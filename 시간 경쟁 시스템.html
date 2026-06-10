@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏆 우리 반 만능 시계</title>
+  <style>
+    /* 전체 배경 및 폰트 설정 */
+    body {
+      font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+      background-color: #e0f7fa; 
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    /* 메인 상자 디자인 */
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 25px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 450px;
+    }
+
+    h1 {
+      color: #ff9f43;
+      margin-bottom: 20px;
+    }
+
+    /* 모드 선택 탭 */
+    .mode-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .mode-tabs button {
+      flex: 1;
+      padding: 10px;
+      font-size: 1.1rem;
+      border-radius: 15px;
+      background-color: #f1f2f6;
+      color: #576574;
+      box-shadow: none;
+    }
+
+    .mode-tabs button.active {
+      background-color: #ff9f43;
+      color: white;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    /* 타이머 설정 영역 */
+    #timerSetup {
+      margin-bottom: 20px;
+      background: #fff9c4;
+      padding: 15px;
+      border-radius: 15px;
+      display: none; /* 스톱워치 모드일 때는 숨김 */
+    }
+
+    .time-input {
+      width: 50px;
+      font-size: 1.2rem;
+      text-align: center;
+      padding: 5px;
+      border: 2px solid #feca57;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    #applyTimeBtn {
+      background-color: #f39c12;
+      padding: 8px 15px;
+      font-size: 1rem;
+    }
+
+    /* 예쁜 원형 디지털 시계 디자인 */
+    .clock-circle {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: #fff9c4; 
+      margin: 0 auto 25px auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 10px solid #feca57;
+      box-shadow: 0 8px 15px rgba(0,0,0,0.1), inset 0 4px 10px rgba(0,0,0,0.05);
+      transition: border-color 0.3s;
+    }
+
+    /* 시계 숫자 디자인 */
+    #display {
+      font-size: 3rem;
+      font-weight: 900;
+      color: #576574;
+      font-variant-numeric: tabular-nums; 
+    }
+
+    /* 버튼 공통 디자인 */
+    button {
+      font-size: 1.1rem;
+      padding: 12px 18px;
+      margin: 5px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+      transition: transform 0.1s;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    /* 조작 버튼 색상 */
+    #startBtn { background-color: #1dd1a1; } 
+    #stopBtn { background-color: #ff6b6b; } 
+    #checkBtn { background-color: #54a0ff; } 
+    #resetBtn { background-color: #c8d6e5; color: #576574; } 
+
+    /* 등수 기록판 영역 */
+    .ranking-board {
+      margin-top: 30px;
+      text-align: left;
+      background: #f1f2f6;
+      padding: 20px;
+      border-radius: 15px;
+      border: 3px dashed #ced6e0;
+    }
+
+    .ranking-board h2 {
+      margin-top: 0;
+      color: #2e86de;
+      font-size: 1.4rem;
+      text-align: center;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      max-height: 250px;
+      overflow-y: auto; 
+    }
+
+    /* 개별 등수 항목 디자인 */
+    li {
+      background: white;
+      margin-bottom: 10px;
+      padding: 12px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .rank-badge {
+      background: #feca57;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-weight: bold;
+      color: white;
+      font-size: 1.1rem;
+      min-width: 45px;
+      text-align: center;
+    }
+
+    /* 이름 입력 칸 */
+    input[type="text"] {
+      flex: 1;
+      padding: 8px 12px;
+      border: 2px solid #dfe4ea;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: #54a0ff; 
+    }
+
+    /* 기록된 시간 */
+    .time-record {
+      font-weight: bold;
+      color: #ee5253;
+      font-size: 1.1rem;
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>🏆 우리 반 만능 시계 🏆</h1>
+    
+    <div class="mode-tabs">
+      <button id="tabStopwatch" class="active">⏱️ 스톱워치 (앞으로)</button>
+      <button id="tabTimer">⏳ 타이머 (거꾸로)</button>
+    </div>
+
+    <div id="timerSetup">
+      <input type="number" id="inputMin" class="time-input" value="3" min="0" max="99"> 분
+      <input type="number" id="inputSec" class="time-input" value="0" min="0" max="59"> 초
+      <button id="applyTimeBtn">시간 설정하기</button>
+    </div>
+    
+    <div class="clock-circle" id="clockCircle">
+      <span id="display">00:00.00</span>
+    </div>
+    
+    <div class="controls">
+      <button id="startBtn">▶ 시작</button>
+      <button id="stopBtn">⏸ 정지</button>
+      <button id="checkBtn">✅ 체크(기록)</button>
+      <button id="resetBtn">🔄 초기화</button>
+    </div>
+    
+    <div class="ranking-board">
+      <h2>✨ 명예의 전당 ✨</h2>
+      <ul id="rankingList">
+        </ul>
+    </div>
+  </div>
+
+  <script>
+    // 상태 변수
+    let mode = 'stopwatch'; // 'stopwatch' 또는 'timer'
+    let timerInterval = null;
+    let savedTime = 0; // 밀리초 단위 (스톱워치: 흐른 시간, 타이머: 남은 시간)
+    let targetTime = 0; // 타이머 계산용
+    let rankCount = 1;
+
+    // DOM 요소
+    const display = document.getElementById('display');
+    const rankingList = document.getElementById('rankingList');
+    const tabStopwatch = document.getElementById('tabStopwatch');
+    const tabTimer = document.getElementById('tabTimer');
+    const timerSetup = document.getElementById('timerSetup');
+    const clockCircle = document.getElementById('clockCircle');
+
+    // 시간 형식 변환 함수 (분:초.밀리초)
+    function formatTime(ms) {
+      if (ms < 0) ms = 0;
+      let totalSeconds = Math.floor(ms / 1000);
+      let minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+      let seconds = (totalSeconds % 60).toString().padStart(2, '0');
+      let milliseconds = Math.floor((ms % 1000) / 10).toString().padStart(2, '0');
+      return `${minutes}:${seconds}.${milliseconds}`;
+    }
+
+    // 화면 업데이트 로직
+    function updateDisplay() {
+      display.textContent = formatTime(savedTime);
+    }
+
+    // 시계 째깍째깍 로직
+    function tick() {
+      if (mode === 'stopwatch') {
+        savedTime = Date.now() - targetTime; // targetTime을 startTime처럼 사용
+        updateDisplay();
+      } else if (mode === 'timer') {
+        savedTime = targetTime - Date.now();
+        if (savedTime <= 0) {
+          savedTime = 0;
+          clearInterval(timerInterval);
+          timerInterval = null;
+          updateDisplay();
+          clockCircle.style.borderColor = '#ff6b6b'; // 종료 시 시계 테두리 빨갛게
+          setTimeout(() => alert("⏰ 약속한 시간이 다 되었습니다!"), 50);
+        } else {
+          updateDisplay();
+        }
+      }
+    }
+
+    // [모드 변경] 스톱워치 탭 클릭
+    tabStopwatch.addEventListener('click', () => {
+      mode = 'stopwatch';
+      tabStopwatch.classList.add('active');
+      tabTimer.classList.remove('active');
+      timerSetup.style.display = 'none';
+      resetAll(false);
+    });
+
+    // [모드 변경] 타이머 탭 클릭
+    tabTimer.addEventListener('click', () => {
+      mode = 'timer';
+      tabTimer.classList.add('active');
+      tabStopwatch.classList.remove('active');
+      timerSetup.style.display = 'block';
+      resetAll(false);
+    });
+
+    // [타이머] 시간 설정 버튼
+    document.getElementById('applyTimeBtn').addEventListener('click', () => {
+      if(timerInterval) return; // 실행 중엔 설정 불가
+      let min = parseInt(document.getElementById('inputMin').value) || 0;
+      let sec = parseInt(document.getElementById('inputSec').value) || 0;
+      savedTime = (min * 60 + sec) * 1000;
+      updateDisplay();
+      clockCircle.style.borderColor = '#feca57'; // 테두리 색상 원상복구
+    });
+
+    // 시작 버튼
+    document.getElementById('startBtn').addEventListener('click', () => {
+      if (!timerInterval) {
+        if (mode === 'stopwatch') {
+          targetTime = Date.now() - savedTime;
+        } else if (mode === 'timer') {
+          if (savedTime === 0) {
+            alert("먼저 '시간 설정하기' 버튼을 눌러 시간을 정해주세요!");
+            return;
+          }
+          targetTime = Date.now() + savedTime;
+          clockCircle.style.borderColor = '#1dd1a1'; // 타이머 진행 중 초록색 테두리
+        }
+        timerInterval = setInterval(tick, 10);
+      }
+    });
+
+    // 정지 버튼
+    document.getElementById('stopBtn').addEventListener('click', () => {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      if (mode === 'timer' && savedTime > 0) {
+        clockCircle.style.borderColor = '#feca57'; // 멈추면 기본 색으로
+      }
+    });
+
+    // 체크(기록) 버튼
+    document.getElementById('checkBtn').addEventListener('click', () => {
+      if (savedTime === 0 && mode === 'stopwatch') return; 
+      
+      const li = document.createElement('li');
+      // 타이머 모드일 때는 '등수' 대신 '순서'나 '기록'으로 활용 가능
+      li.innerHTML = `
+        <span class="rank-badge">${rankCount}</span>
+        <input type="text" placeholder="친구 이름 쓰기 ✏️">
+        <span class="time-record">${formatTime(savedTime)}</span>
+      `;
+      
+      rankingList.appendChild(li);
+      li.querySelector('input').focus();
+      rankCount++;
+      rankingList.scrollTop = rankingList.scrollHeight;
+    });
+
+    // 초기화 함수
+    function resetAll(ask = true) {
+      if(ask && !confirm("기록을 전부 지우고 처음부터 다시 할까요?")) return;
+      
+      clearInterval(timerInterval);
+      timerInterval = null;
+      savedTime = 0;
+      rankCount = 1;
+      rankingList.innerHTML = "";
+      clockCircle.style.borderColor = '#feca57';
+      
+      if(mode === 'timer') {
+        let min = parseInt(document.getElementById('inputMin').value) || 0;
+        let sec = parseInt(document.getElementById('inputSec').value) || 0;
+        savedTime = (min * 60 + sec) * 1000;
+      }
+      updateDisplay();
+    }
+
+    // 초기화 버튼 클릭
+    document.getElementById('resetBtn').addEventListener('click', () => resetAll(true));
+
+    // 처음 시작할 때 스톱워치 화면으로 세팅
+    updateDisplay();
+  </script>
+</body>
+</html>

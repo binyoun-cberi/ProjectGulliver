@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수업 시간표 타이머</title>
+    <!-- Tailwind CSS for rapid styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons for UI icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* Custom scrollbar for the settings panel */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col md:flex-row overflow-hidden text-slate-800">
+
+    <!-- 메인 타이머 영역 (왼쪽) -->
+    <main class="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative h-[60vh] md:h-full">
+        <!-- 패널 토글 버튼 -->
+        <button id="btnTogglePanel" class="absolute top-4 right-4 md:top-6 md:right-6 bg-white text-slate-600 p-2 md:px-4 md:py-2 rounded-lg shadow-md hover:bg-slate-50 transition-colors z-20 flex items-center gap-2 font-medium border border-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            <i class="ph-bold ph-sidebar-simple text-xl md:text-2xl"></i>
+            <span class="hidden md:inline">설정 접기/펴기</span>
+        </button>
+
+        <!-- 확대/축소 컨트롤 버튼 -->
+        <div class="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-20">
+            <button id="btnZoomIn" class="w-10 h-10 md:w-12 md:h-12 bg-white text-slate-600 rounded-full shadow-md border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-300" title="확대">
+                <i class="ph-bold ph-magnifying-glass-plus text-xl md:text-2xl"></i>
+            </button>
+            <button id="btnZoomReset" class="w-10 h-10 md:w-12 md:h-12 bg-white text-slate-600 rounded-full shadow-md border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-300" title="원래 크기">
+                <i class="ph-bold ph-corners-out text-xl md:text-2xl"></i>
+            </button>
+            <button id="btnZoomOut" class="w-10 h-10 md:w-12 md:h-12 bg-white text-slate-600 rounded-full shadow-md border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-300" title="축소">
+                <i class="ph-bold ph-magnifying-glass-minus text-xl md:text-2xl"></i>
+            </button>
+        </div>
+
+        <!-- 편집 가능한 메인 타이틀 -->
+        <input type="text" id="mainTitle" value="수학 연산 시간" 
+            class="text-3xl md:text-5xl font-bold text-center bg-transparent border-b-2 border-transparent hover:border-slate-300 focus:border-indigo-500 focus:outline-none transition-colors mb-8 w-full max-w-2xl text-slate-700"
+            placeholder="주제를 입력하세요 (예: 수학 연산 시간)">
+
+        <!-- 캔버스 및 중앙 정보 (크기 조절 래퍼 추가) -->
+        <div id="timerScaleWrapper" class="transition-transform duration-200 origin-center" style="transform: scale(1);">
+            <div class="relative w-64 h-64 md:w-96 md:h-96 flex items-center justify-center">
+                <canvas id="timerCanvas" class="absolute inset-0 w-full h-full drop-shadow-xl"></canvas>
+                
+                <!-- 중앙 텍스트 정보 -->
+                <div class="z-10 flex flex-col items-center justify-center text-center bg-white w-48 h-48 md:w-72 md:h-72 rounded-full shadow-inner">
+                    <span id="currentEventLabel" class="text-sm md:text-lg text-slate-500 font-semibold mb-1 px-4 truncate w-full">대기 중</span>
+                    <span id="timeDisplay" class="text-4xl md:text-6xl font-bold text-slate-800 tabular-nums tracking-tight">00:00</span>
+                    <span id="totalTimeLabel" class="text-xs md:text-sm text-slate-400 mt-2">총 0분</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 컨트롤 버튼 -->
+        <div class="mt-10 flex gap-4">
+            <button id="btnStart" class="w-16 h-16 md:w-20 md:h-20 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-700 hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-indigo-300">
+                <i class="ph-fill ph-play text-3xl md:text-4xl"></i>
+            </button>
+            <button id="btnPause" class="hidden w-16 h-16 md:w-20 md:h-20 bg-amber-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-amber-600 hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-amber-300">
+                <i class="ph-fill ph-pause text-3xl md:text-4xl"></i>
+            </button>
+            <button id="btnReset" class="w-16 h-16 md:w-20 md:h-20 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center shadow hover:bg-slate-300 hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-slate-100">
+                <i class="ph-bold ph-stop text-2xl md:text-3xl"></i>
+            </button>
+        </div>
+    </main>
+
+    <!-- 설정 패널 (오른쪽) -->
+    <aside id="settingsPanel" class="w-full md:w-96 bg-white border-l border-slate-200 h-[40vh] md:h-full flex flex-col shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)] transition-all duration-300">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <h2 class="text-xl font-bold flex items-center gap-2 text-slate-700">
+                <i class="ph-fill ph-list-dashes text-indigo-500"></i> 시간표 설정
+            </h2>
+        </div>
+        
+        <!-- 이벤트 리스트 -->
+        <div id="eventList" class="flex-1 overflow-y-auto p-4 space-y-3">
+            <!-- JavaScript로 아이템들이 렌더링 됩니다. -->
+        </div>
+
+        <!-- 하단 추가 버튼 -->
+        <div class="p-4 border-t border-slate-100 bg-white">
+            <button id="btnAddEvent" class="w-full py-3 border-2 border-dashed border-indigo-300 text-indigo-600 rounded-xl font-semibold hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">
+                <i class="ph-bold ph-plus"></i> 새 활동 추가
+            </button>
+            <p class="text-xs text-center text-slate-400 mt-3 flex items-center justify-center gap-1">
+                <i class="ph-fill ph-info"></i> 타이머 실행 중에도 설정을 변경할 수 있습니다.
+            </p>
+        </div>
+    </aside>
+
+    <script>
+        // --- 상태 관리 (State) ---
+        const state = {
+            events: [
+                { id: generateId(), name: '도입', duration: 5, color: '#3B82F6' },   // Blue
+                { id: generateId(), name: '활동 1', duration: 15, color: '#10B981' }, // Green
+                { id: generateId(), name: '활동 2', duration: 15, color: '#F59E0B' }, // Yellow/Orange
+                { id: generateId(), name: '정리 시간', duration: 5, color: '#EF4444' }  // Red
+            ],
+            totalSeconds: 0,
+            elapsedSeconds: 0,
+            isRunning: false,
+            timerInterval: null,
+            lastTickTime: null
+        };
+
+        // 추천 색상 팔레트
+        const colorPalette = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#14B8A6'];
+
+        // --- DOM 요소 ---
+        const canvas = document.getElementById('timerCanvas');
+        const ctx = canvas.getContext('2d');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const currentEventLabel = document.getElementById('currentEventLabel');
+        const totalTimeLabel = document.getElementById('totalTimeLabel');
+        const eventListEl = document.getElementById('eventList');
+        const btnStart = document.getElementById('btnStart');
+        const btnPause = document.getElementById('btnPause');
+        const btnReset = document.getElementById('btnReset');
+        const btnAddEvent = document.getElementById('btnAddEvent');
+        const mainTitle = document.getElementById('mainTitle');
+
+        // 새로 추가된 UI 요소들
+        const btnTogglePanel = document.getElementById('btnTogglePanel');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const timerScaleWrapper = document.getElementById('timerScaleWrapper');
+        const btnZoomIn = document.getElementById('btnZoomIn');
+        const btnZoomOut = document.getElementById('btnZoomOut');
+        const btnZoomReset = document.getElementById('btnZoomReset');
+        
+        let currentZoom = 1.0;
+        const ZOOM_STEP = 0.15;
+        const MAX_ZOOM = 2.5;
+        const MIN_ZOOM = 0.5;
+
+        // --- 로컬 스토리지 (Local Storage) 저장/불러오기 ---
+        function loadSettings() {
+            const saved = localStorage.getItem('classTimerSettings');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.events && Array.isArray(data.events) && data.events.length > 0) {
+                        state.events = data.events;
+                    }
+                    if (data.title) {
+                        mainTitle.value = data.title;
+                    }
+                } catch (e) {
+                    console.error("저장된 설정 불러오기 실패", e);
+                }
+            }
+        }
+
+        function saveSettings() {
+            const data = {
+                title: mainTitle.value,
+                events: state.events
+            };
+            localStorage.setItem('classTimerSettings', JSON.stringify(data));
+        }
+
+        // 제목 변경 시 즉시 저장
+        mainTitle.addEventListener('input', saveSettings);
+
+        // --- 유틸리티 함수 ---
+        function generateId() {
+            return Math.random().toString(36).substr(2, 9);
+        }
+
+        function formatTime(totalSeconds) {
+            const m = Math.floor(totalSeconds / 60);
+            const s = Math.floor(totalSeconds % 60);
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // --- 코어 로직 ---
+        function calculateTotalTime() {
+            const totalMinutes = state.events.reduce((sum, ev) => sum + (ev.duration || 0), 0);
+            state.totalSeconds = totalMinutes * 60;
+            totalTimeLabel.innerText = `총 ${totalMinutes}분 기준`;
+        }
+
+        function updateDisplay() {
+            const remaining = Math.max(0, state.totalSeconds - state.elapsedSeconds);
+            timeDisplay.innerText = formatTime(remaining);
+
+            if (state.totalSeconds === 0) {
+                currentEventLabel.innerText = "활동을 추가해주세요";
+                currentEventLabel.className = "text-sm md:text-lg text-slate-500 font-semibold mb-1 px-4 truncate w-full";
+                return;
+            }
+
+            if (state.elapsedSeconds >= state.totalSeconds) {
+                currentEventLabel.innerText = "종료되었습니다";
+                currentEventLabel.className = "text-sm md:text-lg text-indigo-600 font-bold mb-1 px-4 truncate w-full";
+                pauseTimer();
+            } else if (state.isRunning) {
+                // 현재 진행중인 이벤트 찾기
+                let accumulatedSec = 0;
+                for (const ev of state.events) {
+                    accumulatedSec += (ev.duration * 60);
+                    if (state.elapsedSeconds < accumulatedSec) {
+                        currentEventLabel.innerText = ev.name || "이름 없음";
+                        currentEventLabel.style.color = ev.color;
+                        break;
+                    }
+                }
+            } else if (state.elapsedSeconds === 0) {
+                currentEventLabel.innerText = "대기 중";
+                currentEventLabel.style.color = "";
+                currentEventLabel.className = "text-sm md:text-lg text-slate-500 font-semibold mb-1 px-4 truncate w-full";
+            } else {
+                currentEventLabel.innerText = "일시 정지됨";
+                currentEventLabel.style.color = "#94a3b8";
+            }
+        }
+
+        // --- 캔버스 그리기 로직 ---
+        function resizeCanvas() {
+            const parent = canvas.parentElement;
+            // 확대/축소(transform)에 영향받지 않는 실제 요소 크기 가져오기
+            const width = parent.clientWidth;
+            const height = parent.clientHeight;
+            
+            // 레티나 디스플레이 지원을 위해 해상도 2배
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.scale(dpr, dpr);
+            drawTimer();
+        }
+
+        function drawTimer() {
+            const width = canvas.width / (window.devicePixelRatio || 1);
+            const height = canvas.height / (window.devicePixelRatio || 1);
+            const cx = width / 2;
+            const cy = height / 2;
+            const radius = Math.min(cx, cy) - 10; // 여백 10
+            
+            ctx.clearRect(0, 0, width, height);
+
+            if (state.totalSeconds === 0 || state.events.length === 0) {
+                // 빈 원 그리기
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+                ctx.fillStyle = "#e2e8f0";
+                ctx.fill();
+                return;
+            }
+
+            // 1. 이벤트 배경 파이차트 그리기
+            let startAngle = -Math.PI / 2; // 12시 방향부터 시작
+            let accumulatedSec = 0; // 각 이벤트의 남은 시간을 계산하기 위한 누적 초
+            
+            state.events.forEach((ev) => {
+                const proportion = (ev.duration * 60) / state.totalSeconds;
+                const endAngle = startAngle + (proportion * 2 * Math.PI);
+                const midAngle = startAngle + (proportion * Math.PI); // 텍스트를 그릴 중간 각도
+
+                // --- 현재 이벤트의 남은 시간 계산 ---
+                const eventStartSec = accumulatedSec;
+                const eventEndSec = accumulatedSec + (ev.duration * 60);
+                accumulatedSec = eventEndSec; // 다음 이벤트를 위해 누적
+
+                let remainingSec = ev.duration * 60;
+                if (state.elapsedSeconds >= eventEndSec) {
+                    remainingSec = 0; // 이미 지나간 시간
+                } else if (state.elapsedSeconds > eventStartSec) {
+                    remainingSec = eventEndSec - state.elapsedSeconds; // 현재 진행 중인 시간의 남은 초
+                }
+
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = ev.color;
+                ctx.fill();
+
+                // 구분선 그리기 (투명한 선을 그려서 틈새를 만듦)
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, radius + 2, startAngle, startAngle);
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = "white";
+                ctx.stroke();
+
+                // --- 텍스트 라벨 추가 ---
+                if (proportion > 0.03) { // 파이 조각이 너무 좁으면(3% 이하) 텍스트 생략
+                    const textRadius = radius * 0.875; // 도넛 두께의 중앙 위치
+                    const tx = cx + Math.cos(midAngle) * textRadius;
+                    const ty = cy + Math.sin(midAngle) * textRadius;
+
+                    ctx.save();
+                    ctx.translate(tx, ty);
+
+                    // 글씨가 항상 똑바로 보이도록 회전 각도 조정
+                    let rot = midAngle + Math.PI / 2;
+                    let normAngle = midAngle % (2 * Math.PI);
+                    if (normAngle < 0) normAngle += 2 * Math.PI;
+                    if (normAngle > 0 && normAngle < Math.PI) {
+                        rot -= Math.PI; // 시계 하단부(3시~9시)에서 글씨가 뒤집히지 않게 보정
+                    }
+                    ctx.rotate(rot);
+
+                    // 텍스트 스타일 설정
+                    const fontSize = Math.max(10, Math.min(16, radius * 0.08));
+                    ctx.font = `600 ${fontSize}px Pretendard, sans-serif`;
+                    ctx.fillStyle = "white";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    
+                    // 영역을 벗어나지 않도록 텍스트 자르기 처리
+                    let displayName = ev.name;
+                    const arcLength = proportion * 2 * Math.PI * textRadius;
+                    if (ctx.measureText(displayName).width > arcLength - 8) {
+                        let i = displayName.length;
+                        while (i > 0 && ctx.measureText(displayName.substring(0, i) + "..").width > arcLength - 8) {
+                            i--;
+                        }
+                        displayName = i > 0 ? displayName.substring(0, i) + ".." : "";
+                    }
+
+                    if (displayName.length > 0) {
+                        // 흰색 글씨 가독성을 높이기 위한 약간의 그림자 효과
+                        ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+                        ctx.shadowBlur = 4;
+                        ctx.shadowOffsetY = 1;
+                        
+                        // 활동 이름 (위쪽)
+                        ctx.fillText(displayName, 0, -fontSize * 0.5);
+                        
+                        // 할당 시간 (아래쪽, 약간 더 작은 폰트)
+                        ctx.font = `500 ${Math.max(9, fontSize * 0.85)}px Pretendard, sans-serif`;
+                        
+                        // 남은 시간에 따라 동적으로 텍스트 표시
+                        let timeText = "";
+                        if (remainingSec === 0) {
+                            timeText = "완료";
+                        } else if (remainingSec < ev.duration * 60) {
+                            // 진행 중인 활동은 남은 시간을 분:초 형식으로 표시
+                            const m = Math.floor(remainingSec / 60);
+                            const s = Math.floor(remainingSec % 60);
+                            timeText = `${m}:${s.toString().padStart(2, '0')}`;
+                        } else {
+                            // 아직 시작하지 않은 활동은 원래 설정된 분(minute) 표시
+                            timeText = `${ev.duration}분`;
+                        }
+                        
+                        ctx.fillText(timeText, 0, fontSize * 0.7);
+                    }
+                    ctx.restore();
+                }
+
+                startAngle = endAngle;
+            });
+
+            // 2. 경과 시간 오버레이 그리기 (어두운 반투명 색상으로 지나간 시간을 가림)
+            const elapsedProportion = Math.min(state.elapsedSeconds / state.totalSeconds, 1);
+            if (elapsedProportion > 0) {
+                const overlayEndAngle = -Math.PI / 2 + (elapsedProportion * 2 * Math.PI);
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, radius + 1, -Math.PI / 2, overlayEndAngle);
+                ctx.closePath();
+                ctx.fillStyle = "rgba(255, 255, 255, 0.75)"; // 흰색 반투명으로 덮기
+                ctx.fill();
+            }
+
+            // 3. 중앙 구멍 뚫기 (도넛 형태를 만들기 위해 겹치는 원 그리기)
+            // 중앙 정보창(html)이 있지만 캔버스 자체로도 도넛 모양을 유지하도록 그림
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 0.75, 0, 2 * Math.PI); // 두께 조절 (0.75)
+            ctx.fillStyle = "white";
+            ctx.fill();
+        }
+
+        // --- 타이머 제어 ---
+        function startTimer() {
+            if (state.totalSeconds === 0 || state.elapsedSeconds >= state.totalSeconds) return;
+            
+            state.isRunning = true;
+            state.lastTickTime = Date.now();
+            
+            btnStart.classList.add('hidden');
+            btnPause.classList.remove('hidden');
+            
+            function tick() {
+                if (!state.isRunning) return;
+                
+                const now = Date.now();
+                const delta = (now - state.lastTickTime) / 1000; // 초 단위
+                state.lastTickTime = now;
+                
+                state.elapsedSeconds += delta;
+                
+                if (state.elapsedSeconds >= state.totalSeconds) {
+                    state.elapsedSeconds = state.totalSeconds;
+                    updateDisplay();
+                    drawTimer();
+                    pauseTimer();
+                    // 종료 알림이나 효과음을 넣으려면 이곳에 추가
+                } else {
+                    updateDisplay();
+                    drawTimer();
+                    state.timerInterval = requestAnimationFrame(tick);
+                }
+            }
+            state.timerInterval = requestAnimationFrame(tick);
+        }
+
+        function pauseTimer() {
+            state.isRunning = false;
+            cancelAnimationFrame(state.timerInterval);
+            
+            btnStart.classList.remove('hidden');
+            btnPause.classList.add('hidden');
+            
+            updateDisplay();
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            state.elapsedSeconds = 0;
+            updateDisplay();
+            drawTimer();
+        }
+
+        // --- UI 렌더링 및 이벤트 관리 ---
+        function renderEventList() {
+            eventListEl.innerHTML = '';
+            
+            state.events.forEach((ev, index) => {
+                const item = document.createElement('div');
+                item.className = `flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl shadow-sm transition-opacity`;
+                
+                item.innerHTML = `
+                    <div class="relative flex-shrink-0 cursor-pointer group" onclick="document.getElementById('color-${ev.id}').click()">
+                        <div class="w-8 h-8 rounded-full border-2 border-slate-100 shadow-sm" style="background-color: ${ev.color};"></div>
+                        <input type="color" id="color-${ev.id}" value="${ev.color}" class="absolute opacity-0 w-0 h-0" onchange="updateEventColor('${ev.id}', this.value)">
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black bg-opacity-20 rounded-full text-white">
+                            <i class="ph-bold ph-palette text-sm"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 flex flex-col gap-1">
+                        <input type="text" value="${ev.name}" onchange="updateEventName('${ev.id}', this.value)" class="font-semibold text-slate-700 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none w-full text-sm" placeholder="활동 이름">
+                        <div class="flex items-center text-xs text-slate-500 gap-1">
+                            <input type="number" value="${ev.duration}" min="1" max="180" onchange="updateEventDuration('${ev.id}', this.value)" class="w-12 bg-slate-100 rounded px-1 text-center outline-none focus:ring-2 ring-indigo-200">
+                            <span>분 소요</span>
+                        </div>
+                    </div>
+
+                    <button onclick="removeEvent('${ev.id}')" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50 focus:outline-none" title="삭제">
+                        <i class="ph-bold ph-trash text-lg"></i>
+                    </button>
+                `;
+                eventListEl.appendChild(item);
+            });
+        }
+
+        // 설정 변경 액션들
+        window.updateEventColor = (id, newColor) => {
+            const ev = state.events.find(e => e.id === id);
+            if (ev) { ev.color = newColor; fullUpdate(); }
+        };
+        window.updateEventName = (id, newName) => {
+            const ev = state.events.find(e => e.id === id);
+            if (ev) { ev.name = newName; fullUpdate(); }
+        };
+        window.updateEventDuration = (id, newDuration) => {
+            const ev = state.events.find(e => e.id === id);
+            if (ev) { 
+                ev.duration = parseInt(newDuration) || 0; 
+                if(ev.duration < 1) ev.duration = 1;
+                fullUpdate(); 
+            }
+        };
+        window.removeEvent = (id) => {
+            state.events = state.events.filter(e => e.id !== id);
+            fullUpdate();
+        };
+
+        btnAddEvent.addEventListener('click', () => {
+            const newColor = colorPalette[state.events.length % colorPalette.length];
+            state.events.push({
+                id: generateId(),
+                name: `새 활동 ${state.events.length + 1}`,
+                duration: 5,
+                color: newColor
+            });
+            fullUpdate();
+            // 스크롤 맨 아래로
+            setTimeout(() => {
+                eventListEl.scrollTop = eventListEl.scrollHeight;
+            }, 50);
+        });
+
+        function fullUpdate() {
+            calculateTotalTime();
+            // 시간이 줄어들어서 경과시간이 총 시간을 초과했을 경우 보정
+            if (state.elapsedSeconds > state.totalSeconds) {
+                state.elapsedSeconds = state.totalSeconds;
+            }
+            renderEventList();
+            updateDisplay();
+            drawTimer();
+            
+            // 설정이 변경될 때마다 로컬 스토리지에 자동 저장
+            saveSettings();
+        }
+
+        // --- 초기화 ---
+        btnStart.addEventListener('click', startTimer);
+        btnPause.addEventListener('click', pauseTimer);
+        btnReset.addEventListener('click', resetTimer);
+        window.addEventListener('resize', resizeCanvas);
+
+        // 패널 토글 이벤트
+        btnTogglePanel.addEventListener('click', () => {
+            settingsPanel.classList.toggle('hidden');
+            // 패널이 사라지거나 나타날 때 레이아웃 변경 후 캔버스 다시 그리기
+            setTimeout(resizeCanvas, 50);
+        });
+
+        // 줌 이벤트
+        function setZoom(newZoom) {
+            currentZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+            timerScaleWrapper.style.transform = `scale(${currentZoom})`;
+        }
+
+        btnZoomIn.addEventListener('click', () => setZoom(currentZoom + ZOOM_STEP));
+        btnZoomOut.addEventListener('click', () => setZoom(currentZoom - ZOOM_STEP));
+        btnZoomReset.addEventListener('click', () => setZoom(1.0));
+
+        // 마우스 휠 줌 기능 (타이머 영역 위에서 컨트롤 키 누르고 휠)
+        timerScaleWrapper.addEventListener('wheel', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault(); // 기본 화면 줌 방지
+                const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+                setZoom(currentZoom + delta);
+            }
+        }, { passive: false });
+
+        // 첫 실행
+        loadSettings(); // 기존에 저장된 설정이 있다면 불러오기
+
+        setTimeout(() => {
+            calculateTotalTime();
+            renderEventList();
+            updateDisplay();
+            resizeCanvas();
+        }, 100);
+
+    </script>
+</body>
+</html>

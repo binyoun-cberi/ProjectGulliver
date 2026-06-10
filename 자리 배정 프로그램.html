@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초등학교 자리 배정 프로그램</title>
+    <style>
+        /* 기본 리셋 및 폰트 설정 */
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif; 
+            padding: 20px; 
+            background-color: #f3f4f6; /* 부드러운 배경색 */
+            color: #1f2937;
+            margin: 0;
+        }
+        
+        .container { 
+            max-width: 960px; 
+            margin: 0 auto; 
+            background: #ffffff; 
+            padding: 30px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+        }
+
+        /* 헤더 영역 */
+        .header {
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 30px; padding-bottom: 15px;
+            border-bottom: 2px solid #f3f4f6;
+        }
+        h1 { margin: 0; font-size: 24px; color: #111827; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        
+        /* 버튼 공통 스타일 */
+        button { 
+            font-family: inherit;
+            background-color: #3b82f6; color: white; 
+            cursor: pointer; border: none; font-weight: 600; 
+            border-radius: 8px; padding: 10px 16px; font-size: 14px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+        }
+        button:hover { background-color: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); }
+        button:active { transform: translateY(0); }
+        
+        .btn-small { padding: 6px 12px; font-size: 13px; }
+        .btn-danger { background-color: #ef4444; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2); }
+        .btn-danger:hover { background-color: #dc2626; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3); }
+        
+        /* 입력 폼 스타일 */
+        input, select { 
+            font-family: inherit; padding: 10px 12px; 
+            border: 1px solid #d1d5db; border-radius: 8px; 
+            font-size: 14px; color: #374151; background-color: #f9fafb;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus, select:focus { 
+            outline: none; border-color: #3b82f6; 
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); background-color: #fff;
+        }
+
+        /* 컨트롤 패널 그룹 */
+        .controls { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; 
+            margin-bottom: 25px; 
+        }
+        @media (max-width: 768px) { .controls { grid-template-columns: 1fr; } }
+        
+        .control-group { 
+            background: #f8fafc; padding: 20px; 
+            border-radius: 16px; border: 1px solid #e2e8f0;
+            display: flex; flex-direction: column; gap: 10px; 
+        }
+        .control-group label b { color: #334155; font-size: 15px; }
+
+        /* 학생 및 규칙 리스트 스타일 (태그) */
+        .list-container { 
+            display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px; 
+            max-height: 110px; overflow-y: auto; padding: 12px; 
+            background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;
+        }
+        .list-container::-webkit-scrollbar { width: 6px; }
+        .list-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+        .tag-item { 
+            display: inline-flex; align-items: center; gap: 6px; 
+            padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .tag-item.rule { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        .tag-male { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .tag-female { background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; }
+        .tag-front { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+        
+        .delete-btn { cursor: pointer; color: inherit; opacity: 0.5; font-size: 16px; margin-left: 2px; }
+        .delete-btn:hover { opacity: 1; }
+
+        /* 중앙 실행 버튼 영역 */
+        .action-area { text-align: center; margin: 30px 0; }
+        .btn-generate {
+            background-color: #10b981; font-size: 18px; padding: 14px 36px; 
+            border-radius: 30px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        }
+        .btn-generate:hover { background-color: #059669; box-shadow: 0 6px 15px rgba(16, 185, 129, 0.4); }
+
+        /* 책상(그리드) 영역 */
+        .grid-wrapper {
+            width: 100%; overflow-x: auto; padding: 10px;
+        }
+        #grid-container { 
+            display: grid; 
+            gap: 12px; /* 기본 간격 */
+            justify-content: center; 
+            margin: 0 auto;
+        }
+        
+        .seat { 
+            background-color: #ffffff; border: 2px solid #e5e7eb; border-radius: 12px; 
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+            width: 85px; height: 75px; /* 책상 크기 고정! 뒤죽박죽 방지 */
+            text-align: center; font-size: 17px; font-weight: 700; color: #374151;
+            cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            user-select: none;
+        }
+        .seat:hover { border-color: #10b981; transform: translateY(-4px); box-shadow: 0 6px 12px rgba(16, 185, 129, 0.15); }
+        
+        .seat.seat-male { background-color: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+        .seat.seat-female { background-color: #fdf2f8; border-color: #fbcfe8; color: #be185d; }
+        
+        .seat.selected { 
+            background-color: #fef08a !important; border-color: #eab308 !important; color: #854d0e;
+            transform: scale(1.08) translateY(-4px); box-shadow: 0 8px 20px rgba(234, 179, 8, 0.4); z-index: 10; 
+        }
+        
+        .seat.empty { background-color: #f9fafb; color: #9ca3af; border: 2px dashed #d1d5db; }
+        .seat.empty:hover { border-color: #9ca3af; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+        /* 디버그 버튼 */
+        .debug-btn {
+            background: transparent; border: 1px solid #e5e7eb; color: #9ca3af; 
+            border-radius: 6px; padding: 6px 10px; font-size: 12px; font-weight: 500;
+            box-shadow: none; display: flex; align-items: center; gap: 4px;
+        }
+        .debug-btn:hover { background: #f3f4f6; color: #6b7280; box-shadow: none; transform: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🎒 교실 자리 배정</h1>
+        <button onclick="toggleDebugMode()" class="debug-btn" title="비밀 규칙 영역 숨기기">
+            <span id="debugIcon">👁️</span> 디버그
+        </button>
+    </div>
+    
+    <div class="controls" id="controls-area">
+        <!-- 1. 자리 크기 및 대형 -->
+        <div class="control-group">
+            <label><b>1. 학급 대형 선택</b></label>
+            <div style="display: flex; gap: 8px;">
+                <select id="seatSize" style="flex: 1;">
+                    <option value="4x4">4칸 x 4줄 (16자리)</option>
+                    <option value="4x5">4칸 x 5줄 (20자리)</option>
+                    <option value="5x4" selected>5칸 x 4줄 (20자리)</option>
+                    <option value="5x5">5칸 x 5줄 (25자리)</option>
+                    <option value="6x4">6칸 x 4줄 (24자리)</option>
+                    <option value="6x5">6칸 x 5줄 (30자리)</option>
+                    <option value="7x4">7칸 x 4줄 (28자리)</option>
+                    <option value="8x4">8칸 x 4줄 (32자리)</option>
+                </select>
+                <select id="layoutStyle" style="flex: 1;" onchange="updateLayoutStyle()">
+                    <option value="individual">시험 대형 (개별)</option>
+                    <option value="pair">짝꿍 대형 (2인)</option>
+                    <option value="group4">모둠 (2x2)</option>
+                    <option value="group6">모둠 (3x2)</option>
+                </select>
+            </div>
+            <label style="display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; cursor: pointer; color:#4b5563;">
+                <input type="checkbox" id="genderBalance" checked style="width: 16px; height: 16px; cursor: pointer;">
+                <b>👫 남녀 짝/모둠 성비 맞추기</b> (교차 배치)
+            </label>
+        </div>
+
+        <!-- 2. 학생 명단 -->
+        <div class="control-group" id="group-students">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+                <b>2. 학생 명단 (<span id="studentCount">0</span>명)</b>
+                <button class="btn-small btn-danger" onclick="clearStudents()">초기화</button>
+            </label>
+            <div style="display: flex; gap: 6px;">
+                <input type="text" id="newStudentName" placeholder="이름 입력" onkeypress="handleStudentEnter(event)" style="flex: 2;">
+                <select id="newStudentGender" style="flex: 1;">
+                    <option value="M">남학생</option>
+                    <option value="F">여학생</option>
+                </select>
+                <button onclick="addStudent()">추가</button>
+            </div>
+            <div id="studentListDisplay" class="list-container"></div>
+        </div>
+
+        <!-- 3. 앞자리 우선 배치 -->
+        <div class="control-group" id="group-front">
+            <label><b>3. 앞자리 우선 (시력/키)</b></label>
+            <div style="display: flex; gap: 6px;">
+                <input type="text" id="frontStudentName" placeholder="학생 이름 입력" onkeypress="handleFrontEnter(event)" style="flex: 1;">
+                <button onclick="addFrontStudent()">추가</button>
+            </div>
+            <div id="frontDisplay" class="list-container"></div>
+        </div>
+
+        <!-- 4. 인접 금지 규칙 -->
+        <div class="control-group" id="group-rules">
+            <label><b>4. 인접 금지 (짝꿍/앞뒤/대각선)</b></label>
+            <div style="display: flex; gap: 6px;">
+                <input type="text" id="ruleP1" placeholder="이름 1" style="width: 35%;">
+                <input type="text" id="ruleP2" placeholder="이름 2" style="width: 35%;">
+                <button onclick="addRule()" style="flex: 1;">추가</button>
+            </div>
+            <div id="ruleDisplay" class="list-container"></div>
+        </div>
+    </div>
+
+    <div class="action-area">
+        <button onclick="generateSeating()" class="btn-generate">🎲 랜덤 자리 배치 시작</button>
+        <p style="font-size: 13px; color: #6b7280; margin-top: 15px; font-weight: 500;">
+            💡 <b>Tip:</b> 배정 후 자리를 수동으로 바꾸고 싶다면, 두 명의 이름을 차례대로 클릭하세요.
+        </p>
+    </div>
+
+    <!-- 자리표가 그려질 공간 (가로 스크롤 허용) -->
+    <div class="grid-wrapper">
+        <div id="grid-container"></div>
+    </div>
+</div>
+
+<script>
+    // 초기 기본 학생 데이터
+    let studentsData = [
+        {name: "김철수", gender: "M"}, {name: "이영희", gender: "F"}, 
+        {name: "박민수", gender: "M"}, {name: "최지현", gender: "F"}, 
+        {name: "정현우", gender: "M"}, {name: "강수진", gender: "F"}, 
+        {name: "조현기", gender: "M"}, {name: "윤아름", gender: "F"}, 
+        {name: "장동건", gender: "M"}, {name: "임수정", gender: "F"}, 
+        {name: "한지민", gender: "F"}, {name: "오징어", gender: "M"}, 
+        {name: "둘리", gender: "M"}, {name: "도우너", gender: "M"}, 
+        {name: "또치", gender: "F"}, {name: "마이콜", gender: "M"}, 
+        {name: "희동이", gender: "M"}, {name: "고길동", gender: "M"}, 
+        {name: "영심이", gender: "F"}, {name: "왕경태", gender: "M"}
+    ];
+    let rules = [];
+    let frontStudents = [];
+    let currentSeats = [];
+    let selectedSeatIndex = null;
+    let isDebugMode = false;
+
+    // 디버그 모드 토글
+    function toggleDebugMode() {
+        isDebugMode = !isDebugMode;
+        const groupsToHide = ['group-front', 'group-rules'];
+        const debugIcon = document.getElementById('debugIcon');
+        
+        if (isDebugMode) {
+            groupsToHide.forEach(id => document.getElementById(id).style.display = 'none');
+            debugIcon.innerText = '🔒';
+        } else {
+            groupsToHide.forEach(id => document.getElementById(id).style.display = 'flex');
+            debugIcon.innerText = '👁️';
+        }
+    }
+
+    // 초기화
+    window.onload = () => {
+        renderStudents();
+        updateFrontDisplay();
+    };
+
+    /* --- 1. 학생 명단 --- */
+    function renderStudents() {
+        const display = document.getElementById('studentListDisplay');
+        document.getElementById('studentCount').innerText = studentsData.length;
+        
+        if (studentsData.length === 0) {
+            display.innerHTML = '<span style="color: #9ca3af; font-size: 13px;">등록된 학생이 없습니다.</span>';
+            return;
+        }
+
+        display.innerHTML = studentsData.map((s, i) => 
+            `<span class="tag-item ${s.gender === 'M' ? 'tag-male' : 'tag-female'}">
+                ${s.gender === 'M' ? '👦' : '👧'} ${s.name} <span class="delete-btn" onclick="removeStudent(${i})">&times;</span>
+            </span>`
+        ).join('');
+    }
+
+    function addStudent() {
+        const input = document.getElementById('newStudentName');
+        const genderSelect = document.getElementById('newStudentGender');
+        const name = input.value.trim();
+        const gender = genderSelect.value;
+        
+        if (name) {
+            if (studentsData.some(s => s.name === name)) {
+                alert("이미 등록된 이름입니다.");
+                return;
+            }
+            studentsData.push({name, gender});
+            input.value = '';
+            renderStudents();
+        }
+    }
+
+    function handleStudentEnter(event) { if (event.key === 'Enter') addStudent(); }
+
+    function removeStudent(index) {
+        let removedName = studentsData[index].name;
+        studentsData.splice(index, 1);
+        frontStudents = frontStudents.filter(name => name !== removedName);
+        rules = rules.filter(rule => rule[0] !== removedName && rule[1] !== removedName);
+        
+        renderStudents();
+        updateFrontDisplay();
+        updateRuleDisplay();
+    }
+
+    function clearStudents() {
+        if(confirm("학생 명단과 모든 규칙 설정을 삭제하시겠습니까?")) {
+            studentsData = []; rules = []; frontStudents = [];
+            renderStudents(); updateRuleDisplay(); updateFrontDisplay();
+        }
+    }
+
+    /* --- 2. 앞자리 배치 --- */
+    function addFrontStudent() {
+        const input = document.getElementById('frontStudentName');
+        const name = input.value.trim();
+        
+        if (name) {
+            if (!studentsData.some(s => s.name === name)) {
+                alert("명단에 없는 학생입니다. [학생 명단]에 먼저 추가해주세요."); return;
+            }
+            if (frontStudents.includes(name)) {
+                alert("이미 추가된 학생입니다."); return;
+            }
+            frontStudents.push(name);
+            input.value = '';
+            updateFrontDisplay();
+        }
+    }
+
+    function handleFrontEnter(event) { if (event.key === 'Enter') addFrontStudent(); }
+
+    function updateFrontDisplay() {
+        const display = document.getElementById('frontDisplay');
+        if (frontStudents.length === 0) {
+            display.innerHTML = '<span style="color: #9ca3af; font-size: 13px;">등록된 학생이 없습니다.</span>'; return;
+        }
+        display.innerHTML = frontStudents.map((s, i) => 
+            `<span class="tag-item tag-front">
+                ${s} <span class="delete-btn" onclick="removeFrontStudent(${i})">&times;</span>
+            </span>`
+        ).join('');
+    }
+
+    function removeFrontStudent(index) {
+        frontStudents.splice(index, 1);
+        updateFrontDisplay();
+    }
+
+    /* --- 3. 인접 금지 규칙 --- */
+    function addRule() {
+        const p1 = document.getElementById('ruleP1').value.trim();
+        const p2 = document.getElementById('ruleP2').value.trim();
+        
+        if (p1 && p2 && p1 !== p2) {
+            rules.push([p1, p2]);
+            updateRuleDisplay();
+            document.getElementById('ruleP1').value = ''; document.getElementById('ruleP2').value = '';
+        }
+    }
+
+    function updateRuleDisplay() {
+        const display = document.getElementById('ruleDisplay');
+        if (rules.length === 0) {
+            display.innerHTML = '<span style="color: #9ca3af; font-size: 13px;">규칙이 없습니다.</span>'; return;
+        }
+        display.innerHTML = rules.map((r, i) => 
+            `<span class="tag-item rule">
+                ${r[0]} - ${r[1]} <span class="delete-btn" onclick="removeRule(${i})">&times;</span>
+            </span>`
+        ).join('');
+    }
+
+    function removeRule(index) { rules.splice(index, 1); updateRuleDisplay(); }
+
+    /* --- 그리드 크기 --- */
+    function getGridSize() {
+        const sizeStr = document.getElementById('seatSize').value;
+        const [cols, rows] = sizeStr.split('x').map(Number);
+        return { cols, rows };
+    }
+
+    /* --- 4. 랜덤 배치 알고리즘 --- */
+    function shuffleArray(array) {
+        let arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function generateSeating() {
+        const { cols, rows } = getGridSize();
+        const totalSeats = cols * rows;
+        const useGenderBalance = document.getElementById('genderBalance').checked;
+        
+        let students = [...studentsData];
+
+        if (students.length > totalSeats) {
+            alert(`자리가 부족합니다! (학생수: ${students.length}명, 자리수: ${totalSeats}개)`);
+            return;
+        }
+
+        let frontGroup = students.filter(s => frontStudents.includes(s.name));
+        let normalGroup = students.filter(s => !frontStudents.includes(s.name));
+
+        while (frontGroup.length + normalGroup.length < totalSeats) {
+            normalGroup.push({name: "공석", gender: "N"});
+        }
+
+        let frontRows = Math.max(2, Math.ceil(frontGroup.length / cols));
+        let frontSeatCapacity = Math.min(totalSeats, cols * frontRows);
+
+        let attempts = 0; const maxAttempts = 2000;
+        let bestArrangement = null; let lastArrangement = null;
+
+        while (attempts < maxAttempts) {
+            let arr = new Array(totalSeats).fill(null);
+            let frontIndices = Array.from({length: frontSeatCapacity}, (_, i) => i);
+            let normalIndices = Array.from({length: totalSeats - frontSeatCapacity}, (_, i) => i + frontSeatCapacity);
+
+            if (useGenderBalance) {
+                const assignByGender = (group, indices) => {
+                    let boys = shuffleArray(group.filter(s => s.gender === 'M'));
+                    let girls = shuffleArray(group.filter(s => s.gender === 'F'));
+                    let blanks = shuffleArray(group.filter(s => s.gender === 'N'));
+
+                    let mSlots = shuffleArray(indices.filter(i => (Math.floor(i / cols) + (i % cols)) % 2 === 0));
+                    let fSlots = shuffleArray(indices.filter(i => (Math.floor(i / cols) + (i % cols)) % 2 !== 0));
+
+                    let leftovers = [];
+
+                    boys.forEach(b => mSlots.length > 0 ? arr[mSlots.pop()] = b.name : leftovers.push(b));
+                    girls.forEach(g => fSlots.length > 0 ? arr[fSlots.pop()] = g.name : leftovers.push(g));
+                    blanks.forEach(b => leftovers.push(b));
+
+                    let remainingSlots = shuffleArray([...mSlots, ...fSlots]);
+                    leftovers.forEach(s => arr[remainingSlots.pop()] = s.name);
+                };
+                assignByGender(frontGroup, frontIndices);
+                assignByGender(normalGroup, normalIndices);
+            } else {
+                let shuffledFrontIndices = shuffleArray([...frontIndices]);
+                let shuffledFrontGroup = shuffleArray(frontGroup);
+                for(let i = 0; i < shuffledFrontGroup.length; i++) arr[shuffledFrontIndices[i]] = shuffledFrontGroup[i].name;
+
+                let shuffledRemainingIndices = shuffleArray([...normalIndices]);
+                let shuffledNormalGroup = shuffleArray(normalGroup);
+                for(let i = 0; i < shuffledNormalGroup.length; i++) arr[shuffledRemainingIndices[i]] = shuffledNormalGroup[i].name;
+            }
+
+            lastArrangement = arr;
+
+            if (checkRules(arr, cols, rows)) {
+                bestArrangement = arr; break;
+            }
+            attempts++;
+        }
+
+        if (!bestArrangement) {
+            alert("설정한 규칙이 너무 빡빡하여 배치가 어렵습니다. 일부 규칙을 무시하고 임의 배치합니다.");
+            bestArrangement = lastArrangement; 
+        }
+
+        currentSeats = bestArrangement;
+        renderGrid(cols, rows);
+    }
+
+    function checkRules(arr, cols, rows) {
+        for (let i = 0; i < arr.length; i++) {
+            let s1 = arr[i];
+            if (s1 === "공석") continue;
+
+            let row1 = Math.floor(i / cols);
+            let col1 = i % cols;
+            let neighbors = [];
+            
+            if (row1 > 0) neighbors.push(i - cols); 
+            if (row1 < rows - 1) neighbors.push(i + cols); 
+            if (col1 > 0) neighbors.push(i - 1); 
+            if (col1 < cols - 1) neighbors.push(i + 1); 
+            if (row1 > 0 && col1 > 0) neighbors.push(i - cols - 1);
+            if (row1 > 0 && col1 < cols - 1) neighbors.push(i - cols + 1);
+            if (row1 < rows - 1 && col1 > 0) neighbors.push(i + cols - 1);
+            if (row1 < rows - 1 && col1 < cols - 1) neighbors.push(i + cols + 1);
+
+            for (let rule of rules) {
+                if (rule[0] === s1 || rule[1] === s1) {
+                    let target = (rule[0] === s1) ? rule[1] : rule[0];
+                    for (let n of neighbors) if (arr[n] === target) return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /* --- 5. 화면 렌더링 및 교체 --- */
+    function renderGrid(cols, rows) {
+        const container = document.getElementById('grid-container');
+        // auto 키워드를 사용해 책상 크기(85px)에 맞춰 열 너비를 고정! 뒤죽박죽 방지
+        container.style.gridTemplateColumns = `repeat(${cols}, auto)`;
+        container.innerHTML = '';
+        selectedSeatIndex = null;
+
+        currentSeats.forEach((student, index) => {
+            const seatDiv = document.createElement('div');
+            seatDiv.className = 'seat';
+            
+            if (student === '공석') {
+                seatDiv.classList.add('empty');
+                seatDiv.innerText = '공석';
+            } else {
+                let sData = studentsData.find(s => s.name === student);
+                if (sData) {
+                    if (sData.gender === 'M') seatDiv.classList.add('seat-male');
+                    if (sData.gender === 'F') seatDiv.classList.add('seat-female');
+                }
+                seatDiv.innerText = student;
+            }
+            
+            seatDiv.onclick = () => handleSeatClick(index, seatDiv);
+            container.appendChild(seatDiv);
+        });
+
+        updateLayoutStyle();
+    }
+
+    function updateLayoutStyle() {
+        const container = document.getElementById('grid-container');
+        if (!container.children.length) return; 
+
+        const style = document.getElementById('layoutStyle').value;
+        const { cols, rows } = getGridSize();
+
+        Array.from(container.children).forEach((seat, i) => {
+            seat.style.marginRight = '0';
+            seat.style.marginBottom = '0';
+            
+            let col = i % cols;
+            let row = Math.floor(i / cols);
+
+            // 여백(복도) 생성 로직
+            if (style === 'pair') {
+                if (col % 2 === 1 && col !== cols - 1) seat.style.marginRight = '35px';
+            } else if (style === 'group4') {
+                if (col % 2 === 1 && col !== cols - 1) seat.style.marginRight = '35px';
+                if (row % 2 === 1 && row !== rows - 1) seat.style.marginBottom = '35px';
+            } else if (style === 'group6') {
+                if (col % 3 === 2 && col !== cols - 1) seat.style.marginRight = '35px';
+                if (row % 2 === 1 && row !== rows - 1) seat.style.marginBottom = '35px';
+            }
+        });
+    }
+
+    function handleSeatClick(index, seatElement) {
+        if (selectedSeatIndex === null) {
+            selectedSeatIndex = index;
+            seatElement.classList.add('selected');
+        } else if (selectedSeatIndex === index) {
+            seatElement.classList.remove('selected');
+            selectedSeatIndex = null;
+        } else {
+            let temp = currentSeats[selectedSeatIndex];
+            currentSeats[selectedSeatIndex] = currentSeats[index];
+            currentSeats[index] = temp;
+            
+            const { cols, rows } = getGridSize();
+            renderGrid(cols, rows);
+        }
+    }
+</script>
+</body>
+</html>
