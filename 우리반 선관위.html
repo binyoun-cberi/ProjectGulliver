@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리 반 투표판</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- 폰트 -->
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: 'Jua', sans-serif; /* 전체 폰트를 귀여운 주아체로 통일 */
+            background-color: #FFF9EB; 
+        }
+        
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .pop-anim { transition: transform 0.1s ease, box-shadow 0.1s ease; }
+        .pop-anim:active { transform: scale(0.95); }
+        
+        /* 수정 모드용 인풋 스타일 */
+        .edit-input {
+            width: 100%;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px dashed #a5b4fc;
+            border-radius: 8px;
+            outline: none;
+            color: #334155;
+            font-family: 'Jua', sans-serif;
+        }
+        .edit-input:focus { border-color: #6366f1; }
+    </style>
+</head>
+<body class="flex h-screen w-screen overflow-hidden text-slate-800 p-4 md:p-6 gap-6">
+
+    <!-- 왼쪽: 학급 자리 배치도 (그리드) -->
+    <main class="flex-[1.2] flex flex-col bg-white rounded-[2.5rem] shadow-sm border-2 border-amber-100 p-6 relative overflow-hidden">
+        
+        <!-- 상단 컨트롤: 자리 수 조절 및 안내 -->
+        <div class="flex justify-between items-end mb-4 flex-shrink-0">
+            <div>
+                <h2 class="text-2xl text-slate-700 flex items-center gap-2">
+                    <i class="ph-fill ph-chalkboard-teacher text-amber-500"></i> 우리 반 투표 자리표
+                </h2>
+                <p class="text-slate-400 text-sm font-sans mt-1">
+                    💡 <b>클릭</b>: 투표하기 / <b>우클릭</b>: 이름 수정
+                </p>
+            </div>
+            
+            <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100 font-sans">
+                <span class="text-sm font-bold text-slate-500 ml-2">가로</span>
+                <input type="number" id="grid-cols" min="1" max="10" class="w-12 text-center rounded-lg border-slate-200 outline-none focus:ring-2 focus:ring-indigo-400 font-bold text-lg" onchange="updateGridSize()">
+                <span class="text-sm font-bold text-slate-500 ml-2">세로</span>
+                <input type="number" id="grid-rows" min="1" max="10" class="w-12 text-center rounded-lg border-slate-200 outline-none focus:ring-2 focus:ring-indigo-400 font-bold text-lg" onchange="updateGridSize()">
+            </div>
+        </div>
+
+        <!-- 중앙 그리드 영역 -->
+        <div class="flex-1 overflow-y-auto bg-slate-50/50 rounded-3xl p-4 border border-slate-100">
+            <div id="seating-grid" class="grid gap-3 w-full h-full content-start">
+                <!-- 자바스크립트로 자리가 동적 생성됨 -->
+            </div>
+        </div>
+    </main>
+
+    <!-- 오른쪽: 투표 모달 (제목, 선택지, 결과, 초기화) -->
+    <aside class="flex-[0.8] max-w-[500px] flex flex-col bg-white rounded-[2.5rem] shadow-md border-2 border-amber-100 p-8 relative">
+        
+        <!-- 투표 제목 -->
+        <div class="text-center mb-8">
+            <h1 id="vote-title" class="text-3xl lg:text-4xl text-slate-800 cursor-pointer hover:bg-amber-50 p-2 rounded-2xl transition-colors select-none" oncontextmenu="editTitle(event, this)">
+                오늘 어떤 간식을 먹을까요?
+            </h1>
+            <p class="text-slate-400 text-sm font-sans mt-2">💡 칠할 항목을 선택하세요 (우클릭으로 이름 변경)</p>
+        </div>
+
+        <!-- 투표 선택지 리스트 -->
+        <div id="options-list" class="flex flex-col gap-4 flex-1 overflow-y-auto pr-2 pb-4">
+            <!-- 자바스크립트로 선택지 동적 생성 -->
+        </div>
+
+        <!-- 하단 컨트롤 (선택지 추가 및 초기화) -->
+        <div class="mt-4 pt-4 border-t-2 border-slate-100 flex justify-between items-center">
+            <button onclick="addOption()" class="flex items-center gap-1 text-indigo-400 hover:text-indigo-600 font-sans font-bold transition-colors px-2 py-1">
+                <i class="ph-bold ph-plus-circle text-lg"></i> 선택지 추가
+            </button>
+            
+            <button onclick="resetVotes()" class="bg-rose-50 text-rose-500 px-6 py-4 rounded-2xl text-xl hover:bg-rose-100 hover:shadow-sm pop-anim transition-all flex items-center gap-2">
+                <i class="ph-bold ph-eraser text-2xl"></i> 초기화
+            </button>
+        </div>
+    </aside>
+
+    <script>
+        // 🎨 제공되는 파스텔 컬러 팔레트 (클릭 시 순환)
+        const COLORS = [
+            { id: 1, bg: "bg-rose-100", border: "border-rose-300", text: "text-rose-700", fill: "bg-rose-400" },      // 핑크
+            { id: 2, bg: "bg-blue-100", border: "border-blue-300", text: "text-blue-700", fill: "bg-blue-400" },      // 블루
+            { id: 3, bg: "bg-emerald-100", border: "border-emerald-300", text: "text-emerald-700", fill: "bg-emerald-400" }, // 그린
+            { id: 4, bg: "bg-amber-100", border: "border-amber-300", text: "text-amber-700", fill: "bg-amber-400" },      // 옐로우
+            { id: 5, bg: "bg-purple-100", border: "border-purple-300", text: "text-purple-700", fill: "bg-purple-400" },    // 퍼플
+            { id: 6, bg: "bg-orange-100", border: "border-orange-300", text: "text-orange-700", fill: "bg-orange-400" },    // 오렌지
+            { id: 7, bg: "bg-slate-200", border: "border-slate-400", text: "text-slate-700", fill: "bg-slate-500" }       // 그레이
+        ];
+
+        // 🗄️ 기본 데이터 모델
+        let config = {
+            title: "오늘 어떤 간식을 먹을까요?",
+            cols: 6,
+            rows: 5,
+            students: ["유재석", "이효리", "김종국", "송지효", "하하", "개리", "지석진", "이광수", "전소민", "양세찬", "유연석", "조정석", "정경호", "김대명", "전미도", "아이유", "박보검", "송중기", "수지", "김태리"],
+            options: [
+                { id: 1, name: "초코파이 🍫", colorId: 1 },
+                { id: 2, name: "딸기우유 🍓", colorId: 2 },
+                { id: 3, name: "바나나우유 🍌", colorId: 4 },
+                { id: 4, name: "기타/안먹음 ❌", colorId: 7 }
+            ]
+        };
+
+        let votes = {}; // { 자리인덱스: 선택지id }
+        let selectedOptionId = 1; // 현재 칠할 붓(선택지)
+
+        // 로컬스토리지에서 데이터 불러오기
+        if(localStorage.getItem('vote_board_v2')) {
+            const saved = JSON.parse(localStorage.getItem('vote_board_v2'));
+            config = { ...config, ...saved }; // 새 속성 호환되도록 병합
+            if(localStorage.getItem('vote_board_v2_votes')) {
+                votes = JSON.parse(localStorage.getItem('vote_board_v2_votes'));
+            }
+            // 불러올 때 선택된 옵션이 유효한지 확인
+            if(!config.options.find(o => o.id === selectedOptionId)) {
+                selectedOptionId = config.options[0]?.id || null;
+            }
+        }
+
+        function saveToLocal() {
+            localStorage.setItem('vote_board_v2', JSON.stringify(config));
+            localStorage.setItem('vote_board_v2_votes', JSON.stringify(votes));
+        }
+
+        // ==========================================
+        // 1. 그리드 (왼쪽 영역) 관련 로직
+        // ==========================================
+        function updateGridSize() {
+            config.cols = parseInt(document.getElementById('grid-cols').value) || 6;
+            config.rows = parseInt(document.getElementById('grid-rows').value) || 5;
+            saveToLocal();
+            renderLeft();
+        }
+
+        function handleSeatClick(index) {
+            if (!selectedOptionId) return; // 붓이 없으면 무시
+            
+            if (votes[index] === selectedOptionId) {
+                delete votes[index]; // 이미 같은색이면 지우기 (토글)
+            } else {
+                votes[index] = selectedOptionId; // 칠하기
+            }
+            saveToLocal();
+            renderLeft();
+            renderRight(); // 투표수 업데이트
+        }
+
+        // 더블클릭하여 학생 이름 수정 (인라인 인풋)
+        function editStudentName(index, el) {
+            const currentName = config.students[index] || "";
+            // 기존 내용을 인풋 태그로 변경
+            el.innerHTML = `<input type="text" class="edit-input text-xl py-1" value="${currentName}" 
+                onblur="saveStudentName(${index}, this)" 
+                onkeydown="if(event.key==='Enter') this.blur()"
+                oncontextmenu="event.stopPropagation()">`;
+            
+            const input = el.querySelector('input');
+            input.focus();
+            input.select();
+        }
+
+        function saveStudentName(index, inputEl) {
+            const newName = inputEl.value.trim();
+            config.students[index] = newName; // 빈칸이어도 저장
+            saveToLocal();
+            renderLeft();
+        }
+
+        function renderLeft() {
+            document.getElementById('grid-cols').value = config.cols;
+            document.getElementById('grid-rows').value = config.rows;
+
+            const gridContainer = document.getElementById('seating-grid');
+            gridContainer.style.gridTemplateColumns = `repeat(${config.cols}, minmax(0, 1fr))`;
+            gridContainer.innerHTML = '';
+
+            const totalSeats = config.cols * config.rows;
+            
+            for (let i = 0; i < totalSeats; i++) {
+                const seat = document.createElement('div');
+                const studentName = config.students[i] || "";
+                const votedOptId = votes[i];
+                
+                let theme = null;
+                if (votedOptId) {
+                    const opt = config.options.find(o => o.id === votedOptId);
+                    if(opt) theme = COLORS.find(c => c.id === opt.colorId);
+                }
+                
+                // 자리 기본 스타일
+                seat.className = `aspect-[4/3] rounded-3xl border-2 p-2 flex flex-col items-center justify-center transition-all cursor-pointer select-none pop-anim relative group shadow-sm`;
+                
+                if (theme) {
+                    // 색칠된 자리
+                    seat.classList.add(...theme.bg.split(' '), ...theme.border.split(' '), ...theme.text.split(' '));
+                    seat.innerHTML = `
+                        <span class="absolute top-2 left-2 text-[11px] font-sans font-bold opacity-40">${i+1}</span>
+                        <span class="text-xl lg:text-2xl tracking-wide z-10 w-full text-center leading-tight px-1 break-keep">${studentName || "빈자리"}</span>
+                    `;
+                } else {
+                    // 빈 자리 (색칠 안됨)
+                    seat.classList.add('bg-white', 'border-slate-200', 'text-slate-600', 'hover:border-indigo-300', 'hover:shadow-md');
+                    seat.innerHTML = `
+                        <span class="absolute top-2 left-2 text-[11px] font-sans font-bold text-slate-300">${i+1}</span>
+                        <span class="text-xl lg:text-2xl tracking-wide w-full text-center leading-tight px-1 break-keep ${studentName ? '' : 'text-slate-300'}">${studentName || "빈자리"}</span>
+                    `;
+                }
+
+                // 이벤트 바인딩 (클릭: 투표, 우클릭: 수정)
+                seat.onclick = () => handleSeatClick(i);
+                seat.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation(); // 투표 클릭 무시
+                    if(seat.querySelector('input')) return;
+                    editStudentName(i, seat);
+                };
+                
+                gridContainer.appendChild(seat);
+            }
+        }
+
+        // ==========================================
+        // 2. 투표 모달 (오른쪽 영역) 관련 로직
+        // ==========================================
+
+        // 제목 수정
+        function editTitle(e, el) {
+            e.preventDefault();
+            if(el.querySelector('input')) return;
+            const currentTitle = config.title;
+            el.innerHTML = `<input type="text" class="edit-input text-3xl lg:text-4xl py-1 px-4" value="${currentTitle}" 
+                onblur="saveTitle(this)" 
+                onkeydown="if(event.key==='Enter') this.blur()"
+                oncontextmenu="event.stopPropagation()">`;
+            
+            const input = el.querySelector('input');
+            input.focus();
+            input.select();
+        }
+
+        function saveTitle(inputEl) {
+            config.title = inputEl.value.trim() || "제목을 입력하세요";
+            document.getElementById('vote-title').innerText = config.title;
+            saveToLocal();
+        }
+
+        // 선택지 이름 수정
+        function editOptionName(e, optId, el) {
+            e.preventDefault();
+            if(el.querySelector('input')) return;
+            const opt = config.options.find(o => o.id === optId);
+            el.innerHTML = `<input type="text" class="edit-input text-2xl py-1 w-full text-left px-2" value="${opt.name}" 
+                onblur="saveOptionName(${optId}, this)" 
+                onkeydown="if(event.key==='Enter') this.blur()"
+                onclick="event.stopPropagation()"
+                oncontextmenu="event.stopPropagation()">`; // 인풋 클릭/우클릭 시 이벤트 방지
+            
+            const input = el.querySelector('input');
+            input.focus();
+            input.select();
+        }
+
+        function saveOptionName(optId, inputEl) {
+            const opt = config.options.find(o => o.id === optId);
+            opt.name = inputEl.value.trim() || "빈 선택지";
+            saveToLocal();
+            renderRight();
+        }
+
+        // 선택지 색상 변경 (순환)
+        function cycleColor(optId, event) {
+            event.stopPropagation(); // 붓 선택(행 클릭) 이벤트 방지
+            const opt = config.options.find(o => o.id === optId);
+            const currentIndex = COLORS.findIndex(c => c.id === opt.colorId);
+            const nextIndex = (currentIndex + 1) % COLORS.length;
+            opt.colorId = COLORS[nextIndex].id;
+            
+            saveToLocal();
+            renderRight();
+            renderLeft(); // 그리드에 색상 즉시 반영
+        }
+
+        // 선택지 추가/삭제
+        function addOption() {
+            if(config.options.length >= 8) {
+                alert("선택지는 최대 8개까지만 추가할 수 있습니다.");
+                return;
+            }
+            const newId = Date.now(); // 고유 ID
+            const newColorId = COLORS[config.options.length % COLORS.length].id;
+            config.options.push({ id: newId, name: "새 선택지", colorId: newColorId });
+            saveToLocal();
+            renderRight();
+        }
+
+        function deleteOption(optId, event) {
+            event.stopPropagation();
+            if(config.options.length <= 1) {
+                alert("최소 1개의 선택지는 필요합니다.");
+                return;
+            }
+            if(confirm("이 선택지를 삭제할까요? (해당 선택지에 투표된 기록도 지워집니다)")) {
+                config.options = config.options.filter(o => o.id !== optId);
+                // 해당 투표 삭제
+                for(let seatIdx in votes) {
+                    if(votes[seatIdx] === optId) delete votes[seatIdx];
+                }
+                if(selectedOptionId === optId) selectedOptionId = config.options[0].id;
+                
+                saveToLocal();
+                renderRight();
+                renderLeft();
+            }
+        }
+
+        function renderRight() {
+            document.getElementById('vote-title').innerText = config.title;
+            
+            const listContainer = document.getElementById('options-list');
+            listContainer.innerHTML = '';
+
+            // 각 항목별 투표수 집계
+            const counts = {};
+            config.options.forEach(o => counts[o.id] = 0);
+            Object.values(votes).forEach(optId => {
+                if(counts[optId] !== undefined) counts[optId]++;
+            });
+
+            config.options.forEach(opt => {
+                const count = counts[opt.id];
+                const theme = COLORS.find(c => c.id === opt.colorId);
+                const isSelected = selectedOptionId === opt.id;
+
+                const row = document.createElement('div');
+                // 행 디자인 (선택되면 테두리와 그림자 강조)
+                row.className = `flex items-center p-3 md:p-4 rounded-3xl border-4 cursor-pointer transition-all pop-anim
+                    ${isSelected ? `${theme.bg} ${theme.border} shadow-md` : `bg-white border-transparent hover:bg-slate-50 border-slate-100`}`;
+                
+                row.onclick = () => {
+                    selectedOptionId = opt.id;
+                    renderRight(); // 선택 상태 업데이트
+                };
+
+                row.innerHTML = `
+                    <!-- 1. 색상 선택 동그라미 -->
+                    <div class="w-8 h-8 rounded-full ${theme.fill} shadow-inner flex-shrink-0 flex items-center justify-center hover:scale-110 transition-transform" 
+                         onclick="cycleColor(${opt.id}, event)" title="클릭해서 색상 변경">
+                        ${isSelected ? '<i class="ph-bold ph-check text-white"></i>' : ''}
+                    </div>
+                    
+                    <!-- 2. 항목 이름 (우클릭 수정) -->
+                    <div class="ml-4 flex-1 text-2xl md:text-3xl text-slate-700 truncate select-none h-full flex items-center" 
+                         oncontextmenu="editOptionName(event, ${opt.id}, this)">
+                        ${opt.name}
+                    </div>
+
+                    <!-- 3. 투표 수량 및 삭제 버튼 -->
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <span class="text-3xl md:text-4xl text-slate-800 tracking-tighter">
+                            ${count}<span class="text-xl text-slate-500 ml-1 font-sans font-bold">명</span>
+                        </span>
+                        
+                        <button onclick="deleteOption(${opt.id}, event)" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors ml-1" title="선택지 삭제">
+                            <i class="ph-bold ph-x text-lg"></i>
+                        </button>
+                    </div>
+                `;
+                
+                listContainer.appendChild(row);
+            });
+        }
+
+        // 전체 초기화
+        function resetVotes() {
+            const hasVotes = Object.keys(votes).length > 0;
+            if(!hasVotes) return;
+            
+            if(confirm("모든 투표 결과를 0명으로 초기화하시겠습니까?")) {
+                votes = {};
+                saveToLocal();
+                renderLeft();
+                renderRight();
+            }
+        }
+
+        // 초기 실행
+        renderLeft();
+        renderRight();
+    </script>
+</body>
+</html>

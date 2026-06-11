@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1초 뚝딱! 학급 체크리스트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f8fafc; /* 아주 연한 배경색 */
+            user-select: none; /* 드래그 방지 */
+        }
+        
+        /* 자리 클릭 시 부드러운 애니메이션 효과 */
+        .desk {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .desk:active {
+            transform: scale(0.95);
+        }
+        
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* 팝업 모달 애니메이션 */
+        .modal-enter {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col items-center py-10 px-4 sm:px-8">
+
+    <div class="w-full max-w-6xl">
+        
+        <!-- 헤더 영역 -->
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 mb-2">✅ 학급 체크리스트</h1>
+                <p class="text-slate-500 font-medium" id="progress-text">현재 0명 제출 완료 (0%)</p>
+            </div>
+            
+            <div class="flex gap-2">
+                <button onclick="resetCurrentTheme()" class="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm font-medium text-sm flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    전체 초기화
+                </button>
+                <button onclick="openSettings()" class="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm font-medium text-sm flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    인원 설정
+                </button>
+            </div>
+        </header>
+
+        <!-- 테마 탭 (체크리스트 종류) -->
+        <div class="flex items-center gap-2 mb-8 overflow-x-auto pb-2" id="theme-tabs">
+            <!-- 탭이 동적으로 추가됩니다 -->
+        </div>
+
+        <!-- 프로그레스 바 -->
+        <div class="w-full bg-slate-200 rounded-full h-2.5 mb-8">
+            <div id="progress-bar" class="bg-emerald-500 h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+        </div>
+
+        <!-- 자리 배치도 (체크리스트) -->
+        <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4 sm:gap-6" id="desk-grid">
+            <!-- 자리 블록이 동적으로 추가됩니다 -->
+        </div>
+
+    </div>
+
+    <!-- 우클릭 커스텀 메뉴 (테마 삭제용) -->
+    <div id="context-menu" class="hidden fixed bg-white shadow-xl rounded-xl py-2 w-32 border border-slate-100 z-50">
+        <button id="btn-delete-theme" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:font-medium transition-colors">
+            테마 삭제
+        </button>
+    </div>
+
+    <!-- 공통 모달 UI -->
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden modal-enter p-6">
+            <h3 id="modal-title" class="text-xl font-bold text-slate-900 mb-2">제목</h3>
+            <p id="modal-desc" class="text-sm text-slate-500 mb-5">설명</p>
+            
+            <input type="text" id="modal-input" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-shadow mb-6 hidden" autocomplete="off">
+            
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeModal()" class="px-5 py-2.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-medium transition-colors">취소</button>
+                <button id="modal-confirm" class="px-5 py-2.5 rounded-xl text-white bg-emerald-500 hover:bg-emerald-600 font-medium transition-colors shadow-sm shadow-emerald-500/30">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 기본 상태 데이터
+        const DEFAULT_STUDENT_COUNT = 25;
+        const DEFAULT_THEMES = ['독서록', '수학 익힘책', '우유 급식', '안내장'];
+
+        let state = {
+            studentCount: DEFAULT_STUDENT_COUNT,
+            themes: [...DEFAULT_THEMES],
+            currentTheme: '독서록',
+            data: {} // 구조: { '독서록': { 1: true, 2: false, ... }, '수학 익힘책': { ... } }
+        };
+
+        // 데이터 초기화 및 보정
+        function initData() {
+            state.themes.forEach(theme => {
+                if (!state.data[theme]) state.data[theme] = {};
+                // 학생 수가 늘어났을 경우를 대비해 초기화
+                for (let i = 1; i <= state.studentCount; i++) {
+                    if (state.data[theme][i] === undefined) {
+                        state.data[theme][i] = false;
+                    }
+                }
+            });
+        }
+
+        // 로컬 스토리지에서 데이터 불러오기
+        function loadState() {
+            const saved = localStorage.getItem('classChecklistState');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    state.studentCount = parsed.studentCount || DEFAULT_STUDENT_COUNT;
+                    state.themes = parsed.themes || [...DEFAULT_THEMES];
+                    state.currentTheme = parsed.currentTheme || state.themes[0];
+                    state.data = parsed.data || {};
+                } catch (e) {
+                    console.error("데이터 불러오기 실패", e);
+                }
+            }
+            initData();
+        }
+
+        // 로컬 스토리지에 데이터 저장
+        function saveState() {
+            localStorage.setItem('classChecklistState', JSON.stringify(state));
+            updateProgress();
+        }
+
+        // 테마 탭 렌더링
+        function renderTabs() {
+            const container = document.getElementById('theme-tabs');
+            container.innerHTML = '';
+
+            state.themes.forEach(theme => {
+                const isActive = state.currentTheme === theme;
+                const btn = document.createElement('button');
+                
+                // 미니멀하고 세련된 탭 스타일링
+                btn.className = `px-5 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all duration-200 ${
+                    isActive 
+                    ? 'bg-slate-800 text-white shadow-md' 
+                    : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50 hover:text-slate-800'
+                }`;
+                btn.textContent = theme;
+                
+                // 좌클릭: 테마 변경
+                btn.onclick = () => {
+                    state.currentTheme = theme;
+                    saveState();
+                    renderTabs();
+                    renderGrid();
+                };
+
+                // 우클릭: 커스텀 메뉴 열기 (테마 삭제)
+                btn.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    if(state.themes.length <= 1) {
+                        showModal('알림', '최소 1개 이상의 테마가 필요합니다.', null, () => closeModal(), false);
+                        return;
+                    }
+                    showContextMenu(e.pageX, e.pageY, theme);
+                };
+
+                container.appendChild(btn);
+            });
+
+            // 테마 추가 버튼
+            const addBtn = document.createElement('button');
+            addBtn.className = 'px-4 py-2.5 rounded-xl font-bold text-sm text-slate-400 bg-slate-100 hover:bg-slate-200 hover:text-slate-700 transition-colors flex items-center justify-center border border-dashed border-slate-300';
+            addBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
+            addBtn.onclick = () => {
+                showModal('새 테마 추가', '새로 만들 체크리스트의 이름을 입력하세요.', '예: 미술 준비물', (val) => {
+                    if (val && !state.themes.includes(val)) {
+                        state.themes.push(val);
+                        state.currentTheme = val;
+                        initData();
+                        saveState();
+                        renderTabs();
+                        renderGrid();
+                    }
+                });
+            };
+            container.appendChild(addBtn);
+        }
+
+        // 자리 배치도(그리드) 렌더링
+        function renderGrid() {
+            const container = document.getElementById('desk-grid');
+            container.innerHTML = '';
+            
+            const currentData = state.data[state.currentTheme];
+
+            for (let i = 1; i <= state.studentCount; i++) {
+                const isChecked = currentData[i];
+                
+                const desk = document.createElement('div');
+                desk.className = `desk cursor-pointer flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all duration-200 relative overflow-hidden group ${
+                    isChecked 
+                    ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/30' 
+                    : 'bg-white border-slate-200 text-slate-400 hover:border-emerald-200 hover:bg-emerald-50'
+                }`;
+                
+                // 번호
+                const num = document.createElement('span');
+                num.className = `text-3xl font-black mb-1 ${isChecked ? 'text-white' : 'text-slate-800'}`;
+                num.textContent = i;
+                
+                // 상태 텍스트
+                const status = document.createElement('span');
+                status.className = `text-sm font-semibold tracking-wide ${isChecked ? 'text-emerald-100' : 'text-slate-400'}`;
+                status.textContent = isChecked ? '제출 완료' : '미제출';
+
+                // 클릭 이벤트
+                desk.onclick = () => {
+                    state.data[state.currentTheme][i] = !isChecked;
+                    saveState();
+                    renderGrid(); // 다시 렌더링 (리액트처럼 전체 렌더링 방식으로 단순화)
+                };
+
+                desk.appendChild(num);
+                desk.appendChild(status);
+                container.appendChild(desk);
+            }
+            
+            updateProgress();
+        }
+
+        // 진행률 업데이트
+        function updateProgress() {
+            const currentData = state.data[state.currentTheme];
+            let checkedCount = 0;
+            
+            for(let i=1; i<=state.studentCount; i++){
+                if(currentData[i]) checkedCount++;
+            }
+
+            const percentage = state.studentCount > 0 ? Math.round((checkedCount / state.studentCount) * 100) : 0;
+            
+            document.getElementById('progress-text').textContent = `현재 ${checkedCount}명 제출 완료 (${percentage}%)`;
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+        }
+
+        // 현재 테마 초기화
+        function resetCurrentTheme() {
+            showModal('전체 초기화', `'${state.currentTheme}'의 제출 상태를 모두 미제출로 되돌리시겠습니까?`, null, () => {
+                for (let i = 1; i <= state.studentCount; i++) {
+                    state.data[state.currentTheme][i] = false;
+                }
+                saveState();
+                renderGrid();
+            }, false); // 입력창 없는 모달
+        }
+
+        // 인원 설정
+        function openSettings() {
+            showModal('학생 수 설정', '우리 반의 총 학생 수를 입력하세요.', state.studentCount, (val) => {
+                const count = parseInt(val);
+                if (!isNaN(count) && count > 0 && count <= 100) {
+                    state.studentCount = count;
+                    initData();
+                    saveState();
+                    renderGrid();
+                } else {
+                    alert('1부터 100 사이의 올바른 숫자를 입력해주세요.');
+                }
+            });
+        }
+
+        /* --- 우클릭 커스텀 메뉴 로직 --- */
+        const contextMenu = document.getElementById('context-menu');
+        let themeToDelete = null;
+
+        function showContextMenu(x, y, theme) {
+            themeToDelete = theme;
+            contextMenu.style.left = `${x}px`;
+            contextMenu.style.top = `${y}px`;
+            contextMenu.classList.remove('hidden');
+        }
+
+        function hideContextMenu() {
+            contextMenu.classList.add('hidden');
+            themeToDelete = null;
+        }
+
+        // 바탕 클릭 시 컨텍스트 메뉴 닫기
+        document.addEventListener('click', hideContextMenu);
+
+        document.getElementById('btn-delete-theme').onclick = () => {
+            if (themeToDelete) {
+                showModal('테마 삭제', `'${themeToDelete}' 테마를 삭제하시겠습니까? (기록도 함께 삭제됩니다)`, null, () => {
+                    state.themes = state.themes.filter(t => t !== themeToDelete);
+                    delete state.data[themeToDelete];
+                    
+                    if (state.currentTheme === themeToDelete) {
+                        state.currentTheme = state.themes[0];
+                    }
+                    saveState();
+                    renderTabs();
+                    renderGrid();
+                }, false);
+            }
+        };
+
+        /* --- 커스텀 모달 로직 (alert/prompt 대체) --- */
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalTitle = document.getElementById('modal-title');
+        const modalDesc = document.getElementById('modal-desc');
+        const modalInput = document.getElementById('modal-input');
+        const modalConfirm = document.getElementById('modal-confirm');
+        let currentModalCallback = null;
+
+        function showModal(title, desc, placeholderText, callback, isPrompt = true) {
+            modalTitle.textContent = title;
+            modalDesc.textContent = desc;
+            
+            if (isPrompt) {
+                modalInput.classList.remove('hidden');
+                modalInput.value = '';
+                if(placeholderText) modalInput.placeholder = placeholderText;
+                setTimeout(() => modalInput.focus(), 100);
+            } else {
+                modalInput.classList.add('hidden');
+            }
+
+            currentModalCallback = callback;
+            modalOverlay.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            modalOverlay.classList.add('hidden');
+            currentModalCallback = null;
+            modalInput.value = '';
+        }
+
+        modalConfirm.onclick = () => {
+            if (currentModalCallback) {
+                currentModalCallback(modalInput.classList.contains('hidden') ? null : modalInput.value.trim());
+            }
+            closeModal();
+        };
+
+        // 엔터키로 모달 확인
+        modalInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                modalConfirm.click();
+            }
+        });
+
+        // 초기화 실행
+        loadState();
+        renderTabs();
+        renderGrid();
+
+    </script>
+</body>
+</html>

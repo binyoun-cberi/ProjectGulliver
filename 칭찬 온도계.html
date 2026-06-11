@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학급 칭찬 온도계 대시보드</title>
+    <!-- 폰트 및 아이콘 -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/variable/pretendardvariable.css" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Rounded" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #818CF8;
+            --success: #10B981;
+            --danger: #EF4444;
+            --bg: #F3F4F6;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-main: #1F2937;
+            --text-sub: #6B7280;
+            --border: #E5E7EB;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard Variable', Pretendard, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at top right, #E0E7FF 0%, transparent 40%),
+                              radial-gradient(circle at bottom left, #D1FAE5 0%, transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* 전체 레이아웃 (상단 3단, 하단 누가기록) */
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            width: 100%;
+            max-width: 1400px;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+
+        .top-section {
+            display: grid;
+            grid-template-columns: 1fr 380px 1fr;
+            gap: 24px;
+            align-items: stretch;
+        }
+
+        /* 공통 카드 스타일 */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        /* 중앙: 온도계 영역 */
+        .center-panel {
+            align-items: center;
+            position: relative;
+        }
+
+        .target-student-input {
+            width: 100%;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 16px;
+            border: 2px solid var(--primary-light);
+            border-radius: 16px;
+            background: #EEF2FF;
+            color: var(--primary);
+            margin-bottom: 30px;
+            transition: all 0.2s;
+        }
+        .target-student-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+            background: #fff;
+        }
+        .target-student-input::placeholder { color: #A5B4FC; }
+
+        /* 길쭉한 온도계 */
+        .thermometer-wrapper {
+            position: relative;
+            width: 80px;
+            height: 500px; /* 더 길게 변경 */
+            margin: 20px 0 40px 0;
+            filter: drop-shadow(0 10px 15px rgba(239, 68, 68, 0.3));
+        }
+
+        .thermometer-scale {
+            position: absolute;
+            left: -50px;
+            height: calc(100% - 40px);
+            width: 40px;
+            bottom: 40px;
+            z-index: 1;
+        }
+
+        .thermometer-scale span {
+            position: absolute;
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            font-weight: 700;
+            transform: translateY(50%);
+            width: 100%;
+            text-align: right;
+        }
+
+        .thermometer-scale span::after {
+            content: '';
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            width: 8px;
+            height: 2px;
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        .thermometer-glass {
+            width: 100%;
+            height: calc(100% - 40px);
+            background: #F9FAFB;
+            border-radius: 40px 40px 0 0;
+            border: 4px solid #fff;
+            border-bottom: none;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .liquid {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(to top, #EF4444, #F59E0B);
+            transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .thermometer-bulb {
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle at 30% 30%, #F87171, #EF4444);
+            border-radius: 50%;
+            border: 4px solid #fff;
+            position: absolute;
+            bottom: -20px;
+            left: -20px;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset -4px -4px 10px rgba(0,0,0,0.2);
+        }
+
+        .bulb-text {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-shadow: 1px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* 중앙 하단 MVP */
+        .mvp-mini {
+            background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+            border: 1px solid #FDE68A;
+            border-radius: 16px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+        .mvp-mini-icon { font-size: 1.8rem; }
+        .mvp-mini-info { display: flex; flex-direction: column; align-items: flex-start;}
+        .mvp-mini-title { font-size: 0.8rem; color: #B45309; font-weight: 700; }
+        .mvp-mini-name { font-size: 1.1rem; color: #92400E; font-weight: 800; }
+
+        /* 좌/우 이유 패널 */
+        .reason-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .reason-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .reason-btn:active { transform: scale(0.98); }
+        
+        .reason-content { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; pointer-events: none;}
+        .reason-title { font-size: 1.05rem; }
+        .reason-score { font-size: 0.9rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; }
+
+        .btn-delete {
+            background: transparent;
+            border: none;
+            color: rgba(0,0,0,0.3);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-delete:hover { background: rgba(0,0,0,0.1); color: rgba(0,0,0,0.8); }
+
+        /* 좌측: 차감 테마 */
+        .minus-theme .section-title i { color: var(--danger); }
+        .minus-theme .section-title { border-color: #FEE2E2; }
+        .reason-minus { background: #FEF2F2; color: #991B1B; border: 1px solid #FEE2E2; }
+        .reason-minus:hover { background: #FEE2E2; }
+        .reason-minus .reason-score { background: #FCA5A5; color: #7F1D1D; }
+
+        /* 우측: 칭찬 테마 */
+        .plus-theme .section-title i { color: var(--success); }
+        .plus-theme .section-title { border-color: #D1FAE5; }
+        .reason-plus { background: #ECFDF5; color: #065F46; border: 1px solid #D1FAE5; }
+        .reason-plus:hover { background: #D1FAE5; }
+        .reason-plus .reason-score { background: #6EE7B7; color: #064E3B; }
+
+        /* 이유 추가 폼 */
+        .add-form {
+            display: flex;
+            gap: 8px;
+            background: #F9FAFB;
+            padding: 12px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+        .add-form input[type="text"] { flex: 1; min-width: 0; }
+        .add-form input[type="number"] { width: 60px; text-align: center;}
+        .add-form input {
+            padding: 10px; border: 1px solid var(--border); border-radius: 10px; font-size: 0.9rem;
+        }
+        .add-form button {
+            padding: 10px 12px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; color: white;
+        }
+        .minus-theme .add-form button { background: var(--danger); }
+        .plus-theme .add-form button { background: var(--success); }
+
+        /* 하단: 누가기록 패널 */
+        .history-panel {
+            min-height: 300px;
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .sort-select {
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #F9FAFB;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            outline: none;
+        }
+
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .history-item {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .history-info { display: flex; flex-direction: column; gap: 4px; }
+        .history-title { font-weight: 800; font-size: 1.1rem; color: var(--primary); }
+        .history-reason { color: var(--text-main); font-size: 0.95rem; font-weight: 600;}
+        .history-date { font-size: 0.8rem; color: #9CA3AF; }
+
+        .history-score {
+            font-weight: 800;
+            font-size: 1.2rem;
+            padding: 8px 16px;
+            border-radius: 12px;
+            min-width: 60px;
+            text-align: center;
+        }
+        .score-up { color: var(--success); background: #D1FAE5; }
+        .score-down { color: var(--danger); background: #FEE2E2; }
+
+        .util-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+            width: 100%;
+        }
+        .btn-outline {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex; align-items: center; gap: 8px;
+            color: var(--text-sub);
+        }
+        .btn-outline:hover { background: #F3F4F6; color: var(--text-main); }
+
+        /* 반응형 */
+        @media (max-width: 1024px) {
+            .top-section { grid-template-columns: 1fr; }
+            .center-panel { order: -1; } /* 중앙 패널을 위로 */
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bgm" loop>
+        <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8b8175b5f.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="dashboard-container">
+        
+        <!-- 상단 3단 레이아웃 -->
+        <div class="top-section">
+            
+            <!-- 좌측: 차감 이유 -->
+            <div class="card minus-theme">
+                <div class="section-title">
+                    <i class="material-icons-rounded">trending_down</i> 차감 이유 목록
+                </div>
+                <div class="reason-list" id="minusReasonList">
+                    <!-- JS로 렌더링 -->
+                </div>
+                <div class="add-form">
+                    <input type="text" id="newMinusText" placeholder="새로운 이유 추가">
+                    <input type="number" id="newMinusAmount" value="1" min="1">
+                    <button onclick="addReason('minus')"><i class="material-icons-rounded">add</i></button>
+                </div>
+            </div>
+
+            <!-- 중앙: 온도계 및 MVP -->
+            <div class="card center-panel">
+                <input type="text" id="globalStudentName" class="target-student-input" placeholder="👉 점수를 받을 학생 이름 입력" autocomplete="off">
+                
+                <div class="thermometer-wrapper">
+                    <div class="thermometer-scale">
+                        <span style="bottom: 100%">100</span>
+                        <span style="bottom: 80%">80</span>
+                        <span style="bottom: 60%">60</span>
+                        <span style="bottom: 40%">40</span>
+                        <span style="bottom: 20%">20</span>
+                    </div>
+                    <div class="thermometer-glass">
+                        <div class="liquid" id="liquid"></div>
+                    </div>
+                    <div class="thermometer-bulb">
+                        <span class="bulb-text" id="tempText">0</span>
+                    </div>
+                </div>
+
+                <div class="mvp-mini">
+                    <div class="mvp-mini-icon">👑</div>
+                    <div class="mvp-mini-info">
+                        <span class="mvp-mini-title">이달의 기여왕</span>
+                        <span class="mvp-mini-name" id="mvpNameDisplay">아직 없어요</span>
+                    </div>
+                </div>
+
+                <div class="util-row">
+                    <button class="btn-outline" onclick="toggleBGM()" id="musicBtn">
+                        <i class="material-icons-rounded">music_off</i> BGM 켜기
+                    </button>
+                    <button class="btn-outline" onclick="resetAll()">
+                        <i class="material-icons-rounded">refresh</i> 전체 초기화
+                    </button>
+                </div>
+            </div>
+
+            <!-- 우측: 칭찬 이유 -->
+            <div class="card plus-theme">
+                <div class="section-title">
+                    <i class="material-icons-rounded">trending_up</i> 칭찬 이유 목록
+                </div>
+                <div class="reason-list" id="plusReasonList">
+                    <!-- JS로 렌더링 -->
+                </div>
+                <div class="add-form">
+                    <input type="text" id="newPlusText" placeholder="새로운 이유 추가">
+                    <input type="number" id="newPlusAmount" value="5" min="1">
+                    <button onclick="addReason('plus')"><i class="material-icons-rounded">add</i></button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 하단: 누가기록 -->
+        <div class="card history-panel">
+            <div class="history-header">
+                <div class="section-title" style="margin-bottom: 0; border: none; padding: 0;">
+                    <i class="material-icons-rounded" style="color: var(--primary);">history</i> 칭찬/차감 누가기록
+                </div>
+                <select class="sort-select" id="sortSelect" onchange="renderHistory()">
+                    <option value="latest">⏱️ 최신순</option>
+                    <option value="oldest">⏳ 오래된순</option>
+                    <option value="scoreDesc">📈 점수 높은순</option>
+                    <option value="scoreAsc">📉 점수 낮은순</option>
+                </select>
+            </div>
+            
+            <div class="history-grid" id="historyGrid">
+                <!-- JS로 렌더링 -->
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 초기 기본 세팅값
+        const defaultPlus = [
+            { id: 1, text: '발표를 열심히 함', amount: 5 },
+            { id: 2, text: '협동을 잘함', amount: 5 },
+            { id: 3, text: '친구를 도와줌', amount: 3 }
+        ];
+        
+        const defaultMinus = [
+            { id: 4, text: '수업에 집중하지 않음', amount: 3 },
+            { id: 5, text: '숙제를 하지 않음', amount: 5 },
+            { id: 6, text: '준비물 미지참', amount: 2 }
+        ];
+
+        // State Management
+        let state = {
+            currentTemp: 0,
+            goalTemp: 100,
+            records: [],
+            plusReasons: [...defaultPlus],
+            minusReasons: [...defaultMinus]
+        };
+
+        // DOM Elements
+        const liquid = document.getElementById('liquid');
+        const tempText = document.getElementById('tempText');
+        const globalStudentInput = document.getElementById('globalStudentName');
+        const historyGrid = document.getElementById('historyGrid');
+        const plusReasonList = document.getElementById('plusReasonList');
+        const minusReasonList = document.getElementById('minusReasonList');
+        const mvpNameDisplay = document.getElementById('mvpNameDisplay');
+        const sortSelect = document.getElementById('sortSelect');
+        const bgm = document.getElementById('bgm');
+        const musicBtn = document.getElementById('musicBtn');
+
+        // Initialize
+        function init() {
+            const savedState = localStorage.getItem('classDashboardStateV2');
+            if (savedState) {
+                state = JSON.parse(savedState);
+            }
+            updateUI();
+        }
+
+        // Save State
+        function saveState() {
+            localStorage.setItem('classDashboardStateV2', JSON.stringify(state));
+        }
+
+        // --- 이유(버튼) 관리 기능 ---
+        function renderReasons() {
+            // Plus 렌더링
+            plusReasonList.innerHTML = '';
+            state.plusReasons.forEach(reason => {
+                const btn = document.createElement('div');
+                btn.className = 'reason-btn reason-plus';
+                // 전체 버튼 영역을 클릭할 수 있도록 수정
+                btn.onclick = () => processClickRecord(reason.text, reason.amount, 'up');
+                btn.innerHTML = `
+                    <div class="reason-content" style="flex:1;">
+                        <span class="reason-title">${reason.text}</span>
+                        <span class="reason-score">+${reason.amount}점</span>
+                    </div>
+                    <button class="btn-delete" onclick="event.stopPropagation(); deleteReason('plus', ${reason.id})" title="삭제">
+                        <i class="material-icons-rounded" style="font-size: 1.2rem;">close</i>
+                    </button>
+                `;
+                plusReasonList.appendChild(btn);
+            });
+
+            // Minus 렌더링
+            minusReasonList.innerHTML = '';
+            state.minusReasons.forEach(reason => {
+                const btn = document.createElement('div');
+                btn.className = 'reason-btn reason-minus';
+                // 전체 버튼 영역을 클릭할 수 있도록 수정
+                btn.onclick = () => processClickRecord(reason.text, reason.amount, 'down');
+                btn.innerHTML = `
+                    <div class="reason-content" style="flex:1;">
+                        <span class="reason-title">${reason.text}</span>
+                        <span class="reason-score">-${reason.amount}점</span>
+                    </div>
+                    <button class="btn-delete" onclick="event.stopPropagation(); deleteReason('minus', ${reason.id})" title="삭제">
+                        <i class="material-icons-rounded" style="font-size: 1.2rem;">close</i>
+                    </button>
+                `;
+                minusReasonList.appendChild(btn);
+            });
+        }
+
+        function addReason(type) {
+            const textInput = document.getElementById(`new${type === 'plus' ? 'Plus' : 'Minus'}Text`);
+            const amountInput = document.getElementById(`new${type === 'plus' ? 'Plus' : 'Minus'}Amount`);
+            
+            const text = textInput.value.trim();
+            const amount = parseInt(amountInput.value);
+
+            if(!text) { alert("이유를 입력해주세요!"); return; }
+            if(isNaN(amount) || amount <= 0) { alert("올바른 점수를 입력해주세요!"); return; }
+
+            const newReason = { id: Date.now(), text: text, amount: amount };
+
+            if(type === 'plus') state.plusReasons.push(newReason);
+            else state.minusReasons.push(newReason);
+
+            textInput.value = '';
+            amountInput.value = type === 'plus' ? '5' : '1';
+            
+            saveState();
+            renderReasons();
+        }
+
+        function deleteReason(type, id) {
+            if(confirm("이 항목을 삭제하시겠습니까?")) {
+                if(type === 'plus') {
+                    state.plusReasons = state.plusReasons.filter(r => r.id !== id);
+                } else {
+                    state.minusReasons = state.minusReasons.filter(r => r.id !== id);
+                }
+                saveState();
+                renderReasons();
+            }
+        }
+
+        // --- 기록 추가 로직 ---
+        function processClickRecord(reason, amount, type) {
+            const student = globalStudentInput.value.trim();
+            if (!student) {
+                alert("중앙에 있는 🌟점수를 받을 학생 이름🌟을 먼저 입력해주세요!");
+                globalStudentInput.focus();
+                return;
+            }
+
+            const newRecord = {
+                id: Date.now(),
+                type: type,
+                amount: amount,
+                student: student,
+                reason: reason,
+                date: new Date().toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+            };
+
+            state.records.unshift(newRecord); // 맨 앞에 추가
+            
+            if (type === 'up') {
+                state.currentTemp += amount;
+                playSound(600, 'sine', 0.1);
+                setTimeout(() => playSound(800, 'sine', 0.2), 100);
+            } else {
+                state.currentTemp -= amount;
+                playSound(300, 'triangle', 0.2);
+            }
+
+            if (state.currentTemp < 0) state.currentTemp = 0;
+            if (state.currentTemp > state.goalTemp) state.currentTemp = state.goalTemp;
+
+            if (state.currentTemp === state.goalTemp && type === 'up') {
+                triggerGoalEffect();
+            }
+
+            saveState();
+            updateUI();
+            
+            // 이름 입력칸 깜빡임 효과 (성공 피드백)
+            globalStudentInput.style.backgroundColor = type === 'up' ? '#D1FAE5' : '#FEE2E2';
+            setTimeout(() => { globalStudentInput.style.backgroundColor = '#EEF2FF'; }, 300);
+        }
+
+        // --- UI 업데이트 ---
+        function updateUI() {
+            renderReasons();
+            renderThermometer();
+            renderHistory();
+            renderMVP();
+        }
+
+        function renderThermometer() {
+            tempText.innerText = state.currentTemp;
+            let heightPercent = (state.currentTemp / state.goalTemp) * 100;
+            liquid.style.height = heightPercent + '%';
+        }
+
+        function renderMVP() {
+            if (state.records.length === 0) {
+                mvpNameDisplay.innerText = "아직 없어요";
+                return;
+            }
+
+            const scores = {};
+            state.records.forEach(r => {
+                if (!scores[r.student]) scores[r.student] = 0;
+                if (r.type === 'up') scores[r.student] += r.amount;
+                else scores[r.student] -= r.amount;
+            });
+
+            let maxScore = -9999;
+            let mvp = "없음";
+
+            for (const [student, score] of Object.entries(scores)) {
+                if (score > maxScore && score > 0) {
+                    maxScore = score;
+                    mvp = student;
+                }
+            }
+
+            if (maxScore > 0) {
+                mvpNameDisplay.innerText = `${mvp} (${maxScore}점)`;
+            } else {
+                mvpNameDisplay.innerText = "아직 없어요";
+            }
+        }
+
+        // --- 누가기록 및 정렬 ---
+        function renderHistory() {
+            historyGrid.innerHTML = '';
+            
+            if (state.records.length === 0) {
+                historyGrid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: #9CA3AF;">아직 기록이 없습니다. 상단에서 칭찬/차감을 시작해보세요!</div>';
+                return;
+            }
+
+            // 정렬 로직 적용
+            let sortedRecords = [...state.records];
+            const sortMode = sortSelect.value;
+
+            if (sortMode === 'oldest') {
+                sortedRecords.reverse();
+            } else if (sortMode === 'scoreDesc') {
+                sortedRecords.sort((a, b) => {
+                    let aVal = a.type === 'up' ? a.amount : -a.amount;
+                    let bVal = b.type === 'up' ? b.amount : -b.amount;
+                    return bVal - aVal;
+                });
+            } else if (sortMode === 'scoreAsc') {
+                sortedRecords.sort((a, b) => {
+                    let aVal = a.type === 'up' ? a.amount : -a.amount;
+                    let bVal = b.type === 'up' ? b.amount : -b.amount;
+                    return aVal - bVal;
+                });
+            }
+            // latest는 기본값이므로 처리 안함
+
+            sortedRecords.forEach(record => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                
+                const isUp = record.type === 'up';
+                const sign = isUp ? '+' : '-';
+                const scoreClass = isUp ? 'score-up' : 'score-down';
+
+                item.innerHTML = `
+                    <div class="history-info">
+                        <div class="history-title">${record.student} 학생</div>
+                        <div class="history-reason">${record.reason}</div>
+                        <div class="history-date">${record.date}</div>
+                    </div>
+                    <div class="history-score ${scoreClass}">${sign}${record.amount}</div>
+                `;
+                historyGrid.appendChild(item);
+            });
+        }
+
+        function resetAll() {
+            if (confirm("정말로 모든 기록과 온도를 초기화하시겠습니까?\n(등록해둔 이유 목록은 유지됩니다)")) {
+                state.currentTemp = 0;
+                state.records = [];
+                saveState();
+                updateUI();
+                globalStudentInput.value = '';
+            }
+        }
+
+        // --- 효과 (Confetti & Sound) ---
+        function triggerGoalEffect() {
+            setTimeout(() => {
+                confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, colors: ['#4F46E5', '#10B981', '#F59E0B', '#EF4444'] });
+                playSound(400, 'square', 0.1);
+                setTimeout(() => playSound(600, 'square', 0.1), 150);
+                setTimeout(() => playSound(800, 'square', 0.4), 300);
+                setTimeout(() => alert("🎉 대단해요! 목표 온도를 달성했습니다! 🎉"), 500);
+            }, 300);
+        }
+
+        let isPlaying = false;
+        function toggleBGM() {
+            if (isPlaying) {
+                bgm.pause();
+                musicBtn.innerHTML = '<i class="material-icons-rounded">music_off</i> BGM 켜기';
+            } else {
+                bgm.play();
+                musicBtn.innerHTML = '<i class="material-icons-rounded">music_note</i> BGM 끄기';
+            }
+            isPlaying = !isPlaying;
+        }
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(frequency, type, duration) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>
