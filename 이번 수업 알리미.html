@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘의 수업 알리미</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- 폰트 -->
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f3f4f6; }
+        .font-title { font-family: 'Jua', sans-serif; }
+        .font-body { font-family: 'Gowun Dodum', sans-serif; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .theme-transition { transition: all 0.5s ease-in-out; }
+    </style>
+</head>
+<body class="flex h-screen w-screen overflow-hidden text-gray-800">
+
+    <!-- 왼쪽: 메인 프레젠테이션 화면 -->
+    <main id="presentation-area" class="flex-1 flex items-center justify-center p-8 bg-gray-100 relative theme-transition">
+        
+        <div id="board" class="w-full max-w-[1200px] aspect-[16/9] rounded-[2.5rem] shadow-2xl p-10 flex flex-col relative overflow-hidden bg-white theme-transition">
+            
+            <div id="deco-1" class="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-20 theme-transition"></div>
+            <div id="deco-2" class="absolute -bottom-32 -left-20 w-96 h-96 rounded-full opacity-20 theme-transition"></div>
+
+            <div class="relative z-10 flex flex-col h-full">
+                <!-- 상단: 과목 뱃지 & 쪽수 -->
+                <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                    <div id="badge-subject" class="flex items-center gap-2 px-6 py-2 rounded-full text-2xl font-title text-white shadow-md theme-transition">
+                        <i id="icon-subject" class="ph-fill ph-book-open text-3xl"></i>
+                        <span id="display-subject">국어</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-5 py-2 rounded-2xl bg-white/60 backdrop-blur shadow-sm border-2 font-bold text-lg theme-transition" id="border-page">
+                        <i class="ph-bold ph-book-bookmark text-xl opacity-70"></i>
+                        <span id="display-page">국어 12~15쪽</span>
+                    </div>
+                </div>
+
+                <!-- 헤더: 단원명 & 주제 -->
+                <div class="mb-5 flex-shrink-0 flex flex-col items-center w-full">
+                    <p id="display-unit" class="text-xl font-bold opacity-70 mb-1">1. 비유하는 표현</p>
+                    <h1 id="display-topic" class="font-title tracking-wide leading-tight text-gray-900 theme-transition w-full">시에서 비유하는 표현 찾기</h1>
+                </div>
+
+                <!-- 중앙: 학습 목표 -->
+                <div id="bg-objective" class="w-full rounded-3xl p-5 shadow-sm border-2 flex flex-col items-center justify-center mb-5 flex-shrink-0 theme-transition backdrop-blur-sm bg-white/80">
+                    <div id="text-objective-title" class="px-4 py-1 rounded-full text-sm font-bold mb-2 theme-transition">🎯 학습 목표</div>
+                    <p id="display-objective" class="font-body font-bold leading-relaxed w-full">시를 읽고 비유하는 표현을 찾아 그 특징을 설명할 수 있다.</p>
+                </div>
+
+                <!-- 하단: 활동 1, 2, 3 (Grid) -->
+                <div class="grid grid-cols-3 gap-5 flex-1 min-h-[140px] mb-5">
+                    <div id="bg-act1" class="rounded-3xl p-5 border-2 shadow-sm flex flex-col theme-transition bg-white/70 backdrop-blur-md">
+                        <div class="flex items-center gap-2 mb-2 opacity-60 flex-shrink-0">
+                            <i class="ph-fill ph-number-circle-one text-2xl"></i>
+                            <span class="font-bold text-base">활동 1</span>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center w-full">
+                            <p id="display-act1" class="font-body font-bold w-full">경험 떠올리기</p>
+                        </div>
+                    </div>
+                    
+                    <div id="bg-act2" class="rounded-3xl p-5 border-2 shadow-sm flex flex-col theme-transition bg-white/70 backdrop-blur-md">
+                        <div class="flex items-center gap-2 mb-2 opacity-60 flex-shrink-0">
+                            <i class="ph-fill ph-number-circle-two text-2xl"></i>
+                            <span class="font-bold text-base">활동 2</span>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center w-full">
+                            <p id="display-act2" class="font-body font-bold w-full">시 읽고 비유적 표현 찾기</p>
+                        </div>
+                    </div>
+                    
+                    <div id="bg-act3" class="rounded-3xl p-5 border-2 shadow-sm flex flex-col theme-transition bg-white/70 backdrop-blur-md">
+                        <div class="flex items-center gap-2 mb-2 opacity-60 flex-shrink-0">
+                            <i class="ph-fill ph-number-circle-three text-2xl"></i>
+                            <span class="font-bold text-base">활동 3</span>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center w-full">
+                            <p id="display-act3" class="font-body font-bold w-full">나만의 비유적 표현 만들기</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 푸터: 정리 시간 -->
+                <div id="bg-wrapup" class="w-full rounded-2xl p-4 flex items-center gap-4 theme-transition backdrop-blur-sm bg-black/5 flex-shrink-0">
+                    <div id="badge-wrapup" class="px-4 py-2 rounded-xl text-white font-bold text-lg shadow-sm theme-transition flex items-center gap-2 flex-shrink-0">
+                        <i class="ph-bold ph-check-circle"></i> 정리
+                    </div>
+                    <div class="flex-1 overflow-hidden flex items-center">
+                        <p id="display-wrapup" class="font-body font-bold w-full">비유적 표현의 좋은 점 나누기</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button id="btn-fullscreen" onclick="toggleFullscreen()" class="absolute bottom-6 right-6 bg-gray-800 text-white px-5 py-3 rounded-full shadow-lg hover:bg-gray-700 flex items-center gap-2 transition font-bold z-50">
+            <i class="ph-bold ph-corners-out text-xl"></i> 수업 시작 (전체화면)
+        </button>
+    </main>
+
+    <!-- 오른쪽: 컨트롤 패널 -->
+    <aside id="control-panel" class="w-[400px] bg-white border-l border-gray-200 shadow-2xl flex flex-col h-full z-20">
+        <div class="p-6 border-b border-gray-200 bg-gray-50 flex items-center gap-3">
+            <i class="ph-fill ph-chalkboard-teacher text-3xl text-indigo-600"></i>
+            <h2 class="text-xl font-bold text-gray-800">수업 정보 입력</h2>
+        </div>
+        
+        <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-5">
+            <div>
+                <label class="block text-sm font-bold text-gray-600 mb-1">과목 선택 (테마 변경)</label>
+                <select id="input-subject" class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-lg cursor-pointer">
+                    <option value="국어" selected>국어</option>
+                    <option value="수학">수학</option>
+                    <option value="사회">사회</option>
+                    <option value="과학">과학</option>
+                    <option value="실과">실과</option>
+                    <option value="체육">체육</option>
+                    <option value="영어">영어</option>
+                    <option value="음악">음악</option>
+                    <option value="미술">미술</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-600 mb-1">단원명</label>
+                    <input type="text" id="input-unit" value="1. 비유하는 표현" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-600 mb-1">교과서 쪽수</label>
+                    <input type="text" id="input-page" value="국어 12~15쪽" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+
+            <!-- 개별 스타일 조절이 가능한 영역들 (id="container-...") -->
+            <div id="container-topic">
+                <label class="block text-sm font-bold text-gray-600 mb-1">학습 주제 (오늘 배울 내용)</label>
+                <input type="text" id="input-topic" value="시에서 비유하는 표현 찾기" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div id="container-objective">
+                <label class="block text-sm font-bold text-gray-600 mb-1">🎯 학습 목표</label>
+                <textarea id="input-objective" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none">시를 읽고 비유하는 표현을 찾아 그 특징을 설명할 수 있다.</textarea>
+            </div>
+
+            <div class="space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div id="container-act1">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">활동 1</label>
+                    <input type="text" id="input-act1" value="경험 떠올리기" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div id="container-act2">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">활동 2</label>
+                    <input type="text" id="input-act2" value="시 읽고 비유적 표현 찾기" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div id="container-act3">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">활동 3</label>
+                    <input type="text" id="input-act3" value="나만의 비유적 표현 만들기" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+
+            <div id="container-wrapup">
+                <label class="block text-sm font-bold text-gray-600 mb-1">✨ 정리 시간</label>
+                <input type="text" id="input-wrapup" value="비유적 표현의 좋은 점 나누기" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            
+            <div class="mt-2 text-center text-xs text-gray-400">
+                내용과 디자인을 수정하면 실시간 반영됩니다.
+            </div>
+        </div>
+    </aside>
+
+    <script>
+        // 글자 크기 및 정렬 기본 상태 관리
+        const textStyles = {
+            topic: { size: 36, align: 'center' },
+            objective: { size: 24, align: 'center' },
+            act1: { size: 20, align: 'left' },
+            act2: { size: 20, align: 'left' },
+            act3: { size: 20, align: 'left' },
+            wrapup: { size: 20, align: 'left' }
+        };
+
+        const themes = {
+            '국어': { boardBg: 'bg-gradient-to-br from-amber-50 to-orange-100', decoColor: 'bg-orange-300', primaryBg: 'bg-orange-500', primaryText: 'text-orange-900', borderCol: 'border-orange-200', accentBg: 'bg-orange-100 text-orange-800', icon: 'ph-book-open' },
+            '수학': { boardBg: 'bg-gradient-to-br from-blue-50 to-cyan-100', decoColor: 'bg-blue-300', primaryBg: 'bg-blue-500', primaryText: 'text-blue-900', borderCol: 'border-blue-200', accentBg: 'bg-blue-100 text-blue-800', icon: 'ph-calculator' },
+            '사회': { boardBg: 'bg-gradient-to-br from-green-50 to-emerald-100', decoColor: 'bg-emerald-300', primaryBg: 'bg-emerald-600', primaryText: 'text-emerald-900', borderCol: 'border-emerald-200', accentBg: 'bg-emerald-100 text-emerald-800', icon: 'ph-globe-hemisphere-west' },
+            '과학': { boardBg: 'bg-gradient-to-br from-indigo-50 to-purple-100', decoColor: 'bg-purple-300', primaryBg: 'bg-purple-600', primaryText: 'text-purple-900', borderCol: 'border-purple-200', accentBg: 'bg-purple-100 text-purple-800', icon: 'ph-flask' },
+            '실과': { boardBg: 'bg-gradient-to-br from-yellow-50 to-amber-100', decoColor: 'bg-amber-300', primaryBg: 'bg-amber-500', primaryText: 'text-amber-900', borderCol: 'border-amber-300', accentBg: 'bg-amber-100 text-amber-800', icon: 'ph-hammer' },
+            '체육': { boardBg: 'bg-gradient-to-br from-red-50 to-rose-100', decoColor: 'bg-rose-300', primaryBg: 'bg-rose-500', primaryText: 'text-rose-900', borderCol: 'border-rose-200', accentBg: 'bg-rose-100 text-rose-800', icon: 'ph-sneaker' },
+            '영어': { boardBg: 'bg-gradient-to-br from-teal-50 to-cyan-100', decoColor: 'bg-cyan-300', primaryBg: 'bg-cyan-600', primaryText: 'text-cyan-900', borderCol: 'border-cyan-200', accentBg: 'bg-cyan-100 text-cyan-800', icon: 'ph-translate' },
+            '음악': { boardBg: 'bg-gradient-to-br from-pink-50 to-fuchsia-100', decoColor: 'bg-fuchsia-300', primaryBg: 'bg-fuchsia-500', primaryText: 'text-fuchsia-900', borderCol: 'border-fuchsia-200', accentBg: 'bg-fuchsia-100 text-fuchsia-800', icon: 'ph-music-notes' },
+            '미술': { boardBg: 'bg-gradient-to-br from-violet-50 to-fuchsia-100', decoColor: 'bg-violet-300', primaryBg: 'bg-violet-500', primaryText: 'text-violet-900', borderCol: 'border-violet-200', accentBg: 'bg-violet-100 text-violet-800', icon: 'ph-palette' }
+        };
+
+        const inputs = ['subject', 'unit', 'page', 'topic', 'objective', 'act1', 'act2', 'act3', 'wrapup'];
+        const elements = {};
+        
+        inputs.forEach(id => {
+            elements[`in_${id}`] = document.getElementById(`input-${id}`);
+            elements[`out_${id}`] = document.getElementById(`display-${id}`);
+        });
+
+        // 텍스트 스타일 변경 함수 (버튼 클릭 시 호출)
+        function changeStyle(id, type, value) {
+            if (type === 'size') {
+                textStyles[id].size += value;
+                // 크기 제한 (너무 작거나 커지는 것 방지)
+                if(textStyles[id].size < 14) textStyles[id].size = 14;
+                if(textStyles[id].size > 60) textStyles[id].size = 60;
+            } else if (type === 'align') {
+                textStyles[id].align = value;
+            }
+            applyTextStyles();
+        }
+
+        // 상태를 화면에 적용하는 함수
+        function applyTextStyles() {
+            Object.keys(textStyles).forEach(id => {
+                const el = document.getElementById(`display-${id}`);
+                if (el) {
+                    el.style.fontSize = `${textStyles[id].size}px`;
+                    el.style.textAlign = textStyles[id].align;
+                }
+            });
+        }
+
+        // 디자인 툴바 UI를 생성하여 삽입하는 함수
+        function injectStyleControls() {
+            const fields = [
+                { id: 'topic', label: '학습 주제 (오늘 배울 내용)' },
+                { id: 'objective', label: '🎯 학습 목표' },
+                { id: 'act1', label: '활동 1' },
+                { id: 'act2', label: '활동 2' },
+                { id: 'act3', label: '활동 3' },
+                { id: 'wrapup', label: '✨ 정리 시간' }
+            ];
+
+            fields.forEach(field => {
+                const container = document.getElementById(`container-${field.id}`);
+                if(!container) return;
+                
+                const toolbar = document.createElement('div');
+                toolbar.className = 'flex justify-between items-end mb-1';
+                toolbar.innerHTML = `
+                    <label class="block text-sm font-bold text-gray-600">${field.label}</label>
+                    <div class="flex gap-1 bg-white border border-gray-200 rounded-md shadow-sm p-0.5">
+                        <button onclick="changeStyle('${field.id}', 'align', 'left')" class="p-1 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-800 transition-colors flex items-center justify-center" title="왼쪽 정렬"><i class="ph ph-text-align-left text-lg"></i></button>
+                        <button onclick="changeStyle('${field.id}', 'align', 'center')" class="p-1 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-800 transition-colors flex items-center justify-center" title="가운데 정렬"><i class="ph ph-text-align-center text-lg"></i></button>
+                        <button onclick="changeStyle('${field.id}', 'align', 'right')" class="p-1 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-800 transition-colors flex items-center justify-center" title="오른쪽 정렬"><i class="ph ph-text-align-right text-lg"></i></button>
+                        <div class="w-px bg-gray-200 mx-0.5 my-1"></div>
+                        <button onclick="changeStyle('${field.id}', 'size', -2)" class="p-1 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-800 transition-colors flex items-center justify-center" title="글씨 작게"><i class="ph ph-minus text-lg"></i></button>
+                        <button onclick="changeStyle('${field.id}', 'size', 2)" class="p-1 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-800 transition-colors flex items-center justify-center" title="글씨 크게"><i class="ph ph-plus text-lg"></i></button>
+                    </div>
+                `;
+                
+                const oldLabel = container.querySelector('label');
+                if(oldLabel) oldLabel.remove();
+                
+                container.insertBefore(toolbar, container.firstChild);
+            });
+        }
+
+        // 테마 및 텍스트 데이터 업데이트 함수
+        function updateBoard() {
+            inputs.forEach(id => {
+                if(elements[`in_${id}`] && elements[`out_${id}`]) {
+                    elements[`out_${id}`].innerText = elements[`in_${id}`].value || (id === 'subject' ? '과목' : '');
+                }
+            });
+
+            const selectedSubject = elements.in_subject.value;
+            const theme = themes[selectedSubject] || themes['국어'];
+
+            document.getElementById('board').className = `w-full max-w-[1200px] aspect-[16/9] rounded-[2.5rem] shadow-2xl p-10 flex flex-col relative overflow-hidden theme-transition ${theme.boardBg}`;
+            document.getElementById('deco-1').className = `absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-20 theme-transition ${theme.decoColor}`;
+            document.getElementById('deco-2').className = `absolute -bottom-32 -left-20 w-96 h-96 rounded-full opacity-20 theme-transition ${theme.decoColor}`;
+            
+            document.getElementById('badge-subject').className = `flex items-center gap-2 px-6 py-2 rounded-full text-2xl font-title text-white shadow-md theme-transition ${theme.primaryBg}`;
+            document.getElementById('icon-subject').className = `ph-fill ${theme.icon} text-3xl`;
+            document.getElementById('border-page').className = `flex items-center gap-2 px-5 py-2 rounded-2xl bg-white/60 backdrop-blur shadow-sm border-2 font-bold text-lg theme-transition ${theme.borderCol} ${theme.primaryText}`;
+            
+            // 주의: 기존의 텍스트 크기(text-4xl 등) Tailwind 클래스를 제거하고 인라인 스타일을 쓰도록 수정됨
+            document.getElementById('display-topic').className = `font-title tracking-wide leading-tight theme-transition w-full ${theme.primaryText}`;
+
+            document.getElementById('bg-objective').className = `w-full rounded-3xl p-5 shadow-sm border-2 flex flex-col items-center justify-center mb-5 flex-shrink-0 theme-transition backdrop-blur-sm bg-white/80 ${theme.borderCol}`;
+            document.getElementById('text-objective-title').className = `px-4 py-1 rounded-full text-sm font-bold mb-2 theme-transition ${theme.accentBg}`;
+
+            const actClasses = `rounded-3xl p-5 border-2 shadow-sm flex flex-col theme-transition bg-white/70 backdrop-blur-md ${theme.borderCol} ${theme.primaryText}`;
+            document.getElementById('bg-act1').className = actClasses;
+            document.getElementById('bg-act2').className = actClasses;
+            document.getElementById('bg-act3').className = actClasses;
+
+            document.getElementById('badge-wrapup').className = `px-4 py-2 rounded-xl text-white font-bold text-lg shadow-sm theme-transition flex items-center gap-2 flex-shrink-0 ${theme.primaryBg}`;
+        }
+
+        // 모든 입력창에 이벤트 리스너 달기
+        inputs.forEach(id => {
+            elements[`in_${id}`].addEventListener('input', updateBoard);
+        });
+
+        // 전체화면 및 프레젠테이션 모드 전환
+        let isFullscreen = false;
+        function toggleFullscreen() {
+            const controlPanel = document.getElementById('control-panel');
+            const btnFullscreen = document.getElementById('btn-fullscreen');
+            const board = document.getElementById('board');
+
+            if (!isFullscreen) {
+                controlPanel.classList.add('hidden');
+                btnFullscreen.innerHTML = '<i class="ph-bold ph-corners-in text-xl"></i> 수정하기 (전체화면 종료)';
+                
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.warn("현재 환경에서 전체화면 API가 차단되어 내부 화면 최대화로 대체합니다.");
+                    });
+                }
+                
+                board.classList.remove('max-w-[1200px]');
+                board.classList.add('max-w-[1600px]', 'w-[90vw]');
+            } else {
+                controlPanel.classList.remove('hidden');
+                btnFullscreen.innerHTML = '<i class="ph-bold ph-corners-out text-xl"></i> 수업 시작 (전체화면)';
+                
+                if (document.fullscreenElement && document.exitFullscreen) {
+                    document.exitFullscreen().catch(err => console.warn(err));
+                }
+
+                board.classList.remove('max-w-[1600px]', 'w-[90vw]');
+                board.classList.add('max-w-[1200px]');
+            }
+            isFullscreen = !isFullscreen;
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && isFullscreen) toggleFullscreen();
+        });
+
+        // 초기화 실행
+        injectStyleControls(); // 툴바 삽입
+        updateBoard();         // 기본 정보/테마 삽입
+        applyTextStyles();     // 기본 폰트 사이즈/정렬 적용
+    </script>
+</body>
+</html>
