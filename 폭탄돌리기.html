@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>폭탄 돌리기 게임</title>
+    <!-- Tailwind CSS 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 폭탄 흔들림 애니메이션 */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        
+        .bomb-idle {
+            animation: shake 2s infinite;
+        }
+
+        .bomb-fast {
+            animation: shake 0.5s infinite;
+        }
+
+        .bomb-panic {
+            animation: shake 0.1s infinite;
+        }
+
+        /* 폭발 애니메이션 */
+        @keyframes explode {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.5); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .explode-anim {
+            animation: explode 0.5s ease-out forwards;
+        }
+
+        /* 심플한 커스텀 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #fef3c7; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #fcd34d; 
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-gray-800 min-h-screen flex items-center justify-center font-sans select-none">
+
+    <!-- 메인 컨테이너 (밝은 테마로 변경) -->
+    <div class="w-full max-w-md bg-white p-6 rounded-3xl shadow-xl border-4 border-amber-200 relative overflow-hidden">
+        
+        <!-- 알림 메시지 모달 -->
+        <div id="toast" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-50 font-bold">
+            메시지 내용
+        </div>
+
+        <!-- 1. 설정 화면 -->
+        <div id="setup-screen" class="space-y-6">
+            <div class="text-center">
+                <h1 class="text-4xl font-extrabold text-amber-500 flex items-center justify-center gap-2 drop-shadow-sm">
+                    <span>💣</span> 폭탄 돌리기
+                </h1>
+                <p class="text-gray-500 mt-2 text-sm font-medium">참가자 이름과 룰을 설정해주세요.</p>
+            </div>
+
+            <!-- 참가자 입력 -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">참가자 명단 (쉼표나 줄바꿈으로 구분)</label>
+                <textarea id="player-names" rows="3" class="w-full bg-amber-50 border-2 border-amber-200 rounded-xl p-3 text-gray-800 focus:ring-4 focus:ring-amber-300 focus:border-amber-400 focus:outline-none placeholder-gray-400 resize-none font-medium" placeholder="예: 철수, 영희, 민수"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <!-- 게임 모드 설정 -->
+                <div class="bg-amber-50 p-4 rounded-xl border-2 border-amber-100">
+                    <label class="block text-sm font-bold text-amber-600 mb-2">진행 모드</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="play-mode" value="sequential" class="text-amber-500 focus:ring-amber-400 h-5 w-5" checked>
+                            <span class="text-sm font-medium text-gray-700">순서대로</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="play-mode" value="random" class="text-amber-500 focus:ring-amber-400 h-5 w-5">
+                            <span class="text-sm font-medium text-gray-700">랜덤으로</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 시간 모드 설정 -->
+                <div class="bg-amber-50 p-4 rounded-xl border-2 border-amber-100">
+                    <label class="block text-sm font-bold text-amber-600 mb-2">시간 모드</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="time-mode" value="total" class="text-amber-500 focus:ring-amber-400 h-5 w-5" checked>
+                            <span class="text-sm font-medium text-gray-700">총 시간 유지</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="time-mode" value="individual" class="text-amber-500 focus:ring-amber-400 h-5 w-5">
+                            <span class="text-sm font-medium text-gray-700">개인별 초기화</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 시간 설정 -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">제한 시간 (초)</label>
+                <input type="number" id="time-limit" value="30" min="5" max="300" class="w-full bg-amber-50 border-2 border-amber-200 rounded-xl p-3 text-gray-800 font-bold focus:ring-4 focus:ring-amber-300 focus:border-amber-400 focus:outline-none">
+            </div>
+
+            <!-- 시작 버튼 -->
+            <button onclick="startGame()" class="w-full bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white font-extrabold text-xl py-4 rounded-2xl shadow-[0_10px_20px_rgba(251,146,60,0.3)] transition-all transform hover:scale-105 active:scale-95">
+                게임 시작! 🚀
+            </button>
+        </div>
+
+
+        <!-- 2. 게임 진행 화면 -->
+        <div id="game-screen" class="hidden flex-col items-center justify-center space-y-8 py-6">
+            
+            <div class="text-center w-full">
+                <p class="text-amber-600 font-bold text-sm mb-2 bg-amber-100 inline-block px-4 py-1 rounded-full">현재 폭탄 소지자</p>
+                <h2 id="current-player" class="text-5xl font-black text-gray-800 mt-2">
+                    플레이어
+                </h2>
+            </div>
+
+            <!-- 폭탄 그래픽 -->
+            <div class="relative flex items-center justify-center h-48 w-full">
+                <div id="bomb-icon" class="text-9xl bomb-idle drop-shadow-2xl transition-all duration-300">
+                    💣
+                </div>
+                <!-- 밝은 테마의 타이머 오버레이 -->
+                <div class="absolute -bottom-2 bg-white border-4 border-gray-800 rounded-full px-5 py-2 shadow-lg">
+                    <span id="time-display" class="text-2xl font-mono font-black text-gray-800">30.0</span><span class="text-sm text-gray-600 ml-1 font-bold">초</span>
+                </div>
+            </div>
+
+            <!-- 방장 컨트롤 영역 -->
+            <div class="w-full pt-4">
+                <button onclick="passBomb()" id="pass-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black text-2xl py-6 rounded-2xl shadow-[0_10px_20px_rgba(59,130,246,0.3)] border-b-4 border-blue-700 transition-all transform hover:-translate-y-1 active:translate-y-1 active:border-b-0 flex items-center justify-center gap-3">
+                    <span>전달! 통과</span> <span>👉</span>
+                </button>
+                <p class="text-center text-sm text-gray-400 mt-4 font-medium">방장이 정답을 확인하고 버튼을 누르세요.</p>
+            </div>
+            
+            <button onclick="resetGame()" class="text-sm text-gray-400 hover:text-gray-600 font-bold underline transition-colors">게임 종료하기</button>
+        </div>
+
+
+        <!-- 3. 결과 화면 -->
+        <div id="result-screen" class="hidden flex-col items-center justify-center space-y-6 py-8">
+            <div class="text-9xl explode-anim mb-2 drop-shadow-[0_0_40px_rgba(239,68,68,0.6)]">
+                💥
+            </div>
+            
+            <div class="text-center space-y-2">
+                <h2 class="text-6xl font-black text-red-500 drop-shadow-sm">BOOM!</h2>
+                <p class="text-xl font-bold text-gray-700">폭탄이 터졌습니다!</p>
+            </div>
+
+            <div class="bg-red-50 w-full py-6 rounded-2xl border-2 border-red-200 text-center shadow-inner">
+                <p class="text-red-500 font-bold text-sm mb-2">오늘의 벌칙 당첨자</p>
+                <p id="loser-name" class="text-5xl font-black text-gray-900">이름</p>
+            </div>
+
+            <button onclick="resetGame()" class="w-full mt-4 bg-gray-800 hover:bg-gray-700 text-white font-bold text-xl py-4 rounded-2xl shadow-lg transition-transform transform active:scale-95">
+                설정으로 돌아가기
+            </button>
+        </div>
+
+    </div>
+
+    <!-- 로직 및 오디오 스크립트 -->
+    <script>
+        // DOM 요소
+        const setupScreen = document.getElementById('setup-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const resultScreen = document.getElementById('result-screen');
+        
+        const playerNamesInput = document.getElementById('player-names');
+        const timeLimitInput = document.getElementById('time-limit');
+        
+        const currentPlayerDisplay = document.getElementById('current-player');
+        const timeDisplay = document.getElementById('time-display');
+        const bombIcon = document.getElementById('bomb-icon');
+        const loserNameDisplay = document.getElementById('loser-name');
+        const toast = document.getElementById('toast');
+
+        // 게임 상태 변수
+        let players = [];
+        let playMode = 'sequential'; 
+        let timeMode = 'total';      
+        let initialTime = 30;
+        let timeLeft = 30;
+        let currentPlayerIndex = 0;
+        let timerInterval = null;
+        let tickTimer = 0; // 효과음 재생용 내부 타이머
+
+        // --- 오디오 (Web Audio API) 설정 ---
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                // 브라우저 호환성을 위해 vendor prefix 추가
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 긴장감 사운드 (틱소리 + 베이스 심장박동)
+        function playTensionSound(urgentLevel) {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+
+            // 1. 고음 틱(Tick) 사운드 - 시계 초침 느낌
+            const tickOsc = audioCtx.createOscillator();
+            const tickGain = audioCtx.createGain();
+            tickOsc.type = 'triangle';
+            // 다급할수록 피치가 높아짐 (기본 600Hz -> 1차 위기 800Hz -> 2차 위기 1000Hz)
+            tickOsc.frequency.value = 600 + (urgentLevel * 200); 
+            
+            tickOsc.connect(tickGain);
+            tickGain.connect(audioCtx.destination);
+            
+            tickGain.gain.setValueAtTime(0.1, now);
+            tickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+            
+            tickOsc.start(now);
+            tickOsc.stop(now + 0.1);
+
+            // 2. 저음 베이스 사운드 - 긴장감을 고조시키는 BGM 역할
+            const bassOsc = audioCtx.createOscillator();
+            const bassGain = audioCtx.createGain();
+            bassOsc.type = 'sine';
+            // 다급할수록 베이스 음도 약간 높아짐
+            bassOsc.frequency.value = 60 + (urgentLevel * 20); 
+            
+            bassOsc.connect(bassGain);
+            bassGain.connect(audioCtx.destination);
+            
+            bassGain.gain.setValueAtTime(0.2, now);
+            bassGain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            
+            bassOsc.start(now);
+            bassOsc.stop(now + 0.3);
+        }
+
+        // 폭발 사운드
+        function playBoomSound() {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            
+            const boomOsc = audioCtx.createOscillator();
+            const boomGain = audioCtx.createGain();
+            
+            boomOsc.type = 'sawtooth';
+            // 소리가 확 떨어지는 폭발 느낌
+            boomOsc.frequency.setValueAtTime(150, now);
+            boomOsc.frequency.exponentialRampToValueAtTime(10, now + 1);
+            
+            boomGain.gain.setValueAtTime(0.5, now);
+            boomGain.gain.exponentialRampToValueAtTime(0.01, now + 1);
+            
+            boomOsc.connect(boomGain);
+            boomGain.connect(audioCtx.destination);
+            
+            boomOsc.start(now);
+            boomOsc.stop(now + 1);
+        }
+        // -----------------------------------
+
+        // 토스트 메시지
+        function showToast(message) {
+            toast.innerText = message;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+            }, 2500);
+        }
+
+        // 게임 시작 로직
+        function startGame() {
+            initAudio(); // 오디오 컨텍스트 초기화 (사용자 제스처 내에서 실행 필수)
+
+            const rawText = playerNamesInput.value;
+            players = rawText.split(/[\n,]+/).map(p => p.trim()).filter(p => p.length > 0);
+            
+            if (players.length < 2) {
+                showToast("최소 2명 이상의 참가자를 입력해주세요.");
+                return;
+            }
+
+            playMode = document.querySelector('input[name="play-mode"]:checked').value;
+            timeMode = document.querySelector('input[name="time-mode"]:checked').value;
+            initialTime = parseFloat(timeLimitInput.value);
+
+            if (isNaN(initialTime) || initialTime < 1) {
+                showToast("올바른 제한 시간을 입력해주세요.");
+                return;
+            }
+
+            timeLeft = initialTime;
+            tickTimer = 0; // 틱 타이머 초기화
+            currentPlayerIndex = playMode === 'random' ? Math.floor(Math.random() * players.length) : 0;
+            
+            updatePlayerUI();
+            updateTimerUI();
+            
+            bombIcon.className = 'text-9xl bomb-idle drop-shadow-2xl transition-all duration-300';
+
+            setupScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            gameScreen.classList.add('flex');
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(gameLoop, 100);
+            
+            // 시작하자마자 첫 틱 사운드 재생
+            playTensionSound(0);
+        }
+
+        // 방장이 폭탄 넘김
+        function passBomb() {
+            initAudio(); // 혹시 모를 오디오 중단 방지
+
+            if (timeMode === 'individual') {
+                timeLeft = initialTime;
+            }
+
+            if (playMode === 'sequential') {
+                currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            } else {
+                let nextIndex = currentPlayerIndex;
+                while (nextIndex === currentPlayerIndex && players.length > 1) {
+                    nextIndex = Math.floor(Math.random() * players.length);
+                }
+                currentPlayerIndex = nextIndex;
+            }
+
+            updatePlayerUI();
+        }
+
+        // 게임 메인 루프 (100ms마다 실행)
+        function gameLoop() {
+            timeLeft -= 0.1;
+            tickTimer += 0.1;
+
+            const percentage = timeLeft / initialTime;
+
+            // 남은 시간에 따라 효과음(틱+베이스) 발생 간격 조절
+            let tickInterval = 1.0; // 평온할 땐 1초에 한 번
+            let urgentLevel = 0;
+
+            if (percentage <= 0.2) {
+                tickInterval = 0.2; // 매우 위급: 0.2초에 한 번 (다급함)
+                urgentLevel = 2;
+            } else if (percentage <= 0.5) {
+                tickInterval = 0.5; // 주의: 0.5초에 한 번
+                urgentLevel = 1;
+            }
+
+            // 정해진 간격마다 사운드 재생
+            if (tickTimer >= tickInterval) {
+                playTensionSound(urgentLevel);
+                // 오차 방지를 위해 정확한 값으로 빼거나 0으로 리셋
+                tickTimer = 0; 
+            }
+
+            if (timeLeft <= 0) {
+                timeLeft = 0;
+                updateTimerUI();
+                triggerExplosion();
+            } else {
+                updateTimerUI();
+                updateBombAnimation(percentage);
+            }
+        }
+
+        // 타이머 UI 업데이트
+        function updateTimerUI() {
+            timeDisplay.innerText = timeLeft.toFixed(1);
+            const percentage = timeLeft / initialTime;
+            
+            if (percentage > 0.5) {
+                timeDisplay.className = "text-2xl font-mono font-black text-gray-800";
+            } else if (percentage > 0.2) {
+                timeDisplay.className = "text-2xl font-mono font-black text-orange-500";
+            } else {
+                timeDisplay.className = "text-2xl font-mono font-black text-red-600 animate-pulse";
+            }
+        }
+
+        // 폭탄 흔들림 애니메이션 조절
+        function updateBombAnimation(percentage) {
+            // drop-shadow 색상도 긴장감에 따라 변경
+            if (percentage <= 0.2) {
+                bombIcon.className = 'text-9xl bomb-panic drop-shadow-[0_0_30px_rgba(239,68,68,0.8)]';
+            } else if (percentage <= 0.5) {
+                bombIcon.className = 'text-9xl bomb-fast drop-shadow-[0_0_20px_rgba(249,115,22,0.6)]';
+            } else {
+                bombIcon.className = 'text-9xl bomb-idle drop-shadow-2xl';
+            }
+        }
+
+        // 플레이어 텍스트 업데이트 애니메이션
+        function updatePlayerUI() {
+            currentPlayerDisplay.classList.remove('animate-bounce');
+            void currentPlayerDisplay.offsetWidth; 
+            currentPlayerDisplay.classList.add('animate-bounce');
+            
+            currentPlayerDisplay.innerText = players[currentPlayerIndex];
+            
+            setTimeout(() => {
+                currentPlayerDisplay.classList.remove('animate-bounce');
+            }, 500);
+        }
+
+        // 폭발 로직
+        function triggerExplosion() {
+            clearInterval(timerInterval);
+            
+            playBoomSound(); // 💥 폭발음 재생
+
+            gameScreen.classList.add('hidden');
+            gameScreen.classList.remove('flex');
+            resultScreen.classList.remove('hidden');
+            resultScreen.classList.add('flex');
+
+            loserNameDisplay.innerText = players[currentPlayerIndex];
+        }
+
+        // 설정으로 돌아가기
+        function resetGame() {
+            clearInterval(timerInterval);
+            
+            gameScreen.classList.add('hidden');
+            gameScreen.classList.remove('flex');
+            resultScreen.classList.add('hidden');
+            resultScreen.classList.remove('flex');
+            
+            setupScreen.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
