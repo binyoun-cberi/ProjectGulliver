@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>버스 좌석 배치 프로그램 (동성 짝꿍 모드)</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; gap: 40px; }
+        .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 380px; max-height: 90vh; overflow-y: auto; }
+        h2 { margin-top: 0; font-size: 1.2rem; color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; }
+        label { font-size: 0.9rem; font-weight: bold; color: #555; display: block; margin-top: 15px; margin-bottom: 5px; }
+        textarea { width: 100%; height: 60px; border: 1px solid #ccc; border-radius: 6px; padding: 8px; box-sizing: border-box; font-family: inherit; resize: vertical; }
+        .hint { font-size: 0.75rem; color: #888; margin-bottom: 8px; display: block; line-height: 1.3; }
+        
+        .checkbox-group { margin-top: 20px; background: #e8f5e9; padding: 15px; border-radius: 8px; border: 1px solid #c8e6c9; }
+        .checkbox-group label { margin: 0; display: flex; align-items: center; cursor: pointer; color: #2e7d32; font-size: 1rem; }
+        .checkbox-group input { margin-right: 10px; transform: scale(1.2); }
+
+        button { background-color: #4CAF50; color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; margin-top: 20px; transition: background 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        button:hover { background-color: #45a049; }
+        
+        /* Bus Layout */
+        .bus-container { background: #e0e0e0; padding: 20px; border-radius: 20px; border: 4px solid #bdc3c7; width: max-content; }
+        .driver-area { text-align: center; font-weight: bold; background: #fff; padding: 10px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #ccc; }
+        .row { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; gap: 10px; }
+        .aisle { width: 40px; text-align: center; font-size: 0.8rem; color: #7f8c8d; }
+        
+        /* Seat Styles */
+        .seat { width: 65px; height: 65px; background: #fff; border: 2px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: bold; cursor: pointer; user-select: none; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; word-break: keep-all; }
+        .seat:hover:not(.occupied):not(.disabled) { border-color: #999; }
+        
+        .seat.disabled { background: #95a5a6; border-color: #7f8c8d; color: #fff; text-decoration: line-through; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+        
+        /* Gender Colors */
+        .seat.occupied.boy { background: #e3f2fd; border-color: #2196f3; color: #0d47a1; }
+        .seat.occupied.girl { background: #fce4ec; border-color: #e91e63; color: #880e4f; }
+        
+        .forbidden-row { margin-top: 20px; background: #ff7675; color: white; text-align: center; padding: 10px; border-radius: 8px; font-weight: bold; }
+        .tip-box { margin-top: 20px; padding: 12px; background: #fff3cd; border-radius: 8px; font-size: 0.8rem; color: #856404; border: 1px solid #ffeeba; }
+    </style>
+</head>
+<body>
+
+    <!-- 왼쪽: 입력 패널 -->
+    <div class="panel">
+        <h2 id="panel-title" title="더블클릭하면 조건을 숨깁니다." style="cursor: pointer; user-select: none;">📋 설정 및 학생 입력</h2>
+        
+        <label for="boys">👦 남학생 명단 (쉼표로 구분)</label>
+        <textarea id="boys">김철수, 박민수, 최지훈, 강준서, 조민재</textarea>
+
+        <label for="girls">👧 여학생 명단 (쉼표로 구분)</label>
+        <textarea id="girls">이영희, 정다은, 윤서아, 박수진, 최유리</textarea>
+
+        <div id="secret-constraints">
+            <label for="constraints">🚫 떨어뜨려 놓을 학생들 (엔터로 구분)</label>
+            <span class="hint">같은 줄에 적힌 학생들은 앞, 뒤, 양옆, 대각선에 앉지 않습니다.<br>예: 김철수, 이영희</span>
+            <textarea id="constraints">김철수, 박민수
+이영희, 정다은</textarea>
+        </div>
+
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="sameGenderMode" checked>
+                👫 동성(남남/여여) 짝꿍 모드 켜기
+            </label>
+            <span class="hint" style="margin-top: 8px; margin-left: 24px;">체크 시 남자는 남자끼리, 여자는 여자끼리 옆자리에 앉도록 우선 배치합니다. (홀수일 경우 1쌍은 남녀가 앉을 수 있습니다)</span>
+        </div>
+
+        <div class="tip-box">
+            <strong>💡 좌석 설정 팁:</strong><br>
+            오른쪽 버스 좌석을 클릭하면 <strong>[사용 불가]</strong>로 변경됩니다. 다른 반 좌석이나 선생님 좌석은 미리 클릭해 두세요.
+        </div>
+
+        <button onclick="generateSeating()">자동 자리 배치하기 🚀</button>
+    </div>
+
+    <!-- 오른쪽: 버스 시각화 패널 -->
+    <div class="bus-container">
+        <div class="driver-area">운전석 & TV</div>
+        <div id="bus-grid"></div>
+        <div class="forbidden-row">맨 뒷칸은 금지입니다</div>
+    </div>
+
+    <script>
+        const totalRows = 10; // 10줄
+        const seatsPerRow = 4; // 한 줄에 4좌석
+        let seatElements = [];
+
+        // 버스 초기화
+        function initBus() {
+            const grid = document.getElementById('bus-grid');
+            grid.innerHTML = '';
+            seatElements = [];
+
+            for (let r = 0; r < totalRows; r++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'row';
+
+                for (let c = 0; c < seatsPerRow; c++) {
+                    const seat = document.createElement('div');
+                    seat.className = 'seat';
+                    seat.dataset.row = r;
+                    seat.dataset.col = c;
+                    seat.dataset.index = r * seatsPerRow + c;
+                    seat.innerText = (c === 0 || c === 3) ? '창측' : '내측';
+                    
+                    // 클릭 이벤트: 사용 가능 <-> 사용 불가 토글
+                    seat.addEventListener('click', () => {
+                        seat.classList.toggle('disabled');
+                        if (seat.classList.contains('disabled')) {
+                            seat.innerText = '사용\n불가';
+                            seat.classList.remove('occupied', 'boy', 'girl');
+                        } else {
+                            seat.innerText = (c === 0 || c === 3) ? '창측' : '내측';
+                        }
+                    });
+
+                    rowDiv.appendChild(seat);
+                    seatElements.push(seat);
+
+                    // 가운데 통로
+                    if (c === 1) {
+                        const aisle = document.createElement('div');
+                        aisle.className = 'aisle';
+                        if (r === 3) aisle.innerText = '통';
+                        if (r === 6) aisle.innerText = '로';
+                        rowDiv.appendChild(aisle);
+                    }
+                }
+                grid.appendChild(rowDiv);
+            }
+        }
+
+        // 자리 배치 알고리즘 실행
+        function generateSeating() {
+            // 1. 데이터 파싱
+            const boysInput = document.getElementById('boys').value;
+            const girlsInput = document.getElementById('girls').value;
+            
+            let students = [];
+            boysInput.split(',').map(s => s.trim()).filter(s => s !== "").forEach(name => {
+                students.push({ name: name, gender: 'M' });
+            });
+            girlsInput.split(',').map(s => s.trim()).filter(s => s !== "").forEach(name => {
+                students.push({ name: name, gender: 'F' });
+            });
+            
+            const constraintsInput = document.getElementById('constraints').value;
+            const constraints = constraintsInput.split('\n')
+                .map(line => line.split(',').map(s => s.trim()).filter(s => s !== ""))
+                .filter(group => group.length > 1);
+
+            const sameGenderMode = document.getElementById('sameGenderMode').checked;
+
+            // 2. 가용 좌석 파악
+            const availableSeats = [];
+            seatElements.forEach(seat => {
+                if (!seat.classList.contains('disabled')) {
+                    availableSeats.push(parseInt(seat.dataset.index));
+                }
+            });
+
+            if (students.length > availableSeats.length) {
+                alert(`학생 수(${students.length}명)가 선택된 가용 좌석 수(${availableSeats.length}개)보다 많습니다!\n'사용 불가' 좌석을 다시 확인해주세요.`);
+                return;
+            }
+
+            // 좌석 초기화
+            seatElements.forEach(seat => {
+                if (!seat.classList.contains('disabled')) {
+                    seat.innerText = (seat.dataset.col == 0 || seat.dataset.col == 3) ? '창측' : '내측';
+                    seat.classList.remove('occupied', 'boy', 'girl');
+                }
+            });
+
+            // 3. 자리 배치 최적화 (다중 시작점 언덕 오르기 알고리즘)
+            let bestScore = Infinity;
+            let bestAssignment = [];
+
+            // 지역 최적화에 빠지지 않도록 10번 재시작
+            for (let restart = 0; restart < 10; restart++) {
+                let currentAssignment = [...students];
+                // 빈자리는 null로 채움
+                while (currentAssignment.length < availableSeats.length) currentAssignment.push(null);
+                currentAssignment.sort(() => Math.random() - 0.5); // 무작위 섞기
+
+                let currentScore = evaluate(currentAssignment, availableSeats, constraints, sameGenderMode);
+
+                // 내부 최적화 반복
+                for (let i = 0; i < 5000; i++) {
+                    if (currentScore === 0) break;
+
+                    let idx1 = Math.floor(Math.random() * currentAssignment.length);
+                    let idx2 = Math.floor(Math.random() * currentAssignment.length);
+
+                    // 스왑
+                    [currentAssignment[idx1], currentAssignment[idx2]] = [currentAssignment[idx2], currentAssignment[idx1]];
+
+                    let newScore = evaluate(currentAssignment, availableSeats, constraints, sameGenderMode);
+                    
+                    if (newScore <= currentScore) { // 같거나 더 좋으면 채택
+                        currentScore = newScore;
+                        if (currentScore < bestScore) {
+                            bestScore = currentScore;
+                            bestAssignment = [...currentAssignment];
+                        }
+                    } else {
+                        // 원상 복구
+                        [currentAssignment[idx1], currentAssignment[idx2]] = [currentAssignment[idx2], currentAssignment[idx1]];
+                    }
+                }
+                if (bestScore === 0) break; // 완벽한 해를 찾으면 즉시 종료
+            }
+
+            // 결과 안내 메시지
+            if (bestScore >= 100) {
+                alert("떨어뜨려 놓을 학생 조건이 너무 까다로워 완벽하게 분리하지 못했습니다.\n결과를 확인하시고 다시 돌려보시거나 조건을 완화해 주세요.");
+            } else if (sameGenderMode && bestScore > 0) {
+                alert("남/여 학생 수 비율 문제 등으로 부득이하게 남녀 짝꿍이 존재할 수 있습니다.\n(최대한 동성끼리 앉도록 배치되었습니다)");
+            }
+
+            // 4. 결과 UI에 반영
+            bestAssignment.forEach((student, i) => {
+                if (student) {
+                    const seatIdx = availableSeats[i];
+                    const seatEl = seatElements[seatIdx];
+                    seatEl.innerText = student.name;
+                    seatEl.classList.add('occupied');
+                    seatEl.classList.add(student.gender === 'M' ? 'boy' : 'girl');
+                }
+            });
+        }
+
+        // 평가 함수: 페널티 점수 계산
+        function evaluate(assignment, availableSeats, constraints, sameGenderMode) {
+            let penalty = 0;
+            let grid = Array(totalRows).fill(null).map(() => Array(seatsPerRow).fill(null));
+            let posMap = {};
+
+            // 2D 그리드 및 위치 맵핑 생성
+            assignment.forEach((student, i) => {
+                if (student) {
+                    let seatIdx = availableSeats[i];
+                    let r = Math.floor(seatIdx / seatsPerRow);
+                    let c = seatIdx % seatsPerRow;
+                    grid[r][c] = student;
+                    posMap[student.name] = { r, c };
+                }
+            });
+
+            // 1. 떨어뜨려 놓을 학생 제약 검사 (가장 강력한 페널티)
+            constraints.forEach(group => {
+                for (let i = 0; i < group.length; i++) {
+                    for (let j = i + 1; j < group.length; j++) {
+                        let s1 = group[i];
+                        let s2 = group[j];
+                        if (posMap[s1] && posMap[s2]) {
+                            let dr = Math.abs(posMap[s1].r - posMap[s2].r);
+                            let dc = Math.abs(posMap[s1].c - posMap[s2].c);
+                            
+                            // 앞, 뒤, 양옆, 대각선 인접
+                            if (dr <= 1 && dc <= 1) {
+                                penalty += 100; 
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 2. 동성 짝꿍 모드 제약 검사 (중간 페널티)
+            if (sameGenderMode) {
+                for (let r = 0; r < totalRows; r++) {
+                    // 왼쪽 좌석 쌍 (0번과 1번 열)
+                    let left1 = grid[r][0];
+                    let left2 = grid[r][1];
+                    if (left1 && left2 && left1.gender !== left2.gender) {
+                        penalty += 10;
+                    }
+
+                    // 오른쪽 좌석 쌍 (2번과 3번 열)
+                    let right1 = grid[r][2];
+                    let right2 = grid[r][3];
+                    if (right1 && right2 && right1.gender !== right2.gender) {
+                        penalty += 10;
+                    }
+                }
+            }
+
+            return penalty;
+        }
+
+        // 시작 시 버스 그리기
+        window.onload = () => {
+            initBus();
+            
+            // 학생 시연용 조건 숨기기 기능 (제목 더블클릭 또는 Alt+H)
+            const title = document.getElementById('panel-title');
+            const secretSection = document.getElementById('secret-constraints');
+            
+            function toggleSecret() {
+                if (secretSection.style.display === 'none') {
+                    secretSection.style.display = 'block';
+                } else {
+                    secretSection.style.display = 'none';
+                }
+            }
+            
+            title.addEventListener('dblclick', toggleSecret);
+            
+            // 키보드 단축키 (Alt + H)
+            window.addEventListener('keydown', (e) => {
+                if (e.altKey && (e.key.toLowerCase() === 'h' || e.key === 'ㅗ')) {
+                    toggleSecret();
+                }
+            });
+        };
+    </script>
+</body>
+</html>
