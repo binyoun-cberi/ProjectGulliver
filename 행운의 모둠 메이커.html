@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎰 슬롯머신 모둠 메이커</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Jua', sans-serif;
+            background-color: #1a202c;
+            background-image: radial-gradient(#2d3748 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* 슬롯머신 본체 스타일 */
+        .slot-machine-casing {
+            background: linear-gradient(145deg, #f59e0b, #d97706);
+            border: 8px solid #b45309;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 5px 15px rgba(255,255,255,0.3);
+            border-radius: 24px;
+            padding: 20px;
+        }
+
+        /* 개별 슬롯 창 */
+        .slot-window {
+            height: 300px; /* 위, 가운데, 아래 3칸이 보이도록 높이 */
+            overflow: hidden;
+            background: #ffffff;
+            border: 4px solid #475569;
+            border-radius: 12px;
+            box-shadow: inset 0 10px 15px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        /* 가운데 당첨 라인 강조 */
+        .slot-selection-line {
+            position: absolute;
+            top: 100px;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: rgba(250, 204, 21, 0.15);
+            border-top: 3px solid rgba(250, 204, 21, 0.9);
+            border-bottom: 3px solid rgba(250, 204, 21, 0.9);
+            z-index: 5;
+            pointer-events: none;
+            box-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
+        }
+
+        /* 위아래 그림자 효과 (입체감) */
+        .slot-window::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 30px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent);
+            z-index: 10;
+            pointer-events: none;
+        }
+        .slot-window::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0; height: 30px;
+            background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* 돌아가는 릴 */
+        .reel {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            transition: transform cubic-bezier(0.15, 0.9, 0.25, 1);
+        }
+
+        /* 슬롯 안의 텍스트 아이템 */
+        .slot-item {
+            height: 100px; /* 1칸 높이 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: #1e293b;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* 긴 이름 말줄임 처리 */
+            padding: 0 10px;
+        }
+
+        .slot-item.bomb {
+            color: #ef4444;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .blur-spin {
+            filter: blur(1.5px);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .bounce {
+            animation: bounce 0.3s ease;
+        }
+
+        .btn-pop:active {
+            transform: scale(0.95);
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-white min-h-screen flex flex-col items-center py-10 px-4">
+
+    <!-- 제목 -->
+    <header class="text-center mb-8">
+        <h1 class="text-5xl text-yellow-400 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] tracking-wider">🎰 행운의 모둠 메이커</h1>
+        <p class="text-gray-300 mt-2 text-lg">돌려돌려 슬롯머신으로 모둠을 정해보세요!</p>
+        <button id="btn-sound" class="mt-4 bg-gray-700 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition-colors shadow-lg border border-gray-600">
+            🔊 소리 켜기
+        </button>
+        <!-- BGM 오디오 소스 -->
+        <audio id="bgm-audio" loop src="https://freepd.com/music/The%20Entertainer.mp3"></audio>
+    </header>
+
+    <!-- [1] 설정 화면 -->
+    <main id="setup-screen" class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-3xl border border-gray-700">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- 왼쪽: 명단 입력 -->
+            <div>
+                <label class="block text-xl text-yellow-300 mb-2">👥 학생 명단 입력</label>
+                <p class="text-sm text-gray-400 mb-2">예: 홍길동(남), 김영희(여), 이철수<br>※ 성별 모드를 쓰려면 '(남)', '(여)'를 붙여주세요.</p>
+                <textarea id="students-input" rows="8" class="w-full bg-gray-700 text-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-yellow-400 resize-none font-sans text-lg">
+김유신(남), 이순신(남), 강감찬(남), 장보고(남)
+유관순(여), 신사임당(여), 선덕여왕(여), 허난설헌(여)
+홍길동(남), 임꺽정(남), 전봉준(남), 안중근(남)
+김구(남), 윤봉길(남), 안창호(남), 이봉창(남)
+황진이(여), 어우동(여), 논개(여), 최용신(여)</textarea>
+            </div>
+
+            <!-- 오른쪽: 옵션 설정 -->
+            <div class="space-y-6">
+                <!-- 모둠 인원 설정 -->
+                <div>
+                    <label class="block text-xl text-yellow-300 mb-2">🔢 1모둠 당 인원</label>
+                    <div class="flex items-center">
+                        <input type="number" id="group-size" value="4" min="2" max="10" class="w-20 bg-gray-700 text-white text-center text-2xl rounded-lg p-2 outline-none focus:ring-2 focus:ring-yellow-400">
+                        <span class="ml-3 text-gray-300 text-lg">명 (남는 자리는 💣폭탄)</span>
+                    </div>
+                </div>
+
+                <!-- 남녀 모드 설정 -->
+                <div>
+                    <label class="block text-xl text-yellow-300 mb-2">⚖️ 남녀 밸런스 모드</label>
+                    <select id="gender-mode" class="w-full bg-gray-700 text-white text-lg rounded-lg p-3 outline-none focus:ring-2 focus:ring-yellow-400">
+                        <option value="random">🔀 상관없음 (랜덤)</option>
+                        <option value="balanced">👫 최대한 남녀 균형 맞추기</option>
+                        <option value="same">👬/👭 동성끼리 묶기</option>
+                    </select>
+                </div>
+
+                <!-- 쉿! 디버그 모드 (회피) -->
+                <div>
+                    <div class="flex justify-end mb-2">
+                        <button id="btn-toggle-debug" class="text-sm text-gray-500 hover:text-gray-300 underline">⚙️ 고급 설정</button>
+                    </div>
+                    <div id="debug-container" class="hidden bg-gray-900 p-4 rounded-lg border border-red-900 mt-2 shadow-inner">
+                        <label class="block text-xl text-red-400 mb-2">🤫 비밀 디버그 (절대 찢어놔)</label>
+                        <p class="text-sm text-gray-400 mb-2">같은 모둠이 되면 안 되는 학생 쌍을 입력하세요. (한 줄에 한 쌍, '-'로 구분)</p>
+                        <textarea id="avoid-input" rows="3" class="w-full bg-gray-800 text-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-red-400 resize-none font-sans" placeholder="예시: 홍길동-강감찬&#10;유관순-신사임당"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center">
+            <button id="btn-start" class="btn-pop bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-gray-900 font-bold text-3xl py-4 px-12 rounded-full shadow-[0_5px_0_#b45309] hover:shadow-[0_2px_0_#b45309] hover:translate-y-1 transition-all">
+                🚀 모둠 만들기 시작!
+            </button>
+        </div>
+    </main>
+
+    <!-- [2] 슬롯머신 화면 -->
+    <main id="slot-screen" class="hidden flex flex-col items-center w-full max-w-5xl">
+        
+        <!-- 상단 정보 -->
+        <div class="flex justify-between w-full mb-4 px-4 items-end">
+            <button id="btn-back" class="text-gray-400 hover:text-white transition-colors text-lg">
+                ◀ 설정으로 돌아가기
+            </button>
+            <div class="text-right">
+                <p class="text-yellow-400 text-2xl" id="progress-text">모둠 생성 중: 1 / 5</p>
+            </div>
+        </div>
+
+        <!-- 슬롯머신 기계 -->
+        <div class="slot-machine-casing w-full">
+            <div class="bg-gray-900 rounded-xl p-6 border-4 border-gray-800 shadow-inner">
+                <div id="slots-container" class="grid gap-4" style="grid-template-columns: repeat(4, 1fr);">
+                    <!-- JS에서 슬롯을 여기에 생성합니다 -->
+                </div>
+            </div>
+            
+            <div class="mt-8 text-center">
+                <button id="btn-spin" class="btn-pop bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-4xl py-4 px-16 rounded-full shadow-[0_8px_0_#7f1d1d] hover:shadow-[0_4px_0_#7f1d1d] hover:translate-y-1 transition-all border-2 border-red-400">
+                    🕹️ 레버 당기기!
+                </button>
+            </div>
+        </div>
+
+        <!-- 완성된 모둠 리스트 -->
+        <div class="w-full mt-12">
+            <h2 class="text-3xl text-yellow-300 text-center mb-6">🎉 완성된 모둠 🎉</h2>
+            <div id="results-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- 결과가 여기에 추가됩니다 -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 전역 상태 변수
+        const AppState = {
+            students: [],
+            avoidPairs: [],
+            groupSize: 4,
+            genderMode: 'random',
+            
+            calculatedGroups: [],
+            currentGroupIndex: 0,
+            
+            isSpinning: false,
+            soundEnabled: false
+        };
+
+        const itemHeight = 100; // 1칸 높이
+        const baseDuration = 3000; // 첫 번째 릴 회전 시간 (ms)
+        const durationStep = 2500; // 다음 릴이 멈출 때까지의 대기 시간
+        const baseDummyItems = 60; // 첫 번째 릴 가짜 아이템 수
+        const dummyItemsStep = 80; // 다음 릴에 추가될 가짜 아이템 수
+
+        // DOM Elements
+        const screens = {
+            setup: document.getElementById('setup-screen'),
+            slot: document.getElementById('slot-screen')
+        };
+        const inputs = {
+            students: document.getElementById('students-input'),
+            size: document.getElementById('group-size'),
+            gender: document.getElementById('gender-mode'),
+            avoid: document.getElementById('avoid-input')
+        };
+        const buttons = {
+            start: document.getElementById('btn-start'),
+            back: document.getElementById('btn-back'),
+            spin: document.getElementById('btn-spin'),
+            toggleDebug: document.getElementById('btn-toggle-debug'),
+            sound: document.getElementById('btn-sound')
+        };
+        const ui = {
+            slotsContainer: document.getElementById('slots-container'),
+            progressText: document.getElementById('progress-text'),
+            resultsContainer: document.getElementById('results-container'),
+            debugContainer: document.getElementById('debug-container'),
+            bgm: document.getElementById('bgm-audio')
+        };
+
+        // --- 오디오 처리 (Web Audio API) ---
+        let audioCtx;
+        let tickInterval;
+        let soundInitialized = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            // BGM 기본 볼륨을 낮게 설정하여 다른 효과음이 잘 들리게 함
+            ui.bgm.volume = 0.3;
+        }
+
+        function playTick() {
+            if (!AppState.soundEnabled || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function playDing() {
+            if (!AppState.soundEnabled || !audioCtx) return;
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.08);
+                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + i * 0.08 + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.08 + 1.0);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + i * 0.08);
+                osc.stop(audioCtx.currentTime + i * 0.08 + 1.0);
+            });
+        }
+
+        function toggleSound() {
+            initAudio();
+            AppState.soundEnabled = !AppState.soundEnabled;
+            if (AppState.soundEnabled) {
+                buttons.sound.innerText = '🔇 소리 끄기';
+                buttons.sound.classList.replace('bg-gray-700', 'bg-green-600');
+                ui.bgm.play().catch(e => console.log('BGM 재생 실패:', e));
+            } else {
+                buttons.sound.innerText = '🔊 소리 켜기';
+                buttons.sound.classList.replace('bg-green-600', 'bg-gray-700');
+                ui.bgm.pause();
+            }
+            soundInitialized = true;
+        }
+
+        // --- 로컬 데이터 저장 (자동 저장) ---
+        const StorageKeys = {
+            students: 'groupMaker_students',
+            size: 'groupMaker_size',
+            gender: 'groupMaker_gender',
+            avoid: 'groupMaker_avoid'
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem(StorageKeys.students)) inputs.students.value = localStorage.getItem(StorageKeys.students);
+            if (localStorage.getItem(StorageKeys.size)) inputs.size.value = localStorage.getItem(StorageKeys.size);
+            if (localStorage.getItem(StorageKeys.gender)) inputs.gender.value = localStorage.getItem(StorageKeys.gender);
+            if (localStorage.getItem(StorageKeys.avoid)) inputs.avoid.value = localStorage.getItem(StorageKeys.avoid);
+        });
+
+        // 입력값 변경 시 즉시 저장되도록 이벤트 위임
+        document.getElementById('setup-screen').addEventListener('input', (e) => {
+            if (e.target.id === 'students-input') localStorage.setItem(StorageKeys.students, e.target.value);
+            if (e.target.id === 'group-size') localStorage.setItem(StorageKeys.size, e.target.value);
+            if (e.target.id === 'gender-mode') localStorage.setItem(StorageKeys.gender, e.target.value);
+            if (e.target.id === 'avoid-input') localStorage.setItem(StorageKeys.avoid, e.target.value);
+        });
+
+
+        // --- 유틸리티 및 로직 ---
+        function shuffleArray(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function parseInputs() {
+            const rawText = inputs.students.value;
+            const names = rawText.split(/[\n,]+/).map(s => s.trim()).filter(s => s.length > 0);
+            
+            AppState.students = names.map(raw => {
+                let name = raw;
+                let gender = 'none';
+                const match = raw.match(/(.+)\((남|여)\)/);
+                if (match) {
+                    name = match[1].trim();
+                    gender = match[2];
+                }
+                return { name, gender, original: name };
+            });
+
+            const avoidText = inputs.avoid.value;
+            AppState.avoidPairs = avoidText.split('\n')
+                .map(s => s.trim())
+                .filter(s => s.includes('-'))
+                .map(s => s.split('-').map(n => n.trim()));
+
+            AppState.groupSize = parseInt(inputs.size.value) || 4;
+            AppState.genderMode = inputs.gender.value;
+        }
+
+        function calculateGroups() {
+            let pool = [...AppState.students];
+            let numGroups = Math.ceil(pool.length / AppState.groupSize);
+            let groups = Array.from({ length: numGroups }, () => []);
+
+            if (AppState.genderMode === 'balanced') {
+                let males = shuffleArray(pool.filter(s => s.gender === '남'));
+                let females = shuffleArray(pool.filter(s => s.gender === '여'));
+                let unknowns = shuffleArray(pool.filter(s => s.gender === 'none'));
+
+                let i = 0;
+                [...males, ...females, ...unknowns].forEach(s => {
+                    groups[i % numGroups].push(s);
+                    i++;
+                });
+            } else if (AppState.genderMode === 'same') {
+                let males = shuffleArray(pool.filter(s => s.gender === '남'));
+                let females = shuffleArray(pool.filter(s => s.gender === '여'));
+                let unknowns = shuffleArray(pool.filter(s => s.gender === 'none'));
+                
+                let allSorted = [...males, ...females, ...unknowns];
+                groups = [];
+                for (let i = 0; i < allSorted.length; i += AppState.groupSize) {
+                    groups.push(allSorted.slice(i, i + AppState.groupSize));
+                }
+            } else {
+                let shuffled = shuffleArray(pool);
+                groups = [];
+                for (let i = 0; i < shuffled.length; i += AppState.groupSize) {
+                    groups.push(shuffled.slice(i, i + AppState.groupSize));
+                }
+            }
+
+            groups.forEach(g => {
+                while (g.length < AppState.groupSize) {
+                    g.push({ name: '💣 폭탄', isBomb: true });
+                }
+            });
+
+            if (AppState.avoidPairs.length > 0) {
+                let attempts = 0;
+                let hasConflict = true;
+
+                while (hasConflict && attempts < 500) {
+                    hasConflict = false;
+                    for (let i = 0; i < groups.length; i++) {
+                        let namesInGroup = groups[i].map(s => s.name);
+                        for (let [a, b] of AppState.avoidPairs) {
+                            if (namesInGroup.includes(a) && namesInGroup.includes(b)) {
+                                hasConflict = true;
+                                let bIndex = groups[i].findIndex(s => s.name === b);
+                                if (bIndex !== -1) {
+                                    let rGroup;
+                                    do { rGroup = Math.floor(Math.random() * groups.length); } while (rGroup === i);
+                                    let rMember = Math.floor(Math.random() * groups[rGroup].length);
+                                    let temp = groups[i][bIndex];
+                                    groups[i][bIndex] = groups[rGroup][rMember];
+                                    groups[rGroup][rMember] = temp;
+                                }
+                                break;
+                            }
+                        }
+                        if (hasConflict) break;
+                    }
+                    attempts++;
+                }
+            }
+
+            AppState.calculatedGroups = groups.map(g => shuffleArray(g));
+            AppState.currentGroupIndex = 0;
+        }
+
+        // --- UI 및 애니메이션 ---
+        function initSlotMachineUI() {
+            screens.setup.classList.add('hidden');
+            screens.slot.classList.remove('hidden');
+            ui.resultsContainer.innerHTML = '';
+            
+            let cols = AppState.groupSize;
+            if (cols > 5) cols = 5; 
+            ui.slotsContainer.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+            ui.slotsContainer.innerHTML = '';
+
+            for (let i = 0; i < AppState.groupSize; i++) {
+                const slotDiv = document.createElement('div');
+                slotDiv.className = 'slot-window';
+                
+                const highlight = document.createElement('div');
+                highlight.className = 'slot-selection-line';
+                slotDiv.appendChild(highlight);
+
+                const reelDiv = document.createElement('div');
+                reelDiv.className = 'reel';
+                reelDiv.id = `reel-${i}`;
+                
+                for(let j=0; j<3; j++) {
+                    const defaultItem = document.createElement('div');
+                    defaultItem.className = 'slot-item text-gray-300';
+                    defaultItem.innerText = (j === 1) ? '❓' : ''; 
+                    reelDiv.appendChild(defaultItem);
+                }
+
+                slotDiv.appendChild(reelDiv);
+                ui.slotsContainer.appendChild(slotDiv);
+            }
+
+            updateProgress();
+            buttons.spin.innerText = '🕹️ 레버 당기기!';
+            buttons.spin.disabled = false;
+            buttons.spin.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function updateProgress() {
+            const total = AppState.calculatedGroups.length;
+            const current = AppState.currentGroupIndex + 1;
+            if (current > total) {
+                ui.progressText.innerText = `모둠 구성 완료! (${total}/${total})`;
+                buttons.spin.innerText = '🎉 다시 하기';
+                if (AppState.soundEnabled) playDing();
+            } else {
+                ui.progressText.innerText = `모둠 뽑는 중: ${current} / ${total} 모둠`;
+            }
+        }
+
+        function spin() {
+            if (AppState.isSpinning) return;
+
+            if (AppState.currentGroupIndex >= AppState.calculatedGroups.length) {
+                screens.slot.classList.add('hidden');
+                screens.setup.classList.remove('hidden');
+                return;
+            }
+
+            AppState.isSpinning = true;
+            buttons.spin.disabled = true;
+            buttons.spin.classList.add('opacity-50', 'cursor-not-allowed');
+
+            initAudio();
+            if (tickInterval) clearInterval(tickInterval);
+            if (AppState.soundEnabled) {
+                tickInterval = setInterval(playTick, 100);
+            }
+
+            const currentGroup = AppState.calculatedGroups[AppState.currentGroupIndex];
+            const allNames = AppState.students.map(s => s.name);
+            if(allNames.length === 0) allNames.push("데이터없음");
+
+            let completedReels = 0;
+
+            currentGroup.forEach((member, index) => {
+                const reel = document.getElementById(`reel-${index}`);
+                
+                reel.style.transition = 'none';
+                reel.style.transform = `translateY(0px)`;
+                reel.innerHTML = '';
+                reel.classList.add('blur-spin');
+
+                const currentDummyCount = baseDummyItems + (index * dummyItemsStep);
+                const duration = baseDuration + (index * durationStep);
+
+                const itemsFragment = document.createDocumentFragment();
+                
+                for(let j = 0; j < 3; j++) {
+                    let firstDiv = document.createElement('div');
+                    firstDiv.className = 'slot-item';
+                    firstDiv.innerText = (j === 1) ? '❓' : '';
+                    itemsFragment.appendChild(firstDiv);
+                }
+
+                for (let j = 0; j < currentDummyCount; j++) {
+                    let div = document.createElement('div');
+                    div.className = 'slot-item text-gray-400 opacity-80';
+                    div.innerText = allNames[Math.floor(Math.random() * allNames.length)];
+                    itemsFragment.appendChild(div);
+                }
+
+                let targetDiv = document.createElement('div');
+                targetDiv.className = `slot-item font-bold ${member.isBomb ? 'bomb' : 'text-blue-600'} text-3xl`;
+                targetDiv.innerText = member.name;
+                itemsFragment.appendChild(targetDiv);
+
+                for (let j = 0; j < 3; j++) {
+                    let afterDiv = document.createElement('div');
+                    afterDiv.className = 'slot-item text-gray-400 opacity-60';
+                    afterDiv.innerText = allNames[Math.floor(Math.random() * allNames.length)];
+                    itemsFragment.appendChild(afterDiv);
+                }
+
+                reel.appendChild(itemsFragment);
+
+                // 강제 Reflow 처리
+                reel.offsetHeight; 
+
+                reel.style.transition = `transform ${duration}ms cubic-bezier(0.12, 0.85, 0.2, 1)`;
+                
+                const itemsBeforeTarget = 3 + currentDummyCount;
+                const targetY = -((itemsBeforeTarget - 1) * itemHeight);
+                reel.style.transform = `translateY(${targetY}px)`;
+
+                setTimeout(() => {
+                    reel.classList.remove('blur-spin');
+                    reel.parentElement.classList.add('bounce');
+                    playDing();
+                    setTimeout(() => reel.parentElement.classList.remove('bounce'), 300);
+                    
+                    completedReels++;
+                    if (completedReels === currentGroup.length) {
+                        clearInterval(tickInterval);
+                        onSpinComplete(currentGroup);
+                    }
+                }, duration);
+            });
+        }
+
+        function onSpinComplete(group) {
+            AppState.isSpinning = false;
+            
+            const card = document.createElement('div');
+            card.className = 'bg-gray-700 p-4 rounded-xl shadow-lg border border-gray-600 transform transition hover:scale-105';
+            
+            let html = `<h3 class="text-xl text-yellow-400 mb-3 border-b border-gray-500 pb-2">${AppState.currentGroupIndex + 1} 모둠</h3><ul class="space-y-1">`;
+            
+            group.forEach(m => {
+                if (m.isBomb) {
+                    html += `<li class="text-red-400 font-bold flex items-center"><span class="text-2xl mr-2">💣</span> 비었음</li>`;
+                } else {
+                    html += `<li class="text-white text-lg flex justify-between">
+                                <span>${m.name}</span>
+                                <span class="text-xs text-gray-400 align-bottom pt-1">${m.gender !== 'none' ? m.gender : ''}</span>
+                             </li>`;
+                }
+            });
+            html += '</ul>';
+            card.innerHTML = html;
+            ui.resultsContainer.appendChild(card);
+            
+            AppState.currentGroupIndex++;
+            updateProgress();
+
+            if (AppState.currentGroupIndex < AppState.calculatedGroups.length) {
+                buttons.spin.disabled = false;
+                buttons.spin.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                buttons.spin.disabled = false;
+                buttons.spin.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // --- 이벤트 바인딩 ---
+        buttons.start.addEventListener('click', () => {
+            if (!inputs.students.value.trim()) {
+                alert("학생 명단을 입력해주세요!");
+                return;
+            }
+
+            if (!soundInitialized && !AppState.soundEnabled) {
+                toggleSound();
+            }
+
+            parseInputs();
+            calculateGroups();
+            initSlotMachineUI();
+        });
+
+        buttons.back.addEventListener('click', () => {
+            if (AppState.isSpinning) return;
+            screens.slot.classList.add('hidden');
+            screens.setup.classList.remove('hidden');
+            if (tickInterval) clearInterval(tickInterval);
+        });
+
+        buttons.spin.addEventListener('click', spin);
+
+        buttons.toggleDebug.addEventListener('click', () => {
+            ui.debugContainer.classList.toggle('hidden');
+        });
+
+        buttons.sound.addEventListener('click', toggleSound);
+
+    </script>
+</body>
+</html>
