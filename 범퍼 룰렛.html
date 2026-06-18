@@ -2,12 +2,12 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>엎치락뒤치락 범퍼 룰렛</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #1a202c; color: white; font-family: 'Pretendard', sans-serif; }
+        body { margin: 0; overflow: hidden; background-color: #1a202c; color: white; font-family: 'Pretendard', sans-serif; touch-action: none; }
         canvas { display: block; }
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         .pointer-events-auto { pointer-events: auto; }
@@ -27,7 +27,21 @@
             transition: all 0.3s ease;
         }
 
-        /* 추가된 UI 스타일 */
+        /* 모바일 최적화: 순위표 반투명 호버 효과 */
+        #leaderboard-panel {
+            transition: opacity 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            #leaderboard-panel {
+                opacity: 0.4; /* 모바일에서 기본 반투명 */
+                width: auto;
+                min-width: 140px;
+            }
+            #leaderboard-panel:hover, #leaderboard-panel:active {
+                opacity: 1; /* 터치 시 선명하게 */
+            }
+        }
+
         #win-log {
             max-height: 60vh;
             overflow-y: hidden;
@@ -42,6 +56,12 @@
         #countdown-display {
             text-shadow: 0 4px 15px rgba(0,0,0,0.8);
         }
+        
+        /* 숨겨진 디버그 패널 */
+        #debug-panel {
+            display: none;
+            border-color: #ef4444;
+        }
     </style>
 </head>
 <body>
@@ -50,13 +70,14 @@
 
     <div id="ui-layer" class="flex flex-col items-center justify-center">
         
-        <div id="setup-panel" class="glass-panel p-8 rounded-2xl shadow-2xl pointer-events-auto w-full max-w-2xl mx-4 transition-opacity duration-300 absolute z-10">
-            <h1 class="text-3xl font-bold mb-6 text-center text-yellow-400 drop-shadow-md">🚀 엎치락뒤치락 범퍼 룰렛</h1>
+        <div id="setup-panel" class="glass-panel p-6 md:p-8 rounded-2xl shadow-2xl pointer-events-auto w-full max-w-2xl mx-4 transition-opacity duration-300 absolute z-10 max-h-[90vh] overflow-y-auto">
+            <!-- 제목 (더블클릭 시 조작 모드 발동) -->
+            <h1 id="main-title" class="text-2xl md:text-3xl font-bold mb-6 text-center text-yellow-400 drop-shadow-md cursor-pointer select-none">🚀 엎치락뒤치락 범퍼 룰렛</h1>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-2">학생 명단 (엔터로 구분)</label>
-                    <textarea id="names-input" rows="8" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none">김철수
+                    <textarea id="names-input" rows="8" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none text-sm md:text-base">김철수
 이영희
 박민수
 최지윤
@@ -67,7 +88,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-2">결과 슬롯 (엔터로 구분)</label>
-                    <textarea id="slots-input" rows="8" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none">발표 당첨!
+                    <textarea id="slots-input" rows="8" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none text-sm md:text-base">발표 당첨!
 통과
 벌칙: 노래
 통과
@@ -75,38 +96,53 @@
 통과</textarea>
                 </div>
             </div>
+
+            <!-- 비밀 조작 패널 (평소엔 숨김) -->
+            <div id="debug-panel" class="mt-6 p-4 border-2 rounded-xl bg-red-900 bg-opacity-30">
+                <h3 class="text-red-400 font-bold mb-3 flex items-center gap-2">
+                    <span>🕵️ 선생님 전용 조작 모드</span>
+                    <button id="close-debug-btn" class="ml-auto text-xs bg-red-800 hover:bg-red-700 px-2 py-1 rounded text-white">닫기</button>
+                </h3>
+                <p class="text-xs text-gray-300 mb-3">특정 학생의 결과를 미리 강제 지정할 수 있습니다. (여러 명 지정 가능)</p>
+                <div class="flex flex-col gap-2" id="cheat-list">
+                    <!-- 조작 입력 폼 (초기 1개) -->
+                    <div class="flex gap-2 cheat-row">
+                        <input type="text" placeholder="학생 이름 (예: 김철수)" class="cheat-name flex-1 bg-gray-800 border border-gray-600 rounded p-2 text-sm text-white focus:outline-none">
+                        <span class="text-white self-center">👉</span>
+                        <input type="text" placeholder="강제 결과 (예: 발표 당첨!)" class="cheat-result flex-1 bg-gray-800 border border-gray-600 rounded p-2 text-sm text-white focus:outline-none">
+                    </div>
+                </div>
+                <button id="add-cheat-btn" class="mt-2 text-xs bg-gray-700 hover:bg-gray-600 w-full py-2 rounded text-gray-300 transition">+ 조작 대상 추가</button>
+            </div>
             
-            <button id="start-btn" class="mt-8 w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-400 hover:to-orange-500 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform transition hover:scale-105 active:scale-95 text-lg">
+            <button id="start-btn" class="mt-6 md:mt-8 w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-400 hover:to-orange-500 text-white font-bold py-3 md:py-4 px-6 rounded-xl shadow-lg transform transition hover:scale-105 active:scale-95 text-lg">
                 레이스 시작!
             </button>
             <p class="text-xs text-gray-400 text-center mt-4">사운드가 켜져 있습니다. 볼륨을 주의하세요!</p>
         </div>
 
         <div id="hud" class="absolute inset-0 pointer-events-none hidden">
-            <div class="absolute top-4 left-4 glass-panel p-4 rounded-xl w-48">
-                <h3 class="text-yellow-400 font-bold mb-2 border-b border-gray-600 pb-1">🏆 현재 순위</h3>
-                <ul id="leaderboard-list" class="space-y-2 text-sm"></ul>
+            <!-- 모바일 대응 순위표 -->
+            <div id="leaderboard-panel" class="absolute top-4 left-4 glass-panel p-3 md:p-4 rounded-xl w-40 md:w-48 pointer-events-auto">
+                <h3 class="text-yellow-400 font-bold mb-2 border-b border-gray-600 pb-1 text-sm md:text-base">🏆 현재 순위</h3>
+                <ul id="leaderboard-list" class="space-y-2 text-xs md:text-sm"></ul>
             </div>
 
-            <!-- 당첨 로그 (우측) -->
-            <div class="absolute top-4 right-8 w-64 flex flex-col gap-2" id="win-log">
-                <!-- JS로 채워짐 -->
+            <div class="absolute top-4 right-4 md:right-8 w-48 md:w-64 flex flex-col gap-2" id="win-log">
             </div>
 
-            <!-- 카운트다운 표시 (중앙) -->
             <div id="countdown-display" class="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center hidden transition-all">
-                <span class="text-white text-2xl font-bold bg-red-600 px-4 py-1 rounded-full mb-2 shadow-lg animate-pulse">1위 도착! 10초 후 종료</span>
-                <span id="countdown-number" class="text-9xl font-extrabold text-red-500 opacity-90 drop-shadow-2xl">10</span>
+                <span class="text-white text-lg md:text-2xl font-bold bg-red-600 px-4 py-1 rounded-full mb-2 shadow-lg animate-pulse whitespace-nowrap">1위 도착! 10초 후 종료</span>
+                <span id="countdown-number" class="text-7xl md:text-9xl font-extrabold text-red-500 opacity-90 drop-shadow-2xl">10</span>
             </div>
         </div>
 
-        <div id="result-modal" class="hidden absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center pointer-events-auto z-50">
-            <div class="glass-panel p-8 rounded-2xl text-center transform transition-transform scale-95 hover:scale-100 shadow-2xl border-yellow-500 border-2 w-full max-w-2xl max-h-[85vh] flex flex-col">
-                <h2 class="text-3xl text-yellow-300 mb-6 font-bold shrink-0">🎉 최종 결과 발표 🎉</h2>
-                <div id="result-list" class="flex-1 overflow-y-auto grid grid-cols-1 gap-3 mb-6 pr-2 text-left">
-                    <!-- JS로 채워짐 -->
+        <div id="result-modal" class="hidden absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center pointer-events-auto z-50 p-4">
+            <div class="glass-panel p-6 md:p-8 rounded-2xl text-center transform transition-transform scale-95 hover:scale-100 shadow-2xl border-yellow-500 border-2 w-full max-w-2xl max-h-[85vh] flex flex-col">
+                <h2 class="text-2xl md:text-3xl text-yellow-300 mb-6 font-bold shrink-0">🎉 최종 결과 발표 🎉</h2>
+                <div id="result-list" class="flex-1 overflow-y-auto grid grid-cols-1 gap-2 md:gap-3 mb-6 pr-2 text-left">
                 </div>
-                <button id="reset-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-4 px-8 rounded-xl transition text-lg w-full shrink-0">
+                <button id="reset-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 md:py-4 px-8 rounded-xl transition text-base md:text-lg w-full shrink-0">
                     설정으로 돌아가기
                 </button>
             </div>
@@ -114,6 +150,53 @@
     </div>
 
     <script>
+        // --- 조작 모드 (Debug Mode) 관련 로직 ---
+        let cheatData = {}; // { "김철수": "발표 당첨!", "이영희": "통과" }
+        
+        const titleEl = document.getElementById('main-title');
+        const debugPanel = document.getElementById('debug-panel');
+        
+        // 더블 클릭(더블 탭) 감지
+        let lastClickTime = 0;
+        titleEl.addEventListener('click', (e) => {
+            const currentTime = new Date().getTime();
+            if (currentTime - lastClickTime < 400) { // 400ms 안에 두 번 클릭 시
+                debugPanel.style.display = 'block';
+            }
+            lastClickTime = currentTime;
+        });
+
+        document.getElementById('close-debug-btn').addEventListener('click', () => {
+            debugPanel.style.display = 'none';
+        });
+
+        document.getElementById('add-cheat-btn').addEventListener('click', () => {
+            const list = document.getElementById('cheat-list');
+            const newRow = document.createElement('div');
+            newRow.className = 'flex gap-2 cheat-row mt-2';
+            newRow.innerHTML = `
+                <input type="text" placeholder="학생 이름" class="cheat-name flex-1 bg-gray-800 border border-gray-600 rounded p-2 text-sm text-white focus:outline-none">
+                <span class="text-white self-center">👉</span>
+                <input type="text" placeholder="강제 결과" class="cheat-result flex-1 bg-gray-800 border border-gray-600 rounded p-2 text-sm text-white focus:outline-none">
+            `;
+            list.appendChild(newRow);
+        });
+
+        // 시작 버튼을 누를 때 폼에 입력된 조작 데이터를 추출
+        function parseCheatData() {
+            cheatData = {};
+            const rows = document.querySelectorAll('.cheat-row');
+            rows.forEach(row => {
+                const name = row.querySelector('.cheat-name').value.trim();
+                const res = row.querySelector('.cheat-result').value.trim();
+                if (name && res) {
+                    cheatData[name] = res; // 딕셔너리에 저장
+                }
+            });
+            console.log("조작 데이터 활성화:", cheatData);
+        }
+
+        // --- 오디오 시스템 ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let lastSoundTime = 0;
 
@@ -182,17 +265,17 @@
         let slotZones = [];
         let results = [];
         let motorizedWheels = []; 
+        let dynamicSlopes = []; 
         let isFinished = false;
-        let finishLineY = 0; // 결승선 Y좌표 명시적 추가
+        let finishLineY = 0; 
         
-        // 카운트다운 관련 변수
         let countdownTimer = null;
         let countdownValue = 10;
         let isCountdownActive = false;
 
         const WORLD_WIDTH = 1200;
         let WORLD_HEIGHT = 15000; 
-        const MARBLE_RADIUS = 13; // 틈새 통과를 위해 구슬 크기를 좀 더 축소 (15 -> 13)
+        const MARBLE_RADIUS = 13; 
 
         let camera = { x: 0, y: 0, scale: 1, targetY: 0 };
         const colors = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316', '#bef264', '#fca5a5'];
@@ -219,8 +302,7 @@
                     if (labelA === 'marble' || labelB === 'marble') {
                         const otherLabel = labelA === 'marble' ? labelB : labelA;
                         
-                        // 지그재그 슬로프 굴러가는 소음(wall, bump)은 완벽 차단!
-                        if (otherLabel === 'wall' || otherLabel === 'bump') continue;
+                        if (otherLabel === 'wall' || otherLabel === 'bump' || otherLabel === 'dynamicSlope') continue;
 
                         const velocityA = pair.bodyA.velocity ? Vector.magnitude(pair.bodyA.velocity) : 0;
                         const velocityB = pair.bodyB.velocity ? Vector.magnitude(pair.bodyB.velocity) : 0;
@@ -234,17 +316,15 @@
                             }
                         }
 
-                        // 용수철(Spring) 충돌 시 위 대각선으로 강력하게 쏘아올림
                         if (otherLabel === 'spring') {
-                            playSound('bumper', 30); // 경쾌한 튕김 소리
+                            playSound('bumper', 30);
                             const marbleBody = labelA === 'marble' ? pair.bodyA : pair.bodyB;
                             const springBody = labelA === 'spring' ? pair.bodyA : pair.bodyB;
                             
-                            // 용수철 기준 어느 쪽에 맞았는지에 따라 대각선 방향 결정
                             const dirX = marbleBody.position.x > springBody.position.x ? 1 : -1;
                             Body.setVelocity(marbleBody, {
                                 x: dirX * (15 + Math.random() * 8), 
-                                y: -25 - Math.random() * 10 // 위로 강하게 발사
+                                y: -25 - Math.random() * 10 
                             });
                         }
                     }
@@ -253,11 +333,18 @@
 
             Events.on(engine, 'beforeUpdate', function() {
                 if(gameState !== 'playing') return;
+
+                const time = engine.timing.timestamp;
+
                 motorizedWheels.forEach(wheel => {
                     Body.setAngularVelocity(wheel, wheel.motorSpeed);
                 });
 
-                // 엎치락뒤치락 역전 부스트 (고무줄 효과) & 멈춤 방지 기하급수 진동 탈출
+                dynamicSlopes.forEach(slope => {
+                    const angleOffset = Math.sin(time * slope.swingSpeed + slope.timeOffset) * slope.swingAmplitude;
+                    Body.setAngle(slope, slope.baseAngle + angleOffset);
+                });
+
                 let sortedMarbles = [...marbles].sort((a, b) => b.body.position.y - a.body.position.y);
                 let leaderY = sortedMarbles[0] ? sortedMarbles[0].body.position.y : 0;
 
@@ -265,27 +352,23 @@
                     if (m.finished) return;
                     let distanceBehind = leaderY - m.body.position.y;
                     
-                    // 선두와 거리가 멀어질수록 미세한 하강 가속도를 주어 역전 기회 제공
                     if (distanceBehind > 150) {
                         let boost = Math.min(distanceBehind * 0.0000015, 0.0015);
                         Body.applyForce(m.body, m.body.position, { x: 0, y: boost });
                     }
                     
-                    // 구슬이 멈춰있을 경우 기하급수적으로 발버둥 쳐서 탈출 (Exponential Unstuck)
                     if (Math.abs(m.body.velocity.x) < 0.3 && Math.abs(m.body.velocity.y) < 0.3) {
                         m.stuckTicks = (m.stuckTicks || 0) + 1;
-                        if (m.stuckTicks > 30) { // 약 0.5초 이상 정체 시 발동
-                            // 시간이 지날수록 흔드는 힘이 기하급수적으로 강력해짐 (물리 붕괴 방지를 위해 최대치 100 틱으로 제한)
+                        if (m.stuckTicks > 30) {
                             let shakeForce = 0.001 * Math.pow(1.08, Math.min(m.stuckTicks - 30, 100)); 
-                            let dir = (m.stuckTicks % 6 < 3) ? 1 : -1; // 3틱마다 좌우로 심하게 흔들기
+                            let dir = (m.stuckTicks % 6 < 3) ? 1 : -1; 
                             
                             Body.applyForce(m.body, m.body.position, { 
                                 x: dir * shakeForce, 
-                                y: -shakeForce * 0.3 // 위로도 살짝살짝 쳐서 구덩이에서 빼냄
+                                y: -shakeForce * 0.3 
                             });
                         }
                     } else {
-                        // 정상 속도를 되찾으면 즉시 카운터 초기화
                         m.stuckTicks = 0; 
                     }
                 });
@@ -303,6 +386,7 @@
             mapElements = [];
             slotZones = [];
             motorizedWheels = []; 
+            dynamicSlopes = []; 
             Composite.clear(engine.world);
 
             const wallOpts = { isStatic: true, render: { fillStyle: '#334155' }, friction: 0, restitution: 0.2, label: 'wall' }; 
@@ -311,49 +395,51 @@
 
             let currentY = 300;
 
-            // 1. 시작 깔때기
             mapElements.push(Bodies.rectangle(WORLD_WIDTH * 0.15, currentY, WORLD_WIDTH * 0.6, 60, { ...wallOpts, angle: Math.PI / 6 }));
             mapElements.push(Bodies.rectangle(WORLD_WIDTH * 0.85, currentY, WORLD_WIDTH * 0.6, 60, { ...wallOpts, angle: -Math.PI / 6 }));
             currentY += 400; 
 
-            // --- 막힘 없는 요철형 슬로프 생성 함수 (Overlapping bumps) ---
-            function addBumpySlope(cx, cy, width, angle) {
-                // 평평한 1개의 통짜 베이스 바닥을 깔아 보이지 않는 턱(Seam) 제거
-                mapElements.push(Bodies.rectangle(cx, cy, width, 40, { ...wallOpts, angle: angle }));
+            function addDynamicBumpySlope(cx, cy, width, baseAngle) {
+                const parts = [];
+                parts.push(Bodies.rectangle(cx, cy, width, 40, { render: { fillStyle: '#334155' } }));
                 
-                // 요철이 서로 깊게 겹치도록 반경은 크게, 간격은 좁게 설정 (V자 함정 완전 제거)
                 const bumpRadius = 30; 
                 const bumpSpacing = 40; 
                 const numBumps = Math.floor(width / bumpSpacing);
-                const dx = Math.cos(angle);
-                const dy = Math.sin(angle);
                 
                 for(let j=0; j < numBumps; j++) {
                     const dist = (j - (numBumps - 1) / 2) * bumpSpacing;
-                    // 바닥 중심선에 배치. 바닥 두께 40(반경20) 대비 요철 반경 30이므로 표면 위로 10만큼만 부드럽게 튀어나옴
-                    const bx = cx + dist * dx;
-                    const by = cy + dist * dy;
-                    
-                    mapElements.push(Bodies.circle(bx, by, bumpRadius, { 
-                        isStatic: true,
-                        friction: 0, 
-                        restitution: 0.5, 
-                        render: { fillStyle: '#475569' },
-                        label: 'bump' // 소리 안 나도록 라벨 지정
-                    })); 
+                    const bx = cx + dist;
+                    const by = cy; 
+                    parts.push(Bodies.circle(bx, by, bumpRadius, { render: { fillStyle: '#475569' } })); 
                 }
+
+                const slopeBody = Body.create({
+                    parts: parts,
+                    isStatic: true, 
+                    friction: 0, 
+                    restitution: 0.5, 
+                    label: 'dynamicSlope' 
+                });
+
+                Body.setAngle(slopeBody, baseAngle);
+                slopeBody.baseAngle = baseAngle;
+                slopeBody.timeOffset = cx + cy; 
+                slopeBody.swingSpeed = 0.003; 
+                slopeBody.swingAmplitude = 0.25; 
+
+                dynamicSlopes.push(slopeBody);
+                mapElements.push(slopeBody);
             }
 
-            // 2. 요철 지그재그 슬로프 1단계
             for (let i = 0; i < 8; i++) {
                 const isLeft = i % 2 === 0;
                 const cx = isLeft ? WORLD_WIDTH * 0.35 : WORLD_WIDTH * 0.65;
-                const angle = isLeft ? 0.35 : -0.35; // 끼임 방지를 위해 베이스 경사도 상향 (0.3 -> 0.35)
-                addBumpySlope(cx, currentY, WORLD_WIDTH * 0.7, angle);
+                const angle = isLeft ? 0.35 : -0.35; 
+                addDynamicBumpySlope(cx, currentY, WORLD_WIDTH * 0.7, angle);
                 currentY += 350; 
             }
 
-            // 3. 파칭코 핀 숲
             currentY += 100;
             const rows1 = 15; 
             for (let row = 0; row < rows1; row++) {
@@ -364,7 +450,6 @@
                     mapElements.push(Bodies.circle(offsetX + col * spacingX, currentY + row * 90, 10, pinOpts));
                 }
                 
-                // 옆으로 새서 장애물을 회피하는 꼼수 방지 (가이드 빗면)
                 if (row % 4 === 0) {
                     mapElements.push(Bodies.rectangle(0, currentY + row * 90, 150, 20, { ...wallOpts, angle: Math.PI / 4 }));
                     mapElements.push(Bodies.rectangle(WORLD_WIDTH, currentY + row * 90, 150, 20, { ...wallOpts, angle: -Math.PI / 4 }));
@@ -372,7 +457,6 @@
             }
             currentY += rows1 * 90 + 200;
 
-            // 4. 작고 많은 십자 수레바퀴 밭 (각자 강력하게 회전)
             for(let row = 0; row < 5; row++) {
                 const cols = row % 2 === 0 ? 6 : 5;
                 const spacingX = WORLD_WIDTH / 6.5;
@@ -389,7 +473,7 @@
                     const spinner = Body.create({
                         parts: parts,
                         isStatic: false,
-                        density: 100, // 구슬 무더기에 밀리지 않도록 초고중량 적용
+                        density: 100, 
                         frictionAir: 0, 
                         restitution: 0.7, 
                         render: { fillStyle: '#14B8A6' },
@@ -407,17 +491,14 @@
             }
             currentY += 5 * 160 + 100;
             
-            // 보조 깔때기
             mapElements.push(Bodies.rectangle(WORLD_WIDTH * 0.1, currentY, WORLD_WIDTH * 0.4, 40, { ...wallOpts, angle: Math.PI / 8 }));
             mapElements.push(Bodies.rectangle(WORLD_WIDTH * 0.9, currentY, WORLD_WIDTH * 0.4, 40, { ...wallOpts, angle: -Math.PI / 8 }));
             currentY += 300;
 
-            // 5. 거대 중앙 깔때기 병목
             mapElements.push(Bodies.rectangle(WORLD_WIDTH * 0.15, currentY, WORLD_WIDTH * 0.6, 80, { ...wallOpts, angle: Math.PI / 6 }));
             mapElements.push(Bodies.rectangle(WORLD_WIDTH * 0.85, currentY, WORLD_WIDTH * 0.6, 80, { ...wallOpts, angle: -Math.PI / 6 }));
             currentY += 300;
             
-            // 병목 출구 아래 스피드 범퍼
             mapElements.push(Bodies.circle(WORLD_WIDTH * 0.4, currentY, 40, bumperOpts));
             mapElements.push(Bodies.circle(WORLD_WIDTH * 0.6, currentY, 40, bumperOpts));
             mapElements.push(Bodies.circle(WORLD_WIDTH * 0.5, currentY + 100, 50, bumperOpts));
@@ -425,7 +506,7 @@
 
             function addMotorizedFlipper(x, y, length, speed, color) {
                 const bar = Bodies.rectangle(x, y, length, 30, {
-                    density: 100, // 모터 막대기도 멈추지 않도록 무겁게
+                    density: 100,
                     frictionAir: 0, 
                     friction: 0.1,
                     restitution: 1.5, 
@@ -440,7 +521,6 @@
                 Composite.add(engine.world, pivot);
             }
 
-            // 6. 핀볼 플리퍼 존
             currentY += 200;
             addMotorizedFlipper(WORLD_WIDTH * 0.3, currentY, 450, 0.06, '#F59E0B');
             addMotorizedFlipper(WORLD_WIDTH * 0.7, currentY, 450, -0.06, '#10B981');
@@ -448,9 +528,6 @@
             addMotorizedFlipper(WORLD_WIDTH * 0.5, currentY, 600, 0.08, '#3B82F6');
             currentY += 400;
 
-            // 7. 지그재그 2단계 삭제 -> 바로 미로로 진입하여 루즈함 제거
-
-            // 8. 미로형 범퍼 방 (끼임 완벽 방지용 '격자' 배열 기반 생성)
             const mazeHeight = 2500;
             const cols = 8;
             const rows = 12;
@@ -460,13 +537,11 @@
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
                     if(Math.random() > 0.4) { 
-                        // 격자 중심에서 살짝만 어긋나게 하여 틈새 무조건 확보
                         const bx = 100 + c * cellW + cellW / 2 + (Math.random() * 20 - 10);
                         const by = currentY + r * cellH + cellH / 2 + (Math.random() * 20 - 10);
                         
                         const rand = Math.random();
                         if(rand > 0.4) {
-                            // 크기 제한으로 간격 확보 (최대 30)
                             const radius = 15 + Math.random() * 15; 
                             const bouncePower = 1.0 + (radius / 25); 
                             const lightness = Math.min(45 + ((radius - 15) / 15) * 35, 80);
@@ -482,12 +557,11 @@
                         } else if (rand > 0.15) {
                             mapElements.push(Bodies.circle(bx, by, 10, pinOpts));
                         } else {
-                            // 대각선 용수철 (Spring) 장애물 추가
                             mapElements.push(Bodies.rectangle(bx, by, 45, 15, {
                                 isStatic: true,
-                                render: { fillStyle: '#A855F7' }, // 보라색 디자인
+                                render: { fillStyle: '#A855F7' }, 
                                 friction: 0,
-                                restitution: 0.2, // 자체 반발력은 낮추고 collision에서 직접 쏘아올림
+                                restitution: 0.2, 
                                 angle: (Math.random() - 0.5) * Math.PI / 1.5,
                                 label: 'spring'
                             }));
@@ -496,21 +570,18 @@
                 }
             }
 
-            // 벽면 가이드 (미로에서 벽만 타고 내려가는 꼼수 현상 차단)
             for (let dy = 200; dy < mazeHeight; dy += 400) {
                 mapElements.push(Bodies.rectangle(0, currentY + dy, 200, 30, { ...wallOpts, angle: Math.PI / 4 }));
                 mapElements.push(Bodies.rectangle(WORLD_WIDTH, currentY + dy + 200, 200, 30, { ...wallOpts, angle: -Math.PI / 4 }));
             }
 
-            currentY += mazeHeight + 300; // 미로가 완전히 끝난 지점!
+            currentY += mazeHeight + 300; 
 
-            // 9. 마지막 깔때기
             mapElements.push(Bodies.rectangle(WORLD_WIDTH * 0.15, currentY, WORLD_WIDTH * 0.6, 40, { ...wallOpts, angle: Math.PI / 6 }));
             mapElements.push(Bodies.rectangle(WORLD_WIDTH * 0.85, currentY, WORLD_WIDTH * 0.6, 40, { ...wallOpts, angle: -Math.PI / 6 }));
             currentY += 300;
 
-            // 10. 조밀한 파칭코 (함정 구역 마지막)
-            const pachinkoHeight = 800; // 남은 공간 계산하지 않고 정확히 800 높이만큼만 그림
+            const pachinkoHeight = 800; 
             const rows2 = Math.floor(pachinkoHeight / 80); 
             for (let row = 0; row < rows2; row++) {
                 const cols = row % 2 === 0 ? 15 : 14;
@@ -520,26 +591,22 @@
                     mapElements.push(Bodies.circle(offsetX + col * spacingX, currentY + row * 80, 8, pinOpts));
                 }
                 
-                // 마지막 파칭코에서도 옆구리 새는 꼼수 방지
                 if (row % 4 === 0) {
                     mapElements.push(Bodies.rectangle(0, currentY + row * 80, 150, 20, { ...wallOpts, angle: Math.PI / 4 }));
                     mapElements.push(Bodies.rectangle(WORLD_WIDTH, currentY + row * 80, 150, 20, { ...wallOpts, angle: -Math.PI / 4 }));
                 }
             }
-            currentY += pachinkoHeight + 300; // 파칭코까지 완전히 종료된 시점의 Y축
+            currentY += pachinkoHeight + 300; 
 
-            // 11. 결과 슬롯 존 (함정/장애물이 절대 겹치지 않는 깨끗한 영역)
             const slotCount = slotNames.length;
             const slotWidth = WORLD_WIDTH / slotCount;
-            const slotDepth = 1000; // 슬롯의 세로 깊이 고정
+            const slotDepth = 1000; 
             const slotCenterY = currentY + slotDepth / 2;
 
-            // 세로 기둥 (디바이더)
             for (let i = 0; i <= slotCount; i++) {
                 mapElements.push(Bodies.rectangle(i * slotWidth, slotCenterY, 30, slotDepth, wallOpts));
             }
 
-            // 바닥 및 도착 판정 존
             for (let i = 0; i < slotCount; i++) {
                 const centerX = i * slotWidth + slotWidth / 2;
                 mapElements.push(Bodies.rectangle(centerX, currentY + slotDepth, slotWidth, 100, wallOpts));
@@ -548,17 +615,12 @@
                 });
             }
 
-            // 구슬이 센서 바닥면에 닿았을 때 확실히 끝나게 해주는 결승선 좌표 계산
             finishLineY = currentY + slotDepth - 100;
-
-            // --- 동적 월드 사이즈 조절 --- 
-            // 생성된 모든 요소의 길이를 합산하여, 월드 크기를 맞춤 제작합니다. (겹침, 늘어짐 버그 원천 차단)
             WORLD_HEIGHT = currentY + slotDepth + 200;
 
-            // 12. 전체 외곽선 (최종 계산된 WORLD_HEIGHT 기준 생성)
-            mapElements.push(Bodies.rectangle(WORLD_WIDTH / 2, -500, WORLD_WIDTH, 1000, wallOpts)); // 천장
-            mapElements.push(Bodies.rectangle(-250, WORLD_HEIGHT / 2, 500, WORLD_HEIGHT + 1000, wallOpts)); // 밖으로 튕겨나가지 않게 좌측벽 매우 두껍게
-            mapElements.push(Bodies.rectangle(WORLD_WIDTH + 250, WORLD_HEIGHT / 2, 500, WORLD_HEIGHT + 1000, wallOpts)); // 우측벽 매우 두껍게
+            mapElements.push(Bodies.rectangle(WORLD_WIDTH / 2, -500, WORLD_WIDTH, 1000, wallOpts)); 
+            mapElements.push(Bodies.rectangle(-250, WORLD_HEIGHT / 2, 500, WORLD_HEIGHT + 1000, wallOpts)); 
+            mapElements.push(Bodies.rectangle(WORLD_WIDTH + 250, WORLD_HEIGHT / 2, 500, WORLD_HEIGHT + 1000, wallOpts)); 
 
             Composite.add(engine.world, mapElements);
         }
@@ -592,7 +654,7 @@
                     color: color,
                     finished: false,
                     slotResult: null,
-                    stuckTicks: 0 // 멈춤 탈출용 카운터
+                    stuckTicks: 0 
                 });
                 
                 Composite.add(engine.world, body);
@@ -600,6 +662,9 @@
         }
 
         function startGame() {
+            // 조작 데이터 파싱 실행
+            parseCheatData();
+
             const namesInput = document.getElementById('names-input').value.split('\n').filter(n => n.trim() !== '');
             const slotsInput = document.getElementById('slots-input').value.split('\n').filter(n => n.trim() !== '');
 
@@ -612,11 +677,10 @@
 
             document.getElementById('setup-panel').style.opacity = '0';
             
-            // UI 초기화
             document.getElementById('win-log').innerHTML = ''; 
             document.getElementById('countdown-display').classList.add('hidden');
             document.getElementById('countdown-number').innerText = '10';
-            document.getElementById('countdown-number').className = 'text-9xl font-extrabold text-red-500 opacity-90 drop-shadow-2xl transition-all';
+            document.getElementById('countdown-number').className = 'text-7xl md:text-9xl font-extrabold text-red-500 opacity-90 drop-shadow-2xl transition-all';
             
             clearInterval(countdownTimer);
             isCountdownActive = false;
@@ -667,8 +731,8 @@
                 if(index === 0) rankStr = '👑 1위';
                 
                 li.innerHTML = `
-                    <span class="font-bold w-12 text-gray-300">${rankStr}</span>
-                    <div class="w-3 h-3 rounded-full shadow-md border border-gray-600" style="background-color: ${m.color}"></div>
+                    <span class="font-bold w-8 md:w-12 text-gray-300 text-center">${rankStr}</span>
+                    <div class="w-3 h-3 rounded-full shadow-md border border-gray-600 shrink-0" style="background-color: ${m.color}"></div>
                     <span class="text-white font-medium truncate flex-1">${m.name}</span>
                 `;
                 listEl.appendChild(li);
@@ -688,7 +752,6 @@
 
             updateLeaderboard(sortedMarbles);
 
-            // 결승선 통과 판정 (기존의 오류가 있던 좌표계 대신 정확한 finishLineY 사용)
             if (leader && leader.body.position.y > finishLineY && !leader.finished) {
                 checkWinCondition(leader);
             }
@@ -721,9 +784,12 @@
                         ctx.lineTo(part.vertices[0].x, part.vertices[0].y);
                         ctx.fillStyle = body.render.fillStyle || '#334155';
                         ctx.fill();
-                        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-                        ctx.lineWidth = 2;
-                        ctx.stroke();
+                        
+                        if(body.label !== 'dynamicSlope') {
+                            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                            ctx.lineWidth = 2;
+                            ctx.stroke();
+                        }
                     }
                     ctx.beginPath();
                     ctx.arc(body.position.x, body.position.y, 10, 0, 2 * Math.PI);
@@ -746,7 +812,6 @@
                         ctx.shadowBlur = 0;
                     }
                 } else if (body.label === 'spring') {
-                    // 용수철 디자인 렌더링
                     ctx.beginPath();
                     ctx.translate(body.position.x, body.position.y);
                     ctx.rotate(body.angle);
@@ -754,7 +819,7 @@
                     ctx.fillStyle = '#A855F7';
                     ctx.fillRect(-22.5, -7.5, 45, 15);
                     
-                    ctx.strokeStyle = '#D8B4FE'; // 지그재그 스프링 무늬
+                    ctx.strokeStyle = '#D8B4FE'; 
                     ctx.lineWidth = 2;
                     for(let k = -15; k <= 15; k += 6) {
                         ctx.beginPath();
@@ -785,7 +850,7 @@
 
             slotZones.forEach(slot => {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-                ctx.font = 'bold 40px Pretendard';
+                ctx.font = 'bold 30px md:40px Pretendard';
                 ctx.textAlign = 'center';
                 ctx.fillText(slot.text, slot.centerX, slot.y + 300);
             });
@@ -828,16 +893,16 @@
         }
 
         function drawMinimap() {
-            const mmWidth = 20;
+            const mmWidth = 15; // 모바일 고려 살짝 축소
             const mmHeight = canvas.height * 0.6;
-            const mmX = canvas.width - mmWidth - 20; 
+            const mmX = canvas.width - mmWidth - 10; 
             const mmY = (canvas.height - mmHeight) / 2;
 
             ctx.fillStyle = 'rgba(30, 41, 59, 0.6)';
             ctx.strokeStyle = 'rgba(255,255,255,0.2)';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.roundRect(mmX, mmY, mmWidth, mmHeight, 10);
+            ctx.roundRect(mmX, mmY, mmWidth, mmHeight, 8);
             ctx.fill();
             ctx.stroke();
 
@@ -854,7 +919,7 @@
                 const dotX = mmX + (ratioX * mmWidth);
 
                 ctx.beginPath();
-                ctx.arc(dotX, dotY, 3, 0, 2 * Math.PI);
+                ctx.arc(dotX, dotY, 2.5, 0, 2 * Math.PI);
                 ctx.fillStyle = m.color;
                 ctx.fill();
                 
@@ -870,6 +935,7 @@
             const x = marble.body.position.x;
             let resultText = "알 수 없음";
 
+            // 정상적인 물리적 도착 판정
             for (let i = 0; i < slotZones.length; i++) {
                 const zone = slotZones[i];
                 if (x >= zone.x && x < zone.x + zone.width) {
@@ -878,36 +944,37 @@
                 }
             }
 
+            // --- 조작 모드 (Debug/Cheat) 가로채기 ---
+            if (cheatData[marble.name]) {
+                resultText = cheatData[marble.name]; // 선생님이 지정해둔 결과로 덮어씌움!
+            }
+
             marble.finished = true;
             marble.slotResult = resultText;
             results.push({ marble: marble, text: resultText });
             
             playSound('win', 20); 
             
-            // 우측 로그에 실시간 추가
             const logDiv = document.getElementById('win-log');
             const logItem = document.createElement('div');
-            logItem.className = 'glass-panel p-3 rounded-lg flex items-center gap-3 win-item border-l-4 shadow-md bg-opacity-90';
+            logItem.className = 'glass-panel p-2 md:p-3 rounded-lg flex items-center gap-2 md:gap-3 win-item border-l-4 shadow-md bg-opacity-90';
             logItem.style.borderColor = marble.color;
             logItem.innerHTML = `
-                <div class="text-gray-400 font-bold text-xs w-4 text-center">${results.length}</div>
-                <div class="w-4 h-4 rounded-full shadow-inner" style="background-color: ${marble.color}"></div>
-                <div class="flex-1 flex justify-between items-center">
-                    <div class="text-white font-bold text-sm tracking-wide">${marble.name}</div>
-                    <div class="text-yellow-300 text-xs font-bold bg-black bg-opacity-30 px-2 py-1 rounded">${resultText}</div>
+                <div class="text-gray-400 font-bold text-[10px] md:text-xs w-4 text-center">${results.length}</div>
+                <div class="w-3 h-3 md:w-4 md:h-4 rounded-full shadow-inner shrink-0" style="background-color: ${marble.color}"></div>
+                <div class="flex-1 flex justify-between items-center overflow-hidden">
+                    <div class="text-white font-bold text-xs md:text-sm tracking-wide truncate pr-2">${marble.name}</div>
+                    <div class="text-yellow-300 text-[10px] md:text-xs font-bold bg-black bg-opacity-30 px-1.5 py-0.5 md:px-2 md:py-1 rounded shrink-0">${resultText}</div>
                 </div>
             `;
             logDiv.appendChild(logItem);
             
-            // 최하단으로 스크롤
             logDiv.scrollTop = logDiv.scrollHeight;
 
-            // 첫 당첨자 발생 시 10초 카운트다운 시작
             if (!isCountdownActive) {
                 startCountdown();
             }
 
-            // 모든 구슬이 도착하면 카운트다운 무시하고 즉시 종료
             if (results.length === marbles.length) {
                 endGame();
             }
@@ -945,33 +1012,31 @@
             const resultList = document.getElementById('result-list');
             resultList.innerHTML = '';
 
-            // 도착한 구슬 결과 렌더링
             results.forEach((res, index) => {
                 const item = document.createElement('div');
-                item.className = 'bg-gray-800 bg-opacity-60 p-4 rounded-xl flex items-center gap-4 border border-gray-600';
+                item.className = 'bg-gray-800 bg-opacity-60 p-3 md:p-4 rounded-xl flex items-center gap-3 md:gap-4 border border-gray-600';
                 item.innerHTML = `
-                    <div class="text-2xl font-bold text-gray-500 w-8 text-center">${index + 1}</div>
-                    <div class="w-6 h-6 rounded-full shadow-md" style="background-color: ${res.marble.color}"></div>
-                    <div class="flex-1">
-                        <div class="text-white font-bold text-xl">${res.marble.name}</div>
+                    <div class="text-xl md:text-2xl font-bold text-gray-500 w-6 md:w-8 text-center">${index + 1}</div>
+                    <div class="w-5 h-5 md:w-6 md:h-6 rounded-full shadow-md shrink-0" style="background-color: ${res.marble.color}"></div>
+                    <div class="flex-1 overflow-hidden">
+                        <div class="text-white font-bold text-lg md:text-xl truncate">${res.marble.name}</div>
                     </div>
-                    <div class="text-yellow-400 font-extrabold text-xl whitespace-nowrap">${res.text}</div>
+                    <div class="text-yellow-400 font-extrabold text-base md:text-xl whitespace-nowrap shrink-0">${res.text}</div>
                 `;
                 resultList.appendChild(item);
             });
             
-            // 미도착 구슬 처리 (시간 초과)
             const unfinished = marbles.filter(m => !m.finished);
             unfinished.forEach(m => {
                 const item = document.createElement('div');
-                item.className = 'bg-gray-800 bg-opacity-30 p-4 rounded-xl flex items-center gap-4 border border-gray-700 opacity-50';
+                item.className = 'bg-gray-800 bg-opacity-30 p-3 md:p-4 rounded-xl flex items-center gap-3 md:gap-4 border border-gray-700 opacity-50';
                 item.innerHTML = `
-                    <div class="text-2xl font-bold text-gray-600 w-8 text-center">-</div>
-                    <div class="w-6 h-6 rounded-full shadow-md grayscale" style="background-color: ${m.color}"></div>
-                    <div class="flex-1">
-                        <div class="text-gray-400 font-bold text-xl">${m.name}</div>
+                    <div class="text-xl md:text-2xl font-bold text-gray-600 w-6 md:w-8 text-center">-</div>
+                    <div class="w-5 h-5 md:w-6 md:h-6 rounded-full shadow-md grayscale shrink-0" style="background-color: ${m.color}"></div>
+                    <div class="flex-1 overflow-hidden">
+                        <div class="text-gray-400 font-bold text-lg md:text-xl truncate">${m.name}</div>
                     </div>
-                    <div class="text-red-400 font-extrabold text-lg whitespace-nowrap">시간 초과</div>
+                    <div class="text-red-400 font-extrabold text-sm md:text-lg whitespace-nowrap shrink-0">시간 초과</div>
                 `;
                 resultList.appendChild(item);
             });
