@@ -27,18 +27,17 @@
             transition: all 0.3s ease;
         }
 
-        /* 모바일 최적화: 순위표 반투명 호버 효과 */
         #leaderboard-panel {
             transition: opacity 0.3s ease;
         }
         @media (max-width: 768px) {
             #leaderboard-panel {
-                opacity: 0.4; /* 모바일에서 기본 반투명 */
+                opacity: 0.4;
                 width: auto;
                 min-width: 140px;
             }
             #leaderboard-panel:hover, #leaderboard-panel:active {
-                opacity: 1; /* 터치 시 선명하게 */
+                opacity: 1;
             }
         }
 
@@ -57,7 +56,6 @@
             text-shadow: 0 4px 15px rgba(0,0,0,0.8);
         }
         
-        /* 숨겨진 디버그 패널 */
         #debug-panel {
             display: none;
             border-color: #ef4444;
@@ -71,7 +69,6 @@
     <div id="ui-layer" class="flex flex-col items-center justify-center">
         
         <div id="setup-panel" class="glass-panel p-6 md:p-8 rounded-2xl shadow-2xl pointer-events-auto w-full max-w-2xl mx-4 transition-opacity duration-300 absolute z-10 max-h-[90vh] overflow-y-auto">
-            <!-- 제목 (더블클릭 시 조작 모드 발동) -->
             <h1 id="main-title" class="text-2xl md:text-3xl font-bold mb-6 text-center text-yellow-400 drop-shadow-md cursor-pointer select-none">🚀 엎치락뒤치락 범퍼 룰렛</h1>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -97,7 +94,6 @@
                 </div>
             </div>
 
-            <!-- 비밀 조작 패널 (평소엔 숨김) -->
             <div id="debug-panel" class="mt-6 p-4 border-2 rounded-xl bg-red-900 bg-opacity-30">
                 <h3 class="text-red-400 font-bold mb-3 flex items-center gap-2">
                     <span>🕵️ 선생님 전용 조작 모드</span>
@@ -114,7 +110,6 @@
                 <button id="add-cheat-btn" class="mt-2 text-xs bg-gray-700 hover:bg-gray-600 w-full py-2 rounded text-gray-300 transition">+ 조작 대상 추가</button>
             </div>
             
-            <!-- 카운트다운 옵션 토글 스위치 -->
             <div class="mt-6 flex items-center justify-center gap-3">
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" id="use-countdown" class="sr-only peer" checked>
@@ -130,7 +125,6 @@
         </div>
 
         <div id="hud" class="absolute inset-0 pointer-events-none hidden">
-            <!-- 모바일 대응 순위표 -->
             <div id="leaderboard-panel" class="absolute top-4 left-4 glass-panel p-3 md:p-4 rounded-xl w-40 md:w-48 pointer-events-auto">
                 <h3 class="text-yellow-400 font-bold mb-2 border-b border-gray-600 pb-1 text-sm md:text-base">🏆 현재 순위</h3>
                 <ul id="leaderboard-list" class="space-y-2 text-xs md:text-sm"></ul>
@@ -275,6 +269,8 @@
         let isFinished = false;
         let finishLineY = 0; 
         
+        let startBoxBottom; 
+
         let countdownTimer = null;
         let countdownValue = 10;
         let isCountdownActive = false;
@@ -309,7 +305,7 @@
                     if (labelA === 'marble' || labelB === 'marble') {
                         const otherLabel = labelA === 'marble' ? labelB : labelA;
                         
-                        if (otherLabel === 'wall' || otherLabel === 'bump' || otherLabel === 'dynamicSlope') continue;
+                        if (otherLabel === 'wall' || otherLabel === 'bump' || otherLabel === 'dynamicSlope' || otherLabel === 'startBoxBottom') continue;
 
                         const velocityA = pair.bodyA.velocity ? Vector.magnitude(pair.bodyA.velocity) : 0;
                         const velocityB = pair.bodyB.velocity ? Vector.magnitude(pair.bodyB.velocity) : 0;
@@ -357,28 +353,23 @@
                 let secondPlace = activeMarbles[1];
                 let leaderY = currentLeader ? currentLeader.body.position.y : 0;
                 
-                // 누군가 피니쉬 라인을 통과했는지 확인
                 let hasLeaderFinished = results.length > 0;
 
                 marbles.forEach(m => {
                     if (m.finished) return;
                     
-                    // 1. 1등 도착 시 남은 구슬들 광란의 질주 부스트
                     if (hasLeaderFinished) {
-                        m.body.frictionAir = 0.005; // 공기 저항 대폭 감소
-                        Body.applyForce(m.body, m.body.position, { x: 0, y: 0.0025 }); // 하강력 부여
+                        m.body.frictionAir = 0.005; 
+                        Body.applyForce(m.body, m.body.position, { x: 0, y: 0.0025 }); 
                     } 
-                    // 2. 일반 레이스 밸런스 로직
                     else {
                         let distanceBehind = leaderY - m.body.position.y;
                         
-                        // 뒤쳐진 구슬들 추격 부스트
                         if (distanceBehind > 150 && m !== currentLeader) {
                             let boost = Math.min(distanceBehind * 0.0000015, 0.0015);
                             Body.applyForce(m.body, m.body.position, { x: 0, y: boost });
                         }
                         
-                        // 압도적 1등 견제 (하강 속도 반감)
                         if (m === currentLeader && secondPlace) {
                             let gap = currentLeader.body.position.y - secondPlace.body.position.y;
                             if (gap > 250) { 
@@ -394,7 +385,6 @@
                         }
                     }
                     
-                    // 3. 멈춤 방지 기하급수 진동 탈출
                     if (Math.abs(m.body.velocity.x) < 0.3 && Math.abs(m.body.velocity.y) < 0.3) {
                         m.stuckTicks = (m.stuckTicks || 0) + 1;
                         if (m.stuckTicks > 30) {
@@ -431,8 +421,26 @@
             const pinOpts = { isStatic: true, render: { fillStyle: '#94A3B8' }, friction: 0, restitution: 0.9, label: 'pin' }; 
             const bumperOpts = { isStatic: true, render: { fillStyle: '#F43F5E' }, friction: 0, restitution: 1.5, label: 'bumper' }; 
 
-            let currentY = 300;
+            let currentY = 0;
 
+            // --- 0. 공평한 스폰 대기 상자 (Start Box) ---
+            const boxWidth = 900; // 넓은 상자 폭 (구슬들이 겹치지 않게)
+            
+            // 양쪽 벽 (두껍고 높게 설정)
+            mapElements.push(Bodies.rectangle(WORLD_WIDTH / 2 - boxWidth/2, -50, 40, 300, wallOpts)); 
+            mapElements.push(Bodies.rectangle(WORLD_WIDTH / 2 + boxWidth/2, -50, 40, 300, wallOpts)); 
+            
+            // 바닥
+            startBoxBottom = Bodies.rectangle(WORLD_WIDTH / 2, 100, boxWidth, 40, { 
+                isStatic: true, 
+                render: { fillStyle: '#F59E0B' }, 
+                label: 'startBoxBottom' 
+            });
+            mapElements.push(startBoxBottom);
+
+            currentY += 400; 
+
+            // 1. 시작 깔때기
             mapElements.push(Bodies.rectangle(WORLD_WIDTH * 0.15, currentY, WORLD_WIDTH * 0.6, 60, { ...wallOpts, angle: Math.PI / 6 }));
             mapElements.push(Bodies.rectangle(WORLD_WIDTH * 0.85, currentY, WORLD_WIDTH * 0.6, 60, { ...wallOpts, angle: -Math.PI / 6 }));
             currentY += 400; 
@@ -470,7 +478,7 @@
                 mapElements.push(slopeBody);
             }
 
-            for (let i = 0; i < 8; i++) {
+            for (let i = 0; i < 4; i++) {
                 const isLeft = i % 2 === 0;
                 const cx = isLeft ? WORLD_WIDTH * 0.35 : WORLD_WIDTH * 0.65;
                 const angle = isLeft ? 0.35 : -0.35; 
@@ -565,6 +573,14 @@
             currentY += 400;
             addMotorizedFlipper(WORLD_WIDTH * 0.5, currentY, 600, 0.08, '#3B82F6');
             currentY += 400;
+
+            for (let i = 0; i < 4; i++) {
+                const isLeft = i % 2 !== 0;
+                const cx = isLeft ? WORLD_WIDTH * 0.35 : WORLD_WIDTH * 0.65;
+                const angle = isLeft ? 0.35 : -0.35; 
+                addDynamicBumpySlope(cx, currentY, WORLD_WIDTH * 0.7, angle);
+                currentY += 350;
+            }
 
             const mazeHeight = 3500; 
             const cols = 9;  
@@ -670,16 +686,31 @@
 
         function createMarbles(names) {
             marbles = [];
-            const startX = WORLD_WIDTH / 2;
-            const startY = 50;
+            
+            // --- 격자형 정렬 스폰 (Grid Spawn) 계산 ---
+            const maxCols = 22; // 한 줄에 최대 22명
+            const spacing = MARBLE_RADIUS * 2.5; // 구슬 크기보다 넉넉한 간격
+            const actualCols = Math.min(names.length, maxCols);
+            
+            // 그리드가 중앙에 위치하도록 계산
+            const startX = (WORLD_WIDTH / 2) - ((actualCols * spacing) / 2) + (spacing / 2);
+            // 시작 상자의 바닥(100) 바로 위부터 차곡차곡 위로 쌓아올림
+            const startY = 70; 
 
             names.forEach((name, index) => {
                 if(!name.trim()) return;
 
                 const color = colors[index % colors.length];
+                
+                // 수학적으로 겹치지 않는 좌표 계산
+                const row = Math.floor(index / maxCols);
+                const col = index % maxCols;
+                const spawnX = startX + (col * spacing);
+                const spawnY = startY - (row * spacing); // row가 커질수록 위로 쌓임
+                
                 const body = Bodies.circle(
-                    startX + (Math.random() * 400 - 200), // 더 넓게 퍼뜨림 (겹침 방지)
-                    startY - (Math.random() * 400),       // 상하로도 더 넓게 분산
+                    spawnX, 
+                    spawnY,       
                     MARBLE_RADIUS, 
                     {
                         restitution: 0.5, 
@@ -717,7 +748,6 @@
                 return;
             }
 
-            // 이름 목록을 무작위로 섞음 (시작 위치 및 처리 순서에 따른 물리적 편향 완전 차단)
             for (let i = namesInput.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [namesInput[i], namesInput[j]] = [namesInput[j], namesInput[i]];
@@ -750,7 +780,24 @@
             gameState = 'playing';
             isFinished = false;
             results = [];
-            camera.y = 0;
+            
+            // 카메라 타겟을 스폰 박스로 고정
+            camera.y = -200;
+            camera.targetY = -200;
+
+            // --- 2초 대기 후 동시 출발 (바닥 열기) ---
+            setTimeout(() => {
+                if (gameState === 'playing' && startBoxBottom) {
+                    playSound('hit', 20); 
+                    
+                    Composite.remove(engine.world, startBoxBottom);
+                    
+                    const index = mapElements.indexOf(startBoxBottom);
+                    if (index > -1) {
+                        mapElements.splice(index, 1);
+                    }
+                }
+            }, 2000);
         }
 
         function resetGame() {
@@ -809,7 +856,7 @@
             if (leader) {
                 camera.targetY = leader.body.position.y - (canvas.height * 0.6);
             }
-            camera.targetY = Math.max(0, Math.min(camera.targetY, WORLD_HEIGHT - canvas.height));
+            camera.targetY = Math.max(-200, Math.min(camera.targetY, WORLD_HEIGHT - canvas.height));
 
             const lerpSpeed = 0.05; 
             camera.y += (camera.targetY - camera.y) * lerpSpeed;
@@ -931,7 +978,7 @@
                 ctx.fillText(m.name, pos.x, pos.y - 28);
                 ctx.shadowBlur = 0;
                 
-                if(m === sortedMarbles[0] && gameState === 'playing') {
+                if(m === sortedMarbles[0] && gameState === 'playing' && m.body.position.y > 0) {
                     ctx.font = '24px Arial';
                     ctx.fillText('👑', pos.x, pos.y - 55);
                 }
