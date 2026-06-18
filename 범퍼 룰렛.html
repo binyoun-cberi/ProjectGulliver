@@ -115,6 +115,15 @@
                 <button id="add-cheat-btn" class="mt-2 text-xs bg-gray-700 hover:bg-gray-600 w-full py-2 rounded text-gray-300 transition">+ 조작 대상 추가</button>
             </div>
             
+            <!-- 카운트다운 옵션 토글 스위치 -->
+            <div class="mt-6 flex items-center justify-center gap-3">
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="use-countdown" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+                    <span class="ml-3 text-sm font-medium text-gray-300 select-none">1위 도착 시 10초 카운트다운 적용</span>
+                </label>
+            </div>
+
             <button id="start-btn" class="mt-6 md:mt-8 w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-400 hover:to-orange-500 text-white font-bold py-3 md:py-4 px-6 rounded-xl shadow-lg transform transition hover:scale-105 active:scale-95 text-lg">
                 레이스 시작!
             </button>
@@ -272,6 +281,7 @@
         let countdownTimer = null;
         let countdownValue = 10;
         let isCountdownActive = false;
+        let useCountdown = true; // 카운트다운 사용 여부 변수 추가
 
         const WORLD_WIDTH = 1200;
         let WORLD_HEIGHT = 15000; 
@@ -316,15 +326,17 @@
                             }
                         }
 
+                        // 용수철(Spring) 충돌 시 위 대각선으로 강력하게 쏘아올림
                         if (otherLabel === 'spring') {
                             playSound('bumper', 30);
                             const marbleBody = labelA === 'marble' ? pair.bodyA : pair.bodyB;
                             const springBody = labelA === 'spring' ? pair.bodyA : pair.bodyB;
                             
                             const dirX = marbleBody.position.x > springBody.position.x ? 1 : -1;
+                            // 튕겨나가는 힘의 변수를 대폭 증가 (더 높이, 더 멀리, 완전히 랜덤하게)
                             Body.setVelocity(marbleBody, {
-                                x: dirX * (15 + Math.random() * 8), 
-                                y: -25 - Math.random() * 10 
+                                x: dirX * (10 + Math.random() * 20), 
+                                y: -20 - Math.random() * 25 
                             });
                         }
                     }
@@ -528,24 +540,31 @@
             addMotorizedFlipper(WORLD_WIDTH * 0.5, currentY, 600, 0.08, '#3B82F6');
             currentY += 400;
 
-            const mazeHeight = 2500;
-            const cols = 8;
-            const rows = 12;
+            // 8. 미로형 범퍼 방 (혼돈과 역전의 도가니로 밀도 및 길이 대폭 상향)
+            const mazeHeight = 3500; // 구간 길이 1000px 연장
+            const cols = 9;  // 촘촘한 밀도
+            const rows = 20; // 촘촘한 밀도
             const cellW = (WORLD_WIDTH - 200) / cols;
             const cellH = mazeHeight / rows;
 
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
-                    if(Math.random() > 0.4) { 
-                        const bx = 100 + c * cellW + cellW / 2 + (Math.random() * 20 - 10);
-                        const by = currentY + r * cellH + cellH / 2 + (Math.random() * 20 - 10);
+                    if(Math.random() > 0.2) { // 생성 확률 60% -> 80%로 상향
+                        const bx = 100 + c * cellW + cellW / 2 + (Math.random() * 30 - 15);
+                        const by = currentY + r * cellH + cellH / 2 + (Math.random() * 30 - 15);
                         
                         const rand = Math.random();
-                        if(rand > 0.4) {
-                            const radius = 15 + Math.random() * 15; 
-                            const bouncePower = 1.0 + (radius / 25); 
-                            const lightness = Math.min(45 + ((radius - 15) / 15) * 35, 80);
-                            const color = `hsl(343, 90%, ${lightness}%)`;
+                        if(rand > 0.5) { // 50% 확률로 크고 작은 범퍼 생성
+                            const radius = 12 + Math.random() * 22; 
+                            let bouncePower = 1.0 + (radius / 20); 
+                            let lightness = Math.min(45 + ((radius - 12) / 22) * 35, 80);
+                            let color = `hsl(343, 90%, ${lightness}%)`;
+
+                            // 10% 확률로 새하얗게 빛나는 '슈퍼 범퍼' 등장 (엄청난 힘으로 튕겨냄)
+                            if (Math.random() > 0.9) {
+                                bouncePower = 2.5;
+                                color = '#FFFFFF';
+                            }
 
                             mapElements.push(Bodies.circle(bx, by, radius, {
                                 isStatic: true,
@@ -554,25 +573,27 @@
                                 restitution: bouncePower, 
                                 label: 'bumper'
                             }));
-                        } else if (rand > 0.15) {
-                            mapElements.push(Bodies.circle(bx, by, 10, pinOpts));
-                        } else {
-                            mapElements.push(Bodies.rectangle(bx, by, 45, 15, {
+                        } else if (rand > 0.2) { // 30% 확률로 용수철 (비율 대폭 증가)
+                            mapElements.push(Bodies.rectangle(bx, by, 50, 15, {
                                 isStatic: true,
                                 render: { fillStyle: '#A855F7' }, 
                                 friction: 0,
                                 restitution: 0.2, 
-                                angle: (Math.random() - 0.5) * Math.PI / 1.5,
+                                // 용수철의 각도를 수평부터 수직에 가깝게 훨씬 다양하게 배치
+                                angle: (Math.random() - 0.5) * Math.PI, 
                                 label: 'spring'
                             }));
+                        } else { // 20% 확률로 통통 튀는 핀
+                            mapElements.push(Bodies.circle(bx, by, 8 + Math.random() * 8, pinOpts));
                         }
                     }
                 }
             }
 
-            for (let dy = 200; dy < mazeHeight; dy += 400) {
+            // 벽면 가이드 (미로 구간이 길어진 만큼 촘촘히 배치하여 벽 타기 꼼수 차단)
+            for (let dy = 200; dy < mazeHeight; dy += 300) {
                 mapElements.push(Bodies.rectangle(0, currentY + dy, 200, 30, { ...wallOpts, angle: Math.PI / 4 }));
-                mapElements.push(Bodies.rectangle(WORLD_WIDTH, currentY + dy + 200, 200, 30, { ...wallOpts, angle: -Math.PI / 4 }));
+                mapElements.push(Bodies.rectangle(WORLD_WIDTH, currentY + dy + 150, 200, 30, { ...wallOpts, angle: -Math.PI / 4 }));
             }
 
             currentY += mazeHeight + 300; 
@@ -664,6 +685,9 @@
         function startGame() {
             // 조작 데이터 파싱 실행
             parseCheatData();
+
+            // 설정에서 카운트다운 사용 여부 확인
+            useCountdown = document.getElementById('use-countdown').checked;
 
             const namesInput = document.getElementById('names-input').value.split('\n').filter(n => n.trim() !== '');
             const slotsInput = document.getElementById('slots-input').value.split('\n').filter(n => n.trim() !== '');
@@ -971,7 +995,8 @@
             
             logDiv.scrollTop = logDiv.scrollHeight;
 
-            if (!isCountdownActive) {
+            // 옵션이 켜져 있을 때만 카운트다운 시작
+            if (!isCountdownActive && useCountdown) {
                 startCountdown();
             }
 
