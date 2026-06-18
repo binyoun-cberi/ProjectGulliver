@@ -105,7 +105,6 @@
                 </h3>
                 <p class="text-xs text-gray-300 mb-3">특정 학생의 결과를 미리 강제 지정할 수 있습니다. (여러 명 지정 가능)</p>
                 <div class="flex flex-col gap-2" id="cheat-list">
-                    <!-- 조작 입력 폼 (초기 1개) -->
                     <div class="flex gap-2 cheat-row">
                         <input type="text" placeholder="학생 이름 (예: 김철수)" class="cheat-name flex-1 bg-gray-800 border border-gray-600 rounded p-2 text-sm text-white focus:outline-none">
                         <span class="text-white self-center">👉</span>
@@ -160,16 +159,15 @@
 
     <script>
         // --- 조작 모드 (Debug Mode) 관련 로직 ---
-        let cheatData = {}; // { "김철수": "발표 당첨!", "이영희": "통과" }
+        let cheatData = {}; 
         
         const titleEl = document.getElementById('main-title');
         const debugPanel = document.getElementById('debug-panel');
         
-        // 더블 클릭(더블 탭) 감지
         let lastClickTime = 0;
         titleEl.addEventListener('click', (e) => {
             const currentTime = new Date().getTime();
-            if (currentTime - lastClickTime < 400) { // 400ms 안에 두 번 클릭 시
+            if (currentTime - lastClickTime < 400) { 
                 debugPanel.style.display = 'block';
             }
             lastClickTime = currentTime;
@@ -191,7 +189,6 @@
             list.appendChild(newRow);
         });
 
-        // 시작 버튼을 누를 때 폼에 입력된 조작 데이터를 추출
         function parseCheatData() {
             cheatData = {};
             const rows = document.querySelectorAll('.cheat-row');
@@ -199,7 +196,7 @@
                 const name = row.querySelector('.cheat-name').value.trim();
                 const res = row.querySelector('.cheat-result').value.trim();
                 if (name && res) {
-                    cheatData[name] = res; // 딕셔너리에 저장
+                    cheatData[name] = res; 
                 }
             });
             console.log("조작 데이터 활성화:", cheatData);
@@ -281,7 +278,7 @@
         let countdownTimer = null;
         let countdownValue = 10;
         let isCountdownActive = false;
-        let useCountdown = true; // 카운트다운 사용 여부 변수 추가
+        let useCountdown = true; 
 
         const WORLD_WIDTH = 1200;
         let WORLD_HEIGHT = 15000; 
@@ -326,14 +323,12 @@
                             }
                         }
 
-                        // 용수철(Spring) 충돌 시 위 대각선으로 강력하게 쏘아올림
                         if (otherLabel === 'spring') {
                             playSound('bumper', 30);
                             const marbleBody = labelA === 'marble' ? pair.bodyA : pair.bodyB;
                             const springBody = labelA === 'spring' ? pair.bodyA : pair.bodyB;
                             
                             const dirX = marbleBody.position.x > springBody.position.x ? 1 : -1;
-                            // 튕겨나가는 힘의 변수를 대폭 증가 (더 높이, 더 멀리, 완전히 랜덤하게)
                             Body.setVelocity(marbleBody, {
                                 x: dirX * (10 + Math.random() * 20), 
                                 y: -20 - Math.random() * 25 
@@ -357,18 +352,49 @@
                     Body.setAngle(slope, slope.baseAngle + angleOffset);
                 });
 
-                let sortedMarbles = [...marbles].sort((a, b) => b.body.position.y - a.body.position.y);
-                let leaderY = sortedMarbles[0] ? sortedMarbles[0].body.position.y : 0;
+                let activeMarbles = [...marbles].filter(m => !m.finished).sort((a, b) => b.body.position.y - a.body.position.y);
+                let currentLeader = activeMarbles[0];
+                let secondPlace = activeMarbles[1];
+                let leaderY = currentLeader ? currentLeader.body.position.y : 0;
+                
+                // 누군가 피니쉬 라인을 통과했는지 확인
+                let hasLeaderFinished = results.length > 0;
 
                 marbles.forEach(m => {
                     if (m.finished) return;
-                    let distanceBehind = leaderY - m.body.position.y;
                     
-                    if (distanceBehind > 150) {
-                        let boost = Math.min(distanceBehind * 0.0000015, 0.0015);
-                        Body.applyForce(m.body, m.body.position, { x: 0, y: boost });
+                    // 1. 1등 도착 시 남은 구슬들 광란의 질주 부스트
+                    if (hasLeaderFinished) {
+                        m.body.frictionAir = 0.005; // 공기 저항 대폭 감소
+                        Body.applyForce(m.body, m.body.position, { x: 0, y: 0.0025 }); // 하강력 부여
+                    } 
+                    // 2. 일반 레이스 밸런스 로직
+                    else {
+                        let distanceBehind = leaderY - m.body.position.y;
+                        
+                        // 뒤쳐진 구슬들 추격 부스트
+                        if (distanceBehind > 150 && m !== currentLeader) {
+                            let boost = Math.min(distanceBehind * 0.0000015, 0.0015);
+                            Body.applyForce(m.body, m.body.position, { x: 0, y: boost });
+                        }
+                        
+                        // 압도적 1등 견제 (하강 속도 반감)
+                        if (m === currentLeader && secondPlace) {
+                            let gap = currentLeader.body.position.y - secondPlace.body.position.y;
+                            if (gap > 250) { 
+                                m.body.frictionAir = 0.08; 
+                                if (m.body.velocity.y > 6) {
+                                    Body.setVelocity(m.body, { x: m.body.velocity.x, y: 6 });
+                                }
+                            } else {
+                                m.body.frictionAir = 0.015; 
+                            }
+                        } else {
+                            m.body.frictionAir = 0.015; 
+                        }
                     }
                     
+                    // 3. 멈춤 방지 기하급수 진동 탈출
                     if (Math.abs(m.body.velocity.x) < 0.3 && Math.abs(m.body.velocity.y) < 0.3) {
                         m.stuckTicks = (m.stuckTicks || 0) + 1;
                         if (m.stuckTicks > 30) {
@@ -540,27 +566,25 @@
             addMotorizedFlipper(WORLD_WIDTH * 0.5, currentY, 600, 0.08, '#3B82F6');
             currentY += 400;
 
-            // 8. 미로형 범퍼 방 (혼돈과 역전의 도가니로 밀도 및 길이 대폭 상향)
-            const mazeHeight = 3500; // 구간 길이 1000px 연장
-            const cols = 9;  // 촘촘한 밀도
-            const rows = 20; // 촘촘한 밀도
+            const mazeHeight = 3500; 
+            const cols = 9;  
+            const rows = 20; 
             const cellW = (WORLD_WIDTH - 200) / cols;
             const cellH = mazeHeight / rows;
 
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
-                    if(Math.random() > 0.2) { // 생성 확률 60% -> 80%로 상향
+                    if(Math.random() > 0.2) { 
                         const bx = 100 + c * cellW + cellW / 2 + (Math.random() * 30 - 15);
                         const by = currentY + r * cellH + cellH / 2 + (Math.random() * 30 - 15);
                         
                         const rand = Math.random();
-                        if(rand > 0.5) { // 50% 확률로 크고 작은 범퍼 생성
+                        if(rand > 0.5) { 
                             const radius = 12 + Math.random() * 22; 
                             let bouncePower = 1.0 + (radius / 20); 
                             let lightness = Math.min(45 + ((radius - 12) / 22) * 35, 80);
                             let color = `hsl(343, 90%, ${lightness}%)`;
 
-                            // 10% 확률로 새하얗게 빛나는 '슈퍼 범퍼' 등장 (엄청난 힘으로 튕겨냄)
                             if (Math.random() > 0.9) {
                                 bouncePower = 2.5;
                                 color = '#FFFFFF';
@@ -573,24 +597,22 @@
                                 restitution: bouncePower, 
                                 label: 'bumper'
                             }));
-                        } else if (rand > 0.2) { // 30% 확률로 용수철 (비율 대폭 증가)
+                        } else if (rand > 0.2) { 
                             mapElements.push(Bodies.rectangle(bx, by, 50, 15, {
                                 isStatic: true,
                                 render: { fillStyle: '#A855F7' }, 
                                 friction: 0,
                                 restitution: 0.2, 
-                                // 용수철의 각도를 수평부터 수직에 가깝게 훨씬 다양하게 배치
                                 angle: (Math.random() - 0.5) * Math.PI, 
                                 label: 'spring'
                             }));
-                        } else { // 20% 확률로 통통 튀는 핀
+                        } else { 
                             mapElements.push(Bodies.circle(bx, by, 8 + Math.random() * 8, pinOpts));
                         }
                     }
                 }
             }
 
-            // 벽면 가이드 (미로 구간이 길어진 만큼 촘촘히 배치하여 벽 타기 꼼수 차단)
             for (let dy = 200; dy < mazeHeight; dy += 300) {
                 mapElements.push(Bodies.rectangle(0, currentY + dy, 200, 30, { ...wallOpts, angle: Math.PI / 4 }));
                 mapElements.push(Bodies.rectangle(WORLD_WIDTH, currentY + dy + 150, 200, 30, { ...wallOpts, angle: -Math.PI / 4 }));
@@ -656,8 +678,8 @@
 
                 const color = colors[index % colors.length];
                 const body = Bodies.circle(
-                    startX + (Math.random() * 200 - 100), 
-                    startY - (Math.random() * 300), 
+                    startX + (Math.random() * 400 - 200), // 더 넓게 퍼뜨림 (겹침 방지)
+                    startY - (Math.random() * 400),       // 상하로도 더 넓게 분산
                     MARBLE_RADIUS, 
                     {
                         restitution: 0.5, 
@@ -683,18 +705,22 @@
         }
 
         function startGame() {
-            // 조작 데이터 파싱 실행
             parseCheatData();
 
-            // 설정에서 카운트다운 사용 여부 확인
             useCountdown = document.getElementById('use-countdown').checked;
 
-            const namesInput = document.getElementById('names-input').value.split('\n').filter(n => n.trim() !== '');
+            let namesInput = document.getElementById('names-input').value.split('\n').filter(n => n.trim() !== '');
             const slotsInput = document.getElementById('slots-input').value.split('\n').filter(n => n.trim() !== '');
 
             if (namesInput.length === 0 || slotsInput.length === 0) {
                 alert("학생 명단과 슬롯을 1개 이상 입력해주세요.");
                 return;
+            }
+
+            // 이름 목록을 무작위로 섞음 (시작 위치 및 처리 순서에 따른 물리적 편향 완전 차단)
+            for (let i = namesInput.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [namesInput[i], namesInput[j]] = [namesInput[j], namesInput[i]];
             }
 
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -917,7 +943,7 @@
         }
 
         function drawMinimap() {
-            const mmWidth = 15; // 모바일 고려 살짝 축소
+            const mmWidth = 15; 
             const mmHeight = canvas.height * 0.6;
             const mmX = canvas.width - mmWidth - 10; 
             const mmY = (canvas.height - mmHeight) / 2;
@@ -959,7 +985,6 @@
             const x = marble.body.position.x;
             let resultText = "알 수 없음";
 
-            // 정상적인 물리적 도착 판정
             for (let i = 0; i < slotZones.length; i++) {
                 const zone = slotZones[i];
                 if (x >= zone.x && x < zone.x + zone.width) {
@@ -968,9 +993,8 @@
                 }
             }
 
-            // --- 조작 모드 (Debug/Cheat) 가로채기 ---
             if (cheatData[marble.name]) {
-                resultText = cheatData[marble.name]; // 선생님이 지정해둔 결과로 덮어씌움!
+                resultText = cheatData[marble.name]; 
             }
 
             marble.finished = true;
@@ -995,7 +1019,6 @@
             
             logDiv.scrollTop = logDiv.scrollHeight;
 
-            // 옵션이 켜져 있을 때만 카운트다운 시작
             if (!isCountdownActive && useCountdown) {
                 startCountdown();
             }
