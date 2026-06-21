@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인터랙티브 플래시카드 & 퀴즈 메이커</title>
+    <!-- Tailwind CSS (스타일링) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome (아이콘) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* 플래시카드 3D 뒤집기 애니메이션을 위한 커스텀 CSS */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        
+        .flip-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        /* [수정됨] 뒤집기 CSS 선택자 오류 수정 */
+        .flip-card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* 짝맞추기 게임 애니메이션 (흔들림) */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.3s ease-in-out; }
+
+        /* [추가됨] 선 긋기 점 및 드래그 애니메이션 */
+        .connection-dot {
+            touch-action: none; /* 모바일에서 드래그 시 화면 스크롤 방지 */
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5); }
+            70% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+        .animate-pulse-ring {
+            animation: pulse-ring 2s infinite;
+        }
+
+        /* 선 긋기 게임용 스타일 */
+        .match-card-btn {
+            transition: all 0.2s;
+        }
+        .match-card-btn.selected {
+            background-color: #e0e7ff; /* indigo-100 */
+            border-color: #6366f1; /* indigo-500 */
+            color: #4338ca; /* indigo-700 */
+            box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+        }
+        .match-card-btn.matched {
+            background-color: #dcfce7; /* green-100 */
+            border-color: #22c55e; /* green-500 */
+            color: #15803d; /* green-700 */
+            cursor: default;
+        }
+        .match-card-btn.wrong {
+            background-color: #fee2e2; /* red-100 */
+            border-color: #ef4444; /* red-500 */
+            color: #b91c1c; /* red-700 */
+        }
+        
+        /* 인쇄용 스타일 (화면 요소 숨기고 인쇄용 레이아웃 표시) */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area {
+                position: absolute;
+                left: 0; top: 0; width: 100%;
+            }
+            .print-card-row {
+                display: flex;
+                border-bottom: 1px dashed #ccc;
+                padding: 15px 0;
+                page-break-inside: avoid;
+            }
+            .print-card-col { flex: 1; padding: 0 20px; font-size: 1.2rem; }
+            .print-card-col:first-child { border-right: 1px dashed #ccc; font-weight: bold; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- 네비게이션 바 (인쇄 시 숨김) -->
+    <nav class="bg-indigo-600 text-white shadow-md no-print">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-layer-group text-xl"></i>
+                    <span class="font-bold text-xl tracking-tight">FlashQuiz Maker</span>
+                </div>
+                <div class="flex space-x-1 overflow-x-auto">
+                    <button onclick="switchTab('input')" id="tab-input" class="tab-btn px-4 py-2 rounded-md hover:bg-indigo-500 font-medium transition active-tab bg-indigo-700">단어장 관리</button>
+                    <button onclick="switchTab('flashcard')" id="tab-flashcard" class="tab-btn px-4 py-2 rounded-md hover:bg-indigo-500 font-medium transition">플래시카드</button>
+                    <button onclick="switchTab('match')" id="tab-match" class="tab-btn px-4 py-2 rounded-md hover:bg-indigo-500 font-medium transition">선 긋기 게임</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 메인 컨텐츠 영역 -->
+    <main class="flex-grow max-w-6xl mx-auto w-full p-4 md:p-6">
+        
+        <!-- 1. 단어장 관리 (Input) 뷰 -->
+        <section id="view-input" class="view-section">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 입력 패널 -->
+                <div class="md:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold mb-4 flex items-center"><i class="fa-solid fa-paste mr-2 text-indigo-500"></i>단어 일괄 등록</h2>
+                    <p class="text-sm text-slate-500 mb-4">엑셀이나 메모장에서 <strong>'단어 - 뜻'</strong>을 복사해서 붙여넣으세요. (탭, 쉼표, 하이픈 자동 인식)</p>
+                    <textarea id="bulk-input" class="w-full h-48 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none" placeholder="Apple, 사과&#10;Banana, 바나나&#10;School, 학교"></textarea>
+                    <button onclick="parseBulkInput()" class="w-full mt-4 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                        <i class="fa-solid fa-magic mr-1"></i> 카드 생성하기
+                    </button>
+                    
+                    <div class="mt-8 border-t pt-6">
+                        <h3 class="font-bold mb-3 text-sm text-slate-600">데이터 관리</h3>
+                        <div class="flex space-x-2">
+                            <button onclick="clearAllCards()" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2 rounded hover:bg-red-100 transition text-sm font-medium">초기화</button>
+                            <button onclick="preparePrint()" class="flex-1 bg-slate-100 text-slate-700 border border-slate-200 py-2 rounded hover:bg-slate-200 transition text-sm font-medium"><i class="fa-solid fa-print mr-1"></i> 인쇄하기</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 카드 리스트 패널 -->
+                <div class="md:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold flex items-center"><i class="fa-solid fa-list mr-2 text-indigo-500"></i>등록된 카드 목록</h2>
+                        <span id="card-count" class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">0 개</span>
+                    </div>
+                    
+                    <div class="overflow-x-auto h-[500px] overflow-y-auto border border-slate-100 rounded-lg">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-slate-500 bg-slate-50 sticky top-0">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 w-12 text-center">#</th>
+                                    <th scope="col" class="px-4 py-3 w-2/5">단어 (앞면)</th>
+                                    <th scope="col" class="px-4 py-3 w-2/5">뜻 (뒷면)</th>
+                                    <th scope="col" class="px-4 py-3 w-16 text-center">삭제</th>
+                                </tr>
+                            </thead>
+                            <tbody id="card-list-body" class="divide-y divide-slate-100">
+                                <!-- 카드 목록이 여기에 렌더링됩니다 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 플래시카드 뷰 -->
+        <section id="view-flashcard" class="view-section hidden flex flex-col items-center justify-center min-h-[70vh]">
+            <div id="flashcard-empty" class="text-slate-500 text-center hidden">
+                <i class="fa-regular fa-folder-open text-4xl mb-3 text-slate-300"></i>
+                <p>등록된 카드가 없습니다. 먼저 단어장 관리에서 카드를 추가해주세요.</p>
+            </div>
+
+            <!-- 수정됨: onclick 이벤트 제거 및 JS로 처리 -->
+            <div id="flashcard-container" class="w-full max-w-2xl perspective-1000 cursor-pointer mb-8">
+                <div id="flashcard-inner" class="flip-card-inner relative w-full h-80 sm:h-96 transform-style-3d shadow-xl rounded-2xl">
+                    <!-- 앞면 (단어) -->
+                    <div class="backface-hidden absolute w-full h-full bg-white rounded-2xl border-2 border-indigo-100 flex flex-col items-center justify-center p-8">
+                        <div class="absolute top-4 right-4 flex space-x-2">
+                            <button onclick="speakText('front', event)" class="p-2 text-slate-400 hover:text-indigo-600 transition rounded-full hover:bg-indigo-50 z-10" title="읽어주기">
+                                <i class="fa-solid fa-volume-high text-xl"></i>
+                            </button>
+                        </div>
+                        <h2 id="fc-front-text" class="text-4xl sm:text-6xl font-bold text-slate-800 text-center break-words w-full select-none">Word</h2>
+                        <p class="absolute bottom-6 text-slate-400 text-sm select-none"><i class="fa-solid fa-rotate mr-1"></i> 클릭하거나 스페이스바를 눌러 뒤집기</p>
+                    </div>
+                    <!-- 뒷면 (뜻) -->
+                    <div class="backface-hidden absolute w-full h-full bg-indigo-600 rounded-2xl border-2 border-indigo-600 flex flex-col items-center justify-center p-8 rotate-y-180">
+                         <div class="absolute top-4 right-4 flex space-x-2">
+                            <button onclick="speakText('back', event)" class="p-2 text-indigo-200 hover:text-white transition rounded-full hover:bg-indigo-500 z-10" title="읽어주기">
+                                <i class="fa-solid fa-volume-high text-xl"></i>
+                            </button>
+                        </div>
+                        <h2 id="fc-back-text" class="text-3xl sm:text-5xl font-bold text-white text-center break-words w-full select-none">뜻</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 네비게이션 컨트롤 -->
+            <div id="flashcard-controls" class="flex items-center space-x-6 w-full max-w-2xl justify-between px-4">
+                <button onclick="prevCard()" class="w-12 h-12 rounded-full bg-white shadow-md text-slate-600 hover:text-indigo-600 hover:shadow-lg transition flex items-center justify-center">
+                    <i class="fa-solid fa-arrow-left text-xl"></i>
+                </button>
+                <div class="text-slate-500 font-medium">
+                    <span id="fc-current-idx">1</span> / <span id="fc-total-idx">10</span>
+                </div>
+                <button onclick="nextCard()" class="w-12 h-12 rounded-full bg-indigo-600 shadow-md text-white hover:bg-indigo-700 hover:shadow-lg transition flex items-center justify-center">
+                    <i class="fa-solid fa-arrow-right text-xl"></i>
+                </button>
+            </div>
+            <div id="flashcard-keyboard-hint" class="mt-6 text-xs text-slate-400 flex space-x-4">
+                <span><kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-600">Space</kbd> 뒤집기</span>
+                <span><kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-600">←</kbd> <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-600">→</kbd> 이동</span>
+            </div>
+        </section>
+
+        <!-- 3. 선 긋기 게임 뷰 (수정됨) -->
+        <section id="view-match" class="view-section hidden flex flex-col items-center">
+            <div class="w-full max-w-5xl flex justify-between items-end mb-6 px-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">선 긋기 게임</h2>
+                    <p class="text-slate-500">왼쪽의 단어와 오른쪽의 뜻을 클릭해서 연결하세요!</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-3xl font-black text-indigo-600 font-mono" id="game-timer">00:00</div>
+                    <button onclick="initMatchGame()" class="mt-2 text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded hover:bg-indigo-200 font-medium">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> 게임 재시작
+                    </button>
+                </div>
+            </div>
+
+            <div id="match-empty" class="text-slate-500 text-center hidden mt-20">
+                <i class="fa-solid fa-triangle-exclamation text-4xl mb-3 text-slate-300"></i>
+                <p>게임을 시작하려면 최소 2개 이상의 카드가 필요합니다.</p>
+            </div>
+
+            <!-- 게임 보드 (수정됨: 2열 구조 및 캔버스 오버레이) -->
+            <div id="match-board-container" class="relative w-full max-w-5xl mx-auto p-4 bg-white rounded-xl shadow-sm border border-slate-100" style="min-height: 400px;">
+                <canvas id="match-canvas" class="absolute inset-0 pointer-events-none z-10"></canvas>
+                <div class="flex justify-between relative z-20">
+                    <!-- 왼쪽 열 (단어) -->
+                    <div id="match-left-col" class="flex flex-col space-y-4 w-5/12">
+                        <!-- 카드가 여기에 렌더링됩니다 -->
+                    </div>
+                    <!-- 오른쪽 열 (뜻) -->
+                    <div id="match-right-col" class="flex flex-col space-y-4 w-5/12">
+                        <!-- 카드가 여기에 렌더링됩니다 -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 게임 완료 모달 (숨김 상태) -->
+            <div id="game-complete-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-sm w-full transform transition-all scale-100">
+                    <div class="text-yellow-400 text-6xl mb-4"><i class="fa-solid fa-trophy"></i></div>
+                    <h3 class="text-2xl font-bold text-slate-800 mb-2">성공!</h3>
+                    <p class="text-slate-500 mb-6">모든 짝을 연결했습니다.<br>기록: <span id="final-time" class="font-bold text-indigo-600">00:00</span></p>
+                    <button onclick="closeMatchModalAndRestart()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition">다시 하기</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 인쇄용 숨김 영역 (CSS @media print 에 의해 화면에 나타남) -->
+    <div id="print-area" class="hidden bg-white">
+        <h1 class="text-3xl font-bold text-center mb-8 pb-4 border-b-2">학습 단어장</h1>
+        <div id="print-list"></div>
+    </div>
+
+    <!-- 로직 스크립트 -->
+    <script>
+        // === 오디오 시스템 (Web Audio API) ===
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            initAudio();
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'flip') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'complete') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.15); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.3); // G5
+                osc.frequency.setValueAtTime(1046.50, now + 0.45); // C6
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+            }
+        }
+
+        // === 상태 관리 ===
+        let flashcards = [];
+        let currentCardIndex = 0;
+        let isFlipped = false;
+        
+        // 선 긋기 게임 상태
+        let leftCards = [];
+        let rightCards = [];
+        let matchedPairsCount = 0;
+        let gameTimer = null;
+        let secondsElapsed = 0;
+        let canvas, ctx;
+        let matchedLines = []; // { dot1, dot2, color }
+        let wrongLine = null; // { dot1, dot2, color }
+        let wrongTimer = null;
+
+        // 드래그 상태 관리
+        let dragState = {
+            isDragging: false,
+            startDot: null,
+            currentX: 0,
+            currentY: 0
+        };
+
+        // === 초기화 ===
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCardsFromStorage();
+            renderCardList();
+            
+            document.addEventListener('keydown', (e) => {
+                if(document.getElementById('view-flashcard').classList.contains('hidden')) return;
+                if (e.code === 'Space') { e.preventDefault(); toggleFlip(); }
+                else if (e.code === 'ArrowRight') { nextCard(); }
+                else if (e.code === 'ArrowLeft') { prevCard(); }
+            });
+
+            // 캔버스 및 전역 드래그 이벤트 초기화
+            canvas = document.getElementById('match-canvas');
+            ctx = canvas.getContext('2d');
+            window.addEventListener('resize', resizeCanvas);
+            
+            // 모바일 및 마우스 공통 지원을 위한 Pointer Events
+            document.addEventListener('pointermove', handlePointerMove, { passive: false });
+            document.addEventListener('pointerup', handlePointerUp);
+        });
+
+        // === 탭 전환 로직 ===
+        function switchTab(tabName) {
+            initAudio(); // 탭 클릭 시 오디오 권한 확보
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('bg-indigo-700', 'active-tab'));
+
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabName}`).classList.add('bg-indigo-700', 'active-tab');
+
+            if (tabName === 'flashcard') {
+                initFlashcardView();
+            } else if (tabName === 'match') {
+                setTimeout(initMatchGame, 100);
+            }
+        }
+
+        // === 데이터 관리 로직 ===
+        function loadCardsFromStorage() {
+            const stored = localStorage.getItem('edutech_flashcards');
+            if (stored) { flashcards = JSON.parse(stored); }
+            else {
+                flashcards = [
+                    { id: '1', word: 'Education', meaning: '교육' },
+                    { id: '2', word: 'Innovation', meaning: '혁신' },
+                    { id: '3', word: 'Curiosity', meaning: '호기심' }
+                ];
+                saveCardsToStorage();
+            }
+        }
+
+        function saveCardsToStorage() {
+            localStorage.setItem('edutech_flashcards', JSON.stringify(flashcards));
+            document.getElementById('card-count').innerText = `${flashcards.length} 개`;
+        }
+
+        function parseBulkInput() {
+            const textarea = document.getElementById('bulk-input');
+            const text = textarea.value.trim();
+            if (!text) { alert('입력된 내용이 없습니다.'); return; }
+
+            const lines = text.split('\n');
+            let addedCount = 0;
+
+            lines.forEach(line => {
+                const splitMatch = line.match(/^([^\t,-]+)[\t,-]+(.*)$/);
+                if (splitMatch) {
+                    const word = splitMatch[1].trim();
+                    const meaning = splitMatch[2].trim();
+                    if(word && meaning) {
+                        flashcards.push({ id: Date.now().toString() + Math.random().toString(36).substr(2, 5), word, meaning });
+                        addedCount++;
+                    }
+                }
+            });
+
+            if (addedCount > 0) {
+                saveCardsToStorage();
+                renderCardList();
+                textarea.value = '';
+                const btn = event.currentTarget;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> ${addedCount}개 추가됨!`;
+                btn.classList.add('bg-green-600');
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('bg-green-600');
+                }, 2000);
+            } else {
+                alert('올바른 형식(단어 - 뜻)으로 입력되지 않았습니다. 다시 확인해주세요.');
+            }
+        }
+
+        function deleteCard(id) {
+            if(confirm('이 카드를 삭제하시겠습니까?')) {
+                flashcards = flashcards.filter(c => c.id !== id);
+                saveCardsToStorage();
+                renderCardList();
+            }
+        }
+
+        function clearAllCards() {
+            if(confirm('정말로 모든 단어를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                flashcards = [];
+                saveCardsToStorage();
+                renderCardList();
+            }
+        }
+
+        function renderCardList() {
+            const tbody = document.getElementById('card-list-body');
+            tbody.innerHTML = '';
+            document.getElementById('card-count').innerText = `${flashcards.length} 개`;
+            flashcards.forEach((card, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-indigo-50/50 transition';
+                tr.innerHTML = `
+                    <td class="px-4 py-3 text-center text-slate-400">${index + 1}</td>
+                    <td class="px-4 py-3 font-medium text-slate-800">${escapeHTML(card.word)}</td>
+                    <td class="px-4 py-3 text-slate-600">${escapeHTML(card.meaning)}</td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="deleteCard('${card.id}')" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // === 플래시카드 로직 ===
+        function initFlashcardView() {
+            const container = document.getElementById('flashcard-container');
+            const controls = document.getElementById('flashcard-controls');
+            const emptyState = document.getElementById('flashcard-empty');
+            const flashcardInner = document.getElementById('flashcard-inner');
+
+            flashcardInner.onclick = null;
+
+            if (flashcards.length === 0) {
+                container.style.display = 'none'; controls.style.display = 'none';
+                document.getElementById('flashcard-keyboard-hint').style.display = 'none';
+                emptyState.style.display = 'block'; return;
+            }
+
+            container.style.display = 'block'; controls.style.display = 'flex';
+            document.getElementById('flashcard-keyboard-hint').style.display = 'flex';
+            emptyState.style.display = 'none';
+            
+            flashcardInner.onclick = toggleFlip;
+            currentCardIndex = 0; isFlipped = false;
+            flashcardInner.classList.remove('flipped');
+            updateFlashcardUI();
+        }
+
+        function updateFlashcardUI() {
+            if (flashcards.length === 0) return;
+            const card = flashcards[currentCardIndex];
+            document.getElementById('fc-front-text').innerText = card.word;
+            document.getElementById('fc-back-text').innerText = card.meaning;
+            document.getElementById('fc-current-idx').innerText = currentCardIndex + 1;
+            document.getElementById('fc-total-idx').innerText = flashcards.length;
+            
+            if (isFlipped) {
+                isFlipped = false;
+                document.getElementById('flashcard-inner').classList.remove('flipped');
+            }
+        }
+
+        function toggleFlip(event) {
+            if (event && event.target.closest('button')) return;
+            playSound('flip'); // 뒤집기 효과음
+            isFlipped = !isFlipped;
+            const inner = document.getElementById('flashcard-inner');
+            isFlipped ? inner.classList.add('flipped') : inner.classList.remove('flipped');
+        }
+
+        function nextCard() {
+            if (flashcards.length === 0) return;
+            currentCardIndex = (currentCardIndex + 1) % flashcards.length; updateFlashcardUI();
+        }
+
+        function prevCard() {
+            if (flashcards.length === 0) return;
+            currentCardIndex = (currentCardIndex - 1 + flashcards.length) % flashcards.length; updateFlashcardUI();
+        }
+
+        function speakText(side, event) {
+            event.stopPropagation(); 
+            if (!window.speechSynthesis) { alert("현재 브라우저는 읽어주기 기능을 지원하지 않습니다."); return; }
+            const card = flashcards[currentCardIndex];
+            const text = side === 'front' ? card.word : card.meaning;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = /^[a-zA-Z\s.,!?'-]+$/.test(text) ? 'en-US' : 'ko-KR';
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // === 선 긋기 게임 (드래그 앤 드롭 애니메이션) ===
+        function initMatchGame() {
+            const container = document.getElementById('match-board-container');
+            const emptyState = document.getElementById('match-empty');
+            
+            stopTimer();
+            document.getElementById('game-complete-modal').classList.add('hidden');
+
+            if (flashcards.length < 2) {
+                container.style.display = 'none'; emptyState.style.display = 'block'; return;
+            }
+            
+            container.style.display = 'block'; emptyState.style.display = 'none';
+
+            const numPairs = Math.min(flashcards.length, 8);
+            const gameCards = [...flashcards].sort(() => 0.5 - Math.random()).slice(0, numPairs);
+
+            leftCards = gameCards.map((card, index) => ({ id: card.id, text: card.word, index, matched: false }));
+            rightCards = gameCards.map(card => ({ id: card.id, text: card.meaning, matched: false })).sort(() => 0.5 - Math.random());
+            rightCards.forEach((card, index) => card.index = index);
+
+            matchedPairsCount = 0;
+            matchedLines = []; wrongLine = null;
+            dragState.isDragging = false; dragState.startDot = null;
+            
+            resizeCanvas();
+            renderMatchColumns();
+            startTimer();
+        }
+
+        function resizeCanvas() {
+            const container = document.getElementById('match-board-container');
+            canvas.width = container.offsetWidth;
+            canvas.height = container.offsetHeight;
+            drawAllLines(); 
+        }
+
+        function renderMatchColumns() {
+            const leftCol = document.getElementById('match-left-col');
+            const rightCol = document.getElementById('match-right-col');
+            leftCol.innerHTML = ''; rightCol.innerHTML = '';
+
+            leftCards.forEach(card => leftCol.appendChild(createMatchCard(card, 'left')));
+            rightCards.forEach(card => rightCol.appendChild(createMatchCard(card, 'right')));
+        }
+
+        function createMatchCard(card, side) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'relative w-full';
+
+            const btn = document.createElement('button');
+            btn.className = `match-card-btn w-full p-4 bg-white border-2 border-slate-200 rounded-lg shadow-sm text-slate-700 font-medium text-center break-words ${card.matched ? 'matched' : ''}`;
+            btn.innerText = card.text;
+            
+            // 연결 점 생성
+            const dot = document.createElement('div');
+            const posClass = side === 'left' ? '-right-3' : '-left-3';
+            dot.className = `connection-dot absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-4 border-white shadow-md z-20 transition-all ${posClass} ${card.matched ? 'bg-green-500' : 'bg-indigo-400 animate-pulse-ring cursor-grab'}`;
+            dot.dataset.side = side;
+            dot.dataset.index = card.index;
+            dot.dataset.id = card.id;
+
+            if (!card.matched) {
+                dot.addEventListener('pointerdown', handlePointerDown);
+                dot.addEventListener('mouseenter', () => { if(!dragState.isDragging) dot.classList.add('scale-125'); });
+                dot.addEventListener('mouseleave', () => dot.classList.remove('scale-125'));
+            } else {
+                btn.disabled = true;
+            }
+
+            wrapper.appendChild(btn);
+            wrapper.appendChild(dot);
+            return wrapper;
+        }
+
+        // 드래그 이벤트 핸들러
+        function handlePointerDown(e) {
+            e.preventDefault();
+            initAudio(); // 인터랙션 시 오디오 준비
+            const dot = e.currentTarget;
+            if (dot.classList.contains('bg-green-500')) return; // 이미 맞춰진 점
+            
+            dot.classList.replace('cursor-grab', 'cursor-grabbing');
+            dot.classList.remove('animate-pulse-ring', 'scale-125');
+            
+            dragState.isDragging = true;
+            dragState.startDot = dot;
+            
+            updateDragPos(e);
+            drawAllLines();
+        }
+
+        function handlePointerMove(e) {
+            if (!dragState.isDragging) return;
+            e.preventDefault(); // 모바일 스크롤 방지
+            updateDragPos(e);
+            drawAllLines();
+        }
+
+        function updateDragPos(e) {
+            const containerRect = document.getElementById('match-board-container').getBoundingClientRect();
+            // 터치 이벤트 지원 보완
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            if(clientX && clientY) {
+                dragState.currentX = clientX - containerRect.left;
+                dragState.currentY = clientY - containerRect.top;
+            }
+        }
+
+        function handlePointerUp(e) {
+            if (!dragState.isDragging) return;
+            
+            const startDot = dragState.startDot;
+            startDot.classList.replace('cursor-grabbing', 'cursor-grab');
+            startDot.classList.add('animate-pulse-ring');
+            
+            dragState.isDragging = false;
+            dragState.startDot = null;
+
+            // 커서 아래에 있는 요소 찾기 (점)
+            const clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
+            const clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
+            
+            if(clientX && clientY) {
+                // 캔버스가 이벤트를 막지 않도록 처리
+                const target = document.elementFromPoint(clientX, clientY);
+                if (target && target.classList.contains('connection-dot')) {
+                    const startData = startDot.dataset;
+                    const targetData = target.dataset;
+
+                    // 반대쪽 기둥이고, 아직 정답을 맞추지 않은 점일 때만
+                    if (startData.side !== targetData.side && !target.classList.contains('bg-green-500')) {
+                        if (startData.id === targetData.id) {
+                            handleCorrectMatch(startDot, target);
+                        } else {
+                            handleWrongMatch(startDot, target);
+                        }
+                    }
+                }
+            }
+            drawAllLines();
+        }
+
+        function handleCorrectMatch(dot1, dot2) {
+            playSound('correct'); // 정답 효과음
+            
+            let newDot1, newDot2;
+            
+            [dot1, dot2].forEach((dot, index) => {
+                dot.classList.remove('bg-indigo-400', 'animate-pulse-ring', 'cursor-grab', 'scale-125', 'cursor-grabbing');
+                dot.classList.add('bg-green-500');
+                dot.previousElementSibling.classList.add('matched'); // 버튼 스타일 변경
+                // 이벤트 제거를 위해 복제
+                const newDot = dot.cloneNode(true);
+                dot.parentNode.replaceChild(newDot, dot);
+                
+                // 교체된 새로운 노드를 저장
+                if (index === 0) newDot1 = newDot;
+                if (index === 1) newDot2 = newDot;
+            });
+            
+            // 좌표 대신 HTML 요소를 저장하여 창 크기 조절 시 자동으로 선이 따라가게 함
+            matchedLines.push({ dot1: newDot1, dot2: newDot2, color: '#22c55e' });
+            
+            matchedPairsCount++;
+            if (matchedPairsCount === leftCards.length) {
+                setTimeout(() => {
+                    playSound('complete'); // 게임 클리어 효과음
+                    stopTimer();
+                    document.getElementById('final-time').innerText = formatTime(secondsElapsed);
+                    document.getElementById('game-complete-modal').classList.remove('hidden');
+                }, 500);
+            }
+        }
+
+        function handleWrongMatch(dot1, dot2) {
+            playSound('wrong'); // 오답 효과음
+            
+            const wrapper1 = dot1.parentElement;
+            const wrapper2 = dot2.parentElement;
+            
+            wrapper1.classList.add('shake');
+            wrapper2.classList.add('shake');
+            
+            dot1.previousElementSibling.classList.add('wrong');
+            dot2.previousElementSibling.classList.add('wrong');
+
+            wrongLine = { dot1, dot2, color: '#ef4444' };
+            
+            if (wrongTimer) clearTimeout(wrongTimer);
+            wrongTimer = setTimeout(() => {
+                wrapper1.classList.remove('shake');
+                wrapper2.classList.remove('shake');
+                dot1.previousElementSibling.classList.remove('wrong');
+                dot2.previousElementSibling.classList.remove('wrong');
+                wrongLine = null;
+                drawAllLines();
+            }, 600);
+        }
+
+        // 캔버스에 선 그리기 로직
+        function drawAllLines() {
+            if(!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const containerRect = document.getElementById('match-board-container').getBoundingClientRect();
+
+            // 점의 중심 좌표 구하기 유틸
+            const getDotCenter = (dot) => {
+                const rect = dot.getBoundingClientRect();
+                return {
+                    x: rect.left + rect.width / 2 - containerRect.left,
+                    y: rect.top + rect.height / 2 - containerRect.top
+                };
+            };
+
+            const drawLinePath = (x1, y1, x2, y2, color, width, isDashed = false) => {
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = width;
+                ctx.lineCap = 'round';
+                ctx.setLineDash(isDashed ? [8, 8] : []);
+                ctx.stroke();
+            };
+
+            // 1. 이미 그어진 정답 선들 (영구)
+            matchedLines.forEach(line => {
+                const p1 = getDotCenter(line.dot1);
+                const p2 = getDotCenter(line.dot2);
+                drawLinePath(p1.x, p1.y, p2.x, p2.y, line.color, 4);
+            });
+
+            // 2. 틀렸을 때 나타나는 흔들리는 빨간 선 (임시)
+            if (wrongLine) {
+                const p1 = getDotCenter(wrongLine.dot1);
+                const p2 = getDotCenter(wrongLine.dot2);
+                drawLinePath(p1.x, p1.y, p2.x, p2.y, wrongLine.color, 4, true);
+            }
+
+            // 3. 현재 마우스/터치로 끌고 있는 선 (실시간)
+            if (dragState.isDragging && dragState.startDot) {
+                const p1 = getDotCenter(dragState.startDot);
+                drawLinePath(p1.x, p1.y, dragState.currentX, dragState.currentY, '#818cf8', 4, true);
+            }
+        }
+
+        // 타이머 로직
+        function startTimer() {
+            secondsElapsed = 0; document.getElementById('game-timer').innerText = '00:00';
+            gameTimer = setInterval(() => {
+                secondsElapsed++;
+                document.getElementById('game-timer').innerText = formatTime(secondsElapsed);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (gameTimer) { clearInterval(gameTimer); gameTimer = null; }
+        }
+
+        function formatTime(seconds) {
+            return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
+        }
+
+        function closeMatchModalAndRestart() {
+            document.getElementById('game-complete-modal').classList.add('hidden');
+            initMatchGame();
+        }
+
+        // === 인쇄 및 유틸리티 ===
+        function preparePrint() {
+            if (flashcards.length === 0) { alert('인쇄할 카드가 없습니다.'); return; }
+            const printList = document.getElementById('print-list');
+            printList.innerHTML = '';
+            flashcards.forEach(card => {
+                const row = document.createElement('div'); row.className = 'print-card-row';
+                row.innerHTML = `<div class="print-card-col">${escapeHTML(card.word)}</div><div class="print-card-col">${escapeHTML(card.meaning)}</div>`;
+                printList.appendChild(row);
+            });
+            window.print();
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+    </script>
+</body>
+</html>
