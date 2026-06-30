@@ -161,7 +161,7 @@
         <div class="control-group">
             <label><b>1. 학급 대형 선택</b></label>
             <div style="display: flex; gap: 8px;">
-                <select id="seatSize" style="flex: 1;">
+                <select id="seatSize" style="flex: 1;" onchange="handleSeatSizeChange()">
                     <option value="4x4">4칸 x 4줄 (16자리)</option>
                     <option value="4x5">4칸 x 5줄 (20자리)</option>
                     <option value="5x4" selected>5칸 x 4줄 (20자리)</option>
@@ -228,6 +228,7 @@
         <p style="font-size: 13px; color: #6b7280; margin-top: 15px; font-weight: 500;">
             💡 <b>Tip:</b> 배정 후 자리를 수동으로 바꾸고 싶다면, 두 명의 이름을 차례대로 클릭하세요.
         </p>
+        <p id="seatStatus" style="font-size: 13px; color: #4b5563; margin-top: 10px; font-weight: 700;"></p>
     </div>
 
     <!-- 자리표가 그려질 공간 (가로 스크롤 허용) -->
@@ -239,15 +240,15 @@
 <script>
     // 초기 기본 학생 데이터
     let studentsData = [
-        {name: "김철수", gender: "M"}, {name: "이영희", gender: "F"}, 
-        {name: "박민수", gender: "M"}, {name: "최지현", gender: "F"}, 
-        {name: "정현우", gender: "M"}, {name: "강수진", gender: "F"}, 
-        {name: "조현기", gender: "M"}, {name: "윤아름", gender: "F"}, 
-        {name: "장동건", gender: "M"}, {name: "임수정", gender: "F"}, 
-        {name: "한지민", gender: "F"}, {name: "오징어", gender: "M"}, 
-        {name: "둘리", gender: "M"}, {name: "도우너", gender: "M"}, 
-        {name: "또치", gender: "F"}, {name: "마이콜", gender: "M"}, 
-        {name: "희동이", gender: "M"}, {name: "고길동", gender: "M"}, 
+        {name: "김철수", gender: "M"}, {name: "이영희", gender: "F"},
+        {name: "박민수", gender: "M"}, {name: "최지현", gender: "F"},
+        {name: "정현우", gender: "M"}, {name: "강수진", gender: "F"},
+        {name: "조현기", gender: "M"}, {name: "윤아름", gender: "F"},
+        {name: "장동건", gender: "M"}, {name: "임수정", gender: "F"},
+        {name: "한지민", gender: "F"}, {name: "오징어", gender: "M"},
+        {name: "둘리", gender: "M"}, {name: "도우너", gender: "M"},
+        {name: "또치", gender: "F"}, {name: "마이콜", gender: "M"},
+        {name: "희동이", gender: "M"}, {name: "고길동", gender: "M"},
         {name: "영심이", gender: "F"}, {name: "왕경태", gender: "M"}
     ];
     let rules = [];
@@ -261,7 +262,7 @@
         isDebugMode = !isDebugMode;
         const groupsToHide = ['group-front', 'group-rules'];
         const debugIcon = document.getElementById('debugIcon');
-        
+
         if (isDebugMode) {
             groupsToHide.forEach(id => document.getElementById(id).style.display = 'none');
             debugIcon.innerText = '🔒';
@@ -274,134 +275,18 @@
     // 초기화
     window.onload = () => {
         renderStudents();
+        updateRuleDisplay();
         updateFrontDisplay();
+        updateSeatInfo();
     };
 
-    /* --- 1. 학생 명단 --- */
-    function renderStudents() {
-        const display = document.getElementById('studentListDisplay');
-        document.getElementById('studentCount').innerText = studentsData.length;
-        
-        if (studentsData.length === 0) {
-            display.innerHTML = '<span style="color: #9ca3af; font-size: 13px;">등록된 학생이 없습니다.</span>';
-            return;
-        }
-
-        display.innerHTML = studentsData.map((s, i) => 
-            `<span class="tag-item ${s.gender === 'M' ? 'tag-male' : 'tag-female'}">
-                ${s.gender === 'M' ? '👦' : '👧'} ${s.name} <span class="delete-btn" onclick="removeStudent(${i})">&times;</span>
-            </span>`
-        ).join('');
-    }
-
-    function addStudent() {
-        const input = document.getElementById('newStudentName');
-        const genderSelect = document.getElementById('newStudentGender');
-        const name = input.value.trim();
-        const gender = genderSelect.value;
-        
-        if (name) {
-            if (studentsData.some(s => s.name === name)) {
-                alert("이미 등록된 이름입니다.");
-                return;
-            }
-            studentsData.push({name, gender});
-            input.value = '';
-            renderStudents();
-        }
-    }
-
-    function handleStudentEnter(event) { if (event.key === 'Enter') addStudent(); }
-
-    function removeStudent(index) {
-        let removedName = studentsData[index].name;
-        studentsData.splice(index, 1);
-        frontStudents = frontStudents.filter(name => name !== removedName);
-        rules = rules.filter(rule => rule[0] !== removedName && rule[1] !== removedName);
-        
-        renderStudents();
-        updateFrontDisplay();
-        updateRuleDisplay();
-    }
-
-    function clearStudents() {
-        if(confirm("학생 명단과 모든 규칙 설정을 삭제하시겠습니까?")) {
-            studentsData = []; rules = []; frontStudents = [];
-            renderStudents(); updateRuleDisplay(); updateFrontDisplay();
-        }
-    }
-
-    /* --- 2. 앞자리 배치 --- */
-    function addFrontStudent() {
-        const input = document.getElementById('frontStudentName');
-        const name = input.value.trim();
-        
-        if (name) {
-            if (!studentsData.some(s => s.name === name)) {
-                alert("명단에 없는 학생입니다. [학생 명단]에 먼저 추가해주세요."); return;
-            }
-            if (frontStudents.includes(name)) {
-                alert("이미 추가된 학생입니다."); return;
-            }
-            frontStudents.push(name);
-            input.value = '';
-            updateFrontDisplay();
-        }
-    }
-
-    function handleFrontEnter(event) { if (event.key === 'Enter') addFrontStudent(); }
-
-    function updateFrontDisplay() {
-        const display = document.getElementById('frontDisplay');
-        if (frontStudents.length === 0) {
-            display.innerHTML = '<span style="color: #9ca3af; font-size: 13px;">등록된 학생이 없습니다.</span>'; return;
-        }
-        display.innerHTML = frontStudents.map((s, i) => 
-            `<span class="tag-item tag-front">
-                ${s} <span class="delete-btn" onclick="removeFrontStudent(${i})">&times;</span>
-            </span>`
-        ).join('');
-    }
-
-    function removeFrontStudent(index) {
-        frontStudents.splice(index, 1);
-        updateFrontDisplay();
-    }
-
-    /* --- 3. 인접 금지 규칙 --- */
-    function addRule() {
-        const p1 = document.getElementById('ruleP1').value.trim();
-        const p2 = document.getElementById('ruleP2').value.trim();
-        
-        if (p1 && p2 && p1 !== p2) {
-            rules.push([p1, p2]);
-            updateRuleDisplay();
-            document.getElementById('ruleP1').value = ''; document.getElementById('ruleP2').value = '';
-        }
-    }
-
-    function updateRuleDisplay() {
-        const display = document.getElementById('ruleDisplay');
-        if (rules.length === 0) {
-            display.innerHTML = '<span style="color: #9ca3af; font-size: 13px;">규칙이 없습니다.</span>'; return;
-        }
-        display.innerHTML = rules.map((r, i) => 
-            `<span class="tag-item rule">
-                ${r[0]} - ${r[1]} <span class="delete-btn" onclick="removeRule(${i})">&times;</span>
-            </span>`
-        ).join('');
-    }
-
-    function removeRule(index) { rules.splice(index, 1); updateRuleDisplay(); }
-
-    /* --- 그리드 크기 --- */
+    /* --- 공통 유틸 --- */
     function getGridSize() {
         const sizeStr = document.getElementById('seatSize').value;
         const [cols, rows] = sizeStr.split('x').map(Number);
         return { cols, rows };
     }
 
-    /* --- 4. 랜덤 배치 알고리즘 --- */
     function shuffleArray(array) {
         let arr = [...array];
         for (let i = arr.length - 1; i > 0; i--) {
@@ -411,96 +296,359 @@
         return arr;
     }
 
+    function cleanName(value) {
+        return value.trim().replace(/\s+/g, ' ');
+    }
+
+    function escapeHTML(value) {
+        return String(value).replace(/[&<>"']/g, char => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[char]));
+    }
+
+    function getStudentNames() {
+        return studentsData.map(s => s.name);
+    }
+
+    function updateSeatInfo(message = '') {
+        const status = document.getElementById('seatStatus');
+        if (!status) return;
+
+        const { cols, rows } = getGridSize();
+        const totalSeats = cols * rows;
+        const studentCount = studentsData.length;
+        const emptyCount = Math.max(0, totalSeats - studentCount);
+        const shortage = Math.max(0, studentCount - totalSeats);
+
+        if (message) {
+            status.innerText = message;
+            status.style.color = message.includes('부족') || message.includes('누락') || message.includes('중복') ? '#dc2626' : '#047857';
+            return;
+        }
+
+        if (shortage > 0) {
+            status.innerText = `⚠️ 현재 ${cols}칸 x ${rows}줄 = ${totalSeats}자리 / 학생 ${studentCount}명 → ${shortage}자리가 부족합니다.`;
+            status.style.color = '#dc2626';
+        } else {
+            status.innerText = `✅ 현재 ${cols}칸 x ${rows}줄 = ${totalSeats}자리 / 학생 ${studentCount}명 / 공석 ${emptyCount}개`;
+            status.style.color = '#047857';
+        }
+    }
+
+    function handleSeatSizeChange() {
+        updateSeatInfo();
+        if (currentSeats.length > 0) {
+            const container = document.getElementById('grid-container');
+            container.innerHTML = '';
+            currentSeats = [];
+            selectedSeatIndex = null;
+        }
+    }
+
+    function clearGrid() {
+        currentSeats = [];
+        selectedSeatIndex = null;
+        document.getElementById('grid-container').innerHTML = '';
+        updateSeatInfo();
+    }
+
+    /* --- 1. 학생 명단 --- */
+    function renderStudents() {
+        const display = document.getElementById('studentListDisplay');
+        document.getElementById('studentCount').innerText = studentsData.length;
+
+        if (studentsData.length === 0) {
+            display.innerHTML = '<span style="color: #9ca3af; font-size: 13px;">등록된 학생이 없습니다.</span>';
+            updateSeatInfo();
+            return;
+        }
+
+        display.innerHTML = studentsData.map((s, i) =>
+            `<span class="tag-item ${s.gender === 'M' ? 'tag-male' : 'tag-female'}">
+                ${s.gender === 'M' ? '👦' : '👧'} ${escapeHTML(s.name)} <span class="delete-btn" onclick="removeStudent(${i})">&times;</span>
+            </span>`
+        ).join('');
+        updateSeatInfo();
+    }
+
+    function addStudent() {
+        const input = document.getElementById('newStudentName');
+        const genderSelect = document.getElementById('newStudentGender');
+        const name = cleanName(input.value);
+        const gender = genderSelect.value;
+
+        if (!name) return;
+
+        if (studentsData.some(s => s.name === name)) {
+            alert('이미 등록된 이름입니다.');
+            return;
+        }
+
+        studentsData.push({name, gender});
+        input.value = '';
+        renderStudents();
+        clearGrid();
+    }
+
+    function handleStudentEnter(event) { if (event.key === 'Enter') addStudent(); }
+
+    function removeStudent(index) {
+        const removedName = studentsData[index].name;
+        studentsData.splice(index, 1);
+        frontStudents = frontStudents.filter(name => name !== removedName);
+        rules = rules.filter(rule => rule[0] !== removedName && rule[1] !== removedName);
+
+        renderStudents();
+        updateFrontDisplay();
+        updateRuleDisplay();
+        clearGrid();
+    }
+
+    function clearStudents() {
+        if(confirm('학생 명단과 모든 규칙 설정을 삭제하시겠습니까?')) {
+            studentsData = [];
+            rules = [];
+            frontStudents = [];
+            renderStudents();
+            updateRuleDisplay();
+            updateFrontDisplay();
+            clearGrid();
+        }
+    }
+
+    /* --- 2. 앞자리 배치 --- */
+    function addFrontStudent() {
+        const input = document.getElementById('frontStudentName');
+        const name = cleanName(input.value);
+
+        if (!name) return;
+
+        if (!studentsData.some(s => s.name === name)) {
+            alert('명단에 없는 학생입니다. [학생 명단]에 먼저 추가해주세요.');
+            return;
+        }
+        if (frontStudents.includes(name)) {
+            alert('이미 추가된 학생입니다.');
+            return;
+        }
+        frontStudents.push(name);
+        input.value = '';
+        updateFrontDisplay();
+        clearGrid();
+    }
+
+    function handleFrontEnter(event) { if (event.key === 'Enter') addFrontStudent(); }
+
+    function updateFrontDisplay() {
+        const display = document.getElementById('frontDisplay');
+        if (frontStudents.length === 0) {
+            display.innerHTML = '<span style="color: #9ca3af; font-size: 13px;">등록된 학생이 없습니다.</span>';
+            return;
+        }
+        display.innerHTML = frontStudents.map((s, i) =>
+            `<span class="tag-item tag-front">
+                ${escapeHTML(s)} <span class="delete-btn" onclick="removeFrontStudent(${i})">&times;</span>
+            </span>`
+        ).join('');
+    }
+
+    function removeFrontStudent(index) {
+        frontStudents.splice(index, 1);
+        updateFrontDisplay();
+        clearGrid();
+    }
+
+    /* --- 3. 인접 금지 규칙 --- */
+    function addRule() {
+        const p1 = cleanName(document.getElementById('ruleP1').value);
+        const p2 = cleanName(document.getElementById('ruleP2').value);
+        const names = getStudentNames();
+
+        if (!p1 || !p2) return;
+        if (p1 === p2) {
+            alert('서로 다른 두 학생 이름을 입력해주세요.');
+            return;
+        }
+        if (!names.includes(p1) || !names.includes(p2)) {
+            alert('명단에 있는 학생 이름으로만 규칙을 만들 수 있습니다.');
+            return;
+        }
+        if (rules.some(rule => (rule[0] === p1 && rule[1] === p2) || (rule[0] === p2 && rule[1] === p1))) {
+            alert('이미 등록된 규칙입니다.');
+            return;
+        }
+
+        rules.push([p1, p2]);
+        updateRuleDisplay();
+        clearGrid();
+        document.getElementById('ruleP1').value = '';
+        document.getElementById('ruleP2').value = '';
+    }
+
+    function updateRuleDisplay() {
+        const display = document.getElementById('ruleDisplay');
+        if (rules.length === 0) {
+            display.innerHTML = '<span style="color: #9ca3af; font-size: 13px;">규칙이 없습니다.</span>';
+            return;
+        }
+        display.innerHTML = rules.map((r, i) =>
+            `<span class="tag-item rule">
+                ${escapeHTML(r[0])} - ${escapeHTML(r[1])} <span class="delete-btn" onclick="removeRule(${i})">&times;</span>
+            </span>`
+        ).join('');
+    }
+
+    function removeRule(index) {
+        rules.splice(index, 1);
+        updateRuleDisplay();
+        clearGrid();
+    }
+
+    /* --- 4. 랜덤 배치 알고리즘 --- */
+    function assignStudentsToSlots(arr, group, slots, cols, useGenderBalance) {
+        const availableSlots = shuffleArray(slots.filter(i => arr[i] === null));
+        const shuffledGroup = shuffleArray(group);
+
+        if (!useGenderBalance) {
+            shuffledGroup.forEach((student, index) => {
+                if (index < availableSlots.length) arr[availableSlots[index]] = student.name;
+            });
+            return;
+        }
+
+        const evenSlots = shuffleArray(availableSlots.filter(i => (Math.floor(i / cols) + (i % cols)) % 2 === 0));
+        const oddSlots = shuffleArray(availableSlots.filter(i => (Math.floor(i / cols) + (i % cols)) % 2 !== 0));
+        const boys = shuffleArray(shuffledGroup.filter(s => s.gender === 'M'));
+        const girls = shuffleArray(shuffledGroup.filter(s => s.gender === 'F'));
+        const others = shuffleArray(shuffledGroup.filter(s => s.gender !== 'M' && s.gender !== 'F'));
+        const leftovers = [];
+
+        boys.forEach(student => {
+            const seatIndex = evenSlots.pop();
+            if (seatIndex === undefined) leftovers.push(student);
+            else arr[seatIndex] = student.name;
+        });
+
+        girls.forEach(student => {
+            const seatIndex = oddSlots.pop();
+            if (seatIndex === undefined) leftovers.push(student);
+            else arr[seatIndex] = student.name;
+        });
+
+        leftovers.push(...others);
+        const remainingSlots = shuffleArray([...evenSlots, ...oddSlots].filter(i => arr[i] === null));
+        shuffleArray(leftovers).forEach(student => {
+            const seatIndex = remainingSlots.pop();
+            if (seatIndex !== undefined) arr[seatIndex] = student.name;
+        });
+    }
+
+    function buildArrangement(cols, rows, useGenderBalance) {
+        const totalSeats = cols * rows;
+        const arr = new Array(totalSeats).fill(null);
+        const allIndices = Array.from({length: totalSeats}, (_, i) => i);
+        const frontNameSet = new Set(frontStudents);
+        const frontGroup = studentsData.filter(s => frontNameSet.has(s.name));
+        const normalGroup = studentsData.filter(s => !frontNameSet.has(s.name));
+
+        // 핵심 수정: 앞자리 우선 학생이 없으면 앞줄을 예약하지 않습니다.
+        // 앞자리 학생이 있더라도 필요한 앞줄에만 먼저 배치하고, 남은 앞줄 칸은 일반 학생에게 다시 열어 둡니다.
+        const frontSeatCapacity = frontGroup.length === 0 ? 0 : Math.min(totalSeats, cols * Math.ceil(frontGroup.length / cols));
+        const frontCandidateSlots = Array.from({length: frontSeatCapacity}, (_, i) => i);
+
+        assignStudentsToSlots(arr, frontGroup, frontCandidateSlots, cols, useGenderBalance);
+        const remainingSlots = allIndices.filter(i => arr[i] === null);
+        assignStudentsToSlots(arr, normalGroup, remainingSlots, cols, useGenderBalance);
+
+        return arr.map(name => name === null ? '공석' : name);
+    }
+
+    function validateArrangement(arr) {
+        const expectedNames = getStudentNames();
+        const actualNames = arr.filter(name => name !== '공석');
+        const missing = expectedNames.filter(name => !actualNames.includes(name));
+        const duplicates = actualNames.filter((name, index) => actualNames.indexOf(name) !== index);
+        const extra = actualNames.filter(name => !expectedNames.includes(name));
+        return {
+            missing,
+            duplicates: [...new Set(duplicates)],
+            extra,
+            ok: missing.length === 0 && duplicates.length === 0 && extra.length === 0 && actualNames.length === expectedNames.length
+        };
+    }
+
     function generateSeating() {
         const { cols, rows } = getGridSize();
         const totalSeats = cols * rows;
         const useGenderBalance = document.getElementById('genderBalance').checked;
-        
-        let students = [...studentsData];
 
-        if (students.length > totalSeats) {
-            alert(`자리가 부족합니다! (학생수: ${students.length}명, 자리수: ${totalSeats}개)`);
+        if (studentsData.length === 0) {
+            alert('학생을 먼저 추가해주세요.');
+            updateSeatInfo();
             return;
         }
 
-        let frontGroup = students.filter(s => frontStudents.includes(s.name));
-        let normalGroup = students.filter(s => !frontStudents.includes(s.name));
-
-        while (frontGroup.length + normalGroup.length < totalSeats) {
-            normalGroup.push({name: "공석", gender: "N"});
+        if (studentsData.length > totalSeats) {
+            alert(`자리가 부족합니다! (학생수: ${studentsData.length}명, 자리수: ${totalSeats}개)\n더 큰 대형을 선택해주세요.`);
+            updateSeatInfo();
+            return;
         }
 
-        let frontRows = Math.max(2, Math.ceil(frontGroup.length / cols));
-        let frontSeatCapacity = Math.min(totalSeats, cols * frontRows);
-
-        let attempts = 0; const maxAttempts = 2000;
-        let bestArrangement = null; let lastArrangement = null;
+        let attempts = 0;
+        const maxAttempts = 3000;
+        let bestArrangement = null;
+        let lastArrangement = null;
 
         while (attempts < maxAttempts) {
-            let arr = new Array(totalSeats).fill(null);
-            let frontIndices = Array.from({length: frontSeatCapacity}, (_, i) => i);
-            let normalIndices = Array.from({length: totalSeats - frontSeatCapacity}, (_, i) => i + frontSeatCapacity);
-
-            if (useGenderBalance) {
-                const assignByGender = (group, indices) => {
-                    let boys = shuffleArray(group.filter(s => s.gender === 'M'));
-                    let girls = shuffleArray(group.filter(s => s.gender === 'F'));
-                    let blanks = shuffleArray(group.filter(s => s.gender === 'N'));
-
-                    let mSlots = shuffleArray(indices.filter(i => (Math.floor(i / cols) + (i % cols)) % 2 === 0));
-                    let fSlots = shuffleArray(indices.filter(i => (Math.floor(i / cols) + (i % cols)) % 2 !== 0));
-
-                    let leftovers = [];
-
-                    boys.forEach(b => mSlots.length > 0 ? arr[mSlots.pop()] = b.name : leftovers.push(b));
-                    girls.forEach(g => fSlots.length > 0 ? arr[fSlots.pop()] = g.name : leftovers.push(g));
-                    blanks.forEach(b => leftovers.push(b));
-
-                    let remainingSlots = shuffleArray([...mSlots, ...fSlots]);
-                    leftovers.forEach(s => arr[remainingSlots.pop()] = s.name);
-                };
-                assignByGender(frontGroup, frontIndices);
-                assignByGender(normalGroup, normalIndices);
-            } else {
-                let shuffledFrontIndices = shuffleArray([...frontIndices]);
-                let shuffledFrontGroup = shuffleArray(frontGroup);
-                for(let i = 0; i < shuffledFrontGroup.length; i++) arr[shuffledFrontIndices[i]] = shuffledFrontGroup[i].name;
-
-                let shuffledRemainingIndices = shuffleArray([...normalIndices]);
-                let shuffledNormalGroup = shuffleArray(normalGroup);
-                for(let i = 0; i < shuffledNormalGroup.length; i++) arr[shuffledRemainingIndices[i]] = shuffledNormalGroup[i].name;
-            }
-
+            const arr = buildArrangement(cols, rows, useGenderBalance);
             lastArrangement = arr;
 
             if (checkRules(arr, cols, rows)) {
-                bestArrangement = arr; break;
+                bestArrangement = arr;
+                break;
             }
             attempts++;
         }
 
         if (!bestArrangement) {
-            alert("설정한 규칙이 너무 빡빡하여 배치가 어렵습니다. 일부 규칙을 무시하고 임의 배치합니다.");
-            bestArrangement = lastArrangement; 
+            alert('설정한 인접 금지 규칙이 너무 많아 완벽한 배치가 어렵습니다.\n모든 학생은 빠짐없이 배치하되, 일부 인접 금지 규칙은 만족하지 못할 수 있습니다.');
+            bestArrangement = lastArrangement;
+        }
+
+        const validation = validateArrangement(bestArrangement);
+        if (!validation.ok) {
+            const details = [];
+            if (validation.missing.length) details.push(`누락: ${validation.missing.join(', ')}`);
+            if (validation.duplicates.length) details.push(`중복: ${validation.duplicates.join(', ')}`);
+            if (validation.extra.length) details.push(`명단 외: ${validation.extra.join(', ')}`);
+            alert(`배치 검증 중 문제가 발견되었습니다.\n${details.join('\n')}`);
+            updateSeatInfo(`⚠️ 배치 오류: ${details.join(' / ')}`);
+            return;
         }
 
         currentSeats = bestArrangement;
         renderGrid(cols, rows);
+        const emptyCount = currentSeats.filter(name => name === '공석').length;
+        updateSeatInfo(`✅ 배치 완료: 학생 ${studentsData.length}명 전원 배치 / 공석 ${emptyCount}개`);
     }
 
     function checkRules(arr, cols, rows) {
         for (let i = 0; i < arr.length; i++) {
             let s1 = arr[i];
-            if (s1 === "공석") continue;
+            if (s1 === '공석') continue;
 
             let row1 = Math.floor(i / cols);
             let col1 = i % cols;
             let neighbors = [];
-            
-            if (row1 > 0) neighbors.push(i - cols); 
-            if (row1 < rows - 1) neighbors.push(i + cols); 
-            if (col1 > 0) neighbors.push(i - 1); 
-            if (col1 < cols - 1) neighbors.push(i + 1); 
+
+            if (row1 > 0) neighbors.push(i - cols);
+            if (row1 < rows - 1) neighbors.push(i + cols);
+            if (col1 > 0) neighbors.push(i - 1);
+            if (col1 < cols - 1) neighbors.push(i + 1);
             if (row1 > 0 && col1 > 0) neighbors.push(i - cols - 1);
             if (row1 > 0 && col1 < cols - 1) neighbors.push(i - cols + 1);
             if (row1 < rows - 1 && col1 > 0) neighbors.push(i + cols - 1);
@@ -519,7 +667,6 @@
     /* --- 5. 화면 렌더링 및 교체 --- */
     function renderGrid(cols, rows) {
         const container = document.getElementById('grid-container');
-        // auto 키워드를 사용해 책상 크기(85px)에 맞춰 열 너비를 고정! 뒤죽박죽 방지
         container.style.gridTemplateColumns = `repeat(${cols}, auto)`;
         container.innerHTML = '';
         selectedSeatIndex = null;
@@ -527,7 +674,7 @@
         currentSeats.forEach((student, index) => {
             const seatDiv = document.createElement('div');
             seatDiv.className = 'seat';
-            
+
             if (student === '공석') {
                 seatDiv.classList.add('empty');
                 seatDiv.innerText = '공석';
@@ -539,7 +686,7 @@
                 }
                 seatDiv.innerText = student;
             }
-            
+
             seatDiv.onclick = () => handleSeatClick(index, seatDiv);
             container.appendChild(seatDiv);
         });
@@ -549,7 +696,7 @@
 
     function updateLayoutStyle() {
         const container = document.getElementById('grid-container');
-        if (!container.children.length) return; 
+        if (!container.children.length) return;
 
         const style = document.getElementById('layoutStyle').value;
         const { cols, rows } = getGridSize();
@@ -557,7 +704,7 @@
         Array.from(container.children).forEach((seat, i) => {
             seat.style.marginRight = '0';
             seat.style.marginBottom = '0';
-            
+
             let col = i % cols;
             let row = Math.floor(i / cols);
 
@@ -585,9 +732,10 @@
             let temp = currentSeats[selectedSeatIndex];
             currentSeats[selectedSeatIndex] = currentSeats[index];
             currentSeats[index] = temp;
-            
+
             const { cols, rows } = getGridSize();
             renderGrid(cols, rows);
+            updateSeatInfo(`✅ 자리 교체 완료: 학생 ${studentsData.length}명 전원 유지`);
         }
     }
 </script>
