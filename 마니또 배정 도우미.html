@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리 반 마니또 뽑기</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 폰트 적용 (귀여운 느낌의 Jua 폰트) -->
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <!-- 축하 폭죽 효과 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Jua', sans-serif;
+            background-color: #fdf2f8; /* 연한 핑크 배경 */
+            user-select: none;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .shuffling {
+            animation: shake 0.5s infinite;
+        }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-800">
+
+    <!-- 1. 설정 화면 (선생님용) -->
+    <div id="setup-view" class="max-w-2xl mx-auto mt-12 p-8 bg-white rounded-2xl shadow-xl border-4 border-pink-200 relative">
+        <h1 class="text-4xl text-center text-pink-500 mb-8">💖 마니또 준비하기 💖</h1>
+        
+        <div class="mb-6">
+            <label class="block text-xl mb-2">학생 이름 입력 (엔터 또는 쉼표로 구분)</label>
+            <textarea id="names-input" rows="5" class="w-full p-4 border-2 border-pink-100 rounded-xl focus:outline-none focus:border-pink-400 text-lg" placeholder="예: 김철수, 이영희, 홍길동..."></textarea>
+        </div>
+
+        <!-- 비밀 기능 트리거 (우측 하단 작은 아이콘) -->
+        <div class="text-right mb-2">
+            <span onclick="toggleSecret()" class="cursor-pointer text-gray-200 hover:text-gray-400 text-sm transition-colors" title="선생님 비밀 설정">🔒 조작하기</span>
+        </div>
+
+        <!-- 비밀 조작 패널 -->
+        <div id="secret-panel" class="hidden mb-6 p-5 bg-gray-800 text-white rounded-xl shadow-inner">
+            <h2 class="text-xl text-yellow-300 mb-2">🤫 비밀 배정 규칙 (학생들에겐 비밀!)</h2>
+            <p class="text-sm text-gray-400 mb-4">원하는 배정을 미리 지정합니다. 나머지는 알아서 랜덤으로 섞입니다.</p>
+            <div id="rules-container" class="space-y-3"></div>
+            <button onclick="addRule()" class="mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm">+ 배정 추가</button>
+        </div>
+
+        <button onclick="startGame()" class="w-full py-4 bg-pink-500 hover:bg-pink-600 text-white rounded-xl text-2xl shadow-lg transition-colors">
+            배정 완료 및 뽑기 시작!
+        </button>
+    </div>
+
+    <!-- 2. 뽑기 화면 (학생용) -->
+    <div id="draw-view" class="hidden max-w-5xl mx-auto mt-8 p-6">
+        <h1 class="text-4xl text-center text-pink-600 mb-2">🎁 내 마니또는 누구일까? 🎁</h1>
+        <p class="text-center text-gray-500 mb-8">자신의 이름을 클릭해서 마니또를 확인하세요! (확인 후엔 되돌릴 수 없습니다)</p>
+        
+        <div id="student-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <!-- 학생 버튼들이 여기에 동적으로 생성됩니다. -->
+        </div>
+
+        <!-- 선생님 전용 모아보기 버튼 추가 -->
+        <div class="mt-16 text-center border-t-2 border-dashed border-pink-200 pt-8">
+            <button onclick="showTeacherResults()" class="px-6 py-3 bg-gray-700 hover:bg-gray-800 text-white rounded-xl text-lg font-bold transition-colors shadow-md">
+                👨‍🏫 선생님 전용: 전체 결과 모아보기
+            </button>
+            <p class="text-sm text-gray-400 mt-2">이 버튼을 누르면 모든 학생의 마니또 배정 결과를 한눈에 볼 수 있습니다.</p>
+        </div>
+    </div>
+
+    <!-- 3. 모달 (뽑기 진행 및 결과 확인) -->
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full mx-4 text-center border-4 border-pink-300">
+            <h2 id="modal-title" class="text-3xl text-gray-700 mb-6"></h2>
+            
+            <!-- 상태 1: 본인 확인 -->
+            <div id="modal-step-1">
+                <p class="text-lg mb-6 text-gray-600">주변에 보는 사람이 없는지 확인하세요!<br>진짜 본인이 맞나요?</p>
+                <div class="flex gap-4 justify-center">
+                    <button onclick="closeModal()" class="px-6 py-3 bg-gray-300 hover:bg-gray-400 rounded-xl text-lg">아니오</button>
+                    <button onclick="startDraw()" class="px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-xl text-lg">네, 확인할게요!</button>
+                </div>
+            </div>
+
+            <!-- 상태 2: 뽑기 연출 및 결과 -->
+            <div id="modal-step-2" class="hidden">
+                <div id="draw-animation" class="text-5xl text-pink-600 font-bold h-20 flex items-center justify-center mb-6"></div>
+                <div id="draw-result" class="hidden">
+                    <p class="text-2xl text-gray-700 mb-2">당신이 챙겨줄 마니또는</p>
+                    <p id="target-name" class="text-5xl text-blue-600 font-bold mb-4"></p>
+                    <p class="text-xl text-gray-600">입니다! 🎉</p>
+                </div>
+                <button id="close-result-btn" onclick="finishDraw()" class="hidden w-full mt-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-xl">확인했습니다 (닫기)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 선생님 전용 결과 확인 모달 -->
+    <div id="teacher-result-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[100] p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border-4 border-gray-800">
+            <div class="p-6 border-b border-gray-200 bg-gray-50 rounded-t-2xl flex justify-between items-center">
+                <h2 class="text-3xl text-gray-800">🚨 선생님 전용: 전체 배정 결과</h2>
+                <button onclick="closeTeacherModal()" class="text-gray-500 hover:text-red-500 font-bold text-3xl transition-colors">&times;</button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1">
+                <table class="w-full text-lg border-collapse">
+                    <thead class="bg-pink-100 text-pink-800 sticky top-0">
+                        <tr>
+                            <th class="py-3 px-4 rounded-tl-lg text-center">누가 (뽑은 사람)</th>
+                            <th class="py-3 px-4 text-center">확인 상태</th>
+                            <th class="py-3 px-4 rounded-tr-lg text-center">누구를 (대상)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teacher-result-tbody" class="text-gray-700">
+                        <!-- 동적 생성 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl flex justify-end gap-4">
+                <button onclick="copyTeacherResults()" class="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-lg font-bold transition-colors shadow-md">📄 텍스트 복사하기</button>
+                <button onclick="closeTeacherModal()" class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-xl text-lg font-bold transition-colors shadow-md">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 상태 변수
+        let participants = [];
+        let finalMatches = {}; // 최종 결정된 마니또 쌍 { 뽑는사람: 받는사람 }
+        let checkedStudents = new Set(); // 확인 완료한 학생들
+        let currentDrawer = ""; // 현재 뽑기를 진행 중인 학생
+        
+        let rules = []; // 비밀 규칙 [{ drawer: '', receiver: '' }]
+
+        // 이름 입력창 변경 시 배열 업데이트
+        document.getElementById('names-input').addEventListener('input', updateParticipants);
+
+        function updateParticipants() {
+            const text = document.getElementById('names-input').value;
+            // 줄바꿈 또는 쉼표로 분리 후 공백 제거, 빈 문자열 제거
+            participants = text.split(/[\n,]+/).map(n => n.trim()).filter(n => n.length > 0);
+            // 중복 제거
+            participants = [...new Set(participants)];
+            
+            // 비밀 설정 창이 열려있다면 드롭다운 옵션 업데이트
+            renderRules();
+        }
+
+        function toggleSecret() {
+            const panel = document.getElementById('secret-panel');
+            panel.classList.toggle('hidden');
+            if(!panel.classList.contains('hidden')) {
+                renderRules();
+            }
+        }
+
+        function addRule() {
+            rules.push({ drawer: '', receiver: '' });
+            renderRules();
+        }
+
+        function removeRule(index) {
+            rules.splice(index, 1);
+            renderRules();
+        }
+
+        function renderRules() {
+            const container = document.getElementById('rules-container');
+            container.innerHTML = '';
+
+            rules.forEach((rule, index) => {
+                const div = document.createElement('div');
+                div.className = "flex items-center gap-2 bg-gray-700 p-2 rounded";
+                
+                // 뽑는 사람 Select
+                const drawerSelect = createSelect('drawer', rule.drawer, index);
+                // 받는 사람 Select
+                const receiverSelect = createSelect('receiver', rule.receiver, index);
+                
+                div.innerHTML = `
+                    <span class="text-gray-300">누가:</span>
+                `;
+                div.appendChild(drawerSelect);
+                div.innerHTML += `<span class="text-gray-300">누구를:</span>`;
+                div.appendChild(receiverSelect);
+                div.innerHTML += `
+                    <button onclick="removeRule(${index})" class="ml-auto text-red-400 hover:text-red-300 font-bold px-2">X</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function createSelect(type, selectedValue, ruleIndex) {
+            const select = document.createElement('select');
+            select.className = "text-black p-1 rounded";
+            select.innerHTML = `<option value="">--선택--</option>`;
+            
+            participants.forEach(name => {
+                const isSelected = name === selectedValue ? 'selected' : '';
+                select.innerHTML += `<option value="${name}" ${isSelected}>${name}</option>`;
+            });
+
+            select.onchange = (e) => {
+                rules[ruleIndex][type] = e.target.value;
+            };
+            return select;
+        }
+
+        // 마니또 배정 로직 (랜덤이되 비밀 규칙을 100% 충족)
+        function generateManito() {
+            if (participants.length < 3) {
+                return "학생 이름을 최소 3명 이상 입력해주세요.";
+            }
+
+            let forced = {};
+            // 비밀 규칙 유효성 검사
+            for (let rule of rules) {
+                if (rule.drawer && rule.receiver) {
+                    if (rule.drawer === rule.receiver) return "자기 자신을 뽑게 할 수는 없습니다.";
+                    if (forced[rule.drawer]) return `${rule.drawer}님이 여러 명을 뽑도록 설정되었습니다.`;
+                    if (Object.values(forced).includes(rule.receiver)) return `${rule.receiver}님이 여러 명에게 선택받도록 설정되었습니다.`;
+                    forced[rule.drawer] = rule.receiver;
+                }
+            }
+
+            // 조건에 맞는 완전 순열(교란 순열) 찾기 알고리즘 (백트래킹/랜덤재시도)
+            const maxAttempts = 2000;
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                let matches = { ...forced };
+                let availableReceivers = participants.filter(n => !Object.values(forced).includes(n));
+                let remainingDrawers = participants.filter(n => !forced[n]);
+
+                // 남은 받을 사람들을 랜덤하게 섞기
+                availableReceivers.sort(() => Math.random() - 0.5);
+
+                let valid = true;
+                for (let i = 0; i < remainingDrawers.length; i++) {
+                    // 남은 사람들끼리 배정하는데 자기 자신을 뽑게 되면 실패 (재시도)
+                    if (remainingDrawers[i] === availableReceivers[i]) {
+                        valid = false;
+                        break;
+                    }
+                    matches[remainingDrawers[i]] = availableReceivers[i];
+                }
+
+                if (valid) return matches; // 성공!
+            }
+
+            return "입력하신 비밀 규칙으로는 남은 사람들이 배정될 수 없습니다. (예: 2명 남았는데 서로 짝지어질 수 없는 경우 등) 규칙을 수정해주세요.";
+        }
+
+        function startGame() {
+            updateParticipants();
+            
+            const result = generateManito();
+            if (typeof result === 'string') {
+                alert(result); // 에러 메시지 출력
+                return;
+            }
+
+            finalMatches = result;
+            console.log("마니또 배정 완료 (비밀입니다!)");
+
+            // 화면 전환
+            document.getElementById('setup-view').classList.add('hidden');
+            document.getElementById('draw-view').classList.remove('hidden');
+
+            renderStudentGrid();
+        }
+
+        function renderStudentGrid() {
+            const grid = document.getElementById('student-grid');
+            grid.innerHTML = '';
+            
+            // 가나다 순 정렬해서 보여주기
+            const sortedParticipants = [...participants].sort();
+
+            sortedParticipants.forEach(name => {
+                const btn = document.createElement('button');
+                const isChecked = checkedStudents.has(name);
+                
+                btn.className = `p-6 rounded-2xl text-2xl font-bold transition-all duration-300 ${
+                    isChecked 
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                    : 'bg-pink-100 text-pink-700 card-hover border-2 border-pink-300 hover:bg-pink-200'
+                }`;
+                btn.innerText = name + (isChecked ? '\n(확인완료)' : '');
+                
+                if (!isChecked) {
+                    btn.onclick = () => openModal(name);
+                }
+                
+                grid.appendChild(btn);
+            });
+        }
+
+        function openModal(name) {
+            currentDrawer = name;
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('modal-title').innerText = `👤 ${name} 님`;
+            
+            // UI 초기화
+            document.getElementById('modal-step-1').classList.remove('hidden');
+            document.getElementById('modal-step-2').classList.add('hidden');
+            document.getElementById('draw-result').classList.add('hidden');
+            document.getElementById('close-result-btn').classList.add('hidden');
+            document.getElementById('draw-animation').innerText = '';
+            document.getElementById('draw-animation').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            currentDrawer = "";
+        }
+
+        function startDraw() {
+            document.getElementById('modal-step-1').classList.add('hidden');
+            document.getElementById('modal-step-2').classList.remove('hidden');
+            
+            const animBox = document.getElementById('draw-animation');
+            animBox.classList.add('shuffling');
+
+            let ticks = 0;
+            const maxTicks = 20; // 약 2초 지속
+            
+            // 남은 사람들 중 아무나 랜덤으로 보여주는 연출용 배열
+            const others = participants.filter(n => n !== currentDrawer);
+
+            const interval = setInterval(() => {
+                animBox.innerText = others[Math.floor(Math.random() * others.length)];
+                ticks++;
+
+                if (ticks >= maxTicks) {
+                    clearInterval(interval);
+                    animBox.classList.remove('shuffling');
+                    animBox.classList.add('hidden'); // 텍스트 롤링 숨김
+                    showResult();
+                }
+            }, 100);
+        }
+
+        function showResult() {
+            const receiver = finalMatches[currentDrawer];
+            
+            document.getElementById('draw-result').classList.remove('hidden');
+            document.getElementById('target-name').innerText = receiver;
+            document.getElementById('close-result-btn').classList.remove('hidden');
+
+            // 폭죽 효과
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#ec4899', '#3b82f6', '#eab308']
+            });
+        }
+
+        function finishDraw() {
+            checkedStudents.add(currentDrawer);
+            closeModal();
+            renderStudentGrid();
+        }
+
+        function showTeacherResults() {
+            const tbody = document.getElementById('teacher-result-tbody');
+            tbody.innerHTML = '';
+            
+            // 가나다 순으로 정렬해서 보기 좋게 출력
+            const sortedDrawers = Object.keys(finalMatches).sort();
+
+            sortedDrawers.forEach(drawer => {
+                const receiver = finalMatches[drawer];
+                const isChecked = checkedStudents.has(drawer);
+                
+                const statusHtml = isChecked 
+                    ? '<span class="text-blue-500 font-bold bg-blue-50 px-2 py-1 rounded">확인완료</span>' 
+                    : '<span class="text-gray-400">미확인</span>';
+                
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-gray-200 hover:bg-gray-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-center font-bold">${drawer}</td>
+                    <td class="py-3 px-4 text-center">${statusHtml}</td>
+                    <td class="py-3 px-4 text-center text-pink-600 font-bold text-xl">${receiver}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('teacher-result-modal').classList.remove('hidden');
+        }
+
+        function closeTeacherModal() {
+            document.getElementById('teacher-result-modal').classList.add('hidden');
+        }
+
+        function copyTeacherResults() {
+            let text = "💖 우리 반 마니또 전체 배정 결과 💖\n\n";
+            const sortedDrawers = Object.keys(finalMatches).sort();
+            
+            sortedDrawers.forEach(drawer => {
+                const receiver = finalMatches[drawer];
+                const isChecked = checkedStudents.has(drawer) ? "[확인완료]" : "[미확인]";
+                text += `${drawer} ${isChecked} ➡️ ${receiver}\n`;
+            });
+
+            // 클립보드 복사 로직 (호환성을 위해 execCommand 사용)
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                alert("✅ 배정 결과가 클립보드에 복사되었습니다!\n엑셀, 카카오톡, 메모장 등에 '붙여넣기(Ctrl+V)' 해주세요.");
+            } catch (err) {
+                alert("❌ 복사에 실패했습니다. 표를 직접 드래그해서 복사해주세요.");
+            }
+            document.body.removeChild(textArea);
+        }
+
+    </script>
+</body>
+</html>

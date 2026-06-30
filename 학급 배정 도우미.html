@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학급 역할 배정 프로그램</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-slate-800 h-screen flex flex-col selection:bg-indigo-100 selection:text-indigo-900">
+
+    <!-- Header -->
+    <header class="bg-white px-6 py-4 shadow-sm border-b border-slate-200 flex justify-between items-center z-10 sticky top-0">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 text-white p-2 rounded-lg">
+                <i class="fa-solid fa-users-gear text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-slate-800 tracking-tight">학급 역할 배정 도우미</h1>
+                <p class="text-slate-500 text-xs mt-0.5">공정하고 편리한 1인 1역 관리</p>
+            </div>
+        </div>
+        <!-- 우측 상단 설정 버튼 (기존의 비밀 기능을 대체) -->
+        <button onclick="openSettingsModal()" class="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 p-2.5 rounded-full transition-colors" title="설정">
+            <i class="fa-solid fa-gear text-xl"></i>
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto p-4 md:p-8">
+        <div class="max-w-5xl mx-auto">
+            
+            <!-- Step Tabs (Top Navigation) -->
+            <div class="flex bg-white rounded-2xl p-2 shadow-sm border border-slate-200 mb-6 overflow-x-auto">
+                <button onclick="switchTab('roles')" id="tab-btn-roles" class="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold transition-all bg-indigo-50 text-indigo-600">
+                    <span class="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                    역할 설정
+                </button>
+                <button onclick="switchTab('students')" id="tab-btn-students" class="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all text-slate-500 hover:bg-slate-50">
+                    <span class="bg-slate-100 text-slate-500 w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
+                    학생 및 지망
+                </button>
+                <button onclick="switchTab('results')" id="tab-btn-results" class="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all text-slate-500 hover:bg-slate-50">
+                    <span class="bg-slate-100 text-slate-500 w-6 h-6 rounded-full flex items-center justify-center text-sm">3</span>
+                    결과 확인
+                </button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 min-h-[500px]">
+                
+                <!-- TAB 1: 역할 설정 -->
+                <div id="tab-roles" class="tab-content active">
+                    <div class="mb-6">
+                        <h2 class="text-xl font-bold flex items-center gap-2"><i class="fa-solid fa-broom text-indigo-500"></i> 필요한 역할 등록</h2>
+                        <p class="text-slate-500 text-sm mt-1">학급에 필요한 역할과 모집 인원을 설정해주세요.</p>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-3 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <input type="text" id="role-name" placeholder="역할 이름 (예: 칠판 지우기)" class="flex-1 border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 border bg-white" onkeypress="if(event.key==='Enter') addRole()">
+                        <div class="flex gap-3">
+                            <div class="relative w-32">
+                                <input type="number" id="role-count" placeholder="인원수" value="1" min="1" class="w-full border-slate-300 rounded-lg pl-4 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 border bg-white" onkeypress="if(event.key==='Enter') addRole()">
+                                <span class="absolute right-3 top-2.5 text-slate-400 pointer-events-none">명</span>
+                            </div>
+                            <button onclick="addRole()" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition shadow-sm font-medium whitespace-nowrap"><i class="fa-solid fa-plus mr-1"></i> 추가</button>
+                        </div>
+                    </div>
+
+                    <div class="rounded-xl border border-slate-200 overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th class="py-3 px-4 font-semibold text-slate-600 text-sm">역할명</th>
+                                    <th class="py-3 px-4 font-semibold text-slate-600 text-sm w-28 text-center">필요 인원</th>
+                                    <th class="py-3 px-4 font-semibold text-slate-600 text-sm w-20 text-center">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="role-list-body" class="divide-y divide-slate-100">
+                                <!-- Roles will be added here -->
+                            </tbody>
+                        </table>
+                        <div id="role-empty-msg" class="text-center text-slate-400 py-10 flex flex-col items-center gap-2">
+                            <i class="fa-regular fa-folder-open text-3xl mb-1 text-slate-300"></i>
+                            <p>등록된 역할이 없습니다.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-right">
+                        <span class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg font-medium text-sm">
+                            총 필요 인원: <span id="total-role-capacity" class="text-lg font-bold">0</span>명
+                        </span>
+                    </div>
+                </div>
+
+                <!-- TAB 2: 학생 및 지망 -->
+                <div id="tab-students" class="tab-content">
+                    <div class="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold flex items-center gap-2"><i class="fa-solid fa-hand-sparkles text-indigo-500"></i> 학생 목록 및 희망 역할</h2>
+                            <p class="text-slate-500 text-sm mt-1">학생 이름을 추가하고 1~3지망을 선택하세요.</p>
+                        </div>
+                        <button onclick="randomizeAllPreferences()" class="text-slate-500 hover:text-indigo-600 bg-white border border-slate-200 shadow-sm px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1">
+                            <i class="fa-solid fa-dice"></i> 지망 무작위 채우기 (테스트)
+                        </button>
+                    </div>
+                    
+                    <div class="flex gap-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100 items-start">
+                        <textarea id="student-names" rows="1" placeholder="학생 이름 입력 (예: 김철수, 이영희) ※ 쉼표나 줄바꿈으로 여러 명 한 번에 입력 가능" class="flex-1 border-slate-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 border bg-white resize-none text-sm leading-relaxed min-h-[46px]"></textarea>
+                        <button onclick="addStudents()" class="bg-indigo-600 text-white px-5 py-3 rounded-lg hover:bg-indigo-700 transition shadow-sm font-medium whitespace-nowrap h-[46px] flex items-center"><i class="fa-solid fa-user-plus mr-1"></i> 추가</button>
+                    </div>
+
+                    <div class="rounded-xl border border-slate-200 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
+                                <thead class="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th class="py-3 px-4 font-semibold text-slate-600 text-sm w-32">이름</th>
+                                        <th class="py-3 px-2 font-semibold text-indigo-600 text-sm">1지망</th>
+                                        <th class="py-3 px-2 font-semibold text-teal-600 text-sm">2지망</th>
+                                        <th class="py-3 px-2 font-semibold text-amber-600 text-sm">3지망</th>
+                                        <th class="py-3 px-4 font-semibold text-slate-600 text-sm w-20 text-center">관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="student-list-body" class="divide-y divide-slate-100">
+                                    <!-- Students will be added here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="student-empty-msg" class="text-center text-slate-400 py-10 flex flex-col items-center gap-2">
+                            <i class="fa-regular fa-face-frown text-3xl mb-1 text-slate-300"></i>
+                            <p>등록된 학생이 없습니다.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-right">
+                        <span class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg font-medium text-sm">
+                            총 학생 수: <span id="total-student-count" class="text-lg font-bold text-indigo-600">0</span>명
+                        </span>
+                    </div>
+                </div>
+
+                <!-- TAB 3: 결과 -->
+                <div id="tab-results" class="tab-content h-full">
+                    <div class="mb-8 text-center">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-2">모든 준비가 끝났습니다!</h2>
+                        <p class="text-slate-500 mb-6">학생들의 지망을 최대한 반영하여 공정하게 추첨합니다.</p>
+                        <button onclick="runAssignment()" class="bg-indigo-600 text-white font-bold px-10 py-4 rounded-full shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:shadow-xl transition-all transform hover:-translate-y-1 text-lg flex items-center justify-center gap-2 mx-auto">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> 역할 배정 시작하기
+                        </button>
+                    </div>
+
+                    <div id="result-container" class="hidden border-t border-slate-200 pt-8 animate-[fadeIn_0.5s_ease-in-out]">
+                        <div class="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
+                            <h3 class="text-xl font-bold flex items-center gap-2"><i class="fa-solid fa-clipboard-check text-indigo-500"></i> 배정 결과</h3>
+                            <button onclick="copyResults()" class="bg-slate-800 text-white px-5 py-2.5 rounded-lg hover:bg-slate-900 transition shadow-sm font-medium text-sm flex items-center gap-2">
+                                <i class="fa-regular fa-copy"></i> 결과 복사하기
+                            </button>
+                        </div>
+
+                        <!-- 통계 요약 -->
+                        <div id="result-stats" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                            <!-- Stats injected here -->
+                        </div>
+
+                        <!-- 카드 그리드 -->
+                        <div id="result-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            <!-- Results injected here -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- SETTINGS MODAL (Teacher Override / Preset) -->
+    <!-- 기존 비밀 기능을 공식적인 '설정' 모달로 변경 -->
+    <div id="settings-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-95 transition-transform duration-300" id="settings-modal-content">
+            <div class="border-b border-slate-100 px-6 py-4 flex justify-between items-center bg-slate-50/50">
+                <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2"><i class="fa-solid fa-gear text-slate-400"></i> 설정</h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 w-8 h-8 rounded-full flex items-center justify-center transition">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <div class="mb-6">
+                    <h4 class="font-semibold text-slate-800 mb-1">사전 배정 (교사 권한)</h4>
+                    <p class="text-sm text-slate-500 leading-relaxed bg-blue-50 text-blue-700 p-3 rounded-lg border border-blue-100">
+                        <i class="fa-solid fa-circle-info mr-1"></i> 이곳에서 지정된 학생은 추첨 시 <strong>해당 역할에 1순위로 무조건 배정</strong>됩니다. (학생들에게는 일반 배정 결과와 똑같이 보여집니다.)
+                    </p>
+                </div>
+                
+                <div class="flex gap-2 mb-5">
+                    <select id="preset-student-select" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white">
+                        <option value="">학생 선택...</option>
+                    </select>
+                    <select id="preset-role-select" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white">
+                        <option value="">역할 선택...</option>
+                    </select>
+                    <button onclick="addPresetAssignment()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">사전 배정 목록</h5>
+                    <div class="border border-slate-200 rounded-xl max-h-48 overflow-y-auto bg-slate-50">
+                        <ul id="preset-list" class="divide-y divide-slate-200 text-sm">
+                            <!-- Presets go here -->
+                        </ul>
+                        <div id="preset-empty-msg" class="text-center text-slate-400 py-6 text-sm">지정된 내역이 없습니다.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-slate-100 p-4 bg-slate-50 text-right">
+                <button onclick="closeSettingsModal()" class="bg-slate-800 text-white px-6 py-2 rounded-lg hover:bg-slate-900 transition font-medium text-sm shadow-sm">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State ---
+        let roles = [];
+        let students = [];
+        let presetAssignments = {}; // 변경: secretAssignments -> presetAssignments
+
+        let roleIdCounter = 1;
+        let studentIdCounter = 1;
+
+        // --- Tab Logic ---
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('[id^="tab-btn-"]').forEach(el => {
+                // Reset styling
+                el.classList.remove('bg-indigo-50', 'text-indigo-600');
+                el.classList.add('text-slate-500', 'hover:bg-slate-50');
+                
+                // Reset circle styling
+                const circle = el.querySelector('span');
+                circle.classList.remove('bg-indigo-100', 'text-indigo-700');
+                circle.classList.add('bg-slate-100', 'text-slate-500');
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            const btn = document.getElementById(`tab-btn-${tabName}`);
+            btn.classList.remove('text-slate-500', 'hover:bg-slate-50');
+            btn.classList.add('bg-indigo-50', 'text-indigo-600');
+            
+            const activeCircle = btn.querySelector('span');
+            activeCircle.classList.remove('bg-slate-100', 'text-slate-500');
+            activeCircle.classList.add('bg-indigo-100', 'text-indigo-700');
+
+            if(tabName === 'students') {
+                renderStudents();
+            }
+        }
+
+        // --- UI Updates: Roles ---
+        function addRole() {
+            const nameInput = document.getElementById('role-name');
+            const countInput = document.getElementById('role-count');
+            const name = nameInput.value.trim();
+            const count = parseInt(countInput.value);
+
+            if (!name) return Swal.fire({icon: 'error', title: '입력 오류', text: '역할 이름을 입력해주세요.', confirmButtonColor: '#4f46e5', customClass: { popup: 'rounded-2xl' }});
+            if (count < 1 || isNaN(count)) return Swal.fire({icon: 'error', title: '입력 오류', text: '인원수는 1명 이상이어야 합니다.', confirmButtonColor: '#4f46e5', customClass: { popup: 'rounded-2xl' }});
+
+            roles.push({ id: roleIdCounter++, name, count });
+            nameInput.value = '';
+            countInput.value = '1';
+            nameInput.focus();
+            
+            renderRoles();
+            updateAllStudentDropdowns();
+        }
+
+        function deleteRole(id) {
+            roles = roles.filter(r => r.id !== id);
+            students.forEach(s => {
+                s.prefs = s.prefs.map(p => p === id ? '' : p);
+            });
+            for (let sId in presetAssignments) {
+                if (presetAssignments[sId] === id) delete presetAssignments[sId];
+            }
+            renderRoles();
+            renderStudents();
+            renderPresets();
+        }
+
+        function renderRoles() {
+            const tbody = document.getElementById('role-list-body');
+            const emptyMsg = document.getElementById('role-empty-msg');
+            const totalSpan = document.getElementById('total-role-capacity');
+            
+            tbody.innerHTML = '';
+            let total = 0;
+
+            if (roles.length === 0) {
+                emptyMsg.style.display = 'flex';
+            } else {
+                emptyMsg.style.display = 'none';
+                roles.forEach(r => {
+                    total += r.count;
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-slate-50 transition-colors bg-white';
+                    tr.innerHTML = `
+                        <td class="py-3 px-4 font-medium text-slate-700">${r.name}</td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-semibold">${r.count}명</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="deleteRole(${r.id})" class="text-slate-300 hover:text-red-500 bg-white hover:bg-red-50 w-8 h-8 rounded-full transition-colors flex items-center justify-center mx-auto" title="삭제">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            totalSpan.textContent = total;
+        }
+
+        // --- UI Updates: Students ---
+        function addStudents() {
+            const inputEl = document.getElementById('student-names');
+            const rawText = inputEl.value;
+            const names = rawText.split(/[\n,]+/).map(n => n.trim()).filter(n => n.length > 0);
+            
+            if (names.length === 0) return Swal.fire({icon: 'warning', title: '알림', text: '추가할 학생 이름을 입력해주세요.', confirmButtonColor: '#4f46e5', customClass: { popup: 'rounded-2xl' }});
+
+            names.forEach(name => {
+                students.push({
+                    id: studentIdCounter++,
+                    name: name,
+                    prefs: ['', '', '']
+                });
+            });
+
+            inputEl.value = '';
+            inputEl.style.height = 'auto';
+            renderStudents();
+        }
+
+        function deleteStudent(id) {
+            students = students.filter(s => s.id !== id);
+            if (presetAssignments[id]) delete presetAssignments[id];
+            renderStudents();
+            renderPresets();
+        }
+
+        function updatePreference(studentId, choiceIndex, roleId) {
+            const student = students.find(s => s.id === studentId);
+            if (student) {
+                student.prefs[choiceIndex] = roleId ? parseInt(roleId) : '';
+            }
+        }
+
+        function generateRoleOptions(selectedId) {
+            let opts = `<option value="" class="text-slate-400">선택안함</option>`;
+            roles.forEach(r => {
+                const selected = (r.id === selectedId) ? 'selected' : '';
+                opts += `<option value="${r.id}" ${selected} class="text-slate-800">${r.name}</option>`;
+            });
+            return opts;
+        }
+
+        function renderStudents() {
+            const tbody = document.getElementById('student-list-body');
+            const emptyMsg = document.getElementById('student-empty-msg');
+            const countSpan = document.getElementById('total-student-count');
+            
+            tbody.innerHTML = '';
+
+            if (students.length === 0) {
+                emptyMsg.style.display = 'flex';
+            } else {
+                emptyMsg.style.display = 'none';
+                students.forEach(s => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-slate-50 transition-colors bg-white';
+                    tr.innerHTML = `
+                        <td class="py-2.5 px-4 font-medium text-slate-700 whitespace-nowrap">${s.name}</td>
+                        <td class="py-2.5 px-2 min-w-[120px]">
+                            <select onchange="updatePreference(${s.id}, 0, this.value)" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-700">
+                                ${generateRoleOptions(s.prefs[0])}
+                            </select>
+                        </td>
+                        <td class="py-2.5 px-2 min-w-[120px]">
+                            <select onchange="updatePreference(${s.id}, 1, this.value)" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-slate-700">
+                                ${generateRoleOptions(s.prefs[1])}
+                            </select>
+                        </td>
+                        <td class="py-2.5 px-2 min-w-[120px]">
+                            <select onchange="updatePreference(${s.id}, 2, this.value)" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-slate-700">
+                                ${generateRoleOptions(s.prefs[2])}
+                            </select>
+                        </td>
+                        <td class="py-2.5 px-4 text-center">
+                            <button onclick="deleteStudent(${s.id})" class="text-slate-300 hover:text-red-500 bg-white hover:bg-red-50 w-8 h-8 rounded-full transition-colors flex items-center justify-center mx-auto" title="삭제">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            countSpan.textContent = students.length;
+        }
+
+        function updateAllStudentDropdowns() {
+            renderStudents();
+        }
+
+        function randomizeAllPreferences() {
+            if(roles.length === 0) return Swal.fire({icon: 'warning', text: '먼저 역할을 설정해주세요.', confirmButtonColor: '#4f46e5', customClass: { popup: 'rounded-2xl' }});
+            students.forEach(s => {
+                let availableRoles = [...roles];
+                for(let i=0; i<3; i++) {
+                    if(availableRoles.length > 0) {
+                        const rIndex = Math.floor(Math.random() * availableRoles.length);
+                        s.prefs[i] = availableRoles[rIndex].id;
+                        availableRoles.splice(rIndex, 1);
+                    } else {
+                        s.prefs[i] = '';
+                    }
+                }
+            });
+            renderStudents();
+        }
+
+
+        // --- Settings / Preset Feature (Teacher Override) ---
+        // 비밀 연타 기능 대신 공식적인 버튼으로 모달 열기
+        function openSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            const content = document.getElementById('settings-modal-content');
+            
+            modal.classList.remove('hidden');
+            // Allow display block to apply before adding opacity
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+            
+            populatePresetSelects();
+            renderPresets();
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            const content = document.getElementById('settings-modal-content');
+            
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); // Wait for transition
+        }
+
+        function populatePresetSelects() {
+            const sSelect = document.getElementById('preset-student-select');
+            const rSelect = document.getElementById('preset-role-select');
+            
+            sSelect.innerHTML = '<option value="">학생 선택...</option>';
+            students.forEach(s => {
+                sSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+            });
+
+            rSelect.innerHTML = '<option value="">역할 선택...</option>';
+            roles.forEach(r => {
+                rSelect.innerHTML += `<option value="${r.id}">${r.name} (총 ${r.count}명)</option>`;
+            });
+        }
+
+        function addPresetAssignment() {
+            const sId = document.getElementById('preset-student-select').value;
+            const rId = document.getElementById('preset-role-select').value;
+
+            if(!sId || !rId) return Swal.fire({icon:'error', title:'오류', text:'학생과 역할을 모두 선택해주세요.', confirmButtonColor: '#4f46e5', customClass: { popup: 'rounded-2xl' }});
+            
+            presetAssignments[sId] = parseInt(rId);
+            document.getElementById('preset-student-select').value = '';
+            document.getElementById('preset-role-select').value = '';
+            renderPresets();
+        }
+
+        function deletePreset(studentId) {
+            delete presetAssignments[studentId];
+            renderPresets();
+        }
+
+        function renderPresets() {
+            const ul = document.getElementById('preset-list');
+            const emptyMsg = document.getElementById('preset-empty-msg');
+            ul.innerHTML = '';
+            
+            const presetKeys = Object.keys(presetAssignments);
+            if(presetKeys.length === 0) {
+                emptyMsg.style.display = 'block';
+            } else {
+                emptyMsg.style.display = 'none';
+                presetKeys.forEach(sId => {
+                    const student = students.find(s => s.id == sId);
+                    const role = roles.find(r => r.id == presetAssignments[sId]);
+                    if(student && role) {
+                        const li = document.createElement('li');
+                        li.className = 'px-4 py-3 flex justify-between items-center bg-white';
+                        li.innerHTML = `
+                            <div class="flex items-center gap-2">
+                                <span class="bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded text-xs">${student.name}</span>
+                                <i class="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
+                                <span class="text-slate-700 font-medium">${role.name}</span>
+                            </div>
+                            <button onclick="deletePreset('${sId}')" class="text-slate-400 hover:text-red-500 bg-slate-50 hover:bg-red-50 w-7 h-7 rounded flex items-center justify-center transition">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        `;
+                        ul.appendChild(li);
+                    } else {
+                        delete presetAssignments[sId];
+                    }
+                });
+            }
+        }
+
+
+        // --- Core Algorithm: Run Assignment ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function runAssignment() {
+            if(roles.length === 0) return Swal.fire({icon:'warning', title:'확인', text:'역할을 먼저 설정해주세요.', confirmButtonColor: '#4f46e5', customClass: { popup: 'rounded-2xl' }});
+            if(students.length === 0) return Swal.fire({icon:'warning', title:'확인', text:'학생을 추가해주세요.', confirmButtonColor: '#4f46e5', customClass: { popup: 'rounded-2xl' }});
+            
+            const totalCapacity = roles.reduce((sum, r) => sum + r.count, 0);
+            if (students.length > totalCapacity) {
+                return Swal.fire({
+                    icon: 'warning',
+                    title: '자리 부족',
+                    text: `학생 수(${students.length}명)가 전체 역할 자리(${totalCapacity}자리)보다 많습니다. 역할을 추가하거나 인원을 늘려주세요.`,
+                    confirmButtonColor: '#4f46e5',
+                    customClass: { popup: 'rounded-2xl' }
+                });
+            }
+
+            Swal.fire({
+                title: '역할 배정 중...',
+                html: '학생들의 지망을 분석하여 추첨을 진행하고 있습니다.',
+                timer: 1500,
+                timerProgressBar: true,
+                allowOutsideClick: false,
+                customClass: { popup: 'rounded-2xl' },
+                didOpen: () => {
+                    Swal.showLoading()
+                }
+            }).then((result) => {
+                executeAssignmentLogic();
+            });
+        }
+
+        let finalResults = [];
+
+        function executeAssignmentLogic() {
+            let roleCapacities = {};
+            roles.forEach(r => roleCapacities[r.id] = r.count);
+            
+            let unassignedStudents = [...students];
+            let assignedMap = {}; 
+            let studentGotChoice = {}; 
+
+            roles.forEach(r => assignedMap[r.id] = []);
+
+            // 1. Process Presets (Teacher Override)
+            const remainingUnassigned = [];
+            for (let i = 0; i < unassignedStudents.length; i++) {
+                const s = unassignedStudents[i];
+                if (presetAssignments[s.id] && roleCapacities[presetAssignments[s.id]] > 0) {
+                    const forcedRoleId = presetAssignments[s.id];
+                    assignedMap[forcedRoleId].push(s.name);
+                    roleCapacities[forcedRoleId]--;
+                    
+                    let apparentChoice = 'Random';
+                    if (s.prefs[0] === forcedRoleId) apparentChoice = 1;
+                    else if (s.prefs[1] === forcedRoleId) apparentChoice = 2;
+                    else if (s.prefs[2] === forcedRoleId) apparentChoice = 3;
+                    studentGotChoice[s.name] = apparentChoice;
+                } else {
+                    remainingUnassigned.push(s);
+                }
+            }
+            unassignedStudents = remainingUnassigned;
+            unassignedStudents = shuffleArray(unassignedStudents);
+
+            // 2. Process Preferences
+            for(let choiceIdx = 0; choiceIdx < 3; choiceIdx++) {
+                let nextRoundUnassigned = [];
+                for(let i = 0; i < unassignedStudents.length; i++) {
+                    const s = unassignedStudents[i];
+                    const preferredRoleId = s.prefs[choiceIdx];
+                    
+                    if (preferredRoleId && roleCapacities[preferredRoleId] > 0) {
+                        assignedMap[preferredRoleId].push(s.name);
+                        roleCapacities[preferredRoleId]--;
+                        studentGotChoice[s.name] = choiceIdx + 1;
+                    } else {
+                        nextRoundUnassigned.push(s);
+                    }
+                }
+                unassignedStudents = nextRoundUnassigned;
+            }
+
+            // 3. Fallback Random
+            let availableRoleIds = Object.keys(roleCapacities).filter(id => roleCapacities[id] > 0);
+            availableRoleIds = shuffleArray(availableRoleIds);
+
+            unassignedStudents.forEach(s => {
+                const rId = availableRoleIds.find(id => roleCapacities[id] > 0);
+                if (rId) {
+                    assignedMap[rId].push(s.name);
+                    roleCapacities[rId]--;
+                    studentGotChoice[s.name] = 'Random';
+                    if (roleCapacities[rId] === 0) {
+                        availableRoleIds = availableRoleIds.filter(id => id !== rId);
+                    }
+                }
+            });
+
+            // Prepare UI Data
+            finalResults = roles.map(r => {
+                return {
+                    roleName: r.name,
+                    capacity: r.count,
+                    assigned: assignedMap[r.id]
+                };
+            });
+
+            let stats = { c1:0, c2:0, c3:0, rnd:0 };
+            Object.values(studentGotChoice).forEach(val => {
+                if(val === 1) stats.c1++;
+                else if(val === 2) stats.c2++;
+                else if(val === 3) stats.c3++;
+                else stats.rnd++;
+            });
+
+            displayResults(stats);
+        }
+
+        function displayResults(stats) {
+            const container = document.getElementById('result-container');
+            const grid = document.getElementById('result-grid');
+            const statsDiv = document.getElementById('result-stats');
+            
+            container.classList.remove('hidden');
+            grid.innerHTML = '';
+
+            // Render Stats
+            statsDiv.innerHTML = `
+                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex flex-col items-center justify-center">
+                    <span class="text-xs font-bold text-indigo-500 mb-1">1지망 배정</span>
+                    <span class="text-2xl font-black text-indigo-700">${stats.c1}<span class="text-sm font-medium ml-1">명</span></span>
+                </div>
+                <div class="bg-teal-50 border border-teal-100 rounded-xl p-4 flex flex-col items-center justify-center">
+                    <span class="text-xs font-bold text-teal-500 mb-1">2지망 배정</span>
+                    <span class="text-2xl font-black text-teal-700">${stats.c2}<span class="text-sm font-medium ml-1">명</span></span>
+                </div>
+                <div class="bg-amber-50 border border-amber-100 rounded-xl p-4 flex flex-col items-center justify-center">
+                    <span class="text-xs font-bold text-amber-500 mb-1">3지망 배정</span>
+                    <span class="text-2xl font-black text-amber-700">${stats.c3}<span class="text-sm font-medium ml-1">명</span></span>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center">
+                    <span class="text-xs font-bold text-slate-500 mb-1">무작위 배정</span>
+                    <span class="text-2xl font-black text-slate-700">${stats.rnd}<span class="text-sm font-medium ml-1">명</span></span>
+                </div>
+            `;
+
+            // Render Grid
+            finalResults.forEach(r => {
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full';
+                
+                const isFull = r.assigned.length === r.capacity;
+                const badgeColor = isFull ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600';
+
+                let namesHtml = r.assigned.length > 0 
+                    ? r.assigned.map(n => `<div class="bg-indigo-50/50 border border-indigo-100 text-slate-800 px-3 py-1.5 rounded-lg text-sm font-medium flex-1 text-center min-w-[70px] shadow-sm">${n}</div>`).join('')
+                    : `<div class="text-slate-400 text-sm italic w-full text-center py-2 bg-slate-50 rounded-lg border border-dashed border-slate-200">배정 인원 없음</div>`;
+
+                card.innerHTML = `
+                    <div class="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800 text-lg">${r.roleName}</h3>
+                        <span class="text-xs font-bold ${badgeColor} px-2.5 py-1 rounded-full whitespace-nowrap">${r.assigned.length} / ${r.capacity} 명</span>
+                    </div>
+                    <div class="flex-1 flex flex-wrap gap-2 content-start">
+                        ${namesHtml}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            
+            // Scroll to results smoothly
+            setTimeout(() => {
+                container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        function copyResults() {
+            if(!finalResults || finalResults.length === 0) return;
+            
+            let text = "✨ [학급 역할 배정 결과] ✨\n\n";
+            finalResults.forEach(r => {
+                text += `▶ ${r.roleName} (${r.assigned.length}/${r.capacity})\n`;
+                text += `  : ${r.assigned.length > 0 ? r.assigned.join(', ') : '없음'}\n\n`;
+            });
+
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                Swal.fire({
+                    icon: 'success',
+                    title: '복사 완료!',
+                    text: '결과가 클립보드에 복사되었습니다.',
+                    confirmButtonColor: '#4f46e5',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    customClass: { popup: 'rounded-2xl' }
+                });
+            } catch (err) {
+                Swal.fire({icon: 'error', title: '복사 실패', text: '브라우저에서 복사 기능을 지원하지 않습니다.', confirmButtonColor: '#4f46e5', customClass: { popup: 'rounded-2xl' }});
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // Initialize with default state
+        window.onload = () => {
+            // Pre-fill
+            ['칠판 지우기', '분리수거', '우유 당번', '교무실 심부름'].forEach(name => {
+                roles.push({ id: roleIdCounter++, name, count: 2 });
+            });
+            renderRoles();
+            
+            // Auto resize textarea
+            const tx = document.getElementById('student-names');
+            tx.addEventListener("input", function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        }
+    </script>
+</body>
+</html>
