@@ -48,10 +48,10 @@
       line-height:1.55;
     }
     main{
-      width:min(1180px,94vw);
+      width:min(1280px,94vw);
       margin:0 auto 32px;
       display:grid;
-      grid-template-columns:360px 1fr;
+      grid-template-columns:340px 1fr;
       gap:18px;
       align-items:start;
     }
@@ -240,10 +240,144 @@
     }
     .timer-inner.warning{color:var(--bad); animation:pulse .7s infinite alternate;}
     @keyframes pulse{from{transform:scale(1)}to{transform:scale(1.06)}}
+    .word-board{
+      margin-top:16px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:26px;
+      padding:18px;
+      box-shadow:0 12px 28px rgba(31,41,55,.08);
+    }
+    .word-board-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+    .word-board-head p{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:14px;
+      font-weight:750;
+      line-height:1.45;
+    }
+    .word-summary{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .word-summary span{
+      border-radius:999px;
+      padding:9px 12px;
+      font-size:13px;
+      font-weight:950;
+      background:#f8fafc;
+      border:1px solid var(--line);
+      color:#475569;
+    }
+    .word-summary span:last-child{
+      background:#111827;
+      color:white;
+      border-color:#111827;
+    }
+    .word-flow{
+      min-height:210px;
+      max-height:360px;
+      overflow:auto;
+      display:flex;
+      flex-wrap:wrap;
+      align-content:flex-start;
+      gap:12px;
+      padding:10px;
+      border-radius:22px;
+      background:
+        linear-gradient(135deg, rgba(238,242,255,.9), rgba(248,250,252,.98));
+      border:1px solid #e0e7ff;
+    }
+    .word-card{
+      position:relative;
+      min-width:150px;
+      max-width:230px;
+      flex:1 1 165px;
+      border-radius:20px;
+      padding:14px 14px 12px;
+      background:white;
+      border:1px solid #dbe3f0;
+      box-shadow:0 8px 20px rgba(15,23,42,.07);
+    }
+    .word-card.latest{
+      border-color:#818cf8;
+      box-shadow:0 0 0 4px rgba(99,102,241,.13), 0 10px 24px rgba(15,23,42,.10);
+      transform:translateY(-1px);
+    }
+    .word-card.start{
+      background:#fffbeb;
+      border-color:#fde68a;
+    }
+    .word-number{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:32px;
+      height:26px;
+      border-radius:999px;
+      background:#eef2ff;
+      color:#3730a3;
+      font-size:12px;
+      font-weight:1000;
+      margin-bottom:8px;
+    }
+    .word-card.start .word-number{background:#f59e0b;color:white;}
+    .word-main{
+      font-size:clamp(26px,3.6vw,42px);
+      line-height:1.05;
+      font-weight:1000;
+      letter-spacing:-.06em;
+      word-break:keep-all;
+    }
+    .word-meta{
+      margin-top:9px;
+      color:#64748b;
+      font-size:12px;
+      font-weight:850;
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      align-items:center;
+    }
+    .word-next{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:34px;
+      height:34px;
+      border-radius:12px;
+      background:#111827;
+      color:white;
+      font-size:20px;
+      font-weight:1000;
+      flex:none;
+    }
+    .empty-words{
+      width:100%;
+      min-height:170px;
+      display:grid;
+      place-items:center;
+      text-align:center;
+      color:var(--muted);
+      font-weight:900;
+      border:2px dashed #cbd5e1;
+      border-radius:18px;
+      background:rgba(255,255,255,.55);
+      padding:20px;
+    }
     .play-area{
       margin-top:16px;
       display:grid;
-      grid-template-columns:1.1fr .9fr;
+      grid-template-columns:minmax(320px,.9fr) minmax(360px,1.1fr);
       gap:16px;
     }
     .input-card,.list-card{
@@ -277,17 +411,8 @@
       display:flex;
       flex-wrap:wrap;
       gap:8px;
-      max-height:124px;
       overflow:auto;
       padding:4px;
-    }
-    .word-chip{
-      padding:8px 10px;
-      border-radius:999px;
-      background:#f1f5f9;
-      border:1px solid #e2e8f0;
-      font-weight:900;
-      font-size:14px;
     }
     .students{
       display:grid;
@@ -337,7 +462,7 @@
     @media (max-width:920px){
       main{grid-template-columns:1fr;}
       .panel{position:static;}
-      .status-box,.play-area{grid-template-columns:1fr;}
+      .status-box,.play-area{grid-template-columns:1fr;}\n      .word-flow{max-height:320px;}\n      .word-card{flex-basis:140px;min-width:138px;}
       .timer-ring{width:145px;height:145px}.timer-inner{width:108px;height:108px;font-size:36px}
     }
   </style>
@@ -396,7 +521,7 @@
     <section class="game-card">
       <div id="emptyState" class="empty-state">
         <strong>왼쪽에 이름을 넣고 게임을 시작하세요.</strong>
-        차례는 한 바퀴 안에서 아직 안 한 학생에게 먼저 돌아갑니다.
+        차례는 한 바퀴 안에서 아직 안 한 학생에게 먼저 돌아갑니다. 입력된 단어는 가운데 단어판에 크게 쌓입니다.
       </div>
 
       <div id="gameView" class="hidden">
@@ -426,6 +551,20 @@
           </div>
         </div>
 
+        <section class="word-board" aria-label="입력된 단어 모음">
+          <div class="word-board-head">
+            <div>
+              <div class="section-title" style="margin:0;">📚 입력된 단어 모음</div>
+              <p id="wordBoardSub">지금까지 나온 단어가 순서대로 쌓입니다. 가장 최근 단어는 강조 표시됩니다.</p>
+            </div>
+            <div class="word-summary">
+              <span id="wordCountBadge">0개 단어</span>
+              <span id="lastWordBadge">최근 단어 없음</span>
+            </div>
+          </div>
+          <div id="history" class="word-flow"></div>
+        </section>
+
         <div class="play-area">
           <div class="input-card">
             <div class="section-title">✍️ 단어 입력</div>
@@ -444,10 +583,9 @@
           </div>
 
           <div class="list-card">
-            <div class="section-title">📜 사용한 단어</div>
-            <div id="history" class="history"></div>
-            <div class="section-title" style="margin-top:16px;">👥 학생 현황</div>
+            <div class="section-title">👥 학생 현황</div>
             <div id="students" class="students"></div>
+            <p class="mini">대기: 이번 라운드에서 아직 차례가 오지 않은 학생 · 완료: 이번 라운드에서 이미 차례가 온 학생</p>
           </div>
         </div>
       </div>
@@ -465,7 +603,8 @@
       roundPill: $('roundPill'), alivePill: $('alivePill'), poolPill: $('poolPill'), currentName: $('currentName'), wordRule: $('wordRule'),
       timerRing: $('timerRing'), timerText: $('timerText'), timerLabel: $('timerLabel'), wordInput: $('wordInput'),
       submitBtn: $('submitBtn'), overrideBtn: $('overrideBtn'), failBtn: $('failBtn'), skipBtn: $('skipBtn'), nextBtn: $('nextBtn'),
-      message: $('message'), history: $('history'), students: $('students'), pauseBtn: $('pauseBtn'), undoBtn: $('undoBtn'), resetBtn: $('resetBtn')
+      message: $('message'), history: $('history'), wordCountBadge: $('wordCountBadge'), lastWordBadge: $('lastWordBadge'), wordBoardSub: $('wordBoardSub'),
+      students: $('students'), pauseBtn: $('pauseBtn'), undoBtn: $('undoBtn'), resetBtn: $('resetBtn')
     };
 
     let state = {
@@ -477,6 +616,7 @@
       round:1,
       lastWord:'',
       usedWords:[],
+      wordRecords:[],
       log:[],
       secondsLeft:0,
       totalSeconds:20,
@@ -555,6 +695,7 @@
         round:state.round,
         lastWord:state.lastWord,
         usedWords:state.usedWords,
+        wordRecords:state.wordRecords,
         log:state.log,
         secondsLeft:state.secondsLeft,
         totalSeconds:state.totalSeconds
@@ -621,6 +762,7 @@
         round:1,
         lastWord:start,
         usedWords:start ? [start] : [],
+        wordRecords:start ? [{word:start, player:'시작 단어', round:0, type:'start'}] : [],
         log:start ? [`시작 단어: ${start}`] : [],
         secondsLeft:Math.max(5, Math.min(300, parseInt(els.timerSeconds.value,10)||20)),
         totalSeconds:Math.max(5, Math.min(300, parseInt(els.timerSeconds.value,10)||20)),
@@ -724,6 +866,7 @@
       const stu = currentStudent();
       stopTimer();
       state.usedWords.push(word);
+      state.wordRecords.push({word, player:stu.name, round:state.round, type:override ? 'override' : 'normal'});
       state.lastWord = word;
       stu.turns += 1;
       state.log.push(`${stu.name}: ${word}${override ? ' (교사 재량)' : ''}`);
@@ -857,9 +1000,7 @@
         }
         updateTimerUI();
 
-        els.history.innerHTML = state.usedWords.length
-          ? state.usedWords.slice().reverse().map((w,i)=>`<span class="word-chip">${state.usedWords.length-i}. ${escapeHtml(w)}</span>`).join('')
-          : '<span class="mini">아직 사용한 단어가 없습니다.</span>';
+        renderWordBoard();
 
         els.students.innerHTML = state.students.map(s => {
           const cls = ['student'];
@@ -872,6 +1013,47 @@
         const gameEnded = !state.running;
         [els.wordInput,els.submitBtn,els.overrideBtn,els.failBtn,els.skipBtn,els.nextBtn,els.pauseBtn].forEach(el => el.disabled = gameEnded);
       }
+    }
+
+    function renderWordBoard(){
+      const records = (state.wordRecords && state.wordRecords.length)
+        ? state.wordRecords
+        : state.usedWords.map((word, index) => ({word, player:index === 0 ? '시작 단어' : '기록', round:index === 0 ? 0 : state.round, type:index === 0 ? 'start' : 'normal'}));
+
+      els.wordCountBadge.textContent = `${records.length}개 단어`;
+      els.lastWordBadge.textContent = records.length ? `최근: ${records[records.length - 1].word}` : '최근 단어 없음';
+      els.wordBoardSub.textContent = records.length
+        ? `처음부터 현재까지 나온 단어를 한눈에 확인합니다. 다음 시작 글자는 '${lastHangul(records[records.length - 1].word)}'입니다.`
+        : '지금까지 나온 단어가 순서대로 쌓입니다. 가장 최근 단어는 강조 표시됩니다.';
+
+      if(!records.length){
+        els.history.innerHTML = '<div class="empty-words">아직 입력된 단어가 없습니다.<br>첫 단어가 나오면 이곳에 크게 표시됩니다.</div>';
+        return;
+      }
+
+      els.history.innerHTML = records.map((rec, i) => {
+        const isLatest = i === records.length - 1;
+        const isStart = rec.type === 'start';
+        const next = lastHangul(rec.word);
+        const label = isStart ? '시작' : `${i + 1}`;
+        const player = rec.player || '기록';
+        const round = rec.round ? `${rec.round}R` : '시작';
+        const className = ['word-card', isLatest ? 'latest' : '', isStart ? 'start' : ''].filter(Boolean).join(' ');
+        return `
+          <article class="${className}" title="${escapeHtml(player)} · ${escapeHtml(round)}">
+            <div class="word-number">${escapeHtml(label)}</div>
+            <div class="word-main">${escapeHtml(rec.word)}</div>
+            <div class="word-meta">
+              <span>${escapeHtml(player)} · ${escapeHtml(round)}</span>
+              <span class="word-next">${escapeHtml(next)}</span>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      requestAnimationFrame(() => {
+        els.history.scrollTop = els.history.scrollHeight;
+      });
     }
 
     function escapeHtml(str){
