@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>말잇기 교실배틀 - 단순 안정판</title>
+  <title>말잇기 교실배틀 - UI 정리판</title>
   <script src="./dict/words-basic.js"></script>
   <script src="./dict/words-class.js"></script>
   <style>
@@ -179,6 +179,45 @@
     @media (max-width:560px){
       .app{width:96vw;padding-top:10px}.hero{padding-top:8px}.score-row{grid-template-columns:1fr}.btn-grid,.btn-grid3,.row{grid-template-columns:1fr}.stage,.teacher-panel{border-radius:20px;padding:14px}.current-player{font-size:48px}.chain-flow{max-height:320px}.preset-list{grid-template-columns:1fr}
     }
+
+    /* === UI 정리판 패치 === */
+    .top-actions{display:none !important;}
+    .hero{padding-top:10px;padding-bottom:10px;}
+    .title-wrap p{max-width:760px;}
+    .layout{grid-template-columns:320px 1fr;}
+    .teacher-panel{padding:16px;border-radius:24px;}
+    .stage{padding:18px;border-radius:24px;min-height:680px;}
+    .section-title{margin-top:2px;}
+    textarea{min-height:120px;}
+    .score-row{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .score-card.mode-hidden{display:none;}
+    .main-board{grid-template-columns:1.2fr .8fr;}
+    .current-card{min-height:245px;}
+    .current-player{font-size:clamp(50px,7.2vw,86px);}
+    .timer-ring{width:160px;height:160px;}
+    .timer-inner{width:118px;height:118px;font-size:42px;}
+    .mission-text{font-size:22px;}
+    .play-grid{grid-template-columns:minmax(300px,.72fr) minmax(420px,1.28fr);}
+    .word-input{font-size:28px;padding:15px;}
+    .chain-flow{min-height:260px;max-height:450px;}
+    .roster-card{margin-top:12px;}
+    .roster{max-height:160px;}
+    .student-screen .teacher-panel{display:block;}
+    .student-screen .teacher-only{display:block !important;}
+    .student-screen .top-actions{display:none !important;}
+    @media (max-width:980px){
+      .layout{grid-template-columns:1fr;}
+      .score-row{grid-template-columns:1fr 1fr;}
+      .main-board,.play-grid{grid-template-columns:1fr;}
+      .teacher-panel{max-height:none;}
+    }
+    @media (max-width:560px){
+      .score-row{grid-template-columns:1fr;}
+      .current-player{font-size:44px;}
+      .timer-ring{width:140px;height:140px;}
+      .timer-inner{width:104px;height:104px;font-size:36px;}
+    }
+
   </style>
 </head>
 <body>
@@ -186,7 +225,7 @@
     <header class="hero">
       <div class="title-wrap">
         <h1>🔗 말잇기 교실배틀</h1>
-        <p>API 없이 안정적으로 쓰는 끝말잇기 수업 게임입니다. 단어 확인은 사전 파일 + 선생님 판정으로 진행됩니다.</p>
+        <p>끝말잇기를 반 전체 협동 또는 팀 배틀로 진행하는 수업용 게임입니다. 사전에 없으면 선생님이 인정할 수 있습니다.</p>
         <div class="status-line teacher-only">
           <span id="dictStatus" class="chip off">단어 확인 준비 중</span>
           <span id="wordCountStatus" class="chip">기본 단어 0개</span>
@@ -194,7 +233,7 @@
         </div>
       </div>
       <div class="top-actions teacher-only">
-        <button id="studentViewBtn" class="ghost big-view-btn">🖥 학생 화면 크게 보기</button>
+        <button id="studentViewBtn" class="ghost big-view-btn hidden" type="button" aria-hidden="true">학생 화면 크게 보기</button>
       </div>
     </header>
 
@@ -326,15 +365,15 @@
               <input id="wordInput" class="word-input" placeholder="학생이 말한 단어" autocomplete="off" />
               <div id="judgeBox" class="judge-box">단어를 입력하면 시작 글자, 중복, 사전 여부를 확인합니다.</div>
               <div class="btn-grid3">
-                <button class="good" id="submitBtn">제출</button>
+                <button class="good" id="submitBtn">정답 제출</button>
                 <button class="warn" id="acceptBtn">선생님 인정</button>
-                <button class="bad" id="wrongBtn">다시 말하기</button>
+                <button class="bad" id="wrongBtn">하트 -1</button>
               </div>
               <div class="btn-grid">
                 <button class="blue" id="missionSuccessBtn">미션 성공 +1</button>
-                <button class="dark" id="skipBtn">차례 넘김</button>
+                <button class="dark" id="skipBtn">하트 없이 넘김</button>
               </div>
-              <div class="muted" style="margin-top:8px;">Enter: 제출 · Ctrl+Enter: 선생님 인정</div>
+              <div class="muted" style="margin-top:8px;">Enter: 정답 제출 · Ctrl+Enter: 선생님 인정</div>
             </section>
 
             <section class="chain-card">
@@ -722,6 +761,13 @@
 
     function render(){
       updateTimerUI();
+      const blueCardEl = els.blueScore ? els.blueScore.closest('.score-card') : null;
+      const redCardEl = els.redScore ? els.redScore.closest('.score-card') : null;
+      if(blueCardEl && redCardEl){
+        const hideTeams = state.mode !== 'team';
+        blueCardEl.classList.toggle('mode-hidden', hideTeams);
+        redCardEl.classList.toggle('mode-hidden', hideTeams);
+      }
       els.modeStatus.textContent = state.running ? (state.mode === 'team' ? '팀 배틀 진행 중' : '협동 진행 중') : '대기 중';
       els.roundChip.textContent = `${state.round}라운드`;
       els.goalChip.textContent = `목표 ${state.targetWords}개`;
@@ -893,7 +939,7 @@
     els.resetBtn.addEventListener('click',()=>{ stopTimer(); state = makeInitialState(); els.gameView.classList.add('hidden'); els.emptyState.classList.remove('hidden'); render(); });
     els.wordInput.addEventListener('input',()=>{ const w = cleanWord(els.wordInput.value); if(!w){ clearJudge('단어를 입력하면 확인합니다.'); return; } const r = validateWord(w); showJudge(r.message, r.level || (r.ok?'ok':'')); });
     els.wordInput.addEventListener('keydown',(e)=>{ if(e.key==='Enter' && e.ctrlKey){ e.preventDefault(); submitWord(true); } else if(e.key==='Enter'){ e.preventDefault(); submitWord(false); } });
-    els.studentViewBtn.addEventListener('click',()=>{ els.app.classList.toggle('student-screen'); els.studentViewBtn.textContent = els.app.classList.contains('student-screen') ? '👩‍🏫 교사용 화면으로 돌아가기' : '🖥 학생 화면 크게 보기'; });
+    els.studentViewBtn.addEventListener('click',()=>{});
     els.againBtn.addEventListener('click',()=>{ els.resultOverlay.classList.add('hidden'); startGame(); });
     els.closeResultBtn.addEventListener('click',()=>{ els.resultOverlay.classList.add('hidden'); });
     window.addEventListener('beforeunload',stopTimer);
