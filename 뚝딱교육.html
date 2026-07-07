@@ -6,349 +6,10 @@
   <title>뚝딱 교육 | 2022 성취기준과 세특 도우미</title>
   <link rel="icon" type="image/png" href="logo.png">
   <style>
-
-:root {
-  --bg: #f7f7f5;
-  --surface: #ffffff;
-  --surface-soft: #fbfbfa;
-  --ink: #202631;
-  --muted: #667085;
-  --subtle: #98a2b3;
-  --line: #e4e7ec;
-  --line-strong: #d0d5dd;
-  --brand: #5b5ce2;
-  --brand-soft: #f0f0ff;
-  --danger: #c0392b;
-  --shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 8px 24px rgba(16, 24, 40, .06);
-  --radius-xl: 20px;
-  --radius-lg: 16px;
-  --radius-md: 12px;
-}
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body {
-  margin: 0;
-  min-height: 100vh;
-  font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-  color: var(--ink);
-  background: var(--bg);
-  letter-spacing: -0.02em;
-}
-a { color: inherit; text-decoration: none; }
-.page {
-  width: min(1160px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 20px 0 56px;
-}
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 72px;
-  padding: 10px 0;
-  background: color-mix(in srgb, var(--bg) 86%, transparent);
-  backdrop-filter: blur(14px);
-}
-.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.brand-mark {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  overflow: hidden;
-}
-.brand-mark img { width: 100%; height: 100%; object-fit: cover; }
-.brand-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.brand-title strong { font-size: 18px; font-weight: 800; letter-spacing: -0.04em; white-space: nowrap; }
-.brand-title span { color: var(--muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
-.site-nav {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-}
-.site-nav a {
-  padding: 9px 13px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 750;
-  color: var(--muted);
-  white-space: nowrap;
-}
-.site-nav a:hover { background: var(--surface-soft); color: var(--ink); }
-.site-nav a.active { background: var(--ink); color: #fff; }
-.hero {
-  margin: 10px 0 16px;
-  padding: 24px 26px;
-  border-radius: var(--radius-xl);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
-}
-.hero-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 24px; align-items: center; }
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 10px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: var(--brand-soft);
-  color: var(--brand);
-  border: 1px solid #ddddff;
-  font-size: 12px;
-  font-weight: 800;
-}
-h1 {
-  margin: 0;
-  font-size: clamp(28px, 4.2vw, 46px);
-  line-height: 1.05;
-  letter-spacing: -0.065em;
-}
-.hero p {
-  margin: 12px 0 0;
-  max-width: 760px;
-  color: var(--muted);
-  font-size: 15px;
-  line-height: 1.65;
-  word-break: keep-all;
-  font-weight: 500;
-}
-.hero-actions { margin-top: 18px; display: flex; gap: 8px; flex-wrap: wrap; }
-.toolbar, .panel {
-  margin: 14px 0;
-  padding: 16px;
-  border-radius: var(--radius-xl);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
-}
-.toolbar { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
-.grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; }
-.search { position: relative; display: block; }
-.search span {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--subtle);
-  font-size: 12px;
-  font-weight: 800;
-  pointer-events: none;
-}
-.search input, .select, .input, textarea {
-  width: 100%;
-  border: 1px solid var(--line-strong);
-  background: var(--surface);
-  border-radius: var(--radius-md);
-  padding: 12px 13px;
-  outline: none;
-  font-family: inherit;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--ink);
-  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
-}
-.search input { padding-left: 54px; }
-.search input:focus, .select:focus, .input:focus, textarea:focus {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 4px rgba(91, 92, 226, .10);
-}
-textarea { resize: vertical; min-height: 92px; line-height: 1.55; }
-.filters { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.select { width: auto; min-width: 128px; cursor: pointer; }
-.btn {
-  border: 1px solid transparent;
-  border-radius: 999px;
-  padding: 10px 14px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 40px;
-  transition: background .15s ease, border-color .15s ease, transform .15s ease;
-}
-.btn:hover { transform: translateY(-1px); }
-.btn-primary { background: var(--brand); color: white; border-color: var(--brand); }
-.btn-primary:hover { background: #4b4cc8; }
-.btn-ghost { background: var(--surface); color: var(--ink); border-color: var(--line-strong); }
-.btn-ghost:hover { background: var(--surface-soft); }
-.btn-danger { background: #fff; color: var(--danger); border-color: #f1b8b0; }
-.btn-danger:hover { background: #fff6f5; }
-.quick-panel {
-  background: var(--surface-soft);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-}
-.quick-panel h2 { margin: 0 0 10px; font-size: 15px; letter-spacing: -0.04em; }
-.quick-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.quick-list li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 10px;
-  border-radius: 12px;
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 650;
-  border: 1px solid var(--line);
-}
-.chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.chip {
-  border: 1px solid var(--line-strong);
-  background: var(--surface);
-  color: var(--muted);
-  border-radius: 999px;
-  padding: 10px 12px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-}
-.chip.active { background: var(--ink); color: white; border-color: var(--ink); }
-.section-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 22px 0 12px;
-}
-.section-head h2 { margin: 0; font-size: 22px; letter-spacing: -0.055em; }
-.section-head p { margin: 5px 0 0; color: var(--muted); font-weight: 500; font-size: 13px; }
-.count {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 800;
-  background: var(--surface);
-  padding: 8px 11px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-}
-.cards { display: grid; gap: 12px; }
-.tools-page .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.education-page .cards, .video-page .cards { grid-template-columns: 1fr; }
-.card {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
-  padding: 18px;
-  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
-}
-.card:hover {
-  transform: translateY(-2px);
-  border-color: #c7c8ff;
-  box-shadow: var(--shadow);
-}
-.tools-page .card { min-height: 230px; display: flex; flex-direction: column; justify-content: space-between; }
-.card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
-  font-size: 24px;
-  background: var(--surface-soft);
-  border: 1px solid var(--line);
-}
-.tagrow, .meta { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
-.tag, .meta span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 8px;
-  border-radius: 999px;
-  background: var(--surface-soft);
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-  border: 1px solid var(--line);
-}
-.card h3 { margin: 10px 0 7px; font-size: 20px; letter-spacing: -0.055em; line-height: 1.25; }
-.card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.65; word-break: keep-all; font-weight: 500; }
-.card-actions, .card-bottom { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.card-bottom { justify-content: space-between; }
-.open-text { color: var(--brand); font-weight: 850; }
-.filename { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--subtle); font-size: 12px; font-weight: 650; }
-.empty {
-  display: none;
-  padding: 28px;
-  text-align: center;
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  color: var(--muted);
-  font-weight: 700;
-  border: 1px dashed var(--line-strong);
-}
-.sentence-box {
-  background: #fff;
-  color: var(--ink);
-  border: 1px solid var(--line-strong);
-  border-radius: 16px;
-  padding: 18px 20px;
-  line-height: 1.85;
-  font-size: 15px;
-  font-weight: 600;
-  white-space: pre-wrap;
-  min-height: 120px;
-  box-shadow: inset 0 1px 0 rgba(16, 24, 40, .03);
-}
-.sentence-box::selection { background: #dedefd; }
-.result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.small { font-size: 12px; color: var(--muted); font-weight: 600; line-height: 1.6; }
-.checkbox { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 750; color: var(--muted); }
-.checkbox input { width: 16px; height: 16px; accent-color: var(--brand); }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.video-card { display: grid; grid-template-columns: 180px 1fr; gap: 16px; align-items: start; }
-.thumb { width: 100%; aspect-ratio: 16/9; border-radius: 14px; object-fit: cover; background: #eee; border: 1px solid var(--line); }
-.guide { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.guide-box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px; }
-.guide-box h3 { margin: 0 0 8px; font-size: 16px; }
-.guide-box p, .guide-box code { color: var(--muted); font-size: 13px; line-height: 1.7; font-weight: 600; }
-.guide-box code { display: block; margin-top: 8px; padding: 12px; border-radius: 12px; background: #f2f4f7; color: #344054; overflow-x: auto; white-space: pre; }
-footer { margin-top: 30px; color: var(--subtle); text-align: center; font-size: 12px; font-weight: 650; }
-@media (max-width: 980px) {
-  .topbar { align-items: flex-start; flex-direction: column; }
-  .site-nav { width: 100%; overflow-x: auto; justify-content: flex-start; }
-  .hero-grid { grid-template-columns: 1fr; }
-  .toolbar, .grid-2 { grid-template-columns: 1fr; }
-  .filters, .chips { justify-content: flex-start; }
-  .tools-page .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .guide, .form-grid { grid-template-columns: 1fr; }
-}
-@media (max-width: 720px) {
-  .page { width: min(100% - 22px, 1160px); padding-top: 10px; }
-  .brand-title strong { font-size: 17px; }
-  .brand-title span { white-space: normal; }
-  .hero { padding: 20px; }
-  .hero p { font-size: 14px; }
-  .tools-page .cards { grid-template-columns: 1fr; }
-  .video-card { grid-template-columns: 1fr; }
-  .section-head { align-items: flex-start; flex-direction: column; }
-}
-
-  </style>
+:root{--bg:#f6f3ee;--paper:#fffdf8;--paper-2:#ffffff;--ink:#243042;--muted:#697386;--line:#e9dfcf;--brand:#6d5dfc;--brand-2:#ffb86b;--brand-3:#2fbf9b;--danger:#ef6461;--shadow:0 18px 45px rgba(63,54,38,.12);--shadow-soft:0 10px 25px rgba(63,54,38,.08);--radius-xl:28px;--radius-lg:20px;--radius-md:14px}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;color:var(--ink);background:radial-gradient(circle at 15% 8%,rgba(255,184,107,.28),transparent 28%),radial-gradient(circle at 84% 12%,rgba(109,93,252,.18),transparent 26%),linear-gradient(135deg,#fffaf1 0%,var(--bg) 45%,#eef8f4 100%)}a{color:inherit;text-decoration:none}.page{width:min(1180px,calc(100% - 32px));margin:0 auto;padding:28px 0 56px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand-mark{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;box-shadow:var(--shadow-soft);border:1px solid rgba(255,255,255,.8);background:white;overflow:hidden}.brand-mark img{width:100%;height:100%;object-fit:cover}.brand-title{display:flex;flex-direction:column;gap:2px;min-width:0}.brand-title strong{font-size:22px;letter-spacing:-.04em;white-space:nowrap}.brand-title span{color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap}.site-nav{display:flex;align-items:center;gap:8px;padding:8px;border-radius:999px;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.95);box-shadow:var(--shadow-soft);backdrop-filter:blur(10px)}.site-nav a{padding:10px 14px;border-radius:999px;font-size:13px;font-weight:950;color:#536073;white-space:nowrap}.site-nav a.active{background:var(--ink);color:white}.hero{position:relative;overflow:hidden;border-radius:var(--radius-xl);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(255,253,248,.78)),linear-gradient(135deg,rgba(109,93,252,.12),rgba(255,184,107,.18));border:1px solid rgba(255,255,255,.9);box-shadow:var(--shadow);padding:34px;margin-bottom:18px}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#fff4dc;color:#9a5a12;font-size:13px;font-weight:900;margin-bottom:14px;border:1px solid #ffe0aa}h1{margin:0;font-size:clamp(34px,5vw,58px);line-height:1;letter-spacing:-.07em}.hero p{margin:14px 0 0;max-width:780px;color:var(--muted);font-size:16px;line-height:1.7;word-break:keep-all;font-weight:650}.toolbar{margin:18px 0;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}.search{position:relative}.search input,.select,.input,textarea{width:100%;border:1px solid rgba(255,255,255,.95);background:rgba(255,255,255,.82);box-shadow:var(--shadow-soft);border-radius:18px;padding:15px 16px;outline:none;font-family:inherit;font-weight:800;font-size:14px;color:var(--ink)}textarea{resize:vertical;min-height:96px;line-height:1.55}.search input{padding-left:46px}.search span{position:absolute;left:17px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:18px}.filters{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.select{width:auto;min-width:132px;cursor:pointer}.btn{border:0;border-radius:999px;padding:12px 16px;font-family:inherit;font-size:13px;font-weight:950;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .16s ease,box-shadow .16s ease,background .16s ease}.btn:hover{transform:translateY(-2px)}.btn-primary{background:var(--brand);color:white;box-shadow:0 12px 22px rgba(109,93,252,.22)}.btn-ghost{background:white;color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow-soft)}.btn-danger{background:#fff;color:#b42318;border:1px solid #ffd3cf}.section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:28px 0 16px}.section-head h2{margin:0;font-size:24px;letter-spacing:-.055em}.section-head p{margin:6px 0 0;color:var(--muted);font-weight:700;font-size:14px}.count{color:var(--muted);font-size:13px;font-weight:900;background:rgba(255,255,255,.7);padding:9px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.9)}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.card{position:relative;overflow:hidden;border-radius:24px;background:rgba(255,255,255,.84);border:1px solid rgba(255,255,255,.95);box-shadow:var(--shadow-soft);padding:22px;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}.card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:rgba(109,93,252,.28)}.tagrow{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.tag{display:inline-flex;align-items:center;gap:5px;padding:7px 9px;border-radius:999px;background:#faf7f1;color:#6a7280;font-size:12px;font-weight:850;border:1px solid #eee4d5}.card h3{margin:10px 0 8px;font-size:21px;letter-spacing:-.055em;line-height:1.2}.card p{margin:0;color:var(--muted);font-size:14px;line-height:1.65;word-break:keep-all;font-weight:650}.card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.panel{background:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.95);border-radius:24px;padding:20px;box-shadow:var(--shadow-soft);margin:18px 0}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.empty{display:none;padding:28px;text-align:center;border-radius:22px;background:rgba(255,255,255,.7);color:var(--muted);font-weight:800;border:1px dashed #ddcfbd}.sentence-box{display:grid;gap:12px;min-height:96px}.sentence-placeholder{background:#fffdf8;border:1px dashed #ddcfbd;color:#7b7280;border-radius:18px;padding:18px;line-height:1.7;font-weight:800}.sentence-card{background:#fffdf8;border:1px solid #eadfce;border-radius:18px;padding:16px 17px;box-shadow:0 8px 18px rgba(63,54,38,.055)}.sentence-card.saved{border-color:#ffd8a8;background:#fffaf1}.sentence-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:10px}.sentence-number{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;border-radius:999px;background:#f2eeff;color:var(--brand);font-size:12px;font-weight:950}.sentence-source{color:#82776b;font-size:12px;font-weight:900}.sentence-text{color:#293142;line-height:1.85;font-size:15px;font-weight:760;word-break:keep-all}.sentence-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.result-toolbar{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:12px}.favorite-list{display:grid;gap:10px}.favorite-item{background:#fffdf8;border:1px solid #eadfce;border-radius:18px;padding:15px}.favorite-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.favorite-label{display:flex;gap:7px;flex-wrap:wrap;color:#82776b;font-size:12px;font-weight:900}.favorite-text{line-height:1.75;font-size:14px;font-weight:750;word-break:keep-all}.favorite-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}.mini-note{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#fff4dc;color:#9a5a12;border:1px solid #ffe0aa;padding:7px 10px;font-size:12px;font-weight:950}.small{font-size:12px;color:var(--muted);font-weight:800;line-height:1.6}.folder-board{display:grid;gap:14px}.folder{background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.96);border-radius:24px;box-shadow:var(--shadow-soft);overflow:hidden}.folder summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 20px;font-weight:950}.folder summary::-webkit-details-marker{display:none}.folder summary::before{content:"▸";font-size:14px;color:var(--brand);transition:transform .15s ease}.folder[open]>summary::before{transform:rotate(90deg)}.folder-title{display:flex;align-items:center;gap:10px;min-width:0}.folder-title strong{font-size:18px;letter-spacing:-.04em}.folder-title span{color:var(--muted);font-size:13px;font-weight:850}.folder-count{flex:0 0 auto;color:#5f6675;background:#faf7f1;border:1px solid #eee4d5;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:950}.folder-body{padding:0 18px 18px}.grade-folder{background:#fffdf8;border:1px solid #f0e7da;border-radius:18px;margin:10px 0;box-shadow:none}.grade-folder summary{padding:14px 16px}.grade-folder .folder-title strong{font-size:15px}.domain-block{border-top:1px solid #f2eade;padding:14px 2px 4px}.domain-block:first-child{border-top:0}.domain-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}.domain-head h4{margin:0;font-size:14px;letter-spacing:-.035em}.standard-list{display:grid;gap:10px}.standard-item{background:white;border:1px solid #efe6d8;border-radius:16px;padding:16px}.standard-main{display:grid;gap:8px}.standard-code{font-size:12px;font-weight:950;color:var(--brand)}.standard-title{font-size:17px;font-weight:950;letter-spacing:-.045em;line-height:1.3}.standard-text{color:var(--muted);font-size:14px;line-height:1.65;font-weight:650;word-break:keep-all}.standard-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.standard-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}.list-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}.mini-btn{border:1px solid var(--line);background:white;color:var(--ink);border-radius:999px;padding:9px 11px;font-family:inherit;font-size:12px;font-weight:950;cursor:pointer;box-shadow:var(--shadow-soft)}.mini-btn:hover{transform:translateY(-1px)}.checkbox{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:900;color:#536073}.checkbox input{width:17px;height:17px}footer{margin-top:30px;color:#8a8277;text-align:center;font-size:12px;font-weight:800}@media(max-width:900px){.topbar{align-items:flex-start;flex-direction:column}.site-nav{width:100%;overflow-x:auto;justify-content:flex-start}.toolbar{grid-template-columns:1fr}.filters{justify-content:flex-start}.cards,.grid-2{grid-template-columns:1fr}}@media(max-width:640px){.page{width:min(100% - 22px,1180px);padding-top:16px}.brand-title strong{font-size:18px}.brand-title span{white-space:normal}.hero{padding:24px 20px}.hero p{font-size:15px}.section-head{align-items:flex-start;flex-direction:column}}
+</style>
 </head>
-<body class="education-page">
+<body>
   <div class="page">
     <header class="topbar">
       <a class="brand" href="index.html" aria-label="교실 뚝딱도구 홈">
@@ -360,13 +21,12 @@ footer { margin-top: 30px; color: var(--subtle); text-align: center; font-size: 
       </nav>
     </header>
     <section class="hero">
-      <span class="eyebrow">2022 성취기준 검색</span>
+      <span class="eyebrow">📚 2022 성취기준 검색</span>
       <h1>성취기준을 찾고<br>세특 문장을 뚝딱</h1>
-      <p>학년군·교과·키워드로 성취기준을 찾고, 수업 활동과 연결하여 다양한 세특 문장 후보를 생성합니다. 큰 데이터는 <b>data-standards.js</b>, 문장 재료는 <b>data-sentence.js</b>로 분리했습니다.</p>
     </section>
     <section class="panel">
       <div class="grid-2">
-        <label class="search"><span>검색</span><input id="eduSearch" type="search" placeholder="성취기준, 교과, 영역, 키워드로 검색" autocomplete="off"></label>
+        <label class="search"><span>🔎</span><input id="eduSearch" type="search" placeholder="성취기준, 교과, 영역, 키워드로 검색" autocomplete="off"></label>
         <div class="filters">
           <select class="select" id="gradeFilter"><option value="">학년군 전체</option></select>
           <select class="select" id="subjectFilter"><option value="">교과 전체</option></select>
@@ -383,17 +43,36 @@ footer { margin-top: 30px; color: var(--subtle); text-align: center; font-size: 
     </section>
     <section class="panel" id="sentencePanel">
       <div class="section-head" style="margin-top:0">
-        <div><h2>세특 문장 결과</h2><p>성취기준 카드에서 문장을 뽑으면 여기에 표시됩니다.</p></div>
-        <div class="result-actions"><button class="btn btn-ghost" id="copySentenceBtn" type="button">결과 복사</button></div>
+        <div><h2>세특 문장 결과</h2><p>성취기준 카드에서 문장을 뽑으면 여기에 표시됩니다. 마음에 드는 문장은 따로 저장할 수 있습니다.</p></div>
+        <div class="result-toolbar">
+          <button class="mini-btn" id="copyCurrentBtn" type="button">현재 결과 전체 복사</button>
+        </div>
       </div>
-      <div class="sentence-box" id="sentenceOutput">아직 생성된 문장이 없습니다.</div>
+      <div class="sentence-box" id="sentenceOutput">
+        <div class="sentence-placeholder">아직 생성된 문장이 없습니다.</div>
+      </div>
       <p class="small">공문·평가계획에 성취기준 원문을 그대로 인용해야 하는 경우에는 공식 자료와 최종 대조하세요.</p>
     </section>
+    <section class="panel" id="favoritePanel">
+      <div class="section-head" style="margin-top:0">
+        <div><h2>좋아한 세특 문장</h2><p>마음에 든 문장을 모아두고 나중에 한 번에 복사할 수 있습니다. 이 목록은 이 브라우저에 저장됩니다.</p></div>
+        <div class="result-toolbar">
+          <span class="mini-note" id="favoriteCount">0개 저장됨</span>
+          <button class="mini-btn" id="copyFavoritesBtn" type="button">저장 문장 전체 복사</button>
+          <button class="mini-btn" id="clearFavoritesBtn" type="button">저장 목록 비우기</button>
+        </div>
+      </div>
+      <div class="favorite-list" id="favoriteList"></div>
+    </section>
     <div class="section-head">
-      <div><h2>성취기준 목록</h2><p>카드별로 활동 아이디어와 연결 도구를 함께 확인할 수 있습니다.</p></div>
-      <div class="count" id="eduCount">0개 성취기준</div>
+      <div><h2>성취기준 목록</h2><p>교과를 열고, 학년군을 열어 필요한 성취기준만 확인합니다.</p></div>
+      <div class="list-controls">
+        <div class="count" id="eduCount">0개 성취기준</div>
+        <button class="mini-btn" id="expandAllBtn" type="button">전체 펼치기</button>
+        <button class="mini-btn" id="collapseAllBtn" type="button">전체 접기</button>
+      </div>
     </div>
-    <div class="cards" id="eduCards"></div>
+    <div class="folder-board" id="eduCards"></div>
     <div class="empty" id="eduEmpty">검색 결과가 없습니다.</div>
     <footer>교실 뚝딱도구 · 뚝딱 교육</footer>
   </div>
@@ -408,7 +87,19 @@ footer { margin-top: 30px; color: var(--subtle); text-align: center; font-size: 
     const noDuplicate = $('noDuplicate'), studentName = $('studentName');
     const usedKey = 'dd_education_used_sentences_v1';
     let usedSentences = JSON.parse(localStorage.getItem(usedKey) || '[]');
+    const favoriteKey = 'dd_education_favorite_sentences_v1';
+    let favoriteSentences = JSON.parse(localStorage.getItem(favoriteKey) || '[]');
+    let currentSentenceItems = [];
+    const favoriteList = $('favoriteList'), favoriteCount = $('favoriteCount');
     function saveUsed() { localStorage.setItem(usedKey, JSON.stringify(usedSentences.slice(-500))); }
+    function saveFavorites() { localStorage.setItem(favoriteKey, JSON.stringify(favoriteSentences.slice(0, 300))); }
+    function escapeHTML(value) { return String(value || '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch])); }
+    function copyText(text) {
+      if (!text) { alert('복사할 문장이 없습니다.'); return; }
+      navigator.clipboard?.writeText(text).then(() => alert('복사했습니다.')).catch(() => prompt('아래 문장을 복사하세요.', text));
+    }
+    function sentenceId(item) { return `${item.text}`; }
+    function isFavorite(item) { return favoriteSentences.some(saved => saved.text === item.text); }
     function pick(arr) { return (arr && arr.length) ? arr[Math.floor(Math.random()*arr.length)] : ''; }
     function fillTemplate(str, standard) {
       const activity = pick(standard.motivation) || standard.title;
@@ -435,23 +126,146 @@ footer { margin-top: 30px; color: var(--subtle); text-align: center; font-size: 
         return (!g || s.grade===g) && (!sub || s.subject===sub) && (!dom || s.domain===dom) && (!kw || hay.includes(kw));
       });
     }
+    const subjectOrder = ['바른 생활','슬기로운 생활','즐거운 생활','국어','수학','사회','과학','영어','도덕','실과','체육','음악','미술'];
+    const gradeOrder = ['초1-2','초3-4','초5-6'];
+    function orderBy(arr, order) {
+      return [...arr].sort((a,b) => {
+        const ai = order.indexOf(a), bi = order.indexOf(b);
+        if (ai === -1 && bi === -1) return String(a).localeCompare(String(b), 'ko');
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      });
+    }
+    function groupBy(list, key) {
+      return list.reduce((acc, item) => {
+        const value = item[key] || '기타';
+        (acc[value] ||= []).push(item);
+        return acc;
+      }, {});
+    }
+    function isNarrowed() {
+      return Boolean(eduSearch.value.trim() || gradeFilter.value || subjectFilter.value || domainFilter.value);
+    }
+    function standardHTML(s) {
+      const index = standards.indexOf(s);
+      return `
+        <article class="standard-item">
+          <div class="standard-main">
+            <div class="standard-code">${s.code}</div>
+            <div class="standard-title">${s.title}</div>
+            <div class="standard-text">${s.achievement}</div>
+          </div>
+          <div class="standard-meta">
+            ${(s.motivation||[]).slice(0,3).map(x=>`<span class="tag">${x}</span>`).join('')}
+          </div>
+          <div class="standard-meta">
+            ${(s.tools||[]).map(x=>`<span class="tag">${x}</span>`).join('')}
+          </div>
+          <div class="standard-actions">
+            <button class="btn btn-primary" type="button" onclick="makeSentence(${index},1)">세특 문장 1개</button>
+            <button class="btn btn-ghost" type="button" onclick="makeSentence(${index},5)">후보 5개 만들기</button>
+          </div>
+        </article>`;
+    }
     function renderCards() {
       const list = filteredStandards();
+      const narrowed = isNarrowed();
       eduCount.textContent = `${list.length}개 성취기준`;
       eduEmpty.style.display = list.length ? 'none' : 'block';
-      eduCards.innerHTML = list.slice(0, 120).map((s, i) => `
-        <article class="card">
-          <div class="tagrow"><span class="tag">${s.grade}</span><span class="tag">${s.subject}</span><span class="tag">${s.domain}</span><span class="tag">${s.code}</span></div>
-          <h3>${s.title}</h3>
-          <p>${s.achievement}</p>
-          <div class="tagrow">${(s.motivation||[]).slice(0,3).map(x=>`<span class="tag">활동 ${x}</span>`).join('')}</div>
-          <div class="tagrow">${(s.tools||[]).map(x=>`<span class="tag">도구 ${x}</span>`).join('')}</div>
-          <div class="card-actions">
-            <button class="btn btn-primary" type="button" onclick="makeSentence(${standards.indexOf(s)},1)">세특 문장 1개</button>
-            <button class="btn btn-ghost" type="button" onclick="makeSentence(${standards.indexOf(s)},5)">후보 5개 만들기</button>
+      if (!list.length) { eduCards.innerHTML = ''; return; }
+
+      const bySubject = groupBy(list, 'subject');
+      eduCards.innerHTML = orderBy(Object.keys(bySubject), subjectOrder).map(subject => {
+        const subjectList = bySubject[subject];
+        const byGrade = groupBy(subjectList, 'grade');
+        const subjectOpen = narrowed || subjectFilter.value === subject;
+        const subjectSummary = `${unique(subjectList.map(x=>x.grade)).join(' · ')} · ${unique(subjectList.map(x=>x.domain)).length}개 영역`;
+        const gradeHTML = orderBy(Object.keys(byGrade), gradeOrder).map(grade => {
+          const gradeList = byGrade[grade];
+          const byDomain = groupBy(gradeList, 'domain');
+          const gradeOpen = narrowed || gradeFilter.value === grade || subjectFilter.value === subject;
+          const domainsHTML = orderBy(Object.keys(byDomain), []).map(domain => {
+            const domainList = byDomain[domain];
+            return `
+              <section class="domain-block">
+                <div class="domain-head">
+                  <h4>${domain}</h4>
+                  <span class="folder-count">${domainList.length}개</span>
+                </div>
+                <div class="standard-list">
+                  ${domainList.map(standardHTML).join('')}
+                </div>
+              </section>`;
+          }).join('');
+          return `
+            <details class="folder grade-folder" ${gradeOpen ? 'open' : ''}>
+              <summary>
+                <div class="folder-title"><strong>${grade}</strong><span>${unique(gradeList.map(x=>x.domain)).join(' · ')}</span></div>
+                <span class="folder-count">${gradeList.length}개</span>
+              </summary>
+              <div class="folder-body">${domainsHTML}</div>
+            </details>`;
+        }).join('');
+        return `
+          <details class="folder subject-folder" ${subjectOpen ? 'open' : ''}>
+            <summary>
+              <div class="folder-title"><strong>${subject}</strong><span>${subjectSummary}</span></div>
+              <span class="folder-count">${subjectList.length}개</span>
+            </summary>
+            <div class="folder-body">${gradeHTML}</div>
+          </details>`;
+      }).join('');
+    }
+    function renderSentenceOutput(items) {
+      currentSentenceItems = items || [];
+      if (!currentSentenceItems.length) {
+        sentenceOutput.innerHTML = '<div class="sentence-placeholder">아직 생성된 문장이 없습니다.</div>';
+        return;
+      }
+      sentenceOutput.innerHTML = currentSentenceItems.map((item, i) => `
+        <article class="sentence-card ${isFavorite(item) ? 'saved' : ''}" data-index="${i}">
+          <div class="sentence-meta">
+            <span class="sentence-number">${i + 1}</span>
+            <span class="sentence-source">${escapeHTML(item.grade)} · ${escapeHTML(item.subject)} · ${escapeHTML(item.code)}</span>
+            ${isFavorite(item) ? '<span class="mini-note">저장됨</span>' : ''}
           </div>
-        </article>`).join('');
-      if (list.length > 120) { eduCards.insertAdjacentHTML('beforeend', `<div class="card"><h3>검색 결과가 많습니다.</h3><p>현재 120개만 먼저 보여줍니다. 학년군, 교과, 키워드를 추가로 입력하면 더 정확하게 찾을 수 있습니다.</p></div>`); }
+          <div class="sentence-text">${escapeHTML(item.text)}</div>
+          <div class="sentence-actions">
+            <button class="mini-btn" type="button" data-action="copy" data-index="${i}">문장 복사</button>
+            <button class="mini-btn" type="button" data-action="favorite" data-index="${i}">${isFavorite(item) ? '저장됨' : '좋아한 문장에 저장'}</button>
+          </div>
+        </article>
+      `).join('');
+    }
+    function addFavorite(item) {
+      if (!item || !item.text) return;
+      if (isFavorite(item)) { alert('이미 좋아한 문장에 저장되어 있습니다.'); return; }
+      favoriteSentences.unshift({...item, savedAt: new Date().toISOString()});
+      saveFavorites();
+      renderFavorites();
+      renderSentenceOutput(currentSentenceItems);
+    }
+    function renderFavorites() {
+      favoriteCount.textContent = `${favoriteSentences.length}개 저장됨`;
+      if (!favoriteSentences.length) {
+        favoriteList.innerHTML = '<div class="sentence-placeholder">아직 저장한 문장이 없습니다. 세특 문장 결과에서 마음에 드는 문장을 저장해보세요.</div>';
+        return;
+      }
+      favoriteList.innerHTML = favoriteSentences.map((item, i) => `
+        <article class="favorite-item" data-index="${i}">
+          <div class="favorite-top">
+            <div class="favorite-label">
+              <span>${escapeHTML(item.grade || '')}</span><span>${escapeHTML(item.subject || '')}</span><span>${escapeHTML(item.code || '')}</span>
+            </div>
+          </div>
+          <div class="favorite-text">${escapeHTML(item.text)}</div>
+          <div class="favorite-actions">
+            <button class="mini-btn" type="button" data-fav-action="copy" data-index="${i}">복사</button>
+            <button class="mini-btn" type="button" data-fav-action="remove" data-index="${i}">삭제</button>
+          </div>
+        </article>
+      `).join('');
     }
     function generateOne(s) {
       const subjActions = (bank.subjectActions && bank.subjectActions[s.subject]) || bank.focusActions || [];
@@ -482,20 +296,48 @@ footer { margin-top: 30px; color: var(--subtle); text-align: center; font-size: 
       }
       if (!out.length) out.push('겹치지 않는 새 문장이 부족합니다. 뽑은 문장 기록을 초기화한 뒤 다시 시도하세요.');
       if (noDuplicate.checked) { usedSentences.push(...out); usedSentences = [...new Set(usedSentences)]; saveUsed(); }
-      sentenceOutput.textContent = out.map((x,i)=> count>1 ? `${i+1}. ${x}` : x).join('\n\n');
+      const items = out.map(text => ({ text, code: s.code, subject: s.subject, grade: s.grade, domain: s.domain, title: s.title, createdAt: new Date().toISOString() }));
+      renderSentenceOutput(items);
       $('sentencePanel').scrollIntoView({behavior:'smooth', block:'start'});
     };
     $('resetUsedBtn').addEventListener('click', () => { usedSentences = []; saveUsed(); alert('뽑은 문장 기록을 초기화했습니다.'); });
-
-    $('copySentenceBtn').addEventListener('click', async () => {
-      const text = sentenceOutput.textContent.trim();
-      if (!text || text === '아직 생성된 문장이 없습니다.') { alert('복사할 문장이 없습니다.'); return; }
-      try { await navigator.clipboard.writeText(text); alert('세특 문장을 복사했습니다.'); }
-      catch(e) { prompt('아래 문장을 복사하세요.', text); }
-    });
     [eduSearch, gradeFilter, domainFilter].forEach(el => el.addEventListener('input', renderCards));
     subjectFilter.addEventListener('input', () => { renderDomainOptions(); renderCards(); });
-    initFilters(); renderCards();
+    $('expandAllBtn').addEventListener('click', () => document.querySelectorAll('#eduCards details').forEach(d => d.open = true));
+    $('collapseAllBtn').addEventListener('click', () => document.querySelectorAll('#eduCards details').forEach(d => d.open = false));
+    sentenceOutput.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-action]');
+      if (!button) return;
+      const item = currentSentenceItems[Number(button.dataset.index)];
+      if (!item) return;
+      if (button.dataset.action === 'copy') copyText(item.text);
+      if (button.dataset.action === 'favorite') addFavorite(item);
+    });
+    favoriteList.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-fav-action]');
+      if (!button) return;
+      const index = Number(button.dataset.index);
+      const item = favoriteSentences[index];
+      if (!item) return;
+      if (button.dataset.favAction === 'copy') copyText(item.text);
+      if (button.dataset.favAction === 'remove') {
+        favoriteSentences.splice(index, 1);
+        saveFavorites();
+        renderFavorites();
+        renderSentenceOutput(currentSentenceItems);
+      }
+    });
+    $('copyCurrentBtn').addEventListener('click', () => copyText(currentSentenceItems.map(item => item.text).join('\n\n')));
+    $('copyFavoritesBtn').addEventListener('click', () => copyText(favoriteSentences.map((item, index) => `${index + 1}. ${item.text}`).join('\n\n')));
+    $('clearFavoritesBtn').addEventListener('click', () => {
+      if (!favoriteSentences.length) { alert('비울 저장 문장이 없습니다.'); return; }
+      if (!confirm('좋아한 세특 문장 목록을 모두 비울까요?')) return;
+      favoriteSentences = [];
+      saveFavorites();
+      renderFavorites();
+      renderSentenceOutput(currentSentenceItems);
+    });
+    initFilters(); renderCards(); renderFavorites();
   </script>
 </body>
 </html>
