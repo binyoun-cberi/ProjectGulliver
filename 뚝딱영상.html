@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>뚝딱 영상 | 유튜브 링크 보관함</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <style>
+:root{--bg:#f6f3ee;--paper:#fffdf8;--paper-2:#ffffff;--ink:#243042;--muted:#697386;--line:#e9dfcf;--brand:#6d5dfc;--brand-2:#ffb86b;--brand-3:#2fbf9b;--danger:#ef6461;--shadow:0 18px 45px rgba(63,54,38,.12);--shadow-soft:0 10px 25px rgba(63,54,38,.08);--radius-xl:28px;--radius-lg:20px;--radius-md:14px}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;color:var(--ink);background:radial-gradient(circle at 15% 8%,rgba(255,184,107,.28),transparent 28%),radial-gradient(circle at 84% 12%,rgba(109,93,252,.18),transparent 26%),linear-gradient(135deg,#fffaf1 0%,var(--bg) 45%,#eef8f4 100%)}a{color:inherit;text-decoration:none}.page{width:min(1180px,calc(100% - 32px));margin:0 auto;padding:28px 0 56px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand-mark{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;box-shadow:var(--shadow-soft);border:1px solid rgba(255,255,255,.8);background:white;overflow:hidden}.brand-mark img{width:100%;height:100%;object-fit:cover}.brand-title{display:flex;flex-direction:column;gap:2px;min-width:0}.brand-title strong{font-size:22px;letter-spacing:-.04em;white-space:nowrap}.brand-title span{color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap}.site-nav{display:flex;align-items:center;gap:8px;padding:8px;border-radius:999px;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.95);box-shadow:var(--shadow-soft);backdrop-filter:blur(10px)}.site-nav a{padding:10px 14px;border-radius:999px;font-size:13px;font-weight:950;color:#536073;white-space:nowrap}.site-nav a.active{background:var(--ink);color:white}.hero{position:relative;overflow:hidden;border-radius:var(--radius-xl);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(255,253,248,.78)),linear-gradient(135deg,rgba(109,93,252,.12),rgba(255,184,107,.18));border:1px solid rgba(255,255,255,.9);box-shadow:var(--shadow);padding:34px;margin-bottom:18px}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#fff4dc;color:#9a5a12;font-size:13px;font-weight:900;margin-bottom:14px;border:1px solid #ffe0aa}h1{margin:0;font-size:clamp(34px,5vw,58px);line-height:1;letter-spacing:-.07em}.hero p{margin:14px 0 0;max-width:780px;color:var(--muted);font-size:16px;line-height:1.7;word-break:keep-all;font-weight:650}.toolbar{margin:18px 0;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}.search{position:relative}.search input,.select,.input,textarea{width:100%;border:1px solid rgba(255,255,255,.95);background:rgba(255,255,255,.82);box-shadow:var(--shadow-soft);border-radius:18px;padding:15px 16px;outline:none;font-family:inherit;font-weight:800;font-size:14px;color:var(--ink)}textarea{resize:vertical;min-height:96px;line-height:1.55}.search input{padding-left:46px}.search span{position:absolute;left:17px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:18px}.filters{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.select{width:auto;min-width:132px;cursor:pointer}.btn{border:0;border-radius:999px;padding:12px 16px;font-family:inherit;font-size:13px;font-weight:950;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .16s ease,box-shadow .16s ease,background .16s ease}.btn:hover{transform:translateY(-2px)}.btn-primary{background:var(--brand);color:white;box-shadow:0 12px 22px rgba(109,93,252,.22)}.btn-ghost{background:white;color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow-soft)}.btn-danger{background:#fff;color:#b42318;border:1px solid #ffd3cf}.section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:28px 0 16px}.section-head h2{margin:0;font-size:24px;letter-spacing:-.055em}.section-head p{margin:6px 0 0;color:var(--muted);font-weight:700;font-size:14px}.count{color:var(--muted);font-size:13px;font-weight:900;background:rgba(255,255,255,.7);padding:9px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.9)}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.card{position:relative;overflow:hidden;border-radius:24px;background:rgba(255,255,255,.84);border:1px solid rgba(255,255,255,.95);box-shadow:var(--shadow-soft);padding:22px;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}.card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:rgba(109,93,252,.28)}.tagrow{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.tag{display:inline-flex;align-items:center;gap:5px;padding:7px 9px;border-radius:999px;background:#faf7f1;color:#6a7280;font-size:12px;font-weight:850;border:1px solid #eee4d5}.card h3{margin:10px 0 8px;font-size:21px;letter-spacing:-.055em;line-height:1.2}.card p{margin:0;color:var(--muted);font-size:14px;line-height:1.65;word-break:keep-all;font-weight:650}.card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.panel{background:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.95);border-radius:24px;padding:20px;box-shadow:var(--shadow-soft);margin:18px 0}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.empty{display:none;padding:28px;text-align:center;border-radius:22px;background:rgba(255,255,255,.7);color:var(--muted);font-weight:800;border:1px dashed #ddcfbd}.sentence-box{background:#2a3140;color:#fff6df;border-radius:18px;padding:16px;line-height:1.75;font-weight:750;white-space:pre-wrap;min-height:90px}.small{font-size:12px;color:var(--muted);font-weight:800;line-height:1.6}.checkbox{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:900;color:#536073}.checkbox input{width:17px;height:17px}footer{margin-top:30px;color:#8a8277;text-align:center;font-size:12px;font-weight:800}@media(max-width:900px){.topbar{align-items:flex-start;flex-direction:column}.site-nav{width:100%;overflow-x:auto;justify-content:flex-start}.toolbar{grid-template-columns:1fr}.filters{justify-content:flex-start}.cards,.grid-2{grid-template-columns:1fr}}@media(max-width:640px){.page{width:min(100% - 22px,1180px);padding-top:16px}.brand-title strong{font-size:18px}.brand-title span{white-space:normal}.hero{padding:24px 20px}.hero p{font-size:15px}.section-head{align-items:flex-start;flex-direction:column}}
+
+    .video-card{display:grid;grid-template-columns:180px 1fr;gap:16px;align-items:start}
+    .thumb{width:100%;aspect-ratio:16/9;border-radius:18px;object-fit:cover;background:#eee;border:1px solid #eee4d5}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:760px){.video-card{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="교실 뚝딱도구 홈">
+        <div class="brand-mark"><img src="logo.png" alt="교실 뚝딱도구 로고"></div>
+        <div class="brand-title"><strong>교실 뚝딱도구</strong><span>뚝딱 영상 · 유튜브 링크 보관함</span></div>
+      </a>
+      <nav class="site-nav" aria-label="게시판 이동">
+        <a href="index.html">뚝딱 도구</a><a href="뚝딱교육.html">뚝딱 교육</a><a class="active" href="뚝딱영상.html">뚝딱 영상</a>
+      </nav>
+    </header>
+    <section class="hero">
+      <span class="eyebrow">🎬 영상 자료 관리</span>
+      <h1>수업 영상을 모으고<br>새 학년도에도 그대로</h1>
+      <p>유튜브 링크를 태그와 함께 저장하고, JSON 백업 파일로 내보내거나 다른 PC에서 다시 불러올 수 있습니다. 저장 내용은 현재 브라우저의 localStorage에 보관됩니다.</p>
+    </section>
+    <section class="panel">
+      <div class="form-grid">
+        <input class="input" id="videoTitle" placeholder="영상 제목">
+        <input class="input" id="videoUrl" placeholder="유튜브 링크">
+        <input class="input" id="videoSubject" placeholder="교과/영역 예: 과학, 안전, 동기유발">
+        <input class="input" id="videoGrade" placeholder="학년/대상 예: 초1-2, 유치원, 전체">
+        <input class="input" id="videoTags" placeholder="태그 쉼표 구분 예: 계절, 여름, 도입">
+        <textarea id="videoMemo" placeholder="활용 메모"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+        <button class="btn btn-primary" id="addVideoBtn" type="button">영상 저장</button>
+        <button class="btn btn-ghost" id="exportBtn" type="button">목록 백업하기</button>
+        <label class="btn btn-ghost" for="importFile">백업 불러오기</label>
+        <input id="importFile" type="file" accept="application/json,.json" style="display:none">
+        <button class="btn btn-danger" id="clearAllBtn" type="button">전체 삭제</button>
+      </div>
+      <p class="small">불러오기 시 기존 목록에 합칠지, 완전히 덮어쓸지 선택할 수 있습니다. 같은 유튜브 영상은 자동으로 중복 제거됩니다.</p>
+    </section>
+    <section class="panel">
+      <div class="grid-2">
+        <label class="search"><span>🔎</span><input id="videoSearch" type="search" placeholder="제목, 태그, 메모로 검색" autocomplete="off"></label>
+        <div class="filters"><select class="select" id="tagFilter"><option value="">태그 전체</option></select></div>
+      </div>
+    </section>
+    <div class="section-head">
+      <div><h2>뚝딱 영상 목록</h2><p>수업 전에 필요한 영상만 빠르게 모아볼 수 있습니다.</p></div>
+      <div class="count" id="videoCount">0개 영상</div>
+    </div>
+    <div class="cards" id="videoCards"></div>
+    <div class="empty" id="videoEmpty">저장된 영상이 없습니다.</div>
+    <footer>교실 뚝딱도구 · 뚝딱 영상</footer>
+  </div>
+  <script>
+    const key = 'dd_video_board_v2';
+    const $ = id => document.getElementById(id);
+    let videos = JSON.parse(localStorage.getItem(key) || '[]');
+    function save() { localStorage.setItem(key, JSON.stringify(videos)); }
+    function normalize(t) { return String(t||'').toLowerCase().replace(/\s+/g,''); }
+    function getVideoId(url) {
+      const s = String(url||'').trim();
+      const patterns = [/youtu\.be\/([\w-]{11})/, /youtube\.com\/watch\?v=([\w-]{11})/, /youtube\.com\/shorts\/([\w-]{11})/, /youtube\.com\/embed\/([\w-]{11})/];
+      for (const p of patterns) { const m = s.match(p); if (m) return m[1]; }
+      try { const u = new URL(s); return u.searchParams.get('v') || ''; } catch(e) { return ''; }
+    }
+    function thumb(id) { return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : ''; }
+    function collectTags() { return [...new Set(videos.flatMap(v => v.tags || []))].sort(); }
+    function renderTagFilter() {
+      const current = $('tagFilter').value;
+      $('tagFilter').innerHTML = '<option value="">태그 전체</option>' + collectTags().map(t=>`<option value="${t}">#${t}</option>`).join('');
+      $('tagFilter').value = current;
+    }
+    function render() {
+      renderTagFilter();
+      const kw = normalize($('videoSearch').value), tag = $('tagFilter').value;
+      const list = videos.filter(v => {
+        const hay = normalize([v.title,v.url,v.subject,v.grade,v.memo,(v.tags||[]).join(' ')].join(' '));
+        return (!kw || hay.includes(kw)) && (!tag || (v.tags||[]).includes(tag));
+      });
+      $('videoCount').textContent = `${list.length}개 영상`;
+      $('videoEmpty').style.display = list.length ? 'none' : 'block';
+      $('videoCards').innerHTML = list.map(v => `
+        <article class="card video-card">
+          <img class="thumb" src="${thumb(v.videoId)}" alt="${v.title} 썸네일" onerror="this.style.display='none'">
+          <div>
+            <div class="tagrow"><span class="tag">${v.grade || '대상 미지정'}</span><span class="tag">${v.subject || '분류 없음'}</span>${(v.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('')}</div>
+            <h3>${v.title}</h3>
+            <p>${v.memo || '메모 없음'}</p>
+            <div class="card-actions">
+              <a class="btn btn-primary" href="${v.url}" target="_blank" rel="noopener">영상 열기</a>
+              <button class="btn btn-ghost" onclick="copyLink('${v.id}')" type="button">링크 복사</button>
+              <button class="btn btn-danger" onclick="deleteVideo('${v.id}')" type="button">삭제</button>
+            </div>
+          </div>
+        </article>`).join('');
+    }
+    function upsertMany(items, mode) {
+      const clean = (items||[]).map(v => ({
+        id: v.id || crypto.randomUUID(), title: v.title || '제목 없음', url: v.url || '', videoId: v.videoId || getVideoId(v.url),
+        subject: v.subject || '', grade: v.grade || '', tags: Array.isArray(v.tags) ? v.tags : String(v.tags||'').split(',').map(x=>x.trim()).filter(Boolean), memo: v.memo || '', createdAt: v.createdAt || new Date().toISOString()
+      })).filter(v=>v.url);
+      videos = mode === 'replace' ? [] : videos;
+      const map = new Map(videos.map(v => [v.videoId || v.url, v]));
+      clean.forEach(v => map.set(v.videoId || v.url, v));
+      videos = [...map.values()].sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+      save(); render();
+    }
+    $('addVideoBtn').addEventListener('click', () => {
+      const url = $('videoUrl').value.trim(); const id = getVideoId(url);
+      if (!url || !id) { alert('유튜브 링크를 확인해주세요.'); return; }
+      const item = { id: crypto.randomUUID(), title: $('videoTitle').value.trim() || '제목 없음', url, videoId: id, subject: $('videoSubject').value.trim(), grade: $('videoGrade').value.trim(), tags: $('videoTags').value.split(',').map(x=>x.trim()).filter(Boolean), memo: $('videoMemo').value.trim(), createdAt: new Date().toISOString() };
+      upsertMany([item], 'merge');
+      ['videoTitle','videoUrl','videoSubject','videoGrade','videoTags','videoMemo'].forEach(id => $(id).value = '');
+    });
+    $('exportBtn').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify({type:'dd-video-backup', version:2, exportedAt:new Date().toISOString(), videos}, null, 2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `뚝딱영상_백업_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href);
+    });
+    $('importFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        const list = Array.isArray(data) ? data : data.videos;
+        if (!Array.isArray(list)) throw new Error('invalid');
+        const replace = confirm('확인: 기존 목록에 합치기\n취소: 기존 목록을 지우고 백업으로 덮어쓰기');
+        upsertMany(list, replace ? 'merge' : 'replace');
+      } catch(err) { alert('백업 파일을 읽지 못했습니다.'); }
+      e.target.value = '';
+    });
+    $('clearAllBtn').addEventListener('click', () => { if (confirm('저장된 영상을 모두 삭제할까요?')) { videos=[]; save(); render(); } });
+    window.copyLink = async (id) => { const v = videos.find(x=>x.id===id); if (!v) return; try { await navigator.clipboard.writeText(v.url); alert('링크를 복사했습니다.'); } catch(e) { prompt('아래 링크를 복사하세요.', v.url); } };
+    window.deleteVideo = (id) => { videos = videos.filter(v=>v.id!==id); save(); render(); };
+    $('videoSearch').addEventListener('input', render); $('tagFilter').addEventListener('input', render); render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>뚝딱 교육 | 2022 성취기준과 세특 도우미</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <style>
+:root{--bg:#f6f3ee;--paper:#fffdf8;--paper-2:#ffffff;--ink:#243042;--muted:#697386;--line:#e9dfcf;--brand:#6d5dfc;--brand-2:#ffb86b;--brand-3:#2fbf9b;--danger:#ef6461;--shadow:0 18px 45px rgba(63,54,38,.12);--shadow-soft:0 10px 25px rgba(63,54,38,.08);--radius-xl:28px;--radius-lg:20px;--radius-md:14px}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;color:var(--ink);background:radial-gradient(circle at 15% 8%,rgba(255,184,107,.28),transparent 28%),radial-gradient(circle at 84% 12%,rgba(109,93,252,.18),transparent 26%),linear-gradient(135deg,#fffaf1 0%,var(--bg) 45%,#eef8f4 100%)}a{color:inherit;text-decoration:none}.page{width:min(1180px,calc(100% - 32px));margin:0 auto;padding:28px 0 56px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand-mark{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;box-shadow:var(--shadow-soft);border:1px solid rgba(255,255,255,.8);background:white;overflow:hidden}.brand-mark img{width:100%;height:100%;object-fit:cover}.brand-title{display:flex;flex-direction:column;gap:2px;min-width:0}.brand-title strong{font-size:22px;letter-spacing:-.04em;white-space:nowrap}.brand-title span{color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap}.site-nav{display:flex;align-items:center;gap:8px;padding:8px;border-radius:999px;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.95);box-shadow:var(--shadow-soft);backdrop-filter:blur(10px)}.site-nav a{padding:10px 14px;border-radius:999px;font-size:13px;font-weight:950;color:#536073;white-space:nowrap}.site-nav a.active{background:var(--ink);color:white}.hero{position:relative;overflow:hidden;border-radius:var(--radius-xl);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(255,253,248,.78)),linear-gradient(135deg,rgba(109,93,252,.12),rgba(255,184,107,.18));border:1px solid rgba(255,255,255,.9);box-shadow:var(--shadow);padding:34px;margin-bottom:18px}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#fff4dc;color:#9a5a12;font-size:13px;font-weight:900;margin-bottom:14px;border:1px solid #ffe0aa}h1{margin:0;font-size:clamp(34px,5vw,58px);line-height:1;letter-spacing:-.07em}.hero p{margin:14px 0 0;max-width:780px;color:var(--muted);font-size:16px;line-height:1.7;word-break:keep-all;font-weight:650}.toolbar{margin:18px 0;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}.search{position:relative}.search input,.select,.input,textarea{width:100%;border:1px solid rgba(255,255,255,.95);background:rgba(255,255,255,.82);box-shadow:var(--shadow-soft);border-radius:18px;padding:15px 16px;outline:none;font-family:inherit;font-weight:800;font-size:14px;color:var(--ink)}textarea{resize:vertical;min-height:96px;line-height:1.55}.search input{padding-left:46px}.search span{position:absolute;left:17px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:18px}.filters{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.select{width:auto;min-width:132px;cursor:pointer}.btn{border:0;border-radius:999px;padding:12px 16px;font-family:inherit;font-size:13px;font-weight:950;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .16s ease,box-shadow .16s ease,background .16s ease}.btn:hover{transform:translateY(-2px)}.btn-primary{background:var(--brand);color:white;box-shadow:0 12px 22px rgba(109,93,252,.22)}.btn-ghost{background:white;color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow-soft)}.btn-danger{background:#fff;color:#b42318;border:1px solid #ffd3cf}.section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:28px 0 16px}.section-head h2{margin:0;font-size:24px;letter-spacing:-.055em}.section-head p{margin:6px 0 0;color:var(--muted);font-weight:700;font-size:14px}.count{color:var(--muted);font-size:13px;font-weight:900;background:rgba(255,255,255,.7);padding:9px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.9)}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.card{position:relative;overflow:hidden;border-radius:24px;background:rgba(255,255,255,.84);border:1px solid rgba(255,255,255,.95);box-shadow:var(--shadow-soft);padding:22px;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}.card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:rgba(109,93,252,.28)}.tagrow{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.tag{display:inline-flex;align-items:center;gap:5px;padding:7px 9px;border-radius:999px;background:#faf7f1;color:#6a7280;font-size:12px;font-weight:850;border:1px solid #eee4d5}.card h3{margin:10px 0 8px;font-size:21px;letter-spacing:-.055em;line-height:1.2}.card p{margin:0;color:var(--muted);font-size:14px;line-height:1.65;word-break:keep-all;font-weight:650}.card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.panel{background:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.95);border-radius:24px;padding:20px;box-shadow:var(--shadow-soft);margin:18px 0}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.empty{display:none;padding:28px;text-align:center;border-radius:22px;background:rgba(255,255,255,.7);color:var(--muted);font-weight:800;border:1px dashed #ddcfbd}.sentence-box{background:#2a3140;color:#fff6df;border-radius:18px;padding:16px;line-height:1.75;font-weight:750;white-space:pre-wrap;min-height:90px}.small{font-size:12px;color:var(--muted);font-weight:800;line-height:1.6}.checkbox{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:900;color:#536073}.checkbox input{width:17px;height:17px}footer{margin-top:30px;color:#8a8277;text-align:center;font-size:12px;font-weight:800}@media(max-width:900px){.topbar{align-items:flex-start;flex-direction:column}.site-nav{width:100%;overflow-x:auto;justify-content:flex-start}.toolbar{grid-template-columns:1fr}.filters{justify-content:flex-start}.cards,.grid-2{grid-template-columns:1fr}}@media(max-width:640px){.page{width:min(100% - 22px,1180px);padding-top:16px}.brand-title strong{font-size:18px}.brand-title span{white-space:normal}.hero{padding:24px 20px}.hero p{font-size:15px}.section-head{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="교실 뚝딱도구 홈">
+        <div class="brand-mark"><img src="logo.png" alt="교실 뚝딱도구 로고"></div>
+        <div class="brand-title"><strong>교실 뚝딱도구</strong><span>뚝딱 교육 · 성취기준과 세특 도우미</span></div>
+      </a>
+      <nav class="site-nav" aria-label="게시판 이동">
+        <a href="index.html">뚝딱 도구</a><a class="active" href="뚝딱교육.html">뚝딱 교육</a><a href="뚝딱영상.html">뚝딱 영상</a>
+      </nav>
+    </header>
+    <section class="hero">
+      <span class="eyebrow">📚 2022 성취기준 검색</span>
+      <h1>성취기준을 찾고<br>세특 문장을 뚝딱</h1>
+      <p>학년군·교과·키워드로 성취기준을 찾고, 수업 활동과 연결하여 다양한 세특 문장 후보를 생성합니다. 큰 데이터는 <b>data-standards.js</b>, 문장 재료는 <b>data-sentence.js</b>로 분리했습니다.</p>
+    </section>
+    <section class="panel">
+      <div class="grid-2">
+        <label class="search"><span>🔎</span><input id="eduSearch" type="search" placeholder="성취기준, 교과, 영역, 키워드로 검색" autocomplete="off"></label>
+        <div class="filters">
+          <select class="select" id="gradeFilter"><option value="">학년군 전체</option></select>
+          <select class="select" id="subjectFilter"><option value="">교과 전체</option></select>
+          <select class="select" id="domainFilter"><option value="">영역 전체</option></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:14px">
+        <label class="checkbox"><input id="noDuplicate" type="checkbox" checked> 문장 겹치지 않게</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input class="input" id="studentName" style="width:170px" placeholder="학생 이름 선택 입력">
+          <button class="btn btn-ghost" id="resetUsedBtn" type="button">뽑은 문장 기록 초기화</button>
+        </div>
+      </div>
+    </section>
+    <section class="panel" id="sentencePanel">
+      <div class="section-head" style="margin-top:0">
+        <div><h2>세특 문장 결과</h2><p>성취기준 카드에서 문장을 뽑으면 여기에 표시됩니다.</p></div>
+      </div>
+      <div class="sentence-box" id="sentenceOutput">아직 생성된 문장이 없습니다.</div>
+      <p class="small">공문·평가계획에 성취기준 원문을 그대로 인용해야 하는 경우에는 공식 자료와 최종 대조하세요.</p>
+    </section>
+    <div class="section-head">
+      <div><h2>성취기준 목록</h2><p>카드별로 활동 아이디어와 연결 도구를 함께 확인할 수 있습니다.</p></div>
+      <div class="count" id="eduCount">0개 성취기준</div>
+    </div>
+    <div class="cards" id="eduCards"></div>
+    <div class="empty" id="eduEmpty">검색 결과가 없습니다.</div>
+    <footer>교실 뚝딱도구 · 뚝딱 교육</footer>
+  </div>
+  <script src="data-standards.js"></script>
+  <script src="data-sentence.js"></script>
+  <script>
+    const standards = window.DD_STANDARDS_2022 || [];
+    const bank = window.DD_SENTENCE_BANK || {};
+    const $ = (id) => document.getElementById(id);
+    const eduSearch = $('eduSearch'), gradeFilter = $('gradeFilter'), subjectFilter = $('subjectFilter'), domainFilter = $('domainFilter');
+    const eduCards = $('eduCards'), eduCount = $('eduCount'), eduEmpty = $('eduEmpty'), sentenceOutput = $('sentenceOutput');
+    const noDuplicate = $('noDuplicate'), studentName = $('studentName');
+    const usedKey = 'dd_education_used_sentences_v1';
+    let usedSentences = JSON.parse(localStorage.getItem(usedKey) || '[]');
+    function saveUsed() { localStorage.setItem(usedKey, JSON.stringify(usedSentences.slice(-500))); }
+    function pick(arr) { return (arr && arr.length) ? arr[Math.floor(Math.random()*arr.length)] : ''; }
+    function fillTemplate(str, standard) {
+      const activity = pick(standard.motivation) || standard.title;
+      const map = { activity, subject: standard.subject, domain: standard.domain, title: standard.title, code: standard.code, achievement: standard.achievement };
+      return String(str || '').replace(/\{(.*?)\}/g, (_, k) => map[k] || '');
+    }
+    function normalize(text) { return String(text || '').toLowerCase().replace(/\s+/g,''); }
+    function unique(values) { return [...new Set(values.filter(Boolean))]; }
+    function optionHTML(values, label) { return `<option value="">${label} 전체</option>` + values.map(v => `<option value="${v}">${v}</option>`).join(''); }
+    function initFilters() {
+      gradeFilter.innerHTML = optionHTML(unique(standards.map(s=>s.grade)), '학년군');
+      subjectFilter.innerHTML = optionHTML(unique(standards.map(s=>s.subject)), '교과');
+      renderDomainOptions();
+    }
+    function renderDomainOptions() {
+      const sub = subjectFilter.value;
+      const domains = unique(standards.filter(s => !sub || s.subject === sub).map(s=>s.domain));
+      domainFilter.innerHTML = optionHTML(domains, '영역');
+    }
+    function filteredStandards() {
+      const kw = normalize(eduSearch.value), g = gradeFilter.value, sub = subjectFilter.value, dom = domainFilter.value;
+      return standards.filter(s => {
+        const hay = normalize([s.grade,s.subject,s.code,s.domain,s.title,s.achievement,(s.keywords||[]).join(' '),(s.motivation||[]).join(' '),(s.tools||[]).join(' ')].join(' '));
+        return (!g || s.grade===g) && (!sub || s.subject===sub) && (!dom || s.domain===dom) && (!kw || hay.includes(kw));
+      });
+    }
+    function renderCards() {
+      const list = filteredStandards();
+      eduCount.textContent = `${list.length}개 성취기준`;
+      eduEmpty.style.display = list.length ? 'none' : 'block';
+      eduCards.innerHTML = list.slice(0, 120).map((s, i) => `
+        <article class="card">
+          <div class="tagrow"><span class="tag">${s.grade}</span><span class="tag">${s.subject}</span><span class="tag">${s.domain}</span><span class="tag">${s.code}</span></div>
+          <h3>${s.title}</h3>
+          <p>${s.achievement}</p>
+          <div class="tagrow">${(s.motivation||[]).slice(0,3).map(x=>`<span class="tag">💡 ${x}</span>`).join('')}</div>
+          <div class="tagrow">${(s.tools||[]).map(x=>`<span class="tag">🛠️ ${x}</span>`).join('')}</div>
+          <div class="card-actions">
+            <button class="btn btn-primary" type="button" onclick="makeSentence(${standards.indexOf(s)},1)">세특 문장 1개</button>
+            <button class="btn btn-ghost" type="button" onclick="makeSentence(${standards.indexOf(s)},5)">후보 5개 만들기</button>
+          </div>
+        </article>`).join('');
+      if (list.length > 120) { eduCards.insertAdjacentHTML('beforeend', `<div class="card"><h3>검색 결과가 많습니다.</h3><p>현재 120개만 먼저 보여줍니다. 학년군, 교과, 키워드를 추가로 입력하면 더 정확하게 찾을 수 있습니다.</p></div>`); }
+    }
+    function generateOne(s) {
+      const subjActions = (bank.subjectActions && bank.subjectActions[s.subject]) || bank.focusActions || [];
+      const name = studentName.value.trim();
+      const namePart = name ? `${name}은/는 ` : '';
+      const opener = fillTemplate(pick(bank.openers), s);
+      const action = pick(subjActions.concat(bank.focusActions || []));
+      const attitude = pick(bank.attitudes);
+      const growth = pick(bank.growth);
+      const closer = pick(bank.closers);
+      const patterns = [
+        `${namePart}${opener} ${action}. 특히 ${attitude}. ${growth}. ${closer}`,
+        `${namePart}${opener} ${action}는 점이 인상적임. ${attitude}며, ${growth}.`,
+        `${namePart}${s.subject} ${s.domain} 활동에서 ${action}. ${attitude}고 ${growth}. ${closer}`,
+        `${namePart}${fillTemplate(pick(s.motivation), s)} 과정에서 ${action}. ${attitude}며 배운 내용을 생활과 연결하려는 모습이 관찰됨.`
+      ];
+      return pick(patterns).replace(/\s+/g,' ').trim();
+    }
+    window.makeSentence = function(index, count) {
+      const s = standards[index]; if (!s) return;
+      const out = [];
+      let tries = 0;
+      while (out.length < count && tries < 200) {
+        tries++;
+        const sentence = generateOne(s);
+        if (noDuplicate.checked && usedSentences.includes(sentence)) continue;
+        if (!out.includes(sentence)) out.push(sentence);
+      }
+      if (!out.length) out.push('겹치지 않는 새 문장이 부족합니다. 뽑은 문장 기록을 초기화한 뒤 다시 시도하세요.');
+      if (noDuplicate.checked) { usedSentences.push(...out); usedSentences = [...new Set(usedSentences)]; saveUsed(); }
+      sentenceOutput.textContent = out.map((x,i)=> count>1 ? `${i+1}. ${x}` : x).join('\n\n');
+      $('sentencePanel').scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    $('resetUsedBtn').addEventListener('click', () => { usedSentences = []; saveUsed(); alert('뽑은 문장 기록을 초기화했습니다.'); });
+    [eduSearch, gradeFilter, domainFilter].forEach(el => el.addEventListener('input', renderCards));
+    subjectFilter.addEventListener('input', () => { renderDomainOptions(); renderCards(); });
+    initFilters(); renderCards();
+  </script>
+</body>
+</html>
