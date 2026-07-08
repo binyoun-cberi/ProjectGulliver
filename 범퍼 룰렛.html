@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>엎치락뒤치락 범퍼 룰렛</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #1a202c; color: white; font-family: 'Pretendard', sans-serif; touch-action: none; }
         canvas { display: block; }
@@ -122,6 +121,7 @@
                 레이스 시작!
             </button>
             <p class="text-xs text-gray-400 text-center mt-4">사운드가 켜져 있습니다. 볼륨을 주의하세요!</p>
+            <p id="engine-status" class="text-xs text-yellow-300 text-center mt-2 min-h-[1rem]"></p>
         </div>
 
         <div id="hud" class="absolute inset-0 pointer-events-none hidden">
@@ -197,15 +197,17 @@
         }
 
         // --- 오디오 시스템 ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = AudioContextClass ? new AudioContextClass() : null;
         let lastSoundTime = 0;
 
         function playSound(type, velocity) {
+            if (!audioCtx) return;
             const now = Date.now();
             if (now - lastSoundTime < 50) return;
             lastSoundTime = now;
 
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
 
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
@@ -253,7 +255,88 @@
             }
         }
 
-        const { Engine, Render, Runner, Bodies, Composite, Body, Events, Vector, Constraint } = Matter;
+        let Engine, Render, Runner, Bodies, Composite, Body, Events, Vector, Constraint;
+
+        const MATTER_URLS = [
+            'https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js',
+            'https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js',
+            'https://unpkg.com/matter-js@0.19.0/build/matter.min.js'
+        ];
+
+        function setEngineStatus(message, isError = false) {
+            const status = document.getElementById('engine-status');
+            if (!status) return;
+            status.textContent = message || '';
+            status.className = isError
+                ? 'text-xs text-red-300 text-center mt-2 min-h-[1rem] font-bold'
+                : 'text-xs text-yellow-300 text-center mt-2 min-h-[1rem]';
+        }
+
+        function loadMatterScript(index = 0) {
+            return new Promise((resolve, reject) => {
+                if (window.Matter) {
+                    resolve(window.Matter);
+                    return;
+                }
+
+                if (index >= MATTER_URLS.length) {
+                    reject(new Error('Matter.js를 불러오지 못했습니다.'));
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = MATTER_URLS[index];
+                script.async = true;
+                script.onload = () => {
+                    if (window.Matter) {
+                        resolve(window.Matter);
+                    } else {
+                        loadMatterScript(index + 1).then(resolve).catch(reject);
+                    }
+                };
+                script.onerror = () => {
+                    loadMatterScript(index + 1).then(resolve).catch(reject);
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        function bindMatterEngine() {
+            ({ Engine, Render, Runner, Bodies, Composite, Body, Events, Vector, Constraint } = window.Matter);
+        }
+
+        function bootstrapGame() {
+            const startBtn = document.getElementById('start-btn');
+            const originalText = startBtn ? startBtn.textContent : '레이스 시작!';
+
+            if (startBtn) {
+                startBtn.disabled = true;
+                startBtn.textContent = '물리 엔진 준비 중...';
+                startBtn.classList.add('opacity-70', 'cursor-wait');
+            }
+            setEngineStatus('물리 엔진을 불러오는 중입니다...');
+
+            loadMatterScript()
+                .then(() => {
+                    bindMatterEngine();
+                    initGame();
+                    if (startBtn) {
+                        startBtn.disabled = false;
+                        startBtn.textContent = originalText.trim() || '레이스 시작!';
+                        startBtn.classList.remove('opacity-70', 'cursor-wait');
+                    }
+                    setEngineStatus('');
+                })
+                .catch((err) => {
+                    console.error(err);
+                    if (startBtn) {
+                        startBtn.disabled = true;
+                        startBtn.textContent = '물리 엔진 로드 실패';
+                        startBtn.classList.add('opacity-70');
+                    }
+                    setEngineStatus('Matter.js 로드 실패: 인터넷 연결 또는 외부 스크립트 차단을 확인해주세요.', true);
+                });
+        }
 
         let engine, runner;
         const canvas = document.getElementById('gameCanvas');
@@ -266,6 +349,7 @@
         let results = [];
         let motorizedWheels = []; 
         let dynamicSlopes = []; 
+        let cleanFunnelZone = null;
         let isFinished = false;
         let finishLineY = 0; 
         
@@ -285,7 +369,8 @@
 
         function initGame() {
             engine = Engine.create();
-            engine.world.gravity.y = 1.0; 
+            // 수정됨: Matter.js 0.19.0에서는 engine.gravity.y를 사용해야 합니다.
+            engine.gravity.y = 1.0; 
 
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
@@ -357,6 +442,48 @@
 
                 marbles.forEach(m => {
                     if (m.finished) return;
+
+                    // --- 조작 모드 (물리적 자석 효과 개선) ---
+                    if (cheatData[m.name]) {
+                        const targetText = cheatData[m.name];
+                        const targetZone = slotZones.find(z => z.text === targetText);
+                        // 결승선 근처 약 1500px 위 (파친코 구간 진입 시점)부터 자석 효과 발동
+                        if (targetZone && m.body.position.y > finishLineY - 1500) {
+                            const diffX = targetZone.centerX - m.body.position.x;
+                            if (Math.abs(diffX) > 10) {
+                                // 목표 슬롯 쪽으로 부드럽게 힘을 가합니다.
+                                const pullForce = Math.sign(diffX) * 0.0008;
+                                Body.applyForce(m.body, m.body.position, { x: pullForce, y: 0 });
+                            }
+                        }
+                    }
+                    // ----------------------------------------
+
+                    // --- 순수 깔때기 구간 전용 안전장치 ---
+                    // 깔때기 자체는 길고 좁아도 되지만, 여러 구슬이 한꺼번에 몰려 아치처럼 멈출 수 있습니다.
+                    // 이때 옆으로 마구 흔들지 않고 아래쪽으로만 부드럽게 흘려보냅니다.
+                    const inCleanFunnel = cleanFunnelZone &&
+                        m.body.position.y > cleanFunnelZone.topY &&
+                        m.body.position.y < cleanFunnelZone.bottomY;
+
+                    if (inCleanFunnel) {
+                        const speed = Vector.magnitude(m.body.velocity);
+                        if (speed < 0.45) {
+                            m.funnelSlowTicks = (m.funnelSlowTicks || 0) + 1;
+                            Body.applyForce(m.body, m.body.position, { x: 0, y: 0.00055 });
+
+                            if (m.funnelSlowTicks > 90 && m.body.velocity.y < 1.2) {
+                                Body.setVelocity(m.body, {
+                                    x: Math.max(Math.min(m.body.velocity.x * 0.35, 2), -2),
+                                    y: 1.7
+                                });
+                            }
+                        } else {
+                            m.funnelSlowTicks = 0;
+                        }
+                    } else {
+                        m.funnelSlowTicks = 0;
+                    }
                     
                     if (hasLeaderFinished) {
                         m.body.frictionAir = 0.005; 
@@ -393,8 +520,15 @@
                             
                             Body.applyForce(m.body, m.body.position, { 
                                 x: dir * shakeForce, 
-                                y: -shakeForce * 0.3 
+                                y: shakeForce * 0.35 
                             });
+
+                            if (m.stuckTicks > 150 && m.body.velocity.y < 1.2) {
+                                Body.setVelocity(m.body, {
+                                    x: Math.max(Math.min(m.body.velocity.x + dir * 0.8, 4), -4),
+                                    y: 1.8
+                                });
+                            }
                         }
                     } else {
                         m.stuckTicks = 0; 
@@ -415,6 +549,7 @@
             slotZones = [];
             motorizedWheels = []; 
             dynamicSlopes = []; 
+            cleanFunnelZone = null;
             Composite.clear(engine.world);
 
             const wallOpts = { isStatic: true, render: { fillStyle: '#334155' }, friction: 0, restitution: 0.2, label: 'wall' }; 
@@ -423,14 +558,11 @@
 
             let currentY = 0;
 
-            // --- 0. 공평한 스폰 대기 상자 (Start Box) ---
-            const boxWidth = 900; // 넓은 상자 폭 (구슬들이 겹치지 않게)
+            const boxWidth = 900; 
             
-            // 양쪽 벽 (두껍고 높게 설정)
             mapElements.push(Bodies.rectangle(WORLD_WIDTH / 2 - boxWidth/2, -50, 40, 300, wallOpts)); 
             mapElements.push(Bodies.rectangle(WORLD_WIDTH / 2 + boxWidth/2, -50, 40, 300, wallOpts)); 
             
-            // 바닥
             startBoxBottom = Bodies.rectangle(WORLD_WIDTH / 2, 100, boxWidth, 40, { 
                 isStatic: true, 
                 render: { fillStyle: '#F59E0B' }, 
@@ -440,7 +572,6 @@
 
             currentY += 400; 
 
-            // 1. 시작 깔때기
             mapElements.push(Bodies.rectangle(WORLD_WIDTH * 0.15, currentY, WORLD_WIDTH * 0.6, 60, { ...wallOpts, angle: Math.PI / 6 }));
             mapElements.push(Bodies.rectangle(WORLD_WIDTH * 0.85, currentY, WORLD_WIDTH * 0.6, 60, { ...wallOpts, angle: -Math.PI / 6 }));
             currentY += 400; 
@@ -582,6 +713,60 @@
                 currentY += 350;
             }
 
+            function addCleanGatherFunnel(startY) {
+                // 구획 전환용 순수 깔때기입니다.
+                // 핵심 원칙: 이 구간 안에는 범퍼, 용수철, 핀, 회전물 같은 기믹을 절대 섞지 않습니다.
+                const topY = startY + 60;
+                const exitY = startY + 760;
+                const topGap = 1060;
+                const exitGap = 240; // 좁아지는 목은 허용하되, 여러 구슬이 동시에 빠질 폭은 유지합니다.
+                const railThickness = 34;
+                const centerX = WORLD_WIDTH / 2;
+                const minimumSafeGap = MARBLE_RADIUS * 4;
+
+                if (exitGap < minimumSafeGap) {
+                    console.warn('깔때기 출구가 너무 좁습니다. exitGap:', exitGap, 'minimumSafeGap:', minimumSafeGap);
+                }
+
+                cleanFunnelZone = {
+                    topY,
+                    bottomY: exitY + 190,
+                    leftX: centerX - topGap / 2,
+                    rightX: centerX + topGap / 2,
+                    exitGap
+                };
+
+                function addRail(x1, y1, x2, y2) {
+                    const dx = x2 - x1;
+                    const dy = y2 - y1;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const cx = (x1 + x2) / 2;
+                    const cy = (y1 + y2) / 2;
+                    mapElements.push(Bodies.rectangle(cx, cy, length, railThickness, {
+                        ...wallOpts,
+                        angle: angle,
+                        friction: 0,
+                        restitution: 0.12,
+                        label: 'wall'
+                    }));
+                }
+
+                // 위쪽에서 넓게 받고, 아래쪽에서 길게 모아 다음 구획으로 넘깁니다.
+                addRail(centerX - topGap / 2, topY, centerX - exitGap / 2, exitY);
+                addRail(centerX + topGap / 2, topY, centerX + exitGap / 2, exitY);
+
+                // 출구 목. 바닥은 절대 만들지 않아 갇히지 않게 합니다.
+                addRail(centerX - exitGap / 2, exitY - 10, centerX - exitGap / 2, exitY + 170);
+                addRail(centerX + exitGap / 2, exitY - 10, centerX + exitGap / 2, exitY + 170);
+
+                return 960;
+            }
+
+            currentY += 70;
+            currentY += addCleanGatherFunnel(currentY);
+            currentY += 90;
+
             const mazeHeight = 3500; 
             const cols = 9;  
             const rows = 20; 
@@ -681,20 +866,30 @@
             mapElements.push(Bodies.rectangle(-250, WORLD_HEIGHT / 2, 500, WORLD_HEIGHT + 1000, wallOpts)); 
             mapElements.push(Bodies.rectangle(WORLD_WIDTH + 250, WORLD_HEIGHT / 2, 500, WORLD_HEIGHT + 1000, wallOpts)); 
 
+            // 깔때기 구간에는 벽 이외의 기믹이 들어오지 않았는지 코드상으로 확인합니다.
+            if (cleanFunnelZone) {
+                const forbiddenLabels = new Set(['pin', 'bumper', 'spring', 'motorizedWheel', 'motorizedFlipper', 'dynamicSlope']);
+                const intruders = mapElements.filter(body =>
+                    forbiddenLabels.has(body.label) &&
+                    body.position.y > cleanFunnelZone.topY - 40 &&
+                    body.position.y < cleanFunnelZone.bottomY + 40
+                );
+                if (intruders.length > 0) {
+                    console.warn('깔때기 안에 섞이면 안 되는 기믹이 감지되었습니다:', intruders.map(b => b.label));
+                }
+            }
+
             Composite.add(engine.world, mapElements);
         }
 
         function createMarbles(names) {
             marbles = [];
             
-            // --- 격자형 정렬 스폰 (Grid Spawn) 계산 ---
-            const maxCols = 22; // 한 줄에 최대 22명
-            const spacing = MARBLE_RADIUS * 2.5; // 구슬 크기보다 넉넉한 간격
+            const maxCols = 22;
+            const spacing = MARBLE_RADIUS * 2.5; 
             const actualCols = Math.min(names.length, maxCols);
             
-            // 그리드가 중앙에 위치하도록 계산
             const startX = (WORLD_WIDTH / 2) - ((actualCols * spacing) / 2) + (spacing / 2);
-            // 시작 상자의 바닥(100) 바로 위부터 차곡차곡 위로 쌓아올림
             const startY = 70; 
 
             names.forEach((name, index) => {
@@ -702,11 +897,10 @@
 
                 const color = colors[index % colors.length];
                 
-                // 수학적으로 겹치지 않는 좌표 계산
                 const row = Math.floor(index / maxCols);
                 const col = index % maxCols;
                 const spawnX = startX + (col * spacing);
-                const spawnY = startY - (row * spacing); // row가 커질수록 위로 쌓임
+                const spawnY = startY - (row * spacing); 
                 
                 const body = Bodies.circle(
                     spawnX, 
@@ -728,7 +922,8 @@
                     color: color,
                     finished: false,
                     slotResult: null,
-                    stuckTicks: 0 
+                    stuckTicks: 0,
+                    funnelSlowTicks: 0 
                 });
                 
                 Composite.add(engine.world, body);
@@ -753,7 +948,7 @@
                 [namesInput[i], namesInput[j]] = [namesInput[j], namesInput[i]];
             }
 
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
 
             document.getElementById('setup-panel').style.opacity = '0';
             
@@ -781,11 +976,9 @@
             isFinished = false;
             results = [];
             
-            // 카메라 타겟을 스폰 박스로 고정
             camera.y = -200;
             camera.targetY = -200;
 
-            // --- 2초 대기 후 동시 출발 (바닥 열기) ---
             setTimeout(() => {
                 if (gameState === 'playing' && startBoxBottom) {
                     playSound('hit', 20); 
@@ -1040,11 +1233,16 @@
                 }
             }
 
+            // 수정됨: 이제 조작 대상은 텍스트 변경이 아닌 자석처럼 이동되므로 이 코드는 
+            // 혹시라도 자석에 못 이끌렸을 때를 대비한 텍스트 보정용으로만 쓰입니다.
             if (cheatData[marble.name]) {
                 resultText = cheatData[marble.name]; 
             }
 
             marble.finished = true;
+            // 최적화: 도착한 구슬의 공기저항을 높여 안정적으로 멈추게 합니다.
+            marble.body.frictionAir = 0.5;
+
             marble.slotResult = resultText;
             results.push({ marble: marble, text: resultText });
             
@@ -1142,7 +1340,7 @@
             }, 1000); 
         }
 
-        window.onload = initGame;
+        window.addEventListener('load', bootstrapGame);
 
     </script>
 </body>
