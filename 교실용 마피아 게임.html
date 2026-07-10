@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>교실용 마피아 게임</title>
+  <style>
+    :root {
+      --bg: #101827;
+      --panel: rgba(255,255,255,.09);
+      --panel2: rgba(255,255,255,.14);
+      --line: rgba(255,255,255,.18);
+      --text: #f8fbff;
+      --muted: #bfcede;
+      --accent: #7dd3fc;
+      --good: #34d399;
+      --bad: #fb7185;
+      --warn: #fbbf24;
+      --radius: 22px;
+      --shadow: 0 18px 55px rgba(0,0,0,.30);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(125,211,252,.24), transparent 30rem),
+        radial-gradient(circle at 90% 0%, rgba(192,132,252,.23), transparent 30rem),
+        linear-gradient(135deg, #0b1220, #111827);
+      transition: background .45s ease;
+    }
+
+    body.phase-night {
+      --accent: #a78bfa;
+      --panel: rgba(17, 24, 39, .72);
+      --panel2: rgba(76, 29, 149, .38);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(147,197,253,.22), transparent 22rem),
+        radial-gradient(circle at 82% 16%, rgba(167,139,250,.33), transparent 26rem),
+        linear-gradient(160deg, #030712, #111827 45%, #1e1b4b);
+    }
+
+    body.phase-day {
+      --accent: #f59e0b;
+      --panel: rgba(255, 255, 255, .18);
+      --panel2: rgba(251, 191, 36, .25);
+      --text: #fffaf0;
+      --muted: #fff1c7;
+      background:
+        radial-gradient(circle at 18% 5%, rgba(254,243,199,.62), transparent 22rem),
+        radial-gradient(circle at 82% 12%, rgba(251,146,60,.38), transparent 25rem),
+        linear-gradient(145deg, #0f172a, #92400e 50%, #f59e0b);
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 11px 15px;
+      cursor: pointer;
+      transition: transform .12s ease, background .12s ease;
+      user-select: none;
+    }
+
+    button:hover { transform: translateY(-1px); background: rgba(255,255,255,.2); }
+    button:active { transform: translateY(0); }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    button.primary {
+      border-color: transparent;
+      background: linear-gradient(135deg, #0284c7, #7c3aed);
+      box-shadow: 0 10px 24px rgba(2,132,199,.22);
+    }
+
+    button.good { border-color: transparent; background: linear-gradient(135deg, #059669, #10b981); }
+    button.bad { border-color: transparent; background: linear-gradient(135deg, #e11d48, #fb7185); }
+    button.warn { border-color: transparent; background: linear-gradient(135deg, #b45309, #f59e0b); }
+    button.ghost { background: transparent; }
+    button.small { padding: 8px 11px; border-radius: 12px; font-size: 14px; }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,.36);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 12px 13px;
+      outline: none;
+    }
+
+    select option { color: #111827; background: white; }
+
+    textarea {
+      min-height: 230px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+
+    .app {
+      width: min(1120px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 18px 0 34px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      margin: 0 -14px 18px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.09);
+      backdrop-filter: blur(18px);
+      background: rgba(8,13,24,.68);
+    }
+
+    .topbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      font-size: 25px;
+      background: linear-gradient(135deg, #0284c7, #7c3aed);
+      box-shadow: 0 10px 22px rgba(124,58,237,.25);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(20px, 2.3vw, 30px);
+      letter-spacing: -0.04em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand p {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .phase-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      padding: 8px 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 99px;
+      background: var(--accent);
+      box-shadow: 0 0 15px var(--accent);
+    }
+
+    .grid { display: grid; gap: 16px; }
+    .grid.two { grid-template-columns: 1.1fr .9fr; }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .panel h2, .panel h3 {
+      margin: 0 0 12px;
+      letter-spacing: -0.035em;
+    }
+
+    .panel h2 { font-size: 25px; }
+    .panel h3 { font-size: 18px; }
+
+    .hint {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .soft { color: var(--muted); }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field-grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .mini-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .mini-stat {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(0,0,0,.14);
+      min-height: 74px;
+    }
+
+    .mini-stat b {
+      display: block;
+      font-size: 25px;
+      letter-spacing: -0.04em;
+    }
+
+    .mini-stat span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .role-row {
+      display: grid;
+      grid-template-columns: 1.3fr .8fr .8fr .8fr auto;
+      gap: 8px;
+      align-items: end;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(0,0,0,.13);
+      margin-top: 10px;
+    }
+
+    .role-row.custom {
+      grid-template-columns: .6fr 1.1fr .8fr .7fr 1.4fr auto;
+    }
+
+    .role-fixed {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(0,0,0,.13);
+      margin-bottom: 10px;
+    }
+
+    .role-fixed-title {
+      font-weight: 900;
+      font-size: 18px;
+      margin-bottom: 7px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+      gap: 10px;
+    }
+
+    .student-card {
+      position: relative;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.09);
+      min-height: 96px;
+      overflow: hidden;
+    }
+
+    .student-card.dead {
+      opacity: .45;
+      filter: grayscale(.3);
+    }
+
+    .student-card .name {
+      font-weight: 950;
+      font-size: 18px;
+      word-break: keep-all;
+    }
+
+    .student-card .meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .student-card .badge {
+      position: absolute;
+      top: 9px;
+      right: 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: rgba(0,0,0,.16);
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .student-card button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 9px;
+      border-radius: 13px;
+    }
+
+    .role-chip {
+      display: inline-block;
+      margin-top: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: rgba(0,0,0,.18);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .team-mafia { color: #fda4af; }
+    .team-village { color: #93c5fd; }
+    .team-solo { color: #fdba74; }
+
+    .hero {
+      min-height: 330px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 28px;
+    }
+
+    .hero h2 {
+      margin: 0 0 14px;
+      font-size: clamp(38px, 6vw, 76px);
+      line-height: 1;
+      letter-spacing: -0.07em;
+    }
+
+    .hero p {
+      max-width: 680px;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: clamp(16px, 2vw, 22px);
+      line-height: 1.55;
+    }
+
+    .notice {
+      border: 1px solid rgba(251,191,36,.45);
+      background: rgba(251,191,36,.14);
+      border-radius: 18px;
+      padding: 13px 14px;
+      color: #fff7d6;
+      line-height: 1.55;
+    }
+
+    .notice.good {
+      border-color: rgba(52,211,153,.42);
+      background: rgba(52,211,153,.14);
+      color: #e5fff4;
+    }
+
+    .notice.bad {
+      border-color: rgba(251,113,133,.45);
+      background: rgba(251,113,133,.14);
+      color: #ffe4eb;
+    }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(0,0,0,.11);
+      padding: 12px 14px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 850;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+    }
+
+    th {
+      padding: 0 10px;
+      text-align: left;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 10px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.08);
+    }
+
+    td:first-child {
+      border-left: 1px solid var(--line);
+      border-radius: 14px 0 0 14px;
+      font-weight: 850;
+    }
+
+    td:last-child {
+      border-right: 1px solid var(--line);
+      border-radius: 0 14px 14px 0;
+    }
+
+    .timer {
+      display: grid;
+      place-items: center;
+      gap: 12px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(0,0,0,.17);
+    }
+
+    .timer .time {
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(44px, 7vw, 82px);
+      font-weight: 1000;
+      letter-spacing: -0.06em;
+    }
+
+    .log {
+      max-height: 280px;
+      overflow: auto;
+      margin-top: 10px;
+    }
+
+    .log-item {
+      border-left: 3px solid var(--accent);
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      border-radius: 0 14px 14px 0;
+      background: rgba(255,255,255,.07);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(2,6,23,.82);
+      backdrop-filter: blur(9px);
+    }
+
+    .modal.show { display: flex; }
+
+    .modal-card {
+      width: min(620px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      padding: 25px;
+      text-align: center;
+      background:
+        radial-gradient(circle at top left, rgba(125,211,252,.22), transparent 24rem),
+        linear-gradient(135deg, rgba(15,23,42,.98), rgba(30,41,59,.98));
+      box-shadow: 0 30px 90px rgba(0,0,0,.55);
+    }
+
+    .modal-card h2 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 5vw, 52px);
+      letter-spacing: -0.06em;
+    }
+
+    .role-reveal {
+      margin: 18px auto;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(255,255,255,.08);
+    }
+
+    .role-reveal .emoji {
+      display: block;
+      font-size: 58px;
+      margin-bottom: 5px;
+    }
+
+    .role-reveal .role-name {
+      font-size: clamp(34px, 7vw, 68px);
+      line-height: 1;
+      font-weight: 1000;
+      letter-spacing: -0.07em;
+    }
+
+    .hidden-panel { display: none; }
+    .hidden-panel.open { display: block; }
+
+    .screen-flash {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .25s ease;
+    }
+
+    .screen-flash.good { background: rgba(52,211,153,.20); }
+    .screen-flash.bad { background: rgba(251,113,133,.20); }
+    .screen-flash.show { opacity: 1; }
+
+    @media (max-width: 900px) {
+      header { position: relative; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .top-actions { justify-content: flex-start; }
+      .grid.two, .grid.three, .field-grid, .field-grid.three, .mini-stats {
+        grid-template-columns: 1fr;
+      }
+      .role-row, .role-row.custom {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="screen-flash" id="flash"></div>
+
+  <div class="app">
+    <header>
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo" id="phaseLogo">🎲</div>
+          <div>
+            <h1 id="appTitle">교실용 마피아 게임</h1>
+            <p id="subTitle">교사 컴퓨터 한 대로 진행</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <span class="phase-pill"><span class="dot"></span><span id="phaseLabel">준비 중</span></span>
+          <button class="small primary" onclick="openRestartModal()">다시 시작</button>
+          <button class="small ghost" onclick="toggleFullscreen()">전체화면</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="app"></main>
+  </div>
+
+  <div class="modal" id="roleModal">
+    <div class="modal-card">
+      <h2 id="modalStudent">학생 이름</h2>
+      <p class="soft">주변 친구에게 보이지 않게 조용히 확인합니다.</p>
+      <div class="role-reveal">
+        <span class="emoji" id="modalEmoji">🙂</span>
+        <div class="role-name" id="modalRole">시민</div>
+      </div>
+      <p id="modalDesc" class="soft">토론과 투표로 마피아를 찾아내세요.</p>
+      <p class="soft">자동 숨김까지 <b id="hideCount">3</b>초</p>
+      <button class="primary" onclick="hideRoleModal()">역할 숨기기</button>
+    </div>
+  </div>
+
+  <div class="modal" id="restartModal">
+    <div class="modal-card">
+      <h2>다시 시작</h2>
+      <p class="soft">수업 중 바로 쓸 수 있게 세 가지 방식으로 준비했습니다.</p>
+      <div class="grid" style="margin-top:16px;">
+        <button class="primary" onclick="backToSetup()">설정 화면으로 돌아가기</button>
+        <button class="good" onclick="restartSameSettings()">같은 설정으로 새 역할 배정</button>
+        <button class="bad" onclick="fullReset()">완전 초기화</button>
+        <button class="ghost" onclick="closeRestartModal()">닫기</button>
+      </div>
+      <p class="hint">설정 화면으로 돌아가면 학생 명단, 직업 설정, 타이머 설정은 유지됩니다.</p>
+    </div>
+  </div>
+
+  <script>
+    "use strict";
+
+    const STORAGE_KEY = "classroom_mafia_teacher_mode_v3";
+    const SESSION_KEY = "classroom_mafia_teacher_unlocked_v3";
+
+    const memoryStorage = { local: {}, session: {} };
+
+    function getSafeStorage(type) {
+      try {
+        const storage = type === "local" ? window.localStorage : window.sessionStorage;
+        const testKey = "__storage_test__";
+        storage.setItem(testKey, "1");
+        storage.removeItem(testKey);
+        return storage;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function safeStorageGet(type, key) {
+      const storage = getSafeStorage(type);
+      return storage ? storage.getItem(key) : (memoryStorage[type][key] ?? null);
+    }
+
+    function safeStorageSet(type, key, value) {
+      const storage = getSafeStorage(type);
+      if (storage) storage.setItem(key, value);
+      else memoryStorage[type][key] = String(value);
+    }
+
+    function safeStorageRemove(type, key) {
+      const storage = getSafeStorage(type);
+      if (storage) storage.removeItem(key);
+      else delete memoryStorage[type][key];
+    }
+
+    const BASE_ROLES = {
+      mafia: {
+        id: "mafia",
+        name: "마피아",
+        emoji: "🕶️",
+        team: "mafia",
+        fixed: true,
+        desc: "밤마다 한 명을 지목합니다. 마피아 수가 마을 편 수 이상이 되면 승리합니다."
+      },
+      police: {
+        id: "police",
+        name: "경찰",
+        emoji: "👮",
+        team: "village",
+        fixed: true,
+        desc: "밤마다 한 명을 조사해 마피아 팀인지 아닌지 확인합니다."
+      },
+      citizen: {
+        id: "citizen",
+        name: "시민",
+        emoji: "🙂",
+        team: "village",
+        fixed: true,
+        desc: "토론과 투표로 마피아를 찾아내는 마을 편입니다."
+      }
+    };
+
+    const DEFAULT_NAMES = [
+      "가온", "나래", "다온", "라온", "마루", "바다", "사랑", "서우",
+      "시온", "아린", "유준", "이현", "지온", "하은", "현빈", "효식"
+    ];
+
+    let state = loadState() || makeInitialState();
+    normalizeState();
+
+    let hideTimer = null;
+    let hideRemain = 0;
+    let timerInterval = null;
+    let timerData = { seconds: 0, remain: 0, running: false };
+
+    function makeInitialState() {
+      return {
+        version: 3,
+        phase: "setup",
+        round: 1,
+        createdAt: new Date().toISOString(),
+        setup: {
+          title: "교실용 마피아 게임",
+          password: "1234",
+          revealSeconds: 4,
+          discussionSeconds: 180,
+          voteSeconds: 90,
+          revealEliminatedRole: true,
+          tieRule: "revote",
+          allowSelfVote: false,
+          enableSound: true
+        },
+        baseCounts: {
+          mafia: 3,
+          police: 1
+        },
+        customRoles: [],
+        rawNames: DEFAULT_NAMES.join("\n"),
+        students: [],
+        night: {
+          attackTargetId: "",
+          policeTargetId: "",
+          policeResult: "",
+          summary: "",
+          memo: ""
+        },
+        votes: {},
+        lastTally: null,
+        winner: null,
+        journal: [{ at: nowText(), text: "새 게임 준비를 시작했습니다." }]
+      };
+    }
+
+    function normalizeState() {
+      if (!state || state.version !== 3) {
+        state = makeInitialState();
+      }
+      state.baseCounts ||= { mafia: 3, police: 1 };
+      state.baseCounts.mafia = Number(state.baseCounts.mafia || 1);
+      state.baseCounts.police = Number(state.baseCounts.police || 0);
+      state.customRoles ||= [];
+      state.customRoles = state.customRoles.map(r => ({
+        id: r.id || uid(),
+        name: r.name || "새 직업",
+        emoji: r.emoji || "⭐",
+        team: ["village", "mafia", "solo"].includes(r.team) ? r.team : "village",
+        count: Math.max(0, Number(r.count || 0)),
+        desc: r.desc || "교사가 직접 만든 역할입니다."
+      }));
+      state.journal ||= [{ at: nowText(), text: "게임 기록을 시작했습니다." }];
+      state.students ||= [];
+      state.votes ||= {};
+      state.night ||= { attackTargetId: "", policeTargetId: "", policeResult: "", summary: "", memo: "" };
+    }
+
+    function saveState() {
+      safeStorageSet("local", STORAGE_KEY, JSON.stringify(state));
+      updateHeader();
+    }
+
+    function loadState() {
+      try {
+        const raw = safeStorageGet("local", STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || parsed.version !== 3) return null;
+        return parsed;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function nowText() {
+      const d = new Date();
+      return d.toLocaleString("ko-KR", {
+        month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+      });
+    }
+
+    function uid() {
+      return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function parseNames(raw) {
+      return raw.split(/\n|,/).map(s => s.trim()).filter(Boolean);
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function log(text) {
+      state.journal.unshift({ at: nowText(), text });
+      saveState();
+    }
+
+    function allRoleDefs() {
+      const custom = {};
+      for (const r of state.customRoles) custom[r.id] = r;
+      return { ...BASE_ROLES, ...custom };
+    }
+
+    function roleDef(roleId) {
+      return allRoleDefs()[roleId] || BASE_ROLES.citizen;
+    }
+
+    function teamText(team) {
+      return { mafia: "마피아 팀", village: "마을 팀", solo: "개인/특수" }[team] || "마을 팀";
+    }
+
+    function teamClass(team) {
+      return team === "mafia" ? "team-mafia" : team === "solo" ? "team-solo" : "team-village";
+    }
+
+    function getAlive() {
+      return state.students.filter(s => s.alive);
+    }
+
+    function getDead() {
+      return state.students.filter(s => !s.alive);
+    }
+
+    function byId(id) {
+      return state.students.find(s => s.id === id);
+    }
+
+    function displayName(id) {
+      const s = byId(id);
+      return s ? s.name : "선택 안 함";
+    }
+
+    function roleCountTotal() {
+      return Number(state.baseCounts.mafia || 0) +
+        Number(state.baseCounts.police || 0) +
+        state.customRoles.reduce((sum, r) => sum + Number(r.count || 0), 0);
+    }
+
+    function citizenCount() {
+      return Math.max(0, parseNames(state.rawNames).length - roleCountTotal());
+    }
+
+    function isTeacherUnlocked() {
+      return safeStorageGet("session", SESSION_KEY) === "yes";
+    }
+
+    function unlockTeacher(callback) {
+      if (isTeacherUnlocked()) {
+        callback();
+        return;
+      }
+      const input = prompt("교사 비밀번호를 입력하세요. 기본값은 1234입니다.");
+      if (input === null) return;
+      if (input === state.setup.password) {
+        safeStorageSet("session", SESSION_KEY, "yes");
+        callback();
+      } else {
+        alert("비밀번호가 맞지 않습니다.");
+        flash("bad");
+      }
+    }
+
+    function phaseText(phase) {
+      return {
+        setup: "준비 중",
+        reveal: "역할 확인",
+        night: "밤",
+        day: "낮",
+        vote: "투표",
+        ended: "게임 종료"
+      }[phase] || phase;
+    }
+
+    function updateHeader() {
+      document.getElementById("appTitle").textContent = state.setup.title || "교실용 마피아 게임";
+      document.getElementById("phaseLabel").textContent = phaseText(state.phase);
+      document.getElementById("phaseLogo").textContent =
+        state.phase === "night" ? "🌙" :
+        state.phase === "day" ? "☀️" :
+        state.phase === "vote" ? "🗳️" :
+        state.phase === "ended" ? "🏁" : "🎲";
+
+      const alive = getAlive().length;
+      const total = state.students.length || parseNames(state.rawNames).length || 0;
+      document.getElementById("subTitle").textContent =
+        state.phase === "setup"
+          ? `학생 ${total}명 · 기본 직업: 마피아 / 경찰 / 시민`
+          : `${state.round}라운드 · 생존 ${alive}/${state.students.length}명`;
+
+      document.body.classList.remove("phase-night", "phase-day");
+      if (state.phase === "night") document.body.classList.add("phase-night");
+      if (state.phase === "day") document.body.classList.add("phase-day");
+    }
+
+    function render() {
+      updateHeader();
+      stopTimer(false);
+
+      let html = "";
+      if (state.phase === "setup") html = renderSetup();
+      if (state.phase === "reveal") html = renderReveal();
+      if (state.phase === "night") html = renderNight();
+      if (state.phase === "day") html = renderDay();
+      if (state.phase === "vote") html = renderVote();
+      if (state.phase === "ended") html = renderEnded();
+
+      document.getElementById("app").innerHTML = html;
+      updateSetupSummary();
+    }
+
+    function renderSetup() {
+      const names = parseNames(state.rawNames);
+      const customCount = state.customRoles.reduce((sum, r) => sum + Number(r.count || 0), 0);
+      return `
+        <div class="grid two">
+          <section class="panel">
+            <div class="between">
+              <h2>학생 명단</h2>
+              <div class="row">
+                <button class="small" onclick="fillSampleNames()">샘플</button>
+                <button class="small ghost" onclick="clearNames()">비우기</button>
+              </div>
+            </div>
+            <label>한 줄에 한 명씩 입력하세요. 쉼표로 붙여넣어도 됩니다.</label>
+            <textarea id="rawNames" oninput="updateRawNames(this.value)">${escapeHtml(state.rawNames)}</textarea>
+
+            <div class="mini-stats">
+              <div class="mini-stat"><b id="statTotal">${names.length}</b><span>전체 학생</span></div>
+              <div class="mini-stat"><b id="statMafia">${state.baseCounts.mafia}</b><span>마피아</span></div>
+              <div class="mini-stat"><b id="statCustom">${customCount}</b><span>교사 직업</span></div>
+              <div class="mini-stat"><b id="statCitizen">${citizenCount()}</b><span>자동 시민</span></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="between">
+              <h2>기본 직업</h2>
+              <button class="small primary" onclick="autoRecommend()">인원별 추천</button>
+            </div>
+
+            <div class="role-fixed">
+              <div class="role-fixed-title">🕶️ 마피아</div>
+              <label>인원 수</label>
+              <input type="number" min="1" max="99" value="${state.baseCounts.mafia}" onchange="setBaseCount('mafia', this.value)" />
+              <p class="hint">밤에 한 명을 지목합니다. 최소 1명입니다.</p>
+            </div>
+
+            <div class="role-fixed">
+              <div class="role-fixed-title">👮 경찰</div>
+              <label>인원 수</label>
+              <input type="number" min="0" max="99" value="${state.baseCounts.police}" onchange="setBaseCount('police', this.value)" />
+              <p class="hint">밤에 한 명을 조사합니다. 0명도 가능합니다.</p>
+            </div>
+
+            <div class="role-fixed">
+              <div class="role-fixed-title">🙂 시민</div>
+              <p class="hint">남은 학생은 자동으로 시민이 됩니다. 시민 수: <b id="citizenInline">${citizenCount()}</b>명</p>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel" style="margin-top:16px;">
+          <div class="between">
+            <div>
+              <h2>교사가 만드는 직업</h2>
+              <p class="hint">마피아·경찰·시민 외의 직업은 여기에서 직접 추가하거나 없앨 수 있습니다.</p>
+            </div>
+            <button class="primary" onclick="addCustomRole()">직업 추가</button>
+          </div>
+
+          ${state.customRoles.length ? state.customRoles.map((role, index) => renderCustomRoleRow(role, index)).join("") : `
+            <div class="notice" style="margin-top:12px;">
+              아직 추가한 직업이 없습니다. 기본 직업만으로 바로 시작할 수 있습니다.
+            </div>
+          `}
+        </section>
+
+        <section class="panel" style="margin-top:16px;">
+          <details>
+            <summary>고급 설정</summary>
+            <div class="field-grid three" style="margin-top:14px;">
+              <div>
+                <label>게임 제목</label>
+                <input value="${escapeHtml(state.setup.title)}" oninput="setSetup('title', this.value)" />
+              </div>
+              <div>
+                <label>교사 비밀번호</label>
+                <input value="${escapeHtml(state.setup.password)}" oninput="setSetup('password', this.value)" />
+              </div>
+              <div>
+                <label>역할 자동 숨김 초</label>
+                <input type="number" min="1" max="15" value="${state.setup.revealSeconds}" onchange="setSetup('revealSeconds', this.value)" />
+              </div>
+              <div>
+                <label>토론 시간(초)</label>
+                <input type="number" min="10" max="1800" value="${state.setup.discussionSeconds}" onchange="setSetup('discussionSeconds', this.value)" />
+              </div>
+              <div>
+                <label>투표 시간(초)</label>
+                <input type="number" min="10" max="1800" value="${state.setup.voteSeconds}" onchange="setSetup('voteSeconds', this.value)" />
+              </div>
+              <div>
+                <label>동률 처리</label>
+                <select onchange="setSetup('tieRule', this.value)">
+                  ${option("revote", "재투표", state.setup.tieRule)}
+                  ${option("none", "탈락 없음", state.setup.tieRule)}
+                  ${option("random", "동률 중 무작위", state.setup.tieRule)}
+                </select>
+              </div>
+            </div>
+            <div class="row" style="margin-top:12px;">
+              <label class="row"><input type="checkbox" style="width:auto" ${state.setup.revealEliminatedRole ? "checked" : ""} onchange="setSetup('revealEliminatedRole', this.checked)" /> 탈락자 역할 공개</label>
+              <label class="row"><input type="checkbox" style="width:auto" ${state.setup.allowSelfVote ? "checked" : ""} onchange="setSetup('allowSelfVote', this.checked)" /> 자기 자신 투표 허용</label>
+              <label class="row"><input type="checkbox" style="width:auto" ${state.setup.enableSound ? "checked" : ""} onchange="setSetup('enableSound', this.checked)" /> 효과음</label>
+            </div>
+          </details>
+
+          <div class="row" style="justify-content:flex-end;margin-top:16px;">
+            <button class="primary" onclick="startGame()">역할 배정하고 시작</button>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderCustomRoleRow(role, index) {
+      return `
+        <div class="role-row custom">
+          <div>
+            <label>아이콘</label>
+            <input value="${escapeHtml(role.emoji)}" maxlength="4" onchange="updateCustomRole(${index}, 'emoji', this.value)" />
+          </div>
+          <div>
+            <label>직업 이름</label>
+            <input value="${escapeHtml(role.name)}" onchange="updateCustomRole(${index}, 'name', this.value)" />
+          </div>
+          <div>
+            <label>소속</label>
+            <select onchange="updateCustomRole(${index}, 'team', this.value)">
+              ${option("village", "마을 팀", role.team)}
+              ${option("mafia", "마피아 팀", role.team)}
+              ${option("solo", "개인/특수", role.team)}
+            </select>
+          </div>
+          <div>
+            <label>인원</label>
+            <input type="number" min="0" max="99" value="${role.count}" onchange="updateCustomRole(${index}, 'count', this.value)" />
+          </div>
+          <div>
+            <label>역할 설명</label>
+            <input value="${escapeHtml(role.desc)}" onchange="updateCustomRole(${index}, 'desc', this.value)" />
+          </div>
+          <button class="bad" onclick="removeCustomRole(${index})">삭제</button>
+        </div>
+      `;
+    }
+
+    function option(value, label, current) {
+      return `<option value="${value}" ${value === current ? "selected" : ""}>${label}</option>`;
+    }
+
+    function updateSetupSummary() {
+      const totalEl = document.getElementById("statTotal");
+      if (!totalEl) return;
+      const names = parseNames(state.rawNames);
+      const customCount = state.customRoles.reduce((sum, r) => sum + Number(r.count || 0), 0);
+      totalEl.textContent = names.length;
+      document.getElementById("statMafia").textContent = state.baseCounts.mafia;
+      document.getElementById("statCustom").textContent = customCount;
+      document.getElementById("statCitizen").textContent = Math.max(0, names.length - roleCountTotal());
+      const inline = document.getElementById("citizenInline");
+      if (inline) inline.textContent = Math.max(0, names.length - roleCountTotal());
+      updateHeader();
+    }
+
+    function updateRawNames(value) {
+      state.rawNames = value;
+      saveState();
+      updateSetupSummary();
+    }
+
+    function setSetup(key, value) {
+      if (["revealSeconds", "discussionSeconds", "voteSeconds"].includes(key)) {
+        value = Math.max(1, Number(value || 1));
+      }
+      state.setup[key] = value;
+      saveState();
+      updateHeader();
+    }
+
+    function setBaseCount(key, value) {
+      const min = key === "mafia" ? 1 : 0;
+      state.baseCounts[key] = Math.max(min, Number(value || 0));
+      saveState();
+      render();
+    }
+
+    function fillSampleNames() {
+      state.rawNames = DEFAULT_NAMES.join("\n");
+      saveState();
+      render();
+    }
+
+    function clearNames() {
+      if (!confirm("학생 명단을 비울까요?")) return;
+      state.rawNames = "";
+      saveState();
+      render();
+    }
+
+    function autoRecommend() {
+      const n = parseNames(state.rawNames).length;
+      let mafia = 2;
+      let police = 1;
+      if (n <= 8) mafia = 2;
+      else if (n <= 12) mafia = 2;
+      else if (n <= 17) mafia = 3;
+      else if (n <= 24) mafia = 4;
+      else mafia = 5;
+      state.baseCounts.mafia = mafia;
+      state.baseCounts.police = police;
+      log(`학생 ${n}명 기준으로 기본 직업 수를 추천했습니다.`);
+      saveState();
+      render();
+    }
+
+    function addCustomRole() {
+      state.customRoles.push({
+        id: "custom_" + uid(),
+        name: "새 직업",
+        emoji: "⭐",
+        team: "village",
+        count: 1,
+        desc: "교사가 직접 만든 역할입니다."
+      });
+      log("교사 제작 직업을 추가했습니다.");
+      saveState();
+      render();
+    }
+
+    function updateCustomRole(index, key, value) {
+      const role = state.customRoles[index];
+      if (!role) return;
+      if (key === "count") value = Math.max(0, Number(value || 0));
+      if (key === "team" && !["village", "mafia", "solo"].includes(value)) value = "village";
+      role[key] = value;
+      saveState();
+      updateSetupSummary();
+    }
+
+    function removeCustomRole(index) {
+      const role = state.customRoles[index];
+      if (!role) return;
+      if (!confirm(`'${role.name}' 직업을 삭제할까요?`)) return;
+      state.customRoles.splice(index, 1);
+      log(`교사 제작 직업 '${role.name}'을 삭제했습니다.`);
+      saveState();
+      render();
+    }
+
+    function startGame() {
+      const ok = prepareNewAssignment();
+      if (!ok) return;
+      state.phase = "reveal";
+      state.round = 1;
+      state.night = { attackTargetId: "", policeTargetId: "", policeResult: "", summary: "", memo: "" };
+      state.votes = {};
+      state.lastTally = null;
+      state.winner = null;
+      state.journal = [{ at: nowText(), text: `게임을 시작했습니다. 학생 ${state.students.length}명, 마피아 ${state.baseCounts.mafia}명.` }];
+      safeStorageRemove("session", SESSION_KEY);
+      saveState();
+      flash("good");
+      render();
+    }
+
+    function prepareNewAssignment() {
+      const names = parseNames(state.rawNames);
+      const totalRoles = roleCountTotal();
+
+      if (names.length < 4) {
+        alert("최소 4명 이상 입력해 주세요.");
+        return false;
+      }
+      if (state.baseCounts.mafia < 1) {
+        alert("마피아는 최소 1명이어야 합니다.");
+        return false;
+      }
+      if (totalRoles > names.length) {
+        alert("마피아, 경찰, 교사 제작 직업 수가 학생 수보다 많습니다.");
+        return false;
+      }
+
+      const roleIds = [];
+      for (let i = 0; i < state.baseCounts.mafia; i++) roleIds.push("mafia");
+      for (let i = 0; i < state.baseCounts.police; i++) roleIds.push("police");
+      for (const role of state.customRoles) {
+        for (let i = 0; i < Number(role.count || 0); i++) roleIds.push(role.id);
+      }
+      while (roleIds.length < names.length) roleIds.push("citizen");
+
+      const shuffledRoles = shuffle(roleIds);
+      const shuffledNames = shuffle(names);
+
+      state.students = shuffledNames.map((name, i) => ({
+        id: uid(),
+        name,
+        roleId: shuffledRoles[i],
+        alive: true,
+        checked: false,
+        eliminatedRound: null,
+        eliminatedBy: "",
+        notes: ""
+      }));
+
+      return true;
+    }
+
+    function renderReveal() {
+      const checked = state.students.filter(s => s.checked).length;
+      const allChecked = checked === state.students.length;
+      return `
+        <section class="panel">
+          <div class="between">
+            <div>
+              <h2>역할 확인</h2>
+              <p class="hint">학생이 한 명씩 자기 이름을 눌러 역할만 확인합니다.</p>
+            </div>
+            <button class="primary" ${allChecked ? "" : "disabled"} onclick="goNight()">밤 시작</button>
+          </div>
+          <div class="mini-stats">
+            <div class="mini-stat"><b>${checked}</b><span>확인 완료</span></div>
+            <div class="mini-stat"><b>${state.students.length - checked}</b><span>남은 학생</span></div>
+            <div class="mini-stat"><b>${state.baseCounts.mafia}</b><span>마피아</span></div>
+            <div class="mini-stat"><b>${state.round}</b><span>라운드</span></div>
+          </div>
+        </section>
+
+        <section class="panel" style="margin-top:16px;">
+          <div class="cards">
+            ${state.students.map(s => `
+              <div class="student-card">
+                <span class="badge">${s.checked ? "확인 완료" : "미확인"}</span>
+                <div class="name">${escapeHtml(s.name)}</div>
+                <div class="meta">${s.checked ? "다시 보기는 교사 확인 필요" : "역할을 확인하세요."}</div>
+                <button class="${s.checked ? "warn" : "primary"}" onclick="revealRole('${s.id}')">${s.checked ? "다시 보기" : "역할 보기"}</button>
+              </div>
+            `).join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    function revealRole(id) {
+      const student = byId(id);
+      if (!student) return;
+
+      const show = () => {
+        student.checked = true;
+        saveState();
+
+        const role = roleDef(student.roleId);
+        document.getElementById("modalStudent").textContent = student.name;
+        document.getElementById("modalEmoji").textContent = role.emoji;
+        document.getElementById("modalRole").textContent = role.name;
+        document.getElementById("modalRole").className = "role-name " + teamClass(role.team);
+        document.getElementById("modalDesc").textContent = role.desc;
+        document.getElementById("roleModal").classList.add("show");
+
+        hideRemain = Math.max(1, Number(state.setup.revealSeconds || 4));
+        document.getElementById("hideCount").textContent = hideRemain;
+        clearInterval(hideTimer);
+        hideTimer = setInterval(() => {
+          hideRemain--;
+          document.getElementById("hideCount").textContent = Math.max(0, hideRemain);
+          if (hideRemain <= 0) hideRoleModal();
+        }, 1000);
+
+        sound("good");
+        render();
+      };
+
+      if (student.checked) unlockTeacher(show);
+      else show();
+    }
+
+    function hideRoleModal() {
+      clearInterval(hideTimer);
+      document.getElementById("roleModal").classList.remove("show");
+    }
+
+    function goNight() {
+      state.phase = "night";
+      state.night = { attackTargetId: "", policeTargetId: "", policeResult: "", summary: "", memo: "" };
+      log(`${state.round}라운드 밤이 시작되었습니다.`);
+      saveState();
+      render();
+    }
+
+    function renderNight() {
+      const alive = getAlive();
+      const mafiaAlive = alive.filter(s => roleDef(s.roleId).team === "mafia");
+      const policeAlive = alive.filter(s => s.roleId === "police");
+      return `
+        <section class="panel hero">
+          <div>
+            <h2>🌙 밤입니다</h2>
+            <p>모두 눈을 감아 주세요. 마피아와 경찰 선택은 교사 패널에서 조용히 기록합니다.</p>
+            <div class="row" style="justify-content:center;margin-top:22px;">
+              <button class="primary" onclick="toggleTeacherPanel()">교사 패널</button>
+              <button onclick="showNightScript()">진행 멘트</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel hidden-panel" id="teacherPanel" style="margin-top:16px;">
+          <div class="between">
+            <div>
+              <h2>밤 교사 패널</h2>
+              <p class="hint">학생에게 보이지 않게 사용하세요.</p>
+            </div>
+            <button class="good" onclick="resolveNight()">밤 결과 확정</button>
+          </div>
+
+          <div class="notice">
+            <b>마피아 팀:</b> ${mafiaAlive.length ? mafiaAlive.map(s => escapeHtml(s.name)).join(", ") : "생존 마피아 없음"}
+          </div>
+
+          <div class="field-grid" style="margin-top:14px;">
+            <div>
+              <label>마피아 지목 대상</label>
+              <select onchange="setNight('attackTargetId', this.value)">
+                ${targetOptions(state.night.attackTargetId, alive)}
+              </select>
+            </div>
+            <div>
+              <label>경찰 조사 대상 ${policeAlive.length ? "" : "(생존 경찰 없음)"}</label>
+              <select ${policeAlive.length ? "" : "disabled"} onchange="setNight('policeTargetId', this.value); updatePoliceResultText();">
+                ${targetOptions(state.night.policeTargetId, alive)}
+              </select>
+              <p class="hint" id="policeResultText">${policeResultText()}</p>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;">
+            <label>교사 메모</label>
+            <input value="${escapeHtml(state.night.memo || "")}" oninput="setNight('memo', this.value)" placeholder="교사 제작 직업의 밤 행동, 학생 반응 등을 적어둘 수 있습니다." />
+          </div>
+
+          <details style="margin-top:14px;">
+            <summary>교사 제작 직업 확인</summary>
+            <div class="cards" style="margin-top:12px;">
+              ${alive.filter(s => !["mafia", "police", "citizen"].includes(s.roleId)).map(s => {
+                const role = roleDef(s.roleId);
+                return `
+                  <div class="student-card">
+                    <div class="name">${escapeHtml(s.name)}</div>
+                    <span class="role-chip ${teamClass(role.team)}">${escapeHtml(role.emoji)} ${escapeHtml(role.name)}</span>
+                    <div class="meta">${escapeHtml(role.desc)}</div>
+                  </div>
+                `;
+              }).join("") || `<p class="hint">생존한 교사 제작 직업이 없습니다.</p>`}
+            </div>
+          </details>
+        </section>
+      `;
+    }
+
+    function targetOptions(current, students) {
+      return `
+        <option value="" ${current === "" ? "selected" : ""}>선택 안 함</option>
+        ${students.map(s => `<option value="${s.id}" ${current === s.id ? "selected" : ""}>${escapeHtml(s.name)}</option>`).join("")}
+      `;
+    }
+
+    function setNight(key, value) {
+      state.night[key] = value;
+      saveState();
+    }
+
+    function policeResultText() {
+      const target = byId(state.night.policeTargetId);
+      if (!target) return "조사 대상을 선택하면 결과가 표시됩니다.";
+      const role = roleDef(target.roleId);
+      return role.team === "mafia"
+        ? `${target.name}: 마피아 팀입니다.`
+        : `${target.name}: 마피아 팀이 아닙니다.`;
+    }
+
+    function updatePoliceResultText() {
+      const el = document.getElementById("policeResultText");
+      if (el) el.textContent = policeResultText();
+    }
+
+    function toggleTeacherPanel() {
+      unlockTeacher(() => {
+        const panel = document.getElementById("teacherPanel");
+        if (panel) panel.classList.toggle("open");
+      });
+    }
+
+    function showNightScript() {
+      alert(
+        "밤 진행 멘트\n\n" +
+        "1. 모두 눈을 감아 주세요.\n" +
+        "2. 마피아는 조용히 눈을 떠 주세요. 지목할 친구를 정해 주세요.\n" +
+        "3. 마피아는 눈을 감아 주세요.\n" +
+        "4. 경찰은 눈을 떠 주세요. 조사할 친구를 정해 주세요.\n" +
+        "5. 모두 눈을 떠 주세요."
+      );
+    }
+
+    function resolveNight() {
+      unlockTeacher(() => {
+        const attack = byId(state.night.attackTargetId);
+        const policeTarget = byId(state.night.policeTargetId);
+
+        if (policeTarget && getAlive().some(s => s.roleId === "police")) {
+          state.night.policeResult = policeResultText();
+          log(`경찰 조사 결과: ${state.night.policeResult}`);
+        } else {
+          state.night.policeResult = "";
+        }
+
+        if (!attack) {
+          state.night.summary = "밤이 지났지만 아무도 탈락하지 않았습니다.";
+        } else {
+          attack.alive = false;
+          attack.eliminatedRound = state.round;
+          attack.eliminatedBy = "night";
+          const roleText = state.setup.revealEliminatedRole ? ` (${roleDef(attack.roleId).name})` : "";
+          state.night.summary = `${attack.name}이(가) 밤에 탈락했습니다.${roleText}`;
+        }
+
+        log(`밤 결과: ${state.night.summary}`);
+
+        const win = checkWin();
+        if (win) {
+          state.winner = win;
+          state.phase = "ended";
+          log(`게임 종료: ${win.title}`);
+        } else {
+          state.phase = "day";
+          state.votes = {};
+        }
+
+        saveState();
+        flash("good");
+        render();
+      });
+    }
+
+    function renderDay() {
+      const alive = getAlive();
+      const dead = getDead();
+      return `
+        <section class="panel hero">
+          <div>
+            <h2>☀️ 낮입니다</h2>
+            <p>토론으로 마피아를 찾아보세요. 낮 화면은 밝은 색으로 바뀝니다.</p>
+            <div class="row" style="justify-content:center;margin-top:22px;">
+              <button onclick="pickSpeaker()">발언자 추첨</button>
+              <button class="primary" onclick="goVote()">투표 시작</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" style="margin-top:16px;">
+          <h2>밤 결과</h2>
+          <div class="notice ${state.night.summary.includes("아무도") ? "good" : "bad"}">${escapeHtml(state.night.summary || "결과가 없습니다.")}</div>
+
+          <div class="grid two" style="margin-top:16px;">
+            <div class="timer">
+              <div class="soft">토론 타이머</div>
+              <div class="time" id="timerDisplay">${formatTime(state.setup.discussionSeconds)}</div>
+              <div class="row" style="justify-content:center;">
+                <button class="good" onclick="startTimer(${state.setup.discussionSeconds})">시작</button>
+                <button onclick="pauseTimer()">일시정지</button>
+                <button onclick="resetTimer(${state.setup.discussionSeconds})">초기화</button>
+              </div>
+            </div>
+            <div class="notice">
+              말하기 틀<br>
+              <b>“저는 ○○을 의심합니다. 왜냐하면 ______ 때문입니다.”</b>
+            </div>
+          </div>
+        </section>
+
+        <div class="grid two" style="margin-top:16px;">
+          <section class="panel">
+            <h3>생존자 ${alive.length}명</h3>
+            <div class="cards">
+              ${alive.map(s => renderStudentCard(s, false)).join("")}
+            </div>
+          </section>
+          <section class="panel">
+            <h3>탈락자 ${dead.length}명</h3>
+            ${dead.length ? `<div class="cards">${dead.map(s => renderStudentCard(s, true)).join("")}</div>` : `<p class="hint">아직 탈락자가 없습니다.</p>`}
+          </section>
+        </div>
+      `;
+    }
+
+    function renderStudentCard(s, deadView) {
+      const role = roleDef(s.roleId);
+      const showRole = deadView && state.setup.revealEliminatedRole || isTeacherUnlocked();
+      return `
+        <div class="student-card ${s.alive ? "" : "dead"}">
+          <div class="name">${escapeHtml(s.name)}</div>
+          <div class="meta">${s.alive ? "생존" : `${s.eliminatedRound}라운드 · ${s.eliminatedBy === "night" ? "밤" : "투표"}`}</div>
+          ${showRole ? `<span class="role-chip ${teamClass(role.team)}">${escapeHtml(role.emoji)} ${escapeHtml(role.name)}</span>` : ""}
+        </div>
+      `;
+    }
+
+    function pickSpeaker() {
+      const alive = getAlive();
+      if (!alive.length) return;
+      const s = alive[Math.floor(Math.random() * alive.length)];
+      alert(`이번 발언자는 ${s.name}입니다.`);
+      sound("good");
+    }
+
+    function goVote() {
+      state.phase = "vote";
+      state.votes = {};
+      state.lastTally = null;
+      log(`${state.round}라운드 투표를 시작했습니다.`);
+      saveState();
+      render();
+    }
+
+    function renderVote() {
+      const alive = getAlive();
+      return `
+        <section class="panel">
+          <div class="between">
+            <div>
+              <h2>투표</h2>
+              <p class="hint">교사가 손들기 결과를 입력하거나 학생이 한 명씩 앞으로 나와 선택하게 합니다.</p>
+            </div>
+            <button class="good" onclick="finishVote()">투표 확정</button>
+          </div>
+
+          <div class="timer" style="margin-top:14px;">
+            <div class="soft">투표 타이머</div>
+            <div class="time" id="timerDisplay">${formatTime(state.setup.voteSeconds)}</div>
+            <div class="row" style="justify-content:center;">
+              <button class="good" onclick="startTimer(${state.setup.voteSeconds})">시작</button>
+              <button onclick="pauseTimer()">일시정지</button>
+              <button onclick="resetTimer(${state.setup.voteSeconds})">초기화</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" style="margin-top:16px;">
+          <table>
+            <thead>
+              <tr>
+                <th>투표자</th>
+                <th>투표 대상</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${alive.map(voter => `
+                <tr>
+                  <td>${escapeHtml(voter.name)}</td>
+                  <td>
+                    <select onchange="setVote('${voter.id}', this.value)">
+                      <option value="" ${!state.votes[voter.id] ? "selected" : ""}>기권/미선택</option>
+                      ${alive
+                        .filter(target => state.setup.allowSelfVote || target.id !== voter.id)
+                        .map(target => `<option value="${target.id}" ${state.votes[voter.id] === target.id ? "selected" : ""}>${escapeHtml(target.name)}</option>`)
+                        .join("")}
+                    </select>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </section>
+
+        <section class="panel" style="margin-top:16px;">
+          <h3>중간 집계</h3>
+          <div id="tallyBox">${renderTallyPreview()}</div>
+        </section>
+      `;
+    }
+
+    function setVote(voterId, targetId) {
+      if (targetId) state.votes[voterId] = targetId;
+      else delete state.votes[voterId];
+      saveState();
+      const box = document.getElementById("tallyBox");
+      if (box) box.innerHTML = renderTallyPreview();
+    }
+
+    function tallyVotes() {
+      const tally = {};
+      for (const voter of getAlive()) {
+        const targetId = state.votes[voter.id];
+        if (!targetId) continue;
+        const target = byId(targetId);
+        if (!target || !target.alive) continue;
+        if (!state.setup.allowSelfVote && voter.id === targetId) continue;
+        tally[targetId] = (tally[targetId] || 0) + 1;
+      }
+      return tally;
+    }
+
+    function renderTallyPreview() {
+      const tally = tallyVotes();
+      const entries = Object.entries(tally).sort((a, b) => b[1] - a[1]);
+      if (!entries.length) return `<p class="hint">아직 입력된 표가 없습니다.</p>`;
+      return `
+        <div class="cards">
+          ${entries.map(([id, count]) => `
+            <div class="student-card">
+              <div class="name">${escapeHtml(displayName(id))}</div>
+              <div class="meta">${count}표</div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function finishVote() {
+      unlockTeacher(() => {
+        const tally = tallyVotes();
+        const entries = Object.entries(tally);
+        if (!entries.length) {
+          alert("입력된 표가 없습니다.");
+          return;
+        }
+
+        const max = Math.max(...entries.map(e => e[1]));
+        const topIds = entries.filter(e => e[1] === max).map(e => e[0]);
+        const summary = entries
+          .sort((a, b) => b[1] - a[1])
+          .map(([id, count]) => `${displayName(id)} ${count}표`)
+          .join(", ");
+
+        if (topIds.length > 1) {
+          if (state.setup.tieRule === "revote") {
+            alert(`동률입니다. 재투표를 진행하세요.\n\n${summary}`);
+            log(`투표 동률: ${summary}`);
+            state.votes = {};
+            saveState();
+            render();
+            return;
+          }
+          if (state.setup.tieRule === "none") {
+            alert("동률로 탈락자가 없습니다. 다음 밤으로 넘어갑니다.");
+            log(`투표 동률로 탈락자 없음: ${summary}`);
+            state.round++;
+            state.phase = "night";
+            state.votes = {};
+            saveState();
+            render();
+            return;
+          }
+        }
+
+        const eliminatedId = topIds.length > 1
+          ? topIds[Math.floor(Math.random() * topIds.length)]
+          : topIds[0];
+
+        const eliminated = byId(eliminatedId);
+        if (!eliminated) return;
+
+        eliminated.alive = false;
+        eliminated.eliminatedRound = state.round;
+        eliminated.eliminatedBy = "vote";
+
+        const roleText = state.setup.revealEliminatedRole ? ` (${roleDef(eliminated.roleId).name})` : "";
+        log(`투표 결과: ${eliminated.name} 탈락${roleText}. ${summary}`);
+
+        const win = checkWin();
+        if (win) {
+          state.winner = win;
+          state.phase = "ended";
+          log(`게임 종료: ${win.title}`);
+        } else {
+          state.round++;
+          state.phase = "night";
+          state.votes = {};
+          state.night = { attackTargetId: "", policeTargetId: "", policeResult: "", summary: "", memo: "" };
+        }
+
+        saveState();
+        flash("good");
+        render();
+      });
+    }
+
+    function checkWin() {
+      const alive = getAlive();
+      const mafia = alive.filter(s => roleDef(s.roleId).team === "mafia");
+      const nonMafia = alive.filter(s => roleDef(s.roleId).team !== "mafia");
+
+      if (mafia.length === 0) {
+        return { team: "village", title: "마을 팀 승리!", desc: "마피아 팀을 모두 찾아냈습니다." };
+      }
+
+      if (mafia.length >= nonMafia.length) {
+        return { team: "mafia", title: "마피아 팀 승리!", desc: "마피아 팀 수가 마을 편 수 이상이 되었습니다." };
+      }
+
+      return null;
+    }
+
+    function renderEnded() {
+      const winner = state.winner || { title: "게임 종료", desc: "게임이 종료되었습니다.", team: "village" };
+      return `
+        <section class="panel hero">
+          <div>
+            <h2>${winner.team === "mafia" ? "🕶️" : "🏁"} ${escapeHtml(winner.title)}</h2>
+            <p>${escapeHtml(winner.desc)}</p>
+            <div class="row" style="justify-content:center;margin-top:22px;">
+              <button class="primary" onclick="restartSameSettings()">같은 설정으로 새 배정</button>
+              <button onclick="backToSetup()">설정 화면으로</button>
+              <button onclick="exportLog()">기록 복사</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" style="margin-top:16px;">
+          <h2>최종 역할</h2>
+          <div class="cards">
+            ${state.students.map(s => {
+              const role = roleDef(s.roleId);
+              return `
+                <div class="student-card ${s.alive ? "" : "dead"}">
+                  <span class="badge">${s.alive ? "생존" : "탈락"}</span>
+                  <div class="name">${escapeHtml(s.name)}</div>
+                  <span class="role-chip ${teamClass(role.team)}">${escapeHtml(role.emoji)} ${escapeHtml(role.name)}</span>
+                  <div class="meta">${teamText(role.team)}</div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </section>
+
+        ${renderLogPanel()}
+      `;
+    }
+
+    function renderLogPanel() {
+      return `
+        <section class="panel" style="margin-top:16px;">
+          <details>
+            <summary>게임 기록 보기</summary>
+            <div class="log">
+              ${state.journal.map(item => `<div class="log-item"><b>${escapeHtml(item.at)}</b> · ${escapeHtml(item.text)}</div>`).join("")}
+            </div>
+          </details>
+        </section>
+      `;
+    }
+
+    function openRestartModal() {
+      document.getElementById("restartModal").classList.add("show");
+    }
+
+    function closeRestartModal() {
+      document.getElementById("restartModal").classList.remove("show");
+    }
+
+    function backToSetup() {
+      const work = () => {
+        closeRestartModal();
+        state.phase = "setup";
+        state.round = 1;
+        state.students = [];
+        state.votes = {};
+        state.winner = null;
+        state.night = { attackTargetId: "", policeTargetId: "", policeResult: "", summary: "", memo: "" };
+        log("설정 화면으로 돌아왔습니다.");
+        saveState();
+        render();
+      };
+      if (state.phase === "setup") work();
+      else unlockTeacher(work);
+    }
+
+    function restartSameSettings() {
+      const work = () => {
+        const ok = prepareNewAssignment();
+        if (!ok) return;
+        closeRestartModal();
+        state.phase = "reveal";
+        state.round = 1;
+        state.night = { attackTargetId: "", policeTargetId: "", policeResult: "", summary: "", memo: "" };
+        state.votes = {};
+        state.lastTally = null;
+        state.winner = null;
+        state.journal = [{ at: nowText(), text: "같은 설정으로 새 역할을 배정했습니다." }];
+        safeStorageRemove("session", SESSION_KEY);
+        saveState();
+        flash("good");
+        render();
+      };
+      if (state.phase === "setup") work();
+      else unlockTeacher(work);
+    }
+
+    function fullReset() {
+      const work = () => {
+        const phrase = prompt("완전 초기화하려면 '초기화'라고 입력하세요.");
+        if (phrase !== "초기화") return;
+        closeRestartModal();
+        state = makeInitialState();
+        safeStorageRemove("session", SESSION_KEY);
+        saveState();
+        flash("bad");
+        render();
+      };
+      if (state.phase === "setup") work();
+      else unlockTeacher(work);
+    }
+
+    function exportLog() {
+      const lines = [];
+      lines.push(`[${state.setup.title}] 게임 기록`);
+      lines.push(`단계: ${phaseText(state.phase)} / 라운드: ${state.round}`);
+      lines.push("");
+      lines.push("학생과 역할");
+      for (const s of state.students) {
+        const role = roleDef(s.roleId);
+        lines.push(`- ${s.name}: ${role.emoji} ${role.name} / ${teamText(role.team)} / ${s.alive ? "생존" : `${s.eliminatedRound}라운드 탈락`}`);
+      }
+      lines.push("");
+      lines.push("진행 기록");
+      for (const item of [...state.journal].reverse()) {
+        lines.push(`- ${item.at}: ${item.text}`);
+      }
+
+      const text = lines.join("\n");
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => alert("게임 기록을 복사했습니다.")).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const area = document.createElement("textarea");
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand("copy");
+      document.body.removeChild(area);
+      alert("게임 기록을 복사했습니다.");
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    }
+
+    function flash(type) {
+      const el = document.getElementById("flash");
+      el.className = `screen-flash ${type} show`;
+      setTimeout(() => el.className = `screen-flash ${type}`, 220);
+    }
+
+    function sound(type) {
+      if (!state.setup.enableSound) return;
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = type === "bad" ? 180 : 660;
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.2);
+      } catch (e) {}
+    }
+
+    function formatTime(seconds) {
+      const s = Math.max(0, Number(seconds || 0));
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+    }
+
+    function startTimer(seconds) {
+      timerData = { seconds, remain: seconds, running: true };
+      updateTimerDisplay();
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (!timerData.running) return;
+        timerData.remain--;
+        updateTimerDisplay();
+        if (timerData.remain <= 0) {
+          clearInterval(timerInterval);
+          timerData.running = false;
+          sound("bad");
+          flash("bad");
+          alert("시간이 끝났습니다.");
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      timerData.running = false;
+      clearInterval(timerInterval);
+      updateTimerDisplay();
+    }
+
+    function resetTimer(seconds) {
+      clearInterval(timerInterval);
+      timerData = { seconds, remain: seconds, running: false };
+      updateTimerDisplay();
+    }
+
+    function stopTimer(clearDisplay = true) {
+      clearInterval(timerInterval);
+      timerData.running = false;
+      if (clearDisplay) updateTimerDisplay();
+    }
+
+    function updateTimerDisplay() {
+      const el = document.getElementById("timerDisplay");
+      if (el) el.textContent = formatTime(timerData.remain || timerData.seconds || 0);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        hideRoleModal();
+        closeRestartModal();
+      }
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "t") {
+        e.preventDefault();
+        const panel = document.getElementById("teacherPanel");
+        if (panel) toggleTeacherPanel();
+      }
+    });
+
+    window.addEventListener("beforeunload", () => saveState());
+
+    render();
+  </script>
+</body>
+</html>
