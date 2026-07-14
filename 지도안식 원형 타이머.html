@@ -1,596 +1,931 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>수업 시간표 타이머</title>
-    <!-- Tailwind CSS for rapid styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Phosphor Icons for UI icons -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap');
-        body {
-            font-family: 'Pretendard', sans-serif;
-            background-color: #f3f4f6;
-        }
-        /* Custom scrollbar for the settings panel */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; 
-        }
-        
-        input[type="color"] {
-            -webkit-appearance: none;
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            overflow: hidden;
-            cursor: pointer;
-            padding: 0;
-        }
-        input[type="color"]::-webkit-color-swatch-wrapper {
-            padding: 0;
-        }
-        input[type="color"]::-webkit-color-swatch {
-            border: none;
-            border-radius: 50%;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eef3ff">
+<title>지도안식 원형 수업 타이머</title>
+<style>
+:root{
+  --ink:#172033;
+  --muted:#68758d;
+  --line:#dfe5ef;
+  --panel:#ffffff;
+  --bg:#eef3fb;
+  --primary:#4f46e5;
+  --primary-dark:#3730a3;
+  --warning:#f59e0b;
+  --danger:#e5484d;
+  --success:#0f9f6e;
+  --shadow:0 18px 50px rgba(37,48,78,.14);
+  --soft-shadow:0 8px 24px rgba(37,48,78,.11);
+}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden}
+body{
+  color:var(--ink);
+  background:var(--bg);
+  font-family:system-ui,-apple-system,"Pretendard","Noto Sans KR","Malgun Gothic",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button,input{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.45;transform:none!important}
+.hidden{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+#app{
+  width:100%;height:100%;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 400px;
+  transition:grid-template-columns .25s ease;
+}
+#app.panel-collapsed{grid-template-columns:minmax(0,1fr) 0}
+
+.main{
+  min-width:0;min-height:0;position:relative;
+  display:flex;flex-direction:column;
+  padding:max(14px,env(safe-area-inset-top)) 18px max(16px,env(safe-area-inset-bottom));
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 16% 18%,rgba(99,102,241,.14),transparent 27%),
+    radial-gradient(circle at 88% 80%,rgba(14,165,233,.11),transparent 30%),
+    linear-gradient(145deg,#f8faff 0%,#edf3fb 100%);
+}
+.topbar{
+  display:grid;grid-template-columns:1fr auto;align-items:center;gap:14px;
+  min-height:54px;z-index:5;
+}
+.title-input{
+  min-width:0;width:min(740px,100%);
+  border:0;border-bottom:2px solid transparent;background:transparent;
+  color:#26324b;font-size:clamp(24px,3.2vw,48px);font-weight:900;letter-spacing:-.045em;
+  padding:4px 8px;text-align:left;outline:0;
+}
+.title-input:hover{border-bottom-color:#cbd5e1}
+.title-input:focus{border-bottom-color:#6366f1;background:rgba(255,255,255,.45);border-radius:10px 10px 0 0}
+.toolbar{display:flex;align-items:center;gap:8px}
+.tool-btn{
+  width:44px;height:44px;border:1px solid rgba(209,217,230,.95);border-radius:14px;
+  display:grid;place-items:center;background:rgba(255,255,255,.88);color:#4b5872;
+  box-shadow:0 5px 16px rgba(40,52,82,.09);font-size:20px;font-weight:900;
+  transition:transform .15s,background .15s,border-color .15s;
+}
+.tool-btn:hover{transform:translateY(-2px);background:#fff;border-color:#b9c4d7}
+.tool-btn:focus-visible,.control-btn:focus-visible,.small-btn:focus-visible,.preset-btn:focus-visible,.icon-mini:focus-visible,.primary-btn:focus-visible,.secondary-btn:focus-visible{outline:4px solid rgba(99,102,241,.22);outline-offset:2px}
+.tool-btn.active{color:#fff;background:var(--primary);border-color:var(--primary)}
+.tool-btn.wide{width:auto;padding:0 13px;gap:7px;display:flex;font-size:14px}
+
+.stage{
+  flex:1;min-height:0;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  padding:8px 68px 6px;
+}
+.timer-shell{
+  position:relative;flex:0 0 auto;
+  width:480px;height:480px;
+  display:grid;place-items:center;
+  filter:drop-shadow(0 20px 27px rgba(30,45,78,.16));
+  transition:width .18s ease,height .18s ease;
+}
+#timerCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.timer-center{
+  position:relative;z-index:2;width:62%;height:62%;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:8%;background:linear-gradient(145deg,#fff,#f8faff);
+  box-shadow:inset 0 0 0 1px rgba(222,229,240,.92),inset 0 8px 24px rgba(76,91,126,.06),0 5px 16px rgba(48,62,96,.10);
+}
+.run-state{
+  display:inline-flex;align-items:center;gap:6px;margin-bottom:5px;padding:5px 10px;border-radius:999px;
+  color:#64748b;background:#edf1f6;font-size:clamp(10px,1.2vw,13px);font-weight:900;letter-spacing:.03em;
+}
+.run-state::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.run-state.running{color:#0a8b64;background:#e4f8f0}
+.run-state.running::before{animation:pulse 1.2s infinite}
+.run-state.paused{color:#b46a00;background:#fff4d8}
+.run-state.finished{color:#4338ca;background:#e9e8ff}
+@keyframes pulse{50%{opacity:.3;transform:scale(.72)}}
+.phase-name{
+  width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  color:#526078;font-size:clamp(13px,1.8vw,20px);font-weight:850;margin-bottom:2px;
+}
+.main-time{
+  font-size:clamp(44px,8vw,84px);line-height:.98;color:#172033;font-weight:950;
+  letter-spacing:-.06em;font-variant-numeric:tabular-nums;
+}
+.phase-time{margin-top:8px;color:#6c7890;font-size:clamp(11px,1.4vw,15px);font-weight:800}
+.phase-time strong{color:#3f4d68;font-variant-numeric:tabular-nums}
+.next-event{
+  width:100%;margin-top:6px;color:#98a2b5;font-size:clamp(10px,1.2vw,13px);font-weight:700;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.progress-text{margin-top:8px;color:#8a95a8;font-size:11px;font-weight:800}
+
+.zoom-controls{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);z-index:4;
+  display:flex;flex-direction:column;gap:8px;
+}
+.transition-banner{
+  position:absolute;left:50%;top:20px;z-index:8;transform:translate(-50%,-18px) scale(.96);
+  max-width:min(560px,80%);padding:12px 20px;border-radius:999px;color:#fff;background:#25324d;
+  box-shadow:0 12px 30px rgba(26,38,66,.25);font-weight:900;text-align:center;
+  opacity:0;pointer-events:none;transition:.28s ease;
+}
+.transition-banner.show{opacity:1;transform:translate(-50%,0) scale(1)}
+
+.controls-wrap{display:flex;flex-direction:column;align-items:center;gap:9px;z-index:4;padding-bottom:4px}
+.controls{display:flex;align-items:center;justify-content:center;gap:12px}
+.control-btn{
+  width:62px;height:62px;border:0;border-radius:50%;display:grid;place-items:center;
+  background:#fff;color:#536079;box-shadow:var(--soft-shadow);font-size:24px;font-weight:900;
+  transition:transform .15s,filter .15s;
+}
+.control-btn:hover{transform:translateY(-3px);filter:brightness(.98)}
+.control-btn.main-action{width:78px;height:78px;color:#fff;background:linear-gradient(180deg,#655cf0,#4438c8);box-shadow:0 10px 0 #312795,0 18px 30px rgba(68,56,200,.25);font-size:31px}
+.control-btn.main-action:active{transform:translateY(6px);box-shadow:0 4px 0 #312795,0 12px 23px rgba(68,56,200,.22)}
+.control-btn.skip{color:#fff;background:#16a579}
+.control-btn.reset{color:#657188;background:#e6ebf3}
+.quick-actions{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+.small-btn{
+  border:1px solid #d5ddea;border-radius:999px;padding:8px 13px;background:rgba(255,255,255,.8);
+  color:#58657c;font-size:13px;font-weight:850;box-shadow:0 4px 12px rgba(40,55,88,.06);
+}
+.small-btn:hover{background:#fff;border-color:#b9c4d7}
+.keyboard-help{color:#9aa4b5;font-size:11px;font-weight:650}
+
+.settings{
+  min-width:0;min-height:0;overflow:hidden;
+  display:flex;flex-direction:column;background:var(--panel);border-left:1px solid #dce3ee;
+  box-shadow:-12px 0 30px rgba(36,48,78,.06);opacity:1;transform:translateX(0);
+  transition:opacity .2s,transform .25s;
+}
+.panel-collapsed .settings{opacity:0;transform:translateX(20px);pointer-events:none}
+.settings-head{padding:20px 20px 14px;border-bottom:1px solid #e8edf4;background:linear-gradient(180deg,#fbfcff,#f6f8fc)}
+.settings-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.settings-title h2{margin:0;font-size:21px;letter-spacing:-.03em}
+.settings-title p{margin:4px 0 0;color:#8490a5;font-size:12px;font-weight:700}
+.summary-box{
+  margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;
+}
+.summary-item{padding:10px 12px;border:1px solid #e1e7f0;border-radius:13px;background:#fff}
+.summary-item span{display:block;color:#8c97aa;font-size:11px;font-weight:800}
+.summary-item strong{display:block;margin-top:2px;color:#35425c;font-size:18px}
+.presets{display:flex;gap:7px;padding:12px 15px;border-bottom:1px solid #edf1f6;overflow-x:auto}
+.preset-btn{flex:0 0 auto;border:1px solid #d9e0eb;border-radius:11px;padding:8px 11px;background:#fff;color:#59667e;font-size:12px;font-weight:850}
+.preset-btn:hover{color:var(--primary);border-color:#aaa7f8;background:#f5f4ff}
+.preset-btn.danger:hover{color:#c52f36;border-color:#f1a4a8;background:#fff3f3}
+.event-list{flex:1;min-height:0;overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
+.event-card{
+  display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:start;
+  padding:11px;border:1px solid #dee5ef;border-radius:16px;background:#fff;box-shadow:0 4px 12px rgba(41,54,84,.05);
+  transition:border-color .15s,box-shadow .15s,opacity .15s;
+}
+.event-card.current{border-color:#7772ee;box-shadow:0 0 0 3px rgba(99,102,241,.12),0 7px 18px rgba(41,54,84,.08)}
+.color-wrap{position:relative;width:34px;height:34px}
+.color-preview{width:34px;height:34px;border-radius:11px;border:2px solid #fff;box-shadow:0 0 0 1px #d7dfea,0 4px 9px rgba(24,35,62,.12);pointer-events:none}
+.color-input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.event-fields{min-width:0}
+.name-input{width:100%;border:0;border-bottom:1px solid transparent;outline:0;padding:2px 2px 5px;color:#34415a;background:transparent;font-weight:850}
+.name-input:hover{border-bottom-color:#d5ddea}.name-input:focus{border-bottom-color:#6366f1}
+.duration-row{display:flex;align-items:center;gap:5px;margin-top:6px;color:#7b879c;font-size:11px;font-weight:800}
+.duration-input{width:52px;border:1px solid #dae1ec;border-radius:8px;padding:5px 4px;background:#f7f9fc;color:#45526a;text-align:center;outline:0;font-variant-numeric:tabular-nums}
+.duration-input:focus{border-color:#7772ee;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+.card-actions{display:grid;grid-template-columns:repeat(2,30px);gap:4px}
+.icon-mini{width:30px;height:30px;border:0;border-radius:9px;background:#f1f4f8;color:#778399;font-weight:950;display:grid;place-items:center}
+.icon-mini:hover{background:#e7ebf2;color:#45526a}.icon-mini.delete:hover{background:#fff0f1;color:#d8373f}
+.icon-mini:disabled{opacity:.25}
+.add-area{padding:13px 15px max(14px,env(safe-area-inset-bottom));border-top:1px solid #e8edf4;background:#fbfcfe}
+.add-btn{width:100%;border:2px dashed #a9a7f4;border-radius:14px;padding:12px;background:#f8f7ff;color:#4b45c9;font-weight:900}
+.add-btn:hover{background:#efeeff}
+.add-note{text-align:center;color:#98a2b3;font-size:11px;margin:8px 0 0;font-weight:650}
+
+.toast{
+  position:fixed;left:50%;bottom:24px;z-index:80;transform:translate(-50%,18px);
+  max-width:min(520px,calc(100vw - 30px));padding:11px 16px;border-radius:13px;background:#27334c;color:#fff;
+  font-size:13px;font-weight:800;box-shadow:0 12px 30px rgba(21,31,54,.25);opacity:0;pointer-events:none;transition:.24s ease;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.modal-backdrop{
+  position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:rgba(23,32,51,.48);backdrop-filter:blur(5px);
+}
+.modal{
+  width:min(430px,100%);border-radius:24px;padding:26px;background:#fff;box-shadow:0 24px 70px rgba(15,24,45,.30);text-align:center;
+}
+.modal-icon{width:70px;height:70px;margin:0 auto 12px;border-radius:22px;display:grid;place-items:center;background:#eeedff;color:#4f46e5;font-size:34px;font-weight:950}
+.modal h3{margin:0;color:#26324a;font-size:27px;letter-spacing:-.035em}.modal p{margin:9px auto 0;color:#778399;line-height:1.55;font-size:14px;max-width:340px}
+.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:22px}
+.primary-btn,.secondary-btn{border:0;border-radius:14px;padding:12px 16px;font-weight:900}
+.primary-btn{background:var(--primary);color:#fff}.primary-btn.danger{background:var(--danger)}
+.secondary-btn{background:#ebeff5;color:#56637a}
+.finish-modal .modal-icon{background:#fff1c9;color:#d67800;animation:finishPop .65s ease}
+@keyframes finishPop{0%{transform:scale(.4) rotate(-15deg)}70%{transform:scale(1.1) rotate(4deg)}100%{transform:scale(1)}}
+.finish-time{font-size:44px;font-weight:950;color:#4438c8;letter-spacing:-.05em;margin-top:12px;font-variant-numeric:tabular-nums}
+
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#c7d0df;border-radius:999px}
+
+@media(max-width:900px){
+  #app{grid-template-columns:minmax(0,1fr) 350px}
+  .stage{padding-left:40px;padding-right:58px}
+  .title-input{font-size:32px}
+}
+@media(max-width:720px){
+  #app{display:grid;grid-template-columns:1fr;grid-template-rows:minmax(0,58%) minmax(0,42%)}
+  #app.panel-collapsed{grid-template-columns:1fr;grid-template-rows:1fr 0}
+  .main{padding:10px 10px 8px}
+  .settings{border-left:0;border-top:1px solid #dce3ee;box-shadow:0 -12px 28px rgba(36,48,78,.06)}
+  .panel-collapsed .settings{transform:translateY(20px)}
+  .topbar{min-height:42px}.title-input{font-size:24px}.tool-btn{width:38px;height:38px;border-radius:12px;font-size:17px}.tool-btn.wide span{display:none}.tool-btn.wide{width:38px;padding:0;justify-content:center}
+  .stage{padding:0 46px 0 4px}.zoom-controls{right:3px}.zoom-controls .tool-btn{width:36px;height:36px}
+  .timer-center{width:61%;height:61%}.main-time{font-size:clamp(38px,12vw,66px)}
+  .controls-wrap{gap:5px}.controls{gap:8px}.control-btn{width:50px;height:50px;font-size:20px}.control-btn.main-action{width:64px;height:64px;font-size:26px;box-shadow:0 7px 0 #312795,0 12px 20px rgba(68,56,200,.23)}
+  .small-btn{padding:6px 10px;font-size:11px}.keyboard-help{display:none}
+  .settings-head{padding:13px 14px 9px}.settings-title h2{font-size:18px}.settings-title p{display:none}.summary-box{margin-top:8px}.summary-item{padding:7px 10px}.summary-item strong{font-size:15px}
+  .presets{padding:8px 10px}.event-list{padding:9px}.event-card{padding:9px}.add-area{padding:9px 10px max(10px,env(safe-area-inset-bottom))}
+}
+@media(max-height:650px) and (min-width:721px){
+  .main{padding-top:8px;padding-bottom:8px}.topbar{min-height:42px}.title-input{font-size:29px}.control-btn{width:52px;height:52px}.control-btn.main-action{width:64px;height:64px}.controls-wrap{gap:4px}.keyboard-help{display:none}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
 </head>
-<body class="h-screen w-screen flex flex-col md:flex-row overflow-hidden text-slate-800">
-
-    <!-- 메인 타이머 영역 (왼쪽) -->
-    <main class="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative h-[60vh] md:h-full">
-        <!-- 패널 토글 버튼 -->
-        <button id="btnTogglePanel" class="absolute top-4 right-4 md:top-6 md:right-6 bg-white text-slate-600 p-2 md:px-4 md:py-2 rounded-lg shadow-md hover:bg-slate-50 transition-colors z-20 flex items-center gap-2 font-medium border border-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-300">
-            <i class="ph-bold ph-sidebar-simple text-xl md:text-2xl"></i>
-            <span class="hidden md:inline">설정 접기/펴기</span>
+<body>
+<div id="app">
+  <main class="main" id="mainArea">
+    <div class="topbar">
+      <label class="sr-only" for="mainTitle">수업 제목</label>
+      <input id="mainTitle" class="title-input" type="text" maxlength="60" value="수학 연산 시간" placeholder="수업 제목을 입력하세요" autocomplete="off">
+      <div class="toolbar">
+        <button id="btnSound" class="tool-btn active" type="button" aria-label="알림음 켜기 또는 끄기" title="알림음">♪</button>
+        <button id="btnFullscreen" class="tool-btn" type="button" aria-label="전체 화면 전환" title="전체 화면">⛶</button>
+        <button id="btnTogglePanel" class="tool-btn wide" type="button" aria-label="설정 패널 접기 또는 펴기" title="설정 패널">
+          <b>☰</b><span>시간표 설정</span>
         </button>
+      </div>
+    </div>
 
-        <!-- 확대/축소 컨트롤 버튼 -->
-        <div class="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-20">
-            <button id="btnZoomIn" class="w-10 h-10 md:w-12 md:h-12 bg-white text-slate-600 rounded-full shadow-md border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-300" title="확대">
-                <i class="ph-bold ph-magnifying-glass-plus text-xl md:text-2xl"></i>
-            </button>
-            <button id="btnZoomReset" class="w-10 h-10 md:w-12 md:h-12 bg-white text-slate-600 rounded-full shadow-md border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-300" title="원래 크기">
-                <i class="ph-bold ph-corners-out text-xl md:text-2xl"></i>
-            </button>
-            <button id="btnZoomOut" class="w-10 h-10 md:w-12 md:h-12 bg-white text-slate-600 rounded-full shadow-md border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-300" title="축소">
-                <i class="ph-bold ph-magnifying-glass-minus text-xl md:text-2xl"></i>
-            </button>
+    <section id="stage" class="stage" aria-label="수업 타이머">
+      <div id="transitionBanner" class="transition-banner" aria-live="assertive"></div>
+      <div id="timerShell" class="timer-shell">
+        <canvas id="timerCanvas" aria-hidden="true"></canvas>
+        <div class="timer-center">
+          <div id="runState" class="run-state">준비</div>
+          <div id="currentEventLabel" class="phase-name">대기 중</div>
+          <div id="timeDisplay" class="main-time" aria-live="polite">40:00</div>
+          <div class="phase-time">현재 활동 <strong id="phaseTimeDisplay">05:00</strong></div>
+          <div id="nextEventLabel" class="next-event">다음: 활동 1</div>
+          <div id="progressText" class="progress-text">0% 진행 · 총 40분</div>
         </div>
+      </div>
 
-        <!-- 편집 가능한 메인 타이틀 -->
-        <input type="text" id="mainTitle" value="수학 연산 시간" 
-            class="text-3xl md:text-5xl font-bold text-center bg-transparent border-b-2 border-transparent hover:border-slate-300 focus:border-indigo-500 focus:outline-none transition-colors mb-8 w-full max-w-2xl text-slate-700"
-            placeholder="주제를 입력하세요 (예: 수학 연산 시간)">
+      <div class="zoom-controls" aria-label="타이머 크기 조절">
+        <button id="btnZoomIn" class="tool-btn" type="button" aria-label="타이머 확대" title="확대">＋</button>
+        <button id="btnZoomReset" class="tool-btn" type="button" aria-label="타이머 크기 원래대로" title="원래 크기">◎</button>
+        <button id="btnZoomOut" class="tool-btn" type="button" aria-label="타이머 축소" title="축소">－</button>
+      </div>
+    </section>
 
-        <!-- 캔버스 및 중앙 정보 (크기 조절 래퍼 추가) -->
-        <div id="timerScaleWrapper" class="transition-transform duration-200 origin-center" style="transform: scale(1);">
-            <div class="relative w-64 h-64 md:w-96 md:h-96 flex items-center justify-center">
-                <canvas id="timerCanvas" class="absolute inset-0 w-full h-full drop-shadow-xl"></canvas>
-                
-                <!-- 중앙 텍스트 정보 -->
-                <div class="z-10 flex flex-col items-center justify-center text-center bg-white w-48 h-48 md:w-72 md:h-72 rounded-full shadow-inner">
-                    <span id="currentEventLabel" class="text-sm md:text-lg text-slate-500 font-semibold mb-1 px-4 truncate w-full">대기 중</span>
-                    <span id="timeDisplay" class="text-4xl md:text-6xl font-bold text-slate-800 tabular-nums tracking-tight">00:00</span>
-                    <span id="totalTimeLabel" class="text-xs md:text-sm text-slate-400 mt-2">총 0분</span>
-                </div>
-            </div>
+    <div class="controls-wrap">
+      <div class="controls">
+        <button id="btnReset" class="control-btn reset" type="button" aria-label="처음부터 다시 시작" title="초기화">↺</button>
+        <button id="btnStartPause" class="control-btn main-action" type="button" aria-label="타이머 시작" title="시작 또는 일시정지">▶</button>
+        <button id="btnSkip" class="control-btn skip" type="button" aria-label="다음 활동으로 넘기기" title="다음 활동">≫</button>
+      </div>
+      <div class="quick-actions">
+        <button id="btnMinusMinute" class="small-btn" type="button">현재 활동 −1분</button>
+        <button id="btnPlusMinute" class="small-btn" type="button">현재 활동 ＋1분</button>
+      </div>
+      <div class="keyboard-help">Space 시작·정지 · N 다음 활동 · R 초기화 · F 전체 화면 · S 설정</div>
+    </div>
+  </main>
+
+  <aside id="settingsPanel" class="settings" aria-label="시간표 설정">
+    <div class="settings-head">
+      <div class="settings-title">
+        <div>
+          <h2>시간표 설정</h2>
+          <p>활동 순서와 시간을 수업 흐름에 맞게 조정하세요.</p>
         </div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-item"><span>총 수업 시간</span><strong id="totalSummary">40분</strong></div>
+        <div class="summary-item"><span>활동 수</span><strong id="countSummary">4개</strong></div>
+      </div>
+    </div>
+    <div class="presets" aria-label="시간표 빠른 설정">
+      <button class="preset-btn" type="button" data-preset="40">40분 기본</button>
+      <button class="preset-btn" type="button" data-preset="45">45분 기본</button>
+      <button class="preset-btn" type="button" data-preset="three">도입·전개·정리</button>
+      <button class="preset-btn danger" type="button" data-preset="clear">모두 비우기</button>
+    </div>
+    <div id="eventList" class="event-list"></div>
+    <div class="add-area">
+      <button id="btnAddEvent" class="add-btn" type="button">＋ 새 활동 추가</button>
+      <p class="add-note">시간이나 순서를 바꾸면 안전하게 일시정지됩니다.</p>
+    </div>
+  </aside>
+</div>
 
-        <!-- 컨트롤 버튼 -->
-        <div class="mt-10 flex gap-4">
-            <button id="btnStart" class="w-16 h-16 md:w-20 md:h-20 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-700 hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-indigo-300">
-                <i class="ph-fill ph-play text-3xl md:text-4xl"></i>
-            </button>
-            <button id="btnPause" class="hidden w-16 h-16 md:w-20 md:h-20 bg-amber-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-amber-600 hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-amber-300">
-                <i class="ph-fill ph-pause text-3xl md:text-4xl"></i>
-            </button>
-            <button id="btnReset" class="w-16 h-16 md:w-20 md:h-20 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center shadow hover:bg-slate-300 hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-slate-100">
-                <i class="ph-bold ph-stop text-2xl md:text-3xl"></i>
-            </button>
-        </div>
-    </main>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-    <!-- 설정 패널 (오른쪽) -->
-    <aside id="settingsPanel" class="w-full md:w-96 bg-white border-l border-slate-200 h-[40vh] md:h-full flex flex-col shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.05)] transition-all duration-300">
-        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-            <h2 class="text-xl font-bold flex items-center gap-2 text-slate-700">
-                <i class="ph-fill ph-list-dashes text-indigo-500"></i> 시간표 설정
-            </h2>
-        </div>
-        
-        <!-- 이벤트 리스트 -->
-        <div id="eventList" class="flex-1 overflow-y-auto p-4 space-y-3">
-            <!-- JavaScript로 아이템들이 렌더링 됩니다. -->
-        </div>
+<div id="confirmBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+  <div class="modal">
+    <div class="modal-icon">?</div>
+    <h3 id="confirmTitle">확인</h3>
+    <p id="confirmMessage"></p>
+    <div class="modal-actions">
+      <button id="btnConfirmCancel" class="secondary-btn" type="button">취소</button>
+      <button id="btnConfirmOk" class="primary-btn" type="button">확인</button>
+    </div>
+  </div>
+</div>
 
-        <!-- 하단 추가 버튼 -->
-        <div class="p-4 border-t border-slate-100 bg-white">
-            <button id="btnAddEvent" class="w-full py-3 border-2 border-dashed border-indigo-300 text-indigo-600 rounded-xl font-semibold hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">
-                <i class="ph-bold ph-plus"></i> 새 활동 추가
-            </button>
-            <p class="text-xs text-center text-slate-400 mt-3 flex items-center justify-center gap-1">
-                <i class="ph-fill ph-info"></i> 타이머 실행 중에도 설정을 변경할 수 있습니다.
-            </p>
-        </div>
-    </aside>
+<div id="finishBackdrop" class="modal-backdrop finish-modal hidden" role="dialog" aria-modal="true" aria-labelledby="finishTitle">
+  <div class="modal">
+    <div class="modal-icon">✓</div>
+    <h3 id="finishTitle">수업 시간이 끝났습니다</h3>
+    <p>모든 활동이 완료되었습니다. 정리하거나 다음 수업을 준비하세요.</p>
+    <div id="finishTime" class="finish-time">40:00</div>
+    <div class="modal-actions">
+      <button id="btnFinishClose" class="secondary-btn" type="button">화면 유지</button>
+      <button id="btnFinishReset" class="primary-btn" type="button">처음부터</button>
+    </div>
+  </div>
+</div>
 
-    <script>
-        // --- 상태 관리 (State) ---
-        const state = {
-            events: [
-                { id: generateId(), name: '도입', duration: 5, color: '#3B82F6' },   // Blue
-                { id: generateId(), name: '활동 1', duration: 15, color: '#10B981' }, // Green
-                { id: generateId(), name: '활동 2', duration: 15, color: '#F59E0B' }, // Yellow/Orange
-                { id: generateId(), name: '정리 시간', duration: 5, color: '#EF4444' }  // Red
-            ],
-            totalSeconds: 0,
-            elapsedSeconds: 0,
-            isRunning: false,
-            timerInterval: null,
-            lastTickTime: null
-        };
+<script>
+(() => {
+'use strict';
 
-        // 추천 색상 팔레트
-        const colorPalette = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#14B8A6'];
+const STORAGE_KEY = 'lessonCircleTimerV2';
+const OLD_STORAGE_KEY = 'classTimerSettings';
+const MAX_EVENTS = 30;
+const MIN_DURATION = 10;
+const MAX_DURATION = 6 * 60 * 60;
+const palette = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4','#14B8A6','#F97316','#64748B'];
 
-        // --- DOM 요소 ---
-        const canvas = document.getElementById('timerCanvas');
-        const ctx = canvas.getContext('2d');
-        const timeDisplay = document.getElementById('timeDisplay');
-        const currentEventLabel = document.getElementById('currentEventLabel');
-        const totalTimeLabel = document.getElementById('totalTimeLabel');
-        const eventListEl = document.getElementById('eventList');
-        const btnStart = document.getElementById('btnStart');
-        const btnPause = document.getElementById('btnPause');
-        const btnReset = document.getElementById('btnReset');
-        const btnAddEvent = document.getElementById('btnAddEvent');
-        const mainTitle = document.getElementById('mainTitle');
+const $ = (selector) => document.querySelector(selector);
+const app = $('#app');
+const stage = $('#stage');
+const timerShell = $('#timerShell');
+const canvas = $('#timerCanvas');
+const ctx = canvas.getContext('2d');
+const mainTitle = $('#mainTitle');
+const eventList = $('#eventList');
+const timeDisplay = $('#timeDisplay');
+const phaseTimeDisplay = $('#phaseTimeDisplay');
+const currentEventLabel = $('#currentEventLabel');
+const nextEventLabel = $('#nextEventLabel');
+const progressText = $('#progressText');
+const runState = $('#runState');
+const totalSummary = $('#totalSummary');
+const countSummary = $('#countSummary');
+const btnStartPause = $('#btnStartPause');
+const btnSkip = $('#btnSkip');
+const btnReset = $('#btnReset');
+const btnMinusMinute = $('#btnMinusMinute');
+const btnPlusMinute = $('#btnPlusMinute');
+const btnSound = $('#btnSound');
+const transitionBanner = $('#transitionBanner');
+const toast = $('#toast');
+const confirmBackdrop = $('#confirmBackdrop');
+const finishBackdrop = $('#finishBackdrop');
 
-        // 새로 추가된 UI 요소들
-        const btnTogglePanel = document.getElementById('btnTogglePanel');
-        const settingsPanel = document.getElementById('settingsPanel');
-        const timerScaleWrapper = document.getElementById('timerScaleWrapper');
-        const btnZoomIn = document.getElementById('btnZoomIn');
-        const btnZoomOut = document.getElementById('btnZoomOut');
-        const btnZoomReset = document.getElementById('btnZoomReset');
-        
-        let currentZoom = 1.0;
-        const ZOOM_STEP = 0.15;
-        const MAX_ZOOM = 2.5;
-        const MIN_ZOOM = 0.5;
+function makeId(){
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') return crypto.randomUUID();
+  return 'ev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,9);
+}
+function defaultEvents(){
+  return [
+    {id:makeId(),name:'도입',durationSec:5*60,color:'#3B82F6'},
+    {id:makeId(),name:'활동 1',durationSec:15*60,color:'#10B981'},
+    {id:makeId(),name:'활동 2',durationSec:15*60,color:'#F59E0B'},
+    {id:makeId(),name:'정리 시간',durationSec:5*60,color:'#EF4444'}
+  ];
+}
+const state = {
+  events:defaultEvents(),
+  elapsed:0,
+  running:false,
+  runStartedAt:0,
+  elapsedAtStart:0,
+  rafId:0,
+  lastPhaseId:null,
+  soundOn:true,
+  panelCollapsed:false,
+  zoom:1,
+  finishShown:false
+};
 
-        // --- 로컬 스토리지 (Local Storage) 저장/불러오기 ---
-        function loadSettings() {
-            const saved = localStorage.getItem('classTimerSettings');
-            if (saved) {
-                try {
-                    const data = JSON.parse(saved);
-                    if (data.events && Array.isArray(data.events) && data.events.length > 0) {
-                        state.events = data.events;
-                    }
-                    if (data.title) {
-                        mainTitle.value = data.title;
-                    }
-                } catch (e) {
-                    console.error("저장된 설정 불러오기 실패", e);
-                }
-            }
-        }
+function clamp(value,min,max){return Math.max(min,Math.min(max,value));}
+function safeName(value,index=0){
+  const text=String(value ?? '').replace(/[\u0000-\u001F\u007F]/g,' ').trim().slice(0,40);
+  return text || `활동 ${index+1}`;
+}
+function safeColor(value,index=0){
+  const color=String(value || '').trim();
+  return /^#[0-9a-fA-F]{6}$/.test(color) ? color : palette[index % palette.length];
+}
+function sanitizeEvents(raw){
+  if(!Array.isArray(raw)) return defaultEvents();
+  const ids=new Set();
+  return raw.slice(0,MAX_EVENTS).map((ev,index)=>{
+    let id=String(ev?.id || makeId());
+    if(ids.has(id)) id=makeId();
+    ids.add(id);
+    let durationSec;
+    if(Number.isFinite(Number(ev?.durationSec))) durationSec=Number(ev.durationSec);
+    else durationSec=Number(ev?.duration || 5)*60;
+    return {
+      id,
+      name:safeName(ev?.name,index),
+      durationSec:clamp(Math.round(durationSec),MIN_DURATION,MAX_DURATION),
+      color:safeColor(ev?.color,index)
+    };
+  });
+}
+function loadSettings(){
+  let parsed=null;
+  try{
+    parsed=JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+  }catch(error){console.warn('설정 불러오기 실패',error);}
+  if(!parsed){
+    try{
+      const old=JSON.parse(localStorage.getItem(OLD_STORAGE_KEY) || 'null');
+      if(old) parsed={title:old.title,events:old.events};
+    }catch(error){console.warn('이전 설정 변환 실패',error);}
+  }
+  if(parsed){
+    state.events=sanitizeEvents(parsed.events);
+    if(typeof parsed.title==='string') mainTitle.value=parsed.title.slice(0,60);
+    state.soundOn=parsed.soundOn !== false;
+    state.panelCollapsed=parsed.panelCollapsed === true;
+    state.zoom=clamp(Number(parsed.zoom)||1,.68,1.28);
+  }
+  app.classList.toggle('panel-collapsed',state.panelCollapsed);
+  updateSoundButton();
+}
+function saveSettings(){
+  const payload={
+    title:mainTitle.value.slice(0,60),events:state.events,
+    soundOn:state.soundOn,panelCollapsed:state.panelCollapsed,zoom:state.zoom
+  };
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(payload));}
+  catch(error){showToast('설정을 저장하지 못했습니다. 브라우저 저장 공간을 확인해 주세요.');}
+}
 
-        function saveSettings() {
-            const data = {
-                title: mainTitle.value,
-                events: state.events
-            };
-            localStorage.setItem('classTimerSettings', JSON.stringify(data));
-        }
+function totalSeconds(){return state.events.reduce((sum,event)=>sum+event.durationSec,0);}
+function getElapsed(now=performance.now()){
+  if(!state.running) return state.elapsed;
+  return state.elapsedAtStart+(now-state.runStartedAt)/1000;
+}
+function setElapsed(seconds){
+  state.elapsed=clamp(Number(seconds)||0,0,totalSeconds());
+  state.elapsedAtStart=state.elapsed;
+  if(state.running) state.runStartedAt=performance.now();
+}
+function formatClock(seconds,useCeil=true){
+  const safe=Math.max(0,useCeil?Math.ceil(seconds):Math.floor(seconds));
+  const hours=Math.floor(safe/3600);
+  const minutes=Math.floor((safe%3600)/60);
+  const secs=safe%60;
+  if(hours>0) return `${hours}:${String(minutes).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+  return `${String(minutes).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+}
+function formatDurationCompact(seconds){
+  const sec=Math.round(seconds);
+  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  if(h) return `${h}시간 ${m}분`;
+  if(s) return `${m}분 ${s}초`;
+  return `${m}분`;
+}
+function phaseAt(elapsed){
+  if(!state.events.length) return null;
+  let start=0;
+  for(let index=0;index<state.events.length;index++){
+    const event=state.events[index];
+    const end=start+event.durationSec;
+    if(elapsed<end || (elapsed===0 && index===0)){
+      return {event,index,start,end,remaining:Math.max(0,end-elapsed)};
+    }
+    start=end;
+  }
+  return null;
+}
 
-        // 제목 변경 시 즉시 저장
-        mainTitle.addEventListener('input', saveSettings);
+function updateDisplay(now=performance.now()){
+  const total=totalSeconds();
+  const elapsed=clamp(getElapsed(now),0,total);
+  const remaining=Math.max(0,total-elapsed);
+  const phase=phaseAt(elapsed);
+  timeDisplay.textContent=formatClock(remaining);
+  totalSummary.textContent=formatDurationCompact(total);
+  countSummary.textContent=`${state.events.length}개`;
+  const percent=total?clamp(elapsed/total*100,0,100):0;
+  progressText.textContent=`${Math.floor(percent)}% 진행 · 총 ${formatDurationCompact(total)}`;
 
-        // --- 유틸리티 함수 ---
-        function generateId() {
-            return Math.random().toString(36).substr(2, 9);
-        }
+  if(!state.events.length || total===0){
+    currentEventLabel.textContent='활동을 추가해 주세요';
+    currentEventLabel.style.color='#526078';
+    phaseTimeDisplay.textContent='00:00';
+    nextEventLabel.textContent='오른쪽 설정에서 수업 흐름을 만드세요';
+    runState.textContent='시간표 없음';
+    runState.className='run-state';
+  }else if(elapsed>=total){
+    currentEventLabel.textContent='모든 활동 완료';
+    currentEventLabel.style.color='#4f46e5';
+    phaseTimeDisplay.textContent='00:00';
+    nextEventLabel.textContent='수업 시간이 종료되었습니다';
+    runState.textContent='종료';
+    runState.className='run-state finished';
+  }else if(phase){
+    currentEventLabel.textContent=phase.event.name;
+    currentEventLabel.style.color=phase.event.color;
+    phaseTimeDisplay.textContent=formatClock(phase.remaining);
+    const next=state.events[phase.index+1];
+    nextEventLabel.textContent=next?`다음: ${next.name}`:'다음: 수업 종료';
+    if(state.running){runState.textContent='진행 중';runState.className='run-state running';}
+    else if(elapsed>0){runState.textContent='일시정지';runState.className='run-state paused';}
+    else{runState.textContent='준비';runState.className='run-state';}
+  }
+  btnStartPause.textContent=state.running?'Ⅱ':'▶';
+  btnStartPause.setAttribute('aria-label',state.running?'타이머 일시정지':'타이머 시작');
+  btnStartPause.disabled=total===0 || elapsed>=total;
+  btnSkip.disabled=!phase || elapsed>=total;
+  btnMinusMinute.disabled=!phase;
+  btnPlusMinute.disabled=!phase;
+  document.title=`${formatClock(remaining)} · ${mainTitle.value || '수업 타이머'}`;
+}
 
-        function formatTime(totalSeconds) {
-            const m = Math.floor(totalSeconds / 60);
-            const s = Math.floor(totalSeconds % 60);
-            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        }
+function hexToRgba(hex,alpha){
+  const clean=safeColor(hex).slice(1);
+  const r=parseInt(clean.slice(0,2),16),g=parseInt(clean.slice(2,4),16),b=parseInt(clean.slice(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function fitCanvas(){
+  const rect=timerShell.getBoundingClientRect();
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  const width=Math.max(1,Math.round(rect.width));
+  const height=Math.max(1,Math.round(rect.height));
+  if(canvas.width!==Math.round(width*dpr) || canvas.height!==Math.round(height*dpr)){
+    canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);
+    canvas.style.width=width+'px';canvas.style.height=height+'px';
+  }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  drawTimer();
+}
+function fitTimerSize(){
+  const rect=stage.getBoundingClientRect();
+  const mobile=innerWidth<=720;
+  const sideReserve=mobile?52:90;
+  const verticalReserve=mobile?8:24;
+  const base=Math.max(180,Math.min(rect.width-sideReserve,rect.height-verticalReserve,640));
+  const size=Math.max(170,Math.min(base*state.zoom,rect.width-sideReserve,rect.height-4));
+  timerShell.style.width=Math.floor(size)+'px';
+  timerShell.style.height=Math.floor(size)+'px';
+  requestAnimationFrame(fitCanvas);
+}
+function drawTimer(){
+  const rect=timerShell.getBoundingClientRect();
+  const width=rect.width,height=rect.height;
+  if(!width||!height)return;
+  ctx.clearRect(0,0,width,height);
+  const cx=width/2,cy=height/2;
+  const radius=Math.min(cx,cy)-Math.max(8,width*.018);
+  const inner=radius*.67;
+  const total=totalSeconds();
+  const elapsed=clamp(getElapsed(),0,total);
+  const phase=phaseAt(elapsed);
 
-        // --- 코어 로직 ---
-        function calculateTotalTime() {
-            const totalMinutes = state.events.reduce((sum, ev) => sum + (ev.duration || 0), 0);
-            state.totalSeconds = totalMinutes * 60;
-            totalTimeLabel.innerText = `총 ${totalMinutes}분 기준`;
-        }
+  ctx.save();
+  ctx.beginPath();ctx.arc(cx,cy,radius,0,Math.PI*2);
+  ctx.fillStyle='#dfe6f0';ctx.fill();
+  ctx.restore();
 
-        function updateDisplay() {
-            const remaining = Math.max(0, state.totalSeconds - state.elapsedSeconds);
-            timeDisplay.innerText = formatTime(remaining);
+  if(!state.events.length || total<=0){
+    ctx.save();
+    ctx.setLineDash([10,9]);ctx.lineWidth=Math.max(10,radius*.085);ctx.strokeStyle='#c7d1df';
+    ctx.beginPath();ctx.arc(cx,cy,(radius+inner)/2,0,Math.PI*2);ctx.stroke();
+    ctx.restore();
+    return;
+  }
 
-            if (state.totalSeconds === 0) {
-                currentEventLabel.innerText = "활동을 추가해주세요";
-                currentEventLabel.className = "text-sm md:text-lg text-slate-500 font-semibold mb-1 px-4 truncate w-full";
-                return;
-            }
+  let angle=-Math.PI/2;
+  let accumulated=0;
+  state.events.forEach((event,index)=>{
+    const fraction=event.durationSec/total;
+    const endAngle=angle+fraction*Math.PI*2;
+    const eventEnd=accumulated+event.durationSec;
+    const isPast=elapsed>=eventEnd;
+    const isCurrent=phase&&phase.index===index;
+    const alpha=isPast?.25:(isCurrent?1:.68);
 
-            if (state.elapsedSeconds >= state.totalSeconds) {
-                currentEventLabel.innerText = "종료되었습니다";
-                currentEventLabel.className = "text-sm md:text-lg text-indigo-600 font-bold mb-1 px-4 truncate w-full";
-                pauseTimer();
-            } else if (state.isRunning) {
-                // 현재 진행중인 이벤트 찾기
-                let accumulatedSec = 0;
-                for (const ev of state.events) {
-                    accumulatedSec += (ev.duration * 60);
-                    if (state.elapsedSeconds < accumulatedSec) {
-                        currentEventLabel.innerText = ev.name || "이름 없음";
-                        currentEventLabel.style.color = ev.color;
-                        break;
-                    }
-                }
-            } else if (state.elapsedSeconds === 0) {
-                currentEventLabel.innerText = "대기 중";
-                currentEventLabel.style.color = "";
-                currentEventLabel.className = "text-sm md:text-lg text-slate-500 font-semibold mb-1 px-4 truncate w-full";
-            } else {
-                currentEventLabel.innerText = "일시 정지됨";
-                currentEventLabel.style.color = "#94a3b8";
-            }
-        }
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,radius,angle,endAngle);ctx.closePath();
+    ctx.fillStyle=hexToRgba(event.color,alpha);ctx.fill();
 
-        // --- 캔버스 그리기 로직 ---
-        function resizeCanvas() {
-            const parent = canvas.parentElement;
-            // 확대/축소(transform)에 영향받지 않는 실제 요소 크기 가져오기
-            const width = parent.clientWidth;
-            const height = parent.clientHeight;
-            
-            // 레티나 디스플레이 지원을 위해 해상도 2배
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = width * dpr;
-            canvas.height = height * dpr;
-            ctx.scale(dpr, dpr);
-            drawTimer();
-        }
+    if(isCurrent){
+      ctx.save();
+      ctx.beginPath();ctx.arc(cx,cy,radius-3,angle+.006,endAngle-.006);
+      ctx.lineWidth=Math.max(6,radius*.023);ctx.strokeStyle=hexToRgba(event.color,.98);
+      ctx.shadowColor=hexToRgba(event.color,.65);ctx.shadowBlur=18;ctx.stroke();ctx.restore();
+    }
 
-        function drawTimer() {
-            const width = canvas.width / (window.devicePixelRatio || 1);
-            const height = canvas.height / (window.devicePixelRatio || 1);
-            const cx = width / 2;
-            const cy = height / 2;
-            const radius = Math.min(cx, cy) - 10; // 여백 10
-            
-            ctx.clearRect(0, 0, width, height);
+    const boundaryX=cx+Math.cos(angle)*radius,boundaryY=cy+Math.sin(angle)*radius;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(boundaryX,boundaryY);
+    ctx.lineWidth=Math.max(2,radius*.008);ctx.strokeStyle='rgba(255,255,255,.92)';ctx.stroke();
 
-            if (state.totalSeconds === 0 || state.events.length === 0) {
-                // 빈 원 그리기
-                ctx.beginPath();
-                ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
-                ctx.fillStyle = "#e2e8f0";
-                ctx.fill();
-                return;
-            }
+    const arcLength=(endAngle-angle)*((radius+inner)/2);
+    if(arcLength>48){
+      const mid=(angle+endAngle)/2;
+      const labelRadius=(radius+inner)/2;
+      const x=cx+Math.cos(mid)*labelRadius,y=cy+Math.sin(mid)*labelRadius;
+      ctx.save();ctx.translate(x,y);
+      let rotation=mid+Math.PI/2;
+      const normalized=(mid%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+      if(normalized>0&&normalized<Math.PI) rotation+=Math.PI;
+      ctx.rotate(rotation);
+      const fontSize=clamp(radius*.052,10,17);
+      ctx.font=`800 ${fontSize}px system-ui,-apple-system,"Noto Sans KR",sans-serif`;
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=isPast?'rgba(69,81,105,.65)':'#fff';
+      ctx.shadowColor='rgba(19,28,47,.42)';ctx.shadowBlur=4;
+      let label=event.name;
+      const maxWidth=Math.max(30,arcLength-12);
+      while(label.length>2&&ctx.measureText(label).width>maxWidth)label=label.slice(0,-1);
+      if(label!==event.name)label=label.slice(0,-1)+'…';
+      ctx.fillText(label,0,-fontSize*.42);
+      ctx.font=`700 ${Math.max(9,fontSize*.75)}px system-ui,-apple-system,"Noto Sans KR",sans-serif`;
+      ctx.fillText(formatDurationCompact(event.durationSec),0,fontSize*.72);
+      ctx.restore();
+    }
+    accumulated=eventEnd;angle=endAngle;
+  });
 
-            // 1. 이벤트 배경 파이차트 그리기
-            let startAngle = -Math.PI / 2; // 12시 방향부터 시작
-            let accumulatedSec = 0; // 각 이벤트의 남은 시간을 계산하기 위한 누적 초
-            
-            state.events.forEach((ev) => {
-                const proportion = (ev.duration * 60) / state.totalSeconds;
-                const endAngle = startAngle + (proportion * 2 * Math.PI);
-                const midAngle = startAngle + (proportion * Math.PI); // 텍스트를 그릴 중간 각도
+  const elapsedFraction=total?elapsed/total:0;
+  if(elapsedFraction>0&&elapsedFraction<1){
+    const progressAngle=-Math.PI/2+elapsedFraction*Math.PI*2;
+    ctx.save();
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,radius,-Math.PI/2,progressAngle);ctx.closePath();
+    ctx.fillStyle='rgba(255,255,255,.47)';ctx.fill();
+    const dotRadius=(radius+inner)/2;
+    const dx=cx+Math.cos(progressAngle)*dotRadius,dy=cy+Math.sin(progressAngle)*dotRadius;
+    ctx.beginPath();ctx.arc(dx,dy,Math.max(5,radius*.025),0,Math.PI*2);
+    ctx.fillStyle='#fff';ctx.shadowColor='rgba(24,33,55,.45)';ctx.shadowBlur=8;ctx.fill();
+    ctx.restore();
+  }
 
-                // --- 현재 이벤트의 남은 시간 계산 ---
-                const eventStartSec = accumulatedSec;
-                const eventEndSec = accumulatedSec + (ev.duration * 60);
-                accumulatedSec = eventEndSec; // 다음 이벤트를 위해 누적
+  ctx.beginPath();ctx.arc(cx,cy,inner,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+  ctx.lineWidth=1;ctx.strokeStyle='rgba(211,220,234,.9)';ctx.stroke();
+}
 
-                let remainingSec = ev.duration * 60;
-                if (state.elapsedSeconds >= eventEndSec) {
-                    remainingSec = 0; // 이미 지나간 시간
-                } else if (state.elapsedSeconds > eventStartSec) {
-                    remainingSec = eventEndSec - state.elapsedSeconds; // 현재 진행 중인 시간의 남은 초
-                }
+function renderEventList(){
+  eventList.replaceChildren();
+  const phase=phaseAt(clamp(getElapsed(),0,totalSeconds()));
+  if(!state.events.length){
+    const empty=document.createElement('div');
+    empty.style.cssText='margin:auto;padding:26px 18px;text-align:center;color:#8d98aa;font-weight:750;line-height:1.65';
+    empty.textContent='아직 활동이 없습니다. 아래 버튼으로 첫 활동을 추가하세요.';
+    eventList.appendChild(empty);return;
+  }
+  state.events.forEach((event,index)=>{
+    const card=document.createElement('div');card.className='event-card'+(phase&&phase.event.id===event.id?' current':'');card.dataset.id=event.id;
 
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.arc(cx, cy, radius, startAngle, endAngle);
-                ctx.closePath();
-                ctx.fillStyle = ev.color;
-                ctx.fill();
+    const colorWrap=document.createElement('label');colorWrap.className='color-wrap';colorWrap.title='색상 변경';
+    const preview=document.createElement('div');preview.className='color-preview';preview.style.backgroundColor=event.color;
+    const color=document.createElement('input');color.type='color';color.className='color-input';color.value=event.color;color.dataset.action='color';color.setAttribute('aria-label',`${event.name} 색상`);
+    colorWrap.append(preview,color);
 
-                // 구분선 그리기 (투명한 선을 그려서 틈새를 만듦)
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.arc(cx, cy, radius + 2, startAngle, startAngle);
-                ctx.lineWidth = 3;
-                ctx.strokeStyle = "white";
-                ctx.stroke();
+    const fields=document.createElement('div');fields.className='event-fields';
+    const name=document.createElement('input');name.type='text';name.className='name-input';name.value=event.name;name.maxLength=40;name.dataset.action='name';name.setAttribute('aria-label',`${index+1}번째 활동 이름`);
+    const durationRow=document.createElement('div');durationRow.className='duration-row';
+    const minutes=document.createElement('input');minutes.type='number';minutes.className='duration-input';minutes.min='0';minutes.max='360';minutes.value=String(Math.floor(event.durationSec/60));minutes.dataset.action='minutes';minutes.setAttribute('aria-label',`${event.name} 분`);
+    const minText=document.createElement('span');minText.textContent='분';
+    const seconds=document.createElement('input');seconds.type='number';seconds.className='duration-input';seconds.min='0';seconds.max='59';seconds.value=String(event.durationSec%60);seconds.dataset.action='seconds';seconds.setAttribute('aria-label',`${event.name} 초`);
+    const secText=document.createElement('span');secText.textContent='초';
+    durationRow.append(minutes,minText,seconds,secText);fields.append(name,durationRow);
 
-                // --- 텍스트 라벨 추가 ---
-                if (proportion > 0.03) { // 파이 조각이 너무 좁으면(3% 이하) 텍스트 생략
-                    const textRadius = radius * 0.875; // 도넛 두께의 중앙 위치
-                    const tx = cx + Math.cos(midAngle) * textRadius;
-                    const ty = cy + Math.sin(midAngle) * textRadius;
+    const actions=document.createElement('div');actions.className='card-actions';
+    const actionData=[
+      ['up','↑','위로 이동',index===0],['down','↓','아래로 이동',index===state.events.length-1],
+      ['duplicate','＋','복제',false],['delete','×','삭제',false]
+    ];
+    actionData.forEach(([action,text,label,disabled])=>{
+      const button=document.createElement('button');button.type='button';button.className='icon-mini'+(action==='delete'?' delete':'');button.dataset.action=action;button.textContent=text;button.title=label;button.setAttribute('aria-label',`${event.name} ${label}`);button.disabled=disabled;actions.appendChild(button);
+    });
+    card.append(colorWrap,fields,actions);eventList.appendChild(card);
+  });
+}
 
-                    ctx.save();
-                    ctx.translate(tx, ty);
+function refresh({list=false,save=true}={}){
+  const total=totalSeconds();
+  if(getElapsed()>total)setElapsed(total);
+  updateDisplay();drawTimer();if(list)renderEventList();if(save)saveSettings();
+}
+function pauseForScheduleEdit(){
+  if(!state.running)return false;
+  pauseTimer(false);showToast('시간표 변경을 위해 타이머를 일시정지했습니다.');return true;
+}
+function findEventByCard(target){
+  const card=target.closest('.event-card');
+  return card?state.events.find(event=>event.id===card.dataset.id):null;
+}
 
-                    // 글씨가 항상 똑바로 보이도록 회전 각도 조정
-                    let rot = midAngle + Math.PI / 2;
-                    let normAngle = midAngle % (2 * Math.PI);
-                    if (normAngle < 0) normAngle += 2 * Math.PI;
-                    if (normAngle > 0 && normAngle < Math.PI) {
-                        rot -= Math.PI; // 시계 하단부(3시~9시)에서 글씨가 뒤집히지 않게 보정
-                    }
-                    ctx.rotate(rot);
+let audioContext=null;
+function ensureAudio(){
+  if(!state.soundOn)return null;
+  if(!audioContext) audioContext=new (window.AudioContext||window.webkitAudioContext)();
+  if(audioContext.state==='suspended')audioContext.resume();
+  return audioContext;
+}
+function playTone(frequency,duration=.13,type='sine',delay=0,gain=.07){
+  const audio=ensureAudio();if(!audio)return;
+  const start=audio.currentTime+delay;
+  const oscillator=audio.createOscillator(),volume=audio.createGain();
+  oscillator.type=type;oscillator.frequency.setValueAtTime(frequency,start);
+  volume.gain.setValueAtTime(.0001,start);volume.gain.exponentialRampToValueAtTime(gain,start+.015);volume.gain.exponentialRampToValueAtTime(.0001,start+duration);
+  oscillator.connect(volume);volume.connect(audio.destination);oscillator.start(start);oscillator.stop(start+duration+.03);
+}
+function soundStart(){playTone(440,.12,'triangle');playTone(660,.14,'triangle',.09);}
+function soundPhase(){playTone(660,.14,'sine');playTone(880,.18,'sine',.12);}
+function soundFinish(){[523,659,784,1047].forEach((f,i)=>playTone(f,.28,'triangle',i*.13,.08));}
+function updateSoundButton(){btnSound.classList.toggle('active',state.soundOn);btnSound.textContent=state.soundOn?'♪':'×';btnSound.title=state.soundOn?'알림음 켜짐':'알림음 꺼짐';}
 
-                    // 텍스트 스타일 설정
-                    const fontSize = Math.max(10, Math.min(16, radius * 0.08));
-                    ctx.font = `600 ${fontSize}px Pretendard, sans-serif`;
-                    ctx.fillStyle = "white";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    
-                    // 영역을 벗어나지 않도록 텍스트 자르기 처리
-                    let displayName = ev.name;
-                    const arcLength = proportion * 2 * Math.PI * textRadius;
-                    if (ctx.measureText(displayName).width > arcLength - 8) {
-                        let i = displayName.length;
-                        while (i > 0 && ctx.measureText(displayName.substring(0, i) + "..").width > arcLength - 8) {
-                            i--;
-                        }
-                        displayName = i > 0 ? displayName.substring(0, i) + ".." : "";
-                    }
+function startTimer(){
+  const total=totalSeconds();
+  if(!total||getElapsed()>=total)return;
+  ensureAudio();
+  state.elapsedAtStart=state.elapsed;state.runStartedAt=performance.now();state.running=true;state.finishShown=false;
+  const phase=phaseAt(state.elapsed);state.lastPhaseId=phase?.event.id||null;
+  soundStart();updateDisplay();cancelAnimationFrame(state.rafId);state.rafId=requestAnimationFrame(tick);
+}
+function pauseTimer(announce=true){
+  if(state.running){state.elapsed=clamp(getElapsed(),0,totalSeconds());state.elapsedAtStart=state.elapsed;}
+  state.running=false;cancelAnimationFrame(state.rafId);state.rafId=0;updateDisplay();drawTimer();
+  if(announce)showToast('타이머를 일시정지했습니다.');
+}
+function toggleTimer(){state.running?pauseTimer():startTimer();}
+function tick(now){
+  if(!state.running)return;
+  const total=totalSeconds();
+  const elapsed=getElapsed(now);
+  if(elapsed>=total){finishTimer();return;}
+  const phase=phaseAt(elapsed);
+  if(phase&&state.lastPhaseId&&phase.event.id!==state.lastPhaseId){
+    state.lastPhaseId=phase.event.id;soundPhase();showTransition(`${phase.event.name} 시작`);renderEventList();
+  }
+  updateDisplay(now);drawTimer();state.rafId=requestAnimationFrame(tick);
+}
+function finishTimer(){
+  state.elapsed=totalSeconds();state.elapsedAtStart=state.elapsed;state.running=false;cancelAnimationFrame(state.rafId);state.rafId=0;
+  updateDisplay();drawTimer();renderEventList();soundFinish();
+  if(!state.finishShown){state.finishShown=true;$('#finishTime').textContent=formatClock(state.elapsed,false);finishBackdrop.classList.remove('hidden');$('#btnFinishClose').focus();}
+}
+function resetNow(){
+  pauseTimer(false);setElapsed(0);state.lastPhaseId=null;state.finishShown=false;finishBackdrop.classList.add('hidden');refresh({list:true,save:false});showToast('처음 상태로 돌아갔습니다.');
+}
+function requestReset(){
+  if(getElapsed()<=0){resetNow();return;}
+  openConfirm('처음부터 다시 시작할까요?','현재 진행 기록이 모두 지워지고 첫 활동으로 돌아갑니다.','초기화',resetNow,true);
+}
+function skipPhase(){
+  const elapsed=getElapsed(),phase=phaseAt(elapsed);if(!phase)return;
+  const wasRunning=state.running;if(wasRunning)pauseTimer(false);
+  setElapsed(phase.end);
+  if(state.elapsed>=totalSeconds()){finishTimer();return;}
+  const next=phaseAt(state.elapsed);state.lastPhaseId=next?.event.id||null;soundPhase();showTransition(`${next?.event.name||'다음 활동'} 시작`);refresh({list:true,save:false});
+  if(wasRunning)startTimer();
+}
+function adjustCurrent(delta){
+  const phase=phaseAt(getElapsed());if(!phase)return;
+  pauseForScheduleEdit();phase.event.durationSec=clamp(phase.event.durationSec+delta,MIN_DURATION,MAX_DURATION);
+  refresh({list:true});showToast(delta>0?'현재 활동에 1분을 추가했습니다.':'현재 활동에서 1분을 줄였습니다.');
+}
 
-                    if (displayName.length > 0) {
-                        // 흰색 글씨 가독성을 높이기 위한 약간의 그림자 효과
-                        ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
-                        ctx.shadowBlur = 4;
-                        ctx.shadowOffsetY = 1;
-                        
-                        // 활동 이름 (위쪽)
-                        ctx.fillText(displayName, 0, -fontSize * 0.5);
-                        
-                        // 할당 시간 (아래쪽, 약간 더 작은 폰트)
-                        ctx.font = `500 ${Math.max(9, fontSize * 0.85)}px Pretendard, sans-serif`;
-                        
-                        // 남은 시간에 따라 동적으로 텍스트 표시
-                        let timeText = "";
-                        if (remainingSec === 0) {
-                            timeText = "완료";
-                        } else if (remainingSec < ev.duration * 60) {
-                            // 진행 중인 활동은 남은 시간을 분:초 형식으로 표시
-                            const m = Math.floor(remainingSec / 60);
-                            const s = Math.floor(remainingSec % 60);
-                            timeText = `${m}:${s.toString().padStart(2, '0')}`;
-                        } else {
-                            // 아직 시작하지 않은 활동은 원래 설정된 분(minute) 표시
-                            timeText = `${ev.duration}분`;
-                        }
-                        
-                        ctx.fillText(timeText, 0, fontSize * 0.7);
-                    }
-                    ctx.restore();
-                }
+let transitionTimer=0;
+function showTransition(text){
+  transitionBanner.textContent=text;transitionBanner.classList.add('show');clearTimeout(transitionTimer);transitionTimer=setTimeout(()=>transitionBanner.classList.remove('show'),1800);
+}
+let toastTimer=0;
+function showToast(message){toast.textContent=message;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2100);}
+let confirmAction=null;
+function openConfirm(title,message,confirmText,action,danger=false){
+  $('#confirmTitle').textContent=title;$('#confirmMessage').textContent=message;$('#btnConfirmOk').textContent=confirmText;$('#btnConfirmOk').classList.toggle('danger',danger);confirmAction=action;confirmBackdrop.classList.remove('hidden');$('#btnConfirmCancel').focus();
+}
+function closeConfirm(){confirmBackdrop.classList.add('hidden');confirmAction=null;}
 
-                startAngle = endAngle;
-            });
+function applyPreset(type){
+  const presets={
+    '40':[['도입',5,'#3B82F6'],['활동 1',15,'#10B981'],['활동 2',15,'#F59E0B'],['정리',5,'#EF4444']],
+    '45':[['도입',5,'#3B82F6'],['탐구 활동',15,'#10B981'],['적용 활동',20,'#8B5CF6'],['정리',5,'#EF4444']],
+    'three':[['도입',5,'#3B82F6'],['전개',30,'#10B981'],['정리',5,'#EF4444']]
+  };
+  if(type==='clear'){
+    openConfirm('모든 활동을 비울까요?','시간표의 모든 활동이 삭제됩니다.','모두 비우기',()=>{pauseTimer(false);state.events=[];setElapsed(0);refresh({list:true});showToast('시간표를 비웠습니다.');},true);return;
+  }
+  const rows=presets[type];if(!rows)return;
+  const label=type==='three'?'3단계 기본안':`${type}분 기본안`;
+  openConfirm(`${label}을 적용할까요?`,'현재 시간표는 새 기본안으로 교체됩니다.','적용',()=>{
+    pauseTimer(false);state.events=rows.map(([name,min,color])=>({id:makeId(),name,durationSec:min*60,color}));setElapsed(0);refresh({list:true});showToast(`${label}을 적용했습니다.`);
+  });
+}
 
-            // 2. 경과 시간 오버레이 그리기 (어두운 반투명 색상으로 지나간 시간을 가림)
-            const elapsedProportion = Math.min(state.elapsedSeconds / state.totalSeconds, 1);
-            if (elapsedProportion > 0) {
-                const overlayEndAngle = -Math.PI / 2 + (elapsedProportion * 2 * Math.PI);
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.arc(cx, cy, radius + 1, -Math.PI / 2, overlayEndAngle);
-                ctx.closePath();
-                ctx.fillStyle = "rgba(255, 255, 255, 0.75)"; // 흰색 반투명으로 덮기
-                ctx.fill();
-            }
+mainTitle.addEventListener('input',()=>{mainTitle.value=mainTitle.value.slice(0,60);saveSettings();});
+btnStartPause.addEventListener('click',toggleTimer);
+btnReset.addEventListener('click',requestReset);
+btnSkip.addEventListener('click',skipPhase);
+btnMinusMinute.addEventListener('click',()=>adjustCurrent(-60));
+btnPlusMinute.addEventListener('click',()=>adjustCurrent(60));
+$('#btnAddEvent').addEventListener('click',()=>{
+  if(state.events.length>=MAX_EVENTS){showToast(`활동은 최대 ${MAX_EVENTS}개까지 만들 수 있습니다.`);return;}
+  pauseForScheduleEdit();const index=state.events.length;state.events.push({id:makeId(),name:`새 활동 ${index+1}`,durationSec:5*60,color:palette[index%palette.length]});refresh({list:true});
+  requestAnimationFrame(()=>{eventList.scrollTop=eventList.scrollHeight;eventList.querySelector('.event-card:last-child .name-input')?.select();});
+});
 
-            // 3. 중앙 구멍 뚫기 (도넛 형태를 만들기 위해 겹치는 원 그리기)
-            // 중앙 정보창(html)이 있지만 캔버스 자체로도 도넛 모양을 유지하도록 그림
-            ctx.beginPath();
-            ctx.arc(cx, cy, radius * 0.75, 0, 2 * Math.PI); // 두께 조절 (0.75)
-            ctx.fillStyle = "white";
-            ctx.fill();
-        }
+eventList.addEventListener('input',(event)=>{
+  const item=findEventByCard(event.target);if(!item)return;
+  if(event.target.dataset.action==='name'){
+    item.name=String(event.target.value).slice(0,40);drawTimer();updateDisplay();saveSettings();
+  }else if(event.target.dataset.action==='color'){
+    item.color=safeColor(event.target.value);event.target.previousElementSibling.style.backgroundColor=item.color;drawTimer();updateDisplay();saveSettings();
+  }
+});
+eventList.addEventListener('change',(event)=>{
+  const item=findEventByCard(event.target);if(!item)return;
+  const action=event.target.dataset.action;
+  if(action==='name'){
+    item.name=safeName(event.target.value,state.events.indexOf(item));
+    event.target.value=item.name;updateDisplay();drawTimer();saveSettings();return;
+  }
+  if(action!=='minutes'&&action!=='seconds')return;
+  pauseForScheduleEdit();
+  const card=event.target.closest('.event-card');
+  const minutes=clamp(parseInt(card.querySelector('[data-action="minutes"]').value,10)||0,0,360);
+  const seconds=clamp(parseInt(card.querySelector('[data-action="seconds"]').value,10)||0,0,59);
+  item.durationSec=clamp(minutes*60+seconds,MIN_DURATION,MAX_DURATION);refresh({list:true});
+});
+eventList.addEventListener('click',(event)=>{
+  const button=event.target.closest('button[data-action]');if(!button)return;
+  const card=button.closest('.event-card');const index=state.events.findIndex(item=>item.id===card?.dataset.id);if(index<0)return;
+  const action=button.dataset.action;
+  if(action==='up'&&index>0){pauseForScheduleEdit();[state.events[index-1],state.events[index]]=[state.events[index],state.events[index-1]];refresh({list:true});}
+  if(action==='down'&&index<state.events.length-1){pauseForScheduleEdit();[state.events[index+1],state.events[index]]=[state.events[index],state.events[index+1]];refresh({list:true});}
+  if(action==='duplicate'){
+    if(state.events.length>=MAX_EVENTS){showToast(`활동은 최대 ${MAX_EVENTS}개까지 만들 수 있습니다.`);return;}
+    pauseForScheduleEdit();const source=state.events[index];state.events.splice(index+1,0,{...source,id:makeId(),name:(source.name+' 복사').slice(0,40)});refresh({list:true});
+  }
+  if(action==='delete'){
+    const source=state.events[index];openConfirm(`‘${source.name}’ 활동을 삭제할까요?`,'삭제하면 전체 수업 시간도 함께 줄어듭니다.','삭제',()=>{pauseTimer(false);state.events.splice(index,1);setElapsed(Math.min(getElapsed(),totalSeconds()));refresh({list:true});showToast('활동을 삭제했습니다.');},true);
+  }
+});
 
-        // --- 타이머 제어 ---
-        function startTimer() {
-            if (state.totalSeconds === 0 || state.elapsedSeconds >= state.totalSeconds) return;
-            
-            state.isRunning = true;
-            state.lastTickTime = Date.now();
-            
-            btnStart.classList.add('hidden');
-            btnPause.classList.remove('hidden');
-            
-            function tick() {
-                if (!state.isRunning) return;
-                
-                const now = Date.now();
-                const delta = (now - state.lastTickTime) / 1000; // 초 단위
-                state.lastTickTime = now;
-                
-                state.elapsedSeconds += delta;
-                
-                if (state.elapsedSeconds >= state.totalSeconds) {
-                    state.elapsedSeconds = state.totalSeconds;
-                    updateDisplay();
-                    drawTimer();
-                    pauseTimer();
-                    // 종료 알림이나 효과음을 넣으려면 이곳에 추가
-                } else {
-                    updateDisplay();
-                    drawTimer();
-                    state.timerInterval = requestAnimationFrame(tick);
-                }
-            }
-            state.timerInterval = requestAnimationFrame(tick);
-        }
+document.querySelector('.presets').addEventListener('click',(event)=>{const button=event.target.closest('[data-preset]');if(button)applyPreset(button.dataset.preset);});
+btnSound.addEventListener('click',()=>{state.soundOn=!state.soundOn;updateSoundButton();if(state.soundOn){ensureAudio();soundStart();}saveSettings();});
+$('#btnTogglePanel').addEventListener('click',()=>{state.panelCollapsed=!state.panelCollapsed;app.classList.toggle('panel-collapsed',state.panelCollapsed);saveSettings();setTimeout(fitTimerSize,260);});
+$('#btnZoomIn').addEventListener('click',()=>{state.zoom=clamp(state.zoom+.1,.68,1.28);fitTimerSize();saveSettings();});
+$('#btnZoomOut').addEventListener('click',()=>{state.zoom=clamp(state.zoom-.1,.68,1.28);fitTimerSize();saveSettings();});
+$('#btnZoomReset').addEventListener('click',()=>{state.zoom=1;fitTimerSize();saveSettings();});
+$('#btnFullscreen').addEventListener('click',async()=>{
+  try{
+    if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen();
+  }catch(error){showToast('이 브라우저에서는 전체 화면을 사용할 수 없습니다.');}
+});
+document.addEventListener('fullscreenchange',()=>{$('#btnFullscreen').classList.toggle('active',Boolean(document.fullscreenElement));setTimeout(fitTimerSize,80);});
 
-        function pauseTimer() {
-            state.isRunning = false;
-            cancelAnimationFrame(state.timerInterval);
-            
-            btnStart.classList.remove('hidden');
-            btnPause.classList.add('hidden');
-            
-            updateDisplay();
-        }
+$('#btnConfirmCancel').addEventListener('click',closeConfirm);
+$('#btnConfirmOk').addEventListener('click',()=>{const action=confirmAction;closeConfirm();if(typeof action==='function')action();});
+confirmBackdrop.addEventListener('click',(event)=>{if(event.target===confirmBackdrop)closeConfirm();});
+$('#btnFinishClose').addEventListener('click',()=>{finishBackdrop.classList.add('hidden');});
+$('#btnFinishReset').addEventListener('click',resetNow);
 
-        function resetTimer() {
-            pauseTimer();
-            state.elapsedSeconds = 0;
-            updateDisplay();
-            drawTimer();
-        }
+window.addEventListener('resize',fitTimerSize);
+window.addEventListener('orientationchange',()=>setTimeout(fitTimerSize,180));
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&state.running){
+    if(getElapsed()>=totalSeconds())finishTimer();else{updateDisplay();drawTimer();}
+  }
+});
+document.addEventListener('keydown',(event)=>{
+  const tag=document.activeElement?.tagName;
+  const typing=tag==='INPUT'||tag==='TEXTAREA'||document.activeElement?.isContentEditable;
+  if(event.key==='Escape'){
+    if(!confirmBackdrop.classList.contains('hidden')){closeConfirm();return;}
+    if(!finishBackdrop.classList.contains('hidden')){finishBackdrop.classList.add('hidden');return;}
+  }
+  if(typing)return;
+  const key=event.key.toLowerCase();
+  if(event.code==='Space'){event.preventDefault();toggleTimer();}
+  else if(key==='n'){skipPhase();}
+  else if(key==='r'){requestReset();}
+  else if(key==='f'){$('#btnFullscreen').click();}
+  else if(key==='s'){$('#btnTogglePanel').click();}
+});
 
-        // --- UI 렌더링 및 이벤트 관리 ---
-        function renderEventList() {
-            eventListEl.innerHTML = '';
-            
-            state.events.forEach((ev, index) => {
-                const item = document.createElement('div');
-                item.className = `flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl shadow-sm transition-opacity`;
-                
-                item.innerHTML = `
-                    <div class="relative flex-shrink-0 cursor-pointer group" onclick="document.getElementById('color-${ev.id}').click()">
-                        <div class="w-8 h-8 rounded-full border-2 border-slate-100 shadow-sm" style="background-color: ${ev.color};"></div>
-                        <input type="color" id="color-${ev.id}" value="${ev.color}" class="absolute opacity-0 w-0 h-0" onchange="updateEventColor('${ev.id}', this.value)">
-                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black bg-opacity-20 rounded-full text-white">
-                            <i class="ph-bold ph-palette text-sm"></i>
-                        </div>
-                    </div>
-                    
-                    <div class="flex-1 flex flex-col gap-1">
-                        <input type="text" value="${ev.name}" onchange="updateEventName('${ev.id}', this.value)" class="font-semibold text-slate-700 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none w-full text-sm" placeholder="활동 이름">
-                        <div class="flex items-center text-xs text-slate-500 gap-1">
-                            <input type="number" value="${ev.duration}" min="1" max="180" onchange="updateEventDuration('${ev.id}', this.value)" class="w-12 bg-slate-100 rounded px-1 text-center outline-none focus:ring-2 ring-indigo-200">
-                            <span>분 소요</span>
-                        </div>
-                    </div>
-
-                    <button onclick="removeEvent('${ev.id}')" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50 focus:outline-none" title="삭제">
-                        <i class="ph-bold ph-trash text-lg"></i>
-                    </button>
-                `;
-                eventListEl.appendChild(item);
-            });
-        }
-
-        // 설정 변경 액션들
-        window.updateEventColor = (id, newColor) => {
-            const ev = state.events.find(e => e.id === id);
-            if (ev) { ev.color = newColor; fullUpdate(); }
-        };
-        window.updateEventName = (id, newName) => {
-            const ev = state.events.find(e => e.id === id);
-            if (ev) { ev.name = newName; fullUpdate(); }
-        };
-        window.updateEventDuration = (id, newDuration) => {
-            const ev = state.events.find(e => e.id === id);
-            if (ev) { 
-                ev.duration = parseInt(newDuration) || 0; 
-                if(ev.duration < 1) ev.duration = 1;
-                fullUpdate(); 
-            }
-        };
-        window.removeEvent = (id) => {
-            state.events = state.events.filter(e => e.id !== id);
-            fullUpdate();
-        };
-
-        btnAddEvent.addEventListener('click', () => {
-            const newColor = colorPalette[state.events.length % colorPalette.length];
-            state.events.push({
-                id: generateId(),
-                name: `새 활동 ${state.events.length + 1}`,
-                duration: 5,
-                color: newColor
-            });
-            fullUpdate();
-            // 스크롤 맨 아래로
-            setTimeout(() => {
-                eventListEl.scrollTop = eventListEl.scrollHeight;
-            }, 50);
-        });
-
-        function fullUpdate() {
-            calculateTotalTime();
-            // 시간이 줄어들어서 경과시간이 총 시간을 초과했을 경우 보정
-            if (state.elapsedSeconds > state.totalSeconds) {
-                state.elapsedSeconds = state.totalSeconds;
-            }
-            renderEventList();
-            updateDisplay();
-            drawTimer();
-            
-            // 설정이 변경될 때마다 로컬 스토리지에 자동 저장
-            saveSettings();
-        }
-
-        // --- 초기화 ---
-        btnStart.addEventListener('click', startTimer);
-        btnPause.addEventListener('click', pauseTimer);
-        btnReset.addEventListener('click', resetTimer);
-        window.addEventListener('resize', resizeCanvas);
-
-        // 패널 토글 이벤트
-        btnTogglePanel.addEventListener('click', () => {
-            settingsPanel.classList.toggle('hidden');
-            // 패널이 사라지거나 나타날 때 레이아웃 변경 후 캔버스 다시 그리기
-            setTimeout(resizeCanvas, 50);
-        });
-
-        // 줌 이벤트
-        function setZoom(newZoom) {
-            currentZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
-            timerScaleWrapper.style.transform = `scale(${currentZoom})`;
-        }
-
-        btnZoomIn.addEventListener('click', () => setZoom(currentZoom + ZOOM_STEP));
-        btnZoomOut.addEventListener('click', () => setZoom(currentZoom - ZOOM_STEP));
-        btnZoomReset.addEventListener('click', () => setZoom(1.0));
-
-        // 마우스 휠 줌 기능 (타이머 영역 위에서 컨트롤 키 누르고 휠)
-        timerScaleWrapper.addEventListener('wheel', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                e.preventDefault(); // 기본 화면 줌 방지
-                const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-                setZoom(currentZoom + delta);
-            }
-        }, { passive: false });
-
-        // 첫 실행
-        loadSettings(); // 기존에 저장된 설정이 있다면 불러오기
-
-        setTimeout(() => {
-            calculateTotalTime();
-            renderEventList();
-            updateDisplay();
-            resizeCanvas();
-        }, 100);
-
-    </script>
+loadSettings();
+renderEventList();
+updateDisplay();
+requestAnimationFrame(fitTimerSize);
+})();
+</script>
 </body>
 </html>
