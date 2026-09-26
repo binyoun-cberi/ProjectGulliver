@@ -109,6 +109,11 @@ button:disabled{cursor:not-allowed;opacity:.45;transform:none!important}
   width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   color:#526078;font-size:clamp(13px,1.8vw,20px);font-weight:850;margin-bottom:2px;
 }
+.phase-note{
+  width:100%;min-height:1.35em;margin:1px 0 3px;color:#7b879c;
+  font-size:clamp(10px,1.25vw,13px);font-weight:750;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
 .main-time{
   font-size:clamp(44px,8vw,84px);line-height:.98;color:#172033;font-weight:950;
   letter-spacing:-.06em;font-variant-numeric:tabular-nums;
@@ -132,6 +137,8 @@ button:disabled{cursor:not-allowed;opacity:.45;transform:none!important}
   opacity:0;pointer-events:none;transition:.28s ease;
 }
 .transition-banner.show{opacity:1;transform:translate(-50%,0) scale(1)}
+.transition-banner strong{display:block;font-size:15px}
+.transition-banner small{display:block;margin-top:3px;font-size:12px;font-weight:700;opacity:.82}
 
 .controls-wrap{display:flex;flex-direction:column;align-items:center;gap:9px;z-index:4;padding-bottom:4px}
 .controls{display:flex;align-items:center;justify-content:center;gap:12px}
@@ -176,21 +183,43 @@ button:disabled{cursor:not-allowed;opacity:.45;transform:none!important}
 .preset-btn.danger:hover{color:#c52f36;border-color:#f1a4a8;background:#fff3f3}
 .event-list{flex:1;min-height:0;overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
 .event-card{
-  display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:start;
+  display:grid;grid-template-columns:24px 30px minmax(0,1fr) auto;gap:8px;align-items:start;
   padding:11px;border:1px solid #dee5ef;border-radius:16px;background:#fff;box-shadow:0 4px 12px rgba(41,54,84,.05);
   transition:border-color .15s,box-shadow .15s,opacity .15s;
 }
 .event-card.current{border-color:#7772ee;box-shadow:0 0 0 3px rgba(99,102,241,.12),0 7px 18px rgba(41,54,84,.08)}
-.color-wrap{position:relative;width:34px;height:34px}
-.color-preview{width:34px;height:34px;border-radius:11px;border:2px solid #fff;box-shadow:0 0 0 1px #d7dfea,0 4px 9px rgba(24,35,62,.12);pointer-events:none}
+.drag-handle{width:24px;height:34px;border:0;background:transparent;color:#a0aabc;font-size:18px;font-weight:950;cursor:grab;display:grid;place-items:center;padding:0}
+.drag-handle:active{cursor:grabbing}
+.event-card.dragging{opacity:.38}
+.event-card.drag-over{border-color:#7c79ed;box-shadow:0 0 0 3px rgba(99,102,241,.11)}
+.color-wrap{position:relative;width:30px;height:30px}
+.color-preview{width:30px;height:30px;border-radius:10px;border:2px solid #fff;box-shadow:0 0 0 1px #d7dfea,0 4px 9px rgba(24,35,62,.12);pointer-events:none}
 .color-input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
 .event-fields{min-width:0}
 .name-input{width:100%;border:0;border-bottom:1px solid transparent;outline:0;padding:2px 2px 5px;color:#34415a;background:transparent;font-weight:850}
 .name-input:hover{border-bottom-color:#d5ddea}.name-input:focus{border-bottom-color:#6366f1}
-.duration-row{display:flex;align-items:center;gap:5px;margin-top:6px;color:#7b879c;font-size:11px;font-weight:800}
+.note-input{width:100%;border:0;border-bottom:1px solid transparent;outline:0;padding:3px 2px 5px;color:#66748c;background:transparent;font-size:12px;font-weight:700}
+.note-input:hover{border-bottom-color:#d5ddea}.note-input:focus{border-bottom-color:#6366f1}
+.duration-row{display:flex;align-items:center;gap:5px;margin-top:6px;color:#7b879c;font-size:11px;font-weight:800;flex-wrap:wrap}
 .duration-input{width:52px;border:1px solid #dae1ec;border-radius:8px;padding:5px 4px;background:#f7f9fc;color:#45526a;text-align:center;outline:0;font-variant-numeric:tabular-nums}
 .duration-input:focus{border-color:#7772ee;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
-.card-actions{display:grid;grid-template-columns:repeat(2,30px);gap:4px}
+.card-actions{display:grid;grid-template-columns:30px;gap:4px}
+.event-advanced{grid-column:3/5;margin-top:1px;border-top:1px dashed #e7ebf2;padding-top:5px}
+.event-advanced summary{cursor:pointer;color:#8b95a7;font-size:11px;font-weight:850;list-style:none}
+.event-advanced summary::-webkit-details-marker{display:none}
+.advanced-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.advanced-grid label{display:grid;gap:4px;color:#7b879c;font-size:10px;font-weight:850}
+.advanced-grid input,.advanced-grid select{min-width:0;width:100%;border:1px solid #dbe2ec;border-radius:8px;background:#f8fafc;padding:6px 7px;color:#45526a;font-size:11px;outline:0}
+.memo-input{grid-column:1/-1}
+.student-title{display:none;position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:6;max-width:80%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#31405c;font-size:clamp(21px,3vw,38px);font-weight:950;letter-spacing:-.045em}
+.student-exit{display:none;position:fixed;right:14px;top:14px;z-index:90;border:1px solid rgba(100,116,139,.24);border-radius:999px;padding:8px 11px;background:rgba(255,255,255,.34);color:#64748b;font-size:11px;font-weight:900;opacity:.22;backdrop-filter:blur(5px)}
+.student-exit:hover,.student-exit:focus{opacity:1;background:#fff}
+body.student-view .settings,body.student-view .topbar,body.student-view .controls-wrap,body.student-view .zoom-controls{display:none!important}
+body.student-view #app{grid-template-columns:1fr!important;grid-template-rows:1fr!important}
+body.student-view .main{padding:8px}
+body.student-view .stage{padding:66px 10px 12px}
+body.student-view .student-title,body.student-view .student-exit{display:block}
+body.student-view .timer-shell{filter:drop-shadow(0 24px 34px rgba(30,45,78,.18))}
 .icon-mini{width:30px;height:30px;border:0;border-radius:9px;background:#f1f4f8;color:#778399;font-weight:950;display:grid;place-items:center}
 .icon-mini:hover{background:#e7ebf2;color:#45526a}.icon-mini.delete:hover{background:#fff0f1;color:#d8373f}
 .icon-mini:disabled{opacity:.25}
@@ -260,6 +289,7 @@ button:disabled{cursor:not-allowed;opacity:.45;transform:none!important}
       <input id="mainTitle" class="title-input" type="text" maxlength="60" value="수학 연산 시간" placeholder="수업 제목을 입력하세요" autocomplete="off">
       <div class="toolbar">
         <button id="btnSound" class="tool-btn active" type="button" aria-label="알림음 켜기 또는 끄기" title="알림음">♪</button>
+        <button id="btnStudentView" class="tool-btn wide" type="button" aria-label="학생 화면" title="학생 화면"><b>◉</b><span>학생 화면</span></button>
         <button id="btnFullscreen" class="tool-btn" type="button" aria-label="전체 화면 전환" title="전체 화면">⛶</button>
         <button id="btnTogglePanel" class="tool-btn wide" type="button" aria-label="설정 패널 접기 또는 펴기" title="설정 패널">
           <b>☰</b><span>시간표 설정</span>
@@ -268,14 +298,16 @@ button:disabled{cursor:not-allowed;opacity:.45;transform:none!important}
     </div>
 
     <section id="stage" class="stage" aria-label="수업 타이머">
+      <div id="studentTitle" class="student-title"></div>
       <div id="transitionBanner" class="transition-banner" aria-live="assertive"></div>
       <div id="timerShell" class="timer-shell">
         <canvas id="timerCanvas" aria-hidden="true"></canvas>
         <div class="timer-center">
           <div id="runState" class="run-state">준비</div>
           <div id="currentEventLabel" class="phase-name">대기 중</div>
-          <div id="timeDisplay" class="main-time" aria-live="polite">40:00</div>
-          <div class="phase-time">현재 활동 <strong id="phaseTimeDisplay">05:00</strong></div>
+          <div id="currentEventNote" class="phase-note"></div>
+          <div id="timeDisplay" class="main-time" aria-live="polite">05:00</div>
+          <div class="phase-time">전체 수업 <strong id="phaseTimeDisplay">40:00</strong> 남음</div>
           <div id="nextEventLabel" class="next-event">다음: 활동 1</div>
           <div id="progressText" class="progress-text">0% 진행 · 총 40분</div>
         </div>
@@ -295,8 +327,8 @@ button:disabled{cursor:not-allowed;opacity:.45;transform:none!important}
         <button id="btnSkip" class="control-btn skip" type="button" aria-label="다음 활동으로 넘기기" title="다음 활동">≫</button>
       </div>
       <div class="quick-actions">
-        <button id="btnMinusMinute" class="small-btn" type="button">현재 활동 −1분</button>
-        <button id="btnPlusMinute" class="small-btn" type="button">현재 활동 ＋1분</button>
+        <button id="btnMinusMinute" class="small-btn" type="button">1분 일찍 끝내기</button>
+        <button id="btnPlusMinute" class="small-btn" type="button">1분 더 하기</button>
       </div>
       <div class="keyboard-help">Space 시작·정지 · N 다음 활동 · R 초기화 · F 전체 화면 · S 설정</div>
     </div>
@@ -329,6 +361,7 @@ button:disabled{cursor:not-allowed;opacity:.45;transform:none!important}
   </aside>
 </div>
 
+<button id="btnExitStudentView" class="student-exit" type="button">교사 화면</button>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <div id="confirmBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
@@ -339,6 +372,18 @@ button:disabled{cursor:not-allowed;opacity:.45;transform:none!important}
     <div class="modal-actions">
       <button id="btnConfirmCancel" class="secondary-btn" type="button">취소</button>
       <button id="btnConfirmOk" class="primary-btn" type="button">확인</button>
+    </div>
+  </div>
+</div>
+
+<div id="resumeBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="resumeTitle">
+  <div class="modal">
+    <div class="modal-icon">↻</div>
+    <h3 id="resumeTitle">이전 수업을 이어갈까요?</h3>
+    <p id="resumeMessage">진행 중이던 수업 기록을 찾았습니다.</p>
+    <div class="modal-actions">
+      <button id="btnResumeReset" class="secondary-btn" type="button">처음부터</button>
+      <button id="btnResumeContinue" class="primary-btn" type="button">이어하기</button>
     </div>
   </div>
 </div>
@@ -360,8 +405,10 @@ button:disabled{cursor:not-allowed;opacity:.45;transform:none!important}
 (() => {
 'use strict';
 
-const STORAGE_KEY = 'lessonCircleTimerV2';
-const OLD_STORAGE_KEY = 'classTimerSettings';
+const STORAGE_KEY = 'lessonCircleTimerV3';
+const OLD_STORAGE_KEY = 'lessonCircleTimerV2';
+const LEGACY_STORAGE_KEY = 'classTimerSettings';
+const RUNTIME_KEY = 'lessonCircleTimerRuntimeV1';
 const MAX_EVENTS = 30;
 const MIN_DURATION = 10;
 const MAX_DURATION = 6 * 60 * 60;
@@ -378,7 +425,9 @@ const eventList = $('#eventList');
 const timeDisplay = $('#timeDisplay');
 const phaseTimeDisplay = $('#phaseTimeDisplay');
 const currentEventLabel = $('#currentEventLabel');
+const currentEventNote = $('#currentEventNote');
 const nextEventLabel = $('#nextEventLabel');
+const studentTitle = $('#studentTitle');
 const progressText = $('#progressText');
 const runState = $('#runState');
 const totalSummary = $('#totalSummary');
@@ -393,6 +442,7 @@ const transitionBanner = $('#transitionBanner');
 const toast = $('#toast');
 const confirmBackdrop = $('#confirmBackdrop');
 const finishBackdrop = $('#finishBackdrop');
+const resumeBackdrop = $('#resumeBackdrop');
 
 function makeId(){
   if (window.crypto && typeof window.crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -400,10 +450,10 @@ function makeId(){
 }
 function defaultEvents(){
   return [
-    {id:makeId(),name:'도입',durationSec:5*60,color:'#3B82F6'},
-    {id:makeId(),name:'활동 1',durationSec:15*60,color:'#10B981'},
-    {id:makeId(),name:'활동 2',durationSec:15*60,color:'#F59E0B'},
-    {id:makeId(),name:'정리 시간',durationSec:5*60,color:'#EF4444'}
+    {id:makeId(),name:'도입',note:'오늘 배울 내용을 함께 확인해요',teacherNote:'',durationSec:5*60,warningSec:60,transitionSec:0,color:'#3B82F6'},
+    {id:makeId(),name:'활동 1',note:'문제를 해결하며 핵심 개념을 익혀요',teacherNote:'',durationSec:15*60,warningSec:60,transitionSec:60,color:'#10B981'},
+    {id:makeId(),name:'활동 2',note:'친구와 생각을 나누고 적용해요',teacherNote:'',durationSec:14*60,warningSec:60,transitionSec:60,color:'#F59E0B'},
+    {id:makeId(),name:'정리 시간',note:'오늘 배운 내용을 돌아봐요',teacherNote:'',durationSec:4*60,warningSec:60,transitionSec:0,color:'#EF4444'}
   ];
 }
 const state = {
@@ -417,7 +467,9 @@ const state = {
   soundOn:true,
   panelCollapsed:false,
   zoom:1,
-  finishShown:false
+  finishShown:false,
+  warnedSegmentKey:null,
+  studentView:false
 };
 
 function clamp(value,min,max){return Math.max(min,Math.min(max,value));}
@@ -442,7 +494,11 @@ function sanitizeEvents(raw){
     return {
       id,
       name:safeName(ev?.name,index),
+      note:String(ev?.note||'').replace(/[ -]/g,' ').trim().slice(0,80),
+      teacherNote:String(ev?.teacherNote||'').replace(/[ -]/g,' ').trim().slice(0,120),
       durationSec:clamp(Math.round(durationSec),MIN_DURATION,MAX_DURATION),
+      warningSec:clamp(Math.round(Number(ev?.warningSec)||0),0,10*60),
+      transitionSec:clamp(Math.round(Number(ev?.transitionSec)||0),0,15*60),
       color:safeColor(ev?.color,index)
     };
   });
@@ -455,7 +511,13 @@ function loadSettings(){
   if(!parsed){
     try{
       const old=JSON.parse(localStorage.getItem(OLD_STORAGE_KEY) || 'null');
-      if(old) parsed={title:old.title,events:old.events};
+      if(old) parsed={title:old.title,events:old.events,soundOn:old.soundOn,panelCollapsed:old.panelCollapsed,zoom:old.zoom};
+    }catch(error){console.warn('이전 설정 변환 실패',error);}
+  }
+  if(!parsed){
+    try{
+      const legacy=JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY) || 'null');
+      if(legacy) parsed={title:legacy.title,events:legacy.events};
     }catch(error){console.warn('이전 설정 변환 실패',error);}
   }
   if(parsed){
@@ -477,7 +539,17 @@ function saveSettings(){
   catch(error){showToast('설정을 저장하지 못했습니다. 브라우저 저장 공간을 확인해 주세요.');}
 }
 
-function totalSeconds(){return state.events.reduce((sum,event)=>sum+event.durationSec,0);}
+function buildTimeline(){
+  const timeline=[];
+  state.events.forEach((event,index)=>{
+    timeline.push({kind:'activity',event,index,durationSec:event.durationSec,key:'a:'+event.id});
+    if(index<state.events.length-1 && event.transitionSec>0){
+      timeline.push({kind:'transition',event,index,nextEvent:state.events[index+1],durationSec:event.transitionSec,key:'t:'+event.id});
+    }
+  });
+  return timeline;
+}
+function totalSeconds(){return buildTimeline().reduce((sum,item)=>sum+item.durationSec,0);}
 function getElapsed(now=performance.now()){
   if(!state.running) return state.elapsed;
   return state.elapsedAtStart+(now-state.runStartedAt)/1000;
@@ -503,13 +575,14 @@ function formatDurationCompact(seconds){
   return `${m}분`;
 }
 function phaseAt(elapsed){
-  if(!state.events.length) return null;
+  const timeline=buildTimeline();
+  if(!timeline.length)return null;
   let start=0;
-  for(let index=0;index<state.events.length;index++){
-    const event=state.events[index];
-    const end=start+event.durationSec;
-    if(elapsed<end || (elapsed===0 && index===0)){
-      return {event,index,start,end,remaining:Math.max(0,end-elapsed)};
+  for(let timelineIndex=0;timelineIndex<timeline.length;timelineIndex++){
+    const segment=timeline[timelineIndex];
+    const end=start+segment.durationSec;
+    if(elapsed<end || (elapsed===0&&timelineIndex===0)){
+      return {...segment,timelineIndex,start,end,remaining:Math.max(0,end-elapsed),elapsedInSegment:Math.max(0,elapsed-start)};
     }
     start=end;
   }
@@ -521,15 +594,17 @@ function updateDisplay(now=performance.now()){
   const elapsed=clamp(getElapsed(now),0,total);
   const remaining=Math.max(0,total-elapsed);
   const phase=phaseAt(elapsed);
-  timeDisplay.textContent=formatClock(remaining);
   totalSummary.textContent=formatDurationCompact(total);
   countSummary.textContent=`${state.events.length}개`;
   const percent=total?clamp(elapsed/total*100,0,100):0;
-  progressText.textContent=`${Math.floor(percent)}% 진행 · 총 ${formatDurationCompact(total)}`;
+  progressText.textContent=`${Math.floor(percent)}% 진행 · 전체 ${formatDurationCompact(total)}`;
+  studentTitle.textContent=mainTitle.value||'수업 타이머';
 
   if(!state.events.length || total===0){
     currentEventLabel.textContent='활동을 추가해 주세요';
     currentEventLabel.style.color='#526078';
+    currentEventNote.textContent='';
+    timeDisplay.textContent='00:00';
     phaseTimeDisplay.textContent='00:00';
     nextEventLabel.textContent='오른쪽 설정에서 수업 흐름을 만드세요';
     runState.textContent='시간표 없음';
@@ -537,16 +612,27 @@ function updateDisplay(now=performance.now()){
   }else if(elapsed>=total){
     currentEventLabel.textContent='모든 활동 완료';
     currentEventLabel.style.color='#4f46e5';
+    currentEventNote.textContent='오늘 수업을 마무리해요';
+    timeDisplay.textContent='00:00';
     phaseTimeDisplay.textContent='00:00';
     nextEventLabel.textContent='수업 시간이 종료되었습니다';
     runState.textContent='종료';
     runState.className='run-state finished';
   }else if(phase){
-    currentEventLabel.textContent=phase.event.name;
-    currentEventLabel.style.color=phase.event.color;
-    phaseTimeDisplay.textContent=formatClock(phase.remaining);
-    const next=state.events[phase.index+1];
-    nextEventLabel.textContent=next?`다음: ${next.name}`:'다음: 수업 종료';
+    if(phase.kind==='transition'){
+      currentEventLabel.textContent='전환 시간';
+      currentEventLabel.style.color='#64748b';
+      currentEventNote.textContent=phase.nextEvent?`${phase.nextEvent.name} 준비`:'다음 활동 준비';
+      nextEventLabel.textContent=phase.nextEvent?`다음: ${phase.nextEvent.name}`:'다음: 수업 종료';
+    }else{
+      currentEventLabel.textContent=phase.event.name;
+      currentEventLabel.style.color=phase.event.color;
+      currentEventNote.textContent=phase.event.note||'';
+      const next=state.events[phase.index+1];
+      nextEventLabel.textContent=next?`다음: ${phase.event.transitionSec>0?'전환 '+formatDurationCompact(phase.event.transitionSec)+' · ':''}${next.name}`:'다음: 수업 종료';
+    }
+    timeDisplay.textContent=formatClock(phase.remaining);
+    phaseTimeDisplay.textContent=formatClock(remaining);
     if(state.running){runState.textContent='진행 중';runState.className='run-state running';}
     else if(elapsed>0){runState.textContent='일시정지';runState.className='run-state paused';}
     else{runState.textContent='준비';runState.className='run-state';}
@@ -557,10 +643,11 @@ function updateDisplay(now=performance.now()){
   btnSkip.disabled=!phase || elapsed>=total;
   btnMinusMinute.disabled=!phase;
   btnPlusMinute.disabled=!phase;
-  document.title=`${formatClock(remaining)} · ${mainTitle.value || '수업 타이머'}`;
+  const titleClock=phase?formatClock(phase.remaining):formatClock(remaining);
+  document.title=`${titleClock} · ${phase?.kind==='activity'?phase.event.name:(mainTitle.value||'수업 타이머')}`;
 }
 
-function hexToRgba(hex,alpha){
+function hexToRgbafunction hexToRgba(hex,alpha){
   const clean=safeColor(hex).slice(1);
   const r=parseInt(clean.slice(0,2),16),g=parseInt(clean.slice(2,4),16),b=parseInt(clean.slice(4,6),16);
   return `rgba(${r},${g},${b},${alpha})`;
@@ -596,6 +683,7 @@ function drawTimer(){
   const cx=width/2,cy=height/2;
   const radius=Math.min(cx,cy)-Math.max(8,width*.018);
   const inner=radius*.67;
+  const timeline=buildTimeline();
   const total=totalSeconds();
   const elapsed=clamp(getElapsed(),0,total);
   const phase=phaseAt(elapsed);
@@ -605,81 +693,69 @@ function drawTimer(){
   ctx.fillStyle='#dfe6f0';ctx.fill();
   ctx.restore();
 
-  if(!state.events.length || total<=0){
-    ctx.save();
-    ctx.setLineDash([10,9]);ctx.lineWidth=Math.max(10,radius*.085);ctx.strokeStyle='#c7d1df';
-    ctx.beginPath();ctx.arc(cx,cy,(radius+inner)/2,0,Math.PI*2);ctx.stroke();
-    ctx.restore();
-    return;
+  if(!timeline.length || total<=0){
+    ctx.save();ctx.setLineDash([10,9]);ctx.lineWidth=Math.max(10,radius*.085);ctx.strokeStyle='#c7d1df';
+    ctx.beginPath();ctx.arc(cx,cy,(radius+inner)/2,0,Math.PI*2);ctx.stroke();ctx.restore();return;
   }
 
   let angle=-Math.PI/2;
   let accumulated=0;
-  state.events.forEach((event,index)=>{
-    const fraction=event.durationSec/total;
+  timeline.forEach((segment)=>{
+    const fraction=segment.durationSec/total;
     const endAngle=angle+fraction*Math.PI*2;
-    const eventEnd=accumulated+event.durationSec;
-    const isPast=elapsed>=eventEnd;
-    const isCurrent=phase&&phase.index===index;
-    const alpha=isPast?.25:(isCurrent?1:.68);
+    const segmentEnd=accumulated+segment.durationSec;
+    const isPast=elapsed>=segmentEnd;
+    const isCurrent=phase&&phase.key===segment.key;
+    const baseColor=segment.kind==='transition'?'#94A3B8':segment.event.color;
+    const alpha=isPast?.20:(isCurrent?1:.64);
 
     ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,radius,angle,endAngle);ctx.closePath();
-    ctx.fillStyle=hexToRgba(event.color,alpha);ctx.fill();
+    ctx.fillStyle=hexToRgba(baseColor,alpha);ctx.fill();
 
     if(isCurrent){
-      ctx.save();
-      ctx.beginPath();ctx.arc(cx,cy,radius-3,angle+.006,endAngle-.006);
-      ctx.lineWidth=Math.max(6,radius*.023);ctx.strokeStyle=hexToRgba(event.color,.98);
-      ctx.shadowColor=hexToRgba(event.color,.65);ctx.shadowBlur=18;ctx.stroke();ctx.restore();
+      ctx.save();ctx.beginPath();ctx.arc(cx,cy,radius-3,angle+.006,endAngle-.006);
+      ctx.lineWidth=Math.max(6,radius*.023);ctx.strokeStyle=hexToRgba(baseColor,.98);
+      ctx.shadowColor=hexToRgba(baseColor,.58);ctx.shadowBlur=18;ctx.stroke();ctx.restore();
     }
 
-    const boundaryX=cx+Math.cos(angle)*radius,boundaryY=cy+Math.sin(angle)*radius;
-    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(boundaryX,boundaryY);
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(angle)*radius,cy+Math.sin(angle)*radius);
     ctx.lineWidth=Math.max(2,radius*.008);ctx.strokeStyle='rgba(255,255,255,.92)';ctx.stroke();
 
     const arcLength=(endAngle-angle)*((radius+inner)/2);
-    if(arcLength>48){
-      const mid=(angle+endAngle)/2;
-      const labelRadius=(radius+inner)/2;
+    if(arcLength>62){
+      const mid=(angle+endAngle)/2,labelRadius=(radius+inner)/2;
       const x=cx+Math.cos(mid)*labelRadius,y=cy+Math.sin(mid)*labelRadius;
       ctx.save();ctx.translate(x,y);
       let rotation=mid+Math.PI/2;
       const normalized=(mid%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
-      if(normalized>0&&normalized<Math.PI) rotation+=Math.PI;
+      if(normalized>0&&normalized<Math.PI)rotation+=Math.PI;
       ctx.rotate(rotation);
-      const fontSize=clamp(radius*.052,10,17);
+      const fontSize=clamp(radius*.047,10,16);
       ctx.font=`800 ${fontSize}px system-ui,-apple-system,"Noto Sans KR",sans-serif`;
-      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=isPast?'rgba(69,81,105,.65)':'#fff';
-      ctx.shadowColor='rgba(19,28,47,.42)';ctx.shadowBlur=4;
-      let label=event.name;
-      const maxWidth=Math.max(30,arcLength-12);
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=isPast?'rgba(69,81,105,.48)':'#fff';
+      ctx.shadowColor='rgba(19,28,47,.34)';ctx.shadowBlur=3;
+      let label=segment.kind==='transition'?'전환':segment.event.name;
+      const maxWidth=Math.max(32,arcLength-12);
       while(label.length>2&&ctx.measureText(label).width>maxWidth)label=label.slice(0,-1);
-      if(label!==event.name)label=label.slice(0,-1)+'…';
-      ctx.fillText(label,0,-fontSize*.42);
-      ctx.font=`700 ${Math.max(9,fontSize*.75)}px system-ui,-apple-system,"Noto Sans KR",sans-serif`;
-      ctx.fillText(formatDurationCompact(event.durationSec),0,fontSize*.72);
-      ctx.restore();
+      if(segment.kind!=='transition'&&label!==segment.event.name)label=label.slice(0,-1)+'…';
+      ctx.fillText(label,0,0);ctx.restore();
     }
-    accumulated=eventEnd;angle=endAngle;
+    accumulated=segmentEnd;angle=endAngle;
   });
 
-  const elapsedFraction=total?elapsed/total:0;
-  if(elapsedFraction>0&&elapsedFraction<1){
-    const progressAngle=-Math.PI/2+elapsedFraction*Math.PI*2;
-    ctx.save();
-    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,radius,-Math.PI/2,progressAngle);ctx.closePath();
-    ctx.fillStyle='rgba(255,255,255,.47)';ctx.fill();
+  if(phase&&elapsed>0&&elapsed<total){
+    const progressAngle=-Math.PI/2+(elapsed/total)*Math.PI*2;
     const dotRadius=(radius+inner)/2;
     const dx=cx+Math.cos(progressAngle)*dotRadius,dy=cy+Math.sin(progressAngle)*dotRadius;
-    ctx.beginPath();ctx.arc(dx,dy,Math.max(5,radius*.025),0,Math.PI*2);
-    ctx.fillStyle='#fff';ctx.shadowColor='rgba(24,33,55,.45)';ctx.shadowBlur=8;ctx.fill();
-    ctx.restore();
+    ctx.save();ctx.beginPath();ctx.arc(dx,dy,Math.max(5,radius*.025),0,Math.PI*2);
+    ctx.fillStyle='#fff';ctx.shadowColor='rgba(24,33,55,.45)';ctx.shadowBlur=8;ctx.fill();ctx.restore();
   }
 
   ctx.beginPath();ctx.arc(cx,cy,inner,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
   ctx.lineWidth=1;ctx.strokeStyle='rgba(211,220,234,.9)';ctx.stroke();
 }
 
+function renderEventListlet draggedEventId=null;
 function renderEventList(){
   eventList.replaceChildren();
   const phase=phaseAt(clamp(getElapsed(),0,totalSeconds()));
@@ -690,35 +766,79 @@ function renderEventList(){
     eventList.appendChild(empty);return;
   }
   state.events.forEach((event,index)=>{
-    const card=document.createElement('div');card.className='event-card'+(phase&&phase.event.id===event.id?' current':'');card.dataset.id=event.id;
+    const card=document.createElement('div');
+    card.className='event-card'+(phase&&phase.event?.id===event.id?' current':'');
+    card.dataset.id=event.id;card.draggable=true;
+
+    const drag=document.createElement('button');drag.type='button';drag.className='drag-handle';drag.textContent='⋮⋮';drag.title='드래그해서 순서 변경';drag.setAttribute('aria-label',event.name+' 순서 변경');
 
     const colorWrap=document.createElement('label');colorWrap.className='color-wrap';colorWrap.title='색상 변경';
     const preview=document.createElement('div');preview.className='color-preview';preview.style.backgroundColor=event.color;
-    const color=document.createElement('input');color.type='color';color.className='color-input';color.value=event.color;color.dataset.action='color';color.setAttribute('aria-label',`${event.name} 색상`);
+    const color=document.createElement('input');color.type='color';color.className='color-input';color.value=event.color;color.dataset.action='color';color.setAttribute('aria-label',event.name+' 색상');
     colorWrap.append(preview,color);
 
     const fields=document.createElement('div');fields.className='event-fields';
-    const name=document.createElement('input');name.type='text';name.className='name-input';name.value=event.name;name.maxLength=40;name.dataset.action='name';name.setAttribute('aria-label',`${index+1}번째 활동 이름`);
+    const name=document.createElement('input');name.type='text';name.className='name-input';name.value=event.name;name.maxLength=40;name.dataset.action='name';name.setAttribute('aria-label',(index+1)+'번째 활동 이름');
+    const note=document.createElement('input');note.type='text';note.className='note-input';note.value=event.note||'';note.maxLength=80;note.dataset.action='note';note.placeholder='학생에게 보여줄 한 줄 안내';note.setAttribute('aria-label',event.name+' 학생 안내');
     const durationRow=document.createElement('div');durationRow.className='duration-row';
-    const minutes=document.createElement('input');minutes.type='number';minutes.className='duration-input';minutes.min='0';minutes.max='360';minutes.value=String(Math.floor(event.durationSec/60));minutes.dataset.action='minutes';minutes.setAttribute('aria-label',`${event.name} 분`);
+    const minutes=document.createElement('input');minutes.type='number';minutes.className='duration-input';minutes.min='0';minutes.max='360';minutes.value=String(Math.floor(event.durationSec/60));minutes.dataset.action='minutes';minutes.setAttribute('aria-label',event.name+' 분');
     const minText=document.createElement('span');minText.textContent='분';
-    const seconds=document.createElement('input');seconds.type='number';seconds.className='duration-input';seconds.min='0';seconds.max='59';seconds.value=String(event.durationSec%60);seconds.dataset.action='seconds';seconds.setAttribute('aria-label',`${event.name} 초`);
+    const seconds=document.createElement('input');seconds.type='number';seconds.className='duration-input';seconds.min='0';seconds.max='59';seconds.value=String(event.durationSec%60);seconds.dataset.action='seconds';seconds.setAttribute('aria-label',event.name+' 초');
     const secText=document.createElement('span');secText.textContent='초';
-    durationRow.append(minutes,minText,seconds,secText);fields.append(name,durationRow);
+    durationRow.append(minutes,minText,seconds,secText);fields.append(name,note,durationRow);
 
     const actions=document.createElement('div');actions.className='card-actions';
-    const actionData=[
-      ['up','↑','위로 이동',index===0],['down','↓','아래로 이동',index===state.events.length-1],
-      ['duplicate','＋','복제',false],['delete','×','삭제',false]
-    ];
-    actionData.forEach(([action,text,label,disabled])=>{
-      const button=document.createElement('button');button.type='button';button.className='icon-mini'+(action==='delete'?' delete':'');button.dataset.action=action;button.textContent=text;button.title=label;button.setAttribute('aria-label',`${event.name} ${label}`);button.disabled=disabled;actions.appendChild(button);
+    [['duplicate','⧉','복제'],['delete','×','삭제']].forEach(([action,text,label])=>{
+      const button=document.createElement('button');button.type='button';button.className='icon-mini'+(action==='delete'?' delete':'');button.dataset.action=action;button.textContent=text;button.title=label;button.setAttribute('aria-label',event.name+' '+label);actions.appendChild(button);
     });
-    card.append(colorWrap,fields,actions);eventList.appendChild(card);
+
+    const advanced=document.createElement('details');advanced.className='event-advanced';
+    const summary=document.createElement('summary');summary.textContent='세부 설정 · 종료 전 알림 · 전환 시간 · 교사 메모';
+    const grid=document.createElement('div');grid.className='advanced-grid';
+
+    const warnLabel=document.createElement('label');warnLabel.textContent='종료 전 알림';
+    const warn=document.createElement('select');warn.dataset.action='warning';
+    [[0,'없음'],[30,'30초 전'],[60,'1분 전'],[120,'2분 전'],[180,'3분 전']].forEach(([value,label])=>{
+      const opt=document.createElement('option');opt.value=String(value);opt.textContent=label;if(Number(event.warningSec)===value)opt.selected=true;warn.appendChild(opt);
+    });warnLabel.appendChild(warn);
+
+    const transitionLabel=document.createElement('label');transitionLabel.textContent=index===state.events.length-1?'전환 시간 · 마지막 활동':'다음 활동 전 전환';
+    const transition=document.createElement('select');transition.dataset.action='transition';transition.disabled=index===state.events.length-1;
+    [[0,'없음'],[30,'30초'],[60,'1분'],[90,'1분 30초'],[120,'2분'],[180,'3분']].forEach(([value,label])=>{
+      const opt=document.createElement('option');opt.value=String(value);opt.textContent=label;if(Number(event.transitionSec)===value)opt.selected=true;transition.appendChild(opt);
+    });transitionLabel.appendChild(transition);
+
+    const memoLabel=document.createElement('label');memoLabel.className='memo-input';memoLabel.textContent='교사 메모 · 학생 화면에는 표시되지 않음';
+    const memo=document.createElement('input');memo.type='text';memo.value=event.teacherNote||'';memo.maxLength=120;memo.placeholder='예: 발표 두 팀만 받고 바로 정리';memo.dataset.action='teacherNote';memoLabel.appendChild(memo);
+    grid.append(warnLabel,transitionLabel,memoLabel);advanced.append(summary,grid);
+
+    card.append(drag,colorWrap,fields,actions,advanced);
+    eventList.appendChild(card);
   });
 }
 
-function refresh({list=false,save=true}={}){
+eventList.addEventListener('dragstart',(event)=>{
+  const card=event.target.closest('.event-card');if(!card)return;
+  draggedEventId=card.dataset.id;card.classList.add('dragging');
+  event.dataTransfer.effectAllowed='move';
+});
+eventList.addEventListener('dragend',()=>{
+  draggedEventId=null;eventList.querySelectorAll('.event-card').forEach(card=>card.classList.remove('dragging','drag-over'));
+});
+eventList.addEventListener('dragover',(event)=>{
+  const card=event.target.closest('.event-card');if(!card||!draggedEventId||card.dataset.id===draggedEventId)return;
+  event.preventDefault();eventList.querySelectorAll('.event-card').forEach(x=>x.classList.remove('drag-over'));card.classList.add('drag-over');
+});
+eventList.addEventListener('drop',(event)=>{
+  const target=event.target.closest('.event-card');if(!target||!draggedEventId||target.dataset.id===draggedEventId)return;
+  event.preventDefault();pauseForScheduleEdit();
+  const from=state.events.findIndex(x=>x.id===draggedEventId),to=state.events.findIndex(x=>x.id===target.dataset.id);
+  if(from<0||to<0)return;
+  const [moved]=state.events.splice(from,1);state.events.splice(to,0,moved);
+  refresh({list:true});showToast('활동 순서를 바꿨습니다.');
+});
+
+function refreshfunction refresh({list=false,save=true}={}){
   const total=totalSeconds();
   if(getElapsed()>total)setElapsed(total);
   updateDisplay();drawTimer();if(list)renderEventList();if(save)saveSettings();
