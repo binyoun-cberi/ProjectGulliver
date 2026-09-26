@@ -92,6 +92,7 @@
         .tag-male { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
         .tag-female { background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; }
         .tag-front { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+        .tag-neutral { background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; }
         
         .delete-btn { cursor: pointer; color: inherit; opacity: 0.5; font-size: 16px; margin-left: 2px; }
         .delete-btn:hover { opacity: 1; }
@@ -190,6 +191,7 @@
                 <b>2. 학생 명단 (<span id="studentCount">0</span>명)</b>
                 <button class="btn-small btn-danger" onclick="clearStudents()">초기화</button>
             </label>
+            <div style="margin-bottom:8px;"><button type="button" id="loadClassroomBtn" class="btn-small">👥 우리 반 명단 불러오기</button></div>
             <div style="display: flex; gap: 6px;">
                 <input type="text" id="newStudentName" placeholder="이름 입력" onkeypress="handleStudentEnter(event)" style="flex: 2;">
                 <select id="newStudentGender" style="flex: 1;">
@@ -237,6 +239,7 @@
     </div>
 </div>
 
+<script src="gulliver-shared.js"></script>
 <script>
     // 초기 기본 학생 데이터
     let studentsData = [
@@ -274,6 +277,8 @@
 
     // 초기화
     window.onload = () => {
+        Gulliver.mountShell({title:'교실 자리 배정',icon:'🎒'});
+        document.getElementById('loadClassroomBtn').addEventListener('click', loadClassroomRoster);
         renderStudents();
         updateRuleDisplay();
         updateFrontDisplay();
@@ -357,6 +362,27 @@
     }
 
     /* --- 1. 학생 명단 --- */
+    function loadClassroomRoster() {
+        const room = Gulliver.getClassroom();
+        if (!room.students.length) {
+            Gulliver.toast('먼저 우리 반에서 학생 명단을 저장해 주세요.');
+            return;
+        }
+        studentsData = room.students.map(s => ({name:s.name, gender:s.gender || 'U'}));
+        rules = [];
+        frontStudents = [];
+        if (studentsData.some(s => s.gender === 'U')) {
+            document.getElementById('genderBalance').checked = false;
+            Gulliver.toast(room.className + ' ' + studentsData.length + '명 불러옴 · 성별 미입력 학생이 있어 성비 맞추기를 껐습니다.');
+        } else {
+            Gulliver.toast(room.className + ' ' + studentsData.length + '명을 불러왔습니다.');
+        }
+        renderStudents();
+        updateRuleDisplay();
+        updateFrontDisplay();
+        clearGrid();
+    }
+
     function renderStudents() {
         const display = document.getElementById('studentListDisplay');
         document.getElementById('studentCount').innerText = studentsData.length;
@@ -368,8 +394,8 @@
         }
 
         display.innerHTML = studentsData.map((s, i) =>
-            `<span class="tag-item ${s.gender === 'M' ? 'tag-male' : 'tag-female'}">
-                ${s.gender === 'M' ? '👦' : '👧'} ${escapeHTML(s.name)} <span class="delete-btn" onclick="removeStudent(${i})">&times;</span>
+            `<span class="tag-item ${s.gender === 'M' ? 'tag-male' : s.gender === 'F' ? 'tag-female' : 'tag-neutral'}">
+                ${s.gender === 'M' ? '👦' : s.gender === 'F' ? '👧' : '🧑'} ${escapeHTML(s.name)} <span class="delete-btn" onclick="removeStudent(${i})">&times;</span>
             </span>`
         ).join('');
         updateSeatInfo();
