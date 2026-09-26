@@ -1801,7 +1801,18 @@
         }
 
         function getFreeSlotZones() {
-            return slotZones.filter(zone => !zone.occupied);
+            return slotZones.filter(zone => !zone.occupied && (!useOneMarblePerSlot || !zone.reservedFor));
+        }
+
+        function reserveTeacherSlots() {
+            slotZones.forEach(zone => { zone.reservedFor = null; });
+            if (!useOneMarblePerSlot) return true;
+            for (const [name, result] of Object.entries(cheatData)) {
+                const zone = slotZones.find(z => z.text === result && !z.reservedFor);
+                if (!zone) return false;
+                zone.reservedFor = name;
+            }
+            return true;
         }
 
         function getNearestFreeSlot(x) {
@@ -1815,7 +1826,9 @@
 
             const targetText = cheatData[marble.name];
             if (targetText) {
-                const forced = slotZones.find(z => z.text === targetText && (!useOneMarblePerSlot || !z.occupied));
+                const forced = useOneMarblePerSlot
+                    ? slotZones.find(z => z.reservedFor === marble.name && !z.occupied)
+                    : slotZones.find(z => z.text === targetText);
                 if (forced) return forced;
             }
 
@@ -1836,6 +1849,7 @@
                 if (useOneMarblePerSlot) {
                     slot.occupied = true;
                     slot.occupiedBy = marble.name;
+                    slot.reservedFor = null;
                 }
                 Body.setVelocity(marble.body, { x: 0, y: 0 });
                 Body.setAngularVelocity(marble.body, 0);
@@ -1970,7 +1984,7 @@
                 marbles.forEach(m => {
                     if (m.finished) return;
 
-                    // --- 선생님 지정 결과 또는 1알 1함 모드에서만 보조 유도 ---
+                    // --- 교사 지정 결과 또는 결과 중복 금지에서만 보조 유도 ---
                     const needsSlotGuide = Boolean(cheatData[m.name]) || useOneMarblePerSlot;
                     if (needsSlotGuide && m.body.position.y > finishLineY - 1500) {
                         const preferredSlot = getPreferredSlotForMarble(m, m.body.position.x);
@@ -2380,7 +2394,8 @@
                     captureY: currentY + slotDepth - 155,
                     occupied: false,
                     occupiedBy: null,
-                    occupiedCount: 0
+                    occupiedCount: 0,
+                    reservedFor: null
                 });
             }
 
@@ -2480,6 +2495,9 @@
             }
             const nameSet = new Set(namesInput.map(x=>x.trim()));
             const slotSet = new Set(slotsInput.map(x=>x.trim()));
+            const directedCounts = {};
+            const slotCounts = {};
+            slotsInput.forEach(result => slotCounts[result.trim()] = (slotCounts[result.trim()] || 0) + 1);
             for (const [name,result] of Object.entries(cheatData)) {
                 if (!nameSet.has(name)) {
                     alert(`교사 지정 결과의 학생 '${name}'이 현재 명단에 없습니다.`);
@@ -2488,6 +2506,15 @@
                 if (!slotSet.has(result)) {
                     alert(`'${name}' 학생에게 지정한 결과 '${result}'가 결과 슬롯에 없습니다.`);
                     return;
+                }
+                directedCounts[result] = (directedCounts[result] || 0) + 1;
+            }
+            if (useOneMarblePerSlot) {
+                for (const [result,count] of Object.entries(directedCounts)) {
+                    if (count > (slotCounts[result] || 0)) {
+                        alert(`결과 중복 금지에서는 '${result}' 함이 ${slotCounts[result] || 0}개뿐인데 ${count}명이 지정되어 있습니다.`);
+                        return;
+                    }
                 }
             }
 
@@ -2514,6 +2541,11 @@
             }, 300);
 
             createMap(slotsInput);
+            if (!reserveTeacherSlots()) {
+                alert('교사 지정 결과용 슬롯을 예약하지 못했습니다. 결과 슬롯 설정을 확인해 주세요.');
+                resetGame();
+                return;
+            }
             createMarbles(namesInput);
 
             runner = Runner.create();
@@ -2713,7 +2745,7 @@
                 if (useOneMarblePerSlot) {
                     ctx.font = 'bold 18px Pretendard';
                     ctx.fillStyle = slot.occupied ? '#34D399' : '#FDE68A';
-                    ctx.fillText(slot.occupied ? '사용됨' : '빈 함', slot.centerX, slot.y + 138);
+                    ctx.fillText(slot.occupied ? '사용됨' : (slot.reservedFor ? '예약 함' : '빈 함'), slot.centerX, slot.y + 138);
                 }
             });
 
