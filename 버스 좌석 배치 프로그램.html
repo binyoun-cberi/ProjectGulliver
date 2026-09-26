@@ -67,6 +67,13 @@ body.presentation .settings,body.presentation .head,body.presentation .bus-toolb
       </section>
 
       <section class="section">
+        <h2>🤝 같이 앉히기</h2>
+        <div class="pair-form"><select id="togetherA"></select><select id="togetherB"></select><button class="btn small" id="addTogetherBtn">추가</button></div>
+        <div class="chips" id="togetherList"></div>
+        <div class="help" style="margin-top:7px">돌봄·도움 관계처럼 반드시 같은 짝자리에 앉혀야 할 때 사용하세요.</div>
+      </section>
+
+      <section class="section">
         <h2>📌 학생 자리 고정</h2>
         <div class="fixed-form"><select id="fixedStudent"></select><select id="fixedSeat"></select><button class="btn small" id="addFixedBtn">고정</button></div>
         <div class="chips" id="fixedList"></div>
@@ -87,9 +94,10 @@ body.presentation .settings,body.presentation .head,body.presentation .bus-toolb
         <div id="busGrid"></div>
         <div class="back-row">뒤쪽 · 10열은 기본 사용 안 함</div>
       </div></div>
-      <div class="metrics">
+      <div class="metrics" style="grid-template-columns:repeat(5,1fr)">
         <div class="metric"><b id="metricFront">-</b><span>앞자리 우선</span></div>
         <div class="metric"><b id="metricAvoid">-</b><span>분리 조건</span></div>
+        <div class="metric"><b id="metricTogether">-</b><span>같이 앉히기</span></div>
         <div class="metric"><b id="metricGender">-</b><span>동성 짝 비율</span></div>
         <div class="metric"><b id="metricHistory">-</b><span>최근 자리 변경</span></div>
       </div>
@@ -103,7 +111,7 @@ body.presentation .settings,body.presentation .head,body.presentation .bus-toolb
 "use strict";
 const ROWS=10,COLS=4,STORAGE_KEY="gulliver.busSeating.v3",HISTORY_KEY="gulliver.busSeating.history.v1";
 const $=id=>document.getElementById(id);
-let state={rosterHints:[],students:[],disabled:Array(ROWS*COLS).fill(false),avoidPairs:[],fixedSeats:{},assignment:Array(ROWS*COLS).fill(null),sameGender:true,historyMode:true,backRowDisabled:true};
+let state={rosterHints:[],students:[],disabled:Array(ROWS*COLS).fill(false),avoidPairs:[],togetherPairs:[],fixedSeats:{},assignment:Array(ROWS*COLS).fill(null),sameGender:true,historyMode:true,backRowDisabled:true};
 let selectedStudentId=null,sharedProfiles={},sharedRelations=[];
 function safeParse(raw,fallback){try{return raw?JSON.parse(raw):fallback}catch{return fallback}}
 function uid(name,i){return"manual_"+i+"_"+encodeURIComponent(name).slice(0,20)}
@@ -120,6 +128,7 @@ function load(){
   state.disabled=Array.isArray(state.disabled)?state.disabled.slice(0,ROWS*COLS):Array(ROWS*COLS).fill(false);while(state.disabled.length<ROWS*COLS)state.disabled.push(false);
   state.assignment=Array.isArray(state.assignment)?state.assignment.slice(0,ROWS*COLS):Array(ROWS*COLS).fill(null);while(state.assignment.length<ROWS*COLS)state.assignment.push(null);
   state.avoidPairs=Array.isArray(state.avoidPairs)?state.avoidPairs:[];
+  state.togetherPairs=Array.isArray(state.togetherPairs)?state.togetherPairs:[];
   state.fixedSeats=state.fixedSeats&&typeof state.fixedSeats==="object"?state.fixedSeats:{};
   state.students=Array.isArray(state.students)?state.students:[];
   state.rosterHints=Array.isArray(state.rosterHints)?state.rosterHints:[];
@@ -135,6 +144,7 @@ function parseStudents(){
   });
   const ids=new Set(state.students.map(s=>String(s.id)));
   state.avoidPairs=state.avoidPairs.filter(p=>ids.has(String(p[0]))&&ids.has(String(p[1])));
+  state.togetherPairs=state.togetherPairs.filter(p=>ids.has(String(p[0]))&&ids.has(String(p[1])));
   Object.keys(state.fixedSeats).forEach(id=>{if(!ids.has(String(id)))delete state.fixedSeats[id]});
   state.assignment=state.assignment.map(id=>ids.has(String(id))?String(id):null);
 }
@@ -143,8 +153,12 @@ function refreshShared(){
   const ids=new Set(state.students.map(s=>String(s.id)));
   sharedRelations=(Gulliver.getRelations?Gulliver.getRelations():[]).filter(r=>ids.has(String(r.a))&&ids.has(String(r.b)));
 }
+function relationFor(a,b){return sharedRelations.find(r=>pairKey(r.a,r.b)===pairKey(a,b))||null}
+function isSharedHardAvoid(a,b){
+  const rel=relationFor(a,b);return Boolean(rel&&(rel.tags||[]).includes("avoid"));
+}
 function relationWeight(a,b){
-  const rel=sharedRelations.find(r=>pairKey(r.a,r.b)===pairKey(a,b));if(!rel)return 0;
+  const rel=relationFor(a,b);if(!rel)return 0;
   const s=Number(rel.strength||2);let w=0;
   (rel.tags||[]).forEach(tag=>{if(tag==="avoid")w+=2200*s;else if(tag==="conflict")w+=1300*s;else if(tag==="chatter")w+=420*s;else if(tag==="playful")w+=300*s;else if(tag==="cooperate")w-=35*s});
   return w;
@@ -156,6 +170,8 @@ function neighbors(a,b){
   return dr<=1&&dc<=1&&!(dr===0&&dc===0)
 }
 function pairMateIndex(i){const c=i%COLS;if(c===0)return i+1;if(c===1)return i-1;if(c===2)return i+1;return i-1}
+function samePairSeats(a,b){return a>=0&&b>=0&&pairMateIndex(a)===b}
+function pairIsDisabled(i){const mate=pairMateIndex(i);return state.disabled[i]||state.disabled[mate]}
 function fixedSeatEntries(){return Object.entries(state.fixedSeats).map(([id,seat])=>({id:String(id),seat:Number(seat)})).filter(x=>studentById(x.id)&&!state.disabled[x.seat])}
 function setNotice(text,type=""){$("notice").textContent=text;$("notice").className="notice"+(type?" "+type:"")}
 function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -168,25 +184,94 @@ function historyPenalty(arr){
   });return p
 }
 function evaluate(arr){
-  let penalty=0,manualViolations=0,frontMiss=0,genderMismatch=0;
+  let penalty=0,manualViolations=0,sharedHardViolations=0,togetherMiss=0,frontMiss=0,genderMismatch=0,singletons=0;
+
   for(const {id,seat} of fixedSeatEntries())if(String(arr[seat]||"")!==id)penalty+=100000;
-  state.avoidPairs.forEach(([a,b])=>{const ai=arr.findIndex(x=>String(x)===String(a)),bi=arr.findIndex(x=>String(x)===String(b));if(ai>=0&&bi>=0&&neighbors(ai,bi)){penalty+=4000;manualViolations++}});
-  sharedRelations.forEach(rel=>{const ai=arr.findIndex(x=>String(x)===String(rel.a)),bi=arr.findIndex(x=>String(x)===String(rel.b));if(ai>=0&&bi>=0&&neighbors(ai,bi))penalty+=relationWeight(rel.a,rel.b)});
+
+  state.avoidPairs.forEach(([a,b])=>{
+    const ai=arr.findIndex(x=>String(x)===String(a)),bi=arr.findIndex(x=>String(x)===String(b));
+    if(ai>=0&&bi>=0&&neighbors(ai,bi)){penalty+=100000;manualViolations++}
+  });
+
+  state.togetherPairs.forEach(([a,b])=>{
+    const ai=arr.findIndex(x=>String(x)===String(a)),bi=arr.findIndex(x=>String(x)===String(b));
+    if(ai>=0&&bi>=0&&!samePairSeats(ai,bi)){penalty+=100000;togetherMiss++}
+  });
+
+  sharedRelations.forEach(rel=>{
+    const ai=arr.findIndex(x=>String(x)===String(rel.a)),bi=arr.findIndex(x=>String(x)===String(rel.b));
+    if(ai<0||bi<0)return;
+    if(isSharedHardAvoid(rel.a,rel.b)&&neighbors(ai,bi)){penalty+=100000;sharedHardViolations++;return}
+    if(neighbors(ai,bi))penalty+=relationWeight(rel.a,rel.b);
+  });
+
   const frontRows=new Set([0,1,2]);
-  state.students.forEach(s=>{if(!sharedProfiles[String(s.id)]?.frontSeat)return;const idx=arr.findIndex(x=>String(x)===String(s.id));if(idx>=0&&!frontRows.has(Math.floor(idx/COLS))){penalty+=700;frontMiss++}});
+  state.students.forEach(s=>{
+    if(!sharedProfiles[String(s.id)]?.frontSeat)return;
+    const idx=arr.findIndex(x=>String(x)===String(s.id));
+    if(idx>=0&&!frontRows.has(Math.floor(idx/COLS))){penalty+=900;frontMiss++}
+  });
+
   if(state.sameGender){
     for(let r=0;r<ROWS;r++)for(const pair of [[r*COLS,r*COLS+1],[r*COLS+2,r*COLS+3]]){
-      const sa=studentById(arr[pair[0]]),sb=studentById(arr[pair[1]]);if(sa&&sb&&sa.gender&&sb.gender&&sa.gender!==sb.gender){penalty+=55;genderMismatch++}
+      const sa=studentById(arr[pair[0]]),sb=studentById(arr[pair[1]]);
+      if(sa&&sb&&sa.gender&&sb.gender&&sa.gender!==sb.gender){penalty+=80;genderMismatch++}
     }
   }
+
+  // 빈자리는 가능하면 짝 단위로, 그리고 뒤쪽에 모읍니다.
+  let lastOccupiedRow=-1;
+  arr.forEach((id,i)=>{if(id)lastOccupiedRow=Math.max(lastOccupiedRow,Math.floor(i/COLS))});
+  for(let r=0;r<ROWS;r++){
+    for(const pair of [[r*COLS,r*COLS+1],[r*COLS+2,r*COLS+3]]){
+      const usable=pair.filter(i=>!state.disabled[i]);
+      if(usable.length!==2)continue;
+      const occ=usable.filter(i=>arr[i]).length;
+      if(occ===1){singletons++;penalty+=42}
+      if(occ===0&&r<lastOccupiedRow)penalty+=(lastOccupiedRow-r)*14;
+    }
+  }
+
   penalty+=historyPenalty(arr);
-  return{penalty,manualViolations,frontMiss,genderMismatch}
+  return{penalty,manualViolations,sharedHardViolations,togetherMiss,frontMiss,genderMismatch,singletons}
 }
 function randomArrangement(){
   const arr=Array(ROWS*COLS).fill(null),fixed=fixedSeatEntries(),fixedIds=new Set(fixed.map(x=>x.id)),fixedSeats=new Set(fixed.map(x=>x.seat));
   fixed.forEach(x=>arr[x.seat]=x.id);
-  const remaining=shuffle(state.students.map(s=>String(s.id)).filter(id=>!fixedIds.has(id))),seats=shuffle(activeSeats().filter(i=>!fixedSeats.has(i)));
-  remaining.forEach((id,i)=>{if(seats[i]!==undefined)arr[seats[i]]=id});return arr
+
+  const remainingIds=new Set(state.students.map(s=>String(s.id)).filter(id=>!fixedIds.has(id)));
+  const pairedIds=new Set();
+
+  // 같이 앉히기 조건을 우선 같은 짝 좌석에 배치합니다.
+  for(const [a,b] of shuffle(state.togetherPairs)){
+    if(!remainingIds.has(String(a))||!remainingIds.has(String(b)))continue;
+    const candidatePairs=[];
+    for(let r=0;r<ROWS;r++)for(const pair of [[r*COLS,r*COLS+1],[r*COLS+2,r*COLS+3]]){
+      if(pair.every(i=>!state.disabled[i]&&!fixedSeats.has(i)&&!arr[i]))candidatePairs.push(pair)
+    }
+    if(!candidatePairs.length)break;
+    const pair=candidatePairs[Math.floor(Math.random()*Math.min(candidatePairs.length,Math.max(1,Math.ceil(candidatePairs.length*.6))))];
+    arr[pair[0]]=String(a);arr[pair[1]]=String(b);
+    remainingIds.delete(String(a));remainingIds.delete(String(b));pairedIds.add(String(a));pairedIds.add(String(b));
+  }
+
+  const remaining=shuffle([...remainingIds]);
+  const pairBlocks=[];
+  for(let r=0;r<ROWS;r++)for(const pair of [[r*COLS,r*COLS+1],[r*COLS+2,r*COLS+3]]){
+    const free=pair.filter(i=>!state.disabled[i]&&!fixedSeats.has(i)&&!arr[i]);
+    if(free.length)pairBlocks.push({row:r,seats:free});
+  }
+  pairBlocks.sort((a,b)=>a.row-b.row||(Math.random()-.5));
+
+  let cursor=0;
+  for(const block of pairBlocks){
+    for(const seat of block.seats){
+      if(cursor>=remaining.length)break;
+      arr[seat]=remaining[cursor++];
+    }
+    if(cursor>=remaining.length)break;
+  }
+  return arr
 }
 function optimize(){
   let best=null,bestEv=null,current=null,currentEv=null;
@@ -205,6 +290,10 @@ function validate(){
   if(!state.students.length)return"학생 명단이 없습니다.";
   const active=activeSeats();if(state.students.length>active.length)return"학생 "+state.students.length+"명인데 사용할 수 있는 좌석은 "+active.length+"개입니다.";
   const fixed=fixedSeatEntries(),seatSet=new Set();for(const x of fixed){if(seatSet.has(x.seat))return"같은 좌석에 학생 두 명이 고정되어 있습니다.";seatSet.add(x.seat)}
+  for(const [a,b] of state.togetherPairs){
+    if(state.avoidPairs.some(p=>pairKey(p[0],p[1])===pairKey(a,b)))return"같이 앉히기와 떨어뜨리기 조건이 서로 충돌합니다.";
+    if(isSharedHardAvoid(a,b))return studentById(a)?.name+"·"+studentById(b)?.name+" 학생은 우리 반에서 떨어뜨리기로 설정되어 있어 같이 앉힐 수 없습니다.";
+  }
   return""
 }
 function generate(){
@@ -212,8 +301,9 @@ function generate(){
   const err=validate();if(err){setNotice(err,"bad");renderAll();return}
   const result=optimize();if(!result){setNotice("현재 조건으로 자리를 만들지 못했습니다.","bad");return}
   state.assignment=result.arr;selectedStudentId=null;save();renderAll();
-  const parts=[];if(result.ev.manualViolations)parts.push("추가 분리 조건 일부 미충족");if(result.ev.frontMiss)parts.push("앞자리 우선 일부 미충족");if(state.sameGender&&result.ev.genderMismatch)parts.push("동성 짝 일부 미충족");
-  setNotice(parts.length?"최대한 조건을 맞춘 결과입니다. "+parts.join(" · "):"조건과 최근 기록을 반영해 자리를 배치했습니다. 실제 사용할 자리면 확정해 주세요.",parts.length?"":"good")
+  const hard=result.ev.manualViolations+result.ev.sharedHardViolations+result.ev.togetherMiss;
+  const parts=[];if(hard)parts.push("필수 관계 조건 일부 미충족");if(result.ev.frontMiss)parts.push("앞자리 우선 일부 미충족");if(state.sameGender&&result.ev.genderMismatch)parts.push("동성 짝 일부 미충족");if(result.ev.singletons)parts.push("혼자 앉는 짝자리 "+result.ev.singletons+"곳");
+  setNotice(parts.length?"최대한 조건을 맞춘 결과입니다. "+parts.join(" · "):"조건과 최근 기록을 반영해 자리를 배치했습니다. 빈자리는 뒤쪽·짝 단위로 모았습니다.",hard?"bad":"good")
 }
 function renderBus(){
   const grid=$("busGrid");grid.replaceChildren();
@@ -237,7 +327,9 @@ function onSeatClick(i){
     if(selectedStudentId&&selectedStudentId!==id){
       const a=state.assignment.findIndex(x=>String(x)===String(selectedStudentId)),b=i,sa=studentById(selectedStudentId),sb=studentById(id);
       if(Number(state.fixedSeats[sa.id])===a||Number(state.fixedSeats[sb.id])===b){Gulliver.toast("고정 좌석 학생은 교환할 수 없습니다.");selectedStudentId=null;renderAll();return}
-      [state.assignment[a],state.assignment[b]]=[state.assignment[b],state.assignment[a]];selectedStudentId=null;save();renderAll();setNotice("두 학생의 자리를 서로 바꿨습니다. 확정 전에 조건 지표를 확인하세요.");return
+      [state.assignment[a],state.assignment[b]]=[state.assignment[b],state.assignment[a]];selectedStudentId=null;save();renderAll();
+      const ev=evaluate(state.assignment),hard=ev.manualViolations+ev.sharedHardViolations+ev.togetherMiss;
+      setNotice(hard?"두 학생을 바꿨지만 필수 관계 조건이 깨졌습니다. 다시 교환하거나 재배치해 주세요.":"두 학생의 자리를 서로 바꿨습니다.",hard?"bad":"good");return
     }
     selectedStudentId=selectedStudentId===id?null:id;renderAll();return
   }
@@ -245,10 +337,13 @@ function onSeatClick(i){
   state.disabled[i]=!state.disabled[i];save();renderAll()
 }
 function renderMetrics(){
-  if(!state.assignment.some(Boolean)){["metricFront","metricAvoid","metricGender","metricHistory"].forEach(id=>$(id).textContent="-");return}
+  if(!state.assignment.some(Boolean)){["metricFront","metricAvoid","metricTogether","metricGender","metricHistory"].forEach(id=>$(id).textContent="-");return}
   const ev=evaluate(state.assignment),frontTotal=state.students.filter(s=>sharedProfiles[String(s.id)]?.frontSeat).length;
   $("metricFront").textContent=frontTotal?(frontTotal-ev.frontMiss)+"/"+frontTotal:"없음";
-  $("metricAvoid").textContent=state.avoidPairs.length?(state.avoidPairs.length-ev.manualViolations)+"/"+state.avoidPairs.length:"없음";
+  const sharedHard=sharedRelations.filter(r=>(r.tags||[]).includes("avoid")).length;
+  const avoidTotal=state.avoidPairs.length+sharedHard;
+  $("metricAvoid").textContent=avoidTotal?(avoidTotal-ev.manualViolations-ev.sharedHardViolations)+"/"+avoidTotal:"없음";
+  $("metricTogether").textContent=state.togetherPairs.length?(state.togetherPairs.length-ev.togetherMiss)+"/"+state.togetherPairs.length:"없음";
   let pairs=0,same=0;for(let r=0;r<ROWS;r++)for(const pair of [[r*COLS,r*COLS+1],[r*COLS+2,r*COLS+3]]){const sa=studentById(state.assignment[pair[0]]),sb=studentById(state.assignment[pair[1]]);if(sa&&sb&&sa.gender&&sb.gender){pairs++;if(sa.gender===sb.gender)same++}}
   $("metricGender").textContent=state.sameGender&&pairs?Math.round(same/pairs*100)+"%":"해당 없음";
   const h=getHistory()[0];if(!h){$("metricHistory").textContent="첫 배치"}else{let t=0,ch=0;state.assignment.forEach((id,i)=>{if(!id)return;t++;if(h.seats?.findIndex(x=>String(x)===String(id))!==i)ch++});$("metricHistory").textContent=t?Math.round(ch/t*100)+"%":"-"}
@@ -257,11 +352,13 @@ function renderControls(){
   $("studentCount").textContent="학생 "+state.students.length+"명";$("seatCount").textContent="사용 "+activeSeats().length+"석";
   $("sameGenderMode").checked=state.sameGender;$("historyMode").checked=state.historyMode;$("backRowDisabled").checked=state.backRowDisabled;
   const opts='<option value="">학생 선택</option>'+state.students.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join("");
-  $("avoidA").innerHTML=opts;$("avoidB").innerHTML=opts;$("fixedStudent").innerHTML=opts;
+  $("avoidA").innerHTML=opts;$("avoidB").innerHTML=opts;$("togetherA").innerHTML=opts;$("togetherB").innerHTML=opts;$("fixedStudent").innerHTML=opts;
   const occupiedFixed=new Set(Object.values(state.fixedSeats).map(Number));
   $("fixedSeat").innerHTML='<option value="">좌석 선택</option>'+activeSeats().filter(i=>!occupiedFixed.has(i)).map(i=>'<option value="'+i+'">'+seatLabel(i)+'</option>').join("");
   $("avoidList").innerHTML=state.avoidPairs.length?state.avoidPairs.map((p,i)=>'<span class="chip">'+esc(studentById(p[0])?.name||"?")+' ↔ '+esc(studentById(p[1])?.name||"?")+' <button data-del-avoid="'+i+'">×</button></span>').join(""):'<span class="help">추가 조건 없음</span>';
-  document.querySelectorAll("[data-del-avoid]").forEach(b=>b.onclick=()=>{state.avoidPairs.splice(Number(b.dataset.delAvoid),1);save();renderAll()});
+  document.querySelectorAll("[data-del-avoid]").forEach(b=>b.onclick=()=>{state.avoidPairs.splice(Number(b.dataset.delAvoid),1);state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()});
+  $("togetherList").innerHTML=state.togetherPairs.length?state.togetherPairs.map((p,i)=>'<span class="chip">'+esc(studentById(p[0])?.name||"?")+' ↔ '+esc(studentById(p[1])?.name||"?")+' <button data-del-together="'+i+'">×</button></span>').join(""):'<span class="help">추가 조건 없음</span>';
+  document.querySelectorAll("[data-del-together]").forEach(b=>b.onclick=()=>{state.togetherPairs.splice(Number(b.dataset.delTogether),1);state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()});
   const fixed=Object.entries(state.fixedSeats);
   $("fixedList").innerHTML=fixed.length?fixed.map(([id,seat])=>'<span class="chip">'+esc(studentById(id)?.name||"?")+' → '+seatLabel(Number(seat))+' <button data-del-fixed="'+esc(id)+'">×</button></span>').join(""):'<span class="help">고정 좌석 없음</span>';
   document.querySelectorAll("[data-del-fixed]").forEach(b=>b.onclick=()=>{delete state.fixedSeats[b.dataset.delFixed];save();renderAll()});
@@ -276,10 +373,12 @@ function loadClassroom(){
 }
 function confirmResult(){
   if(!state.assignment.some(Boolean)){setNotice("먼저 자리를 배치해 주세요.","bad");return}
-  const ev=evaluate(state.assignment);if(ev.manualViolations){setNotice("추가로 떨어뜨리기 조건이 깨져 있어 확정할 수 없습니다.","bad");return}
+  const ev=evaluate(state.assignment);
+  if(ev.manualViolations||ev.sharedHardViolations||ev.togetherMiss){setNotice("떨어뜨리기 또는 같이 앉히기 필수 조건이 깨져 있어 확정할 수 없습니다.","bad");return}
+  for(const {id,seat} of fixedSeatEntries()){if(String(state.assignment[seat]||"")!==id){setNotice("고정 좌석 조건이 깨져 있어 확정할 수 없습니다.","bad");return}}
   const pairs={};state.assignment.forEach((id,i)=>{if(!id)return;const mate=state.assignment[pairMateIndex(i)];if(mate)pairs[id]=mate});
   const item={at:Date.now(),seats:[...state.assignment],pairs};saveHistoryList([item,...getHistory()]);
-  if(Gulliver.recordOperation)Gulliver.recordOperation("bus",{studentCount:state.students.length,seats:[...state.assignment]});
+  if(Gulliver.recordOperation)Gulliver.recordOperation("bus",{studentCount:state.students.length,seats:[...state.assignment],pairs,frontPriority:state.students.filter(s=>sharedProfiles[String(s.id)]?.frontSeat).map(s=>s.id)});
   renderMetrics();setNotice("이번 버스 좌석을 확정했습니다. 다음 배정에서 같은 자리와 같은 짝을 줄이는 데 사용합니다.","good");Gulliver.toast("버스 자리표를 기록했습니다.")
 }
 function resetSeats(){if(!window.confirm("좌석 사용 설정과 결과를 초기화할까요?"))return;state.disabled=Array(ROWS*COLS).fill(false);state.assignment=Array(ROWS*COLS).fill(null);applyBackRowSetting();save();renderAll()}
@@ -289,11 +388,12 @@ function exitPresentation(){document.body.classList.remove("presentation");$("ex
 $("namesInput").addEventListener("change",refreshFromInput);
 $("loadClassroomBtn").onclick=loadClassroom;
 $("sampleBtn").onclick=()=>{$("namesInput").value=["민준(남)","서연(여)","도윤(남)","하은(여)","지호(남)","수아(여)","현우(남)","윤서(여)","준서(남)","채원(여)"].join("\n");state.rosterHints=[];refreshFromInput()};
-$("clearBtn").onclick=()=>{$("namesInput").value="";state.students=[];state.avoidPairs=[];state.fixedSeats={};state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()};
+$("clearBtn").onclick=()=>{$("namesInput").value="";state.students=[];state.avoidPairs=[];state.togetherPairs=[];state.fixedSeats={};state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()};
 $("sameGenderMode").onchange=e=>{state.sameGender=e.target.checked;state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()};
 $("historyMode").onchange=e=>{state.historyMode=e.target.checked;state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()};
 $("backRowDisabled").onchange=e=>{state.backRowDisabled=e.target.checked;if(e.target.checked)applyBackRowSetting();else for(let i=(ROWS-1)*COLS;i<ROWS*COLS;i++)state.disabled[i]=false;state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()};
-$("addAvoidBtn").onclick=()=>{const a=$("avoidA").value,b=$("avoidB").value;if(!a||!b||a===b){Gulliver.toast("서로 다른 학생 두 명을 선택해 주세요.");return}if(!state.avoidPairs.some(p=>pairKey(p[0],p[1])===pairKey(a,b)))state.avoidPairs.push([a,b]);save();renderAll()};
+$("addAvoidBtn").onclick=()=>{const a=$("avoidA").value,b=$("avoidB").value;if(!a||!b||a===b){Gulliver.toast("서로 다른 학생 두 명을 선택해 주세요.");return}if(state.togetherPairs.some(p=>pairKey(p[0],p[1])===pairKey(a,b))){Gulliver.toast("이미 같이 앉히기로 설정된 학생입니다.");return}if(!state.avoidPairs.some(p=>pairKey(p[0],p[1])===pairKey(a,b)))state.avoidPairs.push([a,b]);state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()};
+$("addTogetherBtn").onclick=()=>{const a=$("togetherA").value,b=$("togetherB").value;if(!a||!b||a===b){Gulliver.toast("서로 다른 학생 두 명을 선택해 주세요.");return}if(state.avoidPairs.some(p=>pairKey(p[0],p[1])===pairKey(a,b))||isSharedHardAvoid(a,b)){Gulliver.toast("떨어뜨리기 조건과 충돌합니다.");return}if(!state.togetherPairs.some(p=>pairKey(p[0],p[1])===pairKey(a,b)))state.togetherPairs.push([a,b]);state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()};
 $("addFixedBtn").onclick=()=>{const id=$("fixedStudent").value,raw=$("fixedSeat").value;if(!id||raw===""){Gulliver.toast("학생과 좌석을 선택해 주세요.");return}const seat=Number(raw);Object.keys(state.fixedSeats).forEach(sid=>{if(Number(state.fixedSeats[sid])===seat)delete state.fixedSeats[sid]});state.fixedSeats[id]=seat;state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()};
 $("generateBtn").onclick=generate;$("confirmBtn").onclick=confirmResult;$("clearHistoryBtn").onclick=()=>{if(window.confirm("최근 버스 자리 기록을 모두 지울까요?")){localStorage.removeItem(HISTORY_KEY);renderMetrics()}};
 $("resetSeatsBtn").onclick=resetSeats;$("cancelSelectBtn").onclick=()=>{selectedStudentId=null;renderAll()};$("presentationBtn").onclick=enterPresentation;$("exitPresentationBtn").onclick=exitPresentation;$("printBtn").onclick=()=>window.print();
