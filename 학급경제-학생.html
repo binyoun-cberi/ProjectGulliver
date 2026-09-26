@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>내 학급경제 지갑</title>
+<link rel="icon" href="logo.png">
+<style>
+:root{--bg:#f3f6fb;--paper:#fff;--ink:#253047;--muted:#6c7890;--line:#e5e9f0;--brand:#6d5dfc;--green:#20a77a;--orange:#f0a020;--red:#dc5b5b;--shadow:0 14px 36px rgba(40,52,78,.11)}
+*{box-sizing:border-box}body{margin:0;font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;background:radial-gradient(circle at 10% 0,#e8e4ff,transparent 28%),radial-gradient(circle at 90% 5%,#dff7ee,transparent 30%),var(--bg);color:var(--ink)}
+button,input{font:inherit}.page{width:min(920px,calc(100% - 22px));margin:auto;padding:20px 0 50px}.brand{display:flex;align-items:center;gap:10px;font-weight:950;margin-bottom:16px;color:inherit;text-decoration:none}.brand img{width:42px;height:42px;border-radius:13px}.card{background:#ffffffdf;border:1px solid #fff;border-radius:22px;padding:18px;box-shadow:var(--shadow)}.login{max-width:520px;margin:40px auto}.login h1{font-size:34px;margin:0;letter-spacing:-.06em}.login p{color:var(--muted);font-weight:700;line-height:1.6}.field{display:grid;gap:6px;margin-top:11px}.field label{font-size:12px;font-weight:900;color:#5d6b82}.input{width:100%;padding:13px;border:1px solid var(--line);border-radius:13px;background:#fff}.btn{border:0;border-radius:999px;padding:11px 15px;font-weight:950;font-size:13px;cursor:pointer}.primary{background:var(--brand);color:#fff}.green{background:var(--green);color:#fff}.soft{background:#fff;border:1px solid var(--line)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.hero{padding:22px;background:linear-gradient(135deg,#fff,#f7fbff);border-radius:24px;box-shadow:var(--shadow);border:1px solid #fff}.hero small{font-weight:900;color:var(--muted)}.hero h1{margin:6px 0;font-size:36px;letter-spacing:-.06em}.balances{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}.balance{padding:16px;border-radius:17px;background:#f8f7ff;border:1px solid #ece9ff}.balance:nth-child(2){background:#eefaf5;border-color:#d9f1e7}.balance span{display:block;color:var(--muted);font-size:11px;font-weight:900}.balance b{display:block;font-size:27px;margin-top:4px}
+.tabs{display:flex;gap:7px;overflow:auto;margin:15px 0;padding:7px;background:#ffffffd5;border-radius:16px;box-shadow:var(--shadow)}.tab{border:0;background:transparent;border-radius:11px;padding:10px 12px;font-size:12px;font-weight:950;color:#6b7488;white-space:nowrap}.tab.active{background:var(--ink);color:#fff}.panel{display:none}.panel.active{display:block}.stack{display:grid;gap:10px}.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px;border:1px solid var(--line);border-radius:14px;background:#fff}.row strong{font-size:13px}.row small{display:block;margin-top:3px;color:var(--muted);font-size:11px;font-weight:700;line-height:1.45}.badge{display:inline-flex;padding:5px 8px;border-radius:999px;background:#f0eeff;color:#5d50d5;font-size:10px;font-weight:950}.section h2{margin:0 0 4px;font-size:19px;letter-spacing:-.04em}.section p{margin:0 0 12px;color:var(--muted);font-size:12px;font-weight:700;line-height:1.5}.empty{padding:22px;text-align:center;color:var(--muted);font-weight:800;border:1px dashed var(--line);border-radius:14px;background:#fff}.hidden{display:none!important}.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,18px);opacity:0;background:#202838;color:#fff;padding:11px 16px;border-radius:999px;font-size:12px;font-weight:900;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:620px){.balances{grid-template-columns:1fr}.page{width:calc(100% - 14px)}}
+</style>
+</head>
+<body>
+<div class="page">
+<a class="brand" href="학급경제.html"><img src="logo.png" alt=""><span>학급경제 · 내 지갑</span></a>
+<section id="loginView" class="card login">
+<h1>내 지갑 들어가기</h1>
+<p>선생님에게 받은 학급코드, 학생번호, 6자리 PIN을 입력하세요. 이 탭을 닫으면 로그인 정보가 사라집니다.</p>
+<div class="field"><label>학급코드</label><input class="input" id="classCode" maxlength="6" autocomplete="off"></div>
+<div class="field"><label>학생번호</label><input class="input" id="studentCode" inputmode="numeric" maxlength="2" placeholder="예: 03"></div>
+<div class="field"><label>6자리 PIN</label><input class="input" id="pin" inputmode="numeric" maxlength="6" autocomplete="off"></div>
+<div class="actions"><button class="btn primary" id="loginBtn">지갑 열기</button></div>
+</section>
+<section id="walletView" class="hidden">
+<div class="hero"><div style="display:flex;justify-content:space-between;gap:8px"><div><small id="className">우리 반</small><h1 id="studentName">학생</h1></div><button class="btn soft" id="logoutBtn">나가기</button></div><div id="jobLine" class="badge">직업 미배정</div><div class="balances"><div class="balance"><span>지갑</span><b id="cash">0</b></div><div class="balance"><span>저축</span><b id="savings">0</b></div></div></div>
+<nav class="tabs"><button class="tab active" data-tab="wallet">내 지갑</button><button class="tab" data-tab="bank">은행</button><button class="tab" data-tab="jobs">직업시장</button><button class="tab" data-tab="store">상점</button><button class="tab" data-tab="law">법·처분</button></nav>
+<section class="panel active card section" id="panel-wallet"><h2>최근 거래</h2><p>월급, 세금, 저축, 구매, 과태료 기록입니다.</p><div id="txRows" class="stack"></div></section>
+<section class="panel card section" id="panel-bank"><h2>은행</h2><p id="interestInfo"></p><div class="field"><label>금액</label><input class="input" id="bankAmount" type="number" value="10" min="1"></div><div class="actions"><button class="btn green" id="depositBtn">저축하기</button><button class="btn soft" id="withdrawBtn">저축 인출</button></div></section>
+<section class="panel card section" id="panel-jobs"><h2>직업 시장</h2><p>자격이 있는 직업에 지원할 수 있습니다.</p><div id="jobRows" class="stack"></div></section>
+<section class="panel card section" id="panel-store"><h2>학급상점</h2><p>구매 시 소비세가 자동 계산됩니다.</p><div id="storeRows" class="stack"></div></section>
+<section class="panel card section" id="panel-law"><h2>학급 법전과 내 처분</h2><div id="lawRows" class="stack"></div><h3>내 처분 기록</h3><div id="caseRows" class="stack"></div></section>
+</section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="economy-student.js"></script>
+</body>
+</html>
