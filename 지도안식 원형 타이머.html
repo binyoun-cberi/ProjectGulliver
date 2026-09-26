@@ -647,7 +647,7 @@ function updateDisplay(now=performance.now()){
   document.title=`${titleClock} · ${phase?.kind==='activity'?phase.event.name:(mainTitle.value||'수업 타이머')}`;
 }
 
-function hexToRgbafunction hexToRgba(hex,alpha){
+function hexToRgba(hex,alpha){
   const clean=safeColor(hex).slice(1);
   const r=parseInt(clean.slice(0,2),16),g=parseInt(clean.slice(2,4),16),b=parseInt(clean.slice(4,6),16);
   return `rgba(${r},${g},${b},${alpha})`;
@@ -755,7 +755,7 @@ function drawTimer(){
   ctx.lineWidth=1;ctx.strokeStyle='rgba(211,220,234,.9)';ctx.stroke();
 }
 
-function renderEventListlet draggedEventId=null;
+let draggedEventId=null;
 function renderEventList(){
   eventList.replaceChildren();
   const phase=phaseAt(clamp(getElapsed(),0,totalSeconds()));
@@ -838,7 +838,7 @@ eventList.addEventListener('drop',(event)=>{
   refresh({list:true});showToast('활동 순서를 바꿨습니다.');
 });
 
-function refreshfunction refresh({list=false,save=true}={}){
+function refresh({list=false,save=true}={}){
   const total=totalSeconds();
   if(getElapsed()>total)setElapsed(total);
   updateDisplay();drawTimer();if(list)renderEventList();if(save)saveSettings();
