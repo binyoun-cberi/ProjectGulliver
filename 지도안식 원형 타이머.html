@@ -881,7 +881,7 @@ function findEventByCard(target){
   return card?state.events.find(event=>event.id===card.dataset.id):null;
 }
 
-let audioContext=null;let audioContext=null;
+let audioContext=null;
 function ensureAudio(){
   if(!state.soundOn)return null;
   if(!audioContext) audioContext=new (window.AudioContext||window.webkitAudioContext)();
