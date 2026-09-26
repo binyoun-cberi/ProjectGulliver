@@ -23,6 +23,7 @@
 
         .theme-transition { transition: all 0.5s ease-in-out; }
     </style>
+  <script src="gulliver-shared.js"></script>
 </head>
 <body class="flex h-screen w-screen overflow-hidden text-gray-800">
 
@@ -351,5 +352,6 @@
         updateBoard();         // 기본 정보/테마 삽입
         applyTextStyles();     // 기본 폰트 사이즈/정렬 적용
     </script>
+<script>Gulliver.mountShell({title:"이번 수업 알리미",icon:"📺"});</script>
 </body>
 </html>
