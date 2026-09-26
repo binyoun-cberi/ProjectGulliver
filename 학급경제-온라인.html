@@ -220,7 +220,14 @@ function renderAll(){
  document.getElementById("itemRows").innerHTML=s.items.map(function(i){return '<div class="row"><div><strong>'+esc(i.name)+" · "+money(i.price)+'</strong><small>'+(i.stock==null?"무제한":"재고 "+i.stock+"개")+" · 소비세 "+s.settings.consumptionTaxRate+"%</small></div><span class='badge green'>판매중</span></div>"}).join("")||'<div class="muted tiny">상품 없음</div>';
  document.getElementById("lawRows").innerHTML=s.laws.map(function(l){return '<div class="row"><div><strong>'+esc(l.title)+'</strong><small>'+esc(l.description)+" · 기본 "+money(l.defaultFine)+" · "+esc(l.effectiveFrom)+" 시행</small></div><span class='badge'>법</span></div>"}).join("")||'<div class="muted tiny">등록된 법 없음</div>';
  document.getElementById("caseLaw").innerHTML=s.laws.map(function(l){return '<option value="'+l.id+'">'+esc(l.title)+"</option>"}).join("");
- document.getElementById("caseRows").innerHTML=s.cases.slice().reverse().map(function(c){var law=s.laws.find(function(x){return x.id===c.lawId});var buttons="";if(c.status==="pending")buttons='<button class="btn green" onclick="caseDecision(\''+c.id+"','confirm')\">확정</button><button class=\"btn soft\" onclick=\"caseDecision('"+c.id+"','cancel')\">취소</button>';if(c.status==="appealed")buttons='<button class="btn dark" onclick="caseDecision(\''+c.id+"','uphold')\">유지</button><button class=\"btn soft\" onclick=\"caseDecision('"+c.id+"','reverse')\">취소·환급</button>';return '<div class="row"><div><strong>'+esc(studentName(c.studentId))+" · "+esc(law?law.title:"법")+" · "+caseStatus(c.status)+'</strong><small>'+esc(c.note)+" · 예정 "+money(c.proposedFine)+(c.appliedFine?" · 적용 "+money(c.appliedFine):"")+(c.appealText?" · 이의: "+esc(c.appealText):"")+"</small></div><div>"+buttons+"</div></div>"}).join("")||'<div class="muted tiny">처분 사건 없음</div>';
+ document.getElementById("caseRows").innerHTML=s.cases.slice().reverse().map(function(c){
+  var law=s.laws.find(function(x){return x.id===c.lawId});
+  var buttons="";
+  if(c.status==="pending")buttons='<button class="btn green" data-case="'+esc(c.id)+'" data-decision="confirm">확정</button> <button class="btn soft" data-case="'+esc(c.id)+'" data-decision="cancel">취소</button>';
+  if(c.status==="appealed")buttons='<button class="btn dark" data-case="'+esc(c.id)+'" data-decision="uphold">유지</button> <button class="btn soft" data-case="'+esc(c.id)+'" data-decision="reverse">취소·환급</button>';
+  return '<div class="row"><div><strong>'+esc(studentName(c.studentId))+" · "+esc(law?law.title:"법")+" · "+caseStatus(c.status)+'</strong><small>'+esc(c.note)+" · 예정 "+money(c.proposedFine)+(c.appliedFine?" · 적용 "+money(c.appliedFine):"")+(c.appealText?" · 이의: "+esc(c.appealText):"")+"</small></div><div>"+buttons+"</div></div>";
+ }).join("")||'<div class="muted tiny">처분 사건 없음</div>';
+ document.querySelectorAll("[data-case][data-decision]").forEach(function(btn){btn.onclick=function(){caseDecision(btn.dataset.case,btn.dataset.decision)};});
  renderCredentials();
 }
 function renderCredentials(){
