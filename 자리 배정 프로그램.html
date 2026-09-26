@@ -150,6 +150,7 @@ body.flipped .seat.selected{transform:rotate(180deg) translateY(3px)}
               <option value="6x5">6 × 5 · 30자리</option>
               <option value="7x4">7 × 4 · 28자리</option>
               <option value="8x4">8 × 4 · 32자리</option>
+              <option value="custom">직접 설정</option>
             </select>
           </div>
           <div class="field"><label>대형</label>
@@ -322,12 +323,14 @@ function isFixedSeat(index){return Object.prototype.hasOwnProperty.call(state.fi
 function hasAssignment(){return state.assignment.some(Boolean)}
 function escapeHTML(v){return String(v||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function gridFromSelect(){
-  const [cols,rows]=$('seatSize').value.split('x').map(Number);
+  const value=$('seatSize').value;
+  if(value==='custom')return{cols:state.cols,rows:state.rows};
+  const [cols,rows]=value.split('x').map(Number);
   return{cols,rows}
 }
 function closestPreset(){
   const val=state.cols+'x'+state.rows;
-  if([...$('seatSize').options].some(o=>o.value===val)) $('seatSize').value=val;
+  $('seatSize').value=[...$('seatSize').options].some(o=>o.value===val)?val:'custom';
 }
 function samePair(a,b){
   const ar=Math.floor(a/state.cols),ac=a%state.cols,br=Math.floor(b/state.cols),bc=b%state.cols;
@@ -781,7 +784,9 @@ function resizeGrid(cols,rows){
   $('customCols').value=cols;$('customRows').value=rows;
   saveState();renderFixedControls();renderBoard();return true;
 }
-function applyCustomGrid(){resizeGrid($('customCols').value,$('customRows').value)}
+function applyCustomGrid(){
+  if(resizeGrid($('customCols').value,$('customRows').value))$('seatSize').value='custom';
+}
 function shapeMask(type){
   const mask=Array(state.cols*state.rows).fill(true);
   const mid=Math.floor(state.cols/2);
