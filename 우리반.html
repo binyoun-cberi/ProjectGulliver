@@ -23,6 +23,9 @@ input,textarea,select{width:100%;border:1px solid #dfe4eb;border-radius:11px;pad
 .profile-grid{display:grid;grid-template-columns:230px minmax(0,1fr);gap:14px}.student-list{border:1px solid var(--line);border-radius:15px;background:#fbfcfe;padding:7px;max-height:570px;overflow:auto}.student-btn{width:100%;border:0;background:transparent;border-radius:10px;padding:9px 10px;text-align:left;color:#536176;font-weight:900;cursor:pointer}.student-btn.active{background:#eef2ff;color:#4338ca}.editor{border:1px solid var(--line);border-radius:17px;padding:15px;background:#fff}.editor-title{font-size:20px;font-weight:1000;letter-spacing:-.04em;margin-bottom:3px}.editor-sub{color:#8a95a6;font-size:11px;font-weight:800;margin-bottom:14px}.score-row{display:grid;grid-template-columns:130px 1fr 34px;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f0f2f5}.score-row label{margin:0}.score-row input[type=range]{padding:0;border:0;background:transparent;box-shadow:none}.score-value{height:30px;display:grid;place-items:center;border-radius:9px;background:#f1f5f9;font-size:12px;font-weight:1000}.toggle-row{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.toggle{display:flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid #e2e8f0;border-radius:11px;background:#f8fafc;font-size:12px;font-weight:850;color:#526077}.toggle input{width:auto}
 .relation-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}.relation-tags{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.tag-check{display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid #dfe5ed;background:#f8fafc;border-radius:999px;font-size:11px;font-weight:900;color:#526077}.tag-check input{width:auto}.relation-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}.relation-list{display:grid;gap:8px;margin-top:15px}.relation-card{border:1px solid var(--line);border-radius:14px;padding:11px 12px;background:#fff}.relation-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.relation-names{font-weight:1000}.relation-meta{font-size:10px;color:#8490a2;font-weight:800;margin-top:5px}.tag-list{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.r-tag{font-size:10px;font-weight:900;padding:5px 7px;border-radius:999px;background:#f1f5f9;color:#526077}.r-tag.warn{background:#fff1f2;color:#be123c}.r-tag.good{background:#ecfdf5;color:#047857}
 .history-list{display:grid;gap:8px}.history-card{border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px}.history-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.history-title{font-weight:1000}.history-time{font-size:10px;color:#8b96a7;font-weight:800}.history-desc{font-size:11px;color:#64748b;font-weight:750;margin-top:5px}.backup{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+.economy-access{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+.economy-access-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px}.economy-access-head h2{font-size:16px;margin:0}.economy-access-head p{margin:4px 0 0;color:#8b96a7;font-size:10px;font-weight:800;line-height:1.5}
+.economy-list{display:grid;gap:6px;max-height:310px;overflow:auto}.economy-row{display:grid;grid-template-columns:minmax(90px,1fr) 52px 88px auto;gap:6px;align-items:center;padding:8px;border:1px solid #e6e9ef;border-radius:11px;background:#fbfcfe}.economy-name{font-size:12px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.economy-code,.economy-pin{font:900 11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;text-align:center;padding:6px 5px;border-radius:8px;background:#eef2ff;color:#4338ca}.economy-pin.missing{background:#f1f5f9;color:#94a3b8}.economy-row .btn{padding:7px 8px;font-size:10px}.economy-status{padding:12px;border-radius:11px;background:#f8fafc;color:#64748b;font-size:11px;font-weight:800;line-height:1.55}
 @media(max-width:760px){.tabs{grid-template-columns:1fr 1fr}.grid,.profile-grid{grid-template-columns:1fr}.student-list{max-height:190px}.relation-form,.relation-controls{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}.hero{padding:22px 18px}.panel{padding:14px}.score-row{grid-template-columns:105px 1fr 30px}}
 </style>
 <script src="gulliver-shared.js"></script>
@@ -58,6 +61,13 @@ input,textarea,select{width:100%;border:1px solid #dfe4eb;border-radius:11px;pad
         </div>
         <div class="preview" id="preview"></div>
         <div class="notice">앞자리·모둠장·관계 태그 같은 구조화된 정보만 다른 도구가 참고합니다. 아래 학생 메모와 관계 메모의 자유 문장은 다른 도구에서 읽지 않습니다.</div>
+        <div class="economy-access">
+          <div class="economy-access-head">
+            <div><h2>💳 학급경제 학생 접속</h2><p>학생번호와 6자리 PIN을 명단에서 바로 확인합니다.</p></div>
+            <a class="btn" href="학급경제-온라인.html">경제 관리</a>
+          </div>
+          <div id="economyAccessList" class="economy-list"></div>
+        </div>
         <div class="backup">
           <h2 style="font-size:16px;margin:0 0 9px">백업 · 복원</h2>
           <div class="actions"><button class="btn" id="exportBtn">전체 JSON 백업</button><button class="btn" id="importBtn">JSON 불러오기</button><input class="file" id="fileInput" type="file" accept=".json,application/json"></div>
@@ -106,6 +116,8 @@ const $=s=>document.querySelector(s);
 let selectedStudentId=null;
 const TAG_LABEL={avoid:'떨어뜨리기',conflict:'갈등 있음',chatter:'수다 많음',playful:'장난 많음',cooperate:'협력 좋음'};
 const TYPE_LABEL={seating:'자리 배정',groups:'모둠 편성',roles:'역할 배정',bus:'버스 좌석'};
+const ECONOMY_KEY='gulliver.economy.server.v1';
+const ECONOMY_API='https://gulliver-api.binyoun.workers.dev';
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function room(){return Gulliver.getClassroom()}
 function switchTab(tab){
@@ -126,12 +138,60 @@ function renderAll(){
   $('#preview').innerHTML=c.students.length?c.students.map((s,i)=>'<span class="chip">'+(i+1)+'. '+esc(s.name)+'</span>').join(''):'<div class="empty">아직 저장된 학생이 없습니다.</div>';
   if(selectedStudentId&&!c.students.some(s=>String(s.id)===String(selectedStudentId)))selectedStudentId=null;
   if(!selectedStudentId&&c.students.length)selectedStudentId=String(c.students[0].id);
-  renderStudentList();renderProfileEditor();renderRelationSelects();renderRelations();renderHistory();
+  renderStudentList();renderProfileEditor();renderRelationSelects();renderRelations();renderHistory();renderEconomyAccess();
 }
 function renderStudentList(){
   const c=room();
   $('#studentList').innerHTML=c.students.length?c.students.map(s=>'<button class="student-btn '+(String(s.id)===String(selectedStudentId)?'active':'')+'" data-student="'+esc(s.id)+'">'+esc(s.name)+'</button>').join(''):'<div class="empty">명단을 먼저 저장하세요.</div>';
   document.querySelectorAll('[data-student]').forEach(b=>b.onclick=()=>{selectedStudentId=b.dataset.student;renderStudentList();renderProfileEditor()});
+}
+function getEconomySession(){
+  try{return JSON.parse(localStorage.getItem(ECONOMY_KEY)||'null')}catch{return null}
+}
+function saveEconomySession(session){
+  localStorage.setItem(ECONOMY_KEY,JSON.stringify(session));
+}
+function renderEconomyAccess(){
+  const box=$('#economyAccessList');
+  if(!box)return;
+  const c=room(),session=getEconomySession();
+  if(!c.students.length){box.innerHTML='<div class="economy-status">명단을 먼저 저장하세요.</div>';return}
+  if(!session||!session.code||!session.teacherToken){
+    box.innerHTML='<div class="economy-status">아직 이 브라우저에 연결된 온라인 학급경제가 없습니다.<br><a href="학급경제-온라인.html" style="color:#4338ca;font-weight:950">온라인 학급경제 v2 열기 →</a></div>';
+    return;
+  }
+  const credentials=Array.isArray(session.credentials)?session.credentials:[];
+  box.innerHTML=c.students.map((student,index)=>{
+    const cred=credentials.find(x=>String(x.id)===String(student.id));
+    const studentCode=cred?.studentCode||String(index+1).padStart(2,'0');
+    const pin=cred?.pin||'미보관';
+    return '<div class="economy-row"><div class="economy-name">'+esc(student.name)+'</div><div class="economy-code">'+esc(studentCode)+'</div><div class="economy-pin '+(cred?.pin?'':'missing')+'">'+esc(pin)+'</div><button class="btn" data-reset-economy-pin="'+esc(student.id)+'">'+(cred?.pin?'재발급':'PIN 발급')+'</button></div>';
+  }).join('');
+  box.insertAdjacentHTML('afterbegin','<div style="display:grid;grid-template-columns:minmax(90px,1fr) 52px 88px auto;gap:6px;padding:0 8px 4px;color:#94a3b8;font-size:9px;font-weight:950"><span>학생</span><span style="text-align:center">번호</span><span style="text-align:center">PIN</span><span></span></div>');
+  box.querySelectorAll('[data-reset-economy-pin]').forEach(btn=>btn.onclick=()=>resetEconomyPin(btn.dataset.resetEconomyPin));
+}
+async function resetEconomyPin(studentId){
+  const session=getEconomySession(),student=room().students.find(s=>String(s.id)===String(studentId));
+  if(!session||!student)return;
+  if(!confirm(student.name+' 학생의 기존 PIN을 무효화하고 새 PIN을 발급할까요?'))return;
+  try{
+    const res=await fetch(ECONOMY_API+'/api/economy/'+encodeURIComponent(session.code)+'/teacher-reset-pin',{
+      method:'POST',
+      headers:{'content-type':'application/json','authorization':'Bearer '+session.teacherToken},
+      body:JSON.stringify({studentId:String(student.id)})
+    });
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data.error||'PIN_RESET_FAILED');
+    session.credentials=Array.isArray(session.credentials)?session.credentials:[];
+    let cred=session.credentials.find(x=>String(x.id)===String(student.id));
+    if(cred){cred.pin=data.pin;cred.studentCode=data.studentCode}else{session.credentials.push({id:student.id,name:student.name,studentCode:data.studentCode,pin:data.pin})}
+    saveEconomySession(session);
+    renderEconomyAccess();
+    Gulliver.toast(student.name+' 새 PIN: '+data.pin);
+  }catch(err){
+    console.error(err);
+    alert('PIN 재발급에 실패했습니다. 온라인 학급경제 연결 상태를 확인해 주세요.');
+  }
 }
 function scoreRow(label,key,value,help){
   return '<div class="score-row"><label>'+label+'<div style="font-size:9px;color:#9aa4b4;margin-top:2px">'+help+'</div></label><input type="range" min="1" max="5" value="'+value+'" data-score="'+key+'"><span class="score-value" id="score_'+key+'">'+value+'</span></div>'
