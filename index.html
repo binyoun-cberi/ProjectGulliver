@@ -586,27 +586,74 @@
       .card { min-height: 220px; }
     }
   
-    .dashboard {
-      display:grid; grid-template-columns:1.05fr .95fr .95fr; gap:14px; margin:18px 0 22px;
+    .home-layout{
+      display:grid;
+      grid-template-columns:272px minmax(0,1fr);
+      gap:20px;
+      align-items:start;
+      margin-top:8px;
     }
-    .dash-card {
-      background:rgba(255,255,255,.82); border:1px solid rgba(255,255,255,.95);
-      border-radius:20px; padding:18px; box-shadow:var(--shadow-soft); min-height:152px;
+    .home-main{min-width:0}
+    .dashboard{
+      position:sticky;
+      top:18px;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:11px;
+      max-height:calc(100vh - 36px);
+      overflow:auto;
+      padding:2px 2px 8px;
+      scrollbar-width:thin;
     }
-    .dash-head {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
-    .dash-head h2 {margin:0;font-size:16px;letter-spacing:-.04em}
-    .dash-link {font-size:12px;font-weight:900;color:var(--brand);text-decoration:none}
-    .class-name {font-size:24px;font-weight:950;letter-spacing:-.05em;margin:2px 0 6px}
-    .class-meta {color:var(--muted);font-size:13px;font-weight:800}
-    .student-preview {display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
-    .student-preview span {padding:6px 8px;border-radius:999px;background:#f4f1ff;color:#5b4dd8;font-size:11px;font-weight:850}
-    .mini-list {display:grid;gap:7px}
-    .mini-tool {display:grid;grid-template-columns:1fr auto;gap:7px;align-items:center}
-    .mini-tool a {min-width:0;padding:9px 10px;border-radius:12px;background:#faf8f4;border:1px solid #eee7dc;color:#475569;font-size:12px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .mini-tool button {width:34px;height:34px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;cursor:pointer;font-size:17px}
-    .dash-empty {padding:12px 0;color:#94a3b8;font-size:12px;font-weight:800}
-    @media (max-width:980px){.dashboard{grid-template-columns:1fr 1fr}.dash-card:first-child{grid-column:1/-1}}
-    @media (max-width:640px){.dashboard{grid-template-columns:1fr}.dash-card:first-child{grid-column:auto}.site-nav{max-width:58vw;overflow-x:auto;justify-content:flex-start}.site-nav a{padding:9px 11px}}
+    .dashboard::-webkit-scrollbar{width:6px}
+    .dashboard::-webkit-scrollbar-thumb{background:#d9d2c7;border-radius:999px}
+    .dash-card{
+      background:rgba(255,255,255,.86);
+      border:1px solid rgba(255,255,255,.97);
+      border-radius:18px;
+      padding:15px;
+      box-shadow:var(--shadow-soft);
+      min-width:0;
+    }
+    .dash-card.classroom-card{
+      background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(244,241,255,.9));
+      border-color:#eeeaff;
+    }
+    .dash-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+    .dash-head h2{margin:0;font-size:15px;letter-spacing:-.04em}
+    .dash-link{font-size:10px;font-weight:950;color:var(--brand);text-decoration:none;white-space:nowrap}
+    .class-name{font-size:22px;font-weight:950;letter-spacing:-.05em;margin:2px 0 5px}
+    .class-meta{color:var(--muted);font-size:11px;font-weight:800;line-height:1.5}
+    .student-preview{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;max-height:72px;overflow:hidden}
+    .student-preview span{padding:5px 7px;border-radius:999px;background:#f4f1ff;color:#5b4dd8;font-size:10px;font-weight:850}
+    .mini-list{display:grid;gap:6px}
+    .mini-tool{display:grid;grid-template-columns:minmax(0,1fr) 31px;gap:6px;align-items:center}
+    .mini-tool a{min-width:0;padding:8px 9px;border-radius:10px;background:#faf8f4;border:1px solid #eee7dc;color:#475569;font-size:11px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .mini-tool button{width:31px;height:31px;border:1px solid #e5e7eb;border-radius:9px;background:#fff;cursor:pointer;font-size:15px}
+    .dash-empty{padding:8px 0;color:#94a3b8;font-size:11px;font-weight:800;line-height:1.5}
+    @media(max-width:980px){
+      .home-layout{grid-template-columns:230px minmax(0,1fr);gap:14px}
+      .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .area-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media(max-width:760px){
+      .home-layout{display:flex;flex-direction:column}
+      .dashboard{
+        position:static;
+        width:100%;
+        max-height:none;
+        overflow:visible;
+        grid-template-columns:1fr;
+        order:0;
+      }
+      .home-main{width:100%;order:1}
+      .dash-card{padding:14px}
+      .student-preview{max-height:none}
+    }
+    @media(max-width:640px){
+      .site-nav{max-width:58vw;overflow-x:auto;justify-content:flex-start}
+      .site-nav a{padding:9px 11px}
+    }
 
     .area-section { margin: 10px 0 22px; }
     .area-head { display:flex;align-items:end;justify-content:space-between;gap:16px;margin:0 0 14px; }
@@ -652,24 +699,25 @@
     </header>
 
 
-    <section class="dashboard" aria-label="교실 대시보드">
-      <article class="dash-card">
-        <div class="dash-head"><h2>👥 우리 반</h2><a class="dash-link" href="우리반.html">운영 정보 관리 →</a></div>
-        <div class="class-name" id="dashClassName">우리 반</div>
-        <div class="class-meta" id="dashClassMeta">저장된 학생이 없습니다.</div>
-        <div class="student-preview" id="dashStudentPreview"></div>
-      </article>
-      <article class="dash-card">
-        <div class="dash-head"><h2>🕘 최근 사용</h2><span class="class-meta">이 브라우저 기준</span></div>
-        <div class="mini-list" id="recentTools"></div>
-      </article>
-      <article class="dash-card">
-        <div class="dash-head"><h2>⭐ 즐겨찾기</h2><span class="class-meta">최근 사용에서 ☆ 추가</span></div>
-        <div class="mini-list" id="favoriteTools"></div>
-      </article>
-    </section>
+    <div class="home-layout">
+      <aside class="dashboard" aria-label="교실 사이드바">
+        <article class="dash-card classroom-card">
+          <div class="dash-head"><h2>👥 우리 반</h2><a class="dash-link" href="우리반.html">관리 →</a></div>
+          <div class="class-name" id="dashClassName">우리 반</div>
+          <div class="class-meta" id="dashClassMeta">저장된 학생이 없습니다.</div>
+          <div class="student-preview" id="dashStudentPreview"></div>
+        </article>
+        <article class="dash-card">
+          <div class="dash-head"><h2>⭐ 즐겨찾기</h2><span class="class-meta">빠른 실행</span></div>
+          <div class="mini-list" id="favoriteTools"></div>
+        </article>
+        <article class="dash-card">
+          <div class="dash-head"><h2>🕘 최근 사용</h2><span class="class-meta">최근 4개</span></div>
+          <div class="mini-list" id="recentTools"></div>
+        </article>
+      </aside>
 
-
+      <div class="home-main">
     <section class="area-section" aria-label="똑똑 영역 선택">
       <div class="area-head">
         <div>
@@ -701,7 +749,8 @@
       <div class="cards" id="cards"></div>
       <div class="empty" id="emptyState">검색 결과가 없습니다. 다른 키워드로 찾아보세요.</div>
     </section>
-
+      </div>
+    </div>
 
     <footer>
       교실 뚝딱도구 · 필요한 일에 맞춰 꺼내 쓰는 교사용 도구함
@@ -1037,7 +1086,7 @@
         <div class="mini-tool">
           <a href="${x.href}" onclick="Gulliver.trackTool({name:'${x.name}',href:'${x.href}',icon:'${x.icon||'🧰'}'})">${x.icon||'⭐'} ${x.name}</a>
           <button type="button" data-favorite="${x.href}" title="즐겨찾기 해제">★</button>
-        </div>`).join('') : '<div class="dash-empty">최근 사용한 도구의 ☆를 눌러 추가하세요.</div>';
+        </div>`).join('') : '<div class="dash-empty">자주 쓰는 도구의 ☆를 눌러 여기에 모아두세요.</div>';
       document.querySelectorAll('[data-favorite]').forEach(btn=>btn.onclick=()=>{
         const href=btn.dataset.favorite;
         const tool=tools.find(t=>t.href===href) || recent.find(t=>t.href===href) || favorites.find(t=>t.href===href);
