@@ -43,6 +43,7 @@
       updatedAt:new Date().toISOString()
     };
     localStorage.setItem(KEYS.classroom,JSON.stringify(value));
+    pruneClassroomMeta(value.students.map(s=>s.id));
     window.dispatchEvent(new CustomEvent('gulliver:classroom-change',{detail:value}));
     return value;
   }
