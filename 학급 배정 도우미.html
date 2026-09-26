@@ -57,7 +57,7 @@ input,select{width:100%;border:1px solid #dce2eb;background:#fff;color:#334155;b
       <div class="toolbar"><button class="btn primary small" id="loadClassroomBtn">👥 우리 반 불러오기</button><button class="btn small" id="clearStudentsBtn">명단 비우기</button></div>
     </div>
     <div class="addbar">
-      <input id="studentNames" placeholder="학생 이름 · 쉼표나 줄바꿈으로 여러 명 입력">
+      <textarea id="studentNames" rows="1" placeholder="학생 이름 · 쉼표나 줄바꿈으로 여러 명 입력" style="width:100%;border:1px solid #dce2eb;background:#fff;color:#334155;border-radius:10px;padding:9px 10px;outline:none;resize:vertical;min-height:42px"></textarea>
       <span></span>
       <button class="btn primary" id="addStudentsBtn">추가</button>
     </div>
@@ -329,15 +329,15 @@ function renderStats(){
 }
 function selectResultStudent(id){
   if(!state.assignment[id])return;
-  if(selectedStudentId&&selectedStudentId!==id){swapStudents(selectedStudentId,id);selectedStudentId=null;renderResults();save();setNotice("두 학생의 역할을 서로 바꿨습니다. 필수·제외 조건은 다시 확인해 주세요.","");return}
+  if(selectedStudentId&&selectedStudentId!==id){const changed=swapStudents(selectedStudentId,id);selectedStudentId=null;renderResults();if(changed){save();setNotice("두 학생의 역할을 서로 바꿨습니다.","")}return}
   selectedStudentId=selectedStudentId===id?null:id;renderResults()
 }
 function swapStudents(a,b){
   const ra=state.assignment[a],rb=state.assignment[b],sa=studentById(a),sb=studentById(b);
-  if(state.fixed[a]&&state.fixed[a]!==rb){toast(sa.name+" 학생은 필수 역할이 있어 바꿀 수 없습니다.");return}
-  if(state.fixed[b]&&state.fixed[b]!==ra){toast(sb.name+" 학생은 필수 역할이 있어 바꿀 수 없습니다.");return}
-  if((state.excluded[a]||[]).includes(rb)||(state.excluded[b]||[]).includes(ra)){toast("제외 조건 때문에 두 학생을 바꿀 수 없습니다.");return}
-  state.assignment[a]=rb;state.assignment[b]=ra
+  if(state.fixed[a]&&state.fixed[a]!==rb){toast(sa.name+" 학생은 필수 역할이 있어 바꿀 수 없습니다.");return false}
+  if(state.fixed[b]&&state.fixed[b]!==ra){toast(sb.name+" 학생은 필수 역할이 있어 바꿀 수 없습니다.");return false}
+  if((state.excluded[a]||[]).includes(rb)||(state.excluded[b]||[]).includes(ra)){toast("제외 조건 때문에 두 학생을 바꿀 수 없습니다.");return false}
+  state.assignment[a]=rb;state.assignment[b]=ra;return true
 }
 function renderManualBox(){
   const box=$("manualBox"),s=studentById(selectedStudentId);box.classList.toggle("show",!!s);if(!s)return;$("selectedStudentLabel").textContent=s.name+" · 현재 "+(roleById(state.assignment[s.id])?.name||"");
@@ -353,6 +353,7 @@ function moveSelected(){
 function confirmAssignment(){
   if(Object.keys(state.assignment).length!==state.students.length){setNotice("모든 학생이 배정된 결과가 있어야 확정할 수 있습니다.","bad");return}
   const err=validate();if(err){setNotice(err,"bad");return}
+  for(const role of state.roles){if(roleUsage(role.id)>role.count){setNotice("‘"+role.name+"’ 역할의 정원을 초과했습니다.","bad");return}}
   for(const s of state.students){const r=state.assignment[s.id];if(state.fixed[s.id]&&state.fixed[s.id]!==r){setNotice(s.name+" 학생의 필수 역할이 지켜지지 않았습니다.","bad");return}if((state.excluded[s.id]||[]).includes(r)){setNotice(s.name+" 학생에게 제외된 역할이 배정되어 있습니다.","bad");return}}
   const hist=[{at:Date.now(),assignments:{...state.assignment}},...getHistory()].slice(0,3);saveHistoryList(hist);renderHistory();renderStats();setNotice("이번 역할을 확정했습니다. 다음 배정에서는 같은 역할이 반복되지 않도록 최근 기록에 반영합니다.","good");toast("이번 역할을 기록했습니다.")
 }
