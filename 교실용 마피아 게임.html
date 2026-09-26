@@ -723,7 +723,7 @@
     let hideTimer = null;
     let hideRemain = 0;
     let timerInterval = null;
-    let timerData = { seconds: 0, remain: 0, running: false };
+    let timerData = { seconds: 0, remain: 0, running: false, endAt: 0 };
 
     function makeInitialState() {
       return {
@@ -1055,8 +1055,8 @@
                 <input value="${escapeHtml(state.setup.password)}" oninput="setSetup('password', this.value)" />
               </div>
               <div>
-                <label>역할 자동 숨김 초</label>
-                <input type="number" min="1" max="15" value="${state.setup.revealSeconds}" onchange="setSetup('revealSeconds', this.value)" />
+                <label>역할 확인 방식</label>
+                <input value="버튼을 누르는 동안만 공개" disabled />
               </div>
               <div>
                 <label>토론 시간(초)</label>
@@ -1112,7 +1112,7 @@
             <select onchange="updateCustomRole(${index}, 'team', this.value)">
               ${option("village", "마을 팀", role.team)}
               ${option("mafia", "마피아 팀", role.team)}
-              ${option("solo", "개인/특수", role.team)}
+              ${option("solo", "개인/특수 · 승리 조건 수동", role.team)}
             </select>
           </div>
           <div>
@@ -1594,7 +1594,7 @@
               <div class="soft">토론 타이머</div>
               <div class="time" id="timerDisplay">${formatTime(state.setup.discussionSeconds)}</div>
               <div class="row" style="justify-content:center;">
-                <button class="good" onclick="startTimer(${state.setup.discussionSeconds})">시작</button>
+                <button class="good" onclick="startTimer(${state.setup.discussionSeconds})">시작/계속</button>
                 <button onclick="pauseTimer()">일시정지</button>
                 <button onclick="resetTimer(${state.setup.discussionSeconds})">초기화</button>
               </div>
@@ -1919,8 +1919,9 @@
         state.round = 1;
         state.students = [];
         state.votes = {};
+        state.handVotes = {};
         state.winner = null;
-        state.night = { attackTargetId: "", policeTargetId: "", policeResult: "", summary: "", memo: "" };
+        state.night = { attackTargetId: "", policeTargetId: "", policeResult: "", protectTargetId: "", summary: "", memo: "" };
         log("설정 화면으로 돌아왔습니다.");
         saveState();
         render();
@@ -1936,8 +1937,9 @@
         closeRestartModal();
         state.phase = "reveal";
         state.round = 1;
-        state.night = { attackTargetId: "", policeTargetId: "", policeResult: "", summary: "", memo: "" };
+        state.night = { attackTargetId: "", policeTargetId: "", policeResult: "", protectTargetId: "", summary: "", memo: "" };
         state.votes = {};
+        state.handVotes = {};
         state.lastTally = null;
         state.winner = null;
         state.journal = [{ at: nowText(), text: "같은 설정으로 새 역할을 배정했습니다." }];
@@ -2036,49 +2038,77 @@
     }
 
     function startTimer(seconds) {
-      timerData = { seconds, remain: seconds, running: true };
+      seconds = Math.max(1, Number(seconds || 1));
+      if (timerData.seconds !== seconds || timerData.remain <= 0) {
+        timerData = { seconds, remain: seconds, running: false, endAt: 0 };
+      }
+      if (timerData.running) return;
+      timerData.running = true;
+      timerData.endAt = Date.now() + timerData.remain * 1000;
       updateTimerDisplay();
       clearInterval(timerInterval);
       timerInterval = setInterval(() => {
         if (!timerData.running) return;
-        timerData.remain--;
+        timerData.remain = Math.max(0, Math.ceil((timerData.endAt - Date.now()) / 1000));
         updateTimerDisplay();
         if (timerData.remain <= 0) {
           clearInterval(timerInterval);
           timerData.running = false;
+          timerData.endAt = 0;
           sound("bad");
           flash("bad");
           alert("시간이 끝났습니다.");
         }
-      }, 1000);
+      }, 200);
     }
 
     function pauseTimer() {
+      if (timerData.running) {
+        timerData.remain = Math.max(0, Math.ceil((timerData.endAt - Date.now()) / 1000));
+      }
       timerData.running = false;
+      timerData.endAt = 0;
       clearInterval(timerInterval);
       updateTimerDisplay();
     }
 
     function resetTimer(seconds) {
       clearInterval(timerInterval);
-      timerData = { seconds, remain: seconds, running: false };
+      seconds = Math.max(1, Number(seconds || 1));
+      timerData = { seconds, remain: seconds, running: false, endAt: 0 };
       updateTimerDisplay();
     }
 
     function stopTimer(clearDisplay = true) {
+      if (timerData.running) {
+        timerData.remain = Math.max(0, Math.ceil((timerData.endAt - Date.now()) / 1000));
+      }
       clearInterval(timerInterval);
       timerData.running = false;
+      timerData.endAt = 0;
       if (clearDisplay) updateTimerDisplay();
     }
 
     function updateTimerDisplay() {
       const el = document.getElementById("timerDisplay");
-      if (el) el.textContent = formatTime(timerData.remain || timerData.seconds || 0);
+      if (el) el.textContent = formatTime(Number.isFinite(timerData.remain) ? timerData.remain : timerData.seconds || 0);
+    }
+
+    const holdRoleBtn = document.getElementById("holdRoleBtn");
+    if (holdRoleBtn) {
+      const showHeldRole = (e) => { e.preventDefault(); setRoleRevealVisible(true); };
+      const hideHeldRole = (e) => { if (e) e.preventDefault(); setRoleRevealVisible(false); };
+      holdRoleBtn.addEventListener("pointerdown", showHeldRole);
+      holdRoleBtn.addEventListener("pointerup", hideHeldRole);
+      holdRoleBtn.addEventListener("pointercancel", hideHeldRole);
+      holdRoleBtn.addEventListener("pointerleave", hideHeldRole);
+      window.addEventListener("blur", () => setRoleRevealVisible(false));
     }
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         hideRoleModal();
+        closeTeacherPanel();
         closeRestartModal();
       }
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "t") {
