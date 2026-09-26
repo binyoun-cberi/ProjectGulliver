@@ -125,7 +125,7 @@ body.flipped .seat.active:hover{transform:rotate(180deg) translateY(2px)}
 body.flipped .seat.selected{transform:rotate(180deg) translateY(3px)}
 @media(max-width:920px){.layout{grid-template-columns:1fr}.settings{position:static;max-height:none}.field-row{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){body{padding:72px 10px 30px}.topline{align-items:flex-start;flex-direction:column}.view-actions{justify-content:flex-start}.workspace{padding:12px}.settings{padding:12px}.scorebox{grid-template-columns:1fr 1fr}.seat{width:78px;height:64px}.mini-form{grid-template-columns:1fr 78px auto}.rule-form{grid-template-columns:1fr 1fr}.rule-form .btn{grid-column:1/-1}}
-@media print{body{padding:0;background:white}.topline,.settings,.board-actions,.scorebox,.notice,.gulliver-shell{display:none!important}.layout{display:block}.panel,.workspace,.board-wrap{box-shadow:none;border:0;background:white}.board-wrap{overflow:visible}.seat{break-inside:avoid}}
+@media print{body{padding:0;background:white}.topline,.settings,.board-actions,.scorebox,.notice,.gulliver-shell,.seat .pin,.seat .gender-pin{display:none!important}.layout{display:block}.panel,.workspace,.board-wrap{box-shadow:none;border:0;background:white}.board-wrap{overflow:visible}.seat{break-inside:avoid}.seat.fixed,.seat.conflict,.seat.gender-seat-m,.seat.gender-seat-f{box-shadow:none!important;border-color:#d8dee7!important;background:#fff!important}}
 </style>
 <script src="gulliver-shared.js"></script>
 </head>
@@ -868,15 +868,7 @@ function validateGenderSeats(){
   const fSeats=activeIndices().filter(i=>!fixedSeatSet.has(i)&&genderSeatAt(i)==='F').length;
   const neutralSeats=activeIndices().filter(i=>!fixedSeatSet.has(i)&&!genderSeatAt(i)).length;
 
-  if(mSeats>freeM){
-    setNotice('남학생 지정석이 남학생 수보다 '+(mSeats-freeM)+'자리 많습니다. 지정석을 줄이거나 남학생 명단을 확인해 주세요.','bad');
-    return false;
-  }
-  if(fSeats>freeF){
-    setNotice('여학생 지정석이 여학생 수보다 '+(fSeats-freeF)+'자리 많습니다. 지정석을 줄이거나 여학생 명단을 확인해 주세요.','bad');
-    return false;
-  }
-  const remainingAfterReserved=(freeM-mSeats)+(freeF-fSeats)+freeU;
+  const remainingAfterReserved=Math.max(0,freeM-mSeats)+Math.max(0,freeF-fSeats)+freeU;
   if(remainingAfterReserved>neutralSeats){
     setNotice('성별 지정석 때문에 나머지 학생이 앉을 일반 자리가 부족합니다. 지정석 일부를 해제해 주세요.','bad');
     return false;
