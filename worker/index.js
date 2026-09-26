@@ -1,4 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
+import { handleEconomyRequest, EconomyClass } from "./economy.js";
+export { EconomyClass };
 
 const ROOM_TTL_MS = 48 * 60 * 60 * 1000;
 const ROOM_CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -157,6 +159,9 @@ export default {
         status: "ready"
       }, 200, corsHeaders());
     }
+
+    const economyResponse = await handleEconomyRequest(request, env);
+    if (economyResponse) return economyResponse;
 
     if (request.method === "POST" && url.pathname === "/api/rooms") {
       return createRoom(request, env);
