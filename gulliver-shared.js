@@ -56,20 +56,15 @@
   }
   function setNames(names,className){
     const current=getClassroom();
-    const queues=new Map();
-    current.students.forEach(s=>{
-      const key=s.name+'|'+(s.gender||'');
-      if(!queues.has(key))queues.set(key,[]);
-      queues.get(key).push(s);
-    });
+    const available=[...current.students];
     const students=String(names||'').split(/\r?\n|,/).map(parseStudentLine).filter(s=>cleanName(s.name)).map(s=>{
-      const key=cleanName(s.name)+'|'+(s.gender||'');
-      const old=(queues.get(key)||[]).shift();
-      return {id:old?.id||uid(),name:s.name,gender:s.gender};
+      const name=cleanName(s.name),gender=s.gender||'';
+      let index=available.findIndex(old=>old.name===name&&(old.gender||'')===gender);
+      if(index<0)index=available.findIndex(old=>old.name===name);
+      const old=index>=0?available.splice(index,1)[0]:null;
+      return {id:old?.id||uid(),name,gender};
     });
-    const saved=saveClassroom({className:className||current.className,students});
-    pruneClassroomMeta(saved.students.map(s=>s.id));
-    return saved;
+    return saveClassroom({className:className||current.className,students});
   }
   function getNames(){return getClassroom().students.map(s=>s.name)}
   function getNamesText(){return getNames().join('\n')}
