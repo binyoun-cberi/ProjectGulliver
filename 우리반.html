@@ -6,69 +6,203 @@
 <title>우리 반 | 교실 뚝딱도구</title>
 <link rel="icon" type="image/png" href="logo.png">
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f6f3ee;color:#243042;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
-main{width:min(980px,calc(100% - 28px));margin:26px auto 64px}.hero,.panel{background:#fff;border:1px solid #ece5d9;border-radius:24px;box-shadow:0 12px 30px rgba(63,54,38,.08)}
-.hero{padding:30px;margin-bottom:18px;background:linear-gradient(135deg,#fff,#f5f3ff)}h1{margin:0;font-size:clamp(30px,5vw,48px);letter-spacing:-.06em}.hero p{margin:10px 0 0;color:#64748b;line-height:1.7;font-weight:650}
-.grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}.panel{padding:22px}h2{margin:0 0 14px;font-size:20px;letter-spacing:-.04em}.field{display:grid;gap:7px;margin-bottom:14px}label{font-size:13px;font-weight:850;color:#475569}
-input,textarea{width:100%;border:1px solid #dfe3ea;border-radius:12px;padding:12px 13px;font:700 14px/1.55 inherit;color:#1f2937;background:#fbfcfe;outline:none}input:focus,textarea:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(99,102,241,.12)}textarea{min-height:360px;resize:vertical}
-.actions{display:flex;flex-wrap:wrap;gap:8px}.btn{border:0;border-radius:11px;padding:11px 14px;font:850 13px/1 inherit;cursor:pointer;background:#eef2ff;color:#4338ca}.btn.primary{background:#4f46e5;color:#fff}.btn.danger{background:#fff1f2;color:#be123c}.btn.ghost{background:#f8fafc;color:#475569;border:1px solid #e2e8f0}
-.summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}.stat{padding:16px;border-radius:16px;background:#f8fafc;border:1px solid #eef2f7}.stat strong{display:block;font-size:25px}.stat span{font-size:12px;color:#64748b;font-weight:800}
-.preview{display:flex;flex-wrap:wrap;gap:7px;max-height:320px;overflow:auto}.chip{padding:8px 10px;border-radius:999px;background:#f1f5f9;font-size:13px;font-weight:800;color:#475569}.empty{color:#94a3b8;font-size:13px;font-weight:750;padding:10px 0}
-.notice{margin-top:16px;padding:14px 15px;border-radius:14px;background:#fffbeb;color:#92400e;font-size:12px;line-height:1.6;font-weight:700}
-.file{display:none}@media(max-width:760px){.grid{grid-template-columns:1fr}.hero{padding:24px 20px}.panel{padding:18px}textarea{min-height:300px}}
+*{box-sizing:border-box}
+:root{--bg:#f6f3ee;--paper:#fff;--ink:#243042;--muted:#6f7c91;--line:#e6e0d7;--brand:#5b55d6;--green:#0f9f78;--red:#dc4c64;--amber:#d97706;--shadow:0 12px 30px rgba(63,54,38,.08)}
+body{margin:0;padding-top:66px;background:radial-gradient(circle at 10% 0,#f0efff 0,transparent 26%),radial-gradient(circle at 92% 0,#fff0d4 0,transparent 22%),var(--bg);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+main{width:min(1080px,calc(100% - 28px));margin:18px auto 64px}
+.hero,.panel{background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.98);border-radius:24px;box-shadow:var(--shadow)}
+.hero{padding:28px;margin-bottom:14px;background:linear-gradient(135deg,#fff,#f5f3ff)}
+h1{margin:0;font-size:clamp(30px,5vw,48px);letter-spacing:-.06em}.hero p{margin:9px 0 0;color:#64748b;line-height:1.65;font-weight:650}.privacy{display:inline-flex;margin-top:12px;padding:7px 10px;border-radius:999px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:900}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:7px;background:rgba(255,255,255,.76);border:1px solid #fff;border-radius:18px;box-shadow:var(--shadow);margin-bottom:14px}.tab{border:0;background:transparent;color:#7a8698;padding:11px 8px;border-radius:12px;font-weight:950;cursor:pointer}.tab.active{background:#fff;color:var(--brand);box-shadow:0 4px 13px rgba(50,45,90,.08)}
+.panel{padding:20px;display:none}.panel.active{display:block}.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.section-head h2{margin:0;font-size:20px;letter-spacing:-.04em}.section-head p{margin:5px 0 0;color:var(--muted);font-size:12px;font-weight:750;line-height:1.55}
+.grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px}.field{display:grid;gap:6px;margin-bottom:12px}label{font-size:12px;font-weight:900;color:#526077}
+input,textarea,select{width:100%;border:1px solid #dfe4eb;border-radius:11px;padding:10px 11px;font:700 14px/1.5 inherit;color:#263244;background:#fbfcfe;outline:none}input:focus,textarea:focus,select:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(99,102,241,.11)}textarea{resize:vertical}
+.names{min-height:350px}.actions{display:flex;flex-wrap:wrap;gap:7px}.btn{border:1px solid #e2e8f0;border-radius:11px;padding:9px 12px;font:900 12px/1 inherit;cursor:pointer;background:#fff;color:#475569}.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.green{background:var(--green);border-color:var(--green);color:#fff}.btn.danger{background:#fff1f2;border-color:#fecdd3;color:#be123c}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:13px}.stat{padding:13px;border-radius:14px;background:#f8fafc;border:1px solid #eef2f7}.stat strong{display:block;font-size:22px}.stat span{font-size:10px;color:#64748b;font-weight:900}
+.preview{display:flex;flex-wrap:wrap;gap:6px;max-height:260px;overflow:auto}.chip{padding:7px 9px;border-radius:999px;background:#f1f5f9;font-size:12px;font-weight:850;color:#475569}.empty{color:#94a3b8;font-size:12px;font-weight:750;padding:12px 0}.notice{margin-top:14px;padding:12px 13px;border-radius:13px;background:#fffbeb;color:#92400e;font-size:11px;line-height:1.6;font-weight:750}.file{display:none}
+.profile-grid{display:grid;grid-template-columns:230px minmax(0,1fr);gap:14px}.student-list{border:1px solid var(--line);border-radius:15px;background:#fbfcfe;padding:7px;max-height:570px;overflow:auto}.student-btn{width:100%;border:0;background:transparent;border-radius:10px;padding:9px 10px;text-align:left;color:#536176;font-weight:900;cursor:pointer}.student-btn.active{background:#eef2ff;color:#4338ca}.editor{border:1px solid var(--line);border-radius:17px;padding:15px;background:#fff}.editor-title{font-size:20px;font-weight:1000;letter-spacing:-.04em;margin-bottom:3px}.editor-sub{color:#8a95a6;font-size:11px;font-weight:800;margin-bottom:14px}.score-row{display:grid;grid-template-columns:130px 1fr 34px;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f0f2f5}.score-row label{margin:0}.score-row input[type=range]{padding:0;border:0;background:transparent;box-shadow:none}.score-value{height:30px;display:grid;place-items:center;border-radius:9px;background:#f1f5f9;font-size:12px;font-weight:1000}.toggle-row{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.toggle{display:flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid #e2e8f0;border-radius:11px;background:#f8fafc;font-size:12px;font-weight:850;color:#526077}.toggle input{width:auto}
+.relation-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}.relation-tags{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.tag-check{display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid #dfe5ed;background:#f8fafc;border-radius:999px;font-size:11px;font-weight:900;color:#526077}.tag-check input{width:auto}.relation-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}.relation-list{display:grid;gap:8px;margin-top:15px}.relation-card{border:1px solid var(--line);border-radius:14px;padding:11px 12px;background:#fff}.relation-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.relation-names{font-weight:1000}.relation-meta{font-size:10px;color:#8490a2;font-weight:800;margin-top:5px}.tag-list{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.r-tag{font-size:10px;font-weight:900;padding:5px 7px;border-radius:999px;background:#f1f5f9;color:#526077}.r-tag.warn{background:#fff1f2;color:#be123c}.r-tag.good{background:#ecfdf5;color:#047857}
+.history-list{display:grid;gap:8px}.history-card{border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px}.history-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.history-title{font-weight:1000}.history-time{font-size:10px;color:#8b96a7;font-weight:800}.history-desc{font-size:11px;color:#64748b;font-weight:750;margin-top:5px}.backup{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+@media(max-width:760px){.tabs{grid-template-columns:1fr 1fr}.grid,.profile-grid{grid-template-columns:1fr}.student-list{max-height:190px}.relation-form,.relation-controls{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}.hero{padding:22px 18px}.panel{padding:14px}.score-row{grid-template-columns:105px 1fr 30px}}
 </style>
+<script src="gulliver-shared.js"></script>
 </head>
 <body>
-<script src="gulliver-shared.js"></script>
 <main>
   <section class="hero">
-    <h1>우리 반</h1>
-    <p>학생 명단을 한 번 저장하면 자리 배정·모둠·마니또·끝말잇기 등 여러 뚝딱도구에서 다시 입력하지 않고 불러올 수 있습니다.</p>
+    <h1>👥 우리 반</h1>
+    <p>명단뿐 아니라 자리·모둠·역할 배정에서 공통으로 참고할 교사용 운영 정보를 한곳에서 관리합니다.</p>
+    <span class="privacy">🔒 이 정보는 현재 브라우저에만 저장되며 학생 화면에는 표시되지 않습니다.</span>
   </section>
-  <div class="grid">
-    <section class="panel">
-      <h2>학급 정보</h2>
-      <div class="field"><label for="className">학급 이름</label><input id="className" maxlength="30" placeholder="예: 5학년 2반"></div>
-      <div class="field"><label for="names">학생 이름 · 한 줄에 한 명 (선택: 이름(남), 이름(여))</label><textarea id="names" placeholder="김민준&#10;이서연&#10;박도윤"></textarea></div>
-      <div class="actions">
-        <button class="btn primary" id="saveBtn">저장하기</button>
-        <button class="btn ghost" id="sampleBtn">예시 넣기</button>
-        <button class="btn danger" id="clearBtn">학급정보 지우기</button>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="roster">명단</button>
+    <button class="tab" data-tab="profiles">학생 프로필</button>
+    <button class="tab" data-tab="relations">관계</button>
+    <button class="tab" data-tab="history">운영 기록</button>
+  </nav>
+
+  <section class="panel active" id="panel-roster">
+    <div class="section-head"><div><h2>학급 명단</h2><p>이름을 수정해도 같은 학생으로 확인되면 기존 학생 ID와 운영 정보를 유지합니다.</p></div></div>
+    <div class="grid">
+      <div>
+        <div class="field"><label for="className">학급 이름</label><input id="className" maxlength="30" placeholder="예: 5학년 2반"></div>
+        <div class="field"><label for="names">학생 이름 · 한 줄에 한 명 (선택: 이름(남), 이름(여))</label><textarea class="names" id="names" placeholder="김민준&#10;이서연&#10;박도윤"></textarea></div>
+        <div class="actions"><button class="btn primary" id="saveBtn">명단 저장</button><button class="btn" id="sampleBtn">예시 넣기</button><button class="btn danger" id="clearBtn">학급정보 지우기</button></div>
       </div>
-    </section>
-    <aside class="panel">
-      <h2>저장 현황</h2>
-      <div class="summary"><div class="stat"><strong id="count">0</strong><span>학생 수</span></div><div class="stat"><strong id="updated">-</strong><span>마지막 저장</span></div></div>
-      <div class="preview" id="preview"></div>
-      <div class="notice">이 명단은 현재 브라우저에만 저장됩니다. 학교 공용 PC라면 사용 후 학급정보를 지우거나 JSON으로 백업해 두세요.</div>
-      <h2 style="margin-top:22px">백업 · 복원</h2>
-      <div class="actions">
-        <button class="btn ghost" id="exportBtn">JSON 백업</button>
-        <button class="btn ghost" id="importBtn">JSON 불러오기</button>
-        <input class="file" id="fileInput" type="file" accept=".json,application/json">
-      </div>
-    </aside>
-  </div>
+      <aside>
+        <div class="summary">
+          <div class="stat"><strong id="count">0</strong><span>학생 수</span></div>
+          <div class="stat"><strong id="profileCount">0</strong><span>운영 프로필</span></div>
+          <div class="stat"><strong id="relationCount">0</strong><span>활성 관계</span></div>
+        </div>
+        <div class="preview" id="preview"></div>
+        <div class="notice">앞자리·모둠장·관계 태그 같은 구조화된 정보만 다른 도구가 참고합니다. 아래 학생 메모와 관계 메모의 자유 문장은 다른 도구에서 읽지 않습니다.</div>
+        <div class="backup">
+          <h2 style="font-size:16px;margin:0 0 9px">백업 · 복원</h2>
+          <div class="actions"><button class="btn" id="exportBtn">전체 JSON 백업</button><button class="btn" id="importBtn">JSON 불러오기</button><input class="file" id="fileInput" type="file" accept=".json,application/json"></div>
+          <div style="margin-top:9px;color:#8b96a7;font-size:10px;font-weight:800" id="updated">마지막 저장 -</div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-profiles">
+    <div class="section-head"><div><h2>학생 프로필</h2><p>점수는 1~5단계입니다. 앞자리·모둠장 후보는 관련 도구에서 바로 참고하고, 나머지 점수는 의미가 맞는 기능에서만 사용합니다.</p></div></div>
+    <div class="profile-grid">
+      <div class="student-list" id="studentList"></div>
+      <div class="editor" id="profileEditor"><div class="empty">학생을 선택하세요.</div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-relations">
+    <div class="section-head"><div><h2>학생 관계</h2><p>관계는 자리·모둠 편성에 가중치로 적용됩니다. ‘떨어뜨리기’가 가장 강하고, 수다·장난은 부드럽게 분산합니다.</p></div></div>
+    <div class="relation-form"><div class="field"><label>학생 1</label><select id="relA"></select></div><div class="field"><label>학생 2</label><select id="relB"></select></div></div>
+    <div class="relation-tags">
+      <label class="tag-check"><input type="checkbox" value="avoid"> 떨어뜨리기</label>
+      <label class="tag-check"><input type="checkbox" value="conflict"> 갈등 있음</label>
+      <label class="tag-check"><input type="checkbox" value="chatter"> 수다 많음</label>
+      <label class="tag-check"><input type="checkbox" value="playful"> 장난 많음</label>
+      <label class="tag-check"><input type="checkbox" value="cooperate"> 협력 좋음</label>
+    </div>
+    <div class="relation-controls">
+      <div class="field"><label>강도</label><select id="relStrength"><option value="1">1 · 약하게</option><option value="2" selected>2 · 보통</option><option value="3">3 · 강하게</option></select></div>
+      <div class="field"><label>유지 기간</label><select id="relScope"><option value="month">이번 달 · 31일</option><option value="term" selected>이번 학기 · 180일</option><option value="always">계속 유지</option></select></div>
+    </div>
+    <div class="field"><label>교사 메모 · 자동화에는 사용하지 않음</label><input id="relNote" maxlength="500" placeholder="선택 사항"></div>
+    <div class="actions"><button class="btn primary" id="saveRelationBtn">관계 저장</button></div>
+    <div class="relation-list" id="relationList"></div>
+  </section>
+
+  <section class="panel" id="panel-history">
+    <div class="section-head"><div><h2>공통 운영 기록</h2><p>자리·모둠·역할 도구에서 ‘확정’한 기록을 모읍니다. 각 도구의 세부 최근 기록은 기존처럼 해당 도구에도 남습니다.</p></div><button class="btn danger" id="clearHistoryBtn">기록 지우기</button></div>
+    <div class="history-list" id="historyList"></div>
+  </section>
 </main>
+
 <script>
 Gulliver.mountShell({title:'우리 반',icon:'👥',track:false});
 const $=s=>document.querySelector(s);
-function render(){
-  const c=Gulliver.getClassroom();
+let selectedStudentId=null;
+const TAG_LABEL={avoid:'떨어뜨리기',conflict:'갈등 있음',chatter:'수다 많음',playful:'장난 많음',cooperate:'협력 좋음'};
+const TYPE_LABEL={seating:'자리 배정',groups:'모둠 편성',roles:'역할 배정'};
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function room(){return Gulliver.getClassroom()}
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  $('#panel-'+tab).classList.add('active');
+}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+
+function renderAll(){
+  const c=room(),profiles=Gulliver.getProfiles(),relations=Gulliver.getRelations();
   $('#className').value=c.className==='우리 반'?'':c.className;
   $('#names').value=c.students.map(s=>s.name+(s.gender==='M'?'(남)':s.gender==='F'?'(여)':'')).join('\n');
   $('#count').textContent=c.students.length;
-  $('#updated').textContent=c.updatedAt?new Date(c.updatedAt).toLocaleDateString('ko-KR'):'-';
-  $('#preview').innerHTML=c.students.length?c.students.map((s,i)=>'<span class="chip">'+(i+1)+'. '+escapeHtml(s.name)+'</span>').join(''):'<div class="empty">아직 저장된 학생이 없습니다.</div>';
+  $('#profileCount').textContent=Object.values(profiles).filter(p=>p.updatedAt||p.frontSeat||p.leader||p.note||p.participation!==3||p.responsibility!==3||p.presentationBurden!==3).length;
+  $('#relationCount').textContent=relations.length;
+  $('#updated').textContent='마지막 명단 저장 '+(c.updatedAt?new Date(c.updatedAt).toLocaleString('ko-KR'):'-');
+  $('#preview').innerHTML=c.students.length?c.students.map((s,i)=>'<span class="chip">'+(i+1)+'. '+esc(s.name)+'</span>').join(''):'<div class="empty">아직 저장된 학생이 없습니다.</div>';
+  if(selectedStudentId&&!c.students.some(s=>String(s.id)===String(selectedStudentId)))selectedStudentId=null;
+  if(!selectedStudentId&&c.students.length)selectedStudentId=String(c.students[0].id);
+  renderStudentList();renderProfileEditor();renderRelationSelects();renderRelations();renderHistory();
 }
-function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-$('#saveBtn').onclick=()=>{const saved=Gulliver.setNames($('#names').value,$('#className').value||'우리 반');Gulliver.toast(saved.students.length+'명 저장했습니다.');render()};
+function renderStudentList(){
+  const c=room();
+  $('#studentList').innerHTML=c.students.length?c.students.map(s=>'<button class="student-btn '+(String(s.id)===String(selectedStudentId)?'active':'')+'" data-student="'+esc(s.id)+'">'+esc(s.name)+'</button>').join(''):'<div class="empty">명단을 먼저 저장하세요.</div>';
+  document.querySelectorAll('[data-student]').forEach(b=>b.onclick=()=>{selectedStudentId=b.dataset.student;renderStudentList();renderProfileEditor()});
+}
+function scoreRow(label,key,value,help){
+  return '<div class="score-row"><label>'+label+'<div style="font-size:9px;color:#9aa4b4;margin-top:2px">'+help+'</div></label><input type="range" min="1" max="5" value="'+value+'" data-score="'+key+'"><span class="score-value" id="score_'+key+'">'+value+'</span></div>'
+}
+function renderProfileEditor(){
+  const c=room(),s=c.students.find(x=>String(x.id)===String(selectedStudentId)),box=$('#profileEditor');
+  if(!s){box.innerHTML='<div class="empty">학생을 선택하세요.</div>';return}
+  const p=Gulliver.getStudentProfile(s.id);
+  box.innerHTML='<div class="editor-title">'+esc(s.name)+'</div><div class="editor-sub">교사용 운영 정보 · 학생 화면에 표시되지 않음</div>'+
+    scoreRow('참여도','participation',p.participation,'수업 참여의 현재 정도')+
+    scoreRow('책임감','responsibility',p.responsibility,'역할 수행 참고 점수')+
+    scoreRow('발표 부담','presentationBurden',p.presentationBurden,'높을수록 발표 부담이 큼')+
+    '<div class="toggle-row"><label class="toggle"><input type="checkbox" id="frontSeat" '+(p.frontSeat?'checked':'')+'> 앞자리 우선</label><label class="toggle"><input type="checkbox" id="leader" '+(p.leader?'checked':'')+'> 모둠장 후보</label></div>'+
+    '<div class="field"><label>교사 메모 · 다른 도구는 읽지 않음</label><textarea id="profileNote" rows="5" maxlength="1000" placeholder="선택 사항">'+esc(p.note)+'</textarea></div>';
+  box.querySelectorAll('[data-score]').forEach(input=>input.oninput=()=>{
+    $('#score_'+input.dataset.score).textContent=input.value;
+    Gulliver.updateStudentProfile(s.id,{[input.dataset.score]:Number(input.value)});
+    renderAllCountsOnly();
+  });
+  $('#frontSeat').onchange=e=>{Gulliver.updateStudentProfile(s.id,{frontSeat:e.target.checked});renderAllCountsOnly()};
+  $('#leader').onchange=e=>{Gulliver.updateStudentProfile(s.id,{leader:e.target.checked});renderAllCountsOnly()};
+  let noteTimer=0;$('#profileNote').oninput=e=>{clearTimeout(noteTimer);noteTimer=setTimeout(()=>Gulliver.updateStudentProfile(s.id,{note:e.target.value}),250)};
+}
+function renderAllCountsOnly(){
+  const profiles=Gulliver.getProfiles();
+  $('#profileCount').textContent=Object.values(profiles).filter(p=>p.updatedAt||p.frontSeat||p.leader||p.note||p.participation!==3||p.responsibility!==3||p.presentationBurden!==3).length;
+}
+function studentOptions(){
+  return '<option value="">학생 선택</option>'+room().students.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join('')
+}
+function renderRelationSelects(){
+  const a=$('#relA').value,b=$('#relB').value,opts=studentOptions();$('#relA').innerHTML=opts;$('#relB').innerHTML=opts;$('#relA').value=a;$('#relB').value=b
+}
+function renderRelations(){
+  const c=room(),byId=new Map(c.students.map(s=>[String(s.id),s.name])),rels=Gulliver.getRelations();
+  $('#relationList').innerHTML=rels.length?rels.map(r=>{
+    const tags=r.tags.map(t=>'<span class="r-tag '+(t==='cooperate'?'good':t==='avoid'||t==='conflict'?'warn':'')+'">'+TAG_LABEL[t]+'</span>').join('');
+    const exp=r.expiresAt?' · '+new Date(r.expiresAt).toLocaleDateString('ko-KR')+'까지':' · 계속';
+    return '<div class="relation-card"><div class="relation-top"><div class="relation-names">'+esc(byId.get(r.a)||'?')+' ↔ '+esc(byId.get(r.b)||'?')+'</div><button class="btn danger" data-del-rel="'+esc(r.a)+'|'+esc(r.b)+'">삭제</button></div><div class="tag-list">'+tags+'</div><div class="relation-meta">강도 '+r.strength+exp+(r.note?' · 메모 있음':'')+'</div></div>'
+  }).join(''):'<div class="empty">등록된 활성 관계가 없습니다.</div>';
+  document.querySelectorAll('[data-del-rel]').forEach(b=>b.onclick=()=>{const [a,c]=b.dataset.delRel.split('|');Gulliver.removeRelation(a,c);renderAll()})
+}
+$('#saveRelationBtn').onclick=()=>{
+  const a=$('#relA').value,b=$('#relB').value,tags=[...document.querySelectorAll('.tag-check input:checked')].map(x=>x.value);
+  if(!a||!b||a===b){Gulliver.toast('서로 다른 학생 두 명을 선택해 주세요.');return}
+  if(!tags.length){Gulliver.toast('관계 태그를 하나 이상 선택해 주세요.');return}
+  Gulliver.upsertRelation(a,b,{tags,strength:Number($('#relStrength').value),scope:$('#relScope').value,note:$('#relNote').value});
+  document.querySelectorAll('.tag-check input').forEach(x=>x.checked=false);$('#relNote').value='';Gulliver.toast('관계를 저장했습니다.');renderAll()
+};
+
+function operationDesc(op){
+  const d=op.data||{};
+  if(op.type==='seating')return (d.studentCount||0)+'명 자리표 확정';
+  if(op.type==='groups')return (d.studentCount||0)+'명 · '+(d.groupCount||0)+'개 모둠 확정';
+  if(op.type==='roles')return (d.studentCount||0)+'명 역할 배정 확정';
+  return '학급 운영 기록';
+}
+function renderHistory(){
+  const ops=Gulliver.getOperations(100);
+  $('#historyList').innerHTML=ops.length?ops.map(op=>'<div class="history-card"><div class="history-top"><div class="history-title">'+(TYPE_LABEL[op.type]||'학급 운영')+'</div><div class="history-time">'+new Date(op.at).toLocaleString('ko-KR')+'</div></div><div class="history-desc">'+esc(operationDesc(op))+'</div></div>').join(''):'<div class="empty">아직 공통 운영 기록이 없습니다. 자리·모둠·역할 결과를 확정하면 여기에 쌓입니다.</div>'
+}
+
+$('#saveBtn').onclick=()=>{const saved=Gulliver.setNames($('#names').value,$('#className').value||'우리 반');Gulliver.toast(saved.students.length+'명 저장했습니다.');renderAll()};
 $('#sampleBtn').onclick=()=>{$('#className').value='5학년 2반';$('#names').value=['민준(남)','서연(여)','도윤(남)','하은(여)','지호','수아','유준','예린'].join('\n')};
-$('#clearBtn').onclick=()=>{if(confirm('현재 브라우저에 저장된 우리 반 명단을 지울까요?')){Gulliver.clearClassroom();Gulliver.toast('학급정보를 지웠습니다.');render()}};
-$('#exportBtn').onclick=()=>{const data=Gulliver.getClassroom();const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(data.className||'우리반')+'_뚝딱도구_백업.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$('#clearBtn').onclick=()=>{if(confirm('명단과 학생 프로필·관계·공통 운영 기록을 모두 지울까요?')){Gulliver.clearClassroom();selectedStudentId=null;Gulliver.toast('우리 반 정보를 지웠습니다.');renderAll()}};
+$('#clearHistoryBtn').onclick=()=>{if(confirm('공통 운영 기록을 모두 지울까요?')){Gulliver.clearOperations();renderHistory()}};
+$('#exportBtn').onclick=()=>{const data=Gulliver.exportClassroomBundle();const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(data.classroom.className||'우리반')+'_뚝딱도구_전체백업.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $('#importBtn').onclick=()=>$('#fileInput').click();
-$('#fileInput').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());const saved=Gulliver.saveClassroom(data);Gulliver.toast(saved.students.length+'명 불러왔습니다.');render()}catch{alert('올바른 우리 반 백업 파일이 아닙니다.')}e.target.value=''};
-render();
+$('#fileInput').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());const saved=Gulliver.importClassroomBundle(data);selectedStudentId=null;Gulliver.toast(saved.students.length+'명과 운영 정보를 불러왔습니다.');renderAll()}catch(err){console.error(err);alert('올바른 우리 반 백업 파일이 아닙니다.')}e.target.value=''};
+window.addEventListener('gulliver:classroom-meta-change',()=>{renderAllCountsOnly();renderRelations();renderHistory()});
+renderAll();
 </script>
 </body>
 </html>
