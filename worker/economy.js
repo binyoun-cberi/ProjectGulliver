@@ -283,8 +283,11 @@ export class EconomyClass extends DurableObject {
       puts[key] = txValue;
       if (item.studentId) puts["stx:" + item.studentId + ":" + String(seq).padStart(12, "0")] = txValue;
     }
-    puts.state = this.state;
-    await this.ctx.storage.put(puts);
+    var entries = Object.entries(puts);
+    for (var offset = 0; offset < entries.length; offset += 120) {
+      await this.ctx.storage.put(Object.fromEntries(entries.slice(offset, offset + 120)));
+    }
+    await this.ctx.storage.put("state", this.state);
   }
 
   fineAmount(student, requested) {
