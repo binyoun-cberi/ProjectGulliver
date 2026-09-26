@@ -530,9 +530,31 @@ function renderRuleSelects(){
 function renderHistoryInfo(){
   const h=getHistory();$('historyInfo').textContent=h.length?'최근 '+h.length+'회 배치 반영 중':'최근 기록 없음';
 }
+function layoutColumnUnit(){
+  if(state.layout==='pair'||state.layout==='group4')return 2;
+  if(state.layout==='group6')return 3;
+  return 0;
+}
+function layoutRowUnit(){
+  if(state.layout==='group4'||state.layout==='group6')return 2;
+  return 0;
+}
+function trackTemplate(count,unit,size,gap){
+  const tracks=[];
+  for(let i=0;i<count;i++){
+    tracks.push(size+'px');
+    if(unit&&(i+1)%unit===0&&i!==count-1)tracks.push(gap+'px');
+  }
+  return tracks.join(' ');
+}
+function visualTrack(position,unit){
+  return position+(unit?Math.floor(position/unit):0)+1;
+}
 function renderBoard(){
   const grid=$('seatGrid');
-  grid.style.gridTemplateColumns=`repeat(${state.cols},94px)`;
+  const colUnit=layoutColumnUnit(),rowUnit=layoutRowUnit();
+  grid.style.gridTemplateColumns=trackTemplate(state.cols,colUnit,94,28);
+  grid.style.gridTemplateRows=trackTemplate(state.rows,rowUnit,72,28);
   grid.innerHTML='';
   state.assignment.length=state.cols*state.rows;
   for(let i=0;i<state.cols*state.rows;i++){
@@ -556,15 +578,8 @@ function renderBoard(){
     }
 
     const col=i%state.cols,row=Math.floor(i/state.cols);
-    if(state.layout==='pair'&&col%2===1&&col!==state.cols-1)seat.classList.add('aisle-r');
-    if(state.layout==='group4'){
-      if(col%2===1&&col!==state.cols-1)seat.classList.add('aisle-r');
-      if(row%2===1&&row!==state.rows-1)seat.classList.add('aisle-b');
-    }
-    if(state.layout==='group6'){
-      if(col%3===2&&col!==state.cols-1)seat.classList.add('aisle-r');
-      if(row%2===1&&row!==state.rows-1)seat.classList.add('aisle-b');
-    }
+    seat.style.gridColumn=String(visualTrack(col,colUnit));
+    seat.style.gridRow=String(visualTrack(row,rowUnit));
 
     if(active){
       seat.innerHTML=`<span class="no">${i+1}</span><span class="name">${student?escapeHTML(student.name):'공석'}</span>${student?`<span class="gender">${student.gender==='M'?'남':student.gender==='F'?'여':''}</span>`:''}`;
