@@ -118,6 +118,7 @@ function uid(name,i){return"manual_"+i+"_"+encodeURIComponent(name).slice(0,20)}
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function pairKey(a,b){return[a,b].map(String).sort().join("|")}
 function studentById(id){return state.students.find(s=>String(s.id)===String(id))}
+function studentNameSafe(id){return studentById(id)?.name||"학생"}
 function seatLabel(i){const r=Math.floor(i/COLS)+1,c=i%COLS;return r+"열 "+(c<2?"왼쪽 ":"오른쪽 ")+(c===0||c===3?"창측":"내측")}
 function isWindow(i){const c=i%COLS;return c===0||c===3}
 function getHistory(){return safeParse(localStorage.getItem(HISTORY_KEY),[]).filter(Boolean).slice(0,3)}
@@ -293,6 +294,14 @@ function validate(){
   for(const [a,b] of state.togetherPairs){
     if(state.avoidPairs.some(p=>pairKey(p[0],p[1])===pairKey(a,b)))return"같이 앉히기와 떨어뜨리기 조건이 서로 충돌합니다.";
     if(isSharedHardAvoid(a,b))return studentById(a)?.name+"·"+studentById(b)?.name+" 학생은 우리 반에서 떨어뜨리기로 설정되어 있어 같이 앉힐 수 없습니다.";
+    const af=state.fixedSeats[a],bf=state.fixedSeats[b];
+    if(af!==undefined&&bf!==undefined&&!samePairSeats(Number(af),Number(bf)))return studentById(a)?.name+"·"+studentById(b)?.name+" 학생의 고정 좌석이 같은 짝자리가 아닙니다.";
+    if(af!==undefined&&bf===undefined&&state.disabled[pairMateIndex(Number(af))])return studentById(a)?.name+" 학생의 고정 좌석 옆자리를 사용할 수 없어 같이 앉힐 수 없습니다.";
+    if(bf!==undefined&&af===undefined&&state.disabled[pairMateIndex(Number(bf))])return studentById(b)?.name+" 학생의 고정 좌석 옆자리를 사용할 수 없어 같이 앉힐 수 없습니다.";
+  }
+  for(const rel of sharedRelations.filter(r=>(r.tags||[]).includes("avoid"))){
+    const af=state.fixedSeats[rel.a],bf=state.fixedSeats[rel.b];
+    if(af!==undefined&&bf!==undefined&&neighbors(Number(af),Number(bf)))return studentNameSafe(rel.a)+"·"+studentNameSafe(rel.b)+" 학생의 고정 좌석이 우리 반 분리 조건과 충돌합니다.";
   }
   return""
 }
