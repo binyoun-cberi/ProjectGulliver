@@ -56,7 +56,15 @@ select:focus,input:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(99,102,2
 .preset-row{display:grid;grid-template-columns:1fr auto;gap:7px;margin-top:9px}
 .custom-grid-row{display:grid;grid-template-columns:1fr 1fr auto;gap:7px;margin-top:8px}
 .seat.fixed{box-shadow:0 0 0 3px rgba(124,58,237,.18);border-color:#8b5cf6}
+.seat.gender-seat-m{background:linear-gradient(135deg,#eff6ff 0 78%,#bfdbfe 78% 100%);border-color:#93c5fd}
+.seat.gender-seat-f{background:linear-gradient(135deg,#fdf2f8 0 78%,#f9a8d4 78% 100%);border-color:#f9a8d4}
 .seat .pin{position:absolute;top:5px;right:7px;font-size:11px}
+.seat .gender-pin{position:absolute;bottom:5px;right:7px;font-size:10px;font-weight:950}
+.gender-seat-tools{display:none;gap:6px;flex-wrap:wrap;margin-top:8px}
+.gender-seat-tools.on{display:flex}
+.gender-mode.active{outline:3px solid rgba(99,102,241,.18);border-color:#818cf8}
+body.presentation .seat .pin,body.presentation .seat .gender-pin{display:none!important}
+body.presentation .seat.fixed,body.presentation .seat.conflict,body.presentation .seat.gender-seat-m,body.presentation .seat.gender-seat-f{box-shadow:none!important;border-color:#d8dee7!important;background:#fff!important}
 .editor-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .editor-legend span{font-size:10px;font-weight:850;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:999px;padding:5px 7px}
 .toggle-line{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:9px;padding-top:9px;border-top:1px dashed #e5e7eb}
@@ -178,11 +186,22 @@ body.flipped .seat.selected{transform:rotate(180deg) translateY(3px)}
           <button class="btn small" id="applyCustomGridBtn">자유 크기</button>
         </div>
         <div class="toggle-line">
+          <label>👫 남녀 지정석 설정</label>
+          <button class="btn small" id="genderSeatEditBtn">지정석 설정</button>
+        </div>
+        <div class="gender-seat-tools" id="genderSeatTools">
+          <button class="btn small gender-mode" data-gender-mode="M">👦 남학생석</button>
+          <button class="btn small gender-mode" data-gender-mode="F">👧 여학생석</button>
+          <button class="btn small gender-mode" data-gender-mode="clear">✕ 지정 해제</button>
+          <button class="btn small" id="genderSeatDoneBtn">끝내기</button>
+        </div>
+        <div class="help" id="genderSeatHelp">설정을 시작한 뒤 자리표에서 책상을 눌러 성별 지정석을 만들 수 있어요.</div>
+        <div class="toggle-line">
           <label>🪑 책상 사용/미사용 자유 편집</label>
           <button class="btn small" id="seatEditBtn">자리 편집</button>
         </div>
         <div class="help" id="seatEditHelp">자리 편집을 누른 뒤 자리표에서 책상을 눌러 켜고 끌 수 있어요.</div>
-        <div class="editor-legend"><span>회색 점선 = 사용 안 함</span><span>📌 = 지정 자리</span></div>
+        <div class="editor-legend"><span>회색 점선 = 사용 안 함</span><span>📌 = 학생 지정 자리</span><span>👦/👧 = 성별 지정석</span></div>
       </section>
 
       <section class="block">
@@ -276,16 +295,19 @@ let state={
   layout:'individual',
   activeSeats:Array(20).fill(true),
   fixedSeats:{},
+  genderSeats:{},
   assignment:Array(20).fill(null)
 };
 let seatEditMode=false;
+let genderSeatEditMode=false;
+let genderSeatMode='M';
 let selectedSeat=null;
 
 function safeParse(raw,fallback){try{return raw?JSON.parse(raw):fallback}catch{return fallback}}
 function saveState(){
   localStorage.setItem(STORAGE_KEY,JSON.stringify({
     students:state.students,frontIds:state.frontIds,rules:state.rules,
-    cols:state.cols,rows:state.rows,layout:state.layout,activeSeats:state.activeSeats,fixedSeats:state.fixedSeats
+    cols:state.cols,rows:state.rows,layout:state.layout,activeSeats:state.activeSeats,fixedSeats:state.fixedSeats,genderSeats:state.genderSeats
   }));
 }
 function loadState(){
@@ -299,10 +321,17 @@ function loadState(){
   const total=state.cols*state.rows;
   state.activeSeats=Array.isArray(saved.activeSeats)&&saved.activeSeats.length===total?saved.activeSeats.map(Boolean):Array(total).fill(true);
   state.fixedSeats={};
+  state.genderSeats={};
   if(saved.fixedSeats&&typeof saved.fixedSeats==='object'){
     Object.entries(saved.fixedSeats).forEach(([seat,id])=>{
       const idx=Number(seat);
       if(Number.isInteger(idx)&&idx>=0&&idx<total&&state.activeSeats[idx])state.fixedSeats[idx]=String(id);
+    });
+  }
+  if(saved.genderSeats&&typeof saved.genderSeats==='object'){
+    Object.entries(saved.genderSeats).forEach(([seat,gender])=>{
+      const idx=Number(seat);
+      if(Number.isInteger(idx)&&idx>=0&&idx<total&&state.activeSeats[idx]&&(gender==='M'||gender==='F'))state.genderSeats[idx]=gender;
     });
   }
   state.assignment=Array(total).fill(null);
@@ -320,6 +349,13 @@ function activeIndices(){return state.activeSeats.map((v,i)=>v?i:-1).filter(i=>i
 function fixedEntries(){return Object.entries(state.fixedSeats||{}).map(([seat,id])=>({seat:Number(seat),id:String(id)})).filter(x=>Number.isInteger(x.seat)&&state.activeSeats[x.seat]&&studentById(x.id))}
 function fixedSeatForStudent(id){const found=fixedEntries().find(x=>x.id===String(id));return found?found.seat:null}
 function isFixedSeat(index){return Object.prototype.hasOwnProperty.call(state.fixedSeats||{},String(index))}
+function genderSeatAt(index){return state.genderSeats?.[index]||state.genderSeats?.[String(index)]||''}
+function studentAllowedInSeat(studentId,index){
+  const required=genderSeatAt(index);
+  if(!required)return true;
+  const student=studentById(studentId);
+  return Boolean(student&&student.gender===required);
+}
 function hasAssignment(){return state.assignment.some(Boolean)}
 function escapeHTML(v){return String(v||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function gridFromSelect(){
@@ -439,6 +475,9 @@ function evaluate(arr){
   for(const item of fixedEntries()){
     if(String(arr[item.seat]||'')!==item.id){penalty+=100000;fixedViolations++}
   }
+  arr.forEach((id,index)=>{
+    if(id&&!studentAllowedInSeat(id,index))penalty+=100000;
+  });
 
   for(const [a,b] of state.rules){
     const ai=arr.findIndex(x=>String(x)===String(a)),bi=arr.findIndex(x=>String(x)===String(b));
@@ -480,9 +519,31 @@ function randomArrangement(){
   const fixedStudents=new Set(fixed.map(x=>x.id));
   const fixedSeatSet=new Set(fixed.map(x=>x.seat));
   fixed.forEach(x=>{arr[x.seat]=x.id});
-  const seats=shuffled(activeIndices().filter(i=>!fixedSeatSet.has(i)));
-  const students=shuffled(state.students.map(s=>String(s.id)).filter(id=>!fixedStudents.has(id)));
-  students.forEach((id,i)=>{if(seats[i]!==undefined)arr[seats[i]]=id});
+
+  const remainingStudents=shuffled(state.students.map(s=>String(s.id)).filter(id=>!fixedStudents.has(id)));
+  const available=shuffled(activeIndices().filter(i=>!fixedSeatSet.has(i)));
+
+  const reservedM=shuffled(available.filter(i=>genderSeatAt(i)==='M'));
+  const reservedF=shuffled(available.filter(i=>genderSeatAt(i)==='F'));
+  const neutral=shuffled(available.filter(i=>!genderSeatAt(i)));
+
+  const boys=shuffled(remainingStudents.filter(id=>studentById(id)?.gender==='M'));
+  const girls=shuffled(remainingStudents.filter(id=>studentById(id)?.gender==='F'));
+  const unknown=shuffled(remainingStudents.filter(id=>!['M','F'].includes(studentById(id)?.gender)));
+
+  while(reservedM.length&&boys.length)arr[reservedM.pop()]=boys.pop();
+  while(reservedF.length&&girls.length)arr[reservedF.pop()]=girls.pop();
+
+  const neutralStudents=shuffled([...boys,...girls,...unknown]);
+  while(neutral.length&&neutralStudents.length)arr[neutral.pop()]=neutralStudents.pop();
+
+  // 남는 지정석에는 해당 성별 학생만 추가 배치
+  const leftovers=[...neutralStudents];
+  const remainingM=leftovers.filter(id=>studentById(id)?.gender==='M');
+  const remainingF=leftovers.filter(id=>studentById(id)?.gender==='F');
+  while(reservedM.length&&remainingM.length)arr[reservedM.pop()]=remainingM.pop();
+  while(reservedF.length&&remainingF.length)arr[reservedF.pop()]=remainingF.pop();
+
   return arr
 }
 function optimize(){
@@ -628,6 +689,7 @@ function addFixedSeat(){
   const seat=Number($('fixedSeat').value);
   if(!studentId||!Number.isInteger(seat)){Gulliver.toast('학생과 자리를 모두 선택해 주세요.');return}
   if(!state.activeSeats[seat]){Gulliver.toast('사용하지 않는 책상에는 지정할 수 없습니다.');return}
+  if(!studentAllowedInSeat(studentId,seat)){Gulliver.toast('이 책상은 다른 성별 지정석입니다.');return}
   Object.keys(state.fixedSeats).forEach(key=>{if(String(state.fixedSeats[key])===studentId)delete state.fixedSeats[key]});
   state.fixedSeats[seat]=studentId;
   saveState();renderFixedControls();clearAssignment();
@@ -672,6 +734,8 @@ function renderBoard(){
     if(active&&!student)seat.classList.add('empty');
     if(student?.gender==='M')seat.classList.add('male');
     if(student?.gender==='F')seat.classList.add('female');
+    if(genderSeatAt(i)==='M')seat.classList.add('gender-seat-m');
+    if(genderSeatAt(i)==='F')seat.classList.add('gender-seat-f');
     if(isFixedSeat(i))seat.classList.add('fixed');
     if(selectedSeat===i)seat.classList.add('selected');
     if(hasAssignment()&&student){
@@ -691,7 +755,8 @@ function renderBoard(){
       const fixedId=state.fixedSeats[i];
       const fixedStudent=fixedId?studentById(fixedId):null;
       const displayStudent=student||(!hasAssignment()&&fixedStudent?fixedStudent:null);
-      seat.innerHTML=`<span class="no">${i+1}</span>${fixedId?'<span class="pin">📌</span>':''}<span class="name">${displayStudent?escapeHTML(displayStudent.name):'공석'}</span>${displayStudent?`<span class="gender">${displayStudent.gender==='M'?'남':displayStudent.gender==='F'?'여':''}</span>`:''}`;
+      const seatGender=genderSeatAt(i);
+      seat.innerHTML=`<span class="no">${i+1}</span>${fixedId?'<span class="pin">📌</span>':''}${seatGender?`<span class="gender-pin">${seatGender==='M'?'👦':'👧'}</span>`:''}<span class="name">${displayStudent?escapeHTML(displayStudent.name):'공석'}</span>${displayStudent?`<span class="gender">${displayStudent.gender==='M'?'남':displayStudent.gender==='F'?'여':''}</span>`:''}`;
     }
     seat.onclick=()=>handleSeat(i);
     grid.appendChild(seat);
@@ -699,8 +764,21 @@ function renderBoard(){
   validateCapacity();renderMetrics();
 }
 function handleSeat(index){
+  if(genderSeatEditMode){
+    if(!state.activeSeats[index]){Gulliver.toast('사용하지 않는 책상에는 성별 지정석을 만들 수 없습니다.');return}
+    if(genderSeatMode==='clear')delete state.genderSeats[index];
+    else state.genderSeats[index]=genderSeatMode;
+    const fixedId=state.fixedSeats[index];
+    if(fixedId&&!studentAllowedInSeat(fixedId,index)){
+      delete state.fixedSeats[index];
+      Gulliver.toast('성별 지정과 맞지 않아 이 자리의 학생 고정을 해제했습니다.');
+      renderFixedControls();
+    }
+    saveState();clearAssignment(false);renderBoard();return;
+  }
   if(seatEditMode){
     if(isFixedSeat(index)){Gulliver.toast('📌 지정 자리를 먼저 해제한 뒤 책상을 끌 수 있습니다.');return}
+    if(genderSeatAt(index)){Gulliver.toast('👦👧 성별 지정석을 먼저 해제한 뒤 책상을 끌 수 있습니다.');return}
     state.activeSeats[index]=!state.activeSeats[index];
     if(!state.activeSeats[index])state.assignment[index]=null;
     saveState();clearAssignment(false);renderBoard();return;
@@ -717,8 +795,30 @@ function clearAssignment(render=true){
   $('resultBadge').textContent='아직 배정 전';$('resultBadge').className='badge';
   if(render)renderBoard();
 }
+function setGenderSeatEdit(on){
+  genderSeatEditMode=on;
+  if(on){
+    seatEditMode=false;
+    $('seatEditBtn').textContent='자리 편집';
+  }
+  $('genderSeatTools').classList.toggle('on',on);
+  $('genderSeatEditBtn').textContent=on?'설정 중':'지정석 설정';
+  $('genderSeatHelp').textContent=on?(genderSeatMode==='M'?'자리표에서 남학생 전용 책상을 눌러 주세요.':genderSeatMode==='F'?'자리표에서 여학생 전용 책상을 눌러 주세요.':'자리표에서 성별 지정을 지울 책상을 눌러 주세요.'):'설정을 시작한 뒤 자리표에서 책상을 눌러 성별 지정석을 만들 수 있어요.';
+  document.querySelectorAll('[data-gender-mode]').forEach(btn=>btn.classList.toggle('active',btn.dataset.genderMode===genderSeatMode));
+  if(on)clearAssignment(false);
+  renderBoard();
+}
+function setGenderSeatMode(mode){
+  genderSeatMode=mode;
+  setGenderSeatEdit(true);
+}
 function setSeatEdit(on){
   seatEditMode=on;
+  if(on){
+    genderSeatEditMode=false;
+    $('genderSeatTools').classList.remove('on');
+    $('genderSeatEditBtn').textContent='지정석 설정';
+  }
   $('seatEditBtn').textContent=on?'편집 끝내기':'자리 편집';
   $('seatEditHelp').textContent=on?'자리표에서 사용하지 않을 책상을 눌러 회색으로 바꾸세요.':'자리 편집을 누른 뒤 자리표에서 책상을 눌러 켜고 끌 수 있어요.';
   if(on)clearAssignment(false);
@@ -749,10 +849,45 @@ function addRule(){
   if(state.rules.some(r=>(r[0]===a&&r[1]===b)||(r[0]===b&&r[1]===a))){Gulliver.toast('이미 등록된 규칙입니다.');return}
   state.rules.push([a,b]);saveState();renderRuleSelects();clearAssignment();
 }
+function validateGenderSeats(){
+  const fixed=fixedEntries();
+  for(const item of fixed){
+    const required=genderSeatAt(item.seat);
+    const student=studentById(item.id);
+    if(required&&student?.gender!==required){
+      setNotice('지정 학생 '+(student?.name||'')+'의 성별과 해당 책상의 성별 지정이 서로 맞지 않습니다.','bad');
+      return false;
+    }
+  }
+  const fixedIds=new Set(fixed.map(x=>x.id));
+  const fixedSeatSet=new Set(fixed.map(x=>x.seat));
+  const freeM=state.students.filter(s=>s.gender==='M'&&!fixedIds.has(String(s.id))).length;
+  const freeF=state.students.filter(s=>s.gender==='F'&&!fixedIds.has(String(s.id))).length;
+  const freeU=state.students.filter(s=>!['M','F'].includes(s.gender)&&!fixedIds.has(String(s.id))).length;
+  const mSeats=activeIndices().filter(i=>!fixedSeatSet.has(i)&&genderSeatAt(i)==='M').length;
+  const fSeats=activeIndices().filter(i=>!fixedSeatSet.has(i)&&genderSeatAt(i)==='F').length;
+  const neutralSeats=activeIndices().filter(i=>!fixedSeatSet.has(i)&&!genderSeatAt(i)).length;
+
+  if(mSeats>freeM){
+    setNotice('남학생 지정석이 남학생 수보다 '+(mSeats-freeM)+'자리 많습니다. 지정석을 줄이거나 남학생 명단을 확인해 주세요.','bad');
+    return false;
+  }
+  if(fSeats>freeF){
+    setNotice('여학생 지정석이 여학생 수보다 '+(fSeats-freeF)+'자리 많습니다. 지정석을 줄이거나 여학생 명단을 확인해 주세요.','bad');
+    return false;
+  }
+  const remainingAfterReserved=(freeM-mSeats)+(freeF-fSeats)+freeU;
+  if(remainingAfterReserved>neutralSeats){
+    setNotice('성별 지정석 때문에 나머지 학생이 앉을 일반 자리가 부족합니다. 지정석 일부를 해제해 주세요.','bad');
+    return false;
+  }
+  return true;
+}
 function generate(){
   setSeatEdit(false);
   if(!state.students.length){setNotice('학생 명단이 없습니다. 우리 반 명단을 불러오세요.','bad');return}
   if(!validateCapacity())return;
+  if(!validateGenderSeats())return;
   const fixed=fixedEntries();
   const duplicateFixedStudents=fixed.map(x=>x.id).filter((id,i,a)=>a.indexOf(id)!==i);
   if(duplicateFixedStudents.length){setNotice('같은 학생이 두 개 이상의 지정 자리에 연결되어 있습니다. 지정 자리를 다시 확인해 주세요.','bad');return}
@@ -780,7 +915,7 @@ function resizeGrid(cols,rows){
   if(Object.keys(state.fixedSeats).length&&!confirm('교실 크기를 바꾸면 지정 자리가 초기화됩니다. 계속할까요?'))return false;
   state.cols=cols;state.rows=rows;
   state.activeSeats=Array(cols*rows).fill(true);
-  state.fixedSeats={};state.assignment=Array(cols*rows).fill(null);selectedSeat=null;
+  state.fixedSeats={};state.genderSeats={};state.assignment=Array(cols*rows).fill(null);selectedSeat=null;
   $('customCols').value=cols;$('customRows').value=rows;
   saveState();renderFixedControls();renderBoard();return true;
 }
@@ -815,6 +950,7 @@ function applyShapePreset(){
   const mask=type==='full'?Array(state.cols*state.rows).fill(true):shapeMask(type);
   state.activeSeats=mask;
   Object.keys(state.fixedSeats).forEach(seat=>{if(!state.activeSeats[Number(seat)])delete state.fixedSeats[seat]});
+  Object.keys(state.genderSeats).forEach(seat=>{if(!state.activeSeats[Number(seat)])delete state.genderSeats[seat]});
   clearAssignment(false);saveState();renderFixedControls();renderBoard();
   setNotice('교실 모양을 적용했습니다. 자리 편집으로 책상을 더 자유롭게 켜고 끌 수 있어요.','');
 }
@@ -838,7 +974,7 @@ function renderAll(){
 $('loadClassroomBtn').onclick=loadClassroom;
 $('addStudentBtn').onclick=addStudent;
 $('studentName').addEventListener('keydown',e=>{if(e.key==='Enter')addStudent()});
-$('clearStudentsBtn').onclick=()=>{if(confirm('학생 명단과 조건을 모두 비울까요?')){state.students=[];state.frontIds=[];state.rules=[];state.fixedSeats={};saveState();renderStudents();renderFixedControls();clearAssignment()}};
+$('clearStudentsBtn').onclick=()=>{if(confirm('학생 명단과 조건을 모두 비울까요?')){state.students=[];state.frontIds=[];state.rules=[];state.fixedSeats={};state.genderSeats={};saveState();renderStudents();renderFixedControls();clearAssignment()}};
 $('addRuleBtn').onclick=addRule;
 $('addFixedBtn').onclick=addFixedSeat;
 $('applyShapeBtn').onclick=applyShapePreset;
@@ -846,6 +982,9 @@ $('applyCustomGridBtn').onclick=applyCustomGrid;
 $('seatSize').onchange=applyGridChange;
 $('layoutStyle').onchange=applyLayoutChange;
 $('seatEditBtn').onclick=()=>setSeatEdit(!seatEditMode);
+$('genderSeatEditBtn').onclick=()=>setGenderSeatEdit(!genderSeatEditMode);
+$('genderSeatDoneBtn').onclick=()=>setGenderSeatEdit(false);
+document.querySelectorAll('[data-gender-mode]').forEach(btn=>btn.onclick=()=>setGenderSeatMode(btn.dataset.genderMode));
 $('genderBalance').onchange=()=>{clearAssignment();};
 $('historyBalance').onchange=()=>{clearAssignment();};
 $('clearHistoryBtn').onclick=()=>{if(confirm('최근 자리 기록을 모두 지울까요?')){localStorage.removeItem(HISTORY_KEY);renderHistoryInfo();renderMetrics()}};
