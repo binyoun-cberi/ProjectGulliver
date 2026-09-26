@@ -386,8 +386,7 @@ function slotMembersFor(index){
 }
 function renderSlotDeck(){
   const count=Math.min(state.groupSize,5);$("slotDeck").style.gridTemplateColumns="repeat("+count+",minmax(0,1fr))";
-  const target=Math.min(state.revealed,state.groups.length-1),members=state.groups.length?slotMembersFor(Math.max(0,target)):[];
-  $("slotDeck").innerHTML=Array.from({length:state.groupSize},(_,i)=>'<div class="slot-window"><div class="slot-name '+(members[i]?.isBomb?"bomb":"")+'">'+(members[i]?esc(members[i].name):"❓")+'</div></div>').join("")
+  $("slotDeck").innerHTML=Array.from({length:state.groupSize},()=>'<div class="slot-window"><div class="slot-name">❓</div></div>').join("")
 }
 function updateProgress(){
   const total=state.groups.length;
@@ -399,7 +398,7 @@ function spin(){
   if(state.revealed>=state.groups.length)return;clearRevealTimers();$("spinBtn").disabled=true;$("revealAllBtn").disabled=true;
   const members=slotMembersFor(state.revealed),windows=[...document.querySelectorAll(".slot-window")],names=state.students.map(s=>s.name);
   windows.forEach((w,i)=>{
-    w.classList.add("spin");const label=w.querySelector(".slot-name");const interval=setInterval(()=>{label.textContent=names[Math.floor(Math.random()*names.length)]||"❓";label.classList.remove("bomb");if(state.sound)tone(170,.035)},90);revealTimers.push(interval);
+    w.classList.add("spin");const label=w.querySelector(".slot-name");const interval=setInterval(()=>{label.textContent=names[Math.floor(Math.random()*names.length)]||"❓";label.classList.remove("bomb");if(state.sound&&i===0)tone(170,.035)},90);revealTimers.push(interval);
     const duration=Math.min(3200,1350+i*230);
     setTimeout(()=>{clearInterval(interval);w.classList.remove("spin");label.textContent=members[i]?.name||"💣 빈 자리";label.classList.toggle("bomb",Boolean(members[i]?.isBomb));tone(620+i*35,.11);if(i===windows.length-1){setTimeout(()=>finishReveal(),180)}},duration)
   })
