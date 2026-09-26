@@ -138,6 +138,19 @@ function save(){
 }
 function roleById(id){return state.roles.find(r=>r.id===String(id))}
 function studentById(id){return state.students.find(s=>s.id===String(id))}
+let sharedProfiles={};
+function refreshSharedProfiles(){sharedProfiles=window.Gulliver?.getProfiles?Gulliver.getProfiles():{}}
+function sharedProfileScore(student,roleId){
+  const p=sharedProfiles[String(student.id)];if(!p)return 0;
+  const role=(roleById(roleId)?.name||"").replace(/\s+/g,"");
+  let score=0;
+  if(/교무실|안전|열쇠|기기|자료|정리|급식|우유|분리|칠판|도우미/.test(role))score+=(Number(p.responsibility||3)-3)*4;
+  if(/발표|안내|인사|방송|사회|진행/.test(role)){
+    score+=(Number(p.participation||3)-3)*3;
+    score-=(Number(p.presentationBurden||3)-3)*4;
+  }
+  return score;
+}
 function roleUsage(roleId){return Object.values(state.assignment).filter(x=>String(x)===String(roleId)).length}
 function totalCapacity(){return state.roles.reduce((a,r)=>a+r.count,0)}
 function toast(msg){if(window.Gulliver&&Gulliver.toast)Gulliver.toast(msg);else alert(msg)}
@@ -273,6 +286,7 @@ function studentRoleScore(student,roleId){
   let seen=false;
   hist.forEach((h,i)=>{if(String(h.assignments[student.id]||"")===roleId){seen=true;score-=[95,45,20][i]||10}});
   if(!seen)score+=12;
+  score+=sharedProfileScore(student,roleId);
   if(state.fixed[student.id]===roleId)score+=5000;
   score+=Math.random()*2;
   return score;
@@ -304,6 +318,7 @@ function solveAssignment(){
   return assignment
 }
 function runAssignment(){
+  refreshSharedProfiles();
   const err=validate();if(err){setNotice(err,"bad");switchTab("results");return}
   const solved=solveAssignment();if(!solved){setNotice("현재 필수·제외 조건으로는 모든 학생을 배정할 수 없습니다. 조건을 조금 완화해 주세요.","bad");switchTab("results");return}
   state.assignment=solved;selectedStudentId=null;save();switchTab("results");renderResults();setNotice("희망 순위와 최근 역할 기록을 함께 계산해 전체 만족도가 높은 배치를 만들었습니다. 결과는 아직 확정되지 않았습니다.","good")
@@ -355,7 +370,9 @@ function confirmAssignment(){
   const err=validate();if(err){setNotice(err,"bad");return}
   for(const role of state.roles){if(roleUsage(role.id)>role.count){setNotice("‘"+role.name+"’ 역할의 정원을 초과했습니다.","bad");return}}
   for(const s of state.students){const r=state.assignment[s.id];if(state.fixed[s.id]&&state.fixed[s.id]!==r){setNotice(s.name+" 학생의 필수 역할이 지켜지지 않았습니다.","bad");return}if((state.excluded[s.id]||[]).includes(r)){setNotice(s.name+" 학생에게 제외된 역할이 배정되어 있습니다.","bad");return}}
-  const hist=[{at:Date.now(),assignments:{...state.assignment}},...getHistory()].slice(0,3);saveHistoryList(hist);renderHistory();renderStats();setNotice("이번 역할을 확정했습니다. 다음 배정에서는 같은 역할이 반복되지 않도록 최근 기록에 반영합니다.","good");toast("이번 역할을 기록했습니다.")
+  const hist=[{at:Date.now(),assignments:{...state.assignment}},...getHistory()].slice(0,3);saveHistoryList(hist);
+  if(Gulliver.recordOperation)Gulliver.recordOperation("roles",{studentCount:state.students.length,assignments:{...state.assignment},roles:Object.fromEntries(state.roles.map(r=>[r.id,r.name]))});
+  renderHistory();renderStats();setNotice("이번 역할을 확정했습니다. 다음 배정에서는 같은 역할이 반복되지 않도록 최근 기록에 반영합니다.","good");toast("이번 역할을 기록했습니다.")
 }
 function copyResults(){
   if(!Object.keys(state.assignment).length){toast("먼저 역할을 배정해 주세요.");return}
@@ -369,7 +386,7 @@ function renderAll(){renderRoles();renderStudents();renderConditions();renderRes
 $("addRoleBtn").onclick=addRole;$("roleName").addEventListener("keydown",e=>{if(e.key==="Enter")addRole()});$("defaultRolesBtn").onclick=()=>fillDefaults(true);
 $("addStudentsBtn").onclick=addStudents;$("studentNames").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();addStudents()}});$("loadClassroomBtn").onclick=loadClassroom;$("clearStudentsBtn").onclick=()=>{if(confirm("학생 명단과 학생별 조건을 모두 비울까요?")){state.students=[];state.fixed={};state.excluded={};state.assignment={};save();renderAll()}};
 $("clearConditionsBtn").onclick=clearConditions;$("clearHistoryBtn").onclick=clearHistory;$("runBtn").onclick=runAssignment;$("copyBtn").onclick=copyResults;$("confirmBtn").onclick=confirmAssignment;$("moveBtn").onclick=moveSelected;$("cancelSelectBtn").onclick=()=>{selectedStudentId=null;renderResults()};
-load();renderAll();
+load();refreshSharedProfiles();renderAll();
 })();
 </script>
 <script>Gulliver.mountShell({title:"학급 역할 배정 도우미",icon:"🧹"});</script>
