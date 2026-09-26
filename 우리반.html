@@ -29,7 +29,7 @@ input,textarea{width:100%;border:1px solid #dfe3ea;border-radius:12px;padding:12
     <section class="panel">
       <h2>학급 정보</h2>
       <div class="field"><label for="className">학급 이름</label><input id="className" maxlength="30" placeholder="예: 5학년 2반"></div>
-      <div class="field"><label for="names">학생 이름 · 한 줄에 한 명</label><textarea id="names" placeholder="김민준&#10;이서연&#10;박도윤"></textarea></div>
+      <div class="field"><label for="names">학생 이름 · 한 줄에 한 명 (선택: 이름(남), 이름(여))</label><textarea id="names" placeholder="김민준&#10;이서연&#10;박도윤"></textarea></div>
       <div class="actions">
         <button class="btn primary" id="saveBtn">저장하기</button>
         <button class="btn ghost" id="sampleBtn">예시 넣기</button>
@@ -56,14 +56,14 @@ const $=s=>document.querySelector(s);
 function render(){
   const c=Gulliver.getClassroom();
   $('#className').value=c.className==='우리 반'?'':c.className;
-  $('#names').value=c.students.map(s=>s.name).join('\n');
+  $('#names').value=c.students.map(s=>s.name+(s.gender==='M'?'(남)':s.gender==='F'?'(여)':'')).join('\n');
   $('#count').textContent=c.students.length;
   $('#updated').textContent=c.updatedAt?new Date(c.updatedAt).toLocaleDateString('ko-KR'):'-';
   $('#preview').innerHTML=c.students.length?c.students.map((s,i)=>'<span class="chip">'+(i+1)+'. '+escapeHtml(s.name)+'</span>').join(''):'<div class="empty">아직 저장된 학생이 없습니다.</div>';
 }
 function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 $('#saveBtn').onclick=()=>{const saved=Gulliver.setNames($('#names').value,$('#className').value||'우리 반');Gulliver.toast(saved.students.length+'명 저장했습니다.');render()};
-$('#sampleBtn').onclick=()=>{$('#className').value='5학년 2반';$('#names').value=['민준','서연','도윤','하은','지호','수아','유준','예린'].join('\n')};
+$('#sampleBtn').onclick=()=>{$('#className').value='5학년 2반';$('#names').value=['민준(남)','서연(여)','도윤(남)','하은(여)','지호','수아','유준','예린'].join('\n')};
 $('#clearBtn').onclick=()=>{if(confirm('현재 브라우저에 저장된 우리 반 명단을 지울까요?')){Gulliver.clearClassroom();Gulliver.toast('학급정보를 지웠습니다.');render()}};
 $('#exportBtn').onclick=()=>{const data=Gulliver.getClassroom();const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(data.className||'우리반')+'_뚝딱도구_백업.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $('#importBtn').onclick=()=>$('#fileInput').click();
