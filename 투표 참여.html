@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fff8eb">
+<title>투표 참여 | 교실 뚝딱도구</title>
+<style>
+*{box-sizing:border-box}
+:root{--ink:#243042;--muted:#718096;--brand:#4f46e5;--paper:#fff8eb;--line:#ece7dc;--ok:#059669;--danger:#e11d48}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#fffdf8 0,#fff8eb 48%,#f7f3ea 100%);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+button,input{font:inherit}
+.wrap{width:min(720px,calc(100% - 28px));margin:0 auto;padding:28px 0 70px}
+.brand{display:flex;align-items:center;justify-content:center;gap:8px;color:#64748b;font-size:13px;font-weight:900;margin-bottom:22px}
+.card{background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.95);border-radius:28px;box-shadow:0 18px 46px rgba(70,58,37,.10);padding:26px}
+.hidden{display:none!important}
+.eyebrow{font-size:12px;color:#6366f1;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+h1{font-size:clamp(28px,7vw,42px);line-height:1.15;letter-spacing:-.055em;margin:8px 0 10px;word-break:keep-all}
+.desc{margin:0;color:var(--muted);font-size:14px;line-height:1.65;font-weight:650}
+.code-form{display:flex;gap:9px;margin-top:20px}
+.code-input{flex:1;min-width:0;border:2px solid #e2e8f0;border-radius:16px;padding:15px 16px;text-transform:uppercase;font-weight:950;font-size:22px;letter-spacing:.12em;outline:none;background:#fbfcff}
+.code-input:focus{border-color:#818cf8;box-shadow:0 0 0 4px rgba(99,102,241,.12)}
+.primary{border:0;background:var(--brand);color:#fff;padding:0 19px;border-radius:16px;font-weight:900;cursor:pointer}
+.primary:disabled{opacity:.55;cursor:not-allowed}
+.roombar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;padding:12px 14px;border-radius:16px;background:#f8fafc;border:1px solid #eef2f7}
+.roomcode{font-weight:950;letter-spacing:.12em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#475569}
+.live{display:flex;align-items:center;gap:7px;font-size:12px;color:#059669;font-weight:900}
+.dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 0 4px rgba(16,185,129,.12)}
+.section-title{font-size:15px;font-weight:950;margin:22px 0 10px}
+.name-grid,.option-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.name-btn,.option-btn{appearance:none;border:2px solid #e7e5e4;background:#fff;border-radius:18px;padding:16px 12px;min-height:58px;color:#334155;font-weight:900;cursor:pointer;transition:.14s ease}
+.name-btn:active,.option-btn:active{transform:scale(.98)}
+.name-btn:hover,.option-btn:hover{border-color:#c7d2fe;background:#fafaff}
+.name-btn.selected{border-color:#818cf8;background:#eef2ff;color:#4338ca}
+.option-btn{min-height:82px;font-size:17px;word-break:keep-all}
+.option-btn.selected{border-color:#34d399;background:#ecfdf5;color:#047857;box-shadow:0 0 0 3px rgba(16,185,129,.08)}
+.identity{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 15px;border-radius:16px;background:#f5f3ff;border:1px solid #ddd6fe;margin-bottom:16px}
+.identity strong{font-size:17px}
+.text-btn{border:0;background:transparent;color:#6366f1;font-weight:900;cursor:pointer;padding:7px}
+.notice{margin-top:16px;padding:14px 15px;border-radius:16px;background:#f8fafc;color:#64748b;font-size:13px;line-height:1.6;font-weight:700}
+.done{margin-top:16px;padding:15px;border-radius:16px;background:#ecfdf5;color:#047857;font-weight:900;text-align:center;border:1px solid #a7f3d0}
+.closed{margin:16px 0;padding:15px;border-radius:16px;background:#fff7ed;color:#9a3412;font-weight:900;text-align:center;border:1px solid #fed7aa}
+.results{display:grid;gap:11px;margin-top:16px}
+.result{padding:14px 15px;border-radius:17px;background:#f8fafc;border:1px solid #eef2f7}
+.result-top{display:flex;justify-content:space-between;gap:12px;font-weight:900}
+.bar{height:9px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin-top:9px}
+.fill{height:100%;border-radius:999px;background:#6366f1;transition:width .35s ease}
+.error{padding:16px;border-radius:16px;background:#fff1f2;color:#be123c;border:1px solid #fecdd3;font-weight:800;line-height:1.55;margin-top:18px}
+.footer{text-align:center;color:#94a3b8;font-size:11px;font-weight:700;margin-top:18px}
+@media(max-width:520px){.wrap{width:min(100% - 18px,720px);padding-top:14px}.card{padding:20px 16px;border-radius:22px}.name-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.option-grid{grid-template-columns:1fr}.code-form{flex-direction:column}.primary{min-height:50px}.name-btn{padding:14px 8px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">🧰 교실 뚝딱도구 · 실시간 투표</div>
+
+  <section class="card" id="join-view">
+    <div class="eyebrow">JOIN VOTE</div>
+    <h1>투표방에 들어가기</h1>
+    <p class="desc">선생님 화면에 보이는 6자리 참여 코드를 입력하세요. QR로 들어왔다면 자동으로 연결됩니다.</p>
+    <form class="code-form" id="code-form">
+      <input class="code-input" id="room-input" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="예: 7K3P9M" aria-label="참여 코드">
+      <button class="primary" type="submit">입장</button>
+    </form>
+    <div class="error hidden" id="join-error"></div>
+  </section>
+
+  <section class="card hidden" id="vote-view">
+    <div class="roombar">
+      <div><span style="font-size:11px;color:#94a3b8;font-weight:900">참여 코드</span><div class="roomcode" id="room-code"></div></div>
+      <div class="live"><span class="dot"></span><span id="connection-text">실시간 연결</span></div>
+    </div>
+
+    <div class="eyebrow">CLASS VOTE</div>
+    <h1 id="vote-title">우리 반 투표</h1>
+    <p class="desc" id="vote-desc">먼저 내 이름을 선택하세요.</p>
+
+    <div id="name-step">
+      <div class="section-title">내 이름</div>
+      <div class="name-grid" id="name-grid"></div>
+      <div class="notice">같은 기기를 여러 명이 함께 쓴다면 투표 후 ‘이름 다시 선택’을 눌러 다음 친구에게 넘겨주세요.</div>
+    </div>
+
+    <div class="hidden" id="choice-step">
+      <div class="identity">
+        <div><span style="font-size:11px;color:#7c3aed;font-weight:900">투표자</span><br><strong id="identity-name"></strong></div>
+        <button class="text-btn" id="change-name-btn" type="button">이름 다시 선택</button>
+      </div>
+      <div class="section-title">하나를 선택하세요</div>
+      <div class="option-grid" id="option-grid"></div>
+      <div class="done hidden" id="done-message">✓ 투표가 반영됐어요. 마감 전까지 선택을 바꿀 수 있습니다.</div>
+    </div>
+
+    <div class="closed hidden" id="closed-message">🔒 선생님이 투표를 마감했어요.</div>
+    <div class="results hidden" id="results"></div>
+    <div class="error hidden" id="vote-error"></div>
+  </section>
+
+  <div class="footer">방 정보는 일정 시간이 지나면 자동으로 만료됩니다.</div>
+</div>
+
+<script>
+const API_BASE = 'https://gulliver-api.binyoun.workers.dev';
+const params = new URLSearchParams(location.search);
+let roomCode = String(params.get('room') || '').toUpperCase().replace(/[^23456789A-HJ-NP-Z]/g,'').slice(0,6);
+let state = null;
+let identityId = null;
+let selectedOptionId = null;
+let socket = null;
+let reconnectTimer = null;
+let previousVotedCount = null;
+
+const $ = s => document.querySelector(s);
+const identityKey = () => 'gulliver.vote.identity.' + roomCode;
+const choiceKey = () => 'gulliver.vote.choice.' + roomCode + '.' + (identityId || '');
+
+function showError(el, message) {
+  el.textContent = message;
+  el.classList.toggle('hidden', !message);
+}
+
+function sanitizeCode(value) {
+  return String(value || '').toUpperCase().replace(/[^23456789A-HJ-NP-Z]/g,'').slice(0,6);
+}
+
+function setRoomInUrl(code) {
+  const url = new URL(location.href);
+  url.searchParams.set('room', code);
+  history.replaceState(null,'',url);
+}
+
+async function api(path, options={}) {
+  const headers = new Headers(options.headers || {});
+  if (options.body && !headers.has('content-type')) headers.set('content-type','application/json');
+  const response = await fetch(API_BASE + path, {...options, headers});
+  let data = null;
+  try { data = await response.json(); } catch {}
+  if (!response.ok) {
+    const error = new Error(data?.error || ('HTTP_' + response.status));
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+}
+
+function friendlyError(error) {
+  const code = error?.message || '';
+  if (code === 'ROOM_NOT_FOUND') return '참여 코드를 찾을 수 없어요. 코드를 다시 확인해 주세요.';
+  if (code === 'ROOM_EXPIRED') return '이 투표방은 사용 시간이 끝났어요. 선생님께 새 방을 열어 달라고 해주세요.';
+  if (code === 'ROOM_CLOSED') return '선생님이 투표를 마감했어요.';
+  if (code === 'UNKNOWN_STUDENT') return '학생 정보를 확인할 수 없어요. 이름을 다시 선택해 주세요.';
+  if (code === 'UNKNOWN_OPTION') return '선택지가 바뀌었어요. 화면을 새로고침해 주세요.';
+  return '서버와 연결하지 못했어요. 잠시 후 다시 시도해 주세요.';
+}
+
+function renderNames() {
+  const host = $('#name-grid');
+  host.innerHTML = '';
+  for (const student of state?.students || []) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'name-btn' + (String(student.id) === String(identityId) ? ' selected' : '');
+    btn.textContent = student.name;
+    btn.onclick = () => chooseIdentity(student.id);
+    host.appendChild(btn);
+  }
+}
+
+function chooseIdentity(id) {
+  identityId = String(id);
+  localStorage.setItem(identityKey(), identityId);
+  selectedOptionId = localStorage.getItem(choiceKey());
+  render();
+}
+
+function clearIdentity() {
+  if (roomCode) localStorage.removeItem(identityKey());
+  identityId = null;
+  selectedOptionId = null;
+  $('#done-message').classList.add('hidden');
+  render();
+}
+
+function renderOptions() {
+  const host = $('#option-grid');
+  host.innerHTML = '';
+  for (const option of state?.options || []) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'option-btn' + (String(option.id) === String(selectedOptionId) ? ' selected' : '');
+    btn.textContent = option.name;
+    btn.disabled = Boolean(state?.closed);
+    btn.onclick = () => submitVote(option.id);
+    host.appendChild(btn);
+  }
+}
+
+function renderResults() {
+  const host = $('#results');
+  if (!state?.closed) {
+    host.classList.add('hidden');
+    host.innerHTML = '';
+    return;
+  }
+  const counts = state.counts || {};
+  const total = Object.values(counts).reduce((sum,n)=>sum+Number(n||0),0);
+  host.innerHTML = '';
+  for (const option of state.options || []) {
+    const count = Number(counts[option.id] || 0);
+    const pct = total ? Math.round(count / total * 100) : 0;
+    const row = document.createElement('div');
+    row.className = 'result';
+    const top = document.createElement('div');
+    top.className = 'result-top';
+    const name = document.createElement('span');
+    name.textContent = option.name;
+    const value = document.createElement('span');
+    value.textContent = count + '명 · ' + pct + '%';
+    top.append(name,value);
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    const fill = document.createElement('div');
+    fill.className = 'fill';
+    fill.style.width = pct + '%';
+    bar.appendChild(fill);
+    row.append(top,bar);
+    host.appendChild(row);
+  }
+  host.classList.remove('hidden');
+}
+
+function render() {
+  if (!state) return;
+  $('#join-view').classList.add('hidden');
+  $('#vote-view').classList.remove('hidden');
+  $('#room-code').textContent = roomCode;
+  $('#vote-title').textContent = state.title || '우리 반 투표';
+
+  const student = (state.students || []).find(s => String(s.id) === String(identityId));
+  if (identityId && !student) {
+    localStorage.removeItem(identityKey());
+    identityId = null;
+    selectedOptionId = null;
+  }
+
+  if (!identityId) {
+    $('#name-step').classList.remove('hidden');
+    $('#choice-step').classList.add('hidden');
+    $('#vote-desc').textContent = state.closed ? '투표가 마감되었습니다. 결과를 확인하세요.' : '먼저 내 이름을 선택하세요.';
+    renderNames();
+  } else {
+    $('#name-step').classList.add('hidden');
+    $('#choice-step').classList.remove('hidden');
+    $('#identity-name').textContent = student?.name || '';
+    $('#vote-desc').textContent = state.closed ? '투표가 마감되었습니다.' : '선택지를 눌러 투표하세요.';
+    renderOptions();
+  }
+
+  $('#closed-message').classList.toggle('hidden', !state.closed);
+  renderResults();
+}
+
+async function submitVote(optionId) {
+  if (!identityId || state?.closed) return;
+  showError($('#vote-error'),'');
+  try {
+    await api('/api/rooms/' + roomCode + '/vote', {
+      method:'POST',
+      body:JSON.stringify({studentId:String(identityId), optionId:String(optionId)})
+    });
+    selectedOptionId = String(optionId);
+    localStorage.setItem(choiceKey(), selectedOptionId);
+    $('#done-message').classList.remove('hidden');
+    renderOptions();
+  } catch (error) {
+    showError($('#vote-error'), friendlyError(error));
+  }
+}
+
+function connectSocket() {
+  clearTimeout(reconnectTimer);
+  try { socket?.close(); } catch {}
+  if (!roomCode) return;
+  const ws = new WebSocket(API_BASE.replace(/^http/,'ws') + '/api/rooms/' + roomCode + '/ws');
+  socket = ws;
+  ws.onopen = () => {
+    $('#connection-text').textContent = '실시간 연결';
+  };
+  ws.onmessage = event => {
+    try {
+      const next = JSON.parse(event.data);
+      if (next.type === 'expired') {
+        showError($('#vote-error'),'이 투표방은 사용 시간이 끝났어요.');
+        return;
+      }
+      if (next.type === 'state') {
+        if (previousVotedCount !== null && Number(next.votedCount) === 0 && Number(previousVotedCount) > 0 && identityId) {
+          selectedOptionId = null;
+          localStorage.removeItem(choiceKey());
+          $('#done-message').classList.add('hidden');
+        }
+        previousVotedCount = Number(next.votedCount || 0);
+        state = next;
+        render();
+      }
+    } catch {}
+  };
+  ws.onclose = () => {
+    $('#connection-text').textContent = '다시 연결 중';
+    reconnectTimer = setTimeout(connectSocket, 1800);
+  };
+}
+
+async function joinRoom(code) {
+  roomCode = sanitizeCode(code);
+  if (roomCode.length !== 6) {
+    showError($('#join-error'),'6자리 참여 코드를 입력해 주세요.');
+    return;
+  }
+  showError($('#join-error'),'');
+  try {
+    state = await api('/api/rooms/' + roomCode + '/state');
+    setRoomInUrl(roomCode);
+    identityId = localStorage.getItem(identityKey());
+    if (identityId && !(state.students || []).some(s => String(s.id) === String(identityId))) identityId = null;
+    selectedOptionId = identityId ? localStorage.getItem(choiceKey()) : null;
+    previousVotedCount = Number(state.votedCount || 0);
+    render();
+    connectSocket();
+  } catch (error) {
+    state = null;
+    showError($('#join-error'), friendlyError(error));
+  }
+}
+
+$('#code-form').addEventListener('submit', event => {
+  event.preventDefault();
+  joinRoom($('#room-input').value);
+});
+$('#room-input').addEventListener('input', event => {
+  event.target.value = sanitizeCode(event.target.value);
+});
+$('#change-name-btn').addEventListener('click', clearIdentity);
+
+if (roomCode) {
+  $('#room-input').value = roomCode;
+  joinRoom(roomCode);
+}
+</script>
+</body>
+</html>
