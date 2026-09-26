@@ -76,7 +76,7 @@
     if(document.getElementById('gulliver-shared-style')) return;
     const style=document.createElement('style');style.id='gulliver-shared-style';
     style.textContent=`
-      .gulliver-shell{position:relative;z-index:9999;width:min(1180px,calc(100% - 24px));margin:12px auto 0;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+      .gulliver-shell{position:fixed;z-index:99999;top:8px;left:50%;transform:translateX(-50%);width:min(1180px,calc(100% - 24px));font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
       .gulliver-shell-inner{min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px 8px 14px;border:1px solid rgba(148,163,184,.22);border-radius:16px;background:rgba(255,255,255,.94);box-shadow:0 8px 24px rgba(15,23,42,.07);backdrop-filter:blur(12px)}
       .gulliver-shell-left,.gulliver-shell-actions{display:flex;align-items:center;gap:8px;min-width:0}
       .gulliver-shell-brand{font-weight:900;font-size:13px;color:#475569;text-decoration:none;white-space:nowrap}
@@ -89,7 +89,7 @@
       .gulliver-import-btn:hover{background:#e0e7ff}
       .gulliver-toast{position:fixed;left:50%;bottom:24px;z-index:100000;transform:translate(-50%,12px);padding:11px 16px;border-radius:999px;background:#0f172a;color:#fff;font:800 13px/1.25 "Pretendard","Malgun Gothic",sans-serif;box-shadow:0 12px 30px rgba(15,23,42,.24);opacity:0;pointer-events:none;transition:.18s ease}
       .gulliver-toast.show{opacity:1;transform:translate(-50%,0)}
-      @media(max-width:640px){.gulliver-shell{width:calc(100% - 16px);margin-top:8px}.gulliver-shell-inner{padding:7px 8px}.gulliver-shell-sep,.gulliver-shell-title{display:none}.gulliver-shell-btn{padding:8px 9px}.gulliver-shell-btn .wide{display:none}}
+      @media(max-width:640px){.gulliver-shell{width:calc(100% - 16px);top:6px}.gulliver-shell-inner{padding:7px 8px}.gulliver-shell-sep,.gulliver-shell-title{display:none}.gulliver-shell-btn{padding:8px 9px}.gulliver-shell-btn .wide{display:none}}
     `;
     document.head.appendChild(style);
   }
