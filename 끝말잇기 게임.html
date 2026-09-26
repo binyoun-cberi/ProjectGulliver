@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>말잇기 교실배틀 - UI 정리판</title>
-  <script src="./dict/words-basic.js"></script>
-  <script src="./dict/words-class.js"></script>
+  <script src="./wordchain-static-db.js?v=1"></script>
   <style>
     :root{
       --bg:#f7f3e8;
@@ -439,6 +438,9 @@
 
     let dictSet = new Set();
     let classAcceptedSet = new Set();
+    let staticDictionaryReady = false;
+    let dictionaryInitPromise = null;
+    let inputCheckSeq = 0;
     let audioCtx = null;
     let state = makeInitialState();
 
@@ -449,24 +451,60 @@
       };
     }
 
-    function initDictionary(){
-      const base = Array.isArray(window.WORD_CHAIN_DICTIONARY) ? window.WORD_CHAIN_DICTIONARY : [];
-      const extra = Array.isArray(window.CLASS_EXTRA_WORDS) ? window.CLASS_EXTRA_WORDS : [];
-      const accepted = JSON.parse(localStorage.getItem('wordChainAcceptedWords') || '[]');
-      classAcceptedSet = new Set(accepted.map(cleanWord).filter(Boolean));
-      dictSet = new Set([...FALLBACK_WORDS, ...base, ...extra].map(cleanWord).filter(Boolean));
-      updateDictUI();
+    async function initDictionary(){
+      let accepted = [];
+      try{ accepted = JSON.parse(localStorage.getItem('wordChainAcceptedWords') || '[]'); }catch(_){ accepted = []; }
+      classAcceptedSet = new Set((Array.isArray(accepted)?accepted:[]).map(cleanWord).filter(Boolean));
+      dictSet = new Set(FALLBACK_WORDS.map(cleanWord).filter(Boolean));
+      staticDictionaryReady = false;
+      updateDictUI('loading');
+
+      if(!window.KidscadeWordDB){
+        updateDictUI('fallback');
+        return false;
+      }
+      if(!dictionaryInitPromise){
+        dictionaryInitPromise = window.KidscadeWordDB.init()
+          .then(()=>{ staticDictionaryReady = true; updateDictUI('ready'); return true; })
+          .catch(error=>{
+            console.warn('대형 단어 사전 로드 실패',error);
+            staticDictionaryReady = false;
+            dictionaryInitPromise = null;
+            updateDictUI('fallback');
+            return false;
+          });
+      }
+      return dictionaryInitPromise;
     }
 
-    function updateDictUI(){
-      if(dictSet.size > FALLBACK_WORDS.length){
+    function updateDictUI(status){
+      const total = Number(window.KidscadeWordDB?.total || 0);
+      if(status === 'loading'){
+        els.dictStatus.className = 'chip';
+        els.dictStatus.textContent = '대형 사전 준비 중…';
+      }else if(staticDictionaryReady || total > 0){
         els.dictStatus.className = 'chip on';
-        els.dictStatus.textContent = '단어 확인 켜짐';
+        els.dictStatus.textContent = '국립국어원 사전 연결됨';
       }else{
         els.dictStatus.className = 'chip off';
         els.dictStatus.textContent = '기본 단어만 사용 중';
       }
-      els.wordCountStatus.textContent = `사전 단어 ${dictSet.size.toLocaleString()}개 · 우리 반 ${classAcceptedSet.size}개`;
+      const count = total || dictSet.size;
+      els.wordCountStatus.textContent = `사전 단어 ${count.toLocaleString()}개 · 우리 반 인정 ${classAcceptedSet.size}개`;
+    }
+
+    async function dictionaryHas(word){
+      const clean = cleanWord(word);
+      if(dictSet.has(clean) || classAcceptedSet.has(clean)) return true;
+      if(!window.KidscadeWordDB) return false;
+      try{
+        if(!staticDictionaryReady) await initDictionary();
+        if(!staticDictionaryReady) return false;
+        return await window.KidscadeWordDB.has(clean);
+      }catch(error){
+        console.warn('단어 조회 실패',error);
+        return false;
+      }
     }
 
     function parseNames(text){
@@ -565,7 +603,7 @@
     function currentStudent(){ return state.students.find(s=>s.id===state.currentId); }
     function currentTeam(){ const s = currentStudent(); return s ? s.team : 'class'; }
 
-    function validateWord(word){
+    async function validateWord(word){
       const clean = cleanWord(word);
       if(!clean) return {ok:false, level:'no', message:'단어를 입력해 주세요.'};
       if([...clean].length < 2) return {ok:false, level:'no', message:'두 글자 이상의 단어를 권장합니다. 필요하면 선생님 인정으로 통과할 수 있습니다.'};
@@ -580,16 +618,17 @@
         }
       }
       if(els.dictionaryOn.checked){
-        if(dictSet.has(clean) || classAcceptedSet.has(clean)) return {ok:true, level:'ok', message:`'${clean}'은 확인된 단어입니다.`};
-        return {ok:false, level:'wait', dictionaryMiss:true, message:`'${clean}'은 현재 사전에서 찾지 못했습니다. 실제 단어라면 [선생님 인정]을 눌러 통과할 수 있습니다.`};
+        const found = await dictionaryHas(clean);
+        if(found) return {ok:true, level:'ok', message:`'${clean}'은 사전에서 확인된 단어입니다.`};
+        return {ok:false, level:'wait', dictionaryMiss:true, message:`'${clean}'은 19만 단어 사전에서 찾지 못했습니다. 실제 단어라면 [선생님 인정]으로 통과할 수 있습니다.`};
       }
       return {ok:true, level:'ok', message:'기본 규칙을 통과했습니다.'};
     }
 
-    function submitWord(manual=false){
+    async function submitWord(manual=false){
       if(!state.running || state.ended) return;
       const word = cleanWord(els.wordInput.value);
-      const result = validateWord(word);
+      const result = await validateWord(word);
       if(!manual && !result.ok){
         state.lastPendingWord = word;
         showJudge(result.message, result.level || 'no');
@@ -939,7 +978,15 @@
     els.pauseBtn.addEventListener('click',togglePause);
     els.undoBtn.addEventListener('click',undo);
     els.resetBtn.addEventListener('click',()=>{ stopTimer(); state = makeInitialState(); els.gameView.classList.add('hidden'); els.emptyState.classList.remove('hidden'); render(); });
-    els.wordInput.addEventListener('input',()=>{ const w = cleanWord(els.wordInput.value); if(!w){ clearJudge('단어를 입력하면 확인합니다.'); return; } const r = validateWord(w); showJudge(r.message, r.level || (r.ok?'ok':'')); });
+    els.wordInput.addEventListener('input',async()=>{
+      const seq=++inputCheckSeq;
+      const w=cleanWord(els.wordInput.value);
+      if(!w){ clearJudge('단어를 입력하면 확인합니다.'); return; }
+      showJudge('사전에서 단어를 확인하고 있습니다…','wait');
+      const r=await validateWord(w);
+      if(seq!==inputCheckSeq || w!==cleanWord(els.wordInput.value)) return;
+      showJudge(r.message,r.level || (r.ok?'ok':''));
+    });
     els.wordInput.addEventListener('keydown',(e)=>{ if(e.key==='Enter' && e.ctrlKey){ e.preventDefault(); submitWord(true); } else if(e.key==='Enter'){ e.preventDefault(); submitWord(false); } });
     els.studentViewBtn.addEventListener('click',()=>{});
     els.againBtn.addEventListener('click',()=>{ els.resultOverlay.classList.add('hidden'); startGame(); });
