@@ -105,7 +105,7 @@ Gulliver.mountShell({title:'우리 반',icon:'👥',track:false});
 const $=s=>document.querySelector(s);
 let selectedStudentId=null;
 const TAG_LABEL={avoid:'떨어뜨리기',conflict:'갈등 있음',chatter:'수다 많음',playful:'장난 많음',cooperate:'협력 좋음'};
-const TYPE_LABEL={seating:'자리 배정',groups:'모둠 편성',roles:'역할 배정'};
+const TYPE_LABEL={seating:'자리 배정',groups:'모둠 편성',roles:'역할 배정',bus:'버스 좌석'};
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function room(){return Gulliver.getClassroom()}
 function switchTab(tab){
@@ -187,6 +187,7 @@ function operationDesc(op){
   if(op.type==='seating')return (d.studentCount||0)+'명 자리표 확정';
   if(op.type==='groups')return (d.studentCount||0)+'명 · '+(d.groupCount||0)+'개 모둠 확정';
   if(op.type==='roles')return (d.studentCount||0)+'명 역할 배정 확정';
+  if(op.type==='bus')return (d.studentCount||0)+'명 버스 좌석 확정';
   return '학급 운영 기록';
 }
 function renderHistory(){
