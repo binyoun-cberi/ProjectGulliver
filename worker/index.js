@@ -154,8 +154,9 @@ export default {
       return json({
         ok: true,
         service: "gulliver-api",
-        version: 1,
+        version: 2,
         durableObjects: true,
+        classroomEconomy: true,
         status: "ready"
       }, 200, corsHeaders());
     }
