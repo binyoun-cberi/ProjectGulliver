@@ -345,6 +345,24 @@ function saveHistory(){
   renderHistoryInfo();
 }
 function studentById(id){return state.students.find(s=>String(s.id)===String(id))}
+let sharedProfiles={},sharedRelations=[];
+function sharedRelKey(a,b){return [String(a),String(b)].sort().join('|')}
+function refreshSharedContext(){
+  sharedProfiles=window.Gulliver?.getProfiles?Gulliver.getProfiles():{};
+  const ids=new Set(state.students.map(s=>String(s.id)));
+  sharedRelations=(window.Gulliver?.getRelations?Gulliver.getRelations():[]).filter(r=>ids.has(String(r.a))&&ids.has(String(r.b)));
+}
+function sharedSeatWeight(rel){
+  const s=Number(rel.strength||2);let w=0;
+  (rel.tags||[]).forEach(tag=>{
+    if(tag==='avoid')w+=1500*s;
+    else if(tag==='conflict')w+=900*s;
+    else if(tag==='chatter')w+=300*s;
+    else if(tag==='playful')w+=220*s;
+    else if(tag==='cooperate')w-=35*s;
+  });
+  return w;
+}
 function activeIndices(){return state.activeSeats.map((v,i)=>v?i:-1).filter(i=>i>=0)}
 function fixedEntries(){return Object.entries(state.fixedSeats||{}).map(([seat,id])=>({seat:Number(seat),id:String(id)})).filter(x=>Number.isInteger(x.seat)&&state.activeSeats[x.seat]&&studentById(x.id))}
 function fixedSeatForStudent(id){const found=fixedEntries().find(x=>x.id===String(id));return found?found.seat:null}
@@ -485,9 +503,21 @@ function evaluate(arr){
   }
 
   const frontRows=frontRowSet();
-  for(const id of state.frontIds){
+  const allFrontIds=new Set([...state.frontIds,...state.students.filter(s=>sharedProfiles[String(s.id)]?.frontSeat).map(s=>String(s.id))]);
+  for(const id of allFrontIds){
     const idx=arr.findIndex(x=>String(x)===String(id));
-    if(idx>=0&&!frontRows.has(Math.floor(idx/state.cols))){penalty+=650;frontMiss++}
+    if(idx>=0&&!frontRows.has(Math.floor(idx/state.cols))){
+      penalty+=state.frontIds.includes(String(id))?650:520;
+      if(state.frontIds.includes(String(id)))frontMiss++;
+    }
+  }
+
+  for(const rel of sharedRelations){
+    const ai=arr.findIndex(x=>String(x)===String(rel.a)),bi=arr.findIndex(x=>String(x)===String(rel.b));
+    if(ai<0||bi<0)continue;
+    const w=sharedSeatWeight(rel);
+    if(state.layout!=='individual'&&sameCluster(ai,bi))penalty+=w;
+    else if(isNeighbor(ai,bi))penalty+=Math.round(w*.72);
   }
 
   if($('genderBalance').checked && state.layout!=='individual'){
@@ -839,6 +869,7 @@ function loadClassroom(){
   state.frontIds=state.frontIds.filter(id=>ids.has(String(id)));
   state.rules=state.rules.filter(r=>ids.has(String(r[0]))&&ids.has(String(r[1])));
   Object.keys(state.fixedSeats).forEach(seat=>{if(!ids.has(String(state.fixedSeats[seat])))delete state.fixedSeats[seat]});
+  refreshSharedContext();
   saveState();renderStudents();renderFixedControls();clearAssignment();
   Gulliver.toast(room.className+' '+state.students.length+'명을 불러왔습니다.');
 }
@@ -877,6 +908,7 @@ function validateGenderSeats(){
 }
 function generate(){
   setSeatEdit(false);
+  refreshSharedContext();
   if(!state.students.length){setNotice('학생 명단이 없습니다. 우리 반 명단을 불러오세요.','bad');return}
   if(!validateCapacity())return;
   if(!validateGenderSeats())return;
@@ -989,11 +1021,13 @@ $('printBtn').onclick=()=>window.print();
 $('commitHistoryBtn').onclick=()=>{
   if(!hasAssignment()){Gulliver.toast('먼저 자리를 배정해 주세요.');return}
   saveHistory();
+  if(Gulliver.recordOperation)Gulliver.recordOperation('seating',{studentCount:state.students.length,seats:[...state.assignment],cols:state.cols,rows:state.rows,layout:state.layout});
   Gulliver.toast('이 자리표를 최근 자리 기록에 저장했습니다.');
   setNotice('자리표를 확정했습니다. 다음 자리 배정에서 같은 자리와 같은 짝·모둠을 피하도록 반영합니다.','good');
 };
 
 loadState();
+refreshSharedContext();
 renderAll();
 Gulliver.mountShell({title:'교실 자리 배정',icon:'🎒'});
 </script>
