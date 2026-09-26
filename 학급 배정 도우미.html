@@ -20,6 +20,7 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
+  <script src="gulliver-shared.js"></script>
 </head>
 <body class="text-slate-800 h-screen flex flex-col selection:bg-indigo-100 selection:text-indigo-900">
 
@@ -114,9 +115,14 @@
                             <h2 class="text-xl font-bold flex items-center gap-2"><i class="fa-solid fa-hand-sparkles text-indigo-500"></i> 학생 목록 및 희망 역할</h2>
                             <p class="text-slate-500 text-sm mt-1">학생 이름을 추가하고 1~3지망을 선택하세요.</p>
                         </div>
+                        <div class="flex flex-wrap gap-2">
+                        <button id="load-classroom-btn" type="button" class="text-indigo-600 hover:text-indigo-700 bg-indigo-50 border border-indigo-100 shadow-sm px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1">
+                            <i class="fa-solid fa-users"></i> 우리 반 불러오기
+                        </button>
                         <button onclick="randomizeAllPreferences()" class="text-slate-500 hover:text-indigo-600 bg-white border border-slate-200 shadow-sm px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1">
                             <i class="fa-solid fa-dice"></i> 지망 무작위 채우기 (테스트)
                         </button>
+                        </div>
                     </div>
                     
                     <div class="flex gap-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100 items-start">
@@ -775,5 +781,19 @@
             });
         }
     </script>
+
+<script>
+  Gulliver.mountShell({title:'학급 역할 배정 도우미',icon:'🧹'});
+  document.getElementById('load-classroom-btn')?.addEventListener('click',()=>{
+    const room=Gulliver.getClassroom();
+    if(!room.students.length){Gulliver.toast('먼저 우리 반에서 학생 명단을 저장해 주세요.');return;}
+    const oldPrefs=new Map(students.map(s=>[s.name,s.prefs]));
+    students=room.students.map(s=>({id:studentIdCounter++,name:s.name,prefs:oldPrefs.get(s.name)||['','','']}));
+    presetAssignments={};
+    renderStudents();
+    renderPresets();
+    Gulliver.toast(room.className+' '+room.students.length+'명을 불러왔습니다.');
+  });
+</script>
 </body>
 </html>
