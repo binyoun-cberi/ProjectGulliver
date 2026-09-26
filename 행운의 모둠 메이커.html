@@ -1,697 +1,475 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎰 슬롯머신 모둠 메이커</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Jua', sans-serif;
-            background-color: #1a202c;
-            background-image: radial-gradient(#2d3748 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>행운의 모둠 메이커 | 교실 뚝딱도구</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#f6f3ee;--paper:#fffdf9;--ink:#243042;--muted:#6f7b8e;--line:#e6ded2;
+  --brand:#f59e0b;--brand-deep:#b45309;--violet:#6558d3;--green:#0f9f78;--red:#dc4c64;
+  --blue:#2563eb;--shadow:0 14px 34px rgba(58,47,32,.09)
+}
+html,body{margin:0;min-height:100%}
+body{padding:76px 16px 46px;background:radial-gradient(circle at 10% 2%,#fff0cf 0,transparent 25%),radial-gradient(circle at 92% 4%,#ecebff 0,transparent 25%),var(--bg);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;color:var(--ink)}
+button,input,textarea,select{font:inherit}button{cursor:pointer}
+.app{width:min(1220px,100%);margin:auto}
+.head{display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:16px}
+.head h1{margin:0;font-size:clamp(28px,4vw,42px);letter-spacing:-.055em}
+.head p{margin:6px 0 0;color:var(--muted);font-size:13px;font-weight:750}
+.head-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn{border:1px solid var(--line);background:#fff;color:#475569;border-radius:12px;padding:9px 12px;font-weight:900;box-shadow:0 4px 12px rgba(40,35,25,.04)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#4b2a00}
+.btn.green{background:var(--green);border-color:var(--green);color:white}
+.btn.violet{background:var(--violet);border-color:var(--violet);color:white}
+.btn.danger{background:#fff5f6;border-color:#fecdd3;color:#be123c}
+.btn.small{padding:7px 9px;font-size:12px}
+.panel{background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.98);border-radius:22px;box-shadow:var(--shadow)}
+.setup{padding:18px}
+.setup-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);gap:16px}
+.block{border:1px solid #eee6da;background:#fffdf9;border-radius:17px;padding:14px}
+.block h2{margin:0;font-size:16px;letter-spacing:-.035em}
+.block-head{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:10px}
+.help{font-size:11px;color:#8a94a5;font-weight:750;line-height:1.5}
+textarea,input,select{width:100%;border:1px solid #dce2ea;border-radius:11px;background:#fff;padding:10px 11px;color:#334155;outline:none}
+textarea:focus,input:focus,select:focus{border-color:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.12)}
+textarea{min-height:195px;resize:vertical;line-height:1.55}
+.toolbar{display:flex;gap:7px;flex-wrap:wrap}
+.field-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.field{display:grid;gap:5px}.field label{font-size:11px;font-weight:900;color:#64748b}
+.summary{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:6px 9px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:900}
+.pill.good{background:#ecfdf5;color:#047857}.pill.warn{background:#fff7ed;color:#c2410c}
+details.conditions{margin-top:14px;border:1px solid #e7e0d7;border-radius:17px;background:#fbfcfe;overflow:hidden}
+details.conditions>summary{list-style:none;cursor:pointer;padding:12px 14px;font-size:13px;font-weight:950;color:#516078;display:flex;justify-content:space-between}
+details.conditions>summary::-webkit-details-marker{display:none}
+details.conditions>summary::after{content:"＋";color:#9aa4b4}details.conditions[open]>summary::after{content:"−"}
+.condition-body{padding:0 12px 12px}
+.condition-section{padding:11px 0;border-top:1px dashed #e3e8ef}.condition-section:first-child{border-top:0}
+.condition-title{font-size:12px;font-weight:950;margin-bottom:7px}
+.condition-form{display:grid;grid-template-columns:1fr 1fr auto;gap:7px}
+.condition-form.fixed{grid-template-columns:1fr 120px auto}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid #dde4ed;background:#f8fafc;color:#536176;border-radius:999px;padding:6px 8px;font-size:11px;font-weight:850}.chip button{border:0;background:transparent;padding:0;color:inherit;font-weight:950}
+.history-list{display:grid;gap:5px;margin-top:7px}.history-line{display:flex;justify-content:space-between;gap:10px;color:#67758a;font-size:11px;font-weight:800;padding:7px 8px;border-radius:9px;background:#f8fafc}
+.notice{margin-top:12px;padding:11px 12px;border-radius:13px;background:#f8fafc;color:#64748b;font-size:12px;font-weight:750;line-height:1.55}.notice.good{background:#ecfdf5;color:#047857}.notice.bad{background:#fff1f2;color:#be123c}
+.start-area{display:flex;justify-content:center;margin-top:16px}.start-area .btn{font-size:17px;padding:13px 24px}
 
-        /* 슬롯머신 본체 스타일 */
-        .slot-machine-casing {
-            background: linear-gradient(145deg, #f59e0b, #d97706);
-            border: 8px solid #b45309;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 5px 15px rgba(255,255,255,0.3);
-            border-radius: 24px;
-            padding: 20px;
-        }
-
-        /* 개별 슬롯 창 */
-        .slot-window {
-            height: 300px; /* 위, 가운데, 아래 3칸이 보이도록 높이 */
-            overflow: hidden;
-            background: #ffffff;
-            border: 4px solid #475569;
-            border-radius: 12px;
-            box-shadow: inset 0 10px 15px rgba(0,0,0,0.2);
-            position: relative;
-        }
-
-        /* 가운데 당첨 라인 강조 */
-        .slot-selection-line {
-            position: absolute;
-            top: 100px;
-            left: 0;
-            right: 0;
-            height: 100px;
-            background: rgba(250, 204, 21, 0.15);
-            border-top: 3px solid rgba(250, 204, 21, 0.9);
-            border-bottom: 3px solid rgba(250, 204, 21, 0.9);
-            z-index: 5;
-            pointer-events: none;
-            box-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
-        }
-
-        /* 위아래 그림자 효과 (입체감) */
-        .slot-window::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 30px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent);
-            z-index: 10;
-            pointer-events: none;
-        }
-        .slot-window::after {
-            content: '';
-            position: absolute;
-            bottom: 0; left: 0; right: 0; height: 30px;
-            background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        /* 돌아가는 릴 */
-        .reel {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            transition: transform cubic-bezier(0.15, 0.9, 0.25, 1);
-        }
-
-        /* 슬롯 안의 텍스트 아이템 */
-        .slot-item {
-            height: 100px; /* 1칸 높이 */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.2rem;
-            color: #1e293b;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis; /* 긴 이름 말줄임 처리 */
-            padding: 0 10px;
-        }
-
-        .slot-item.bomb {
-            color: #ef4444;
-            font-size: 2.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .blur-spin {
-            filter: blur(1.5px);
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-        .bounce {
-            animation: bounce 0.3s ease;
-        }
-
-        .btn-pop:active {
-            transform: scale(0.95);
-        }
-
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    </style>
-  <script src="gulliver-shared.js"></script>
+.slot-screen{display:none}.slot-screen.active{display:block}
+.slot-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.slot-progress{font-size:16px;font-weight:950;color:#8a4d00}
+.machine{background:linear-gradient(145deg,#f7b733,#dc8a08);border:5px solid #b96d07;border-radius:26px;padding:17px;box-shadow:0 17px 36px rgba(105,60,8,.22),inset 0 4px 10px rgba(255,255,255,.38)}
+.slot-deck{background:#273142;border-radius:17px;padding:14px;display:grid;gap:10px}
+.slot-window{height:96px;background:#fff;border:3px solid #4b5563;border-radius:13px;display:grid;place-items:center;overflow:hidden;position:relative;box-shadow:inset 0 8px 14px rgba(0,0,0,.13)}
+.slot-window::after{content:"";position:absolute;inset:29px 0;border-top:2px solid rgba(245,158,11,.8);border-bottom:2px solid rgba(245,158,11,.8);background:rgba(250,204,21,.08);pointer-events:none}
+.slot-name{position:relative;z-index:2;max-width:96%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1f2937;font-size:clamp(20px,3vw,32px);font-weight:1000;letter-spacing:-.04em}.slot-name.bomb{color:#dc2626}
+.slot-window.spin{animation:slotShake .13s linear infinite alternate}@keyframes slotShake{to{transform:translateY(2px)}}
+.machine-actions{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:14px}.lever{font-size:18px;padding:12px 24px;background:#b91c1c;border-color:#991b1b;color:#fff}
+.results-wrap{margin-top:18px}.results-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.results-head h2{margin:0;font-size:19px}
+.group-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.group-card{border:1px solid #e4e8ef;background:#fff;border-radius:16px;padding:12px;min-height:125px}.group-head{display:flex;align-items:center;justify-content:space-between;gap:7px;padding-bottom:8px;border-bottom:1px solid #edf0f4}.group-head strong{font-size:15px}.members{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.member{border:1px solid #dbe4ff;background:#f4f7ff;color:#344a82;border-radius:10px;padding:7px 8px;font-size:12px;font-weight:900}.member.selected{outline:3px solid rgba(245,158,11,.25);border-color:#f59e0b;background:#fff9ea}.member.leader::after{content:" · 모둠장";font-size:9px;color:#7c3aed}.member.fixed::before{content:"📌 ";font-size:10px}
+.result-tools{display:none;margin:12px 0;padding:10px 12px;border:1px solid #fde68a;background:#fffbeb;border-radius:13px}.result-tools.show{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.result-tools strong{font-size:13px}
+.teacher-only{}
+@media(max-width:850px){.setup-grid{grid-template-columns:1fr}.group-grid{grid-template-columns:1fr 1fr}.field-row{grid-template-columns:1fr 1fr}.condition-form,.condition-form.fixed{grid-template-columns:1fr 1fr}.condition-form .btn,.condition-form.fixed .btn{grid-column:1/-1}}
+@media(max-width:560px){body{padding:70px 8px 28px}.head{align-items:flex-start;flex-direction:column}.head-actions{justify-content:flex-start}.setup{padding:11px}.group-grid{grid-template-columns:1fr}.field-row{grid-template-columns:1fr}.slot-window{height:80px}.machine{padding:10px}.slot-deck{padding:9px}.condition-form,.condition-form.fixed{grid-template-columns:1fr}}
+</style>
+<script src="gulliver-shared.js"></script>
 </head>
-<body class="text-white min-h-screen flex flex-col items-center py-10 px-4">
+<body>
+<div class="app">
+  <header class="head">
+    <div><h1>🎰 행운의 모둠 메이커</h1><p>재미있게 공개하고, 속으로는 조건을 꼼꼼하게 맞추는 모둠 편성 도구입니다.</p></div>
+    <div class="head-actions"><button class="btn" id="soundBtn">🔊 효과음 켜기</button></div>
+  </header>
 
-    <!-- 제목 -->
-    <header class="text-center mb-8">
-        <h1 class="text-5xl text-yellow-400 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] tracking-wider">🎰 행운의 모둠 메이커</h1>
-        <p class="text-gray-300 mt-2 text-lg">돌려돌려 슬롯머신으로 모둠을 정해보세요!</p>
-        <button id="btn-sound" class="mt-4 bg-gray-700 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition-colors shadow-lg border border-gray-600">
-            🔊 소리 켜기
-        </button>
-        <!-- BGM 오디오 소스 -->
-        <audio id="bgm-audio" loop src="https://freepd.com/music/The%20Entertainer.mp3"></audio>
-    </header>
+  <section id="setupScreen" class="panel setup">
+    <div class="setup-grid">
+      <div class="block">
+        <div class="block-head"><h2>👥 학생 명단</h2><div class="toolbar"><button class="btn small violet" id="loadClassroomBtn">우리 반 불러오기</button><button class="btn small" id="sampleBtn">예시</button><button class="btn small" id="clearNamesBtn">비우기</button></div></div>
+        <textarea id="studentsInput" placeholder="한 줄에 한 명&#10;예: 민준(남)&#10;서연(여)"></textarea>
+        <div class="summary"><span class="pill" id="studentCount">학생 0명</span><span class="pill" id="genderCount">성별 정보 없음</span></div>
+      </div>
 
-    <!-- [1] 설정 화면 -->
-    <main id="setup-screen" class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-3xl border border-gray-700">
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- 왼쪽: 명단 입력 -->
-            <div>
-                <div class="flex items-center justify-between gap-2 mb-2">
-                    <label class="block text-xl text-yellow-300">👥 학생 명단 입력</label>
-                    <button id="load-classroom-btn" type="button" class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold">우리 반 불러오기</button>
-                </div>
-                <p class="text-sm text-gray-400 mb-2">예: 홍길동(남), 김영희(여), 이철수<br>※ 성별 모드를 쓰려면 '(남)', '(여)'를 붙여주세요.</p>
-                <textarea id="students-input" rows="8" class="w-full bg-gray-700 text-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-yellow-400 resize-none font-sans text-lg">
-김유신(남), 이순신(남), 강감찬(남), 장보고(남)
-유관순(여), 신사임당(여), 선덕여왕(여), 허난설헌(여)
-홍길동(남), 임꺽정(남), 전봉준(남), 안중근(남)
-김구(남), 윤봉길(남), 안창호(남), 이봉창(남)
-황진이(여), 어우동(여), 논개(여), 최용신(여)</textarea>
-            </div>
-
-            <!-- 오른쪽: 옵션 설정 -->
-            <div class="space-y-6">
-                <!-- 모둠 인원 설정 -->
-                <div>
-                    <label class="block text-xl text-yellow-300 mb-2">🔢 1모둠 당 인원</label>
-                    <div class="flex items-center">
-                        <input type="number" id="group-size" value="4" min="2" max="10" class="w-20 bg-gray-700 text-white text-center text-2xl rounded-lg p-2 outline-none focus:ring-2 focus:ring-yellow-400">
-                        <span class="ml-3 text-gray-300 text-lg">명 (남는 자리는 💣폭탄)</span>
-                    </div>
-                </div>
-
-                <!-- 남녀 모드 설정 -->
-                <div>
-                    <label class="block text-xl text-yellow-300 mb-2">⚖️ 남녀 밸런스 모드</label>
-                    <select id="gender-mode" class="w-full bg-gray-700 text-white text-lg rounded-lg p-3 outline-none focus:ring-2 focus:ring-yellow-400">
-                        <option value="random">🔀 상관없음 (랜덤)</option>
-                        <option value="balanced">👫 최대한 남녀 균형 맞추기</option>
-                        <option value="same">👬/👭 동성끼리 묶기</option>
-                    </select>
-                </div>
-
-                <!-- 쉿! 디버그 모드 (회피) -->
-                <div>
-                    <div class="flex justify-end mb-2">
-                        <button id="btn-toggle-debug" class="text-sm text-gray-500 hover:text-gray-300 underline">⚙️ 고급 설정</button>
-                    </div>
-                    <div id="debug-container" class="hidden bg-gray-900 p-4 rounded-lg border border-red-900 mt-2 shadow-inner">
-                        <label class="block text-xl text-red-400 mb-2">🤫 비밀 디버그 (절대 찢어놔)</label>
-                        <p class="text-sm text-gray-400 mb-2">같은 모둠이 되면 안 되는 학생 쌍을 입력하세요. (한 줄에 한 쌍, '-'로 구분)</p>
-                        <textarea id="avoid-input" rows="3" class="w-full bg-gray-800 text-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-red-400 resize-none font-sans" placeholder="예시: 홍길동-강감찬&#10;유관순-신사임당"></textarea>
-                    </div>
-                </div>
-            </div>
+      <div class="block">
+        <div class="block-head"><h2>⚙️ 기본 편성</h2><span class="help">모둠 인원 차이는 최대 1명</span></div>
+        <div class="field-row">
+          <div class="field"><label>1모둠 기준 인원</label><input id="groupSize" type="number" min="2" max="10" value="4"></div>
+          <div class="field"><label>성별 구성</label><select id="genderMode"><option value="random">상관없음</option><option value="balanced">남녀 균형</option><option value="same">동성끼리 최대한</option></select></div>
+          <div class="field"><label>예상 모둠 수</label><input id="groupCountPreview" value="0" disabled></div>
         </div>
 
-        <div class="mt-8 text-center">
-            <button id="btn-start" class="btn-pop bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-gray-900 font-bold text-3xl py-4 px-12 rounded-full shadow-[0_5px_0_#b45309] hover:shadow-[0_2px_0_#b45309] hover:translate-y-1 transition-all">
-                🚀 모둠 만들기 시작!
-            </button>
-        </div>
-    </main>
-
-    <!-- [2] 슬롯머신 화면 -->
-    <main id="slot-screen" class="hidden flex flex-col items-center w-full max-w-5xl">
-        
-        <!-- 상단 정보 -->
-        <div class="flex justify-between w-full mb-4 px-4 items-end">
-            <button id="btn-back" class="text-gray-400 hover:text-white transition-colors text-lg">
-                ◀ 설정으로 돌아가기
-            </button>
-            <div class="text-right">
-                <p class="text-yellow-400 text-2xl" id="progress-text">모둠 생성 중: 1 / 5</p>
+        <details class="conditions" open>
+          <summary>교사 조건 · 최근 모둠</summary>
+          <div class="condition-body">
+            <div class="condition-section">
+              <div class="condition-title">🚫 같은 모둠 피하기</div>
+              <div class="condition-form"><select id="avoidA"></select><select id="avoidB"></select><button class="btn small" id="addAvoidBtn">추가</button></div>
+              <div class="chips" id="avoidList"></div>
             </div>
-        </div>
-
-        <!-- 슬롯머신 기계 -->
-        <div class="slot-machine-casing w-full">
-            <div class="bg-gray-900 rounded-xl p-6 border-4 border-gray-800 shadow-inner">
-                <div id="slots-container" class="grid gap-4" style="grid-template-columns: repeat(4, 1fr);">
-                    <!-- JS에서 슬롯을 여기에 생성합니다 -->
-                </div>
+            <div class="condition-section">
+              <div class="condition-title">🤝 반드시 같이 묶기</div>
+              <div class="condition-form"><select id="togetherA"></select><select id="togetherB"></select><button class="btn small" id="addTogetherBtn">추가</button></div>
+              <div class="chips" id="togetherList"></div>
             </div>
-            
-            <div class="mt-8 text-center">
-                <button id="btn-spin" class="btn-pop bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-4xl py-4 px-16 rounded-full shadow-[0_8px_0_#7f1d1d] hover:shadow-[0_4px_0_#7f1d1d] hover:translate-y-1 transition-all border-2 border-red-400">
-                    🕹️ 레버 당기기!
-                </button>
+            <div class="condition-section">
+              <div class="condition-title">⭐ 모둠장 분산</div>
+              <div class="condition-form" style="grid-template-columns:1fr auto"><select id="leaderStudent"></select><button class="btn small" id="addLeaderBtn">모둠장 후보 추가</button></div>
+              <div class="chips" id="leaderList"></div>
             </div>
-        </div>
-
-        <!-- 완성된 모둠 리스트 -->
-        <div class="w-full mt-12">
-            <h2 class="text-3xl text-yellow-300 text-center mb-6">🎉 완성된 모둠 🎉</h2>
-            <div id="results-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- 결과가 여기에 추가됩니다 -->
+            <div class="condition-section">
+              <div class="condition-title">📌 특정 모둠 고정</div>
+              <div class="condition-form fixed"><select id="fixedStudent"></select><select id="fixedGroup"></select><button class="btn small" id="addFixedBtn">고정</button></div>
+              <div class="chips" id="fixedList"></div>
             </div>
-        </div>
-    </main>
+            <div class="condition-section">
+              <div class="block-head" style="margin:0"><div><div class="condition-title" style="margin:0">🔄 최근 모둠 반복 줄이기</div><div class="help">확정한 최근 3회를 자동 반영합니다.</div></div><button class="btn small" id="clearHistoryBtn">기록 지우기</button></div>
+              <div class="history-list" id="historyList"></div>
+            </div>
+          </div>
+        </details>
+        <div class="notice" id="setupNotice">학생 명단을 넣으면 조건을 설정할 수 있어요.</div>
+      </div>
+    </div>
+    <div class="start-area"><button class="btn primary" id="startBtn">✨ 좋은 모둠 계산하고 슬롯 시작</button></div>
+  </section>
 
-    <script>
-        // 전역 상태 변수
-        const AppState = {
-            students: [],
-            avoidPairs: [],
-            groupSize: 4,
-            genderMode: 'random',
-            
-            calculatedGroups: [],
-            currentGroupIndex: 0,
-            
-            isSpinning: false,
-            soundEnabled: false
-        };
+  <section id="slotScreen" class="slot-screen">
+    <div class="slot-top">
+      <button class="btn" id="backBtn">← 설정으로</button>
+      <div class="slot-progress" id="progressText">1 / 1 모둠</div>
+    </div>
 
-        const itemHeight = 100; // 1칸 높이
-        const baseDuration = 3000; // 첫 번째 릴 회전 시간 (ms)
-        const durationStep = 2500; // 다음 릴이 멈출 때까지의 대기 시간
-        const baseDummyItems = 60; // 첫 번째 릴 가짜 아이템 수
-        const dummyItemsStep = 80; // 다음 릴에 추가될 가짜 아이템 수
+    <div class="machine">
+      <div id="slotDeck" class="slot-deck"></div>
+      <div class="machine-actions">
+        <button class="btn lever" id="spinBtn">🕹️ 레버 당기기</button>
+        <button class="btn" id="revealAllBtn">모두 바로 공개</button>
+      </div>
+    </div>
 
-        // DOM Elements
-        const screens = {
-            setup: document.getElementById('setup-screen'),
-            slot: document.getElementById('slot-screen')
-        };
-        const inputs = {
-            students: document.getElementById('students-input'),
-            size: document.getElementById('group-size'),
-            gender: document.getElementById('gender-mode'),
-            avoid: document.getElementById('avoid-input')
-        };
-        const buttons = {
-            start: document.getElementById('btn-start'),
-            back: document.getElementById('btn-back'),
-            spin: document.getElementById('btn-spin'),
-            toggleDebug: document.getElementById('btn-toggle-debug'),
-            sound: document.getElementById('btn-sound')
-        };
-        const ui = {
-            slotsContainer: document.getElementById('slots-container'),
-            progressText: document.getElementById('progress-text'),
-            resultsContainer: document.getElementById('results-container'),
-            debugContainer: document.getElementById('debug-container'),
-            bgm: document.getElementById('bgm-audio')
-        };
-
-        // --- 오디오 처리 (Web Audio API) ---
-        let audioCtx;
-        let tickInterval;
-        let soundInitialized = false;
-
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            // BGM 기본 볼륨을 낮게 설정하여 다른 효과음이 잘 들리게 함
-            ui.bgm.volume = 0.3;
-        }
-
-        function playTick() {
-            if (!AppState.soundEnabled || !audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.05);
-            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.05);
-        }
-
-        function playDing() {
-            if (!AppState.soundEnabled || !audioCtx) return;
-            const notes = [523.25, 659.25, 783.99, 1046.50];
-            notes.forEach((freq, i) => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.08);
-                gain.gain.setValueAtTime(0, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + i * 0.08 + 0.05);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.08 + 1.0);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start(audioCtx.currentTime + i * 0.08);
-                osc.stop(audioCtx.currentTime + i * 0.08 + 1.0);
-            });
-        }
-
-        function toggleSound() {
-            initAudio();
-            AppState.soundEnabled = !AppState.soundEnabled;
-            if (AppState.soundEnabled) {
-                buttons.sound.innerText = '🔇 소리 끄기';
-                buttons.sound.classList.replace('bg-gray-700', 'bg-green-600');
-                ui.bgm.play().catch(e => console.log('BGM 재생 실패:', e));
-            } else {
-                buttons.sound.innerText = '🔊 소리 켜기';
-                buttons.sound.classList.replace('bg-green-600', 'bg-gray-700');
-                ui.bgm.pause();
-            }
-            soundInitialized = true;
-        }
-
-        // --- 로컬 데이터 저장 (자동 저장) ---
-        const StorageKeys = {
-            students: 'groupMaker_students',
-            size: 'groupMaker_size',
-            gender: 'groupMaker_gender',
-            avoid: 'groupMaker_avoid'
-        };
-
-        window.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem(StorageKeys.students)) inputs.students.value = localStorage.getItem(StorageKeys.students);
-            if (localStorage.getItem(StorageKeys.size)) inputs.size.value = localStorage.getItem(StorageKeys.size);
-            if (localStorage.getItem(StorageKeys.gender)) inputs.gender.value = localStorage.getItem(StorageKeys.gender);
-            if (localStorage.getItem(StorageKeys.avoid)) inputs.avoid.value = localStorage.getItem(StorageKeys.avoid);
-        });
-
-        // 입력값 변경 시 즉시 저장되도록 이벤트 위임
-        document.getElementById('setup-screen').addEventListener('input', (e) => {
-            if (e.target.id === 'students-input') localStorage.setItem(StorageKeys.students, e.target.value);
-            if (e.target.id === 'group-size') localStorage.setItem(StorageKeys.size, e.target.value);
-            if (e.target.id === 'gender-mode') localStorage.setItem(StorageKeys.gender, e.target.value);
-            if (e.target.id === 'avoid-input') localStorage.setItem(StorageKeys.avoid, e.target.value);
-        });
-
-
-        // --- 유틸리티 및 로직 ---
-        function shuffleArray(array) {
-            let arr = [...array];
-            for (let i = arr.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [arr[i], arr[j]] = [arr[j], arr[i]];
-            }
-            return arr;
-        }
-
-        function parseInputs() {
-            const rawText = inputs.students.value;
-            const names = rawText.split(/[\n,]+/).map(s => s.trim()).filter(s => s.length > 0);
-            
-            AppState.students = names.map(raw => {
-                let name = raw;
-                let gender = 'none';
-                const match = raw.match(/(.+)\((남|여)\)/);
-                if (match) {
-                    name = match[1].trim();
-                    gender = match[2];
-                }
-                return { name, gender, original: name };
-            });
-
-            const avoidText = inputs.avoid.value;
-            AppState.avoidPairs = avoidText.split('\n')
-                .map(s => s.trim())
-                .filter(s => s.includes('-'))
-                .map(s => s.split('-').map(n => n.trim()));
-
-            AppState.groupSize = parseInt(inputs.size.value) || 4;
-            AppState.genderMode = inputs.gender.value;
-        }
-
-        function calculateGroups() {
-            let pool = [...AppState.students];
-            let numGroups = Math.ceil(pool.length / AppState.groupSize);
-            let groups = Array.from({ length: numGroups }, () => []);
-
-            if (AppState.genderMode === 'balanced') {
-                let males = shuffleArray(pool.filter(s => s.gender === '남'));
-                let females = shuffleArray(pool.filter(s => s.gender === '여'));
-                let unknowns = shuffleArray(pool.filter(s => s.gender === 'none'));
-
-                let i = 0;
-                [...males, ...females, ...unknowns].forEach(s => {
-                    groups[i % numGroups].push(s);
-                    i++;
-                });
-            } else if (AppState.genderMode === 'same') {
-                let males = shuffleArray(pool.filter(s => s.gender === '남'));
-                let females = shuffleArray(pool.filter(s => s.gender === '여'));
-                let unknowns = shuffleArray(pool.filter(s => s.gender === 'none'));
-                
-                let allSorted = [...males, ...females, ...unknowns];
-                groups = [];
-                for (let i = 0; i < allSorted.length; i += AppState.groupSize) {
-                    groups.push(allSorted.slice(i, i + AppState.groupSize));
-                }
-            } else {
-                let shuffled = shuffleArray(pool);
-                groups = [];
-                for (let i = 0; i < shuffled.length; i += AppState.groupSize) {
-                    groups.push(shuffled.slice(i, i + AppState.groupSize));
-                }
-            }
-
-            groups.forEach(g => {
-                while (g.length < AppState.groupSize) {
-                    g.push({ name: '💣 폭탄', isBomb: true });
-                }
-            });
-
-            if (AppState.avoidPairs.length > 0) {
-                let attempts = 0;
-                let hasConflict = true;
-
-                while (hasConflict && attempts < 500) {
-                    hasConflict = false;
-                    for (let i = 0; i < groups.length; i++) {
-                        let namesInGroup = groups[i].map(s => s.name);
-                        for (let [a, b] of AppState.avoidPairs) {
-                            if (namesInGroup.includes(a) && namesInGroup.includes(b)) {
-                                hasConflict = true;
-                                let bIndex = groups[i].findIndex(s => s.name === b);
-                                if (bIndex !== -1) {
-                                    let rGroup;
-                                    do { rGroup = Math.floor(Math.random() * groups.length); } while (rGroup === i);
-                                    let rMember = Math.floor(Math.random() * groups[rGroup].length);
-                                    let temp = groups[i][bIndex];
-                                    groups[i][bIndex] = groups[rGroup][rMember];
-                                    groups[rGroup][rMember] = temp;
-                                }
-                                break;
-                            }
-                        }
-                        if (hasConflict) break;
-                    }
-                    attempts++;
-                }
-            }
-
-            AppState.calculatedGroups = groups.map(g => shuffleArray(g));
-            AppState.currentGroupIndex = 0;
-        }
-
-        // --- UI 및 애니메이션 ---
-        function initSlotMachineUI() {
-            screens.setup.classList.add('hidden');
-            screens.slot.classList.remove('hidden');
-            ui.resultsContainer.innerHTML = '';
-            
-            let cols = AppState.groupSize;
-            if (cols > 5) cols = 5; 
-            ui.slotsContainer.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-            ui.slotsContainer.innerHTML = '';
-
-            for (let i = 0; i < AppState.groupSize; i++) {
-                const slotDiv = document.createElement('div');
-                slotDiv.className = 'slot-window';
-                
-                const highlight = document.createElement('div');
-                highlight.className = 'slot-selection-line';
-                slotDiv.appendChild(highlight);
-
-                const reelDiv = document.createElement('div');
-                reelDiv.className = 'reel';
-                reelDiv.id = `reel-${i}`;
-                
-                for(let j=0; j<3; j++) {
-                    const defaultItem = document.createElement('div');
-                    defaultItem.className = 'slot-item text-gray-300';
-                    defaultItem.innerText = (j === 1) ? '❓' : ''; 
-                    reelDiv.appendChild(defaultItem);
-                }
-
-                slotDiv.appendChild(reelDiv);
-                ui.slotsContainer.appendChild(slotDiv);
-            }
-
-            updateProgress();
-            buttons.spin.innerText = '🕹️ 레버 당기기!';
-            buttons.spin.disabled = false;
-            buttons.spin.classList.remove('opacity-50', 'cursor-not-allowed');
-        }
-
-        function updateProgress() {
-            const total = AppState.calculatedGroups.length;
-            const current = AppState.currentGroupIndex + 1;
-            if (current > total) {
-                ui.progressText.innerText = `모둠 구성 완료! (${total}/${total})`;
-                buttons.spin.innerText = '🎉 다시 하기';
-                if (AppState.soundEnabled) playDing();
-            } else {
-                ui.progressText.innerText = `모둠 뽑는 중: ${current} / ${total} 모둠`;
-            }
-        }
-
-        function spin() {
-            if (AppState.isSpinning) return;
-
-            if (AppState.currentGroupIndex >= AppState.calculatedGroups.length) {
-                screens.slot.classList.add('hidden');
-                screens.setup.classList.remove('hidden');
-                return;
-            }
-
-            AppState.isSpinning = true;
-            buttons.spin.disabled = true;
-            buttons.spin.classList.add('opacity-50', 'cursor-not-allowed');
-
-            initAudio();
-            if (tickInterval) clearInterval(tickInterval);
-            if (AppState.soundEnabled) {
-                tickInterval = setInterval(playTick, 100);
-            }
-
-            const currentGroup = AppState.calculatedGroups[AppState.currentGroupIndex];
-            const allNames = AppState.students.map(s => s.name);
-            if(allNames.length === 0) allNames.push("데이터없음");
-
-            let completedReels = 0;
-
-            currentGroup.forEach((member, index) => {
-                const reel = document.getElementById(`reel-${index}`);
-                
-                reel.style.transition = 'none';
-                reel.style.transform = `translateY(0px)`;
-                reel.innerHTML = '';
-                reel.classList.add('blur-spin');
-
-                const currentDummyCount = baseDummyItems + (index * dummyItemsStep);
-                const duration = baseDuration + (index * durationStep);
-
-                const itemsFragment = document.createDocumentFragment();
-                
-                for(let j = 0; j < 3; j++) {
-                    let firstDiv = document.createElement('div');
-                    firstDiv.className = 'slot-item';
-                    firstDiv.innerText = (j === 1) ? '❓' : '';
-                    itemsFragment.appendChild(firstDiv);
-                }
-
-                for (let j = 0; j < currentDummyCount; j++) {
-                    let div = document.createElement('div');
-                    div.className = 'slot-item text-gray-400 opacity-80';
-                    div.innerText = allNames[Math.floor(Math.random() * allNames.length)];
-                    itemsFragment.appendChild(div);
-                }
-
-                let targetDiv = document.createElement('div');
-                targetDiv.className = `slot-item font-bold ${member.isBomb ? 'bomb' : 'text-blue-600'} text-3xl`;
-                targetDiv.innerText = member.name;
-                itemsFragment.appendChild(targetDiv);
-
-                for (let j = 0; j < 3; j++) {
-                    let afterDiv = document.createElement('div');
-                    afterDiv.className = 'slot-item text-gray-400 opacity-60';
-                    afterDiv.innerText = allNames[Math.floor(Math.random() * allNames.length)];
-                    itemsFragment.appendChild(afterDiv);
-                }
-
-                reel.appendChild(itemsFragment);
-
-                // 강제 Reflow 처리
-                reel.offsetHeight; 
-
-                reel.style.transition = `transform ${duration}ms cubic-bezier(0.12, 0.85, 0.2, 1)`;
-                
-                const itemsBeforeTarget = 3 + currentDummyCount;
-                const targetY = -((itemsBeforeTarget - 1) * itemHeight);
-                reel.style.transform = `translateY(${targetY}px)`;
-
-                setTimeout(() => {
-                    reel.classList.remove('blur-spin');
-                    reel.parentElement.classList.add('bounce');
-                    playDing();
-                    setTimeout(() => reel.parentElement.classList.remove('bounce'), 300);
-                    
-                    completedReels++;
-                    if (completedReels === currentGroup.length) {
-                        clearInterval(tickInterval);
-                        onSpinComplete(currentGroup);
-                    }
-                }, duration);
-            });
-        }
-
-        function onSpinComplete(group) {
-            AppState.isSpinning = false;
-            
-            const card = document.createElement('div');
-            card.className = 'bg-gray-700 p-4 rounded-xl shadow-lg border border-gray-600 transform transition hover:scale-105';
-            
-            let html = `<h3 class="text-xl text-yellow-400 mb-3 border-b border-gray-500 pb-2">${AppState.currentGroupIndex + 1} 모둠</h3><ul class="space-y-1">`;
-            
-            group.forEach(m => {
-                if (m.isBomb) {
-                    html += `<li class="text-red-400 font-bold flex items-center"><span class="text-2xl mr-2">💣</span> 비었음</li>`;
-                } else {
-                    html += `<li class="text-white text-lg flex justify-between">
-                                <span>${m.name}</span>
-                                <span class="text-xs text-gray-400 align-bottom pt-1">${m.gender !== 'none' ? m.gender : ''}</span>
-                             </li>`;
-                }
-            });
-            html += '</ul>';
-            card.innerHTML = html;
-            ui.resultsContainer.appendChild(card);
-            
-            AppState.currentGroupIndex++;
-            updateProgress();
-
-            if (AppState.currentGroupIndex < AppState.calculatedGroups.length) {
-                buttons.spin.disabled = false;
-                buttons.spin.classList.remove('opacity-50', 'cursor-not-allowed');
-            } else {
-                buttons.spin.disabled = false;
-                buttons.spin.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        }
-
-        // --- 이벤트 바인딩 ---
-        buttons.start.addEventListener('click', () => {
-            if (!inputs.students.value.trim()) {
-                alert("학생 명단을 입력해주세요!");
-                return;
-            }
-
-            if (!soundInitialized && !AppState.soundEnabled) {
-                toggleSound();
-            }
-
-            parseInputs();
-            calculateGroups();
-            initSlotMachineUI();
-        });
-
-        buttons.back.addEventListener('click', () => {
-            if (AppState.isSpinning) return;
-            screens.slot.classList.add('hidden');
-            screens.setup.classList.remove('hidden');
-            if (tickInterval) clearInterval(tickInterval);
-        });
-
-        buttons.spin.addEventListener('click', spin);
-
-        buttons.toggleDebug.addEventListener('click', () => {
-            ui.debugContainer.classList.toggle('hidden');
-        });
-
-        buttons.sound.addEventListener('click', toggleSound);
-
-    </script>
+    <div class="results-wrap">
+      <div class="results-head">
+        <h2>🎉 완성된 모둠</h2>
+        <div class="toolbar"><button class="btn" id="rerollBtn">다시 계산</button><button class="btn green" id="confirmBtn">✓ 이번 모둠 확정</button></div>
+      </div>
+      <div class="result-tools" id="resultTools"><strong id="selectedLabel">학생 선택</strong><span class="help">다른 학생을 누르면 두 학생의 모둠을 서로 바꿉니다.</span><button class="btn small" id="cancelSelectBtn">선택 해제</button></div>
+      <div class="group-grid" id="groupGrid"></div>
+      <div class="notice" id="resultNotice">레버를 당기면 계산된 모둠을 하나씩 공개합니다.</div>
+    </div>
+  </section>
+</div>
 
 <script>
-  Gulliver.mountShell({title:'행운의 모둠 메이커',icon:'🎰'});
-  document.getElementById('load-classroom-btn')?.addEventListener('click',()=>{
-    const room=Gulliver.getClassroom();
-    if(!room.students.length){Gulliver.toast('먼저 우리 반에서 학생 명단을 저장해 주세요.');return;}
-    const text=room.students.map(s=>s.name+(s.gender==='M'?'(남)':s.gender==='F'?'(여)':'')).join(', ');
-    const input=document.getElementById('students-input');
-    input.value=text;
-    input.dispatchEvent(new Event('input',{bubbles:true}));
-    Gulliver.toast(room.className+' '+room.students.length+'명을 불러왔습니다.');
+(function(){
+"use strict";
+const CONFIG_KEY="gulliver.groupMaker.v4";
+const HISTORY_KEY="gulliver.groupMaker.history.v1";
+const $=id=>document.getElementById(id);
+let audioCtx=null;
+let selectedStudentId=null;
+let revealTimers=[];
+let state={
+  rosterHints:[],students:[],groupSize:4,genderMode:"random",
+  avoidPairs:[],togetherPairs:[],leaders:[],fixedGroups:{},
+  groups:[],targetSizes:[],revealed:0,sound:false
+};
+
+function safeParse(raw,fallback){try{return raw?JSON.parse(raw):fallback}catch{return fallback}}
+function esc(v){return String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
+function uid(name,index){return"manual_"+index+"_"+encodeURIComponent(name).slice(0,22)}
+function getHistory(){return safeParse(localStorage.getItem(HISTORY_KEY),[]).filter(x=>x&&x.assignments).slice(0,3)}
+function saveConfig(){
+  const payload={rosterHints:state.rosterHints,groupSize:state.groupSize,genderMode:state.genderMode,avoidPairs:state.avoidPairs,togetherPairs:state.togetherPairs,leaders:state.leaders,fixedGroups:state.fixedGroups,names:$("studentsInput").value,sound:state.sound};
+  localStorage.setItem(CONFIG_KEY,JSON.stringify(payload));
+}
+function loadConfig(){
+  const p=safeParse(localStorage.getItem(CONFIG_KEY),null);if(!p)return;
+  state.rosterHints=Array.isArray(p.rosterHints)?p.rosterHints:[];
+  state.groupSize=Math.max(2,Math.min(10,Number(p.groupSize)||4));
+  state.genderMode=["random","balanced","same"].includes(p.genderMode)?p.genderMode:"random";
+  state.avoidPairs=Array.isArray(p.avoidPairs)?p.avoidPairs:[];
+  state.togetherPairs=Array.isArray(p.togetherPairs)?p.togetherPairs:[];
+  state.leaders=Array.isArray(p.leaders)?p.leaders.map(String):[];
+  state.fixedGroups=p.fixedGroups&&typeof p.fixedGroups==="object"?p.fixedGroups:{};
+  state.sound=Boolean(p.sound);
+  $("studentsInput").value=p.names||"";
+  $("groupSize").value=state.groupSize;$("genderMode").value=state.genderMode;renderSound();
+}
+function parseStudents(){
+  const raw=$("studentsInput").value.split(/[\n,]+/).map(x=>x.trim()).filter(Boolean);
+  const usedHints=new Set();
+  state.students=raw.map((entry,index)=>{
+    let name=entry,gender="";
+    const m=entry.match(/^(.+?)\s*\((남|여)\)\s*$/);
+    if(m){name=m[1].trim();gender=m[2]==="남"?"M":"F"}
+    let hint=null;
+    for(const h of state.rosterHints){
+      if(!usedHints.has(String(h.id))&&h.name===name){hint=h;usedHints.add(String(h.id));break}
+    }
+    return{id:hint?String(hint.id):uid(name,index),name,gender:gender||(hint?.gender||"")};
   });
+  cleanConditions();
+}
+function studentById(id){return state.students.find(s=>s.id===String(id))}
+function studentName(id){return studentById(id)?.name||"?"}
+function cleanConditions(){
+  const ids=new Set(state.students.map(s=>s.id));
+  const cleanPairs=arr=>(Array.isArray(arr)?arr:[]).filter(p=>Array.isArray(p)&&p.length===2&&ids.has(String(p[0]))&&ids.has(String(p[1]))&&String(p[0])!==String(p[1])).map(p=>[String(p[0]),String(p[1])]);
+  state.avoidPairs=cleanPairs(state.avoidPairs);state.togetherPairs=cleanPairs(state.togetherPairs);
+  state.leaders=state.leaders.filter(id=>ids.has(String(id)));
+  Object.keys(state.fixedGroups).forEach(id=>{if(!ids.has(String(id)))delete state.fixedGroups[id]});
+}
+function groupCount(){return state.students.length?Math.ceil(state.students.length/state.groupSize):0}
+function balancedSizes(){
+  const n=state.students.length,g=groupCount();if(!g)return[];
+  const base=Math.floor(n/g),rem=n%g;
+  return Array.from({length:g},(_,i)=>base+(i<rem?1:0));
+}
+function pairKey(a,b){return[a,b].sort().join("|")}
+function pairExists(arr,a,b){const key=pairKey(String(a),String(b));return arr.some(p=>pairKey(String(p[0]),String(p[1]))===key)}
+function setNotice(id,text,type=""){$(id).textContent=text;$(id).className="notice"+(type?" "+type:"")}
+function renderSound(){$("soundBtn").textContent=state.sound?"🔇 효과음 끄기":"🔊 효과음 켜기"}
+
+function studentOptions(selected="",blank="학생 선택"){
+  let html='<option value="">'+esc(blank)+'</option>';
+  state.students.forEach(s=>{html+='<option value="'+esc(s.id)+'" '+(String(selected)===s.id?"selected":"")+'>'+esc(s.name)+'</option>'});
+  return html
+}
+function refreshStudentUI(){
+  parseStudents();
+  const m=state.students.filter(s=>s.gender==="M").length,f=state.students.filter(s=>s.gender==="F").length;
+  $("studentCount").textContent="학생 "+state.students.length+"명";
+  $("genderCount").textContent=(m+f)?("남 "+m+" · 여 "+f+" · 미입력 "+(state.students.length-m-f)):"성별 정보 없음";
+  $("groupCountPreview").value=groupCount()+"개";
+  ["avoidA","avoidB","togetherA","togetherB","leaderStudent","fixedStudent"].forEach(id=>$(id).innerHTML=studentOptions());
+  const gc=groupCount();$("fixedGroup").innerHTML='<option value="">모둠 선택</option>'+Array.from({length:gc},(_,i)=>'<option value="'+(i+1)+'">'+(i+1)+'모둠</option>').join("");
+  renderConditions();saveConfig();
+  if(!state.students.length)setNotice("setupNotice","학생 명단을 넣으면 조건을 설정할 수 있어요.");
+  else setNotice("setupNotice","현재 "+state.students.length+"명 · 예상 "+gc+"모둠입니다. 필요한 조건만 추가하세요.");
+}
+function renderConditions(){
+  const renderPairs=(id,arr,kind)=>{
+    $(id).innerHTML=arr.length?arr.map((p,i)=>'<span class="chip">'+esc(studentName(p[0]))+' ↔ '+esc(studentName(p[1]))+' <button data-del-'+kind+'="'+i+'">×</button></span>').join(""):'<span class="help">설정 없음</span>';
+    document.querySelectorAll("[data-del-"+kind+"]").forEach(b=>b.onclick=()=>{arr.splice(Number(b.getAttribute("data-del-"+kind)),1);saveConfig();renderConditions()});
+  };
+  renderPairs("avoidList",state.avoidPairs,"avoid");renderPairs("togetherList",state.togetherPairs,"together");
+  $("leaderList").innerHTML=state.leaders.length?state.leaders.map(id=>'<span class="chip">⭐ '+esc(studentName(id))+' <button data-del-leader="'+esc(id)+'">×</button></span>').join(""):'<span class="help">설정 없음</span>';
+  document.querySelectorAll("[data-del-leader]").forEach(b=>b.onclick=()=>{state.leaders=state.leaders.filter(id=>id!==b.dataset.delLeader);saveConfig();renderConditions()});
+  const fixed=Object.entries(state.fixedGroups);
+  $("fixedList").innerHTML=fixed.length?fixed.map(([id,g])=>'<span class="chip">📌 '+esc(studentName(id))+' → '+g+'모둠 <button data-del-fixed="'+esc(id)+'">×</button></span>').join(""):'<span class="help">설정 없음</span>';
+  document.querySelectorAll("[data-del-fixed]").forEach(b=>b.onclick=()=>{delete state.fixedGroups[b.dataset.delFixed];saveConfig();renderConditions()});
+  renderHistory();
+}
+function renderHistory(){
+  const hist=getHistory();$("historyList").innerHTML=hist.length?hist.map((h,i)=>'<div class="history-line"><span>'+(i===0?"최근 ":"")+new Date(h.at).toLocaleString("ko-KR")+'</span><span>'+Object.keys(h.assignments).length+'명</span></div>').join(""):'<div class="help">아직 확정한 모둠 기록이 없습니다.</div>'
+}
+function addPair(kind){
+  const a=$(kind+"A").value,b=$(kind+"B").value;if(!a||!b||a===b){Gulliver.toast("서로 다른 학생 두 명을 선택해 주세요.");return}
+  const arr=kind==="avoid"?state.avoidPairs:state.togetherPairs,other=kind==="avoid"?state.togetherPairs:state.avoidPairs;
+  if(pairExists(other,a,b)){Gulliver.toast(kind==="avoid"?"이미 같이 묶기로 설정된 학생입니다.":"이미 떨어뜨리기로 설정된 학생입니다.");return}
+  if(!pairExists(arr,a,b))arr.push([a,b]);saveConfig();renderConditions()
+}
+function addLeader(){
+  const id=$("leaderStudent").value;if(!id)return;if(!state.leaders.includes(id))state.leaders.push(id);saveConfig();renderConditions()
+}
+function addFixed(){
+  const id=$("fixedStudent").value,g=Number($("fixedGroup").value);if(!id||!g){Gulliver.toast("학생과 모둠을 선택해 주세요.");return}
+  state.fixedGroups[id]=g;saveConfig();renderConditions()
+}
+
+class DSU{
+  constructor(ids){this.p=new Map(ids.map(id=>[id,id]))}
+  find(x){const p=this.p.get(x);if(p===x)return x;const r=this.find(p);this.p.set(x,r);return r}
+  union(a,b){a=this.find(a);b=this.find(b);if(a!==b)this.p.set(b,a)}
+}
+function components(){
+  const ids=state.students.map(s=>s.id),dsu=new DSU(ids);
+  state.togetherPairs.forEach(([a,b])=>dsu.union(a,b));
+  const map=new Map();ids.forEach(id=>{const r=dsu.find(id);if(!map.has(r))map.set(r,[]);map.get(r).push(id)});
+  return[...map.values()]
+}
+function historyPairPenalty(idsA,idsB){
+  let score=0;const hist=getHistory();
+  hist.forEach((h,age)=>{
+    const weight=[62,28,12][age]||8;
+    idsA.forEach(a=>idsB.forEach(b=>{if(h.assignments[a]&&h.assignments[a]===h.assignments[b])score+=weight}))
+  });return score
+}
+function genderStats(ids){let m=0,f=0;ids.forEach(id=>{const g=studentById(id)?.gender;if(g==="M")m++;if(g==="F")f++});return{m,f}}
+function incrementalScore(groupIds,compIds){
+  let score=Math.random()*3;
+  state.avoidPairs.forEach(([a,b])=>{
+    const all=new Set([...groupIds,...compIds]);if(all.has(a)&&all.has(b))score+=100000
+  });
+  const leaders=new Set(state.leaders);const leadCount=[...groupIds,...compIds].filter(id=>leaders.has(id)).length;if(leadCount>1)score+=(leadCount-1)*420;
+  const gs=genderStats([...groupIds,...compIds]);
+  if(state.genderMode==="balanced")score+=Math.abs(gs.m-gs.f)*18;
+  if(state.genderMode==="same"&&gs.m>0&&gs.f>0)score+=650+Math.min(gs.m,gs.f)*80;
+  score+=historyPairPenalty(compIds,groupIds);
+  return score
+}
+function evaluateGroups(groups){
+  let score=0,avoid=0,mixed=0,leaderClash=0;
+  groups.forEach(g=>{
+    state.avoidPairs.forEach(([a,b])=>{if(g.includes(a)&&g.includes(b)){avoid++;score+=100000}});
+    const gs=genderStats(g);if(state.genderMode==="balanced")score+=Math.abs(gs.m-gs.f)*18;
+    if(state.genderMode==="same"&&gs.m>0&&gs.f>0){mixed++;score+=650+Math.min(gs.m,gs.f)*80}
+    const lc=g.filter(id=>state.leaders.includes(id)).length;if(lc>1){leaderClash+=lc-1;score+=(lc-1)*420}
+    for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++)score+=historyPairPenalty([g[i]],[g[j]]);
+  });
+  return{score,avoid,mixed,leaderClash}
+}
+function validateSetup(){
+  if(state.students.length<2)return"학생을 2명 이상 입력해 주세요.";
+  const sizes=balancedSizes(),max=Math.max(...sizes),gc=sizes.length;
+  const comps=components();
+  for(const comp of comps){
+    if(comp.length>max)return"같이 묶기로 연결된 학생이 한 모둠 정원보다 많습니다.";
+    const fixed=[...new Set(comp.map(id=>Number(state.fixedGroups[id]||0)).filter(Boolean))];
+    if(fixed.length>1)return"같이 묶인 학생들이 서로 다른 고정 모둠으로 지정되어 있습니다.";
+    if(fixed[0]&&fixed[0]>gc)return"존재하지 않는 모둠 번호로 고정된 학생이 있습니다.";
+    for(let i=0;i<comp.length;i++)for(let j=i+1;j<comp.length;j++)if(pairExists(state.avoidPairs,comp[i],comp[j]))return"같이 묶기와 떨어뜨리기 조건이 서로 충돌합니다.";
+  }
+  const fixedCounts=Array(gc).fill(0);
+  comps.forEach(comp=>{const g=comp.map(id=>Number(state.fixedGroups[id]||0)).find(Boolean);if(g)fixedCounts[g-1]+=comp.length});
+  for(let i=0;i<gc;i++)if(fixedCounts[i]>sizes[i])return(i+1)+"모둠의 고정 학생 수가 배정 가능한 인원보다 많습니다.";
+  return""
+}
+function shuffled(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function solveGroups(){
+  const sizes=balancedSizes(),gc=sizes.length,compsBase=components();
+  let best=null,bestEval=null;
+  for(let attempt=0;attempt<1600;attempt++){
+    const groups=Array.from({length:gc},()=>[]);
+    let valid=true;
+    const comps=shuffled(compsBase).sort((a,b)=>{
+      const af=a.some(id=>state.fixedGroups[id]),bf=b.some(id=>state.fixedGroups[id]);
+      if(af!==bf)return af?-1:1;return b.length-a.length
+    });
+    for(const comp of comps){
+      const forced=comp.map(id=>Number(state.fixedGroups[id]||0)).find(Boolean);
+      let candidates=[];
+      if(forced)candidates=[forced-1];
+      else for(let g=0;g<gc;g++)if(groups[g].length+comp.length<=sizes[g])candidates.push(g);
+      candidates=candidates.filter(g=>groups[g].length+comp.length<=sizes[g]);
+      if(!candidates.length){valid=false;break}
+      let chosen=candidates[0],chosenScore=Infinity;
+      shuffled(candidates).forEach(g=>{const s=incrementalScore(groups[g],comp);if(s<chosenScore){chosenScore=s;chosen=g}});
+      groups[chosen].push(...comp);
+    }
+    if(!valid||groups.some((g,i)=>g.length!==sizes[i]))continue;
+    const ev=evaluateGroups(groups);
+    if(!bestEval||ev.score<bestEval.score){best=groups.map(g=>[...g]);bestEval=ev;if(ev.score===0)break}
+  }
+  return best?{groups:best,ev:bestEval}:null
+}
+function buildStudentGroups(idGroups){return idGroups.map(g=>g.map(id=>studentById(id)).filter(Boolean))}
+
+function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume()}
+function tone(freq,dur=.12,delay=0){if(!state.sound)return;try{initAudio();const o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=audioCtx.currentTime+delay;o.frequency.setValueAtTime(freq,t);o.type="sine";g.gain.setValueAtTime(.001,t);g.gain.exponentialRampToValueAtTime(.11,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(audioCtx.destination);o.start(t);o.stop(t+dur+.02)}catch{}}
+function ding(){tone(523,.16);tone(659,.16,.08);tone(784,.2,.16)}
+
+function start(){
+  parseStudents();state.groupSize=Math.max(2,Math.min(10,Number($("groupSize").value)||4));state.genderMode=$("genderMode").value;saveConfig();
+  const err=validateSetup();if(err){setNotice("setupNotice",err,"bad");return}
+  const solved=solveGroups();if(!solved){setNotice("setupNotice","현재 조건으로 모둠을 만들지 못했습니다. 고정·같이 묶기 조건을 조금 완화해 주세요.","bad");return}
+  if(solved.ev.avoid>0){setNotice("setupNotice","‘같은 모둠 피하기’ 조건을 모두 지킬 수 없습니다. 조건을 줄이거나 모둠 크기를 조정해 주세요.","bad");return}
+  state.groups=buildStudentGroups(solved.groups);state.targetSizes=balancedSizes();state.revealed=0;selectedStudentId=null;
+  $("setupScreen").style.display="none";$("slotScreen").classList.add("active");
+  renderSlotDeck();renderResults();updateProgress();
+  let msg="모둠 인원은 "+state.targetSizes.join("·")+"명으로 균등하게 구성했습니다.";
+  if(state.genderMode==="same"&&solved.ev.mixed)msg+=" 인원 구성상 혼합 모둠 "+solved.ev.mixed+"개가 불가피합니다.";
+  if(solved.ev.leaderClash)msg+=" 모둠장 후보 일부가 같은 모둠에 배치되었습니다.";
+  setNotice("resultNotice",msg,"good")
+}
+function slotMembersFor(index){
+  const real=state.groups[index]||[],arr=[...real];while(arr.length<state.groupSize)arr.push({id:"bomb_"+arr.length,name:"💣 빈 자리",gender:"",isBomb:true});return arr
+}
+function renderSlotDeck(){
+  const count=Math.min(state.groupSize,5);$("slotDeck").style.gridTemplateColumns="repeat("+count+",minmax(0,1fr))";
+  const target=Math.min(state.revealed,state.groups.length-1),members=state.groups.length?slotMembersFor(Math.max(0,target)):[];
+  $("slotDeck").innerHTML=Array.from({length:state.groupSize},(_,i)=>'<div class="slot-window"><div class="slot-name '+(members[i]?.isBomb?"bomb":"")+'">'+(members[i]?esc(members[i].name):"❓")+'</div></div>').join("")
+}
+function updateProgress(){
+  const total=state.groups.length;
+  if(state.revealed>=total){$("progressText").textContent="모둠 공개 완료 · "+total+"개 모둠";$("spinBtn").textContent="🎉 공개 완료";$("spinBtn").disabled=true}
+  else{$("progressText").textContent=(state.revealed+1)+" / "+total+" 모둠 공개";$("spinBtn").textContent="🕹️ 레버 당기기";$("spinBtn").disabled=false}
+}
+function clearRevealTimers(){revealTimers.forEach(clearInterval);revealTimers=[]}
+function spin(){
+  if(state.revealed>=state.groups.length)return;clearRevealTimers();$("spinBtn").disabled=true;$("revealAllBtn").disabled=true;
+  const members=slotMembersFor(state.revealed),windows=[...document.querySelectorAll(".slot-window")],names=state.students.map(s=>s.name);
+  windows.forEach((w,i)=>{
+    w.classList.add("spin");const label=w.querySelector(".slot-name");const interval=setInterval(()=>{label.textContent=names[Math.floor(Math.random()*names.length)]||"❓";label.classList.remove("bomb");if(state.sound)tone(170,.035)},90);revealTimers.push(interval);
+    const duration=Math.min(3200,1350+i*230);
+    setTimeout(()=>{clearInterval(interval);w.classList.remove("spin");label.textContent=members[i]?.name||"💣 빈 자리";label.classList.toggle("bomb",Boolean(members[i]?.isBomb));tone(620+i*35,.11);if(i===windows.length-1){setTimeout(()=>finishReveal(),180)}},duration)
+  })
+}
+function finishReveal(){
+  clearRevealTimers();state.revealed++;ding();renderResults();updateProgress();$("revealAllBtn").disabled=false;
+  if(state.revealed<state.groups.length)renderSlotDeck();else setNotice("resultNotice","모든 모둠을 공개했습니다. 필요하면 학생 두 명을 눌러 서로 바꾼 뒤 확정하세요.","good")
+}
+function revealAll(){clearRevealTimers();state.revealed=state.groups.length;renderResults();updateProgress();renderSlotDeck();ding();setNotice("resultNotice","모든 모둠을 공개했습니다. 필요하면 두 학생을 눌러 서로 바꿀 수 있어요.","good")}
+function renderResults(){
+  const visible=Math.min(state.revealed,state.groups.length);
+  $("groupGrid").innerHTML=state.groups.map((g,gi)=>{
+    const shown=gi<visible;if(!shown)return'<div class="group-card"><div class="group-head"><strong>'+(gi+1)+'모둠</strong><span class="pill">아직 비공개</span></div><div class="help" style="margin-top:14px">레버를 당기면 공개됩니다.</div></div>';
+    const members=g.map(s=>{
+      const cls="member"+(selectedStudentId===s.id?" selected":"")+(state.leaders.includes(s.id)?" leader":"")+(Number(state.fixedGroups[s.id]||0)===gi+1?" fixed":"");
+      return'<button class="'+cls+'" data-member="'+esc(s.id)+'">'+esc(s.name)+(s.gender==="M"?" ♂":s.gender==="F"?" ♀":"")+'</button>'
+    }).join("");
+    return'<div class="group-card"><div class="group-head"><strong>'+(gi+1)+'모둠</strong><span class="pill">'+g.length+'명</span></div><div class="members">'+members+'</div></div>'
+  }).join("");
+  document.querySelectorAll("[data-member]").forEach(b=>b.onclick=()=>selectStudent(b.dataset.member));
+  $("resultTools").classList.toggle("show",Boolean(selectedStudentId));
+  if(selectedStudentId)$("selectedLabel").textContent=studentName(selectedStudentId)+" 선택됨";
+}
+function findGroupOf(id){return state.groups.findIndex(g=>g.some(s=>s.id===id))}
+function selectStudent(id){
+  if(state.revealed<state.groups.length){Gulliver.toast("모든 모둠을 공개한 뒤 수정할 수 있습니다.");return}
+  if(selectedStudentId&&selectedStudentId!==id){
+    const a=findGroupOf(selectedStudentId),b=findGroupOf(id);if(a===b){selectedStudentId=null;renderResults();return}
+    const ai=state.groups[a].findIndex(s=>s.id===selectedStudentId),bi=state.groups[b].findIndex(s=>s.id===id);
+    [state.groups[a][ai],state.groups[b][bi]]=[state.groups[b][bi],state.groups[a][ai]];
+    selectedStudentId=null;renderResults();
+    const hard=hardViolations();setNotice("resultNotice",hard.length?"교환은 했지만 조건이 깨졌습니다: "+hard.join(" · "):"두 학생의 모둠을 서로 바꿨습니다.",hard.length?"bad":"good");return
+  }
+  selectedStudentId=selectedStudentId===id?null:id;renderResults()
+}
+function hardViolations(){
+  const map={};state.groups.forEach((g,gi)=>g.forEach(s=>map[s.id]=gi+1));const issues=[];
+  state.avoidPairs.forEach(([a,b])=>{if(map[a]&&map[a]===map[b])issues.push(studentName(a)+"·"+studentName(b)+" 분리")});
+  state.togetherPairs.forEach(([a,b])=>{if(map[a]!==map[b])issues.push(studentName(a)+"·"+studentName(b)+" 같이 묶기")});
+  Object.entries(state.fixedGroups).forEach(([id,g])=>{if(map[id]!==Number(g))issues.push(studentName(id)+" "+g+"모둠 고정")});
+  return issues
+}
+function confirmGroups(){
+  if(state.revealed<state.groups.length){setNotice("resultNotice","모둠을 모두 공개한 뒤 확정해 주세요.","bad");return}
+  const hard=hardViolations();if(hard.length){setNotice("resultNotice","조건이 깨진 결과는 확정할 수 없습니다: "+hard.join(" · "),"bad");return}
+  const assignments={};state.groups.forEach((g,gi)=>g.forEach(s=>assignments[s.id]=gi+1));
+  const hist=[{at:Date.now(),assignments},...getHistory()].slice(0,3);localStorage.setItem(HISTORY_KEY,JSON.stringify(hist));renderHistory();setNotice("resultNotice","이번 모둠을 확정했습니다. 다음 편성에서는 최근 같은 모둠이 반복되지 않도록 반영합니다.","good");Gulliver.toast("이번 모둠을 기록했습니다.")
+}
+function back(){clearRevealTimers();$("slotScreen").classList.remove("active");$("setupScreen").style.display="block";refreshStudentUI()}
+function reroll(){state.revealed=0;start()}
+function loadClassroom(){
+  const room=Gulliver.getClassroom();if(!room.students.length){Gulliver.toast("먼저 우리 반에서 학생 명단을 저장해 주세요.");return}
+  state.rosterHints=room.students.map(s=>({id:String(s.id),name:s.name,gender:s.gender||""}));
+  $("studentsInput").value=room.students.map(s=>s.name+(s.gender==="M"?"(남)":s.gender==="F"?"(여)":"")).join("\n");refreshStudentUI();Gulliver.toast((room.className||"우리 반")+" "+room.students.length+"명을 불러왔습니다.")
+}
+
+$("studentsInput").addEventListener("input",refreshStudentUI);
+$("groupSize").addEventListener("change",()=>{state.groupSize=Math.max(2,Math.min(10,Number($("groupSize").value)||4));$("groupSize").value=state.groupSize;refreshStudentUI()});
+$("genderMode").addEventListener("change",()=>{state.genderMode=$("genderMode").value;saveConfig()});
+$("loadClassroomBtn").onclick=loadClassroom;
+$("sampleBtn").onclick=()=>{$("studentsInput").value=["민준(남)","서연(여)","도윤(남)","하은(여)","지호(남)","수아(여)","현우(남)","윤서(여)","준서(남)","채원(여)","도현(남)","나은(여)"].join("\n");state.rosterHints=[];refreshStudentUI()};
+$("clearNamesBtn").onclick=()=>{$("studentsInput").value="";state.rosterHints=[];state.avoidPairs=[];state.togetherPairs=[];state.leaders=[];state.fixedGroups={};refreshStudentUI()};
+$("addAvoidBtn").onclick=()=>addPair("avoid");$("addTogetherBtn").onclick=()=>addPair("together");$("addLeaderBtn").onclick=addLeader;$("addFixedBtn").onclick=addFixed;
+$("clearHistoryBtn").onclick=()=>{if(confirm("최근 모둠 기록을 모두 지울까요?")){localStorage.removeItem(HISTORY_KEY);renderHistory()}};
+$("soundBtn").onclick=()=>{state.sound=!state.sound;renderSound();saveConfig();if(state.sound){initAudio();ding()}};
+$("startBtn").onclick=start;$("backBtn").onclick=back;$("spinBtn").onclick=spin;$("revealAllBtn").onclick=revealAll;$("rerollBtn").onclick=reroll;$("confirmBtn").onclick=confirmGroups;$("cancelSelectBtn").onclick=()=>{selectedStudentId=null;renderResults()};
+
+loadConfig();refreshStudentUI();renderHistory();
+Gulliver.mountShell({title:"행운의 모둠 메이커",icon:"🎰"});
+})();
 </script>
 </body>
 </html>
