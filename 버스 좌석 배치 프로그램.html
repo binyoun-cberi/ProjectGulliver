@@ -1,346 +1,306 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>버스 좌석 배치 프로그램 (동성 짝꿍 모드)</title>
-    <style>
-        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; gap: 40px; }
-        .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 380px; max-height: 90vh; overflow-y: auto; }
-        h2 { margin-top: 0; font-size: 1.2rem; color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; }
-        label { font-size: 0.9rem; font-weight: bold; color: #555; display: block; margin-top: 15px; margin-bottom: 5px; }
-        textarea { width: 100%; height: 60px; border: 1px solid #ccc; border-radius: 6px; padding: 8px; box-sizing: border-box; font-family: inherit; resize: vertical; }
-        .hint { font-size: 0.75rem; color: #888; margin-bottom: 8px; display: block; line-height: 1.3; }
-        
-        .checkbox-group { margin-top: 20px; background: #e8f5e9; padding: 15px; border-radius: 8px; border: 1px solid #c8e6c9; }
-        .checkbox-group label { margin: 0; display: flex; align-items: center; cursor: pointer; color: #2e7d32; font-size: 1rem; }
-        .checkbox-group input { margin-right: 10px; transform: scale(1.2); }
-
-        button { background-color: #4CAF50; color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; margin-top: 20px; transition: background 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        button:hover { background-color: #45a049; }
-        
-        /* Bus Layout */
-        .bus-container { background: #e0e0e0; padding: 20px; border-radius: 20px; border: 4px solid #bdc3c7; width: max-content; }
-        .driver-area { text-align: center; font-weight: bold; background: #fff; padding: 10px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #ccc; }
-        .row { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; gap: 10px; }
-        .aisle { width: 40px; text-align: center; font-size: 0.8rem; color: #7f8c8d; }
-        
-        /* Seat Styles */
-        .seat { width: 65px; height: 65px; background: #fff; border: 2px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: bold; cursor: pointer; user-select: none; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; word-break: keep-all; }
-        .seat:hover:not(.occupied):not(.disabled) { border-color: #999; }
-        
-        .seat.disabled { background: #95a5a6; border-color: #7f8c8d; color: #fff; text-decoration: line-through; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
-        
-        /* Gender Colors */
-        .seat.occupied.boy { background: #e3f2fd; border-color: #2196f3; color: #0d47a1; }
-        .seat.occupied.girl { background: #fce4ec; border-color: #e91e63; color: #880e4f; }
-        .seat.occupied.neutral { background:#f1f5f9; border-color:#64748b; color:#334155; }
-        .gulliver-shell{flex-basis:100%;}
-        
-        .forbidden-row { margin-top: 20px; background: #ff7675; color: white; text-align: center; padding: 10px; border-radius: 8px; font-weight: bold; }
-        .tip-box { margin-top: 20px; padding: 12px; background: #fff3cd; border-radius: 8px; font-size: 0.8rem; color: #856404; border: 1px solid #ffeeba; }
-    </style>
-    <script src="gulliver-shared.js"></script>
-    <script src="gulliver-shared.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>버스 좌석 배치 | 교실 뚝딱도구</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#f4f7f5;--paper:#fff;--ink:#243042;--muted:#6f7c91;--line:#e1e7e5;--brand:#16a36a;--brand2:#4f46e5;--red:#dc4c64;--amber:#d97706;--shadow:0 14px 34px rgba(31,41,55,.08)}
+body{margin:0;padding:76px 14px 42px;background:radial-gradient(circle at 9% 0,#e9fff4 0,transparent 28%),radial-gradient(circle at 92% 0,#eef0ff 0,transparent 24%),var(--bg);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;color:var(--ink)}
+button,input,textarea,select{font:inherit}button{cursor:pointer}
+.app{width:min(1380px,100%);margin:auto}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:14px}.head h1{margin:0;font-size:clamp(28px,4vw,42px);letter-spacing:-.055em}.head p{margin:6px 0 0;color:var(--muted);font-size:13px;font-weight:750}.head-actions{display:flex;gap:7px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:#fff;color:#475569;border-radius:11px;padding:9px 12px;font-weight:900}.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.violet{background:var(--brand2);border-color:var(--brand2);color:#fff}.btn.green{background:#0f9f78;border-color:#0f9f78;color:#fff}.btn.danger{background:#fff1f2;border-color:#fecdd3;color:#be123c}.btn.small{padding:7px 9px;font-size:12px}
+.layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px;align-items:start}
+.panel{background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.98);border-radius:22px;box-shadow:var(--shadow)}
+.settings{padding:15px;position:sticky;top:66px;max-height:calc(100vh - 82px);overflow:auto}.section{border:1px solid #e9eeec;border-radius:15px;padding:12px;margin-bottom:10px;background:#fbfdfc}.section:last-child{margin-bottom:0}.section h2{margin:0 0 9px;font-size:15px;letter-spacing:-.035em}.help{font-size:10px;color:#8995a6;font-weight:750;line-height:1.5}.toolbar{display:flex;gap:6px;flex-wrap:wrap}
+textarea,input,select{width:100%;border:1px solid #dce3e1;background:#fff;border-radius:10px;padding:9px 10px;color:#334155;outline:none}textarea:focus,input:focus,select:focus{border-color:#34d399;box-shadow:0 0 0 3px rgba(16,185,129,.1)}textarea{min-height:100px;resize:vertical}
+.field{display:grid;gap:5px;margin-top:8px}.field label{font-size:11px;color:#607085;font-weight:900}
+.checks{display:grid;gap:6px}.check{display:flex;align-items:flex-start;gap:8px;padding:8px 9px;border-radius:10px;background:#f8fafc;border:1px solid #edf0f4;font-size:11px;font-weight:850;color:#526077}.check input{width:auto;margin-top:1px}
+.pair-form{display:grid;grid-template-columns:1fr 1fr auto;gap:6px}.fixed-form{display:grid;grid-template-columns:1fr 1fr auto;gap:6px}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid #dfe6e4;background:#f8fafc;color:#526077;border-radius:999px;padding:5px 7px;font-size:10px;font-weight:900}.chip button{border:0;background:transparent;color:inherit;padding:0;font-weight:1000}
+.summary{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.pill{display:inline-flex;padding:6px 8px;border-radius:999px;background:#f1f5f9;color:#64748b;font-size:10px;font-weight:900}
+.notice{margin-top:10px;border-radius:12px;padding:10px 11px;background:#f8fafc;color:#64748b;font-size:11px;font-weight:750;line-height:1.55}.notice.good{background:#ecfdf5;color:#047857}.notice.bad{background:#fff1f2;color:#be123c}
+.bus-panel{padding:17px;min-width:0}.bus-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}.bus-toolbar h2{margin:0;font-size:18px}.bus-wrap{overflow:auto;padding-bottom:4px}
+.bus{width:max-content;min-width:480px;margin:auto;background:linear-gradient(#dfe5e7,#cfd7da);border:4px solid #aeb8bd;border-radius:28px 28px 18px 18px;padding:16px 18px 20px;box-shadow:inset 0 6px 15px rgba(255,255,255,.55)}
+.driver{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:#fff;border:2px solid #c3ccd0;border-radius:13px;padding:10px 13px;margin-bottom:15px;font-weight:950}.windshield{height:10px;border-radius:999px;background:linear-gradient(90deg,#b9dcf5,#e7f5ff,#b9dcf5)}
+.bus-row{display:grid;grid-template-columns:68px 68px 45px 68px 68px;gap:8px;align-items:center;margin-bottom:8px}.row-no{text-align:center;font-size:9px;color:#748191;font-weight:900}.aisle{display:grid;place-items:center;color:#9ba5b1;font-size:9px;font-weight:900}
+.seat{width:68px;height:68px;border:2px solid #cbd5d9;border-radius:11px;background:#fff;color:#536176;display:grid;place-items:center;text-align:center;line-height:1.18;padding:4px;font-size:11px;font-weight:950;box-shadow:0 2px 5px rgba(30,41,59,.07);user-select:none;position:relative}.seat:hover{border-color:#94a3b8}.seat.window::after{content:"창";position:absolute;top:3px;right:4px;font-size:7px;color:#94a3b8}.seat.disabled{background:#7f8b94;border-color:#6b7780;color:#fff}.seat.occupied.m{background:#eff6ff;border-color:#60a5fa;color:#1e40af}.seat.occupied.f{background:#fff1f6;border-color:#f472b6;color:#9d174d}.seat.occupied.u{background:#f8fafc;border-color:#94a3b8;color:#334155}.seat.selected{outline:4px solid rgba(245,158,11,.28);border-color:#f59e0b}.seat.fixed::before{content:"📌";position:absolute;top:2px;left:3px;font-size:9px}.back-row{margin-top:4px;padding:7px;border-radius:10px;background:#fff7ed;color:#c2410c;text-align:center;font-size:10px;font-weight:900}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:12px}.metric{border:1px solid var(--line);border-radius:12px;background:#fff;padding:9px;text-align:center}.metric b{display:block;font-size:17px}.metric span{font-size:9px;color:#7b8794;font-weight:850}
+.result-tools{display:none;margin-top:10px;padding:10px;border:1px solid #fde68a;background:#fffbeb;border-radius:12px;font-size:11px;font-weight:800}.result-tools.show{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+body.presentation .settings,body.presentation .head,body.presentation .bus-toolbar .teacher-only,body.presentation .metrics,body.presentation .result-tools,body.presentation .notice{display:none!important}body.presentation{padding-top:10px}body.presentation .layout{display:block}body.presentation .bus-panel{box-shadow:none;background:transparent;border:0;padding:0}body.presentation .bus{transform:scale(1.12);transform-origin:top center;margin-top:24px}
+@media(max-width:980px){.layout{grid-template-columns:320px minmax(0,1fr)}.settings{position:static;max-height:none}.metrics{grid-template-columns:1fr 1fr}}@media(max-width:760px){body{padding:70px 8px 28px}.layout{grid-template-columns:1fr}.settings{order:1}.bus-panel{order:0}.head{align-items:flex-start;flex-direction:column}.pair-form,.fixed-form{grid-template-columns:1fr 1fr}.pair-form .btn,.fixed-form .btn{grid-column:1/-1}.bus{min-width:420px}.bus-row{grid-template-columns:60px 60px 38px 60px 60px}.seat{width:60px;height:60px}.metrics{grid-template-columns:1fr 1fr}}
+</style>
+<script src="gulliver-shared.js"></script>
 </head>
 <body>
+<div class="app">
+  <header class="head">
+    <div><h1>🚌 버스 좌석 배치</h1><p>학생 관계, 앞자리 우선, 동성 짝, 최근 자리까지 함께 고려해 버스 자리를 편성합니다.</p></div>
+    <div class="head-actions"><button class="btn" id="presentationBtn">📺 자리표만 보기</button><button class="btn" id="printBtn">인쇄</button></div>
+  </header>
 
-    <!-- 왼쪽: 입력 패널 -->
-    <div class="panel">
-        <h2 id="panel-title" title="더블클릭하면 조건을 숨깁니다." style="cursor: pointer; user-select: none;">📋 설정 및 학생 입력</h2>
-        <button id="loadClassroomBtn" type="button" style="margin-top:0;background:#4f46e5;">👥 우리 반 명단 불러오기</button>
-        <button id="load-classroom-btn" type="button" style="margin-top:0;background:#4f46e5;">👥 우리 반 명단 불러오기</button>
-        
-        <label for="boys">👦 남학생 명단 (쉼표로 구분)</label>
-        <textarea id="boys">김철수, 박민수, 최지훈, 강준서, 조민재</textarea>
+  <div class="layout">
+    <aside class="panel settings">
+      <section class="section">
+        <h2>👥 학생 명단</h2>
+        <div class="toolbar"><button class="btn small violet" id="loadClassroomBtn">우리 반 불러오기</button><button class="btn small" id="sampleBtn">예시</button><button class="btn small" id="clearBtn">비우기</button></div>
+        <div class="field"><textarea id="namesInput" placeholder="한 줄에 한 명&#10;예: 민준(남)&#10;서연(여)"></textarea></div>
+        <div class="summary"><span class="pill" id="studentCount">학생 0명</span><span class="pill" id="seatCount">사용 0석</span></div>
+      </section>
 
-        <label for="girls">👧 여학생 명단 (쉼표로 구분)</label>
-        <textarea id="girls">이영희, 정다은, 윤서아, 박수진, 최유리</textarea>
-
-        <label for="others">🧑 성별 미입력 학생</label>
-        <textarea id="others" placeholder="우리 반에 성별 없이 저장한 학생이 여기에 들어옵니다."></textarea>
-
-        <div id="secret-constraints">
-            <label for="constraints">🚫 떨어뜨려 놓을 학생들 (엔터로 구분)</label>
-            <span class="hint">같은 줄에 적힌 학생들은 앞, 뒤, 양옆, 대각선에 앉지 않습니다.<br>예: 김철수, 이영희</span>
-            <textarea id="constraints">김철수, 박민수
-이영희, 정다은</textarea>
+      <section class="section">
+        <h2>⚙️ 배치 규칙</h2>
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="sameGenderMode" checked> 동성 짝을 우선합니다.</label>
+          <label class="check"><input type="checkbox" id="historyMode" checked> 최근 같은 자리·짝꿍을 줄입니다.</label>
+          <label class="check"><input type="checkbox" id="backRowDisabled" checked> 맨 뒤 10열은 기본 사용하지 않습니다.</label>
         </div>
+        <div class="notice">우리 반의 앞자리 우선과 관계 정보는 자동으로 적용되지만 이 화면에는 관계 사유를 표시하지 않습니다.</div>
+      </section>
 
-        <div class="checkbox-group">
-            <label>
-                <input type="checkbox" id="sameGenderMode" checked>
-                👫 동성(남남/여여) 짝꿍 모드 켜기
-            </label>
-            <span class="hint" style="margin-top: 8px; margin-left: 24px;">체크 시 남자는 남자끼리, 여자는 여자끼리 옆자리에 앉도록 우선 배치합니다. (홀수일 경우 1쌍은 남녀가 앉을 수 있습니다)</span>
-        </div>
+      <section class="section">
+        <h2>🚫 추가로 떨어뜨리기</h2>
+        <div class="pair-form"><select id="avoidA"></select><select id="avoidB"></select><button class="btn small" id="addAvoidBtn">추가</button></div>
+        <div class="chips" id="avoidList"></div>
+      </section>
 
-        <div class="tip-box">
-            <strong>💡 좌석 설정 팁:</strong><br>
-            오른쪽 버스 좌석을 클릭하면 <strong>[사용 불가]</strong>로 변경됩니다. 다른 반 좌석이나 선생님 좌석은 미리 클릭해 두세요.
-        </div>
+      <section class="section">
+        <h2>📌 학생 자리 고정</h2>
+        <div class="fixed-form"><select id="fixedStudent"></select><select id="fixedSeat"></select><button class="btn small" id="addFixedBtn">고정</button></div>
+        <div class="chips" id="fixedList"></div>
+      </section>
 
-        <button onclick="generateSeating()">자동 자리 배치하기 🚀</button>
-    </div>
+      <button class="btn primary" id="generateBtn" style="width:100%;padding:12px">✨ 좋은 자리 배치 찾기</button>
+      <div class="toolbar" style="margin-top:7px"><button class="btn green" id="confirmBtn" style="flex:1">✓ 이번 버스 자리 확정</button><button class="btn danger" id="clearHistoryBtn">기록 지우기</button></div>
+      <div class="notice" id="notice">우리 반 명단을 불러오거나 학생 이름을 입력하세요.</div>
+    </aside>
 
-    <!-- 오른쪽: 버스 시각화 패널 -->
-    <div class="bus-container">
-        <div class="driver-area">운전석 & TV</div>
-        <div id="bus-grid"></div>
-        <div class="forbidden-row">맨 뒷칸은 금지입니다</div>
-    </div>
+    <main class="panel bus-panel">
+      <div class="bus-toolbar">
+        <div><h2>버스 좌석표</h2><div class="help">빈 좌석을 누르면 사용 불가/사용 가능을 바꿀 수 있습니다. 결과가 나온 뒤 학생 두 명을 눌러 자리를 교환할 수 있어요.</div></div>
+        <div class="toolbar teacher-only"><button class="btn small" id="resetSeatsBtn">좌석 설정 초기화</button><button class="btn small" id="exitPresentationBtn" style="display:none">교사 화면으로</button></div>
+      </div>
+      <div class="bus-wrap"><div class="bus">
+        <div class="driver"><span>🧑‍✈️ 운전석 · 앞쪽</span><span class="windshield" style="width:150px"></span></div>
+        <div id="busGrid"></div>
+        <div class="back-row">뒤쪽 · 10열은 기본 사용 안 함</div>
+      </div></div>
+      <div class="metrics">
+        <div class="metric"><b id="metricFront">-</b><span>앞자리 우선</span></div>
+        <div class="metric"><b id="metricAvoid">-</b><span>분리 조건</span></div>
+        <div class="metric"><b id="metricGender">-</b><span>동성 짝 비율</span></div>
+        <div class="metric"><b id="metricHistory">-</b><span>최근 자리 변경</span></div>
+      </div>
+      <div class="result-tools" id="resultTools"><strong id="selectedLabel">학생 선택</strong><span>다른 학생을 누르면 두 자리를 교환합니다.</span><button class="btn small" id="cancelSelectBtn">선택 해제</button></div>
+    </main>
+  </div>
+</div>
 
-    <script>
-        const totalRows = 10; // 10줄
-        const seatsPerRow = 4; // 한 줄에 4좌석
-        let seatElements = [];
+<script>
+(function(){
+"use strict";
+const ROWS=10,COLS=4,STORAGE_KEY="gulliver.busSeating.v3",HISTORY_KEY="gulliver.busSeating.history.v1";
+const $=id=>document.getElementById(id);
+let state={rosterHints:[],students:[],disabled:Array(ROWS*COLS).fill(false),avoidPairs:[],fixedSeats:{},assignment:Array(ROWS*COLS).fill(null),sameGender:true,historyMode:true,backRowDisabled:true};
+let selectedStudentId=null,sharedProfiles={},sharedRelations=[];
+function safeParse(raw,fallback){try{return raw?JSON.parse(raw):fallback}catch{return fallback}}
+function uid(name,i){return"manual_"+i+"_"+encodeURIComponent(name).slice(0,20)}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function pairKey(a,b){return[a,b].map(String).sort().join("|")}
+function studentById(id){return state.students.find(s=>String(s.id)===String(id))}
+function seatLabel(i){const r=Math.floor(i/COLS)+1,c=i%COLS;return r+"열 "+(c<2?"왼쪽 ":"오른쪽 ")+(c===0||c===3?"창측":"내측")}
+function isWindow(i){const c=i%COLS;return c===0||c===3}
+function getHistory(){return safeParse(localStorage.getItem(HISTORY_KEY),[]).filter(Boolean).slice(0,3)}
+function saveHistoryList(list){localStorage.setItem(HISTORY_KEY,JSON.stringify(list.slice(0,3)))}
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+function load(){
+  const p=safeParse(localStorage.getItem(STORAGE_KEY),null);if(p)state={...state,...p};
+  state.disabled=Array.isArray(state.disabled)?state.disabled.slice(0,ROWS*COLS):Array(ROWS*COLS).fill(false);while(state.disabled.length<ROWS*COLS)state.disabled.push(false);
+  state.assignment=Array.isArray(state.assignment)?state.assignment.slice(0,ROWS*COLS):Array(ROWS*COLS).fill(null);while(state.assignment.length<ROWS*COLS)state.assignment.push(null);
+  state.avoidPairs=Array.isArray(state.avoidPairs)?state.avoidPairs:[];
+  state.fixedSeats=state.fixedSeats&&typeof state.fixedSeats==="object"?state.fixedSeats:{};
+  state.students=Array.isArray(state.students)?state.students:[];
+  state.rosterHints=Array.isArray(state.rosterHints)?state.rosterHints:[];
+}
+function parseStudents(){
+  const raw=$("namesInput").value.split(/[\n,]+/).map(x=>x.trim()).filter(Boolean),used=new Set();
+  state.students=raw.map((entry,i)=>{
+    let name=entry,gender="";
+    const m=entry.match(/^(.+?)\s*\((남|여)\)\s*$/);if(m){name=m[1].trim();gender=m[2]==="남"?"M":"F"}
+    let hint=null;
+    for(const h of state.rosterHints){if(!used.has(String(h.id))&&h.name===name){hint=h;used.add(String(h.id));break}}
+    return{id:hint?String(hint.id):uid(name,i),name,gender:gender||(hint?.gender||"")};
+  });
+  const ids=new Set(state.students.map(s=>String(s.id)));
+  state.avoidPairs=state.avoidPairs.filter(p=>ids.has(String(p[0]))&&ids.has(String(p[1])));
+  Object.keys(state.fixedSeats).forEach(id=>{if(!ids.has(String(id)))delete state.fixedSeats[id]});
+  state.assignment=state.assignment.map(id=>ids.has(String(id))?String(id):null);
+}
+function refreshShared(){
+  sharedProfiles=Gulliver.getProfiles?Gulliver.getProfiles():{};
+  const ids=new Set(state.students.map(s=>String(s.id)));
+  sharedRelations=(Gulliver.getRelations?Gulliver.getRelations():[]).filter(r=>ids.has(String(r.a))&&ids.has(String(r.b)));
+}
+function relationWeight(a,b){
+  const rel=sharedRelations.find(r=>pairKey(r.a,r.b)===pairKey(a,b));if(!rel)return 0;
+  const s=Number(rel.strength||2);let w=0;
+  (rel.tags||[]).forEach(tag=>{if(tag==="avoid")w+=2200*s;else if(tag==="conflict")w+=1300*s;else if(tag==="chatter")w+=420*s;else if(tag==="playful")w+=300*s;else if(tag==="cooperate")w-=35*s});
+  return w;
+}
+function applyBackRowSetting(){if(state.backRowDisabled){for(let i=(ROWS-1)*COLS;i<ROWS*COLS;i++)state.disabled[i]=true}}
+function activeSeats(){return state.disabled.map((v,i)=>v?-1:i).filter(i=>i>=0)}
+function neighbors(a,b){
+  const ar=Math.floor(a/COLS),ac=a%COLS,br=Math.floor(b/COLS),bc=b%COLS,dr=Math.abs(ar-br),dc=Math.abs(ac-bc);
+  return dr<=1&&dc<=1&&!(dr===0&&dc===0)
+}
+function pairMateIndex(i){const c=i%COLS;if(c===0)return i+1;if(c===1)return i-1;if(c===2)return i+1;return i-1}
+function fixedSeatEntries(){return Object.entries(state.fixedSeats).map(([id,seat])=>({id:String(id),seat:Number(seat)})).filter(x=>studentById(x.id)&&!state.disabled[x.seat])}
+function setNotice(text,type=""){$("notice").textContent=text;$("notice").className="notice"+(type?" "+type:"")}
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function historyPenalty(arr){
+  if(!state.historyMode)return 0;let p=0;const hist=getHistory();
+  hist.forEach((h,age)=>{
+    const seatW=[65,28,12][age]||8,pairW=[42,18,8][age]||6;
+    arr.forEach((id,i)=>{if(!id)return;const old=h.seats?.findIndex(x=>String(x)===String(id));if(old===i)p+=seatW});
+    for(let i=0;i<arr.length;i++){const id=arr[i],mate=arr[pairMateIndex(i)];if(!id||!mate||i>pairMateIndex(i))continue;const oldMate=h.pairs?.[id];if(oldMate&&String(oldMate)===String(mate))p+=pairW}
+  });return p
+}
+function evaluate(arr){
+  let penalty=0,manualViolations=0,frontMiss=0,genderMismatch=0;
+  for(const {id,seat} of fixedSeatEntries())if(String(arr[seat]||"")!==id)penalty+=100000;
+  state.avoidPairs.forEach(([a,b])=>{const ai=arr.findIndex(x=>String(x)===String(a)),bi=arr.findIndex(x=>String(x)===String(b));if(ai>=0&&bi>=0&&neighbors(ai,bi)){penalty+=4000;manualViolations++}});
+  sharedRelations.forEach(rel=>{const ai=arr.findIndex(x=>String(x)===String(rel.a)),bi=arr.findIndex(x=>String(x)===String(rel.b));if(ai>=0&&bi>=0&&neighbors(ai,bi))penalty+=relationWeight(rel.a,rel.b)});
+  const frontRows=new Set([0,1,2]);
+  state.students.forEach(s=>{if(!sharedProfiles[String(s.id)]?.frontSeat)return;const idx=arr.findIndex(x=>String(x)===String(s.id));if(idx>=0&&!frontRows.has(Math.floor(idx/COLS))){penalty+=700;frontMiss++}});
+  if(state.sameGender){
+    for(let r=0;r<ROWS;r++)for(const pair of [[r*COLS,r*COLS+1],[r*COLS+2,r*COLS+3]]){
+      const sa=studentById(arr[pair[0]]),sb=studentById(arr[pair[1]]);if(sa&&sb&&sa.gender&&sb.gender&&sa.gender!==sb.gender){penalty+=55;genderMismatch++}
+    }
+  }
+  penalty+=historyPenalty(arr);
+  return{penalty,manualViolations,frontMiss,genderMismatch}
+}
+function randomArrangement(){
+  const arr=Array(ROWS*COLS).fill(null),fixed=fixedSeatEntries(),fixedIds=new Set(fixed.map(x=>x.id)),fixedSeats=new Set(fixed.map(x=>x.seat));
+  fixed.forEach(x=>arr[x.seat]=x.id);
+  const remaining=shuffle(state.students.map(s=>String(s.id)).filter(id=>!fixedIds.has(id))),seats=shuffle(activeSeats().filter(i=>!fixedSeats.has(i)));
+  remaining.forEach((id,i)=>{if(seats[i]!==undefined)arr[seats[i]]=id});return arr
+}
+function optimize(){
+  let best=null,bestEv=null,current=null,currentEv=null;
+  for(let r=0;r<700;r++){const arr=randomArrangement(),ev=evaluate(arr);if(!bestEv||ev.penalty<bestEv.penalty){best=arr;bestEv=ev}if(!currentEv||ev.penalty<currentEv.penalty){current=arr;currentEv=ev}}
+  if(!best)return null;
+  const fixedSet=new Set(fixedSeatEntries().map(x=>x.seat)),usable=activeSeats().filter(i=>!fixedSet.has(i));let temp=28;
+  for(let n=0;n<5000;n++){
+    const next=[...current],a=usable[Math.floor(Math.random()*usable.length)],b=usable[Math.floor(Math.random()*usable.length)];if(a===undefined||b===undefined||a===b)continue;
+    [next[a],next[b]]=[next[b],next[a]];const ev=evaluate(next),delta=ev.penalty-currentEv.penalty;
+    if(delta<=0||Math.random()<Math.exp(-delta/Math.max(1,temp))){current=next;currentEv=ev;if(ev.penalty<bestEv.penalty){best=next;bestEv=ev}}
+    temp*=.9988;
+  }
+  return{arr:best,ev:bestEv}
+}
+function validate(){
+  if(!state.students.length)return"학생 명단이 없습니다.";
+  const active=activeSeats();if(state.students.length>active.length)return"학생 "+state.students.length+"명인데 사용할 수 있는 좌석은 "+active.length+"개입니다.";
+  const fixed=fixedSeatEntries(),seatSet=new Set();for(const x of fixed){if(seatSet.has(x.seat))return"같은 좌석에 학생 두 명이 고정되어 있습니다.";seatSet.add(x.seat)}
+  return""
+}
+function generate(){
+  parseStudents();refreshShared();state.sameGender=$("sameGenderMode").checked;state.historyMode=$("historyMode").checked;state.backRowDisabled=$("backRowDisabled").checked;applyBackRowSetting();save();
+  const err=validate();if(err){setNotice(err,"bad");renderAll();return}
+  const result=optimize();if(!result){setNotice("현재 조건으로 자리를 만들지 못했습니다.","bad");return}
+  state.assignment=result.arr;selectedStudentId=null;save();renderAll();
+  const parts=[];if(result.ev.manualViolations)parts.push("추가 분리 조건 일부 미충족");if(result.ev.frontMiss)parts.push("앞자리 우선 일부 미충족");if(state.sameGender&&result.ev.genderMismatch)parts.push("동성 짝 일부 미충족");
+  setNotice(parts.length?"최대한 조건을 맞춘 결과입니다. "+parts.join(" · "):"조건과 최근 기록을 반영해 자리를 배치했습니다. 실제 사용할 자리면 확정해 주세요.",parts.length?"":"good")
+}
+function renderBus(){
+  const grid=$("busGrid");grid.replaceChildren();
+  for(let r=0;r<ROWS;r++){
+    const row=document.createElement("div");row.className="bus-row";
+    for(let c=0;c<COLS;c++){
+      const i=r*COLS+c,seat=document.createElement("button");seat.type="button";seat.className="seat"+(isWindow(i)?" window":"");
+      const id=state.assignment[i],s=studentById(id);
+      if(state.disabled[i]){seat.classList.add("disabled");seat.textContent="사용 불가"}
+      else if(s){seat.classList.add("occupied",s.gender==="M"?"m":s.gender==="F"?"f":"u");seat.textContent=s.name;if(selectedStudentId===s.id)seat.classList.add("selected");if(Number(state.fixedSeats[s.id])===i)seat.classList.add("fixed")}
+      else seat.textContent=(r+1)+"-"+(c+1);
+      seat.dataset.seat=i;seat.onclick=()=>onSeatClick(i);row.appendChild(seat);
+      if(c===1){const aisle=document.createElement("div");aisle.className="aisle";aisle.innerHTML=(r===3?"통":r===5?"로":'<span class="row-no">'+(r+1)+"열</span>");row.appendChild(aisle)}
+    }
+    grid.appendChild(row);
+  }
+}
+function onSeatClick(i){
+  const id=state.assignment[i];
+  if(id){
+    if(selectedStudentId&&selectedStudentId!==id){
+      const a=state.assignment.findIndex(x=>String(x)===String(selectedStudentId)),b=i,sa=studentById(selectedStudentId),sb=studentById(id);
+      if(Number(state.fixedSeats[sa.id])===a||Number(state.fixedSeats[sb.id])===b){Gulliver.toast("고정 좌석 학생은 교환할 수 없습니다.");selectedStudentId=null;renderAll();return}
+      [state.assignment[a],state.assignment[b]]=[state.assignment[b],state.assignment[a]];selectedStudentId=null;save();renderAll();setNotice("두 학생의 자리를 서로 바꿨습니다. 확정 전에 조건 지표를 확인하세요.");return
+    }
+    selectedStudentId=selectedStudentId===id?null:id;renderAll();return
+  }
+  if(state.assignment.some(Boolean)){Gulliver.toast("배치 결과가 있을 때는 빈 좌석 사용 여부를 바꾸지 않습니다. 결과를 다시 만들기 전에 좌석 설정을 바꿔 주세요.");return}
+  state.disabled[i]=!state.disabled[i];save();renderAll()
+}
+function renderMetrics(){
+  if(!state.assignment.some(Boolean)){["metricFront","metricAvoid","metricGender","metricHistory"].forEach(id=>$(id).textContent="-");return}
+  const ev=evaluate(state.assignment),frontTotal=state.students.filter(s=>sharedProfiles[String(s.id)]?.frontSeat).length;
+  $("metricFront").textContent=frontTotal?(frontTotal-ev.frontMiss)+"/"+frontTotal:"없음";
+  $("metricAvoid").textContent=state.avoidPairs.length?(state.avoidPairs.length-ev.manualViolations)+"/"+state.avoidPairs.length:"없음";
+  let pairs=0,same=0;for(let r=0;r<ROWS;r++)for(const pair of [[r*COLS,r*COLS+1],[r*COLS+2,r*COLS+3]]){const sa=studentById(state.assignment[pair[0]]),sb=studentById(state.assignment[pair[1]]);if(sa&&sb&&sa.gender&&sb.gender){pairs++;if(sa.gender===sb.gender)same++}}
+  $("metricGender").textContent=state.sameGender&&pairs?Math.round(same/pairs*100)+"%":"해당 없음";
+  const h=getHistory()[0];if(!h){$("metricHistory").textContent="첫 배치"}else{let t=0,ch=0;state.assignment.forEach((id,i)=>{if(!id)return;t++;if(h.seats?.findIndex(x=>String(x)===String(id))!==i)ch++});$("metricHistory").textContent=t?Math.round(ch/t*100)+"%":"-"}
+}
+function renderControls(){
+  $("studentCount").textContent="학생 "+state.students.length+"명";$("seatCount").textContent="사용 "+activeSeats().length+"석";
+  $("sameGenderMode").checked=state.sameGender;$("historyMode").checked=state.historyMode;$("backRowDisabled").checked=state.backRowDisabled;
+  const opts='<option value="">학생 선택</option>'+state.students.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join("");
+  $("avoidA").innerHTML=opts;$("avoidB").innerHTML=opts;$("fixedStudent").innerHTML=opts;
+  const occupiedFixed=new Set(Object.values(state.fixedSeats).map(Number));
+  $("fixedSeat").innerHTML='<option value="">좌석 선택</option>'+activeSeats().filter(i=>!occupiedFixed.has(i)).map(i=>'<option value="'+i+'">'+seatLabel(i)+'</option>').join("");
+  $("avoidList").innerHTML=state.avoidPairs.length?state.avoidPairs.map((p,i)=>'<span class="chip">'+esc(studentById(p[0])?.name||"?")+' ↔ '+esc(studentById(p[1])?.name||"?")+' <button data-del-avoid="'+i+'">×</button></span>').join(""):'<span class="help">추가 조건 없음</span>';
+  document.querySelectorAll("[data-del-avoid]").forEach(b=>b.onclick=()=>{state.avoidPairs.splice(Number(b.dataset.delAvoid),1);save();renderAll()});
+  const fixed=Object.entries(state.fixedSeats);
+  $("fixedList").innerHTML=fixed.length?fixed.map(([id,seat])=>'<span class="chip">'+esc(studentById(id)?.name||"?")+' → '+seatLabel(Number(seat))+' <button data-del-fixed="'+esc(id)+'">×</button></span>').join(""):'<span class="help">고정 좌석 없음</span>';
+  document.querySelectorAll("[data-del-fixed]").forEach(b=>b.onclick=()=>{delete state.fixedSeats[b.dataset.delFixed];save();renderAll()});
+  $("resultTools").classList.toggle("show",Boolean(selectedStudentId));if(selectedStudentId)$("selectedLabel").textContent=(studentById(selectedStudentId)?.name||"학생")+" 선택됨";
+}
+function renderAll(){renderBus();renderControls();renderMetrics()}
+function refreshFromInput(){parseStudents();refreshShared();state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()}
+function loadClassroom(){
+  const room=Gulliver.getClassroom();if(!room.students.length){Gulliver.toast("먼저 우리 반에서 학생 명단을 저장해 주세요.");return}
+  state.rosterHints=room.students.map(s=>({id:String(s.id),name:s.name,gender:s.gender||""}));
+  $("namesInput").value=room.students.map(s=>s.name+(s.gender==="M"?"(남)":s.gender==="F"?"(여)":"")).join("\n");refreshFromInput();Gulliver.toast((room.className||"우리 반")+" "+room.students.length+"명을 불러왔습니다.")
+}
+function confirmResult(){
+  if(!state.assignment.some(Boolean)){setNotice("먼저 자리를 배치해 주세요.","bad");return}
+  const ev=evaluate(state.assignment);if(ev.manualViolations){setNotice("추가로 떨어뜨리기 조건이 깨져 있어 확정할 수 없습니다.","bad");return}
+  const pairs={};state.assignment.forEach((id,i)=>{if(!id)return;const mate=state.assignment[pairMateIndex(i)];if(mate)pairs[id]=mate});
+  const item={at:Date.now(),seats:[...state.assignment],pairs};saveHistoryList([item,...getHistory()]);
+  if(Gulliver.recordOperation)Gulliver.recordOperation("bus",{studentCount:state.students.length,seats:[...state.assignment]});
+  renderMetrics();setNotice("이번 버스 좌석을 확정했습니다. 다음 배정에서 같은 자리와 같은 짝을 줄이는 데 사용합니다.","good");Gulliver.toast("버스 자리표를 기록했습니다.")
+}
+function resetSeats(){if(!window.confirm("좌석 사용 설정과 결과를 초기화할까요?"))return;state.disabled=Array(ROWS*COLS).fill(false);state.assignment=Array(ROWS*COLS).fill(null);applyBackRowSetting();save();renderAll()}
+function enterPresentation(){if(!state.assignment.some(Boolean)){Gulliver.toast("먼저 자리를 배치해 주세요.");return}document.body.classList.add("presentation");$("exitPresentationBtn").style.display="inline-flex"}
+function exitPresentation(){document.body.classList.remove("presentation");$("exitPresentationBtn").style.display="none"}
 
-        // 버스 초기화
-        function initBus() {
-            const grid = document.getElementById('bus-grid');
-            grid.innerHTML = '';
-            seatElements = [];
+$("namesInput").addEventListener("change",refreshFromInput);
+$("loadClassroomBtn").onclick=loadClassroom;
+$("sampleBtn").onclick=()=>{$("namesInput").value=["민준(남)","서연(여)","도윤(남)","하은(여)","지호(남)","수아(여)","현우(남)","윤서(여)","준서(남)","채원(여)"].join("\n");state.rosterHints=[];refreshFromInput()};
+$("clearBtn").onclick=()=>{$("namesInput").value="";state.students=[];state.avoidPairs=[];state.fixedSeats={};state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()};
+$("sameGenderMode").onchange=e=>{state.sameGender=e.target.checked;state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()};
+$("historyMode").onchange=e=>{state.historyMode=e.target.checked;state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()};
+$("backRowDisabled").onchange=e=>{state.backRowDisabled=e.target.checked;if(e.target.checked)applyBackRowSetting();else for(let i=(ROWS-1)*COLS;i<ROWS*COLS;i++)state.disabled[i]=false;state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()};
+$("addAvoidBtn").onclick=()=>{const a=$("avoidA").value,b=$("avoidB").value;if(!a||!b||a===b){Gulliver.toast("서로 다른 학생 두 명을 선택해 주세요.");return}if(!state.avoidPairs.some(p=>pairKey(p[0],p[1])===pairKey(a,b)))state.avoidPairs.push([a,b]);save();renderAll()};
+$("addFixedBtn").onclick=()=>{const id=$("fixedStudent").value,raw=$("fixedSeat").value;if(!id||raw===""){Gulliver.toast("학생과 좌석을 선택해 주세요.");return}const seat=Number(raw);Object.keys(state.fixedSeats).forEach(sid=>{if(Number(state.fixedSeats[sid])===seat)delete state.fixedSeats[sid]});state.fixedSeats[id]=seat;state.assignment=Array(ROWS*COLS).fill(null);save();renderAll()};
+$("generateBtn").onclick=generate;$("confirmBtn").onclick=confirmResult;$("clearHistoryBtn").onclick=()=>{if(window.confirm("최근 버스 자리 기록을 모두 지울까요?")){localStorage.removeItem(HISTORY_KEY);renderMetrics()}};
+$("resetSeatsBtn").onclick=resetSeats;$("cancelSelectBtn").onclick=()=>{selectedStudentId=null;renderAll()};$("presentationBtn").onclick=enterPresentation;$("exitPresentationBtn").onclick=exitPresentation;$("printBtn").onclick=()=>window.print();
 
-            for (let r = 0; r < totalRows; r++) {
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'row';
-
-                for (let c = 0; c < seatsPerRow; c++) {
-                    const seat = document.createElement('div');
-                    seat.className = 'seat';
-                    seat.dataset.row = r;
-                    seat.dataset.col = c;
-                    seat.dataset.index = r * seatsPerRow + c;
-                    seat.innerText = (c === 0 || c === 3) ? '창측' : '내측';
-                    
-                    // 클릭 이벤트: 사용 가능 <-> 사용 불가 토글
-                    seat.addEventListener('click', () => {
-                        seat.classList.toggle('disabled');
-                        if (seat.classList.contains('disabled')) {
-                            seat.innerText = '사용\n불가';
-                            seat.classList.remove('occupied', 'boy', 'girl');
-                        } else {
-                            seat.innerText = (c === 0 || c === 3) ? '창측' : '내측';
-                        }
-                    });
-
-                    rowDiv.appendChild(seat);
-                    seatElements.push(seat);
-
-                    // 가운데 통로
-                    if (c === 1) {
-                        const aisle = document.createElement('div');
-                        aisle.className = 'aisle';
-                        if (r === 3) aisle.innerText = '통';
-                        if (r === 6) aisle.innerText = '로';
-                        rowDiv.appendChild(aisle);
-                    }
-                }
-                grid.appendChild(rowDiv);
-            }
-        }
-
-        // 자리 배치 알고리즘 실행
-        function generateSeating() {
-            // 1. 데이터 파싱
-            const boysInput = document.getElementById('boys').value;
-            const girlsInput = document.getElementById('girls').value;
-            const othersInput = document.getElementById('others').value;
-            
-            let students = [];
-            boysInput.split(',').map(s => s.trim()).filter(s => s !== "").forEach(name => {
-                students.push({ name: name, gender: 'M' });
-            });
-            girlsInput.split(',').map(s => s.trim()).filter(s => s !== "").forEach(name => {
-                students.push({ name: name, gender: 'F' });
-            });
-            othersInput.split(',').map(s => s.trim()).filter(s => s !== "").forEach(name => {
-                students.push({ name: name, gender: 'U' });
-            });
-            if (students.some(s => s.gender === 'U')) {
-                document.getElementById('sameGenderMode').checked = false;
-            }
-            
-            const constraintsInput = document.getElementById('constraints').value;
-            const constraints = constraintsInput.split('\n')
-                .map(line => line.split(',').map(s => s.trim()).filter(s => s !== ""))
-                .filter(group => group.length > 1);
-
-            const sameGenderMode = document.getElementById('sameGenderMode').checked;
-
-            // 2. 가용 좌석 파악
-            const availableSeats = [];
-            seatElements.forEach(seat => {
-                if (!seat.classList.contains('disabled')) {
-                    availableSeats.push(parseInt(seat.dataset.index));
-                }
-            });
-
-            if (students.length > availableSeats.length) {
-                alert(`학생 수(${students.length}명)가 선택된 가용 좌석 수(${availableSeats.length}개)보다 많습니다!\n'사용 불가' 좌석을 다시 확인해주세요.`);
-                return;
-            }
-
-            // 좌석 초기화
-            seatElements.forEach(seat => {
-                if (!seat.classList.contains('disabled')) {
-                    seat.innerText = (seat.dataset.col == 0 || seat.dataset.col == 3) ? '창측' : '내측';
-                    seat.classList.remove('occupied', 'boy', 'girl');
-                }
-            });
-
-            // 3. 자리 배치 최적화 (다중 시작점 언덕 오르기 알고리즘)
-            let bestScore = Infinity;
-            let bestAssignment = [];
-
-            // 지역 최적화에 빠지지 않도록 10번 재시작
-            for (let restart = 0; restart < 10; restart++) {
-                let currentAssignment = [...students];
-                // 빈자리는 null로 채움
-                while (currentAssignment.length < availableSeats.length) currentAssignment.push(null);
-                currentAssignment.sort(() => Math.random() - 0.5); // 무작위 섞기
-
-                let currentScore = evaluate(currentAssignment, availableSeats, constraints, sameGenderMode);
-
-                // 내부 최적화 반복
-                for (let i = 0; i < 5000; i++) {
-                    if (currentScore === 0) break;
-
-                    let idx1 = Math.floor(Math.random() * currentAssignment.length);
-                    let idx2 = Math.floor(Math.random() * currentAssignment.length);
-
-                    // 스왑
-                    [currentAssignment[idx1], currentAssignment[idx2]] = [currentAssignment[idx2], currentAssignment[idx1]];
-
-                    let newScore = evaluate(currentAssignment, availableSeats, constraints, sameGenderMode);
-                    
-                    if (newScore <= currentScore) { // 같거나 더 좋으면 채택
-                        currentScore = newScore;
-                        if (currentScore < bestScore) {
-                            bestScore = currentScore;
-                            bestAssignment = [...currentAssignment];
-                        }
-                    } else {
-                        // 원상 복구
-                        [currentAssignment[idx1], currentAssignment[idx2]] = [currentAssignment[idx2], currentAssignment[idx1]];
-                    }
-                }
-                if (bestScore === 0) break; // 완벽한 해를 찾으면 즉시 종료
-            }
-
-            // 결과 안내 메시지
-            if (bestScore >= 100) {
-                alert("떨어뜨려 놓을 학생 조건이 너무 까다로워 완벽하게 분리하지 못했습니다.\n결과를 확인하시고 다시 돌려보시거나 조건을 완화해 주세요.");
-            } else if (sameGenderMode && bestScore > 0) {
-                alert("남/여 학생 수 비율 문제 등으로 부득이하게 남녀 짝꿍이 존재할 수 있습니다.\n(최대한 동성끼리 앉도록 배치되었습니다)");
-            }
-
-            // 4. 결과 UI에 반영
-            bestAssignment.forEach((student, i) => {
-                if (student) {
-                    const seatIdx = availableSeats[i];
-                    const seatEl = seatElements[seatIdx];
-                    seatEl.innerText = student.name;
-                    seatEl.classList.add('occupied');
-                    seatEl.classList.add(student.gender === 'M' ? 'boy' : student.gender === 'F' ? 'girl' : 'neutral');
-                }
-            });
-        }
-
-        // 평가 함수: 페널티 점수 계산
-        function evaluate(assignment, availableSeats, constraints, sameGenderMode) {
-            let penalty = 0;
-            let grid = Array(totalRows).fill(null).map(() => Array(seatsPerRow).fill(null));
-            let posMap = {};
-
-            // 2D 그리드 및 위치 맵핑 생성
-            assignment.forEach((student, i) => {
-                if (student) {
-                    let seatIdx = availableSeats[i];
-                    let r = Math.floor(seatIdx / seatsPerRow);
-                    let c = seatIdx % seatsPerRow;
-                    grid[r][c] = student;
-                    posMap[student.name] = { r, c };
-                }
-            });
-
-            // 1. 떨어뜨려 놓을 학생 제약 검사 (가장 강력한 페널티)
-            constraints.forEach(group => {
-                for (let i = 0; i < group.length; i++) {
-                    for (let j = i + 1; j < group.length; j++) {
-                        let s1 = group[i];
-                        let s2 = group[j];
-                        if (posMap[s1] && posMap[s2]) {
-                            let dr = Math.abs(posMap[s1].r - posMap[s2].r);
-                            let dc = Math.abs(posMap[s1].c - posMap[s2].c);
-                            
-                            // 앞, 뒤, 양옆, 대각선 인접
-                            if (dr <= 1 && dc <= 1) {
-                                penalty += 100; 
-                            }
-                        }
-                    }
-                }
-            });
-
-            // 2. 동성 짝꿍 모드 제약 검사 (중간 페널티)
-            if (sameGenderMode) {
-                for (let r = 0; r < totalRows; r++) {
-                    // 왼쪽 좌석 쌍 (0번과 1번 열)
-                    let left1 = grid[r][0];
-                    let left2 = grid[r][1];
-                    if (left1 && left2 && left1.gender !== left2.gender) {
-                        penalty += 10;
-                    }
-
-                    // 오른쪽 좌석 쌍 (2번과 3번 열)
-                    let right1 = grid[r][2];
-                    let right2 = grid[r][3];
-                    if (right1 && right2 && right1.gender !== right2.gender) {
-                        penalty += 10;
-                    }
-                }
-            }
-
-            return penalty;
-        }
-
-        // 시작 시 버스 그리기
-        window.onload = () => {
-            Gulliver.mountShell({title:'버스 좌석 배치',icon:'🚌'});
-            document.getElementById('load-classroom-btn').addEventListener('click', () => {
-                const room = Gulliver.getClassroom();
-                if (!room.students.length) { Gulliver.toast('먼저 우리 반에서 학생 명단을 저장해 주세요.'); return; }
-                document.getElementById('boys').value = room.students.filter(s=>s.gender==='M').map(s=>s.name).join(', ');
-                document.getElementById('girls').value = room.students.filter(s=>s.gender==='F').map(s=>s.name).join(', ');
-                const unknown = room.students.filter(s=>!s.gender).map(s=>s.name);
-                document.getElementById('others').value = unknown.join(', ');
-                if (unknown.length) document.getElementById('sameGenderMode').checked = false;
-                Gulliver.toast(room.className+' '+room.students.length+'명을 불러왔습니다.'+(unknown.length?' · 성별 미입력 '+unknown.length+'명':''));
-            });
-            initBus();
-            
-            // 학생 시연용 조건 숨기기 기능 (제목 더블클릭 또는 Alt+H)
-            const title = document.getElementById('panel-title');
-            const secretSection = document.getElementById('secret-constraints');
-            
-            function toggleSecret() {
-                if (secretSection.style.display === 'none') {
-                    secretSection.style.display = 'block';
-                } else {
-                    secretSection.style.display = 'none';
-                }
-            }
-            
-            title.addEventListener('dblclick', toggleSecret);
-            
-            // 키보드 단축키 (Alt + H)
-            window.addEventListener('keydown', (e) => {
-                if (e.altKey && (e.key.toLowerCase() === 'h' || e.key === 'ㅗ')) {
-                    toggleSecret();
-                }
-            });
-        };
-    </script>
+load();applyBackRowSetting();$("namesInput").value=state.students.map(s=>s.name+(s.gender==="M"?"(남)":s.gender==="F"?"(여)":"")).join("\n");parseStudents();refreshShared();save();renderAll();
+Gulliver.mountShell({title:"버스 좌석 배치",icon:"🚌"});
+})();
+</script>
 </body>
 </html>
