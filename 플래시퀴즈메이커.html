@@ -34,6 +34,7 @@ textarea,input[type=text],input[type=number],select{width:100%;border:1px solid 
   body{background:#fff}.topbar,main,.toast,.modal-back{display:none!important}.print-area{display:block!important;padding:0 12mm;color:#111}.print-title{text-align:center;font-size:24pt;margin:0 0 8mm}.print-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid #777;border-left:1px solid #777}.print-cell{min-height:28mm;padding:6mm;border-right:1px solid #777;border-bottom:1px solid #777;display:flex;align-items:center;justify-content:center;text-align:center;font-size:15pt;break-inside:avoid}.print-cell.back{font-weight:700}.print-list-row{display:grid;grid-template-columns:55px 1fr 1fr;border-bottom:1px solid #aaa;break-inside:avoid}.print-list-row>div{padding:4mm;border-right:1px solid #bbb}.print-list-row:first-child{border-top:1px solid #aaa}.print-list-row>div:first-child{border-left:1px solid #bbb;text-align:center}
 }
 </style>
+  <script src="gulliver-shared.js"></script>
 </head>
 <body>
 <header class="topbar">
@@ -314,5 +315,6 @@ document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].include
 load();$('#soundBtn').textContent=state.sound?'♪':'×';renderCards();switchTab('manage');
 })();
 </script>
+<script>Gulliver.mountShell({title:"플래시카드 & 퀴즈 메이커",icon:"🗂️"});</script>
 </body>
 </html>
