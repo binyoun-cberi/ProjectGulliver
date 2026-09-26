@@ -546,6 +546,17 @@
       font-weight: 1000;
       letter-spacing: -0.07em;
     }
+    .role-reveal.concealed .emoji,.role-reveal.concealed .role-name,.role-reveal.concealed #modalDesc{visibility:hidden}
+    .role-reveal.concealed::after{content:"버튼을 누르고 있는 동안만 역할이 보여요";display:grid;place-items:center;min-height:130px;color:var(--muted);font-weight:900;line-height:1.5}
+    .hold-role{width:100%;margin-top:12px;padding:16px;font-size:17px;font-weight:950;touch-action:none}
+    body.teacher-secret header,body.teacher-secret main{filter:blur(16px) brightness(.22);pointer-events:none;user-select:none}
+    body.teacher-secret::before{content:"교사 비밀 화면";position:fixed;inset:0;z-index:45;display:grid;place-items:center;color:rgba(255,255,255,.22);font-size:clamp(34px,7vw,84px);font-weight:1000;letter-spacing:-.06em;pointer-events:none}
+    .teacher-panel-wrap{position:relative;z-index:55}
+    .vote-candidate{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.08)}
+    .vote-stepper{display:flex;align-items:center;gap:8px}
+    .vote-stepper b{min-width:34px;text-align:center;font-size:22px}
+    .vote-stepper button{width:38px;height:38px;padding:0;border-radius:12px;font-size:20px;font-weight:950}
+    .privacy-note{border:1px solid rgba(167,139,250,.45);background:rgba(124,58,237,.14);border-radius:16px;padding:12px 14px;color:#ede9fe;font-size:13px;line-height:1.55}
 
     .hidden-panel { display: none; }
     .hidden-panel.open { display: block; }
@@ -604,14 +615,14 @@
   <div class="modal" id="roleModal">
     <div class="modal-card">
       <h2 id="modalStudent">학생 이름</h2>
-      <p class="soft">주변 친구에게 보이지 않게 조용히 확인합니다.</p>
-      <div class="role-reveal">
+      <p class="soft">화면을 가까이 보고, 아래 버튼을 누르고 있는 동안만 역할을 확인하세요.</p>
+      <div class="role-reveal concealed" id="roleRevealBox">
         <span class="emoji" id="modalEmoji">🙂</span>
         <div class="role-name" id="modalRole">시민</div>
+        <p id="modalDesc" class="soft">토론과 투표로 마피아를 찾아내세요.</p>
       </div>
-      <p id="modalDesc" class="soft">토론과 투표로 마피아를 찾아내세요.</p>
-      <p class="soft">자동 숨김까지 <b id="hideCount">3</b>초</p>
-      <button class="primary" onclick="hideRoleModal()">역할 숨기기</button>
+      <button class="primary hold-role" id="holdRoleBtn" type="button">꾹 눌러 역할 보기</button>
+      <button class="ghost" style="width:100%;margin-top:8px" onclick="hideRoleModal()">확인 끝내기</button>
     </div>
   </div>
 
@@ -683,6 +694,14 @@
         fixed: true,
         desc: "밤마다 한 명을 조사해 마피아 팀인지 아닌지 확인합니다."
       },
+      doctor: {
+        id: "doctor",
+        name: "의사",
+        emoji: "🩺",
+        team: "village",
+        fixed: true,
+        desc: "밤마다 한 명을 보호합니다. 마피아가 같은 학생을 지목하면 그날은 살아남습니다."
+      },
       citizen: {
         id: "citizen",
         name: "시민",
@@ -720,12 +739,14 @@
           voteSeconds: 90,
           revealEliminatedRole: true,
           tieRule: "revote",
+          voteMode: "secret",
           allowSelfVote: false,
           enableSound: true
         },
         baseCounts: {
           mafia: 3,
-          police: 1
+          police: 1,
+          doctor: 1
         },
         customRoles: [],
         rawNames: DEFAULT_NAMES.join("\n"),
@@ -734,10 +755,12 @@
           attackTargetId: "",
           policeTargetId: "",
           policeResult: "",
+          protectTargetId: "",
           summary: "",
           memo: ""
         },
         votes: {},
+        handVotes: {},
         lastTally: null,
         winner: null,
         journal: [{ at: nowText(), text: "새 게임 준비를 시작했습니다." }]
@@ -748,9 +771,11 @@
       if (!state || state.version !== 3) {
         state = makeInitialState();
       }
-      state.baseCounts ||= { mafia: 3, police: 1 };
+      state.baseCounts ||= { mafia: 3, police: 1, doctor: 1 };
       state.baseCounts.mafia = Number(state.baseCounts.mafia || 1);
       state.baseCounts.police = Number(state.baseCounts.police || 0);
+      state.baseCounts.doctor = Math.max(0, Number(state.baseCounts.doctor ?? 1));
+      state.setup.voteMode = ["secret","hands"].includes(state.setup.voteMode) ? state.setup.voteMode : "secret";
       state.customRoles ||= [];
       state.customRoles = state.customRoles.map(r => ({
         id: r.id || uid(),
@@ -763,7 +788,9 @@
       state.journal ||= [{ at: nowText(), text: "게임 기록을 시작했습니다." }];
       state.students ||= [];
       state.votes ||= {};
-      state.night ||= { attackTargetId: "", policeTargetId: "", policeResult: "", summary: "", memo: "" };
+      state.handVotes ||= {};
+      state.night ||= { attackTargetId: "", policeTargetId: "", policeResult: "", protectTargetId: "", summary: "", memo: "" };
+      state.night.protectTargetId ||= "";
     }
 
     function saveState() {
@@ -804,7 +831,11 @@
     }
 
     function parseNames(raw) {
-      return raw.split(/\n|,/).map(s => s.trim()).filter(Boolean);
+      const seen = new Set();
+      return raw.split(/\n|,/).map(s => s.trim()).filter(name => {
+        if (!name || seen.has(name)) return false;
+        seen.add(name); return true;
+      });
     }
 
     function shuffle(arr) {
@@ -859,6 +890,7 @@
     function roleCountTotal() {
       return Number(state.baseCounts.mafia || 0) +
         Number(state.baseCounts.police || 0) +
+        Number(state.baseCounts.doctor || 0) +
         state.customRoles.reduce((sum, r) => sum + Number(r.count || 0), 0);
     }
 
@@ -943,6 +975,7 @@
             <div class="between">
               <h2>학생 명단</h2>
               <div class="row">
+                <button class="small primary" onclick="loadClassroomNames()">👥 우리 반 불러오기</button>
                 <button class="small" onclick="fillSampleNames()">샘플</button>
                 <button class="small ghost" onclick="clearNames()">비우기</button>
               </div>
@@ -979,6 +1012,13 @@
             </div>
 
             <div class="role-fixed">
+              <div class="role-fixed-title">🩺 의사</div>
+              <label>인원 수</label>
+              <input type="number" min="0" max="99" value="${state.baseCounts.doctor}" onchange="setBaseCount('doctor', this.value)" />
+              <p class="hint">밤마다 한 명을 보호합니다. 0명도 가능합니다.</p>
+            </div>
+
+            <div class="role-fixed">
               <div class="role-fixed-title">🙂 시민</div>
               <p class="hint">남은 학생은 자동으로 시민이 됩니다. 시민 수: <b id="citizenInline">${citizenCount()}</b>명</p>
             </div>
@@ -989,7 +1029,7 @@
           <div class="between">
             <div>
               <h2>교사가 만드는 직업</h2>
-              <p class="hint">마피아·경찰·시민 외의 직업은 여기에서 직접 추가하거나 없앨 수 있습니다.</p>
+              <p class="hint">마피아·경찰·의사는 자동 처리됩니다. 여기서 만든 특수 직업의 행동·승리 조건은 교사가 직접 진행합니다.</p>
             </div>
             <button class="primary" onclick="addCustomRole()">직업 추가</button>
           </div>
@@ -1024,6 +1064,13 @@
               <div>
                 <label>투표 시간(초)</label>
                 <input type="number" min="10" max="1800" value="${state.setup.voteSeconds}" onchange="setSetup('voteSeconds', this.value)" />
+              </div>
+              <div>
+                <label>투표 방식</label>
+                <select onchange="setSetup('voteMode', this.value)">
+                  ${option("secret", "학생별 비밀투표", state.setup.voteMode)}
+                  ${option("hands", "손들기 빠른 집계", state.setup.voteMode)}
+                </select>
               </div>
               <div>
                 <label>동률 처리</label>
