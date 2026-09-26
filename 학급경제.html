@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학급경제 | 교실 뚝딱도구</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <style>
+    :root{
+      --bg:#f6f3ee;--paper:#fffdf8;--ink:#243042;--muted:#697386;--line:#e9dfcf;
+      --brand:#6d5dfc;--green:#2fbf9b;--orange:#ffb86b;--red:#ef6461;--blue:#3b82f6;
+      --shadow:0 18px 45px rgba(63,54,38,.12);--shadow-soft:0 10px 25px rgba(63,54,38,.08);
+      --r-xl:28px;--r-lg:20px;--r-md:14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;min-height:100vh;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 10% 5%,rgba(47,191,155,.14),transparent 26%),
+        radial-gradient(circle at 88% 8%,rgba(109,93,252,.16),transparent 28%),
+        linear-gradient(135deg,#fffaf1 0%,var(--bg) 48%,#eef8f4 100%);
+    }
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    a{color:inherit;text-decoration:none}
+    .page{width:min(1560px,calc(100% - clamp(24px,4vw,72px)));margin:0 auto;padding:26px 0 58px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
+    .brand{display:flex;align-items:center;gap:12px;min-width:0}
+    .brand-mark{width:48px;height:48px;border-radius:16px;background:#fff;overflow:hidden;box-shadow:var(--shadow-soft);border:1px solid rgba(255,255,255,.9)}
+    .brand-mark img{width:100%;height:100%;object-fit:cover}
+    .brand-title{display:flex;flex-direction:column;gap:2px}
+    .brand-title strong{font-size:22px;letter-spacing:-.04em;white-space:nowrap}
+    .brand-title span{font-size:13px;color:var(--muted);font-weight:800;white-space:nowrap}
+    .site-nav{display:flex;align-items:center;gap:8px;padding:8px;border-radius:999px;background:rgba(255,255,255,.76);border:1px solid rgba(255,255,255,.95);box-shadow:var(--shadow-soft);backdrop-filter:blur(10px)}
+    .site-nav a{padding:10px 14px;border-radius:999px;font-size:13px;font-weight:950;color:#536073;white-space:nowrap}
+    .site-nav a.active{background:var(--ink);color:#fff}
+    .hero{position:relative;overflow:hidden;border-radius:var(--r-xl);padding:34px;background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(248,255,252,.86));border:1px solid rgba(255,255,255,.98);box-shadow:var(--shadow)}
+    .hero:after{content:"";position:absolute;right:-70px;top:-90px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(47,191,155,.18),transparent 62%)}
+    .hero-grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);gap:28px;align-items:center}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#eafaf5;color:#148568;border:1px solid #c9f0e3;font-weight:950;font-size:13px}
+    h1{margin:16px 0 0;font-size:clamp(34px,5vw,58px);line-height:1;letter-spacing:-.07em}
+    .hero p{margin:16px 0 0;color:var(--muted);font-size:16px;line-height:1.75;font-weight:700;word-break:keep-all;max-width:780px}
+    .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+    .btn{border:0;border-radius:999px;padding:12px 16px;font-size:13px;font-weight:950;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+    .btn-primary{background:var(--brand);color:#fff;box-shadow:0 10px 22px rgba(109,93,252,.23)}
+    .btn-green{background:var(--green);color:#fff}
+    .btn-dark{background:var(--ink);color:#fff}
+    .btn-soft{background:#fff;border:1px solid var(--line);color:var(--ink)}
+    .hero-card{background:rgba(255,255,255,.82);border:1px solid #e8f2ee;border-radius:22px;padding:20px;box-shadow:var(--shadow-soft)}
+    .hero-card h2{font-size:16px;margin:0 0 12px;letter-spacing:-.04em}
+    .hero-card ul{margin:0;padding:0;list-style:none;display:grid;gap:9px}
+    .hero-card li{display:flex;gap:9px;align-items:flex-start;padding:10px 11px;border-radius:12px;background:#fbfdfc;color:#536073;font-size:12px;line-height:1.5;font-weight:800}
+    .status-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:18px 0 0}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.95);font-size:12px;font-weight:900;color:#566173}
+    .tabs{display:flex;gap:8px;overflow-x:auto;padding:8px;margin:20px 0 16px;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.95);border-radius:18px;box-shadow:var(--shadow-soft)}
+    .tab{border:0;background:transparent;color:#687386;border-radius:12px;padding:11px 14px;white-space:nowrap;font-size:13px;font-weight:950}
+    .tab.active{background:var(--ink);color:#fff}
+    .panel{display:none}
+    .panel.active{display:block}
+    .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+    .metric,.card{background:rgba(255,255,255,.84);border:1px solid rgba(255,255,255,.98);box-shadow:var(--shadow-soft);border-radius:20px}
+    .metric{padding:18px}
+    .metric .label{font-size:12px;color:var(--muted);font-weight:900}
+    .metric strong{display:block;margin-top:7px;font-size:28px;letter-spacing:-.05em}
+    .metric small{display:block;margin-top:5px;color:#8390a2;font-size:11px;font-weight:800}
+    .layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);gap:16px;margin-top:16px}
+    .card{padding:20px}
+    .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .card-head h2{margin:0;font-size:20px;letter-spacing:-.05em}
+    .card-head p{margin:5px 0 0;color:var(--muted);font-size:12px;font-weight:750;line-height:1.5}
+    .notice{padding:16px 18px;border-radius:16px;background:#fff8e8;border:1px solid #ffe2a6;color:#805d18;font-size:13px;line-height:1.6;font-weight:800;margin-bottom:14px}
+    .empty{padding:28px 18px;text-align:center;border:1px dashed #d9cebf;border-radius:16px;color:#7c8795;background:#fffdf8;font-size:13px;font-weight:800}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .field{display:grid;gap:6px}
+    .field.full{grid-column:1/-1}
+    .field label{font-size:11px;font-weight:950;color:#596678}
+    .input,select,textarea{width:100%;border:1px solid #e6dfd3;background:#fff;border-radius:12px;padding:11px 12px;outline:none;color:var(--ink);font-weight:750}
+    textarea{resize:vertical;min-height:74px}
+    .input:focus,select:focus,textarea:focus{border-color:#b7adff;box-shadow:0 0 0 3px rgba(109,93,252,.1)}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .table-wrap{overflow:auto;border:1px solid #eee6da;border-radius:16px;background:#fff}
+    table{width:100%;border-collapse:collapse;min-width:720px}
+    th,td{padding:12px 13px;text-align:left;border-bottom:1px solid #f0ebe3;font-size:12px}
+    th{background:#faf8f4;color:#657084;font-weight:950;position:sticky;top:0}
+    td{font-weight:750;color:#39475a}
+    tr:last-child td{border-bottom:0}
+    .money{font-variant-numeric:tabular-nums;font-weight:950}
+    .money.plus{color:#168a6d}.money.minus{color:#d14d4a}
+    .name-btn{border:0;background:transparent;padding:0;color:#4538c7;font-weight:950;text-decoration:underline;text-underline-offset:3px}
+    .mini-btn{border:1px solid #e4ddd2;background:#fff;border-radius:9px;padding:7px 9px;font-size:11px;font-weight:900;color:#4f5d6f}
+    .mini-btn.danger{color:#c74545;background:#fff7f7;border-color:#ffd4d4}
+    .badge{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:950;background:#f1efff;color:#5a4ed8}
+    .badge.green{background:#e9faf4;color:#148568}.badge.orange{background:#fff3df;color:#9b6413}.badge.gray{background:#f1f4f7;color:#6b7280}
+    .feed{display:grid;gap:8px}
+    .feed-item{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:11px 12px;border:1px solid #eee8df;border-radius:12px;background:#fff}
+    .feed-item strong{font-size:12px}
+    .feed-item small{display:block;margin-top:3px;color:#8a94a3;font-size:10px;font-weight:750}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .toolbar .input,.toolbar select{width:auto;min-width:130px}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .settings-box{padding:14px;border:1px solid #eee7dd;border-radius:14px;background:#fffdf9}
+    .settings-box h3{margin:0 0 10px;font-size:14px}
+    .settings-box.fullwide{grid-column:1/-1}
+    .inline-fields{display:grid;grid-template-columns:minmax(0,1fr) 140px auto;gap:8px;align-items:end}
+    .danger-zone{border-color:#ffd8d8;background:#fff9f9}
+    .muted{color:var(--muted)}
+    .small{font-size:11px;font-weight:750;line-height:1.55}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(28,36,48,.46);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+    .modal-backdrop.open{display:flex}
+    .modal{width:min(620px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:24px;padding:22px;box-shadow:0 28px 80px rgba(0,0,0,.22)}
+    .modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .modal-head h2{margin:0;font-size:22px;letter-spacing:-.05em}
+    .close{border:0;background:#f1f3f6;width:36px;height:36px;border-radius:50%;font-weight:950}
+    .wallet-balance{margin:18px 0;padding:18px;border-radius:18px;background:linear-gradient(135deg,#f1efff,#ecfaf5)}
+    .wallet-balance span{display:block;color:#667085;font-size:11px;font-weight:900}
+    .wallet-balance strong{display:block;margin-top:4px;font-size:34px;letter-spacing:-.05em}
+    footer{text-align:center;margin-top:28px;color:#8a8277;font-size:11px;font-weight:800}
+    @media(max-width:1000px){.hero-grid,.layout{grid-template-columns:1fr}.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:700px){
+      .page{width:calc(100% - 20px);padding-top:14px}
+      .topbar{align-items:flex-start}
+      .brand-title strong{font-size:18px}
+      .brand-title span{display:none}
+      .site-nav{max-width:60vw;overflow-x:auto;justify-content:flex-start}
+      .site-nav a{padding:9px 11px}
+      .hero{padding:24px 18px}
+      .grid4,.split,.form-grid,.inline-fields{grid-template-columns:1fr}
+      .field.full{grid-column:auto}
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="교실 뚝딱도구 홈">
+        <span class="brand-mark"><img src="logo.png" alt=""></span>
+        <span class="brand-title"><strong>교실 뚝딱도구</strong><span>교실에서 바로 쓰는 도구와 실험실</span></span>
+      </a>
+      <nav class="site-nav" aria-label="주요 메뉴">
+        <a href="index.html">홈</a>
+        <a class="active" href="학급경제.html">학급경제</a>
+        <a href="https://binyoun-cberi.github.io/kidscade/" target="_blank" rel="noopener">키즈케이드 ↗</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <span class="eyebrow">🧪 실험판 · 우리 반 작은 경제</span>
+          <h1>직업을 갖고,<br>월급을 받고, 세금을 내는 교실</h1>
+          <p>기존 <strong>우리 반</strong> 명단을 그대로 불러와 학급화폐, 직업, 월급, 소득세, 정부계좌, 학급상점과 거래장부를 한곳에서 운영합니다. 먼저 교사 중심으로 실제 학급 운영 흐름을 검증하는 1차 버전입니다.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="학급경제-온라인.html">온라인 학급경제 v2 열기</a>
+            <a class="btn btn-green" href="학급경제-학생.html">학생 지갑</a>
+            <button class="btn btn-soft" type="button" onclick="showTab('accounts')">오프라인 실험판</button>
+            <a class="btn btn-soft" href="우리반.html">우리 반 명단 관리</a>
+          </div>
+          <div class="status-row">
+            <span class="pill" id="roomPill">👥 학생 0명</span>
+            <span class="pill" id="currencyPill">💰 화폐: 뚝</span>
+            <span class="pill">🔒 이 버전은 내 브라우저에 저장</span>
+          </div>
+        </div>
+        <aside class="hero-card">
+          <h2>이번 실험에서 확인할 것</h2>
+          <ul>
+            <li>① 1인 1역을 실제 직업과 월급으로 연결하기</li>
+            <li>② 월급날 소득세를 자동으로 떼고 정부계좌에 모으기</li>
+            <li>③ 학생이 번 돈을 상점에서 소비하며 선택을 경험하기</li>
+            <li>④ 모든 지급·징수·소비를 장부로 남겨 수업 자료로 쓰기</li>
+          </ul>
+        </aside>
+      </div>
+    </section>
+
+    <nav class="tabs" aria-label="학급경제 메뉴">
+      <button class="tab active" data-tab="overview" onclick="showTab('overview')">개요</button>
+      <button class="tab" data-tab="accounts" onclick="showTab('accounts')">학생·계좌</button>
+      <button class="tab" data-tab="jobs" onclick="showTab('jobs')">직업·급여</button>
+      <button class="tab" data-tab="store" onclick="showTab('store')">학급상점</button>
+      <button class="tab" data-tab="ledger" onclick="showTab('ledger')">거래장부</button>
+      <button class="tab" data-tab="settings" onclick="showTab('settings')">설정·백업</button>
+    </nav>
+
+    <section class="panel active" id="panel-overview">
+      <div id="noStudentsOverview" class="notice" style="display:none">
+        아직 저장된 학생이 없습니다. 먼저 <a href="우리반.html"><strong>우리 반 관리</strong></a>에서 학생 명단을 입력하면 학급경제 계좌가 자동으로 만들어집니다.
+      </div>
+      <div class="grid4">
+        <div class="metric"><span class="label">학생 보유 화폐</span><strong id="metricSupply">0 뚝</strong><small>현재 학생 계좌 잔액 합계</small></div>
+        <div class="metric"><span class="label">정부 계좌</span><strong id="metricTreasury">0 뚝</strong><small>세금·징수·상점 수입</small></div>
+        <div class="metric"><span class="label">직업 배정</span><strong id="metricJobs">0 / 0</strong><small>현재 직업이 있는 학생</small></div>
+        <div class="metric"><span class="label">누적 거래</span><strong id="metricTx">0건</strong><small>지급·세금·구매 포함</small></div>
+      </div>
+      <div class="layout">
+        <div class="card">
+          <div class="card-head">
+            <div><h2>오늘 바로 할 수 있는 운영</h2><p>복잡한 경제 개념보다 학급 생활의 반복되는 흐름부터 연결합니다.</p></div>
+          </div>
+          <div class="split">
+            <div class="settings-box">
+              <h3>💼 월급날</h3>
+              <p class="small muted">배정된 직업의 월급을 한 번에 지급하고 소득세를 자동 징수합니다.</p>
+              <button class="btn btn-dark" type="button" onclick="runPayroll()">전체 월급 지급</button>
+            </div>
+            <div class="settings-box">
+              <h3>💸 바로 지급·징수</h3>
+              <p class="small muted">발표, 도움, 지각, 전기세 등 학급 상황을 즉시 화폐와 연결합니다.</p>
+              <button class="btn btn-soft" type="button" onclick="showTab('accounts');setTimeout(function(){document.getElementById('quickStudent').focus();},50)">빠른 거래 열기</button>
+            </div>
+            <div class="settings-box fullwide">
+              <h3>🏛️ 정부 공공지출</h3>
+              <p class="small muted">걷은 세금을 학급 행사, 공동 물품, 공공서비스에 사용하고 어디에 썼는지 남깁니다.</p>
+              <div class="inline-fields">
+                <div class="field"><label>사용처</label><input class="input" id="treasuryReason" placeholder="예: 학급 행사 지원금"></div>
+                <div class="field"><label>금액</label><input class="input" id="treasuryAmount" type="number" min="1" step="1" value="50"></div>
+                <button class="btn btn-green" type="button" onclick="spendTreasury()">공공지출 기록</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><h2>최근 경제 활동</h2><p>가장 최근 거래 6건</p></div></div>
+          <div class="feed" id="recentFeed"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-accounts">
+      <div class="layout">
+        <div class="card">
+          <div class="card-head">
+            <div><h2>학생 계좌</h2><p>우리 반 명단과 자동으로 연결됩니다. 이름을 누르면 개인 지갑을 볼 수 있습니다.</p></div>
+            <a class="mini-btn" href="우리반.html">명단 관리</a>
+          </div>
+          <div id="accountsEmpty" class="empty" style="display:none">학생 명단을 먼저 입력해주세요.</div>
+          <div class="table-wrap" id="accountsTableWrap">
+            <table>
+              <thead><tr><th>학생</th><th>직업</th><th>월급</th><th>현재 잔액</th><th>최근 거래</th></tr></thead>
+              <tbody id="accountsBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <aside class="card">
+          <div class="card-head"><div><h2>빠른 거래</h2><p>교사가 바로 지급하거나 징수합니다.</p></div></div>
+          <div class="form-grid">
+            <div class="field full"><label>학생</label><select id="quickStudent"></select></div>
+            <div class="field"><label>구분</label><select id="quickType"><option value="give">지급</option><option value="collect">징수</option></select></div>
+            <div class="field"><label>금액</label><input class="input" id="quickAmount" type="number" min="1" step="1" value="10"></div>
+            <div class="field full"><label>이유</label><input class="input" id="quickReason" placeholder="예: 발표 참여, 준비물, 전기세"></div>
+            <div class="field full"><label><input id="quickTreasury" type="checkbox" checked> 징수한 금액은 정부계좌로 보내기</label></div>
+          </div>
+          <div class="actions"><button class="btn btn-primary" type="button" onclick="quickTransaction()">거래 기록</button></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-jobs">
+      <div class="layout">
+        <div class="card">
+          <div class="card-head">
+            <div><h2>직업과 월급</h2><p>1인 1역을 직업으로 바꾸고, 월급날 실제 화폐 흐름을 만듭니다.</p></div>
+            <button class="mini-btn" type="button" onclick="addPresetJobs()">추천 직업 넣기</button>
+          </div>
+          <div id="jobsList" class="feed"></div>
+        </div>
+        <aside class="card">
+          <div class="card-head"><div><h2>직업 추가</h2><p>우리 반에 맞는 일을 자유롭게 만드세요.</p></div></div>
+          <div class="form-grid">
+            <div class="field full"><label>직업 이름</label><input class="input" id="jobName" placeholder="예: 환경부장관"></div>
+            <div class="field"><label>월급</label><input class="input" id="jobSalary" type="number" min="0" step="1" value="100"></div>
+            <div class="field"><label>담당 학생</label><select id="jobStudent"></select></div>
+            <div class="field full"><label>하는 일</label><textarea id="jobTask" placeholder="예: 분리수거함을 확인하고 정리하기"></textarea></div>
+          </div>
+          <div class="actions"><button class="btn btn-primary" type="button" onclick="createJob()">직업 만들기</button></div>
+          <hr style="border:0;border-top:1px solid #eee7dc;margin:20px 0">
+          <div class="settings-box">
+            <h3>이번 소득세</h3>
+            <p class="small muted">현재 소득세율 <strong id="taxRateHint">10%</strong>. 월급 지급 시 자동으로 정부계좌에 들어갑니다.</p>
+            <button class="btn btn-dark" type="button" onclick="runPayroll()">전체 월급 지급</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-store">
+      <div class="layout">
+        <div class="card">
+          <div class="card-head"><div><h2>학급상점</h2><p>자리 선택권, 급식 1등권, 작은 간식처럼 실제 학급에서 쓸 보상을 등록합니다.</p></div></div>
+          <div id="storeList" class="feed"></div>
+        </div>
+        <aside class="card">
+          <div class="card-head"><div><h2>상품 추가</h2><p>가격과 재고를 정합니다. 재고 0은 무제한입니다.</p></div></div>
+          <div class="form-grid">
+            <div class="field full"><label>상품 이름</label><input class="input" id="itemName" placeholder="예: 급식 1등권"></div>
+            <div class="field"><label>가격</label><input class="input" id="itemPrice" type="number" min="1" step="1" value="50"></div>
+            <div class="field"><label>재고</label><input class="input" id="itemStock" type="number" min="0" step="1" value="0"></div>
+          </div>
+          <div class="actions"><button class="btn btn-primary" type="button" onclick="createItem()">상품 추가</button></div>
+          <hr style="border:0;border-top:1px solid #eee7dc;margin:20px 0">
+          <div class="card-head"><div><h2>구매 처리</h2><p>학생과 상품을 골라 교사가 구매를 확정합니다.</p></div></div>
+          <div class="form-grid">
+            <div class="field full"><label>학생</label><select id="buyStudent"></select></div>
+            <div class="field full"><label>상품</label><select id="buyItem"></select></div>
+          </div>
+          <div class="actions"><button class="btn btn-green" type="button" onclick="buyItem()">구매 확정</button></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-ledger">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>거래장부</h2><p>돈이 생기고 사라진 이유를 모두 남깁니다.</p></div>
+          <div class="toolbar">
+            <select id="ledgerStudent" onchange="renderLedger()"></select>
+            <select id="ledgerType" onchange="renderLedger()">
+              <option value="">전체 유형</option>
+              <option value="opening">초기 지급</option>
+              <option value="manual">수동 거래</option>
+              <option value="salary">월급</option>
+              <option value="tax">세금</option>
+              <option value="purchase">구매</option>
+              <option value="treasury">정부</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>시간</th><th>학생/계정</th><th>유형</th><th>내용</th><th>금액</th><th>잔액</th></tr></thead>
+            <tbody id="ledgerBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-settings">
+      <div class="split">
+        <div class="card">
+          <div class="card-head"><div><h2>경제 설정</h2><p>우리 반에 맞게 화폐와 세율을 조정합니다.</p></div></div>
+          <div class="form-grid">
+            <div class="field"><label>화폐 이름</label><input class="input" id="settingCurrency" maxlength="12"></div>
+            <div class="field"><label>새 학생 초기 지급액</label><input class="input" id="settingOpening" type="number" min="0" step="1"></div>
+            <div class="field"><label>소득세율 (%)</label><input class="input" id="settingTax" type="number" min="0" max="100" step="1"></div>
+            <div class="field"><label>상점 수입</label><select id="settingStoreTreasury"><option value="yes">정부계좌로</option><option value="no">소멸</option></select></div>
+          </div>
+          <div class="actions"><button class="btn btn-primary" type="button" onclick="saveSettings()">설정 저장</button></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><h2>백업과 복원</h2><p>현재 1차 버전은 브라우저 저장 방식입니다. 정기 백업을 권장합니다.</p></div></div>
+          <div class="actions">
+            <button class="btn btn-dark" type="button" onclick="exportEconomy()">경제 데이터 백업</button>
+            <label class="btn btn-soft" for="importFile">백업 불러오기</label>
+            <input id="importFile" type="file" accept=".json,application/json" style="display:none" onchange="importEconomy(event)">
+          </div>
+          <p class="small muted">백업 파일에는 학급경제 설정, 계좌, 직업, 상품, 거래장부가 들어갑니다. 학생 이름은 현재 ‘우리 반’ 명단을 기준으로 다시 연결합니다.</p>
+        </div>
+      </div>
+      <div class="card danger-zone" style="margin-top:16px">
+        <div class="card-head"><div><h2>실험 초기화</h2><p>경제 데이터만 지우며 ‘우리 반’ 명단은 삭제하지 않습니다.</p></div></div>
+        <button class="btn btn-soft" type="button" onclick="resetEconomy()">학급경제 데이터 초기화</button>
+      </div>
+    </section>
+
+    <footer>교실 뚝딱도구 · 학급경제 실험판 v0.1</footer>
+  </div>
+
+  <div class="modal-backdrop" id="walletModal" onclick="if(event.target===this)closeWallet()">
+    <div class="modal">
+      <div class="modal-head"><h2 id="walletName">학생 지갑</h2><button class="close" type="button" onclick="closeWallet()">×</button></div>
+      <div class="wallet-balance"><span>현재 잔액</span><strong id="walletBalance">0 뚝</strong></div>
+      <div id="walletJob" class="small muted"></div>
+      <h3 style="font-size:14px;margin:20px 0 10px">최근 거래</h3>
+      <div class="feed" id="walletFeed"></div>
+    </div>
+  </div>
+
+  <script src="gulliver-shared.js"></script>
+  <script>
+    (function(){
+      'use strict';
+      var KEY='gulliver.economy.v1';
+      var DEFAULT_JOBS=[
+        {name:'환경부장관',salary:120,task:'분리수거함과 교실 환경을 살핀다.'},
+        {name:'칠판관리자',salary:100,task:'칠판과 보드마카를 정리한다.'},
+        {name:'급식도우미',salary:110,task:'급식 준비와 정리를 돕는다.'},
+        {name:'은행원',salary:130,task:'예금·거래 활동을 도울 준비를 한다.'},
+        {name:'국세청',salary:130,task:'세금과 공공요금 활동을 돕는다.'},
+        {name:'기자',salary:100,task:'우리 반 경제 소식을 기록한다.'},
+        {name:'정리부장',salary:110,task:'공용 물건과 정리 상태를 확인한다.'}
+      ];
+      var state=load();
+
+      function uid(prefix){return prefix+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+      function num(v){v=Number(v);return Number.isFinite(v)?Math.round(v):0}
+      function safeParse(text,fallback){try{return JSON.parse(text)}catch(e){return fallback}}
+      function defaultState(){
+        return {
+          version:1,
+          settings:{currency:'뚝',openingBalance:100,incomeTaxRate:10,storeRevenueToTreasury:true},
+          treasury:0,
+          accounts:{},
+          jobs:[],
+          items:[],
+          transactions:[]
+        };
+      }
+      function normalize(raw){
+        var d=defaultState(), s=raw&&typeof raw==='object'?raw:{};
+        return {
+          version:1,
+          settings:Object.assign({},d.settings,s.settings||{}),
+          treasury:num(s.treasury),
+          accounts:s.accounts&&typeof s.accounts==='object'?s.accounts:{},
+          jobs:Array.isArray(s.jobs)?s.jobs:[],
+          items:Array.isArray(s.items)?s.items:[],
+          transactions:Array.isArray(s.transactions)?s.transactions.slice(0,3000):[]
+        };
+      }
+      function load(){return normalize(safeParse(localStorage.getItem(KEY),null))}
+      function save(){
+        localStorage.setItem(KEY,JSON.stringify(state));
+        renderAll();
+      }
+      function classroom(){return window.Gulliver&&Gulliver.getClassroom?Gulliver.getClassroom():{className:'우리 반',students:[]}}
+      function studentById(id){return classroom().students.find(function(s){return String(s.id)===String(id)})||null}
+      function account(id){
+        id=String(id);
+        if(!state.accounts[id]) state.accounts[id]={balance:0,createdAt:new Date().toISOString()};
+        return state.accounts[id];
+      }
+      function currency(){return String(state.settings.currency||'뚝').trim()||'뚝'}
+      function formatMoney(v){return num(v).toLocaleString('ko-KR')+' '+currency()}
+      function nowText(iso){
+        var d=new Date(iso||Date.now());
+        return d.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+      }
+      function reconcile(){
+        var students=classroom().students;
+        var changed=false;
+        students.forEach(function(s){
+          var id=String(s.id);
+          if(!state.accounts[id]){
+            state.accounts[id]={balance:num(state.settings.openingBalance),createdAt:new Date().toISOString()};
+            state.transactions.unshift({
+              id:uid('tx'),at:new Date().toISOString(),studentId:id,type:'opening',
+              reason:'학급경제 시작금',amount:num(state.settings.openingBalance),balance:num(state.settings.openingBalance)
+            });
+            changed=true;
+          }
+        });
+        if(changed)localStorage.setItem(KEY,JSON.stringify(state));
+      }
+      function pushTx(tx){
+        state.transactions.unshift(Object.assign({id:uid('tx'),at:new Date().toISOString(),studentId:null,type:'manual',reason:'',amount:0,balance:null},tx||{}));
+        state.transactions=state.transactions.slice(0,3000);
+      }
+      function changeStudent(studentId,amount,type,reason){
+        var a=account(studentId);
+        var next=num(a.balance)+num(amount);
+        if(next<0)return {ok:false,error:'잔액이 부족합니다.'};
+        a.balance=next;
+        pushTx({studentId:String(studentId),type:type||'manual',reason:reason||'',amount:num(amount),balance:next});
+        return {ok:true,balance:next};
+      }
+      function addTreasury(amount,reason,type){
+        state.treasury=num(state.treasury)+num(amount);
+        pushTx({studentId:null,type:type||'treasury',reason:reason||'정부계좌',amount:num(amount),balance:state.treasury});
+      }
+      function assignedJob(studentId){
+        return state.jobs.find(function(j){return String(j.studentId||'')===String(studentId)})||null;
+      }
+      function recentStudentTx(studentId){
+        return state.transactions.find(function(t){return String(t.studentId||'')===String(studentId)})||null;
+      }
+
+      window.showTab=function(name){
+        document.querySelectorAll('.tab').forEach(function(el){el.classList.toggle('active',el.dataset.tab===name)});
+        document.querySelectorAll('.panel').forEach(function(el){el.classList.toggle('active',el.id==='panel-'+name)});
+        window.scrollTo({top:document.querySelector('.tabs').offsetTop-10,behavior:'smooth'});
+      };
+
+      window.quickTransaction=function(){
+        var sid=document.getElementById('quickStudent').value;
+        var kind=document.getElementById('quickType').value;
+        var amount=Math.abs(num(document.getElementById('quickAmount').value));
+        var reason=document.getElementById('quickReason').value.trim()||(kind==='give'?'교사 지급':'교사 징수');
+        if(!sid||!amount){alert('학생과 금액을 확인해주세요.');return}
+        var signed=kind==='give'?amount:-amount;
+        var result=changeStudent(sid,signed,'manual',reason);
+        if(!result.ok){alert(result.error);return}
+        if(kind==='collect'&&document.getElementById('quickTreasury').checked)addTreasury(amount,studentById(sid).name+' · '+reason,'treasury');
+        document.getElementById('quickReason').value='';
+        save();
+      };
+
+      window.createJob=function(){
+        var name=document.getElementById('jobName').value.trim();
+        var salary=Math.max(0,num(document.getElementById('jobSalary').value));
+        var studentId=document.getElementById('jobStudent').value;
+        var task=document.getElementById('jobTask').value.trim();
+        if(!name){alert('직업 이름을 입력해주세요.');return}
+        if(studentId){
+          state.jobs.forEach(function(j){if(String(j.studentId||'')===String(studentId))j.studentId=''});
+        }
+        state.jobs.push({id:uid('job'),name:name,salary:salary,studentId:studentId,task:task});
+        document.getElementById('jobName').value='';
+        document.getElementById('jobTask').value='';
+        save();
+      };
+
+      window.addPresetJobs=function(){
+        var existing=new Set(state.jobs.map(function(j){return j.name}));
+        DEFAULT_JOBS.forEach(function(j){if(!existing.has(j.name))state.jobs.push({id:uid('job'),name:j.name,salary:j.salary,studentId:'',task:j.task})});
+        save();
+      };
+
+      window.assignJob=function(jobId,studentId){
+        state.jobs.forEach(function(j){
+          if(String(j.studentId||'')===String(studentId)&&j.id!==jobId)j.studentId='';
+        });
+        var job=state.jobs.find(function(j){return j.id===jobId});
+        if(job)job.studentId=studentId||'';
+        save();
+      };
+
+      window.removeJob=function(jobId){
+        if(!confirm('이 직업을 삭제할까요?'))return;
+        state.jobs=state.jobs.filter(function(j){return j.id!==jobId});
+        save();
+      };
+
+      window.runPayroll=function(){
+        var jobs=state.jobs.filter(function(j){return j.studentId&&studentById(j.studentId)});
+        if(!jobs.length){alert('먼저 학생에게 직업을 배정해주세요.');return}
+        var totalGross=jobs.reduce(function(sum,j){return sum+Math.max(0,num(j.salary))},0);
+        var rate=Math.max(0,Math.min(100,num(state.settings.incomeTaxRate)));
+        if(!confirm(jobs.length+'명에게 총 '+formatMoney(totalGross)+'의 월급을 지급하고 소득세 '+rate+'%를 징수할까요?'))return;
+        jobs.forEach(function(j){
+          var gross=Math.max(0,num(j.salary));
+          var tax=Math.round(gross*rate/100);
+          var net=gross-tax;
+          changeStudent(j.studentId,net,'salary',j.name+' 월급 (세전 '+formatMoney(gross)+')');
+          if(tax>0){
+            pushTx({studentId:String(j.studentId),type:'tax',reason:'소득세 '+rate+'%',amount:-tax,balance:account(j.studentId).balance});
+            addTreasury(tax,(studentById(j.studentId)||{name:'학생'}).name+' 소득세','treasury');
+          }
+        });
+        save();
+      };
+
+      window.createItem=function(){
+        var name=document.getElementById('itemName').value.trim();
+        var price=Math.max(1,num(document.getElementById('itemPrice').value));
+        var stock=Math.max(0,num(document.getElementById('itemStock').value));
+        if(!name){alert('상품 이름을 입력해주세요.');return}
+        state.items.push({id:uid('item'),name:name,price:price,stock:stock,unlimited:stock===0,active:true});
+        document.getElementById('itemName').value='';
+        save();
+      };
+
+      window.removeItem=function(id){
+        if(!confirm('이 상품을 삭제할까요?'))return;
+        state.items=state.items.filter(function(x){return x.id!==id});
+        save();
+      };
+
+      window.buyItem=function(){
+        var sid=document.getElementById('buyStudent').value;
+        var iid=document.getElementById('buyItem').value;
+        var item=state.items.find(function(x){return x.id===iid&&x.active!==false});
+        if(!sid||!item){alert('학생과 상품을 선택해주세요.');return}
+        var unlimited=item.unlimited===true || (item.unlimited==null && num(item.stock)===0);
+        if(!unlimited&&num(item.stock)<=0){alert('재고가 없습니다.');return}
+        var result=changeStudent(sid,-Math.abs(num(item.price)),'purchase',item.name+' 구매');
+        if(!result.ok){alert(result.error);return}
+        if(!unlimited)item.stock=Math.max(0,num(item.stock)-1);
+        if(state.settings.storeRevenueToTreasury)addTreasury(item.price,(studentById(sid)||{name:'학생'}).name+' · '+item.name+' 구매','treasury');
+        save();
+      };
+
+      window.spendTreasury=function(){
+        var amount=Math.abs(num(document.getElementById('treasuryAmount').value));
+        var reason=document.getElementById('treasuryReason').value.trim()||'학급 공공지출';
+        if(!amount){alert('지출 금액을 입력해주세요.');return}
+        if(num(state.treasury)<amount){alert('정부계좌 잔액이 부족합니다.');return}
+        state.treasury=num(state.treasury)-amount;
+        pushTx({studentId:null,type:'treasury',reason:reason,amount:-amount,balance:state.treasury});
+        document.getElementById('treasuryReason').value='';
+        save();
+      };
+
+      window.saveSettings=function(){
+        var newCurrency=document.getElementById('settingCurrency').value.trim();
+        state.settings.currency=newCurrency||'뚝';
+        state.settings.openingBalance=Math.max(0,num(document.getElementById('settingOpening').value));
+        state.settings.incomeTaxRate=Math.max(0,Math.min(100,num(document.getElementById('settingTax').value)));
+        state.settings.storeRevenueToTreasury=document.getElementById('settingStoreTreasury').value==='yes';
+        save();
+        alert('설정을 저장했습니다.');
+      };
+
+      window.exportEconomy=function(){
+        var payload={exportedAt:new Date().toISOString(),economy:state};
+        var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+        var a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);
+        a.download='학급경제_백업_'+new Date().toISOString().slice(0,10)+'.json';
+        a.click();
+        setTimeout(function(){URL.revokeObjectURL(a.href)},500);
+      };
+
+      window.importEconomy=function(event){
+        var file=event.target.files&&event.target.files[0];
+        if(!file)return;
+        var reader=new FileReader();
+        reader.onload=function(){
+          try{
+            var data=JSON.parse(reader.result);
+            state=normalize(data.economy||data);
+            reconcile();
+            save();
+            alert('백업을 불러왔습니다.');
+          }catch(e){alert('읽을 수 없는 백업 파일입니다.')}
+          event.target.value='';
+        };
+        reader.readAsText(file);
+      };
+
+      window.resetEconomy=function(){
+        if(!confirm('학급경제의 계좌, 직업, 상점, 거래장부를 모두 초기화할까요? 우리 반 명단은 유지됩니다.'))return;
+        localStorage.removeItem(KEY);
+        state=defaultState();
+        reconcile();
+        save();
+      };
+
+      window.openWallet=function(studentId){
+        var s=studentById(studentId);if(!s)return;
+        var job=assignedJob(studentId);
+        document.getElementById('walletName').textContent=s.name+' 지갑';
+        document.getElementById('walletBalance').textContent=formatMoney(account(studentId).balance);
+        document.getElementById('walletJob').textContent=job?('직업: '+job.name+' · 월급 '+formatMoney(job.salary)):'아직 배정된 직업이 없습니다.';
+        var txs=state.transactions.filter(function(t){return String(t.studentId||'')===String(studentId)}).slice(0,10);
+        document.getElementById('walletFeed').innerHTML=txs.length?txs.map(function(t){
+          return '<div class="feed-item"><div><strong>'+escapeHtml(t.reason||typeLabel(t.type))+'</strong><small>'+nowText(t.at)+' · '+typeLabel(t.type)+'</small></div><span class="money '+(t.amount>=0?'plus':'minus')+'">'+(t.amount>0?'+':'')+formatMoney(t.amount)+'</span></div>';
+        }).join(''):'<div class="empty">아직 거래가 없습니다.</div>';
+        document.getElementById('walletModal').classList.add('open');
+      };
+      window.closeWallet=function(){document.getElementById('walletModal').classList.remove('open')};
+
+      function typeLabel(type){
+        return {opening:'초기 지급',manual:'수동 거래',salary:'월급',tax:'세금',purchase:'구매',treasury:'정부'}[type]||'거래';
+      }
+      function escapeHtml(v){
+        return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]});
+      }
+      function studentOptions(includeAll){
+        var list=classroom().students;
+        var head=includeAll?'<option value="">전체 학생</option>':'<option value="">학생 선택</option>';
+        return head+list.map(function(s){return '<option value="'+escapeHtml(s.id)+'">'+escapeHtml(s.name)+'</option>'}).join('');
+      }
+      function renderOverview(){
+        var students=classroom().students;
+        var supply=students.reduce(function(sum,s){return sum+num(account(s.id).balance)},0);
+        var assigned=students.filter(function(s){return !!assignedJob(s.id)}).length;
+        document.getElementById('metricSupply').textContent=formatMoney(supply);
+        document.getElementById('metricTreasury').textContent=formatMoney(state.treasury);
+        document.getElementById('metricJobs').textContent=assigned+' / '+students.length;
+        document.getElementById('metricTx').textContent=state.transactions.length.toLocaleString('ko-KR')+'건';
+        document.getElementById('noStudentsOverview').style.display=students.length?'none':'block';
+        var feed=state.transactions.slice(0,6);
+        document.getElementById('recentFeed').innerHTML=feed.length?feed.map(function(t){
+          var s=t.studentId?studentById(t.studentId):null;
+          return '<div class="feed-item"><div><strong>'+escapeHtml(s?s.name:'정부계좌')+' · '+escapeHtml(t.reason||typeLabel(t.type))+'</strong><small>'+nowText(t.at)+' · '+typeLabel(t.type)+'</small></div><span class="money '+(t.amount>=0?'plus':'minus')+'">'+(t.amount>0?'+':'')+formatMoney(t.amount)+'</span></div>';
+        }).join(''):'<div class="empty">아직 경제 활동이 없습니다.</div>';
+      }
+      function renderAccounts(){
+        var students=classroom().students;
+        document.getElementById('accountsEmpty').style.display=students.length?'none':'block';
+        document.getElementById('accountsTableWrap').style.display=students.length?'block':'none';
+        document.getElementById('accountsBody').innerHTML=students.map(function(s){
+          var job=assignedJob(s.id),tx=recentStudentTx(s.id),acc=account(s.id);
+          return '<tr><td><button class="name-btn" type="button" onclick="openWallet(\''+escapeHtml(s.id)+'\')">'+escapeHtml(s.name)+'</button></td>'+
+            '<td>'+(job?'<span class="badge">'+escapeHtml(job.name)+'</span>':'<span class="badge gray">미배정</span>')+'</td>'+
+            '<td>'+(job?formatMoney(job.salary):'-')+'</td><td class="money">'+formatMoney(acc.balance)+'</td>'+
+            '<td>'+(tx?escapeHtml(tx.reason||typeLabel(tx.type)):'-')+'</td></tr>';
+        }).join('');
+        var current=document.getElementById('quickStudent').value;
+        document.getElementById('quickStudent').innerHTML=studentOptions(false);
+        if(current)document.getElementById('quickStudent').value=current;
+      }
+      function renderJobs(){
+        var students=classroom().students;
+        var options='<option value="">미배정</option>'+students.map(function(s){return '<option value="'+escapeHtml(s.id)+'">'+escapeHtml(s.name)+'</option>'}).join('');
+        var current=document.getElementById('jobStudent').value;
+        document.getElementById('jobStudent').innerHTML=options;
+        if(current)document.getElementById('jobStudent').value=current;
+        document.getElementById('jobsList').innerHTML=state.jobs.length?state.jobs.map(function(j){
+          return '<div class="feed-item"><div><strong>'+escapeHtml(j.name)+' · '+formatMoney(j.salary)+'</strong><small>'+escapeHtml(j.task||'하는 일 미입력')+'</small></div>'+
+            '<div style="display:flex;gap:6px;align-items:center"><select onchange="assignJob(\''+j.id+'\',this.value)" style="max-width:130px;padding:7px 8px;border-radius:9px;border:1px solid #e4ddd2">'+options.replace('value="'+escapeHtml(j.studentId)+'"','value="'+escapeHtml(j.studentId)+'" selected')+'</select>'+
+            '<button class="mini-btn danger" type="button" onclick="removeJob(\''+j.id+'\')">삭제</button></div></div>';
+        }).join(''):'<div class="empty">아직 직업이 없습니다. 추천 직업을 넣거나 직접 만들어보세요.</div>';
+        document.getElementById('taxRateHint').textContent=num(state.settings.incomeTaxRate)+'%';
+      }
+      function renderStore(){
+        var students=classroom().students;
+        document.getElementById('storeList').innerHTML=state.items.length?state.items.map(function(item){
+          var unlimited=item.unlimited===true || (item.unlimited==null && num(item.stock)===0);
+          var stockText=unlimited?'무제한':'재고 '+num(item.stock)+'개';
+          return '<div class="feed-item"><div><strong>'+escapeHtml(item.name)+' · '+formatMoney(item.price)+'</strong><small>'+stockText+'</small></div><button class="mini-btn danger" type="button" onclick="removeItem(\''+item.id+'\')">삭제</button></div>';
+        }).join(''):'<div class="empty">아직 상품이 없습니다.</div>';
+        document.getElementById('buyStudent').innerHTML=studentOptions(false);
+        document.getElementById('buyItem').innerHTML='<option value="">상품 선택</option>'+state.items.map(function(i){return '<option value="'+i.id+'">'+escapeHtml(i.name)+' · '+formatMoney(i.price)+'</option>'}).join('');
+      }
+      window.renderLedger=function(){
+        var sid=document.getElementById('ledgerStudent').value;
+        var type=document.getElementById('ledgerType').value;
+        var rows=state.transactions.filter(function(t){
+          return (!sid||String(t.studentId||'')===String(sid))&&(!type||t.type===type);
+        }).slice(0,500);
+        document.getElementById('ledgerBody').innerHTML=rows.length?rows.map(function(t){
+          var s=t.studentId?studentById(t.studentId):null;
+          return '<tr><td>'+nowText(t.at)+'</td><td>'+escapeHtml(s?s.name:'정부계좌')+'</td><td><span class="badge '+(t.type==='tax'||t.type==='purchase'?'orange':t.type==='salary'?'green':'gray')+'">'+typeLabel(t.type)+'</span></td>'+
+            '<td>'+escapeHtml(t.reason||'-')+'</td><td class="money '+(t.amount>=0?'plus':'minus')+'">'+(t.amount>0?'+':'')+formatMoney(t.amount)+'</td><td>'+(t.balance==null?'-':formatMoney(t.balance))+'</td></tr>';
+        }).join(''):'<tr><td colspan="6" style="text-align:center;color:#8a94a3;padding:28px">조건에 맞는 거래가 없습니다.</td></tr>';
+      };
+      function renderSettings(){
+        document.getElementById('settingCurrency').value=currency();
+        document.getElementById('settingOpening').value=num(state.settings.openingBalance);
+        document.getElementById('settingTax').value=num(state.settings.incomeTaxRate);
+        document.getElementById('settingStoreTreasury').value=state.settings.storeRevenueToTreasury?'yes':'no';
+      }
+      function renderHeader(){
+        var room=classroom();
+        document.getElementById('roomPill').textContent='👥 '+(room.className||'우리 반')+' · '+room.students.length+'명';
+        document.getElementById('currencyPill').textContent='💰 화폐: '+currency();
+      }
+      function renderSelectors(){
+        var cur=document.getElementById('ledgerStudent').value;
+        document.getElementById('ledgerStudent').innerHTML=studentOptions(true);
+        if(cur)document.getElementById('ledgerStudent').value=cur;
+      }
+      function renderAll(){
+        reconcile();
+        renderHeader();renderOverview();renderAccounts();renderJobs();renderStore();renderSelectors();renderLedger();renderSettings();
+      }
+      window.addEventListener('gulliver:classroom-change',function(){reconcile();renderAll()});
+      reconcile();
+      renderAll();
+    })();
+  </script>
+</body>
+</html>

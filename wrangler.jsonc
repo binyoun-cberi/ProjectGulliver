@@ -8,11 +8,19 @@
       {
         "name": "GULLIVER_ROOM",
         "class_name": "GulliverRoom"
+      },
+      {
+        "name": "GULLIVER_ECONOMY",
+        "class_name": "EconomyClass"
       }
     ]
   },
   "exports": {
     "GulliverRoom": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    },
+    "EconomyClass": {
       "type": "durable-object",
       "storage": "sqlite"
     }
