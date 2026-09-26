@@ -148,8 +148,14 @@ export default {
 
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders() });
 
-    if (request.method === "GET" && url.pathname === "/health") {
-      return json({ ok: true, service: "gulliver-api", version: 1, durableObjects: true }, 200, corsHeaders());
+    if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
+      return json({
+        ok: true,
+        service: "gulliver-api",
+        version: 1,
+        durableObjects: true,
+        status: "ready"
+      }, 200, corsHeaders());
     }
 
     if (request.method === "POST" && url.pathname === "/api/rooms") {
