@@ -211,6 +211,29 @@ function parseStudents(){
 }
 function studentById(id){return state.students.find(s=>s.id===String(id))}
 function studentName(id){return studentById(id)?.name||"?"}
+let sharedProfiles={},sharedRelations=[],sharedRelationMap=new Map();
+function sharedRelKey(a,b){return[a,b].map(String).sort().join("|")}
+function refreshSharedContext(){
+  sharedProfiles=window.Gulliver?.getProfiles?Gulliver.getProfiles():{};
+  const ids=new Set(state.students.map(s=>String(s.id)));
+  sharedRelations=(window.Gulliver?.getRelations?Gulliver.getRelations():[]).filter(r=>ids.has(String(r.a))&&ids.has(String(r.b)));
+  sharedRelationMap=new Map(sharedRelations.map(r=>[sharedRelKey(r.a,r.b),r]));
+}
+function sharedLeaders(){
+  return new Set([...state.leaders,...state.students.filter(s=>sharedProfiles[String(s.id)]?.leader).map(s=>String(s.id))]);
+}
+function sharedGroupWeight(a,b){
+  const rel=sharedRelationMap.get(sharedRelKey(a,b));if(!rel)return 0;
+  const s=Number(rel.strength||2);let w=0;
+  (rel.tags||[]).forEach(tag=>{
+    if(tag==="avoid")w+=5000*s;
+    else if(tag==="conflict")w+=1800*s;
+    else if(tag==="chatter")w+=420*s;
+    else if(tag==="playful")w+=300*s;
+    else if(tag==="cooperate")w-=90*s;
+  });
+  return w;
+}
 function cleanConditions(){
   const ids=new Set(state.students.map(s=>s.id));
   const cleanPairs=arr=>(Array.isArray(arr)?arr:[]).filter(p=>Array.isArray(p)&&p.length===2&&ids.has(String(p[0]))&&ids.has(String(p[1]))&&String(p[0])!==String(p[1])).map(p=>[String(p[0]),String(p[1])]);
@@ -300,7 +323,9 @@ function incrementalScore(groupIds,compIds){
   state.avoidPairs.forEach(([a,b])=>{
     const all=new Set([...groupIds,...compIds]);if(all.has(a)&&all.has(b))score+=100000
   });
-  const leaders=new Set(state.leaders);const leadCount=[...groupIds,...compIds].filter(id=>leaders.has(id)).length;if(leadCount>1)score+=(leadCount-1)*420;
+  const leaders=sharedLeaders();const leadCount=[...groupIds,...compIds].filter(id=>leaders.has(String(id))).length;if(leadCount>1)score+=(leadCount-1)*420;
+  compIds.forEach(a=>groupIds.forEach(b=>{score+=sharedGroupWeight(a,b)}));
+  for(let i=0;i<compIds.length;i++)for(let j=i+1;j<compIds.length;j++)score+=sharedGroupWeight(compIds[i],compIds[j]);
   const gs=genderStats([...groupIds,...compIds]);
   if(state.genderMode==="balanced")score+=Math.abs(gs.m-gs.f)*18;
   if(state.genderMode==="same"&&gs.m>0&&gs.f>0)score+=650+Math.min(gs.m,gs.f)*80;
@@ -313,8 +338,11 @@ function evaluateGroups(groups){
     state.avoidPairs.forEach(([a,b])=>{if(g.includes(a)&&g.includes(b)){avoid++;score+=100000}});
     const gs=genderStats(g);if(state.genderMode==="balanced")score+=Math.abs(gs.m-gs.f)*18;
     if(state.genderMode==="same"&&gs.m>0&&gs.f>0){mixed++;score+=650+Math.min(gs.m,gs.f)*80}
-    const lc=g.filter(id=>state.leaders.includes(id)).length;if(lc>1){leaderClash+=lc-1;score+=(lc-1)*420}
-    for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++)score+=historyPairPenalty([g[i]],[g[j]]);
+    const leaders=sharedLeaders();const lc=g.filter(id=>leaders.has(String(id))).length;if(lc>1){leaderClash+=lc-1;score+=(lc-1)*420}
+    for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){
+      score+=historyPairPenalty([g[i]],[g[j]]);
+      score+=sharedGroupWeight(g[i],g[j]);
+    }
   });
   return{score,avoid,mixed,leaderClash}
 }
@@ -369,7 +397,7 @@ function tone(freq,dur=.12,delay=0){if(!state.sound)return;try{initAudio();const
 function ding(){tone(523,.16);tone(659,.16,.08);tone(784,.2,.16)}
 
 function start(){
-  parseStudents();state.groupSize=Math.max(2,Math.min(10,Number($("groupSize").value)||4));state.genderMode=$("genderMode").value;saveConfig();
+  parseStudents();refreshSharedContext();state.groupSize=Math.max(2,Math.min(10,Number($("groupSize").value)||4));state.genderMode=$("genderMode").value;saveConfig();
   const err=validateSetup();if(err){setNotice("setupNotice",err,"bad");return}
   const solved=solveGroups();if(!solved){setNotice("setupNotice","현재 조건으로 모둠을 만들지 못했습니다. 고정·같이 묶기 조건을 조금 완화해 주세요.","bad");return}
   if(solved.ev.avoid>0){setNotice("setupNotice","‘같은 모둠 피하기’ 조건을 모두 지킬 수 없습니다. 조건을 줄이거나 모둠 크기를 조정해 주세요.","bad");return}
@@ -445,14 +473,16 @@ function confirmGroups(){
   if(state.revealed<state.groups.length){setNotice("resultNotice","모둠을 모두 공개한 뒤 확정해 주세요.","bad");return}
   const hard=hardViolations();if(hard.length){setNotice("resultNotice","조건이 깨진 결과는 확정할 수 없습니다: "+hard.join(" · "),"bad");return}
   const assignments={};state.groups.forEach((g,gi)=>g.forEach(s=>assignments[s.id]=gi+1));
-  const hist=[{at:Date.now(),assignments},...getHistory()].slice(0,3);localStorage.setItem(HISTORY_KEY,JSON.stringify(hist));renderHistory();setNotice("resultNotice","이번 모둠을 확정했습니다. 다음 편성에서는 최근 같은 모둠이 반복되지 않도록 반영합니다.","good");Gulliver.toast("이번 모둠을 기록했습니다.")
+  const hist=[{at:Date.now(),assignments},...getHistory()].slice(0,3);localStorage.setItem(HISTORY_KEY,JSON.stringify(hist));
+  if(Gulliver.recordOperation)Gulliver.recordOperation("groups",{studentCount:state.students.length,groupCount:state.groups.length,assignments});
+  renderHistory();setNotice("resultNotice","이번 모둠을 확정했습니다. 다음 편성에서는 최근 같은 모둠이 반복되지 않도록 반영합니다.","good");Gulliver.toast("이번 모둠을 기록했습니다.")
 }
 function back(){clearRevealTimers();$("slotScreen").classList.remove("active");$("setupScreen").style.display="block";refreshStudentUI()}
 function reroll(){state.revealed=0;start()}
 function loadClassroom(){
   const room=Gulliver.getClassroom();if(!room.students.length){Gulliver.toast("먼저 우리 반에서 학생 명단을 저장해 주세요.");return}
   state.rosterHints=room.students.map(s=>({id:String(s.id),name:s.name,gender:s.gender||""}));
-  $("studentsInput").value=room.students.map(s=>s.name+(s.gender==="M"?"(남)":s.gender==="F"?"(여)":"")).join("\n");refreshStudentUI();Gulliver.toast((room.className||"우리 반")+" "+room.students.length+"명을 불러왔습니다.")
+  $("studentsInput").value=room.students.map(s=>s.name+(s.gender==="M"?"(남)":s.gender==="F"?"(여)":"")).join("\n");refreshStudentUI();refreshSharedContext();Gulliver.toast((room.className||"우리 반")+" "+room.students.length+"명을 불러왔습니다.")
 }
 
 $("studentsInput").addEventListener("input",refreshStudentUI);
@@ -466,7 +496,7 @@ $("clearHistoryBtn").onclick=()=>{if(confirm("최근 모둠 기록을 모두 지
 $("soundBtn").onclick=()=>{state.sound=!state.sound;renderSound();saveConfig();if(state.sound){initAudio();ding()}};
 $("startBtn").onclick=start;$("backBtn").onclick=back;$("spinBtn").onclick=spin;$("revealAllBtn").onclick=revealAll;$("rerollBtn").onclick=reroll;$("confirmBtn").onclick=confirmGroups;$("cancelSelectBtn").onclick=()=>{selectedStudentId=null;renderResults()};
 
-loadConfig();refreshStudentUI();renderHistory();
+loadConfig();refreshStudentUI();refreshSharedContext();renderHistory();
 Gulliver.mountShell({title:"행운의 모둠 메이커",icon:"🎰"});
 })();
 </script>
