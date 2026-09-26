@@ -654,7 +654,7 @@
 
     <section class="dashboard" aria-label="교실 대시보드">
       <article class="dash-card">
-        <div class="dash-head"><h2>👥 우리 반</h2><a class="dash-link" href="우리반.html">명단 관리 →</a></div>
+        <div class="dash-head"><h2>👥 우리 반</h2><a class="dash-link" href="우리반.html">운영 정보 관리 →</a></div>
         <div class="class-name" id="dashClassName">우리 반</div>
         <div class="class-meta" id="dashClassMeta">저장된 학생이 없습니다.</div>
         <div class="student-preview" id="dashStudentPreview"></div>
@@ -1019,7 +1019,10 @@
     function renderDashboard() {
       const room = Gulliver.getClassroom();
       document.getElementById('dashClassName').textContent = room.className || '우리 반';
-      document.getElementById('dashClassMeta').textContent = room.students.length ? `${room.students.length}명 저장됨 · 여러 도구에서 바로 불러올 수 있어요.` : '저장된 학생이 없습니다. 한 번 저장하면 여러 도구에서 함께 씁니다.';
+      const profiles=Gulliver.getProfiles?Gulliver.getProfiles():{};
+      const relations=Gulliver.getRelations?Gulliver.getRelations():[];
+      const profileCount=Object.values(profiles).filter(p=>p.updatedAt||p.frontSeat||p.leader||p.note||p.participation!==3||p.responsibility!==3||p.presentationBurden!==3).length;
+      document.getElementById('dashClassMeta').textContent = room.students.length ? `${room.students.length}명 · 운영 프로필 ${profileCount}명 · 관계 ${relations.length}개` : '저장된 학생이 없습니다. 명단과 교사용 운영 정보를 한 번에 관리할 수 있어요.';
       document.getElementById('dashStudentPreview').innerHTML = room.students.slice(0,6).map(s=>`<span>${s.name}</span>`).join('') + (room.students.length>6 ? `<span>+${room.students.length-6}명</span>` : '');
 
       const favorites = Gulliver.getFavorites();
@@ -1042,6 +1045,7 @@
       });
     }
     window.addEventListener('gulliver:classroom-change', renderDashboard);
+    window.addEventListener('gulliver:classroom-meta-change', renderDashboard);
     window.addEventListener('gulliver:favorites-change', renderDashboard);
 
     searchInput.addEventListener("input", renderCards);
