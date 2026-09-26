@@ -216,6 +216,25 @@
                 });
             };
             container.appendChild(addBtn);
+
+            if (state.themes.length > 1) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-colors text-red-500 bg-red-50 hover:bg-red-100 border border-red-100';
+                deleteBtn.textContent = '🗑️ 현재 테마';
+                deleteBtn.onclick = () => {
+                    const target = state.currentTheme;
+                    showModal('테마 삭제', `'${target}' 테마를 삭제하시겠습니까? (기록도 함께 삭제됩니다)`, null, () => {
+                        state.themes = state.themes.filter(t => t !== target);
+                        delete state.data[target];
+                        state.currentTheme = state.themes[0];
+                        saveState();
+                        renderTabs();
+                        renderGrid();
+                    }, false);
+                };
+                container.appendChild(deleteBtn);
+            }
         }
 
         // 자리 배치도(그리드) 렌더링
@@ -293,6 +312,7 @@
                 const count = parseInt(val);
                 if (!isNaN(count) && count > 0 && count <= 100) {
                     state.studentCount = count;
+                    state.studentNames = [];
                     initData();
                     saveState();
                     renderGrid();
@@ -380,6 +400,21 @@
             if (e.key === 'Enter') {
                 modalConfirm.click();
             }
+        });
+
+        Gulliver.mountShell({title:'학급 체크리스트',icon:'✅'});
+        document.getElementById('load-classroom-btn').addEventListener('click', () => {
+            const room = Gulliver.getClassroom();
+            if (!room.students.length) {
+                Gulliver.toast('먼저 우리 반에서 학생 명단을 저장해 주세요.');
+                return;
+            }
+            state.studentNames = room.students.map(s => s.name);
+            state.studentCount = state.studentNames.length;
+            initData();
+            saveState();
+            renderGrid();
+            Gulliver.toast(room.className + ' ' + state.studentCount + '명을 불러왔습니다.');
         });
 
         // 초기화 실행
