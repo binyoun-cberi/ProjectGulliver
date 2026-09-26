@@ -34,22 +34,29 @@
         /* Gender Colors */
         .seat.occupied.boy { background: #e3f2fd; border-color: #2196f3; color: #0d47a1; }
         .seat.occupied.girl { background: #fce4ec; border-color: #e91e63; color: #880e4f; }
+        .seat.occupied.neutral { background:#f1f5f9; border-color:#64748b; color:#334155; }
+        .gulliver-shell{flex-basis:100%;}
         
         .forbidden-row { margin-top: 20px; background: #ff7675; color: white; text-align: center; padding: 10px; border-radius: 8px; font-weight: bold; }
         .tip-box { margin-top: 20px; padding: 12px; background: #fff3cd; border-radius: 8px; font-size: 0.8rem; color: #856404; border: 1px solid #ffeeba; }
     </style>
+    <script src="gulliver-shared.js"></script>
 </head>
 <body>
 
     <!-- 왼쪽: 입력 패널 -->
     <div class="panel">
         <h2 id="panel-title" title="더블클릭하면 조건을 숨깁니다." style="cursor: pointer; user-select: none;">📋 설정 및 학생 입력</h2>
+        <button id="load-classroom-btn" type="button" style="margin-top:0;background:#4f46e5;">👥 우리 반 명단 불러오기</button>
         
         <label for="boys">👦 남학생 명단 (쉼표로 구분)</label>
         <textarea id="boys">김철수, 박민수, 최지훈, 강준서, 조민재</textarea>
 
         <label for="girls">👧 여학생 명단 (쉼표로 구분)</label>
         <textarea id="girls">이영희, 정다은, 윤서아, 박수진, 최유리</textarea>
+
+        <label for="others">🧑 성별 미입력 학생</label>
+        <textarea id="others" placeholder="우리 반에 성별 없이 저장한 학생이 여기에 들어옵니다."></textarea>
 
         <div id="secret-constraints">
             <label for="constraints">🚫 떨어뜨려 놓을 학생들 (엔터로 구분)</label>
@@ -136,6 +143,7 @@
             // 1. 데이터 파싱
             const boysInput = document.getElementById('boys').value;
             const girlsInput = document.getElementById('girls').value;
+            const othersInput = document.getElementById('others').value;
             
             let students = [];
             boysInput.split(',').map(s => s.trim()).filter(s => s !== "").forEach(name => {
@@ -144,6 +152,12 @@
             girlsInput.split(',').map(s => s.trim()).filter(s => s !== "").forEach(name => {
                 students.push({ name: name, gender: 'F' });
             });
+            othersInput.split(',').map(s => s.trim()).filter(s => s !== "").forEach(name => {
+                students.push({ name: name, gender: 'U' });
+            });
+            if (students.some(s => s.gender === 'U')) {
+                document.getElementById('sameGenderMode').checked = false;
+            }
             
             const constraintsInput = document.getElementById('constraints').value;
             const constraints = constraintsInput.split('\n')
@@ -226,7 +240,7 @@
                     const seatEl = seatElements[seatIdx];
                     seatEl.innerText = student.name;
                     seatEl.classList.add('occupied');
-                    seatEl.classList.add(student.gender === 'M' ? 'boy' : 'girl');
+                    seatEl.classList.add(student.gender === 'M' ? 'boy' : student.gender === 'F' ? 'girl' : 'neutral');
                 }
             });
         }
@@ -291,6 +305,17 @@
 
         // 시작 시 버스 그리기
         window.onload = () => {
+            Gulliver.mountShell({title:'버스 좌석 배치',icon:'🚌'});
+            document.getElementById('load-classroom-btn').addEventListener('click', () => {
+                const room = Gulliver.getClassroom();
+                if (!room.students.length) { Gulliver.toast('먼저 우리 반에서 학생 명단을 저장해 주세요.'); return; }
+                document.getElementById('boys').value = room.students.filter(s=>s.gender==='M').map(s=>s.name).join(', ');
+                document.getElementById('girls').value = room.students.filter(s=>s.gender==='F').map(s=>s.name).join(', ');
+                const unknown = room.students.filter(s=>!s.gender).map(s=>s.name);
+                document.getElementById('others').value = unknown.join(', ');
+                if (unknown.length) document.getElementById('sameGenderMode').checked = false;
+                Gulliver.toast(room.className+' '+room.students.length+'명을 불러왔습니다.'+(unknown.length?' · 성별 미입력 '+unknown.length+'명':''));
+            });
             initBus();
             
             // 학생 시연용 조건 숨기기 기능 (제목 더블클릭 또는 Alt+H)
