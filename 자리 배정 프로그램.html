@@ -101,7 +101,7 @@ body.presentation .board-title{justify-content:center}
 body.presentation .seat{width:118px;height:90px}
 body.presentation .seat .name{font-size:19px;max-width:105px}
 body.presentation .exit-presentation{display:inline-flex!important}
-.exit-presentation{display:none}
+.exit-presentation{display:none}.floating-exit{position:fixed;top:16px;right:16px;z-index:100000}
 body.flipped .seat-grid{transform:rotate(180deg)}
 body.flipped .seat{transform:rotate(180deg)}
 body.flipped .seat.active:hover{transform:rotate(180deg) translateY(2px)}
@@ -113,6 +113,7 @@ body.flipped .seat.selected{transform:rotate(180deg) translateY(3px)}
 <script src="gulliver-shared.js"></script>
 </head>
 <body>
+<button class="btn exit-presentation floating-exit" id="exitPresentationBtn">설정으로 돌아가기</button>
 <div class="app">
   <header class="topline">
     <div>
@@ -122,7 +123,6 @@ body.flipped .seat.selected{transform:rotate(180deg) translateY(3px)}
     <div class="view-actions">
       <button class="btn" id="loadClassroomBtn">👥 우리 반 불러오기</button>
       <button class="btn" id="presentationBtn">📺 자리표만 보기</button>
-      <button class="btn exit-presentation" id="exitPresentationBtn">설정으로 돌아가기</button>
     </div>
   </header>
 
@@ -202,6 +202,7 @@ body.flipped .seat.selected{transform:rotate(180deg) translateY(3px)}
         <div class="board-actions">
           <button class="btn small edit-only" id="flipBtn">↕ 자리표 뒤집기</button>
           <button class="btn small edit-only" id="printBtn">🖨️ 인쇄</button>
+          <button class="btn small edit-only" id="commitHistoryBtn">✓ 이 자리 확정</button>
           <button class="btn small edit-only" id="clearResultBtn">배정 지우기</button>
         </div>
       </div>
@@ -321,6 +322,14 @@ function clusterMap(arr){
   });
   return map;
 }
+function historicalGroupId(index,h){
+  const cols=Number(h.cols)||state.cols;
+  const row=Math.floor(index/cols),col=index%cols;
+  if(h.layout==='pair')return row+'-'+Math.floor(col/2);
+  if(h.layout==='group4')return Math.floor(row/2)+'-'+Math.floor(col/2);
+  if(h.layout==='group6')return Math.floor(row/2)+'-'+Math.floor(col/3);
+  return 'i-'+index;
+}
 function historyPenalty(arr){
   if(!$('historyBalance').checked)return 0;
   const hist=getHistory();
@@ -328,17 +337,32 @@ function historyPenalty(arr){
   let p=0;
   hist.forEach((h,age)=>{
     const factor=age===0?1:age===1?.55:.3;
+    const oldGroupMembers=new Map();
+    (h.seats||[]).forEach((id,index)=>{
+      if(!id||h.layout==='individual')return;
+      const key=historicalGroupId(index,h);
+      if(!oldGroupMembers.has(key))oldGroupMembers.set(key,[]);
+      oldGroupMembers.get(key).push(String(id));
+    });
     arr.forEach((id,i)=>{
       if(!id)return;
-      const oldIndex=h.seats.findIndex(x=>String(x)===String(id));
+      const sid=String(id);
+      const oldIndex=(h.seats||[]).findIndex(x=>String(x)===sid);
       if(oldIndex<0)return;
       if(oldIndex===i)p+=90*factor;
-      if(h.layout===state.layout && state.layout!=='individual' && groupId(oldIndex)===groupId(i))p+=34*factor;
-      else{
-        const or=Math.floor(oldIndex/(h.cols||state.cols)),oc=oldIndex%(h.cols||state.cols);
-        const nr=Math.floor(i/state.cols),nc=i%state.cols;
-        if(Math.abs(or-nr)<=1&&Math.abs(oc-nc)<=1)p+=10*factor;
+
+      if(h.layout!=='individual'&&state.layout!=='individual'){
+        const oldKey=historicalGroupId(oldIndex,h);
+        const oldMates=(oldGroupMembers.get(oldKey)||[]).filter(x=>x!==sid);
+        const currentKey=groupId(i);
+        const currentMates=arr.map((x,idx)=>x&&groupId(idx)===currentKey?String(x):null).filter(x=>x&&x!==sid);
+        const repeated=oldMates.filter(x=>currentMates.includes(x)).length;
+        p+=repeated*38*factor;
       }
+
+      const or=Math.floor(oldIndex/(Number(h.cols)||state.cols)),oc=oldIndex%(Number(h.cols)||state.cols);
+      const nr=Math.floor(i/state.cols),nc=i%state.cols;
+      if(Math.abs(or-nr)<=1&&Math.abs(oc-nc)<=1)p+=8*factor;
     });
   });
   return p;
@@ -393,32 +417,38 @@ function randomArrangement(){
   return arr
 }
 function optimize(){
-  let best=null,bestEval=null;
-  const rounds=Math.min(1700,600+state.students.length*32);
+  let seed=null,seedEval=null;
+  const rounds=Math.min(1800,650+state.students.length*34);
   for(let n=0;n<rounds;n++){
     const arr=randomArrangement();
     const ev=evaluate(arr);
-    if(!bestEval||ev.penalty<bestEval.penalty){best=arr;bestEval=ev;if(ev.penalty===0)break}
+    if(!seedEval||ev.penalty<seedEval.penalty){seed=arr;seedEval=ev;if(ev.penalty===0)break}
   }
-  if(!best)return{arr:Array(state.cols*state.rows).fill(null),ev:evaluate([])};
+  if(!seed)return{arr:Array(state.cols*state.rows).fill(null),ev:evaluate([])};
 
-  const occupied=()=>best.map((id,i)=>id?i:-1).filter(i=>i>=0);
+  let current=[...seed],currentEval=seedEval;
+  let globalBest=[...seed],globalEval=seedEval;
   const usable=activeIndices();
-  let temperature=25;
-  for(let n=0;n<1800;n++){
-    const next=[...best];
+  let temperature=24;
+
+  for(let n=0;n<2200;n++){
+    const next=[...current];
     const a=usable[Math.floor(Math.random()*usable.length)];
     const b=usable[Math.floor(Math.random()*usable.length)];
     if(a===undefined||b===undefined||a===b)continue;
     [next[a],next[b]]=[next[b],next[a]];
     const ev=evaluate(next);
-    const delta=ev.penalty-bestEval.penalty;
-    if(delta<0||Math.random()<Math.exp(-delta/Math.max(1,temperature))){
-      best=next;bestEval=ev;
+    const delta=ev.penalty-currentEval.penalty;
+    if(delta<=0||Math.random()<Math.exp(-delta/Math.max(1,temperature))){
+      current=next;currentEval=ev;
+      if(ev.penalty<globalEval.penalty){
+        globalBest=[...next];globalEval=ev;
+        if(globalEval.penalty===0)break;
+      }
     }
     temperature*=.997;
   }
-  return{arr:best,ev:bestEval}
+  return{arr:globalBest,ev:globalEval}
 }
 function countRuleSatisfied(ev){return Math.max(0,state.rules.length-ev.ruleViolations)}
 function changedRatio(){
@@ -472,7 +502,14 @@ function setNotice(text,type=''){
 }
 function renderStudents(){
   $('studentCount').textContent=state.students.length+'명';
-  $('studentList').innerHTML=state.students.length?state.students.map(s=>`<span class="student-chip ${s.gender==='M'?'m':s.gender==='F'?'f':'u'}">${s.gender==='M'?'👦':s.gender==='F'?'👧':'🧑'} ${escapeHTML(s.name)}</span>`).join(''):'<span class="help">학생이 없습니다. 우리 반 명단을 불러오세요.</span>';
+  $('studentList').innerHTML=state.students.length?state.students.map(s=>`<span class="student-chip ${s.gender==='M'?'m':s.gender==='F'?'f':'u'}">${s.gender==='M'?'👦':s.gender==='F'?'👧':'🧑'} ${escapeHTML(s.name)} <button type="button" data-del-student="${escapeHTML(s.id)}" style="border:0;background:transparent;color:inherit;padding:0 0 0 3px;font-weight:950">×</button></span>`).join(''):'<span class="help">학생이 없습니다. 우리 반 명단을 불러오세요.</span>';
+  document.querySelectorAll('[data-del-student]').forEach(btn=>btn.onclick=()=>{
+    const id=String(btn.dataset.delStudent);
+    state.students=state.students.filter(s=>String(s.id)!==id);
+    state.frontIds=state.frontIds.filter(x=>String(x)!==id);
+    state.rules=state.rules.filter(r=>String(r[0])!==id&&String(r[1])!==id);
+    saveState();renderStudents();clearAssignment();
+  });
   $('frontList').innerHTML=state.students.length?state.students.map(s=>`<button type="button" class="front-chip ${state.frontIds.includes(String(s.id))?'on':''}" data-front="${escapeHTML(s.id)}">${escapeHTML(s.name)}</button>`).join(''):'<span class="help">학생을 먼저 추가하세요.</span>';
   document.querySelectorAll('[data-front]').forEach(btn=>btn.onclick=()=>{
     const id=String(btn.dataset.front);
@@ -600,8 +637,7 @@ function generate(){
   if(state.rules.length)parts.push('분리 '+countRuleSatisfied(result.ev)+'/'+state.rules.length);
   if(state.frontIds.length)parts.push('앞자리 '+(state.frontIds.length-result.ev.frontMiss)+'/'+state.frontIds.length);
   if(beforeHistory.length)parts.push('지난 자리와 다른 배치 우선');
-  setNotice('배치 완료'+(parts.length?' · '+parts.join(' · '):'')+'. 필요하면 두 자리를 차례로 눌러 직접 바꿀 수 있어요.','good');
-  saveHistory();
+  setNotice('배치 완료'+(parts.length?' · '+parts.join(' · '):'')+'. 실제로 사용할 자리라면 ‘이 자리 확정’을 눌러 다음 배정에 기록하세요.','good');
 }
 function applyGridChange(){
   const {cols,rows}=gridFromSelect();
@@ -643,6 +679,12 @@ $('presentationBtn').onclick=enterPresentation;
 $('exitPresentationBtn').onclick=exitPresentation;
 $('flipBtn').onclick=toggleFlip;
 $('printBtn').onclick=()=>window.print();
+$('commitHistoryBtn').onclick=()=>{
+  if(!hasAssignment()){Gulliver.toast('먼저 자리를 배정해 주세요.');return}
+  saveHistory();
+  Gulliver.toast('이 자리표를 최근 자리 기록에 저장했습니다.');
+  setNotice('자리표를 확정했습니다. 다음 자리 배정에서 같은 자리와 같은 짝·모둠을 피하도록 반영합니다.','good');
+};
 
 loadState();
 renderAll();
