@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>말잇기 교실배틀 - UI 정리판</title>
+  <title>말잇기 교실배틀 | 교실 뚝딱도구</title>
   <script src="./wordchain-static-db.js?v=1"></script>
   <style>
     :root{
@@ -72,7 +72,7 @@
     input:focus,textarea:focus,select:focus{border-color:var(--main);box-shadow:0 0 0 4px rgba(37,99,235,.12)}
     textarea{min-height:150px;resize:vertical;line-height:1.45}
     label{display:block;margin:11px 0 6px;font-weight:900;font-size:14px;color:#374151}
-    .app{width:min(1380px,96vw);margin:0 auto;padding:18px 0 28px;}
+    .app{width:min(1380px,96vw);margin:0 auto;padding:68px 0 28px;}
     .hero{
       display:flex;
       justify-content:space-between;
@@ -180,11 +180,34 @@
     }
 
     /* === UI 정리판 패치 === */
-    .top-actions{display:none !important;}
+    .top-actions{display:flex !important;gap:8px;align-items:center;}
     .hero{padding-top:10px;padding-bottom:10px;}
     .title-wrap p{max-width:760px;}
-    .layout{grid-template-columns:320px 1fr;}
-    .teacher-panel{padding:16px;border-radius:24px;}
+    .layout{grid-template-columns:300px minmax(0,1fr);}
+    .teacher-panel{padding:14px;border-radius:22px;top:66px;max-height:calc(100vh - 82px);}
+    .teacher-panel label{font-size:12px;margin:8px 0 5px}
+    .teacher-panel input,.teacher-panel select,.teacher-panel textarea{padding:9px 10px;border-radius:12px}
+    .teacher-panel textarea{min-height:82px}
+    .settings-details{margin-top:10px;border:1px solid var(--line);border-radius:15px;background:#fbfcfe;overflow:hidden}
+    .settings-details summary{cursor:pointer;list-style:none;padding:11px 12px;font-size:12px;font-weight:950;color:#526078;display:flex;justify-content:space-between;align-items:center}
+    .settings-details summary::-webkit-details-marker{display:none}
+    .settings-details summary::after{content:"＋";font-size:16px;color:#8b95a7}
+    .settings-details[open] summary::after{content:"−"}
+    .settings-detail-body{padding:0 10px 10px}
+    .settings-detail-body .checks{margin:0;gap:6px}
+    .settings-detail-body .check{padding:8px 9px;font-size:12px;border-radius:11px}
+    .settings-detail-body .settings-note{font-size:11px;padding:9px 10px}
+    .settings-detail-body .btn-grid{margin-top:8px}
+    .roster-card summary{cursor:pointer;list-style:none;font-weight:1000;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+    .roster-card summary::-webkit-details-marker{display:none}
+    .roster-card summary::after{content:"펼치기";font-size:11px;color:#64748b;font-weight:850}
+    .roster-card[open] summary::after{content:"접기"}
+    .student-exit-btn{display:none;position:fixed;right:14px;top:14px;z-index:100000;border:1px solid #d7deea;background:rgba(255,255,255,.88);color:#475569;box-shadow:0 8px 22px rgba(15,23,42,.12);padding:9px 12px;border-radius:999px;font-size:12px}
+    body.student-view .student-exit-btn{display:block}
+    body.student-view .gulliver-shell{display:none!important}
+    body.student-view .app{padding-top:8px;width:min(1500px,99vw)}
+    body.student-view .hero{display:none}
+    body.student-view .stage{min-height:calc(100vh - 16px);border-radius:20px}
     .stage{padding:18px;border-radius:24px;min-height:680px;}
     .section-title{margin-top:2px;}
     textarea{min-height:120px;}
@@ -201,9 +224,19 @@
     .chain-flow{min-height:260px;max-height:450px;}
     .roster-card{margin-top:12px;}
     .roster{max-height:160px;}
-    .student-screen .teacher-panel{display:block;}
-    .student-screen .teacher-only{display:block !important;}
+    .student-screen .teacher-panel{display:none !important;}
+    .student-screen .teacher-only{display:none !important;}
     .student-screen .top-actions{display:none !important;}
+    .student-screen .layout{grid-template-columns:1fr}
+    .student-screen .stage{min-height:calc(100vh - 16px)}
+    .student-screen .main-board{grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr)}
+    .student-screen .play-grid{grid-template-columns:1fr}
+    .student-screen .chain-flow{max-height:300px}
+    .student-screen .current-card{min-height:330px}
+    .student-screen .current-player{font-size:clamp(76px,12vw,150px)}
+    .student-screen .need-char{width:92px;height:92px;font-size:58px}
+    .student-screen .timer-ring{width:220px;height:220px}
+    .student-screen .timer-inner{width:160px;height:160px;font-size:58px}
     @media (max-width:980px){
       .layout{grid-template-columns:1fr;}
       .score-row{grid-template-columns:1fr 1fr;}
@@ -225,7 +258,7 @@
     <header class="hero">
       <div class="title-wrap">
         <h1>🔗 말잇기 교실배틀</h1>
-        <p>끝말잇기를 반 전체 협동 또는 팀 배틀로 진행하는 수업용 게임입니다. 사전에 없으면 선생님이 인정할 수 있습니다.</p>
+        <p>학생 차례는 공평하게 섞고, 19만 단어 사전으로 빠르게 판정하는 교실 끝말잇기입니다.</p>
         <div class="status-line teacher-only">
           <span id="dictStatus" class="chip off">단어 확인 준비 중</span>
           <span id="wordCountStatus" class="chip">기본 단어 0개</span>
@@ -233,7 +266,7 @@
         </div>
       </div>
       <div class="top-actions teacher-only">
-        <button id="studentViewBtn" class="ghost big-view-btn hidden" type="button" aria-hidden="true">학생 화면 크게 보기</button>
+        <button id="studentViewBtn" class="ghost big-view-btn" type="button">📺 학생 화면</button>
       </div>
     </header>
 
@@ -277,22 +310,27 @@
           </div>
         </div>
 
-        <div class="checks">
-          <label class="check"><input id="timerOn" type="checkbox" checked /> 타이머 사용</label>
-          <label class="check"><input id="dictionaryOn" type="checkbox" checked /> 단어 확인 사용</label>
-          <label class="check"><input id="initialLaw" type="checkbox" checked /> 두음법칙 일부 허용</label>
-          <label class="check"><input id="missionOn" type="checkbox" checked /> 미션 카드 사용</label>
-          <label class="check"><input id="soundOn" type="checkbox" checked /> 효과음 사용</label>
-        </div>
-
         <button class="full good" id="startBtn">게임 시작</button>
-        <div class="btn-grid">
-          <button class="dark" id="saveSettingsBtn">설정 저장</button>
-          <button class="dark" id="loadSettingsBtn">저장 불러오기</button>
-        </div>
-        <div class="settings-note">
-          사전에 없는 단어도 수업 상황에 맞으면 <b>선생님 인정</b>으로 통과할 수 있습니다. 인정한 단어는 이 브라우저에 저장되어 다음에도 확인됩니다.
-        </div>
+
+        <details class="settings-details">
+          <summary>세부 규칙 · 저장</summary>
+          <div class="settings-detail-body">
+            <div class="checks">
+              <label class="check"><input id="timerOn" type="checkbox" checked /> 타이머 사용</label>
+              <label class="check"><input id="dictionaryOn" type="checkbox" checked /> 19만 단어 사전 확인</label>
+              <label class="check"><input id="initialLaw" type="checkbox" checked /> 두음법칙 일부 허용</label>
+              <label class="check"><input id="missionOn" type="checkbox" checked /> 미션 카드 사용</label>
+              <label class="check"><input id="soundOn" type="checkbox" checked /> 효과음 사용</label>
+            </div>
+            <div class="btn-grid">
+              <button class="dark" id="saveSettingsBtn">설정 저장</button>
+              <button class="dark" id="loadSettingsBtn">저장 불러오기</button>
+            </div>
+            <div class="settings-note">
+              사전에 없는 단어나 막다른 단어는 수업 상황에 맞으면 <b>선생님 인정</b>으로 통과할 수 있습니다.
+            </div>
+          </div>
+        </details>
       </aside>
 
       <section class="stage" id="stage">
@@ -392,10 +430,10 @@
             </section>
           </div>
 
-          <section class="roster-card teacher-only">
-            <div class="section-title">👥 학생 현황</div>
-            <div id="roster" class="roster"></div>
-          </section>
+          <details class="roster-card teacher-only">
+            <summary>👥 학생 현황 <span class="subtle" id="rosterSummary"></span></summary>
+            <div id="roster" class="roster" style="margin-top:10px"></div>
+          </details>
         </div>
 
         <div id="resultOverlay" class="result hidden">
@@ -412,6 +450,7 @@
       </section>
     </main>
   </div>
+  <button id="studentExitBtn" class="student-exit-btn" type="button">교사 화면으로</button>
 
   <script>
     const $ = (id) => document.getElementById(id);
@@ -422,7 +461,7 @@
       emptyState:$('emptyState'), gameView:$('gameView'), roundChip:$('roundChip'), goalChip:$('goalChip'), poolChip:$('poolChip'), turnModeChip:$('turnModeChip'), pauseBtn:$('pauseBtn'), undoBtn:$('undoBtn'), resetBtn:$('resetBtn'),
       scoreLabel1:$('scoreLabel1'), scoreValue1:$('scoreValue1'), scoreSub1:$('scoreSub1'), scoreLabel2:$('scoreLabel2'), scoreValue2:$('scoreValue2'), scoreSub2:$('scoreSub2'), blueScore:$('blueScore'), blueSub:$('blueSub'), redScore:$('redScore'), redSub:$('redSub'),
       currentCard:$('currentCard'), currentTeamLabel:$('currentTeamLabel'), currentName:$('currentName'), needLine:$('needLine'), timerRing:$('timerRing'), timerText:$('timerText'), timerLabel:$('timerLabel'), missionCard:$('missionCard'), missionText:$('missionText'), missionSub:$('missionSub'),
-      wordInput:$('wordInput'), judgeBox:$('judgeBox'), submitBtn:$('submitBtn'), acceptBtn:$('acceptBtn'), wrongBtn:$('wrongBtn'), missionSuccessBtn:$('missionSuccessBtn'), skipBtn:$('skipBtn'), chainSub:$('chainSub'), chainCount:$('chainCount'), lastWordChip:$('lastWordChip'), chainFlow:$('chainFlow'), roster:$('roster'),
+      wordInput:$('wordInput'), judgeBox:$('judgeBox'), submitBtn:$('submitBtn'), acceptBtn:$('acceptBtn'), wrongBtn:$('wrongBtn'), missionSuccessBtn:$('missionSuccessBtn'), skipBtn:$('skipBtn'), chainSub:$('chainSub'), chainCount:$('chainCount'), lastWordChip:$('lastWordChip'), chainFlow:$('chainFlow'), roster:$('roster'), rosterSummary:$('rosterSummary'),
       resultOverlay:$('resultOverlay'), resultEmoji:$('resultEmoji'), resultTitle:$('resultTitle'), resultDesc:$('resultDesc'), againBtn:$('againBtn'), closeResultBtn:$('closeResultBtn')
     };
 
@@ -507,6 +546,21 @@
       }
     }
 
+    async function continuationExistsAfter(word){
+      if(!els.dictionaryOn.checked || !window.KidscadeWordDB) return true;
+      try{
+        if(!staticDictionaryReady) await initDictionary();
+        if(!staticDictionaryReady) return true;
+        const initials=[...allowedStarts(lastHangul(word))];
+        const excluded=new Set([...state.usedWords.map(cleanWord),cleanWord(word)]);
+        const next=await window.KidscadeWordDB.candidates(initials,excluded,1);
+        return next.length>0;
+      }catch(error){
+        console.warn('이어질 단어 확인 실패',error);
+        return true;
+      }
+    }
+
     function parseNames(text){
       const seen = new Set();
       return text.split(/\n|,/).map(v=>v.trim()).filter(Boolean).filter(name=>{
@@ -542,6 +596,12 @@
       return set;
     }
 
+    function shuffledIndexes(length){
+      const arr=Array.from({length},(_,i)=>i);
+      for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}
+      return arr;
+    }
+
     function startGame(){
       const names = parseNames(els.namesInput.value);
       if(names.length < 2){ alert('학생 이름을 2명 이상 입력해 주세요.'); return; }
@@ -554,7 +614,11 @@
       state = makeInitialState();
       state.running = true;
       state.mode = mode;
-      state.students = names.map((name,i)=>({id:i, name, team: mode==='team' ? (i%2===0?'blue':'red') : 'class', turns:0, doneThisRound:false}));
+      let teamByIndex = new Map();
+      if(mode==='team'){
+        shuffledIndexes(names.length).forEach((originalIndex,position)=>teamByIndex.set(originalIndex,position%2===0?'blue':'red'));
+      }
+      state.students = names.map((name,i)=>({id:i, name, team: mode==='team' ? teamByIndex.get(i) : 'class', turns:0, doneThisRound:false}));
       state.roundPool = state.students.map(s=>s.id);
       state.totalSeconds = total;
       state.secondsLeft = total;
@@ -603,7 +667,7 @@
     function currentStudent(){ return state.students.find(s=>s.id===state.currentId); }
     function currentTeam(){ const s = currentStudent(); return s ? s.team : 'class'; }
 
-    async function validateWord(word){
+    async function validateWord(word, checkDeadEnd=false){
       const clean = cleanWord(word);
       if(!clean) return {ok:false, level:'no', message:'단어를 입력해 주세요.'};
       if([...clean].length < 2) return {ok:false, level:'no', message:'두 글자 이상의 단어를 권장합니다. 필요하면 선생님 인정으로 통과할 수 있습니다.'};
@@ -619,7 +683,13 @@
       }
       if(els.dictionaryOn.checked){
         const found = await dictionaryHas(clean);
-        if(found) return {ok:true, level:'ok', message:`'${clean}'은 사전에서 확인된 단어입니다.`};
+        if(found){
+          if(checkDeadEnd){
+            const hasNext=await continuationExistsAfter(clean);
+            if(!hasNext) return {ok:false, level:'wait', deadEnd:true, message:`'${clean}'은 사전에 있지만 다음에 이어갈 단어가 없습니다. 다른 단어를 쓰거나 [선생님 인정]으로 통과할 수 있습니다.`};
+          }
+          return {ok:true, level:'ok', message:`'${clean}'은 사전에서 확인된 단어입니다.`};
+        }
         return {ok:false, level:'wait', dictionaryMiss:true, message:`'${clean}'은 19만 단어 사전에서 찾지 못했습니다. 실제 단어라면 [선생님 인정]으로 통과할 수 있습니다.`};
       }
       return {ok:true, level:'ok', message:'기본 규칙을 통과했습니다.'};
@@ -628,11 +698,11 @@
     async function submitWord(manual=false){
       if(!state.running || state.ended) return;
       const word = cleanWord(els.wordInput.value);
-      const result = await validateWord(word);
+      const result = await validateWord(word, true);
       if(!manual && !result.ok){
         state.lastPendingWord = word;
         showJudge(result.message, result.level || 'no');
-        playTone(result.dictionaryMiss ? 'wait' : 'bad');
+        playTone(result.dictionaryMiss || result.deadEnd ? 'wait' : 'bad');
         return;
       }
       if(manual){
@@ -890,6 +960,10 @@
     }
 
     function renderRoster(){
+      if(els.rosterSummary){
+        const done=state.students.filter(s=>s.doneThisRound).length;
+        els.rosterSummary.textContent=`${done}/${state.students.length}명 차례 완료`;
+      }
       els.roster.innerHTML = state.students.map(s=>{
         const current = s.id === state.currentId;
         const cls = ['student', current?'current':'', s.doneThisRound?'done':''].filter(Boolean).join(' ');
@@ -983,12 +1057,28 @@
       const w=cleanWord(els.wordInput.value);
       if(!w){ clearJudge('단어를 입력하면 확인합니다.'); return; }
       showJudge('사전에서 단어를 확인하고 있습니다…','wait');
-      const r=await validateWord(w);
+      const r=await validateWord(w, false);
       if(seq!==inputCheckSeq || w!==cleanWord(els.wordInput.value)) return;
       showJudge(r.message,r.level || (r.ok?'ok':''));
     });
     els.wordInput.addEventListener('keydown',(e)=>{ if(e.key==='Enter' && e.ctrlKey){ e.preventDefault(); submitWord(true); } else if(e.key==='Enter'){ e.preventDefault(); submitWord(false); } });
-    els.studentViewBtn.addEventListener('click',()=>{});
+    function setStudentView(on){
+      els.app.classList.toggle('student-screen',!!on);
+      document.body.classList.toggle('student-view',!!on);
+      if(on && document.documentElement.requestFullscreen){
+        document.documentElement.requestFullscreen().catch(()=>{});
+      }
+    }
+    els.studentViewBtn.addEventListener('click',()=>setStudentView(true));
+    document.getElementById('studentExitBtn').addEventListener('click',()=>{
+      setStudentView(false);
+      if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+    });
+    document.addEventListener('keydown',e=>{
+      if(e.key==='Escape' && document.body.classList.contains('student-view')){
+        setStudentView(false);
+      }
+    });
     els.againBtn.addEventListener('click',()=>{ els.resultOverlay.classList.add('hidden'); startGame(); });
     els.closeResultBtn.addEventListener('click',()=>{ els.resultOverlay.classList.add('hidden'); });
     window.addEventListener('beforeunload',stopTimer);
