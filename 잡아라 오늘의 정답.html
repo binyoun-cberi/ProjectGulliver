@@ -179,6 +179,7 @@
     @media(max-width:640px){
       .hero,.settings{padding:16px}.grid2,.grid3,.preset-grid{grid-template-columns:1fr}.score-grid{grid-template-columns:1fr 1fr}.side{max-height:48vh}.stage-wrap{height:52vh}h1{font-size:38px}.student-title{font-size:25px}.big-start{font-size:22px;padding:16px}.class-title .main{font-size:22px}.toast{font-size:17px;min-width:190px}.motion-guide span{font-size:11px}.side-actions{grid-template-columns:1fr 1fr}}
   </style>
+  <script src="gulliver-shared.js"></script>
 </head>
 <body>
   <main class="app" aria-label="교사용 모션 캐치 수업 게임">
@@ -1016,5 +1017,6 @@
   updateLabels(); updatePreview(); refreshSavedSelect();
 })();
 </script>
+<script>Gulliver.mountShell({title:"잡아라! 오늘의 정답",icon:"🎯"});</script>
 </body>
 </html>
