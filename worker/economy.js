@@ -213,7 +213,7 @@ export async function handleEconomyRequest(request, env) {
     "login","student-state","student-save","student-apply","student-appeal","student-buy",
     "teacher-state","teacher-settings","teacher-certificate","teacher-certificate-grant",
     "teacher-job","teacher-job-assign","teacher-payroll","teacher-manual","teacher-treasury",
-    "teacher-item","teacher-law","teacher-case","teacher-case-decision"
+    "teacher-item","teacher-law","teacher-case","teacher-case-decision","teacher-reset-pin","teacher-delete"
   ];
   var action = match[2].toLowerCase();
   if (allowed.indexOf(action) < 0) return makeCors(json({ ok:false, error:"NOT_FOUND" }, 404));
@@ -251,14 +251,13 @@ export class EconomyClass extends DurableObject {
   }
 
   async transactions(limit, studentId) {
+    var prefix = studentId ? "stx:" + studentId + ":" : "tx:";
     var list = await this.ctx.storage.list({
-      prefix:"tx:",
+      prefix:prefix,
       reverse:true,
       limit:Math.min(500, Math.max(1, Number(limit || 80)))
     });
-    var rows = Array.from(list.values());
-    if (studentId) rows = rows.filter(function(item){ return item.studentId === studentId; });
-    return rows.slice(0, Number(limit || 80));
+    return Array.from(list.values()).slice(0, Number(limit || 80));
   }
 
   async commit(items) {
@@ -269,7 +268,7 @@ export class EconomyClass extends DurableObject {
       var seq = this.state.nextTx++;
       var key = "tx:" + String(seq).padStart(12, "0");
       var item = items[i] || {};
-      puts[key] = {
+      var txValue = {
         id:String(seq),
         at:Date.now(),
         studentId:item.studentId || null,
@@ -281,6 +280,8 @@ export class EconomyClass extends DurableObject {
         treasury:item.treasury == null ? null : Number(item.treasury),
         meta:item.meta && typeof item.meta === "object" ? item.meta : {}
       };
+      puts[key] = txValue;
+      if (item.studentId) puts["stx:" + item.studentId + ":" + String(seq).padStart(12, "0")] = txValue;
     }
     puts.state = this.state;
     await this.ctx.storage.put(puts);
@@ -291,8 +292,7 @@ export class EconomyClass extends DurableObject {
     var base = job ? Number(job.salary || 0) : Number(this.state.settings.openingBalance || 0);
     var cap = Math.floor(base * Number(this.state.settings.fineCapPercent || 0) / 100);
     var wanted = Math.max(0, Number(requested || 0));
-    var byCap = cap > 0 ? Math.min(wanted, cap) : wanted;
-    return Math.max(0, Math.min(byCap, Number(student.balance || 0)));
+    return Math.max(0, Math.min(wanted, cap, Number(student.balance || 0)));
   }
 
   async fetch(request) {
@@ -648,6 +648,8 @@ export class EconomyClass extends DurableObject {
         var caseStudent = this.state.students.find(function(item){ return item.id === cleanId(teacherBody.studentId); });
         var caseLaw = this.state.laws.find(function(item){ return item.id === cleanId(teacherBody.lawId); });
         if (!caseStudent || !caseLaw) return json({ ok:false, error:"NOT_FOUND" }, 404);
+        var occurredAt = clean(teacherBody.occurredAt, 30) || new Date().toISOString().slice(0, 10);
+        if (caseLaw.effectiveFrom && occurredAt < caseLaw.effectiveFrom) return json({ ok:false, error:"LAW_NOT_IN_EFFECT" }, 409);
         var caseRecord = {
           id:crypto.randomUUID(),
           studentId:caseStudent.id,
@@ -655,6 +657,7 @@ export class EconomyClass extends DurableObject {
           proposedFine:number(teacherBody.fine, 0, 100000, caseLaw.defaultFine),
           appliedFine:0,
           note:clean(teacherBody.note, 240),
+          occurredAt:occurredAt,
           status:"pending",
           createdAt:Date.now(),
           decidedAt:null,
@@ -663,6 +666,26 @@ export class EconomyClass extends DurableObject {
         this.state.cases.push(caseRecord);
         await this.commit();
         return json({ ok:true, case:caseRecord });
+      }
+
+      if (action === "teacher-reset-pin") {
+        var resetStudent = this.state.students.find(function(item){ return item.id === cleanId(teacherBody.studentId); });
+        if (!resetStudent) return json({ ok:false, error:"STUDENT_NOT_FOUND" }, 404);
+        var freshPin = pin();
+        resetStudent.pinHash = await hash(this.state.code + ":" + resetStudent.studentCode + ":" + freshPin);
+        resetStudent.failedAttempts = 0;
+        resetStudent.lockedUntil = 0;
+        resetStudent.sessionHash = null;
+        resetStudent.sessionExpiresAt = 0;
+        await this.commit();
+        return json({ ok:true, studentId:resetStudent.id, studentCode:resetStudent.studentCode, pin:freshPin });
+      }
+
+      if (action === "teacher-delete") {
+        if (clean(teacherBody.confirmName, 50) !== this.state.className) return json({ ok:false, error:"CONFIRMATION_MISMATCH" }, 400);
+        await this.ctx.storage.deleteAll();
+        this.state = null;
+        return json({ ok:true });
       }
 
       if (action === "teacher-case-decision") {
