@@ -37,6 +37,7 @@
             100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
     </style>
+  <script src="gulliver-shared.js"></script>
 </head>
 <body class="min-h-screen text-gray-800">
 
@@ -45,7 +46,10 @@
         <h1 class="text-4xl text-center text-pink-500 mb-8">💖 마니또 준비하기 💖</h1>
         
         <div class="mb-6">
-            <label class="block text-xl mb-2">학생 이름 입력 (엔터 또는 쉼표로 구분)</label>
+            <div class="flex items-center justify-between gap-2 mb-2">
+                <label class="block text-xl">학생 이름 입력 (엔터 또는 쉼표로 구분)</label>
+                <button id="load-classroom-btn" type="button" class="px-3 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-bold">👥 우리 반 불러오기</button>
+            </div>
             <textarea id="names-input" rows="5" class="w-full p-4 border-2 border-pink-100 rounded-xl focus:outline-none focus:border-pink-400 text-lg" placeholder="예: 김철수, 이영희, 홍길동..."></textarea>
         </div>
 
@@ -438,5 +442,17 @@
         }
 
     </script>
+
+<script>
+  Gulliver.mountShell({title:'마니또 배정 도우미',icon:'🎁'});
+  document.getElementById('load-classroom-btn')?.addEventListener('click',()=>{
+    const room=Gulliver.getClassroom();
+    if(!room.students.length){Gulliver.toast('먼저 우리 반에서 학생 명단을 저장해 주세요.');return;}
+    const input=document.getElementById('names-input');
+    input.value=room.students.map(s=>s.name).join(', ');
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    Gulliver.toast(room.className+' '+room.students.length+'명을 불러왔습니다.');
+  });
+</script>
 </body>
 </html>
