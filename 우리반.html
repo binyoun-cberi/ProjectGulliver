@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>우리 반 | 교실 뚝딱도구</title>
+<link rel="icon" type="image/png" href="logo.png">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f6f3ee;color:#243042;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+main{width:min(980px,calc(100% - 28px));margin:26px auto 64px}.hero,.panel{background:#fff;border:1px solid #ece5d9;border-radius:24px;box-shadow:0 12px 30px rgba(63,54,38,.08)}
+.hero{padding:30px;margin-bottom:18px;background:linear-gradient(135deg,#fff,#f5f3ff)}h1{margin:0;font-size:clamp(30px,5vw,48px);letter-spacing:-.06em}.hero p{margin:10px 0 0;color:#64748b;line-height:1.7;font-weight:650}
+.grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}.panel{padding:22px}h2{margin:0 0 14px;font-size:20px;letter-spacing:-.04em}.field{display:grid;gap:7px;margin-bottom:14px}label{font-size:13px;font-weight:850;color:#475569}
+input,textarea{width:100%;border:1px solid #dfe3ea;border-radius:12px;padding:12px 13px;font:700 14px/1.55 inherit;color:#1f2937;background:#fbfcfe;outline:none}input:focus,textarea:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(99,102,241,.12)}textarea{min-height:360px;resize:vertical}
+.actions{display:flex;flex-wrap:wrap;gap:8px}.btn{border:0;border-radius:11px;padding:11px 14px;font:850 13px/1 inherit;cursor:pointer;background:#eef2ff;color:#4338ca}.btn.primary{background:#4f46e5;color:#fff}.btn.danger{background:#fff1f2;color:#be123c}.btn.ghost{background:#f8fafc;color:#475569;border:1px solid #e2e8f0}
+.summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}.stat{padding:16px;border-radius:16px;background:#f8fafc;border:1px solid #eef2f7}.stat strong{display:block;font-size:25px}.stat span{font-size:12px;color:#64748b;font-weight:800}
+.preview{display:flex;flex-wrap:wrap;gap:7px;max-height:320px;overflow:auto}.chip{padding:8px 10px;border-radius:999px;background:#f1f5f9;font-size:13px;font-weight:800;color:#475569}.empty{color:#94a3b8;font-size:13px;font-weight:750;padding:10px 0}
+.notice{margin-top:16px;padding:14px 15px;border-radius:14px;background:#fffbeb;color:#92400e;font-size:12px;line-height:1.6;font-weight:700}
+.file{display:none}@media(max-width:760px){.grid{grid-template-columns:1fr}.hero{padding:24px 20px}.panel{padding:18px}textarea{min-height:300px}}
+</style>
+</head>
+<body>
+<script src="gulliver-shared.js"></script>
+<main>
+  <section class="hero">
+    <h1>우리 반</h1>
+    <p>학생 명단을 한 번 저장하면 자리 배정·모둠·마니또·끝말잇기 등 여러 뚝딱도구에서 다시 입력하지 않고 불러올 수 있습니다.</p>
+  </section>
+  <div class="grid">
+    <section class="panel">
+      <h2>학급 정보</h2>
+      <div class="field"><label for="className">학급 이름</label><input id="className" maxlength="30" placeholder="예: 5학년 2반"></div>
+      <div class="field"><label for="names">학생 이름 · 한 줄에 한 명</label><textarea id="names" placeholder="김민준&#10;이서연&#10;박도윤"></textarea></div>
+      <div class="actions">
+        <button class="btn primary" id="saveBtn">저장하기</button>
+        <button class="btn ghost" id="sampleBtn">예시 넣기</button>
+        <button class="btn danger" id="clearBtn">학급정보 지우기</button>
+      </div>
+    </section>
+    <aside class="panel">
+      <h2>저장 현황</h2>
+      <div class="summary"><div class="stat"><strong id="count">0</strong><span>학생 수</span></div><div class="stat"><strong id="updated">-</strong><span>마지막 저장</span></div></div>
+      <div class="preview" id="preview"></div>
+      <div class="notice">이 명단은 현재 브라우저에만 저장됩니다. 학교 공용 PC라면 사용 후 학급정보를 지우거나 JSON으로 백업해 두세요.</div>
+      <h2 style="margin-top:22px">백업 · 복원</h2>
+      <div class="actions">
+        <button class="btn ghost" id="exportBtn">JSON 백업</button>
+        <button class="btn ghost" id="importBtn">JSON 불러오기</button>
+        <input class="file" id="fileInput" type="file" accept=".json,application/json">
+      </div>
+    </aside>
+  </div>
+</main>
+<script>
+Gulliver.mountShell({title:'우리 반',icon:'👥',track:false});
+const $=s=>document.querySelector(s);
+function render(){
+  const c=Gulliver.getClassroom();
+  $('#className').value=c.className==='우리 반'?'':c.className;
+  $('#names').value=c.students.map(s=>s.name).join('\n');
+  $('#count').textContent=c.students.length;
+  $('#updated').textContent=c.updatedAt?new Date(c.updatedAt).toLocaleDateString('ko-KR'):'-';
+  $('#preview').innerHTML=c.students.length?c.students.map((s,i)=>'<span class="chip">'+(i+1)+'. '+escapeHtml(s.name)+'</span>').join(''):'<div class="empty">아직 저장된 학생이 없습니다.</div>';
+}
+function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('#saveBtn').onclick=()=>{const saved=Gulliver.setNames($('#names').value,$('#className').value||'우리 반');Gulliver.toast(saved.students.length+'명 저장했습니다.');render()};
+$('#sampleBtn').onclick=()=>{$('#className').value='5학년 2반';$('#names').value=['민준','서연','도윤','하은','지호','수아','유준','예린'].join('\n')};
+$('#clearBtn').onclick=()=>{if(confirm('현재 브라우저에 저장된 우리 반 명단을 지울까요?')){Gulliver.clearClassroom();Gulliver.toast('학급정보를 지웠습니다.');render()}};
+$('#exportBtn').onclick=()=>{const data=Gulliver.getClassroom();const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(data.className||'우리반')+'_뚝딱도구_백업.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$('#importBtn').onclick=()=>$('#fileInput').click();
+$('#fileInput').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());const saved=Gulliver.saveClassroom(data);Gulliver.toast(saved.students.length+'명 불러왔습니다.');render()}catch{alert('올바른 우리 반 백업 파일이 아닙니다.')}e.target.value=''};
+render();
+</script>
+</body>
+</html>
