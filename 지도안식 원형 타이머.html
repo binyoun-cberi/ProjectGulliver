@@ -976,7 +976,7 @@ function adjustCurrent(delta){
   showToast(delta>0?'현재 구간에 1분을 더했습니다.':'현재 구간을 1분 일찍 끝내도록 조정했습니다.');
 }
 
-let transitionTimer=0;let transitionTimer=0;
+let transitionTimer=0;
 function showTransition(title,note=''){
   transitionBanner.replaceChildren();
   const strong=document.createElement('strong');strong.textContent=title;transitionBanner.appendChild(strong);
