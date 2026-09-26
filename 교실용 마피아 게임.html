@@ -549,9 +549,9 @@
     .role-reveal.concealed .emoji,.role-reveal.concealed .role-name,.role-reveal.concealed #modalDesc{visibility:hidden}
     .role-reveal.concealed::after{content:"버튼을 누르고 있는 동안만 역할이 보여요";display:grid;place-items:center;min-height:130px;color:var(--muted);font-weight:900;line-height:1.5}
     .hold-role{width:100%;margin-top:12px;padding:16px;font-size:17px;font-weight:950;touch-action:none}
-    body.teacher-secret header,body.teacher-secret main{filter:blur(16px) brightness(.22);pointer-events:none;user-select:none}
-    body.teacher-secret::before{content:"교사 비밀 화면";position:fixed;inset:0;z-index:45;display:grid;place-items:center;color:rgba(255,255,255,.22);font-size:clamp(34px,7vw,84px);font-weight:1000;letter-spacing:-.06em;pointer-events:none}
-    .teacher-panel-wrap{position:relative;z-index:55}
+    body.teacher-secret header,body.teacher-secret #app > :not(#teacherPanel){filter:blur(16px) brightness(.22);pointer-events:none;user-select:none}
+    body.teacher-secret::before{content:"교사 비밀 화면";position:fixed;inset:0;z-index:45;display:grid;place-items:center;color:rgba(255,255,255,.16);font-size:clamp(34px,7vw,84px);font-weight:1000;letter-spacing:-.06em;pointer-events:none}
+    body.teacher-secret #teacherPanel{position:relative;z-index:55}
     .vote-candidate{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.08)}
     .vote-stepper{display:flex;align-items:center;gap:8px}
     .vote-stepper b{min-width:34px;text-align:center;font-size:22px}
@@ -952,6 +952,7 @@
 
     function render() {
       updateHeader();
+      document.body.classList.remove("teacher-secret");
       stopTimer(false);
 
       let html = "";
@@ -1167,6 +1168,22 @@
       render();
     }
 
+    function loadClassroomNames() {
+      try {
+        const room = Gulliver.getClassroom();
+        if (!room.students || !room.students.length) {
+          Gulliver.toast("먼저 우리 반에서 학생 명단을 저장해 주세요.");
+          return;
+        }
+        state.rawNames = room.students.map(s => s.name).join("\n");
+        log(`${room.className || "우리 반"} 명단 ${room.students.length}명을 불러왔습니다.`);
+        saveState();
+        render();
+      } catch (e) {
+        alert("우리 반 명단을 불러오지 못했습니다.");
+      }
+    }
+
     function fillSampleNames() {
       state.rawNames = DEFAULT_NAMES.join("\n");
       saveState();
@@ -1184,6 +1201,7 @@
       const n = parseNames(state.rawNames).length;
       let mafia = 2;
       let police = 1;
+      let doctor = n >= 10 ? 1 : 0;
       if (n <= 8) mafia = 2;
       else if (n <= 12) mafia = 2;
       else if (n <= 17) mafia = 3;
@@ -1191,6 +1209,7 @@
       else mafia = 5;
       state.baseCounts.mafia = mafia;
       state.baseCounts.police = police;
+      state.baseCounts.doctor = doctor;
       log(`학생 ${n}명 기준으로 기본 직업 수를 추천했습니다.`);
       saveState();
       render();
@@ -1235,8 +1254,9 @@
       if (!ok) return;
       state.phase = "reveal";
       state.round = 1;
-      state.night = { attackTargetId: "", policeTargetId: "", policeResult: "", summary: "", memo: "" };
+      state.night = { attackTargetId: "", policeTargetId: "", policeResult: "", protectTargetId: "", summary: "", memo: "" };
       state.votes = {};
+      state.handVotes = {};
       state.lastTally = null;
       state.winner = null;
       state.journal = [{ at: nowText(), text: `게임을 시작했습니다. 학생 ${state.students.length}명, 마피아 ${state.baseCounts.mafia}명.` }];
@@ -1266,15 +1286,15 @@
       const roleIds = [];
       for (let i = 0; i < state.baseCounts.mafia; i++) roleIds.push("mafia");
       for (let i = 0; i < state.baseCounts.police; i++) roleIds.push("police");
+      for (let i = 0; i < state.baseCounts.doctor; i++) roleIds.push("doctor");
       for (const role of state.customRoles) {
         for (let i = 0; i < Number(role.count || 0); i++) roleIds.push(role.id);
       }
       while (roleIds.length < names.length) roleIds.push("citizen");
 
       const shuffledRoles = shuffle(roleIds);
-      const shuffledNames = shuffle(names);
 
-      state.students = shuffledNames.map((name, i) => ({
+      state.students = names.map((name, i) => ({
         id: uid(),
         name,
         roleId: shuffledRoles[i],
@@ -1328,27 +1348,16 @@
       if (!student) return;
 
       const show = () => {
-        student.checked = true;
-        saveState();
-
         const role = roleDef(student.roleId);
         document.getElementById("modalStudent").textContent = student.name;
         document.getElementById("modalEmoji").textContent = role.emoji;
         document.getElementById("modalRole").textContent = role.name;
         document.getElementById("modalRole").className = "role-name " + teamClass(role.team);
         document.getElementById("modalDesc").textContent = role.desc;
+        document.getElementById("roleRevealBox").classList.add("concealed");
         document.getElementById("roleModal").classList.add("show");
-
-        hideRemain = Math.max(1, Number(state.setup.revealSeconds || 4));
-        document.getElementById("hideCount").textContent = hideRemain;
-        clearInterval(hideTimer);
-        hideTimer = setInterval(() => {
-          hideRemain--;
-          document.getElementById("hideCount").textContent = Math.max(0, hideRemain);
-          if (hideRemain <= 0) hideRoleModal();
-        }, 1000);
-
-        sound("good");
+        student.checked = true;
+        saveState();
         render();
       };
 
@@ -1356,14 +1365,21 @@
       else show();
     }
 
+    function setRoleRevealVisible(visible) {
+      const box = document.getElementById("roleRevealBox");
+      if (!box || !document.getElementById("roleModal").classList.contains("show")) return;
+      box.classList.toggle("concealed", !visible);
+      if (visible) sound("good");
+    }
+
     function hideRoleModal() {
-      clearInterval(hideTimer);
+      setRoleRevealVisible(false);
       document.getElementById("roleModal").classList.remove("show");
     }
 
     function goNight() {
       state.phase = "night";
-      state.night = { attackTargetId: "", policeTargetId: "", policeResult: "", summary: "", memo: "" };
+      state.night = { attackTargetId: "", policeTargetId: "", policeResult: "", protectTargetId: "", summary: "", memo: "" };
       log(`${state.round}라운드 밤이 시작되었습니다.`);
       saveState();
       render();
@@ -1373,13 +1389,16 @@
       const alive = getAlive();
       const mafiaAlive = alive.filter(s => roleDef(s.roleId).team === "mafia");
       const policeAlive = alive.filter(s => s.roleId === "police");
+      const doctorAlive = alive.filter(s => s.roleId === "doctor");
+      const attackTargets = alive.filter(s => roleDef(s.roleId).team !== "mafia");
+      const policeTargets = alive.filter(s => s.roleId !== "police");
       return `
         <section class="panel hero">
           <div>
             <h2>🌙 밤입니다</h2>
-            <p>모두 눈을 감아 주세요. 마피아와 경찰 선택은 교사 패널에서 조용히 기록합니다.</p>
+            <p>모두 눈을 감아 주세요. 비밀 정보는 교사 패널을 열었을 때만 표시됩니다.</p>
             <div class="row" style="justify-content:center;margin-top:22px;">
-              <button class="primary" onclick="toggleTeacherPanel()">교사 패널</button>
+              <button class="primary" onclick="toggleTeacherPanel()">🔒 교사 비밀 패널</button>
               <button onclick="showNightScript()">진행 멘트</button>
             </div>
           </div>
@@ -1388,41 +1407,53 @@
         <section class="panel hidden-panel" id="teacherPanel" style="margin-top:16px;">
           <div class="between">
             <div>
-              <h2>밤 교사 패널</h2>
-              <p class="hint">학생에게 보이지 않게 사용하세요.</p>
+              <h2>🔒 밤 교사 패널</h2>
+              <p class="hint">비밀 정보가 표시됩니다. 학생들이 화면을 보지 않는 상태에서 사용하세요.</p>
             </div>
-            <button class="good" onclick="resolveNight()">밤 결과 확정</button>
+            <div class="row">
+              <button onclick="closeTeacherPanel()">패널 닫기</button>
+              <button class="good" onclick="resolveNight()">밤 결과 확정</button>
+            </div>
           </div>
 
-          <div class="notice">
+          <div class="privacy-note" style="margin-top:12px;">
+            이 화면은 교사용입니다. 패널을 닫으면 마피아·경찰·의사 정보가 즉시 가려집니다.
+          </div>
+          <div class="notice" style="margin-top:12px;">
             <b>마피아 팀:</b> ${mafiaAlive.length ? mafiaAlive.map(s => escapeHtml(s.name)).join(", ") : "생존 마피아 없음"}
           </div>
 
-          <div class="field-grid" style="margin-top:14px;">
+          <div class="field-grid three" style="margin-top:14px;">
             <div>
               <label>마피아 지목 대상</label>
-              <select onchange="setNight('attackTargetId', this.value)">
-                ${targetOptions(state.night.attackTargetId, alive)}
+              <select ${mafiaAlive.length ? "" : "disabled"} onchange="setNight('attackTargetId', this.value)">
+                ${targetOptions(state.night.attackTargetId, attackTargets)}
               </select>
             </div>
             <div>
               <label>경찰 조사 대상 ${policeAlive.length ? "" : "(생존 경찰 없음)"}</label>
               <select ${policeAlive.length ? "" : "disabled"} onchange="setNight('policeTargetId', this.value); updatePoliceResultText();">
-                ${targetOptions(state.night.policeTargetId, alive)}
+                ${targetOptions(state.night.policeTargetId, policeTargets)}
               </select>
               <p class="hint" id="policeResultText">${policeResultText()}</p>
+            </div>
+            <div>
+              <label>의사 보호 대상 ${doctorAlive.length ? "" : "(생존 의사 없음)"}</label>
+              <select ${doctorAlive.length ? "" : "disabled"} onchange="setNight('protectTargetId', this.value)">
+                ${targetOptions(state.night.protectTargetId, alive)}
+              </select>
             </div>
           </div>
 
           <div style="margin-top:14px;">
             <label>교사 메모</label>
-            <input value="${escapeHtml(state.night.memo || "")}" oninput="setNight('memo', this.value)" placeholder="교사 제작 직업의 밤 행동, 학생 반응 등을 적어둘 수 있습니다." />
+            <input value="${escapeHtml(state.night.memo || "")}" oninput="setNight('memo', this.value)" placeholder="수동 특수 직업의 행동이나 학생 반응 등을 기록하세요." />
           </div>
 
           <details style="margin-top:14px;">
-            <summary>교사 제작 직업 확인</summary>
+            <summary>수동 특수 직업 확인</summary>
             <div class="cards" style="margin-top:12px;">
-              ${alive.filter(s => !["mafia", "police", "citizen"].includes(s.roleId)).map(s => {
+              ${alive.filter(s => !["mafia", "police", "doctor", "citizen"].includes(s.roleId)).map(s => {
                 const role = roleDef(s.roleId);
                 return `
                   <div class="student-card">
@@ -1431,7 +1462,7 @@
                     <div class="meta">${escapeHtml(role.desc)}</div>
                   </div>
                 `;
-              }).join("") || `<p class="hint">생존한 교사 제작 직업이 없습니다.</p>`}
+              }).join("") || `<p class="hint">생존한 수동 특수 직업이 없습니다.</p>`}
             </div>
           </details>
         </section>
@@ -1467,8 +1498,17 @@
     function toggleTeacherPanel() {
       unlockTeacher(() => {
         const panel = document.getElementById("teacherPanel");
-        if (panel) panel.classList.toggle("open");
+        if (!panel) return;
+        const opening = !panel.classList.contains("open");
+        panel.classList.toggle("open", opening);
+        document.body.classList.toggle("teacher-secret", opening);
       });
+    }
+
+    function closeTeacherPanel() {
+      const panel = document.getElementById("teacherPanel");
+      if (panel) panel.classList.remove("open");
+      document.body.classList.remove("teacher-secret");
     }
 
     function showNightScript() {
@@ -1478,7 +1518,10 @@
         "2. 마피아는 조용히 눈을 떠 주세요. 지목할 친구를 정해 주세요.\n" +
         "3. 마피아는 눈을 감아 주세요.\n" +
         "4. 경찰은 눈을 떠 주세요. 조사할 친구를 정해 주세요.\n" +
-        "5. 모두 눈을 떠 주세요."
+        "5. 경찰은 눈을 감아 주세요.\n" +
+        "6. 의사는 눈을 떠 주세요. 보호할 친구를 정해 주세요.\n" +
+        "7. 의사는 눈을 감아 주세요.\n" +
+        "8. 모두 눈을 떠 주세요."
       );
     }
 
@@ -1486,6 +1529,8 @@
       unlockTeacher(() => {
         const attack = byId(state.night.attackTargetId);
         const policeTarget = byId(state.night.policeTargetId);
+        const protectedTarget = byId(state.night.protectTargetId);
+        const doctorAlive = getAlive().some(s => s.roleId === "doctor");
 
         if (policeTarget && getAlive().some(s => s.roleId === "police")) {
           state.night.policeResult = policeResultText();
@@ -1496,6 +1541,8 @@
 
         if (!attack) {
           state.night.summary = "밤이 지났지만 아무도 탈락하지 않았습니다.";
+        } else if (doctorAlive && protectedTarget && attack.id === protectedTarget.id) {
+          state.night.summary = "밤사이 공격이 있었지만 의사가 지켜냈습니다. 아무도 탈락하지 않았습니다.";
         } else {
           attack.alive = false;
           attack.eliminatedRound = state.round;
@@ -1516,6 +1563,7 @@
           state.votes = {};
         }
 
+        closeTeacherPanel();
         saveState();
         flash("good");
         render();
@@ -1575,7 +1623,7 @@
 
     function renderStudentCard(s, deadView) {
       const role = roleDef(s.roleId);
-      const showRole = deadView && state.setup.revealEliminatedRole || isTeacherUnlocked();
+      const showRole = deadView && state.setup.revealEliminatedRole;
       return `
         <div class="student-card ${s.alive ? "" : "dead"}">
           <div class="name">${escapeHtml(s.name)}</div>
@@ -1596,6 +1644,7 @@
     function goVote() {
       state.phase = "vote";
       state.votes = {};
+      state.handVotes = {};
       state.lastTally = null;
       log(`${state.round}라운드 투표를 시작했습니다.`);
       saveState();
