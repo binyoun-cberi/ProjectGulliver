@@ -25,12 +25,6 @@
       "storage": "sqlite"
     }
   },
-  "migrations": [
-    {
-      "tag": "economy-v1",
-      "new_sqlite_classes": ["EconomyClass"]
-    }
-  ],
   "observability": {
     "enabled": true
   }
