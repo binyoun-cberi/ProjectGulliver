@@ -41,8 +41,16 @@
     window.dispatchEvent(new CustomEvent('gulliver:classroom-change',{detail:value}));
     return value;
   }
+  function parseStudentLine(value){
+    let raw=String(value||'').trim();
+    let gender='';
+    if(/\((남|남자|m)\)\s*$/i.test(raw)){gender='M';raw=raw.replace(/\((남|남자|m)\)\s*$/i,'').trim()}
+    else if(/\((여|여자|f)\)\s*$/i.test(raw)){gender='F';raw=raw.replace(/\((여|여자|f)\)\s*$/i,'').trim()}
+    return {name:raw,gender};
+  }
   function setNames(names,className){
-    return saveClassroom({className:className||getClassroom().className,students:String(names||'').split(/\r?\n|,/).map(name=>({name}))});
+    const students=String(names||'').split(/\r?\n|,/).map(parseStudentLine);
+    return saveClassroom({className:className||getClassroom().className,students});
   }
   function getNames(){return getClassroom().students.map(s=>s.name)}
   function getNamesText(){return getNames().join('\n')}
