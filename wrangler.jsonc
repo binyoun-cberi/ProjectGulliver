@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "gulliver-api",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-09-26",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "GULLIVER_ROOM",
+        "class_name": "GulliverRoom"
+      }
+    ]
+  },
+  "exports": {
+    "GulliverRoom": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  },
+  "observability": {
+    "enabled": true
+  }
+}
