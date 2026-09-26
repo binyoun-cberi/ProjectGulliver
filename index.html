@@ -4,9 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>교실 뚝딱도구 | 교사용 프로그램 모음</title>
-  
-  <script defer src="/_vercel/insights/script.js"></script>
-  
   <link rel="icon" type="image/png" href="logo.png">
   
   <style>
@@ -610,6 +607,30 @@
     .dash-empty {padding:12px 0;color:#94a3b8;font-size:12px;font-weight:800}
     @media (max-width:980px){.dashboard{grid-template-columns:1fr 1fr}.dash-card:first-child{grid-column:1/-1}}
     @media (max-width:640px){.dashboard{grid-template-columns:1fr}.dash-card:first-child{grid-column:auto}.site-nav{max-width:58vw;overflow-x:auto;justify-content:flex-start}.site-nav a{padding:9px 11px}}
+
+    .area-section { margin: 10px 0 22px; }
+    .area-head { display:flex;align-items:end;justify-content:space-between;gap:16px;margin:0 0 14px; }
+    .area-head h2 { margin:0;font-size:24px;letter-spacing:-.055em; }
+    .area-head p { margin:6px 0 0;color:var(--muted);font-size:14px;font-weight:750; }
+    .area-grid { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px; }
+    .area-card {
+      --area:#6d5dfc;
+      position:relative;overflow:hidden;text-align:left;border:1px solid rgba(255,255,255,.96);
+      border-radius:22px;padding:20px;background:rgba(255,255,255,.83);box-shadow:var(--shadow-soft);
+      cursor:pointer;font-family:inherit;color:var(--ink);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+    }
+    .area-card:hover { transform:translateY(-4px);box-shadow:var(--shadow);border-color:color-mix(in srgb,var(--area) 32%,white); }
+    .area-card.active { outline:3px solid color-mix(in srgb,var(--area) 20%,transparent);border-color:var(--area); }
+    .area-card::before { content:"";position:absolute;left:0;right:0;top:0;height:5px;background:linear-gradient(90deg,var(--area),transparent); }
+    .area-icon { width:48px;height:48px;border-radius:16px;display:grid;place-items:center;font-size:26px;background:color-mix(in srgb,var(--area) 12%,white); }
+    .area-card h3 { margin:14px 0 6px;font-size:20px;letter-spacing:-.05em; }
+    .area-card p { margin:0;color:var(--muted);font-size:13px;line-height:1.55;font-weight:700;min-height:42px; }
+    .area-foot { display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:15px; }
+    .area-count { font-size:12px;font-weight:900;color:var(--area); }
+    .area-arrow { font-size:18px;color:var(--area);font-weight:900; }
+    .section-kicker {display:inline-flex;padding:6px 9px;border-radius:999px;background:#f6f3ff;color:#5b4dd8;font-size:11px;font-weight:950;margin-bottom:6px}
+    @media(max-width:980px){.area-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+    @media(max-width:640px){.area-grid{grid-template-columns:1fr 1fr;gap:10px}.area-card{padding:16px}.area-card p{min-height:0}.area-icon{width:42px;height:42px;font-size:23px}.area-card h3{font-size:17px}}
 </style>
 </head>
 <body>
@@ -621,13 +642,13 @@
         </div>
         <div class="brand-title">
           <strong>교실 뚝딱도구</strong>
-          <span>뚝딱 도구 · 선생님을 위한 HTML 프로그램 모음</span>
+          <span>학급운영 · 수업 · 업무 · 편의성을 한곳에</span>
         </div>
       </a>
-      <nav class="site-nav" aria-label="게시판 이동">
-        <a class="active" href="index.html">뚝딱 도구</a>
-        <a href="뚝딱교육.html">뚝딱 교육</a>
-        <a href="뚝딱영상.html">뚝딱 영상</a>
+      <nav class="site-nav" aria-label="주요 메뉴">
+        <a class="active" href="index.html">홈</a>
+        <a href="뚝딱교육.html">성취기준·세특</a>
+        <a href="뚝딱영상.html">영상 보관함</a>
         <a href="https://binyoun-cberi.github.io/kidscade/" target="_blank" title="새 창으로 열기">키즈케이드 ↗</a>
       </nav>
     </header>
@@ -650,6 +671,18 @@
       </article>
     </section>
 
+
+    <section class="area-section" aria-label="똑똑 영역 선택">
+      <div class="area-head">
+        <div>
+          <span class="section-kicker">무엇을 하려 하나요?</span>
+          <h2>똑똑 도구함</h2>
+          <p>기능 이름보다 지금 하려는 일에 맞춰 들어가세요.</p>
+        </div>
+      </div>
+      <div class="area-grid" id="areaGrid"></div>
+    </section>
+
     <section id="tools">
       <div class="toolbar">
         <label class="search" aria-label="도구 검색">
@@ -661,8 +694,8 @@
 
       <div class="section-head">
         <div>
-          <h2>뚝딱 도구</h2>
-          <p>수업 중 바로 쓸 수 있는 교실 도구를 카드형으로 정리했습니다.</p>
+          <h2 id="toolSectionTitle">전체 도구</h2>
+          <p>학급운영·수업·업무·편의성 도구를 한곳에서 찾을 수 있습니다.</p>
         </div>
         <div class="count" id="resultCount">0개 도구</div>
       </div>
@@ -673,7 +706,7 @@
 
 
     <footer>
-      교실 뚝딱도구 · 뚝딱 도구 · 입력한 내용은 각 프로그램의 브라우저 안에서 처리됩니다.
+      교실 뚝딱도구 · 필요한 일에 맞춰 꺼내 쓰는 교사용 도구함
     </footer>
   </div>
 
@@ -684,7 +717,7 @@
         name: "지도안식 원형 타이머",
         subtitle: "수업 흐름을 원형 시간표로 보여주는 활동 타이머",
         href: "지도안식 원형 타이머.html",
-        category: "타이머",
+        category: "똑똑 수업",
         icon: "🕘",
         accent: "#6d5dfc",
         tags: ["수업흐름", "활동시간", "원형타이머"],
@@ -694,7 +727,7 @@
         name: "우리 반 만능 시계",
         subtitle: "스톱워치와 타이머, 기록판을 함께 쓰는 시간 경쟁 도구",
         href: "시간 경쟁 시스템.html",
-        category: "기록/경쟁",
+        category: "똑똑 수업",
         icon: "🏆",
         accent: "#ff9f43",
         tags: ["스톱워치", "타이머", "기록판"],
@@ -704,7 +737,7 @@
         name: "교실 자리 배정",
         subtitle: "학생 명단과 조건을 반영해 무작위 자리표를 만드는 도구",
         href: "자리 배정 프로그램.html",
-        category: "학급운영",
+        category: "똑똑 학급운영",
         icon: "🎒",
         accent: "#2fbf9b",
         tags: ["자리배치", "명단", "앞자리", "인접금지"],
@@ -714,7 +747,7 @@
         name: "QR 코드 도구",
         subtitle: "텍스트, 링크, Wi-Fi용 QR 코드를 만들고 카메라나 사진으로 바로 스캔하는 도구",
         href: "QR코드.html",
-        category: "수업운영",
+        category: "똑똑 편의성",
         icon: "📱",
         accent: "#4f46e5",
         tags: ["QR코드", "QR스캔", "링크공유", "수업자료"],
@@ -724,7 +757,7 @@
         name: "교실용 마피아 게임",
         subtitle: "교사 컴퓨터 한 대로 학생들의 역할을 배정하고 진행하는 학급 마피아 게임",
         href: "교실용 마피아 게임.html",
-        category: "게임/활동",
+        category: "똑똑 수업",
         icon: "🕶️",
         accent: "#7c3aed",
         tags: ["마피아", "레크리에이션", "교실놀이", "역할배정", "추리"],
@@ -734,7 +767,7 @@
         name: "학급 역할 배정 도우미",
         subtitle: "1인 1역, 청소 역할, 학급 업무를 학생 희망과 교사 설정에 맞춰 공정하게 배정하는 도구",
         href: "학급 배정 도우미.html",
-        category: "학급운영",
+        category: "똑똑 학급운영",
         icon: "🧹",
         accent: "#7c3aed",
         tags: ["1인1역", "역할배정", "희망조사", "청소구역", "학급업무"],
@@ -744,7 +777,7 @@
   name: "잡아라! 오늘의 정답",
   subtitle: "교사가 직접 정답과 오답 카드를 입력하고, 학생들이 모션이나 터치로 정답을 잡는 수업 게임",
   href: "잡아라 오늘의 정답.html",
-  category: "게임/활동",
+  category: "똑똑 수업",
   icon: "🎯",
   accent: "#2563eb",
   tags: ["모션게임", "전자칠판", "정답찾기", "분류활동", "수업게임"],
@@ -754,7 +787,7 @@
   name: "랜덤 끝말잇기",
   subtitle: "학생 이름을 넣으면 아직 차례가 안 온 학생을 우선으로 랜덤 지목하고, 타이머와 탈락 규칙으로 운영하는 끝말잇기 게임",
   href: "끝말잇기 게임.html",
-  category: "게임/활동",
+  category: "똑똑 수업",
   icon: "🔤",
   accent: "#22c55e",
   tags: ["끝말잇기", "랜덤지목", "국어활동", "타이머", "탈락제"],
@@ -764,7 +797,7 @@
         name: "마니또 배정 도우미",
         subtitle: "학생 이름을 넣고 자기 자신 제외 조건으로 마니또를 안전하게 뽑는 비밀 배정 도구",
         href: "마니또 배정 도우미.html",
-        category: "게임/활동",
+        category: "똑똑 학급운영",
         icon: "🎁",
         accent: "#ec4899",
         tags: ["마니또", "비밀친구", "랜덤배정", "학급행사", "친교활동"],
@@ -774,7 +807,7 @@
         name: "이번 수업 알리미",
         subtitle: "과목, 단원, 학습 목표와 활동을 띄워두는 수업 안내판",
         href: "이번 수업 알리미.html",
-        category: "수업운영",
+        category: "똑똑 수업",
         icon: "📺",
         accent: "#4f46e5",
         tags: ["학습목표", "수업안내", "칠판보조", "프레젠테이션"],
@@ -783,7 +816,7 @@
         name: "우리 반 투표판",
         subtitle: "자리 배치도를 활용해 빠르게 의견을 모으는 시각적 투표 도구",
         href: "우리반 선관위.html",
-        category: "학급운영",
+        category: "똑똑 학급운영",
         icon: "🗳️",
         accent: "#f59e0b",
         tags: ["투표", "의견조사", "자리표"],
@@ -793,7 +826,7 @@
         name: "학급 칭찬 온도계",
         subtitle: "목표 달성을 위한 칭찬 점수 시각화 및 누가기록 대시보드",
         href: "칭찬 온도계.html",
-        category: "보상/기록",
+        category: "똑똑 학급운영",
         icon: "🌡️",
         accent: "#ef4444",
         tags: ["칭찬온도계", "보상", "MVP", "점수판"],
@@ -803,7 +836,7 @@
         name: "학급 체크리스트 (학급췍)",
         subtitle: "과제, 준비물, 안내장 제출 여부를 직관적으로 확인하는 도구",
         href: "학급췍.html",
-        category: "학급운영",
+        category: "똑똑 학급운영",
         icon: "✅",
         accent: "#10b981",
         tags: ["체크리스트", "제출확인", "준비물", "과제검사"],
@@ -813,7 +846,7 @@
         name: "폭탄 돌리기",
         subtitle: "긴장감 넘치는 효과음과 함께 무작위/순서대로 폭탄을 돌리는 게임",
         href: "폭탄돌리기.html",
-        category: "게임/활동", 
+        category: "똑똑 수업", 
         icon: "💣",
         accent: "#fb923c",
         tags: ["폭탄돌리기", "복불복", "타이머", "발표자뽑기"],
@@ -823,7 +856,7 @@
         name: "버스 좌석 배치",
         subtitle: "동성 짝꿍, 떨어뜨려 놓기 등 조건을 반영한 버스 자리 자동 배치 도구",
         href: "버스 좌석 배치 프로그램.html",
-        category: "학급운영",
+        category: "똑똑 학급운영",
         icon: "🚌",
         accent: "#3b82f6",
         tags: ["현장체험학습", "수학여행", "자리배치", "버스자리"],
@@ -833,7 +866,7 @@
         name: "행운의 모둠 메이커",
         subtitle: "돌려돌려 슬롯머신으로 재미있고 짜릿하게 모둠을 정하는 도구",
         href: "행운의 모둠 메이커.html",
-        category: "학급운영",
+        category: "똑똑 학급운영",
         icon: "🎰",
         accent: "#f59e0b",
         tags: ["모둠짜기", "랜덤뽑기", "슬롯머신", "조편성"],
@@ -843,7 +876,7 @@
         name: "범퍼 룰렛 레이스",
         subtitle: "물리 엔진 기반의 화려한 구슬 레이스로 당첨자를 뽑는 복불복 게임",
         href: "범퍼 룰렛.html",
-        category: "게임/활동",
+        category: "똑똑 수업",
         icon: "🎡",
         accent: "#e11d48",
         tags: ["구슬레이스", "룰렛", "발표자뽑기", "복불복"],
@@ -853,11 +886,31 @@
         name: "플래시카드 & 퀴즈 메이커",
         subtitle: "단어를 일괄 등록해 플래시카드(TTS 지원)와 선 긋기 게임을 만드는 도구",
         href: "플래시퀴즈메이커.html",
-        category: "수업운영",
+        category: "똑똑 수업",
         icon: "🗂️",
         accent: "#6366f1",
         tags: ["플래시카드", "단어장", "선긋기게임", "낱말카드", "TTS"],
         situation: "외우기 힘든 영단어, 핵심 용어 정의를 암기하거나 선 긋기 게임으로 재미있게 복습할 때"
+      },
+      {
+        name: "성취기준·세특 도우미",
+        subtitle: "2022 개정 성취기준을 검색하고 세특 문장 후보를 빠르게 만드는 업무 도구",
+        href: "뚝딱교육.html",
+        category: "똑똑 업무",
+        icon: "📚",
+        accent: "#8b5cf6",
+        tags: ["성취기준", "세특", "평가", "기록", "업무"],
+        situation: "성취기준을 찾거나 학생별 세특 문장 후보를 준비할 때"
+      },
+      {
+        name: "수업 영상 보관함",
+        subtitle: "자주 쓰는 유튜브 수업 영상을 교과·학년·태그와 함께 모아두는 자료 관리 도구",
+        href: "뚝딱영상.html",
+        category: "똑똑 업무",
+        icon: "🎬",
+        accent: "#ef4444",
+        tags: ["영상자료", "유튜브", "자료관리", "백업", "수업준비"],
+        situation: "수업용 영상을 모아두고 다음 학년도에도 다시 활용하고 싶을 때"
       }
     ];
 
@@ -866,23 +919,49 @@
     const searchInput = document.getElementById("searchInput");
     const resultCount = document.getElementById("resultCount");
     const emptyState = document.getElementById("emptyState");
+    const AREAS = [
+      { name:"똑똑 학급운영", icon:"👥", color:"#2fbf9b", desc:"자리·역할·투표·체크·모둠처럼 우리 반을 운영하는 도구" },
+      { name:"똑똑 수업", icon:"📚", color:"#6d5dfc", desc:"타이머·퀴즈·게임·수업 안내처럼 수업 시간에 바로 쓰는 도구" },
+      { name:"똑똑 업무", icon:"🗂️", color:"#f59e0b", desc:"성취기준·세특·자료 보관처럼 준비와 기록을 줄여주는 도구" },
+      { name:"똑똑 편의성", icon:"🛠️", color:"#3b82f6", desc:"QR처럼 작지만 자주 생기는 교실의 귀찮음을 해결하는 도구" }
+    ];
     let activeCategory = "전체";
 
     function getCategories() {
-      return ["전체", ...Array.from(new Set(tools.map(tool => tool.category)))];
+      return ["전체", ...AREAS.map(area => area.name)];
     }
 
     function renderChips() {
       chipsEl.innerHTML = getCategories().map(category => `
         <button class="chip ${category === activeCategory ? "active" : ""}" type="button" onclick="setCategory('${category}')">
-          ${category}
+          ${category === "전체" ? "전체" : category.replace("똑똑 ","")}
         </button>
       `).join("");
+    }
+
+    function renderAreas() {
+      const areaGrid = document.getElementById("areaGrid");
+      areaGrid.innerHTML = AREAS.map(area => {
+        const count = tools.filter(tool => tool.category === area.name).length;
+        return `
+          <button class="area-card ${activeCategory === area.name ? "active" : ""}" style="--area:${area.color}" type="button" onclick="openArea('${area.name}')">
+            <div class="area-icon">${area.icon}</div>
+            <h3>${area.name}</h3>
+            <p>${area.desc}</p>
+            <div class="area-foot"><span class="area-count">${count}개 도구</span><span class="area-arrow">→</span></div>
+          </button>`;
+      }).join("");
+    }
+
+    function openArea(category) {
+      setCategory(category);
+      document.getElementById("tools").scrollIntoView({behavior:"smooth", block:"start"});
     }
 
     function setCategory(category) {
       activeCategory = category;
       renderChips();
+      renderAreas();
       renderCards();
     }
 
@@ -906,13 +985,14 @@
       });
 
       resultCount.textContent = `${filtered.length}개 도구`;
+      document.getElementById("toolSectionTitle").textContent = activeCategory === "전체" ? "전체 도구" : activeCategory;
       emptyState.style.display = filtered.length ? "none" : "block";
       cardsEl.innerHTML = filtered.map(tool => `
         <a class="card" href="${tool.href}" style="--accent:${tool.accent}" title="${tool.name} 열기" onclick="Gulliver.trackTool({name:'${tool.name}',href:'${tool.href}',icon:'${tool.icon}'})">
           <div>
             <div class="card-top">
               <div class="icon">${tool.icon}</div>
-              <span class="tag">${tool.category}</span>
+              <span class="tag">${tool.category.replace("똑똑 ","")}</span>
             </div>
             <h3>${tool.name}</h3>
             <p>${tool.subtitle}</p>
@@ -968,6 +1048,7 @@
 
     searchInput.addEventListener("input", renderCards);
     renderChips();
+    renderAreas();
     renderCards();
     renderDashboard();
   </script>
