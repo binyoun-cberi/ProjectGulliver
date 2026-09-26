@@ -1319,6 +1319,14 @@
         .bg-gray-800.bg-opacity-60 { background-color: rgba(31,41,55,.60); }
         .bg-gray-900.bg-opacity-35 { background-color: rgba(17,24,39,.35); }
         .bg-red-900.bg-opacity-30 { background-color: rgba(127,29,29,.30); }
+        .setup-helper-row{display:flex;gap:8px;flex-wrap:wrap;margin:-2px 0 8px}
+        .setup-helper-btn{border:1px solid rgba(148,163,184,.35);background:rgba(30,41,59,.8);color:#e2e8f0;border-radius:9px;padding:7px 10px;font-size:12px;font-weight:800}
+        .mode-card{border:1px solid rgba(100,116,139,.55);background:rgba(15,23,42,.42);border-radius:14px;padding:12px}
+        .mode-card label{display:block;font-size:12px;font-weight:800;color:#cbd5e1;margin-bottom:6px}
+        .mode-card select{width:100%;border:1px solid #475569;background:#1f2937;color:#fff;border-radius:9px;padding:9px}
+        .probability-hint{font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.45}
+        .teacher-tools-btn{border:1px solid rgba(248,113,113,.4);background:rgba(127,29,29,.18);color:#fca5a5;border-radius:9px;padding:7px 10px;font-size:12px;font-weight:800}
+        #debug-panel.open{display:block}
         @media (max-width: 640px) {
             .setting-option { min-height: auto; }
         }
@@ -1337,32 +1345,32 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-2">학생 명단 (엔터로 구분)</label>
-                    <textarea id="names-input" rows="8" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none text-sm md:text-base">김철수
-이영희
-박민수
-최지윤
-정호석
-강유리
-조현우
-윤아름</textarea>
+                    <div class="setup-helper-row">
+                        <button type="button" id="load-classroom-btn" class="setup-helper-btn">👥 우리 반 불러오기</button>
+                        <button type="button" id="sample-names-btn" class="setup-helper-btn">예시 명단</button>
+                    </div>
+                    <textarea id="names-input" rows="8" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none text-sm md:text-base" placeholder="학생 이름을 한 줄에 한 명씩 입력"></textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-2">결과 슬롯 (엔터로 구분)</label>
                     <textarea id="slots-input" rows="8" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none text-sm md:text-base">발표 당첨!
 통과
-벌칙: 노래
 통과
 질문하기
 통과</textarea>
+                    <p class="probability-hint">같은 결과를 여러 줄 넣으면 그 결과가 나올 영역이 넓어져 확률이 높아집니다.</p>
                 </div>
             </div>
 
-            <div id="debug-panel" class="mt-6 p-4 border-2 rounded-xl bg-red-900 bg-opacity-30">
+            <div class="mt-4 flex justify-end">
+                <button type="button" id="open-debug-btn" class="teacher-tools-btn">🔒 교사 지정 결과</button>
+            </div>
+            <div id="debug-panel" class="mt-3 p-4 border-2 rounded-xl bg-red-900 bg-opacity-30">
                 <h3 class="text-red-400 font-bold mb-3 flex items-center gap-2">
-                    <span>🕵️ 선생님 전용 조작 모드</span>
+                    <span>🔒 교사 지정 결과</span>
                     <button id="close-debug-btn" class="ml-auto text-xs bg-red-800 hover:bg-red-700 px-2 py-1 rounded text-white">닫기</button>
                 </h3>
-                <p class="text-xs text-gray-300 mb-3">특정 학생의 결과를 미리 강제 지정할 수 있습니다. (여러 명 지정 가능)</p>
+                <p class="text-xs text-gray-300 mb-3">필요한 경우 특정 학생이 들어갈 결과 함을 지정합니다. 지정된 구슬은 마지막 구간에서 실제 해당 함으로 유도됩니다.</p>
                 <div class="flex flex-col gap-2" id="cheat-list">
                     <div class="flex gap-2 cheat-row">
                         <input type="text" placeholder="학생 이름 (예: 김철수)" class="cheat-name flex-1 bg-gray-800 border border-gray-600 rounded p-2 text-sm text-white focus:outline-none">
@@ -1374,12 +1382,29 @@
             </div>
             
             <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <section class="mode-card">
+                    <label for="game-purpose">게임 목적</label>
+                    <select id="game-purpose">
+                        <option value="winner">🏆 우승자 뽑기 · 1위 중심</option>
+                        <option value="assign">🎯 전체 결과 배정 · 모두 도착</option>
+                    </select>
+                    <p class="probability-hint" id="purpose-help">1위가 도착하면 설정한 시간 뒤 레이스를 종료합니다.</p>
+                </section>
+                <section class="setting-option bg-gray-900 bg-opacity-35 border border-gray-700 rounded-xl px-4 py-3">
+                    <label class="flex items-start gap-3 cursor-pointer select-none">
+                        <input type="checkbox" id="close-race" class="option-check mt-1" checked>
+                        <span class="min-w-0">
+                            <span class="block text-sm font-bold text-gray-200">엎치락뒤치락 보정</span>
+                            <span class="block text-xs text-gray-400 mt-1">뒤처진 구슬을 조금 돕고 독주를 완화해 접전을 만듭니다.</span>
+                        </span>
+                    </label>
+                </section>
                 <section class="setting-option bg-gray-900 bg-opacity-35 border border-gray-700 rounded-xl px-4 py-3">
                     <label class="flex items-start gap-3 cursor-pointer select-none">
                         <input type="checkbox" id="use-countdown" class="option-check mt-1" checked>
                         <span class="min-w-0">
-                            <span class="block text-sm font-bold text-gray-200">1위 도착 후 자동 종료</span>
-                            <span class="block text-xs text-gray-400 mt-1">끄면 모든 알이 도착할 때까지 진행합니다.</span>
+                            <span class="block text-sm font-bold text-gray-200">1위 도착 후 카운트다운</span>
+                            <span class="block text-xs text-gray-400 mt-1">우승자 뽑기 모드에서만 사용합니다.</span>
                         </span>
                     </label>
                     <div class="mt-3 flex items-center gap-2 pl-8">
@@ -1392,19 +1417,19 @@
                     <label class="flex items-start gap-3 cursor-pointer select-none">
                         <input type="checkbox" id="one-marble-per-slot" class="option-check one-slot-check mt-1">
                         <span class="min-w-0">
-                            <span class="block text-sm font-bold text-gray-200">1알 1함 모드</span>
-                            <span class="block text-xs text-gray-400 mt-1">한 결과 함에 한 명만 배정합니다.</span>
+                            <span class="block text-sm font-bold text-gray-200">결과 중복 금지</span>
+                            <span class="block text-xs text-gray-400 mt-1">한 결과 함에는 한 명만 들어갑니다.</span>
                         </span>
                     </label>
-                    <p class="text-xs text-gray-500 mt-3 pl-8">학생 수보다 결과 함이 적으면 시작되지 않습니다.</p>
+                    <p class="text-xs text-gray-500 mt-3 pl-8">전체 결과 배정에서 사용할 때 슬롯 수가 학생 수 이상이어야 합니다.</p>
                 </section>
             </div>
             <p class="text-xs text-gray-400 text-center mt-2">용수철은 각각 무작위로 1~3번 튕긴 뒤 사라집니다.</p>
 
             <button id="start-btn" class="mt-6 md:mt-8 w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-400 hover:to-orange-500 text-white font-bold py-3 md:py-4 px-6 rounded-xl shadow-lg transform transition hover:scale-105 active:scale-95 text-lg">
-                레이스 시작!
+                범퍼 레이스 시작!
             </button>
-            <p class="text-xs text-gray-400 text-center mt-4">사운드가 켜져 있습니다. 볼륨을 주의하세요!</p>
+            <p class="text-xs text-gray-400 text-center mt-4">충돌 효과음이 재생됩니다. 교실 볼륨을 확인해 주세요.</p>
             <p id="engine-status" class="text-xs text-yellow-300 text-center mt-2 min-h-[1rem]"></p>
         </div>
 
@@ -1425,7 +1450,7 @@
 
         <div id="result-modal" class="hidden absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center pointer-events-auto z-50 p-4">
             <div class="glass-panel p-6 md:p-8 rounded-2xl text-center transform transition-transform scale-95 hover:scale-100 shadow-2xl border-yellow-500 border-2 w-full max-w-2xl max-h-[85vh] flex flex-col">
-                <h2 class="text-2xl md:text-3xl text-yellow-300 mb-6 font-bold shrink-0">🎉 최종 결과 발표 🎉</h2>
+                <h2 id="result-title" class="text-2xl md:text-3xl text-yellow-300 mb-6 font-bold shrink-0">🎉 최종 결과 🎉</h2>
                 <div id="result-list" class="flex-1 overflow-y-auto grid grid-cols-1 gap-2 md:gap-3 mb-6 pr-2 text-left">
                 </div>
                 <button id="reset-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 md:py-4 px-8 rounded-xl transition text-base md:text-lg w-full shrink-0">
@@ -1435,24 +1460,19 @@
         </div>
     </div>
 
+    <script src="vendor/matter.min.js"></script>
     <script>
-        // --- 조작 모드 (Debug Mode) 관련 로직 ---
+        // --- 교사 지정 결과 관련 로직 ---
         let cheatData = {}; 
         
         const titleEl = document.getElementById('main-title');
         const debugPanel = document.getElementById('debug-panel');
         
-        let lastClickTime = 0;
-        titleEl.addEventListener('click', (e) => {
-            const currentTime = new Date().getTime();
-            if (currentTime - lastClickTime < 400) { 
-                debugPanel.style.display = 'block';
-            }
-            lastClickTime = currentTime;
+        document.getElementById('open-debug-btn').addEventListener('click', () => {
+            debugPanel.classList.add('open');
         });
-
         document.getElementById('close-debug-btn').addEventListener('click', () => {
-            debugPanel.style.display = 'none';
+            debugPanel.classList.remove('open');
         });
 
         document.getElementById('add-cheat-btn').addEventListener('click', () => {
@@ -1477,7 +1497,7 @@
                     cheatData[name] = res; 
                 }
             });
-            console.log("조작 데이터 활성화:", cheatData);
+            console.log("교사 지정 결과:", cheatData);
         }
 
         // --- 오디오 시스템 ---
@@ -1542,6 +1562,7 @@
         let Engine, Render, Runner, Bodies, Composite, Body, Events, Vector, Constraint;
 
         const MATTER_URLS = [
+            './vendor/matter.min.js',
             'https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js',
             'https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js',
             'https://unpkg.com/matter-js@0.19.0/build/matter.min.js'
@@ -1618,7 +1639,7 @@
                         startBtn.textContent = '물리 엔진 로드 실패';
                         startBtn.classList.add('opacity-70');
                     }
-                    setEngineStatus('Matter.js 로드 실패: 인터넷 연결 또는 외부 스크립트 차단을 확인해주세요.', true);
+                    setEngineStatus('물리 엔진을 불러오지 못했습니다. 페이지를 새로고침해 주세요.', true);
                 });
         }
 
@@ -1646,6 +1667,10 @@
         let isCountdownActive = false;
         let useCountdown = true;
         let useOneMarblePerSlot = false;
+        let gamePurpose = 'winner';
+        let useCloseRace = true;
+        const CONFIG_KEY = 'gulliver.bumperRoulette.v2';
+        let lastLeaderboardPaint = 0;
 
         const WORLD_WIDTH = 1200;
         let WORLD_HEIGHT = 15000; 
@@ -1653,6 +1678,92 @@
 
         let camera = { x: 0, y: 0, scale: 1, targetY: 0 };
         const colors = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316', '#bef264', '#fca5a5'];
+
+        function saveGameConfig() {
+            try {
+                const rows = [...document.querySelectorAll('.cheat-row')].map(row => ({
+                    name: row.querySelector('.cheat-name')?.value || '',
+                    result: row.querySelector('.cheat-result')?.value || ''
+                }));
+                const payload = {
+                    names: document.getElementById('names-input').value,
+                    slots: document.getElementById('slots-input').value,
+                    purpose: document.getElementById('game-purpose').value,
+                    closeRace: document.getElementById('close-race').checked,
+                    useCountdown: document.getElementById('use-countdown').checked,
+                    countdown: getCountdownSeconds(),
+                    uniqueSlot: document.getElementById('one-marble-per-slot').checked,
+                    teacherResults: rows
+                };
+                localStorage.setItem(CONFIG_KEY, JSON.stringify(payload));
+            } catch (e) { console.warn('범퍼 룰렛 설정 저장 실패', e); }
+        }
+
+        function restoreTeacherRows(rows) {
+            const list = document.getElementById('cheat-list');
+            list.innerHTML = '';
+            const source = Array.isArray(rows) && rows.length ? rows : [{name:'', result:''}];
+            source.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'flex gap-2 cheat-row mt-2';
+                row.innerHTML = `
+                    <input type="text" placeholder="학생 이름" class="cheat-name flex-1 bg-gray-800 border border-gray-600 rounded p-2 text-sm text-white focus:outline-none">
+                    <span class="text-white self-center">👉</span>
+                    <input type="text" placeholder="지정 결과" class="cheat-result flex-1 bg-gray-800 border border-gray-600 rounded p-2 text-sm text-white focus:outline-none">
+                `;
+                row.querySelector('.cheat-name').value = item.name || '';
+                row.querySelector('.cheat-result').value = item.result || '';
+                list.appendChild(row);
+            });
+        }
+
+        function loadGameConfig() {
+            let saved = null;
+            try { saved = JSON.parse(localStorage.getItem(CONFIG_KEY) || 'null'); } catch {}
+            if (!saved) return;
+            if (typeof saved.names === 'string') document.getElementById('names-input').value = saved.names;
+            if (typeof saved.slots === 'string') document.getElementById('slots-input').value = saved.slots;
+            if (saved.purpose) document.getElementById('game-purpose').value = saved.purpose;
+            document.getElementById('close-race').checked = saved.closeRace !== false;
+            document.getElementById('use-countdown').checked = saved.useCountdown !== false;
+            if (saved.countdown) document.getElementById('countdown-seconds').value = saved.countdown;
+            document.getElementById('one-marble-per-slot').checked = Boolean(saved.uniqueSlot);
+            restoreTeacherRows(saved.teacherResults);
+        }
+
+        function syncPurposeUI() {
+            const purpose = document.getElementById('game-purpose').value;
+            const countdown = document.getElementById('use-countdown');
+            const countdownInput = document.getElementById('countdown-seconds');
+            const help = document.getElementById('purpose-help');
+            const start = document.getElementById('start-btn');
+            if (purpose === 'assign') {
+                countdown.checked = false;
+                countdown.disabled = true;
+                countdownInput.disabled = true;
+                help.textContent = '모든 학생이 결과 함에 들어갈 때까지 진행합니다.';
+                start.textContent = '전체 결과 배정 시작!';
+            } else {
+                countdown.disabled = false;
+                countdownInput.disabled = !countdown.checked;
+                help.textContent = '1위가 도착하면 설정한 시간 뒤 레이스를 종료합니다.';
+                start.textContent = '우승 레이스 시작!';
+            }
+        }
+
+        function loadClassroomNames() {
+            try {
+                const room = Gulliver.getClassroom();
+                if (!room.students || !room.students.length) {
+                    Gulliver.toast('먼저 우리 반에서 학생 명단을 저장해 주세요.');
+                    return;
+                }
+                document.getElementById('names-input').value = room.students.map(s => s.name).join('\n');
+                saveGameConfig();
+                Gulliver.toast((room.className || '우리 반') + ' ' + room.students.length + '명을 불러왔습니다.');
+            } catch (e) { alert('우리 반 명단을 불러오지 못했습니다.'); }
+        }
+
 
         function getCountdownSeconds() {
             const input = document.getElementById('countdown-seconds');
@@ -1720,16 +1831,18 @@
 
             slot.occupiedCount = (slot.occupiedCount || 0) + 1;
 
-            if (useOneMarblePerSlot) {
-                slot.occupied = true;
-                slot.occupiedBy = marble.name;
+            const isTeacherDirected = Boolean(cheatData[marble.name]);
+            if (useOneMarblePerSlot || isTeacherDirected) {
+                if (useOneMarblePerSlot) {
+                    slot.occupied = true;
+                    slot.occupiedBy = marble.name;
+                }
                 Body.setVelocity(marble.body, { x: 0, y: 0 });
                 Body.setAngularVelocity(marble.body, 0);
                 Body.setPosition(marble.body, { x: slot.centerX, y: slot.captureY });
                 Body.setStatic(marble.body, true);
                 marble.body.frictionAir = 1;
             } else {
-                // 일반 모드는 원래의 도착 감각을 유지하되 과도한 튕김만 줄입니다.
                 marble.body.frictionAir = 0.5;
             }
         }
@@ -1897,37 +2010,34 @@
                         m.funnelSlowTicks = 0;
                     }
                     
-                    if (hasLeaderFinished) {
-                        m.body.frictionAir = 0.005; 
-                        Body.applyForce(m.body, m.body.position, { x: 0, y: 0.0025 }); 
-                    } 
-                    else {
+                    if (hasLeaderFinished && gamePurpose === 'winner') {
+                        m.body.frictionAir = 0.005;
+                        Body.applyForce(m.body, m.body.position, { x: 0, y: 0.0025 });
+                    } else if (useCloseRace) {
                         let distanceBehind = leaderY - m.body.position.y;
-                        
                         if (distanceBehind > 150 && m !== currentLeader) {
                             let boost = Math.min(distanceBehind * 0.0000015, 0.0015);
                             Body.applyForce(m.body, m.body.position, { x: 0, y: boost });
                         }
-                        
                         if (m === currentLeader && secondPlace) {
                             let gap = currentLeader.body.position.y - secondPlace.body.position.y;
-                            if (gap > 250) { 
-                                m.body.frictionAir = 0.08; 
-                                if (m.body.velocity.y > 6) {
-                                    Body.setVelocity(m.body, { x: m.body.velocity.x, y: 6 });
-                                }
+                            if (gap > 250) {
+                                m.body.frictionAir = 0.08;
+                                if (m.body.velocity.y > 6) Body.setVelocity(m.body, { x: m.body.velocity.x, y: 6 });
                             } else {
-                                m.body.frictionAir = 0.015; 
+                                m.body.frictionAir = 0.015;
                             }
                         } else {
-                            m.body.frictionAir = 0.015; 
+                            m.body.frictionAir = 0.015;
                         }
+                    } else {
+                        m.body.frictionAir = 0.015;
                     }
                     
                     if (Math.abs(m.body.velocity.x) < 0.3 && Math.abs(m.body.velocity.y) < 0.3) {
                         m.stuckTicks = (m.stuckTicks || 0) + 1;
                         if (m.stuckTicks > 30) {
-                            let shakeForce = 0.001 * Math.pow(1.08, Math.min(m.stuckTicks - 30, 100)); 
+                            let shakeForce = Math.min(0.008, 0.001 * Math.pow(1.055, Math.min(m.stuckTicks - 30, 80))); 
                             let dir = (m.stuckTicks % 6 < 3) ? 1 : -1; 
                             
                             Body.applyForce(m.body, m.body.position, { 
@@ -2349,9 +2459,12 @@
             if (gameState === 'playing') return;
             parseCheatData();
 
-            useCountdown = document.getElementById('use-countdown').checked;
+            gamePurpose = document.getElementById('game-purpose').value;
+            useCountdown = gamePurpose === 'winner' && document.getElementById('use-countdown').checked;
             countdownSeconds = getCountdownSeconds();
             useOneMarblePerSlot = document.getElementById('one-marble-per-slot').checked;
+            useCloseRace = document.getElementById('close-race').checked;
+            saveGameConfig();
 
             let namesInput = document.getElementById('names-input').value.split('\n').filter(n => n.trim() !== '');
             const slotsInput = document.getElementById('slots-input').value.split('\n').filter(n => n.trim() !== '');
@@ -2362,8 +2475,20 @@
             }
 
             if (useOneMarblePerSlot && slotsInput.length < namesInput.length) {
-                alert(`1알 1함 모드에서는 결과 슬롯 수가 학생 수 이상이어야 합니다.\n현재 학생 ${namesInput.length}명, 슬롯 ${slotsInput.length}개입니다.`);
+                alert(`결과 중복 금지에서는 결과 슬롯 수가 학생 수 이상이어야 합니다.\n현재 학생 ${namesInput.length}명, 슬롯 ${slotsInput.length}개입니다.`);
                 return;
+            }
+            const nameSet = new Set(namesInput.map(x=>x.trim()));
+            const slotSet = new Set(slotsInput.map(x=>x.trim()));
+            for (const [name,result] of Object.entries(cheatData)) {
+                if (!nameSet.has(name)) {
+                    alert(`교사 지정 결과의 학생 '${name}'이 현재 명단에 없습니다.`);
+                    return;
+                }
+                if (!slotSet.has(result)) {
+                    alert(`'${name}' 학생에게 지정한 결과 '${result}'가 결과 슬롯에 없습니다.`);
+                    return;
+                }
             }
 
             for (let i = namesInput.length - 1; i > 0; i--) {
@@ -2430,6 +2555,7 @@
                 document.getElementById('setup-panel').style.opacity = '1';
             }, 50);
             setHudVisible(false);
+            syncPurposeUI();
         }
 
         function updateLeaderboard(sortedMarbles) {
@@ -2454,7 +2580,7 @@
             });
         }
 
-        function renderLoop() {
+        function renderLoop(now = performance.now()) {
             requestAnimationFrame(renderLoop);
 
             ctx.fillStyle = '#1a202c';
@@ -2465,7 +2591,10 @@
             let sortedMarbles = [...marbles].sort((a, b) => b.body.position.y - a.body.position.y);
             let leader = sortedMarbles.find(m => !m.finished) || sortedMarbles[0];
 
-            updateLeaderboard(sortedMarbles);
+            if (now - lastLeaderboardPaint > 160) {
+                updateLeaderboard(sortedMarbles);
+                lastLeaderboardPaint = now;
+            }
 
             if (leader && leader.body.position.y > finishLineY && !leader.finished) {
                 checkWinCondition(leader);
@@ -2702,7 +2831,7 @@
             
             logDiv.scrollTop = logDiv.scrollHeight;
 
-            if (!isCountdownActive && useCountdown) {
+            if (gamePurpose === 'winner' && !isCountdownActive && useCountdown) {
                 startCountdown();
             }
 
@@ -2743,6 +2872,8 @@
             document.getElementById('countdown-display').classList.add('hidden');
 
             const modal = document.getElementById('result-modal');
+            const title = document.getElementById('result-title');
+            if (title) title.textContent = gamePurpose === 'assign' ? '🎯 전체 배정 결과' : '🏆 레이스 결과';
             const resultList = document.getElementById('result-list');
             resultList.innerHTML = '';
 
@@ -2783,10 +2914,23 @@
 
         const countdownToggleEl = document.getElementById('use-countdown');
         const countdownInputEl = document.getElementById('countdown-seconds');
-        countdownToggleEl.addEventListener('change', syncCountdownInputState);
-        countdownInputEl.addEventListener('change', resetCountdownDisplay);
+        const purposeEl = document.getElementById('game-purpose');
+        loadGameConfig();
+        purposeEl.addEventListener('change',()=>{syncPurposeUI();saveGameConfig();});
+        countdownToggleEl.addEventListener('change',()=>{syncCountdownInputState();saveGameConfig();});
+        countdownInputEl.addEventListener('change',()=>{resetCountdownDisplay();saveGameConfig();});
         countdownInputEl.addEventListener('blur', resetCountdownDisplay);
-        syncCountdownInputState();
+        document.getElementById('close-race').addEventListener('change',saveGameConfig);
+        document.getElementById('one-marble-per-slot').addEventListener('change',saveGameConfig);
+        document.getElementById('names-input').addEventListener('input',saveGameConfig);
+        document.getElementById('slots-input').addEventListener('input',saveGameConfig);
+        document.getElementById('load-classroom-btn').addEventListener('click',loadClassroomNames);
+        document.getElementById('sample-names-btn').addEventListener('click',()=>{
+            document.getElementById('names-input').value=['민준','서연','도윤','하은','지호','수아','현우','윤서'].join('\n');
+            saveGameConfig();
+        });
+        document.getElementById('debug-panel').addEventListener('input',saveGameConfig);
+        syncPurposeUI();
         resetCountdownDisplay();
         setHudVisible(false);
         window.addEventListener('load', bootstrapGame);
