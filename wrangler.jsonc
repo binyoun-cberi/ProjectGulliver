@@ -1,4 +1,5 @@
 // ProjectGulliver Cloudflare Worker
+// deploy-check
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "gulliver-api",
