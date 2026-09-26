@@ -250,6 +250,7 @@ button:disabled{cursor:not-allowed;opacity:.45;transform:none!important}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
+  <script src="gulliver-shared.js"></script>
 </head>
 <body>
 <div id="app">
@@ -927,5 +928,6 @@ updateDisplay();
 requestAnimationFrame(fitTimerSize);
 })();
 </script>
+<script>Gulliver.mountShell({title:"지도안식 원형 타이머",icon:"🕘"});</script>
 </body>
 </html>
