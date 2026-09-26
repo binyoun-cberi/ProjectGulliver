@@ -219,6 +219,7 @@
     }
 
   </style>
+  <script src="gulliver-shared.js"></script>
 </head>
 <body>
   <div class="app" id="app">
@@ -243,6 +244,7 @@
         <label for="namesInput">학생 이름 <span class="muted">한 줄에 한 명</span></label>
         <textarea id="namesInput" placeholder="예)\n민준\n서연\n도윤\n하은"></textarea>
         <div class="preset-list">
+          <button class="preset" id="loadClassroomBtn">👥 우리 반 불러오기</button>
           <button class="preset" id="sampleNamesBtn">예시 이름 넣기</button>
           <button class="preset" id="clearNamesBtn">이름 지우기</button>
         </div>
@@ -943,6 +945,16 @@
     els.againBtn.addEventListener('click',()=>{ els.resultOverlay.classList.add('hidden'); startGame(); });
     els.closeResultBtn.addEventListener('click',()=>{ els.resultOverlay.classList.add('hidden'); });
     window.addEventListener('beforeunload',stopTimer);
+
+
+    Gulliver.mountShell({title:'말잇기 교실배틀',icon:'🔤'});
+    document.getElementById('loadClassroomBtn').addEventListener('click',()=>{
+      const room=Gulliver.getClassroom();
+      if(!room.students.length){Gulliver.toast('먼저 우리 반에서 학생 명단을 저장해 주세요.');return;}
+      els.namesInput.value=room.students.map(s=>s.name).join('\n');
+      saveSettings();
+      Gulliver.toast(room.className+' '+room.students.length+'명을 불러왔습니다.');
+    });
 
     initDictionary();
     loadSettings();
