@@ -588,7 +588,29 @@
       .section-head { align-items: flex-start; flex-direction: column; }
       .card { min-height: 220px; }
     }
-  </style>
+  
+    .dashboard {
+      display:grid; grid-template-columns:1.05fr .95fr .95fr; gap:14px; margin:18px 0 22px;
+    }
+    .dash-card {
+      background:rgba(255,255,255,.82); border:1px solid rgba(255,255,255,.95);
+      border-radius:20px; padding:18px; box-shadow:var(--shadow-soft); min-height:152px;
+    }
+    .dash-head {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+    .dash-head h2 {margin:0;font-size:16px;letter-spacing:-.04em}
+    .dash-link {font-size:12px;font-weight:900;color:var(--brand);text-decoration:none}
+    .class-name {font-size:24px;font-weight:950;letter-spacing:-.05em;margin:2px 0 6px}
+    .class-meta {color:var(--muted);font-size:13px;font-weight:800}
+    .student-preview {display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+    .student-preview span {padding:6px 8px;border-radius:999px;background:#f4f1ff;color:#5b4dd8;font-size:11px;font-weight:850}
+    .mini-list {display:grid;gap:7px}
+    .mini-tool {display:grid;grid-template-columns:1fr auto;gap:7px;align-items:center}
+    .mini-tool a {min-width:0;padding:9px 10px;border-radius:12px;background:#faf8f4;border:1px solid #eee7dc;color:#475569;font-size:12px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .mini-tool button {width:34px;height:34px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;cursor:pointer;font-size:17px}
+    .dash-empty {padding:12px 0;color:#94a3b8;font-size:12px;font-weight:800}
+    @media (max-width:980px){.dashboard{grid-template-columns:1fr 1fr}.dash-card:first-child{grid-column:1/-1}}
+    @media (max-width:640px){.dashboard{grid-template-columns:1fr}.dash-card:first-child{grid-column:auto}.site-nav{max-width:58vw;overflow-x:auto;justify-content:flex-start}.site-nav a{padding:9px 11px}}
+</style>
 </head>
 <body>
   <div class="page">
@@ -606,9 +628,27 @@
         <a class="active" href="index.html">뚝딱 도구</a>
         <a href="뚝딱교육.html">뚝딱 교육</a>
         <a href="뚝딱영상.html">뚝딱 영상</a>
-        <a href="https://kidscade.vercel.app" target="_blank" title="새 창으로 열기">키즈케이드 ↗</a>
+        <a href="https://binyoun-cberi.github.io/kidscade/" target="_blank" title="새 창으로 열기">키즈케이드 ↗</a>
       </nav>
     </header>
+
+
+    <section class="dashboard" aria-label="교실 대시보드">
+      <article class="dash-card">
+        <div class="dash-head"><h2>👥 우리 반</h2><a class="dash-link" href="우리반.html">명단 관리 →</a></div>
+        <div class="class-name" id="dashClassName">우리 반</div>
+        <div class="class-meta" id="dashClassMeta">저장된 학생이 없습니다.</div>
+        <div class="student-preview" id="dashStudentPreview"></div>
+      </article>
+      <article class="dash-card">
+        <div class="dash-head"><h2>🕘 최근 사용</h2><span class="class-meta">이 브라우저 기준</span></div>
+        <div class="mini-list" id="recentTools"></div>
+      </article>
+      <article class="dash-card">
+        <div class="dash-head"><h2>⭐ 즐겨찾기</h2><span class="class-meta">최근 사용에서 ☆ 추가</span></div>
+        <div class="mini-list" id="favoriteTools"></div>
+      </article>
+    </section>
 
     <section id="tools">
       <div class="toolbar">
@@ -637,6 +677,7 @@
     </footer>
   </div>
 
+  <script src="gulliver-shared.js"></script>
   <script>
     const tools = [
       {
@@ -867,7 +908,7 @@
       resultCount.textContent = `${filtered.length}개 도구`;
       emptyState.style.display = filtered.length ? "none" : "block";
       cardsEl.innerHTML = filtered.map(tool => `
-        <a class="card" href="${tool.href}" style="--accent:${tool.accent}" title="${tool.name} 열기">
+        <a class="card" href="${tool.href}" style="--accent:${tool.accent}" title="${tool.name} 열기" onclick="Gulliver.trackTool({name:'${tool.name}',href:'${tool.href}',icon:'${tool.icon}'})">
           <div>
             <div class="card-top">
               <div class="icon">${tool.icon}</div>
@@ -881,7 +922,7 @@
           </div>
           <div class="card-bottom">
             <span class="open-text">열기 <span aria-hidden="true">→</span></span>
-            <span class="filename">${tool.href}</span>
+            <span class="filename">바로 실행</span>
           </div>
         </a>
       `).join("");
@@ -896,9 +937,39 @@
       });
     }
 
+
+    function renderDashboard() {
+      const room = Gulliver.getClassroom();
+      document.getElementById('dashClassName').textContent = room.className || '우리 반';
+      document.getElementById('dashClassMeta').textContent = room.students.length ? `${room.students.length}명 저장됨 · 여러 도구에서 바로 불러올 수 있어요.` : '저장된 학생이 없습니다. 한 번 저장하면 여러 도구에서 함께 씁니다.';
+      document.getElementById('dashStudentPreview').innerHTML = room.students.slice(0,6).map(s=>`<span>${s.name}</span>`).join('') + (room.students.length>6 ? `<span>+${room.students.length-6}명</span>` : '');
+
+      const favorites = Gulliver.getFavorites();
+      const favSet = new Set(favorites.map(x=>x.href));
+      const recent = Gulliver.getRecent();
+      document.getElementById('recentTools').innerHTML = recent.length ? recent.slice(0,4).map(x=>`
+        <div class="mini-tool">
+          <a href="${x.href}" onclick="Gulliver.trackTool({name:'${x.name}',href:'${x.href}',icon:'${x.icon||'🧰'}'})">${x.icon||'🧰'} ${x.name}</a>
+          <button type="button" data-favorite="${x.href}" title="즐겨찾기">${favSet.has(x.href)?'★':'☆'}</button>
+        </div>`).join('') : '<div class="dash-empty">아직 사용한 도구가 없습니다.</div>';
+      document.getElementById('favoriteTools').innerHTML = favorites.length ? favorites.slice(0,4).map(x=>`
+        <div class="mini-tool">
+          <a href="${x.href}" onclick="Gulliver.trackTool({name:'${x.name}',href:'${x.href}',icon:'${x.icon||'🧰'}'})">${x.icon||'⭐'} ${x.name}</a>
+          <button type="button" data-favorite="${x.href}" title="즐겨찾기 해제">★</button>
+        </div>`).join('') : '<div class="dash-empty">최근 사용한 도구의 ☆를 눌러 추가하세요.</div>';
+      document.querySelectorAll('[data-favorite]').forEach(btn=>btn.onclick=()=>{
+        const href=btn.dataset.favorite;
+        const tool=tools.find(t=>t.href===href) || recent.find(t=>t.href===href) || favorites.find(t=>t.href===href);
+        if(tool){Gulliver.toggleFavorite(tool);renderDashboard();}
+      });
+    }
+    window.addEventListener('gulliver:classroom-change', renderDashboard);
+    window.addEventListener('gulliver:favorites-change', renderDashboard);
+
     searchInput.addEventListener("input", renderCards);
     renderChips();
     renderCards();
+    renderDashboard();
   </script>
 </body>
 </html>
