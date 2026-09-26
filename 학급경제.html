@@ -101,6 +101,8 @@
     .split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     .settings-box{padding:14px;border:1px solid #eee7dd;border-radius:14px;background:#fffdf9}
     .settings-box h3{margin:0 0 10px;font-size:14px}
+    .settings-box.fullwide{grid-column:1/-1}
+    .inline-fields{display:grid;grid-template-columns:minmax(0,1fr) 140px auto;gap:8px;align-items:end}
     .danger-zone{border-color:#ffd8d8;background:#fff9f9}
     .muted{color:var(--muted)}
     .small{font-size:11px;font-weight:750;line-height:1.55}
@@ -123,7 +125,7 @@
       .site-nav{max-width:60vw;overflow-x:auto;justify-content:flex-start}
       .site-nav a{padding:9px 11px}
       .hero{padding:24px 18px}
-      .grid4,.split,.form-grid{grid-template-columns:1fr}
+      .grid4,.split,.form-grid,.inline-fields{grid-template-columns:1fr}
       .field.full{grid-column:auto}
     }
   </style>
@@ -205,6 +207,15 @@
               <h3>💸 바로 지급·징수</h3>
               <p class="small muted">발표, 도움, 지각, 전기세 등 학급 상황을 즉시 화폐와 연결합니다.</p>
               <button class="btn btn-soft" type="button" onclick="showTab('accounts');setTimeout(function(){document.getElementById('quickStudent').focus();},50)">빠른 거래 열기</button>
+            </div>
+            <div class="settings-box fullwide">
+              <h3>🏛️ 정부 공공지출</h3>
+              <p class="small muted">걷은 세금을 학급 행사, 공동 물품, 공공서비스에 사용하고 어디에 썼는지 남깁니다.</p>
+              <div class="inline-fields">
+                <div class="field"><label>사용처</label><input class="input" id="treasuryReason" placeholder="예: 학급 행사 지원금"></div>
+                <div class="field"><label>금액</label><input class="input" id="treasuryAmount" type="number" min="1" step="1" value="50"></div>
+                <button class="btn btn-green" type="button" onclick="spendTreasury()">공공지출 기록</button>
+              </div>
             </div>
           </div>
         </div>
@@ -543,7 +554,7 @@
         var price=Math.max(1,num(document.getElementById('itemPrice').value));
         var stock=Math.max(0,num(document.getElementById('itemStock').value));
         if(!name){alert('상품 이름을 입력해주세요.');return}
-        state.items.push({id:uid('item'),name:name,price:price,stock:stock,active:true});
+        state.items.push({id:uid('item'),name:name,price:price,stock:stock,unlimited:stock===0,active:true});
         document.getElementById('itemName').value='';
         save();
       };
@@ -559,11 +570,23 @@
         var iid=document.getElementById('buyItem').value;
         var item=state.items.find(function(x){return x.id===iid&&x.active!==false});
         if(!sid||!item){alert('학생과 상품을 선택해주세요.');return}
-        if(item.stock>0&&item.stock<1){alert('재고가 없습니다.');return}
+        var unlimited=item.unlimited===true || (item.unlimited==null && num(item.stock)===0);
+        if(!unlimited&&num(item.stock)<=0){alert('재고가 없습니다.');return}
         var result=changeStudent(sid,-Math.abs(num(item.price)),'purchase',item.name+' 구매');
         if(!result.ok){alert(result.error);return}
-        if(item.stock>0)item.stock=Math.max(0,item.stock-1);
+        if(!unlimited)item.stock=Math.max(0,num(item.stock)-1);
         if(state.settings.storeRevenueToTreasury)addTreasury(item.price,(studentById(sid)||{name:'학생'}).name+' · '+item.name+' 구매','treasury');
+        save();
+      };
+
+      window.spendTreasury=function(){
+        var amount=Math.abs(num(document.getElementById('treasuryAmount').value));
+        var reason=document.getElementById('treasuryReason').value.trim()||'학급 공공지출';
+        if(!amount){alert('지출 금액을 입력해주세요.');return}
+        if(num(state.treasury)<amount){alert('정부계좌 잔액이 부족합니다.');return}
+        state.treasury=num(state.treasury)-amount;
+        pushTx({studentId:null,type:'treasury',reason:reason,amount:-amount,balance:state.treasury});
+        document.getElementById('treasuryReason').value='';
         save();
       };
 
@@ -683,7 +706,8 @@
       function renderStore(){
         var students=classroom().students;
         document.getElementById('storeList').innerHTML=state.items.length?state.items.map(function(item){
-          var stockText=item.stock>0?'재고 '+item.stock+'개':'무제한';
+          var unlimited=item.unlimited===true || (item.unlimited==null && num(item.stock)===0);
+          var stockText=unlimited?'무제한':'재고 '+num(item.stock)+'개';
           return '<div class="feed-item"><div><strong>'+escapeHtml(item.name)+' · '+formatMoney(item.price)+'</strong><small>'+stockText+'</small></div><button class="mini-btn danger" type="button" onclick="removeItem(\''+item.id+'\')">삭제</button></div>';
         }).join(''):'<div class="empty">아직 상품이 없습니다.</div>';
         document.getElementById('buyStudent').innerHTML=studentOptions(false);
