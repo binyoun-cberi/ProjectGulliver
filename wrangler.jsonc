@@ -17,6 +17,10 @@
     "GulliverRoom": {
       "type": "durable-object",
       "storage": "sqlite"
+    },
+    "EconomyClass": {
+      "type": "durable-object",
+      "state": "deleted"
     }
   },
   "observability": {
