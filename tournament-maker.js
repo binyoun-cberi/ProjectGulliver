@@ -205,8 +205,11 @@ function renderBracket(){
     return '<section class="round"><div class="round-head">'+name+'</div><div class="round-matches">'+
       round.matches.map((match,m)=>{
         const sides=currentSides(r,m);
-        const a=sides.ready?sides.a:null,bId=sides.ready?sides.b:null;
-        return '<div class="match"><div class="match-label">'+name+' · '+(m+1)+'경기</div>'+slotButton(a,r,m,match)+slotButton(bId,r,m,match)+'</div>';
+        if(!sides.ready){
+          const waiting='<button class="slot empty" type="button" disabled><span class="slot-name">진출자 대기</span><span class="bye">WAIT</span></button>';
+          return '<div class="match"><div class="match-label">'+name+' · '+(m+1)+'경기</div>'+waiting+waiting+'</div>';
+        }
+        return '<div class="match"><div class="match-label">'+name+' · '+(m+1)+'경기</div>'+slotButton(sides.a,r,m,match)+slotButton(sides.b,r,m,match)+'</div>';
       }).join('')+'</div></section>';
   }).join('');
   const champion=participantById(b.championId);
