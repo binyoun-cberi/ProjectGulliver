@@ -28,13 +28,27 @@ function parseEntries(){
 }
 function nextPowerOfTwo(n){let p=2;while(p<n)p*=2;return p}
 function previousPowerOfTwo(n){let p=1;while(p*2<=n)p*=2;return p}
+function minimumByeCount(n){
+  let count=Math.max(0,Number(n)||0),byes=0;
+  while(count>1){
+    if(count%2===1)byes++;
+    count=Math.ceil(count/2);
+  }
+  return byes;
+}
 function roundName(roundIndex,totalRounds,size){
   if(roundIndex===totalRounds-1)return '결승';
   const people=size/Math.pow(2,roundIndex);
   return people===4?'4강':people+'강';
 }
 function displayRoundName(b,roundIndex){
-  return roundName(roundIndex,b.rounds.length,b.size);
+  const round=b?.rounds?.[roundIndex];
+  if(!round)return '';
+  if(roundIndex===b.rounds.length-1)return '결승';
+  const count=round.entrantCount||round.matches.length*2;
+  if(count===4)return '4강';
+  if(count>0&&(count&(count-1))===0)return count+'강';
+  return count+'명 라운드';
 }
 function visibleMatchesForRound(b,roundIndex){
   const round=b.rounds[roundIndex];
@@ -63,7 +77,7 @@ function renderMode(){
   ui.modeTabs.querySelectorAll('[data-mode]').forEach(btn=>btn.classList.toggle('active',btn.dataset.mode===state.mode));
   if(state.mode==='individual'){
     ui.entriesLabel.textContent='참가자 · 한 줄에 한 명';
-    ui.entryHint.textContent='2~64명까지 가능해요. 애매한 인원수는 자동으로 부전승 처리됩니다.';
+    ui.entryHint.textContent='2~64명까지 가능해요. 매 라운드 홀수일 때만 1명씩, 최소한으로 부전승 처리합니다.';
     ui.makeTeams.hidden=false;ui.loadClassroom.hidden=false;
   }else if(state.mode==='team'){
     ui.entriesLabel.textContent='팀 · 한 줄에 한 팀';
@@ -80,9 +94,8 @@ function updateEntryMeta(){
   const count=parseEntries().length;
   ui.entryCount.textContent=count+modeUnit();
   if(count<2){ui.sizeInfo.value='참가자를 입력하세요';return}
-  const size=nextPowerOfTwo(count);
-  const byes=size-count;
-  ui.sizeInfo.value=size+'강'+(byes?' · 부전승 '+byes+'명':' · 부전승 없음');
+  const byes=minimumByeCount(count);
+  ui.sizeInfo.value=byes?'최소 부전승 총 '+byes+'회':'부전승 없이 진행';
   const maxSeed=count>=4?4:count>=2?2:0;
   [...ui.seedCount.options].forEach(opt=>{opt.disabled=Number(opt.value)>maxSeed});
   if(Number(ui.seedCount.value)>maxSeed)ui.seedCount.value=String(maxSeed||0);
@@ -92,11 +105,22 @@ function participantById(id){
 }
 function currentSides(roundIndex,matchIndex){
   const b=state.bracket;if(!b)return {a:null,b:null,ready:false};
-  const match=b.rounds[roundIndex].matches[matchIndex];
+  const match=b.rounds[roundIndex]?.matches?.[matchIndex];
+  if(!match)return {a:null,b:null,ready:false};
   if(roundIndex===0)return {a:match.aId||null,b:match.bId||null,ready:true};
+
   const prev=b.rounds[roundIndex-1].matches;
-  const left=prev[matchIndex*2],right=prev[matchIndex*2+1];
-  return {a:left?.winnerId||null,b:right?.winnerId||null,ready:Boolean(left?.resolved&&right?.resolved)};
+  const left=prev[matchIndex*2];
+  const right=prev[matchIndex*2+1];
+
+  if(!left)return {a:null,b:null,ready:false};
+  const leftReady=Boolean(left.resolved);
+  const rightReady=!right||Boolean(right.resolved);
+  return {
+    a:leftReady?(left.winnerId||null):null,
+    b:right&&rightReady?(right.winnerId||null):null,
+    ready:leftReady&&rightReady
+  };
 }
 function recalculate(){
   const b=state.bracket;if(!b)return;
@@ -114,75 +138,68 @@ function recalculate(){
   const final=b.rounds.at(-1)?.matches?.[0];
   b.championId=final?.resolved?final.winnerId:null;
 }
-function spreadMatchOrder(matchCount){
-  const order=[];
-  let left=0,right=matchCount-1;
-  while(left<=right){
-    order.push(left);
-    if(right!==left)order.push(right);
-    left++;right--;
-  }
-  return order;
-}
-function buildPairs(participants,size,seedCount){
-  const matchCount=size/2;
-  const byeCount=size-participants.length;
-  const playedMatches=matchCount-byeCount;
-  const pairs=Array.from({length:matchCount},()=>[null,null]);
-
+function buildFirstRound(participants,seedCount){
   const seeds=participants.slice(0,seedCount);
   let rest=participants.slice(seedCount);
   if(state.shuffle)rest=shuffleArray(rest);
 
-  const matchOrder=spreadMatchOrder(matchCount);
-  const byeIndices=matchOrder.slice(0,byeCount);
-  const gameIndices=matchOrder.slice(byeCount);
+  const hasBye=participants.length%2===1;
+  let byeRecipient=null;
+  if(hasBye)byeRecipient=seeds.shift()||rest.shift()||null;
 
-  // 시드는 가능한 한 먼저 부전승을 받고, 남는 부전승만 일반 참가자에게 배정.
-  const byeRecipients=[];
-  while(byeRecipients.length<byeCount&&seeds.length)byeRecipients.push(seeds.shift());
-  while(byeRecipients.length<byeCount&&rest.length)byeRecipients.push(rest.shift());
+  const gameCount=Math.floor(participants.length/2);
+  const gamePairs=Array.from({length:gameCount},()=>[null,null]);
 
-  byeIndices.forEach((matchIndex,i)=>{
-    pairs[matchIndex][i%2]=byeRecipients[i];
-  });
-
-  // 남은 시드는 서로 첫 경기에서 만나지 않도록 각 실제 경기에 먼저 한 명씩 배치.
+  // 남은 시드는 가능한 한 서로 첫 경기에서 만나지 않도록 한 자리씩 분산.
   seeds.forEach((participant,i)=>{
-    const matchIndex=gameIndices[i%playedMatches];
-    if(!pairs[matchIndex][0])pairs[matchIndex][0]=participant;
-    else pairs[matchIndex][1]=participant;
+    const target=i%gameCount;
+    if(!gamePairs[target][0])gamePairs[target][0]=participant;
+    else gamePairs[target][1]=participant;
   });
 
-  // 남은 자리를 일반 참가자로 채움. 이 단계가 끝나면 빈 경기나 추가 BYE가 생기지 않음.
-  const fillPool=[...rest];
-  gameIndices.forEach(matchIndex=>{
+  // 나머지 참가자로 모든 실제 경기를 가득 채움.
+  const pool=[...rest];
+  gamePairs.forEach(pair=>{
     for(let side=0;side<2;side++){
-      if(!pairs[matchIndex][side])pairs[matchIndex][side]=fillPool.shift()||null;
+      if(!pair[side])pair[side]=pool.shift()||null;
     }
   });
 
-  return pairs;
+  // 홀수면 부전승은 딱 한 경기만 추가. 1번 시드가 있으면 우선 배정됨.
+  return byeRecipient?[[byeRecipient,null],...gamePairs]:gamePairs;
 }
 function createBracket(){
   const names=parseEntries();
   if(names.length<2){Gulliver.toast('참가자를 2명 이상 입력해 주세요.');ui.entries.focus();return}
   const participants=names.map(name=>({id:uid(),name:name.slice(0,40)}));
-  const size=nextPowerOfTwo(participants.length);
   let seedCount=Math.min(Number(ui.seedCount.value)||0,participants.length);
   if(seedCount===4&&participants.length<4)seedCount=2;
-  const pairs=buildPairs(participants,size,seedCount);
-  const totalRounds=Math.log2(size);
+
+  const firstPairs=buildFirstRound(participants,seedCount);
   const rounds=[];
-  rounds.push({matches:pairs.map((pair,i)=>({id:'r0m'+i,aId:pair[0]?.id||null,bId:pair[1]?.id||null,winnerId:null,resolved:false}))});
-  for(let r=1;r<totalRounds;r++){
-    rounds.push({matches:Array.from({length:size/Math.pow(2,r+1)},(_,i)=>({id:'r'+r+'m'+i,winnerId:null,resolved:false}))});
+  rounds.push({
+    entrantCount:participants.length,
+    matches:firstPairs.map((pair,i)=>({id:'r0m'+i,aId:pair[0]?.id||null,bId:pair[1]?.id||null,winnerId:null,resolved:false}))
+  });
+
+  let entrantCount=firstPairs.length;
+  let r=1;
+  while(entrantCount>1){
+    const matchCount=Math.ceil(entrantCount/2);
+    rounds.push({
+      entrantCount,
+      matches:Array.from({length:matchCount},(_,i)=>({id:'r'+r+'m'+i,winnerId:null,resolved:false}))
+    });
+    entrantCount=matchCount;
+    r++;
   }
-  state.bracket={participants,size,rounds,championId:null,createdAt:Date.now()};
+
+  state.bracket={participants,size:participants.length,rounds,championId:null,createdAt:Date.now(),format:'minimal-bye-v2'};
   state.history=[];
   recalculate();saveState();renderAll();
-  const byeCount=size-participants.length;
-  Gulliver.toast(size+'강 대진표를 만들었습니다.'+(byeCount?' 부전승은 최소 '+byeCount+'명만 배정했습니다.':''));
+
+  const byes=minimumByeCount(participants.length);
+  Gulliver.toast('대진표를 만들었습니다.'+(byes?' 전체 토너먼트에서 부전승은 최소 '+byes+'회만 생깁니다.':' 부전승 없이 진행됩니다.'));
 }
 function winnerSnapshot(){
   return state.bracket.rounds.map(r=>r.matches.map(m=>m.winnerId||null));
