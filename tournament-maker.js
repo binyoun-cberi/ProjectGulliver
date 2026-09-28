@@ -33,19 +33,12 @@ function roundName(roundIndex,totalRounds,size){
   const people=size/Math.pow(2,roundIndex);
   return people===4?'4강':people+'강';
 }
-function hasPreliminaryRound(b){
-  if(!b?.rounds?.[0])return false;
-  return b.rounds[0].matches.some(match=>Boolean(match.aId)!==Boolean(match.bId));
-}
 function displayRoundName(b,roundIndex){
-  if(roundIndex===0&&hasPreliminaryRound(b))return '예선';
   return roundName(roundIndex,b.rounds.length,b.size);
 }
 function visibleMatchesForRound(b,roundIndex){
   const round=b.rounds[roundIndex];
-  if(!round)return [];
-  if(roundIndex!==0||!hasPreliminaryRound(b))return round.matches.map((match,index)=>({match,index}));
-  return round.matches.map((match,index)=>({match,index})).filter(({match})=>match.aId&&match.bId);
+  return round?round.matches.map((match,index)=>({match,index})):[];
 }
 function modeUnit(){
   if(state.mode==='individual')return '명';
@@ -88,13 +81,8 @@ function updateEntryMeta(){
   ui.entryCount.textContent=count+modeUnit();
   if(count<2){ui.sizeInfo.value='참가자를 입력하세요';return}
   const size=nextPowerOfTwo(count);
-  if(size===count){
-    ui.sizeInfo.value=size+'강 바로 시작';
-  }else{
-    const mainSize=previousPowerOfTwo(count);
-    const prelimMatches=count-mainSize;
-    ui.sizeInfo.value='예선 '+prelimMatches+'경기 → '+mainSize+'강';
-  }
+  const byes=size-count;
+  ui.sizeInfo.value=size+'강'+(byes?' · 부전승 '+byes+'명':' · 부전승 없음');
   const maxSeed=count>=4?4:count>=2?2:0;
   [...ui.seedCount.options].forEach(opt=>{opt.disabled=Number(opt.value)>maxSeed});
   if(Number(ui.seedCount.value)>maxSeed)ui.seedCount.value=String(maxSeed||0);
@@ -126,27 +114,54 @@ function recalculate(){
   const final=b.rounds.at(-1)?.matches?.[0];
   b.championId=final?.resolved?final.winnerId:null;
 }
+function spreadMatchOrder(matchCount){
+  const order=[];
+  let left=0,right=matchCount-1;
+  while(left<=right){
+    order.push(left);
+    if(right!==left)order.push(right);
+    left++;right--;
+  }
+  return order;
+}
 function buildPairs(participants,size,seedCount){
   const matchCount=size/2;
+  const byeCount=size-participants.length;
+  const playedMatches=matchCount-byeCount;
   const pairs=Array.from({length:matchCount},()=>[null,null]);
-  let ordered=[...participants];
-  const seeds=ordered.slice(0,seedCount);
-  let rest=ordered.slice(seedCount);
+
+  const seeds=participants.slice(0,seedCount);
+  let rest=participants.slice(seedCount);
   if(state.shuffle)rest=shuffleArray(rest);
-  const seedMatchOrder=[0,matchCount-1,Math.floor(matchCount/2),Math.max(0,Math.floor(matchCount/2)-1)]
-    .filter((v,i,a)=>v>=0&&v<matchCount&&a.indexOf(v)===i);
-  seeds.forEach((p,i)=>{
-    const matchIndex=seedMatchOrder[i]??i%matchCount;
-    const side=i%2===0?0:1;
-    if(!pairs[matchIndex][side])pairs[matchIndex][side]=p;
-    else pairs[matchIndex][1-side]=p;
+
+  const matchOrder=spreadMatchOrder(matchCount);
+  const byeIndices=matchOrder.slice(0,byeCount);
+  const gameIndices=matchOrder.slice(byeCount);
+
+  // 시드는 가능한 한 먼저 부전승을 받고, 남는 부전승만 일반 참가자에게 배정.
+  const byeRecipients=[];
+  while(byeRecipients.length<byeCount&&seeds.length)byeRecipients.push(seeds.shift());
+  while(byeRecipients.length<byeCount&&rest.length)byeRecipients.push(rest.shift());
+
+  byeIndices.forEach((matchIndex,i)=>{
+    pairs[matchIndex][i%2]=byeRecipients[i];
   });
-  rest.forEach(p=>{
-    let target=pairs.findIndex(pair=>!pair[0]&&!pair[1]);
-    if(target<0)target=pairs.findIndex(pair=>!pair[0]||!pair[1]);
-    if(target<0)return;
-    if(!pairs[target][0])pairs[target][0]=p;else pairs[target][1]=p;
+
+  // 남은 시드는 서로 첫 경기에서 만나지 않도록 각 실제 경기에 먼저 한 명씩 배치.
+  seeds.forEach((participant,i)=>{
+    const matchIndex=gameIndices[i%playedMatches];
+    if(!pairs[matchIndex][0])pairs[matchIndex][0]=participant;
+    else pairs[matchIndex][1]=participant;
   });
+
+  // 남은 자리를 일반 참가자로 채움. 이 단계가 끝나면 빈 경기나 추가 BYE가 생기지 않음.
+  const fillPool=[...rest];
+  gameIndices.forEach(matchIndex=>{
+    for(let side=0;side<2;side++){
+      if(!pairs[matchIndex][side])pairs[matchIndex][side]=fillPool.shift()||null;
+    }
+  });
+
   return pairs;
 }
 function createBracket(){
@@ -166,9 +181,8 @@ function createBracket(){
   state.bracket={participants,size,rounds,championId:null,createdAt:Date.now()};
   state.history=[];
   recalculate();saveState();renderAll();
-  const mainSize=previousPowerOfTwo(participants.length);
-  const prelimMatches=participants.length-mainSize;
-  Gulliver.toast(prelimMatches>0?'예선 '+prelimMatches+'경기 후 '+mainSize+'강으로 진행합니다.':size+'강 대진표를 만들었습니다.');
+  const byeCount=size-participants.length;
+  Gulliver.toast(size+'강 대진표를 만들었습니다.'+(byeCount?' 부전승은 최소 '+byeCount+'명만 배정했습니다.':''));
 }
 function winnerSnapshot(){
   return state.bracket.rounds.map(r=>r.matches.map(m=>m.winnerId||null));
