@@ -38,8 +38,10 @@ button:disabled{cursor:not-allowed;opacity:.45;transform:none!important}
   width:100%;height:100%;
   display:grid;
   grid-template-columns:minmax(0,1fr) 400px;
-  transition:grid-template-columns .25s ease;
+  transition:grid-template-columns .25s ease,padding-top .18s ease;
 }
+body.with-gulliver-shell #app{padding-top:66px}
+body.student-view #app{padding-top:0}
 #app.panel-collapsed{grid-template-columns:minmax(0,1fr) 0}
 
 .main{
@@ -261,6 +263,7 @@ body.student-view .timer-shell{filter:drop-shadow(0 24px 34px rgba(30,45,78,.18)
   .title-input{font-size:32px}
 }
 @media(max-width:720px){
+  body.with-gulliver-shell #app{padding-top:60px}
   #app{display:grid;grid-template-columns:1fr;grid-template-rows:minmax(0,58%) minmax(0,42%)}
   #app.panel-collapsed{grid-template-columns:1fr;grid-template-rows:1fr 0}
   .main{padding:10px 10px 8px}
@@ -1157,6 +1160,16 @@ requestAnimationFrame(fitTimerSize);
 checkRuntimeRecovery();
 })();
 </script>
-<script>Gulliver.mountShell({title:"지도안식 원형 타이머",icon:"🕘"});</script>
+<script>
+try{
+  if(window.Gulliver && typeof window.Gulliver.mountShell==='function'){
+    window.Gulliver.mountShell({title:"지도안식 원형 타이머",icon:"🕘"});
+    document.body.classList.add('with-gulliver-shell');
+    requestAnimationFrame(()=>window.dispatchEvent(new Event('resize')));
+  }
+}catch(error){
+  console.warn('공용 도구 메뉴를 불러오지 못했지만 타이머는 계속 사용할 수 있습니다.',error);
+}
+</script>
 </body>
 </html>
