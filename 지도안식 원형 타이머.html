@@ -282,7 +282,7 @@ body.student-view .timer-shell{filter:drop-shadow(0 24px 34px rgba(30,45,78,.18)
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
-  <script src="lesson-circle-timer.js"></script>
+  <script src="gulliver-shared.js"></script>
 </head>
 <body>
 <div id="app">
@@ -405,16 +405,6 @@ body.student-view .timer-shell{filter:drop-shadow(0 24px 34px rgba(30,45,78,.18)
 </div>
 
 
-<script>
-try{
-  if(window.Gulliver && typeof window.Gulliver.mountShell==='function'){
-    window.Gulliver.mountShell({title:"지도안식 원형 타이머",icon:"🕘"});
-    document.body.classList.add('with-gulliver-shell');
-    requestAnimationFrame(()=>window.dispatchEvent(new Event('resize')));
-  }
-}catch(error){
-  console.warn('공용 도구 메뉴를 불러오지 못했지만 타이머는 계속 사용할 수 있습니다.',error);
-}
-</script>
+<script src="lesson-circle-timer.js"></script>
 </body>
 </html>
