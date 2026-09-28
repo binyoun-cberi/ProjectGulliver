@@ -27,10 +27,25 @@ function parseEntries(){
   return String(ui.entries.value||'').split(/\r?\n|,/).map(v=>v.trim()).filter(Boolean).slice(0,64);
 }
 function nextPowerOfTwo(n){let p=2;while(p<n)p*=2;return p}
+function previousPowerOfTwo(n){let p=1;while(p*2<=n)p*=2;return p}
 function roundName(roundIndex,totalRounds,size){
   if(roundIndex===totalRounds-1)return '결승';
   const people=size/Math.pow(2,roundIndex);
   return people===4?'4강':people+'강';
+}
+function hasPreliminaryRound(b){
+  if(!b?.rounds?.[0])return false;
+  return b.rounds[0].matches.some(match=>Boolean(match.aId)!==Boolean(match.bId));
+}
+function displayRoundName(b,roundIndex){
+  if(roundIndex===0&&hasPreliminaryRound(b))return '예선';
+  return roundName(roundIndex,b.rounds.length,b.size);
+}
+function visibleMatchesForRound(b,roundIndex){
+  const round=b.rounds[roundIndex];
+  if(!round)return [];
+  if(roundIndex!==0||!hasPreliminaryRound(b))return round.matches.map((match,index)=>({match,index}));
+  return round.matches.map((match,index)=>({match,index})).filter(({match})=>match.aId&&match.bId);
 }
 function modeUnit(){
   if(state.mode==='individual')return '명';
@@ -73,8 +88,13 @@ function updateEntryMeta(){
   ui.entryCount.textContent=count+modeUnit();
   if(count<2){ui.sizeInfo.value='참가자를 입력하세요';return}
   const size=nextPowerOfTwo(count);
-  const byes=size-count;
-  ui.sizeInfo.value=size+'강'+(byes?' · 부전승 '+byes:' · 부전승 없음');
+  if(size===count){
+    ui.sizeInfo.value=size+'강 바로 시작';
+  }else{
+    const mainSize=previousPowerOfTwo(count);
+    const prelimMatches=count-mainSize;
+    ui.sizeInfo.value='예선 '+prelimMatches+'경기 → '+mainSize+'강';
+  }
   const maxSeed=count>=4?4:count>=2?2:0;
   [...ui.seedCount.options].forEach(opt=>{opt.disabled=Number(opt.value)>maxSeed});
   if(Number(ui.seedCount.value)>maxSeed)ui.seedCount.value=String(maxSeed||0);
@@ -146,7 +166,9 @@ function createBracket(){
   state.bracket={participants,size,rounds,championId:null,createdAt:Date.now()};
   state.history=[];
   recalculate();saveState();renderAll();
-  Gulliver.toast(size+'강 대진표를 만들었습니다.');
+  const mainSize=previousPowerOfTwo(participants.length);
+  const prelimMatches=participants.length-mainSize;
+  Gulliver.toast(prelimMatches>0?'예선 '+prelimMatches+'경기 후 '+mainSize+'강으로 진행합니다.':size+'강 대진표를 만들었습니다.');
 }
 function winnerSnapshot(){
   return state.bracket.rounds.map(r=>r.matches.map(m=>m.winnerId||null));
@@ -198,18 +220,20 @@ function escapeHtml(value){
 function renderBracket(){
   const b=state.bracket;
   if(!b){ui.bracket.innerHTML='<div class="empty-arena" style="padding:42px"><strong>대진표가 비어 있어요</strong>참가자를 입력하고 만들어 주세요.</div>';ui.summary.textContent='승자를 누르면 다음 라운드로 자동 진출합니다.';return}
-  const height=Math.max(430,b.rounds[0].matches.length*104);
+  const visibleCounts=b.rounds.map((_,r)=>visibleMatchesForRound(b,r).length);
+  const height=Math.max(430,Math.max(...visibleCounts,1)*104);
   ui.bracket.style.setProperty('--bracket-h',height+'px');
   ui.bracket.innerHTML=b.rounds.map((round,r)=>{
-    const name=roundName(r,b.rounds.length,b.size);
+    const name=displayRoundName(b,r);
+    const visible=visibleMatchesForRound(b,r);
     return '<section class="round"><div class="round-head">'+name+'</div><div class="round-matches">'+
-      round.matches.map((match,m)=>{
+      visible.map(({match,index:m},visibleIndex)=>{
         const sides=currentSides(r,m);
         if(!sides.ready){
           const waiting='<button class="slot empty" type="button" disabled><span class="slot-name">진출자 대기</span><span class="bye">WAIT</span></button>';
-          return '<div class="match"><div class="match-label">'+name+' · '+(m+1)+'경기</div>'+waiting+waiting+'</div>';
+          return '<div class="match"><div class="match-label">'+name+' · '+(visibleIndex+1)+'경기</div>'+waiting+waiting+'</div>';
         }
-        return '<div class="match"><div class="match-label">'+name+' · '+(m+1)+'경기</div>'+slotButton(sides.a,r,m,match)+slotButton(sides.b,r,m,match)+'</div>';
+        return '<div class="match"><div class="match-label">'+name+' · '+(visibleIndex+1)+'경기</div>'+slotButton(sides.a,r,m,match)+slotButton(sides.b,r,m,match)+'</div>';
       }).join('')+'</div></section>';
   }).join('');
   const champion=participantById(b.championId);
@@ -239,8 +263,10 @@ function renderArena(){
     ui.countdown=$('countdown');ui.countdownBtn.disabled=true;return;
   }
   const pa=participantById(current.sides.a),pb=participantById(current.sides.b);
-  const round=roundName(current.r,b.rounds.length,b.size);
-  ui.roundEyebrow.textContent=round.toUpperCase();ui.arenaTitle.textContent=round+' · '+(current.m+1)+'경기';
+  const round=displayRoundName(b,current.r);
+  const visible=visibleMatchesForRound(b,current.r);
+  const visibleIndex=Math.max(0,visible.findIndex(item=>item.index===current.m));
+  ui.roundEyebrow.textContent=round.toUpperCase();ui.arenaTitle.textContent=round+' · '+(visibleIndex+1)+'경기';
   ui.arena.innerHTML='<div class="versus">'+
     fighterHtml(pa,'A',current.r,current.m)+
     '<div class="vs">VS</div>'+
