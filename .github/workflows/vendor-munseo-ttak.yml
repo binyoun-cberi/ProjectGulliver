@@ -1,0 +1,95 @@
+name: Install 문서 뚝딱 web libraries
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/vendor-munseo-ttak.yml'
+      - 'scripts/install-munseo-ttak.sh'
+  workflow_dispatch:
+
+concurrency:
+  group: gulliver-munseo-ttak-vendor
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    if: github.repository == 'binyoun-cberi/ProjectGulliver'
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - name: Checkout Gulliver
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: true
+
+      - name: Install verified official WordCraft and DOCX files
+        shell: bash
+        run: bash scripts/install-munseo-ttak.sh
+
+      - name: Inspect release and generate a real test DOCX
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/munseo-ttak.test.cjs
+          test -s assets/artcraft/wordcraft/index.html
+          test -s assets/artcraft/wordcraft/licenses/LICENSE-MIT
+          test -s assets/artcraft/wordcraft/licenses/LICENSE-APACHE
+          test -s assets/artcraft/wordcraft/licenses/NOTICE
+          test -s assets/artcraft/wordcraft/licenses/ATTRIBUTION.md
+          test -s vendor/docx/docx.iife.min.js
+          test -s vendor/docx/docx.umd.cjs
+          test -s vendor/docx/LICENSE
+          node - <<'JS'
+          const d=require('./vendor/docx/docx.umd.cjs');
+          const fs=require('node:fs');
+          (async()=>{
+            const doc=new d.Document({sections:[{children:[
+              new d.Paragraph({children:[new d.TextRun({text:'문서 뚝딱 한글 테스트',font:'Malgun Gothic',bold:true})]}),
+              new d.Table({rows:[new d.TableRow({children:[
+                new d.TableCell({children:[new d.Paragraph('표 제목')]}),
+                new d.TableCell({children:[new d.Paragraph('관찰기록')]})
+              ]})]})
+            ]}]});
+            const out=await d.Packer.toBuffer(doc);
+            if(out.length<1400)throw Error('DOCX buffer unexpectedly short');
+            fs.writeFileSync('/tmp/munseo-ttak-smoke.docx',out);
+            console.log('Generated real DOCX test document',out.length,'bytes');
+          })().catch(e=>{console.error(e);process.exit(1);});
+          JS
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import json
+          root=Path('assets/artcraft/wordcraft')
+          data=json.loads((root/'gulliver-install.json').read_text())
+          assert data['source']=='storytold/wordcraft' and data['version']=='0.6.1'
+          assert data['release_sha256']=='85e458cb5adaa75afa871a9858c735ef7fd1e05741c6bf5d444dc09a1eb29e0a'
+          assert len(list(root.glob('wordcraft-web-*.js')))==1
+          assert len(list(root.glob('wordcraft-web-*_bg.wasm')))==1
+          assert all(f.stat().st_size<94371840 for folder in (root,Path('vendor/docx')) for f in folder.rglob('*') if f.is_file())
+          with ZipFile('/tmp/munseo-ttak-smoke.docx') as z:
+            assert 'word/document.xml' in z.namelist()
+            xml=z.read('word/document.xml').decode()
+            assert '문서 뚝딱 한글 테스트' in xml
+            assert '관찰기록' in xml
+          print('DOCX XML structure and Korean text validated')
+          PY
+
+      - name: Commit vendor-only static assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f -- assets/artcraft/wordcraft/ vendor/docx/
+          if git diff --cached --quiet; then
+            echo "Already current"
+            exit 0
+          fi
+          git commit -m 'chore(munseo): vendor WordCraft v0.6.1 and docx v9.10.0'
+          git pull --rebase origin main
+          git push origin HEAD:main
