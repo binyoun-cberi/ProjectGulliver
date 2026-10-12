@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="발표 뚝딱 - 교사가 한글 수업용 슬라이드와 퀴즈를 만들고 발표하며 PPTX·PDF로 저장하는 무료 발표 제작실">
+<meta name="color-scheme" content="light">
+<title>발표 뚝딱 | 뚝딱교실</title>
+<link rel="icon" href="logo.png" type="image/png">
+<style>
+:root{--ink:#1b2c41;--muted:#627387;--surface:#fff;--edge:#dce5ef;--light:#f5f8fc;--accent:#486ec2}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:#f5f7fb;color:var(--ink);margin:0}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}button:disabled{opacity:.48;cursor:not-allowed}
+a{color:#2761a5}
+:focus-visible{outline:3px solid #db962d;outline-offset:3px}
+.site-head{max-width:1440px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 23px}
+.brand{font-weight:850;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:9px}.brand img{height:33px;width:33px}
+.site-head .back{font-size:13px;font-weight:800}
+.intro{max-width:1440px;margin:0 auto;padding:14px 23px 20px}
+.eyebrow{font-size:12px;font-weight:850;color:#3268a2}
+.intro h1{font-size:clamp(29px,4vw,39px);line-height:1.2;letter-spacing:-.04em;margin:7px 0}
+.intro p{margin:0;color:var(--muted);font-size:15px}
+.workspace{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:213px minmax(0,1fr) 284px;gap:13px;padding:0 23px 34px;align-items:start}
+.panel{border:1px solid var(--edge);border-radius:17px;background:var(--surface);min-width:0;padding:16px;box-shadow:0 7px 25px #2144670b}
+.panel h2{font-size:16px;margin:0 0 9px;letter-spacing:-.02em}
+.hint{color:var(--muted);font-size:12px;line-height:1.65;margin:3px 0 12px}
+.btn{min-height:40px;border:1px solid #b5c7da;background:white;color:var(--ink);font-weight:760;font-size:13px;padding:8px 11px;border-radius:10px}
+.btn.primary{background:#456dbc;color:#fff;border-color:#456dbc}
+.btn.danger{color:#983434}
+.btn.small{padding:5px 7px;min-height:31px;font-size:12px}
+.btn.wide{width:100%}
+.toolbar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.separate{height:25px;border-left:1px solid var(--edge);margin:0 2px}
+.editor-col{min-width:0}
+.slide-surface{background:#dce4ee;padding:14px;border-radius:15px;border:1px solid #cad7e3}
+.slide{width:100%;aspect-ratio:16/9;border-radius:5px;overflow:hidden;position:relative;isolation:isolate;box-shadow:0 11px 30px #1a2d4744;font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif}
+.slide>*{position:relative;z-index:1}
+.slide .pattern{position:absolute;inset:auto -7% -40% auto;width:49%;height:99%;border-radius:50%;border:3.1vw solid var(--accent-theme);opacity:.11;z-index:0;pointer-events:none}
+.slide .line{position:absolute;top:0;left:0;width:100%;height:2%;background:var(--accent-theme);z-index:0}
+.slide .content{display:flex;flex-direction:column;justify-content:center;height:100%;padding:7% 8%;gap:3.5%;overflow:hidden}
+.slide .label{font-size:clamp(9px,1.05vw,17px);font-weight:800;color:var(--accent-theme)}
+.slide .heading{font-size:clamp(19px,3.3vw,55px);line-height:1.26;font-weight:900;letter-spacing:-.04em;white-space:pre-wrap;overflow-wrap:anywhere;max-width:99%;margin:0}
+.slide .description{font-size:clamp(10px,1.65vw,26px);line-height:1.48;white-space:pre-wrap;overflow-wrap:anywhere;max-height:61%;overflow:hidden;margin:0}
+.slide .bullet-lines{display:grid;gap:2.3%;margin:0;padding:0;list-style:none;max-height:65%;overflow:hidden}
+.slide .bullet-lines li{font-size:clamp(10px,1.7vw,27px);line-height:1.35;position:relative;padding-left:1.3em;overflow-wrap:anywhere}
+.slide .bullet-lines li:before{content:"";width:.45em;height:.45em;background:var(--accent-theme);position:absolute;left:0;top:.4em;border-radius:50%}
+.slide[data-layout=title] .heading{font-size:clamp(23px,4vw,64px)}
+.slide[data-layout=closing] .heading{font-size:clamp(24px,4vw,60px)}
+.slide[data-layout=question] .heading{font-size:clamp(23px,3.4vw,55px)}
+.slide[data-layout=question] .label{background:var(--accent-theme);color:#fff;border-radius:999px;padding:6px 14px;width:max-content;max-width:90%}
+.slide[data-layout=picture] .content{display:grid;grid-template-columns:46% 1fr;align-items:center;gap:4%;padding:6%}
+.slide[data-layout=picture] .picture-box{height:92%;border:2px dashed currentColor;border-radius:13px;overflow:hidden;display:flex;align-items:center;justify-content:center;opacity:.84;min-height:0}
+.slide[data-layout=picture] .picture-box img{width:100%;height:100%;object-fit:contain}
+.slide[data-layout=picture] .picture-box span{font-size:clamp(10px,1.4vw,21px);text-align:center;padding:6%}
+.slide[data-layout=picture] .picture-copy{display:flex;flex-direction:column;justify-content:center;gap:9%;height:100%;overflow:hidden}
+.slide[data-layout=picture] .heading{font-size:clamp(15px,2.7vw,45px)}
+.slide .page-number{position:absolute;bottom:3%;right:4%;font-size:clamp(8px,1vw,15px);opacity:.5}
+.field{display:grid;gap:6px;margin:0 0 14px}
+.field label{font-size:12px;font-weight:800;color:#455c72}
+.field input,.field textarea,.field select{border:1px solid #b9cbdb;border-radius:10px;background:white;min-height:43px;padding:9px;color:var(--ink);width:100%}
+.field textarea{resize:vertical;min-height:90px}
+.small-help{font-size:11px;color:var(--muted);line-height:1.6}
+.actions-vertical{display:grid;gap:8px}
+hr{border:0;border-top:1px solid var(--edge);margin:16px 0}
+.templates{display:grid;gap:7px}
+.template{background:#f6f9fd;border:1px solid var(--edge);border-radius:10px;padding:9px;text-align:left;color:#2c425b;font-size:13px;font-weight:760}
+.template.selected{border-color:#8dafdc;background:#eaf2ff}
+.slides-list{display:grid;gap:9px;margin:12px 0;max-height:360px;overflow:auto}
+.thumb{border:1px solid var(--edge);border-radius:10px;background:#fff;padding:7px;display:grid;gap:5px}
+.thumb.selected{border-color:#5684cf;background:#edf4ff}
+.thumb-main{display:flex;gap:8px;align-items:center}
+.thumb-num{font-size:12px;color:var(--muted);font-weight:800}
+.thumb-title{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;color:#293c57}
+.thumb button{border:0;background:transparent;color:#235d9a;text-align:left;padding:5px;border-radius:6px}
+.thumb-actions{display:flex;gap:4px;justify-content:flex-end}
+.thumb-actions button{border:1px solid var(--edge);background:#f7f9fc;padding:3px 8px;min-height:28px;text-align:center}
+.help{font-size:12px;line-height:1.75;color:var(--muted)}
+.notes{font-size:12px;line-height:1.5;color:var(--muted)}
+.message{font-size:12px;color:var(--muted);padding-top:11px;min-height:24px}
+.message.error{color:#b73f4e}.message.success{color:#167953}
+.presentation{position:fixed;z-index:400;inset:0;background:#0e1521;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px}
+.presentation .slide{width:min(96vw,calc(88vh * 16 / 9));max-height:88vh}
+.presentation .slide .label{font-size:clamp(16px,1.7vw,25px)}
+.presentation .slide .heading{font-size:clamp(30px,4.5vw,75px)}
+.presentation .slide .description,.presentation .slide .bullet-lines li{font-size:clamp(19px,2.2vw,38px)}
+.presentation-controls{display:flex;align-items:center;justify-content:space-between;width:min(96vw,1080px);gap:8px;color:white}
+.presentation-controls button{border-radius:10px;border:1px solid #8ba0b6;background:#243b59;color:white;padding:9px 15px;min-height:42px}
+.presentation-controls .counter{font-size:13px;color:#e0e9f5}
+.advanced{max-width:1440px;margin:0 auto;padding:0 23px 25px}
+.advanced-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.advanced iframe{display:block;border:0;width:100%;height:75vh;min-height:500px;background:#171d2b;border-radius:9px;margin-top:10px}
+.footer{max-width:1440px;margin:0 auto;padding:0 24px 35px;font-size:12px;color:var(--muted)}
+#printSlides{display:none}
+@media(max-width:1110px){.workspace{grid-template-columns:205px minmax(0,1fr)}.properties{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 15px}.properties>h2,.properties>.hint,.properties>hr,.properties>h3{grid-column:1/-1}}
+@media(max-width:720px){.workspace{display:flex;flex-direction:column;padding:0 11px 23px}.workspace>*{width:100%}.site-head,.intro{padding-left:15px;padding-right:15px}.panel{padding:13px}.slides-list{display:flex;overflow-x:auto;max-height:none}.thumb{min-width:160px}.toolbar .btn{font-size:12px;padding:8px}.slide-surface{padding:8px}.properties{display:block}.slide .label{font-size:clamp(9px,2.5vw,16px)}.slide .heading{font-size:clamp(18px,5.2vw,38px)}.slide .description,.slide .bullet-lines li{font-size:clamp(10px,2.9vw,21px)}.slide[data-layout=title] .heading{font-size:clamp(21px,6vw,45px)}.slide[data-layout=picture] .heading{font-size:clamp(13px,4vw,31px)}.advanced{padding:0 11px 15px}}
+@media print {
+@page{size:13.333in 7.5in;margin:0}
+body{background:white;margin:0}
+.site-head,.intro,.workspace,.advanced,.footer,.presentation{display:none!important}
+#printSlides{display:block!important}
+#printSlides .print-page{display:block;page-break-after:always;break-after:page;width:13.333in;height:7.5in;overflow:hidden;margin:0;padding:0}
+#printSlides .print-page:last-child{page-break-after:auto;break-after:auto}
+#printSlides .slide{width:100%;height:100%;aspect-ratio:16/9;border-radius:0;box-shadow:none}
+#printSlides .slide .label{font-size:21pt}
+#printSlides .slide .heading{font-size:40pt}
+#printSlides .slide .description,#printSlides .slide .bullet-lines li{font-size:22pt}
+#printSlides .slide .pattern{border-width:35pt}
+}
+</style>
+</head>
+<body>
+<header class="site-head"><a class="brand" href="index.html"><img src="logo.png" alt="">뚝딱교실</a><a class="back" href="index.html">← 전체 도구로 돌아가기</a></header>
+<section class="intro"><span class="eyebrow">자료·기록 / 수업자료 제작</span><h1>발표 뚝딱</h1><p>수업 슬라이드를 만들어 발표하고, 파워포인트 파일과 PDF로 저장해 보세요.</p></section>
+<main class="workspace">
+<aside class="panel sidebar">
+ <h2>1. 발표 시작하기</h2><p class="hint">템플릿을 고르면 현재 발표가 바뀌어요. 기존 작업을 먼저 저장해 주세요.</p>
+ <div id="templates" class="templates">
+  <button type="button" class="template selected" data-starter="lesson">수업 시작과 마무리</button>
+  <button type="button" class="template" data-starter="picture">그림으로 이야기하기</button>
+  <button type="button" class="template" data-starter="quiz">우리 반 퀴즈</button>
+  <button type="button" class="template" data-starter="routine">하루 일과 소개</button>
+  <button type="button" class="template" data-starter="blank">빈 발표 자료</button>
+ </div>
+ <hr>
+ <div class="field"><label for="deckTitle">발표 제목</label><input id="deckTitle" maxlength="90"></div>
+ <h2>슬라이드 목록</h2><p class="hint">눌러 이동하거나 화살표로 순서를 바꿔요.</p>
+ <div id="slidesList" class="slides-list" aria-label="슬라이드 목록"></div>
+ <button id="addSlide" type="button" class="btn wide">+ 슬라이드 추가</button>
+ <button id="duplicateSlide" type="button" class="btn wide" style="margin-top:7px">현재 슬라이드 복제</button>
+ <hr>
+ <h2>원본 저장하기</h2>
+ <button id="saveProject" class="btn wide" type="button">편집 원본 저장 (.json)</button>
+ <label for="loadProject" class="btn wide" style="margin-top:7px;display:block;text-align:center;cursor:pointer">원본 불러오기<input id="loadProject" type="file" accept=".json,application/json" hidden></label>
+ <p class="hint" style="margin-top:11px">자동 저장은 하지 않아요. 공용 기기에서 학생 이름이 들어간 파일을 남기지 않도록 주의해 주세요.</p>
+</aside>
+<section class="editor-col">
+ <nav class="toolbar" aria-label="발표 편집 도구">
+  <button id="previous" type="button" class="btn" title="이전 슬라이드">← 이전</button>
+  <button id="next" type="button" class="btn" title="다음 슬라이드">다음 →</button>
+  <span class="separate"></span>
+  <button id="present" type="button" class="btn primary">▶ 발표 시작</button>
+  <button id="exportPptx" type="button" class="btn">PPTX 저장</button>
+  <button id="printDeck" type="button" class="btn">PDF / 인쇄</button>
+ </nav>
+ <div class="slide-surface"><div id="slideStage" aria-label="선택한 슬라이드 미리보기"></div></div>
+ <p class="message" id="message" role="status" aria-live="polite"></p>
+ <p class="hint">슬라이드는 16:9 화면 기준이에요. 파워포인트 파일을 저장하면 다른 프로그램에서도 수정할 수 있어요.</p>
+</section>
+<aside class="panel properties">
+ <h2>2. 슬라이드 편집</h2><p class="hint" id="currentCounter">1 / 4 슬라이드</p>
+ <div class="field"><label for="layout">슬라이드 종류</label>
+  <select id="layout"><option value="title">표지</option><option value="content">목록·설명</option><option value="question">질문·퀴즈</option><option value="picture">그림·사진</option><option value="closing">마무리</option></select>
+ </div>
+ <div class="field"><label for="eyebrow">작은 제목</label><input id="eyebrow" maxlength="100" placeholder="예: 오늘의 수업"></div>
+ <div class="field"><label for="slideTitle">슬라이드 제목</label><textarea id="slideTitle" maxlength="170" rows="2"></textarea></div>
+ <div class="field"><label for="slideBody">설명 또는 내용</label><textarea id="slideBody" maxlength="1400" rows="5"></textarea><small class="small-help">목록형에서는 한 줄마다 하나의 항목으로 표시돼요.</small></div>
+ <div class="field"><label for="theme">전체 색상 테마</label><select id="theme"><option value="sky">하늘빛</option><option value="mint">초록빛</option><option value="peach">햇살빛</option><option value="midnight">밤하늘</option></select></div>
+ <div class="field"><label for="slideImage">그림·사진 넣기</label><input type="file" id="slideImage" accept="image/png,image/jpeg"><small class="small-help">현재 슬라이드에서 사용해요. 최대 2MB, 서버로 업로드되지 않아요.</small></div>
+ <button class="btn wide" type="button" id="removeImage">현재 사진 지우기</button>
+ <hr>
+ <div class="field"><label for="slideNotes">진행 메모 (화면에는 표시되지 않음)</label><textarea id="slideNotes" maxlength="2000" rows="4" placeholder="질문할 내용이나 진행 순서 등을 적어 두세요."></textarea></div>
+ <button class="btn danger wide" id="deleteSlide" type="button">현재 슬라이드 삭제</button>
+ <p class="help" style="margin-top:13px">원본 DeckCraft 고급 편집기와 간편 제작실은 자동으로 동기화되지 않아요. PPTX로 저장한 뒤 고급 편집기에서 열어야 해요.</p>
+</aside>
+</main>
+<section class="advanced">
+ <div class="panel"><div class="advanced-row"><div><h2 style="margin:0 0 4px">DeckCraft 고급 프레젠테이션 편집기</h2><p class="hint" style="margin:0">원본 프로그램의 전환 효과·마스터·세밀한 편집 기능을 써 보세요. PC나 태블릿 권장.</p></div><button id="openAdvanced" type="button" class="btn">고급 편집기 열기</button></div>
+ <p class="hint" style="margin-top:11px">원본 고급 편집기는 영어 중심 메뉴로 표시돼요. 첫 실행 시에는 샘플 대신 빈 프레젠테이션을 엽니다.</p>
+ <div id="advancedArea" hidden><p id="advancedStatus" class="message" role="status"></p><p style="text-align:right"><a href="assets/artcraft/deckcraft/index.html?blank" id="advancedTab" target="_blank" rel="noopener noreferrer">새 창에서 크게 열기 ↗</a></p><iframe id="advancedFrame" title="DeckCraft 고급 프레젠테이션 편집기" sandbox="allow-scripts allow-same-origin allow-downloads allow-popups allow-forms" allow="fullscreen; clipboard-read; clipboard-write" loading="lazy"></iframe></div>
+ </div>
+</section>
+<footer class="footer">뚝딱교실 · 발표 뚝딱 | 교사용 간편 제작실 · 원본 DeckCraft: <a href="https://github.com/storytold/deckcraft" target="_blank" rel="noopener noreferrer">오픈소스 GitHub</a></footer>
+<div id="presentation" class="presentation" role="dialog" aria-modal="true" aria-label="슬라이드 발표" hidden tabindex="-1">
+ <div id="presentationSlide" style="width:100%;display:flex;justify-content:center"></div>
+ <div class="presentation-controls"><button id="presentPrev" type="button">← 이전</button><span class="counter" id="presentCounter">1 / 4</span><button id="presentNext" type="button">다음 →</button><button id="presentClose" type="button">닫기 ✕</button></div>
+</div>
+<div id="printSlides" aria-hidden="true"></div>
+<script src="balpyo-core.js"></script>
+<script src="vendor/pptxgenjs/pptxgen.bundle.js"></script>
+<script src="balpyo-ttak.js"></script>
+</body>
+</html>
