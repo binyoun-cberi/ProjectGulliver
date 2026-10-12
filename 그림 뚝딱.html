@@ -59,7 +59,7 @@
   <section class="hero" aria-labelledby="title">
     <span class="eyebrow">자료 만들기 · 그림과 사진</span>
     <h1 id="title">그림 뚝딱</h1>
-    <p class="lead">사진을 자르고, 글씨와 도형을 넣고, 그림카드를 꾸며 보세요. 오픈소스 이미지 편집기 PhotoCraft를 활용하는 첫 번째 제작실이에요.</p>
+    <p class="lead">사진을 자르고, 글씨와 도형을 넣고, 그림카드를 꾸며 보세요. PhotoCraft가 뚝딱교실 안에서 직접 실행돼요. 별도 프로그램 설치나 로그인이 필요 없어요.</p>
   </section>
   <main class="panels">
     <section class="panel" aria-labelledby="workspace-title">
@@ -71,17 +71,18 @@
         <p class="note" id="statusDesc">뚝딱교실에 설치된 PhotoCraft 웹 편집기를 찾고 있어요.</p>
         <div class="actions">
           <button class="btn primary" type="button" id="startLocal" hidden>그림 편집 시작</button>
-          <a class="btn primary" id="openExternal" href="https://photocraftweb.com/editor/" target="_blank" rel="noopener noreferrer" hidden>외부 웹 편집기 열기 ↗</a>
+          <a class="btn primary" id="retryLocal" href="그림 뚝딱.html" hidden>다시 확인하기</a>
           <a class="btn" href="https://github.com/storytold/photocraft" target="_blank" rel="noopener noreferrer">원본 프로젝트 보기 ↗</a>
         </div>
-        <div class="warning" id="externalNotice" hidden>
-          현재 뚝딱교실 자체에 PhotoCraft 실행 파일이 설치된 것은 아니에요. 아래 버튼은 ArtCraft 공식 사이트가 아닌 독립 운영 사이트로 이동합니다. 학생 사진, 이름, 개인정보가 포함된 자료는 외부 사이트에서 편집하지 마세요.
+        <div class="warning" id="setupNotice" hidden>
+          사진 편집기는 뚝딱교실이 제공하는 파일에서만 실행해요. 외부 사이트로 이동하거나 자료를 자동으로 업로드하지 않습니다. 편집기가 준비되지 않았다면 배포 상태를 확인해 주세요.
         </div>
       </div>
       <div class="editor-shell" id="editorShell">
         <div class="editor-tools">
           <strong>PhotoCraft · 내 브라우저에서 실행</strong>
           <div class="inline-actions">
+            <button class="btn" id="useWebGL" type="button">화면이 검다면 호환 모드</button>
             <button class="btn" id="closeEditor" type="button">편집기 닫기</button>
             <a id="newTab" class="small-link" href="assets/artcraft/photocraft/index.html" target="_blank" rel="noopener noreferrer">크게 열기 ↗</a>
           </div>
@@ -116,8 +117,9 @@
     const statusDesc = document.getElementById("statusDesc");
     const statusDot = document.getElementById("statusDot");
     const startLocal = document.getElementById("startLocal");
-    const openExternal = document.getElementById("openExternal");
-    const externalNotice = document.getElementById("externalNotice");
+    const retryLocal = document.getElementById("retryLocal");
+    const setupNotice = document.getElementById("setupNotice");
+    const useWebGL = document.getElementById("useWebGL");
     const welcome = document.getElementById("welcome");
     const shell = document.getElementById("editorShell");
     const frame = document.getElementById("editorFrame");
@@ -128,27 +130,27 @@
       statusDesc.textContent = "뚝딱교실에 설치된 PhotoCraft를 여기에서 실행할 수 있어요. 첫 실행 시 편집기를 불러오는 데 시간이 걸릴 수 있어요.";
       startLocal.hidden = false;
     }
-    function showExternal() {
+    function showUnavailable() {
       statusDot.classList.add("missing");
-      statusTitle.textContent = "웹 편집기 체험하기";
-      statusDesc.textContent = "아직 이 사이트에는 PhotoCraft 실행 파일을 설치하지 않았어요. 지금은 공개된 웹 체험판으로 이동할 수 있어요.";
-      externalNotice.hidden = false;
-      openExternal.hidden = false;
+      statusTitle.textContent = "그림 편집기를 불러오지 못했어요";
+      statusDesc.textContent = "뚝딱교실에 PhotoCraft 웹 파일이 아직 배포되지 않았거나 연결에 실패했어요. 잠시 후 다시 확인해 주세요.";
+      setupNotice.hidden = false;
+      retryLocal.hidden = false;
     }
     // Only enable the embedded editor with our verified same-origin install manifest.
-    // Never embed a third-party URL: external hosting needs an explicit user click.
+    // No external editor links or student-data uploads.
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
     fetch(manifestUrl, {method:"GET", cache:"no-store", signal:controller.signal})
       .then(async response => {
-        if (!response.ok) return showExternal();
+        if (!response.ok) return showUnavailable();
         const manifest = await response.json();
         if (manifest && manifest.product === "PhotoCraft" &&
             manifest.source === "storytold/photocraft" &&
             manifest.version === "0.7.0") {
           showLocal();
         } else {
-          showExternal();
+          showUnavailable();
         }
       })
       .catch(showExternal)
@@ -158,6 +160,10 @@
       welcome.hidden = true;
       shell.classList.add("active");
       closeEditor.focus();
+    });
+    useWebGL.addEventListener("click", () => {
+      // A forced WebGL2 renderer helps tablets and older GPUs when WebGPU cannot initialize.
+      frame.src = localUrl + "?webgl";
     });
     closeEditor.addEventListener("click", () => {
       frame.removeAttribute("src");
