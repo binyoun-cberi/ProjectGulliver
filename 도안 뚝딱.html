@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="무료 도안 뚝딱 — 교실 그림카드, 감정카드, 이름표, 도형 도안을 한글로 만들고 A4 인쇄·PNG·SVG로 저장">
+<meta name="color-scheme" content="light">
+<title>도안 뚝딱 | 뚝딱교실</title>
+<link rel="icon" href="logo.png" type="image/png">
+<style>
+:root{--ink:#1f3449;--muted:#5c7085;--accent:#426db5;--line:#dae4ed;--bg:#f4f7fb;--panel:#fff}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);margin:0;color:var(--ink);font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.5}
+button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.48;cursor:not-allowed}
+a{color:var(--accent)}:focus-visible{outline:3px solid #e9a43f;outline-offset:3px}
+[hidden]{display:none!important}
+.topbar{max-width:1420px;margin:0 auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:850;text-decoration:none}.brand img{width:34px;height:34px}
+.back{font-size:13px;font-weight:750;text-decoration:none}
+.hero{max-width:1420px;margin:0 auto;padding:13px 24px 22px}.eyebrow{font-size:13px;color:var(--accent);font-weight:800}h1{font-size:clamp(30px,5vw,41px);letter-spacing:-.04em;line-height:1.2;margin:7px 0}.hero p{margin:0;color:var(--muted)}
+.workspace{max-width:1420px;margin:0 auto;padding:0 24px 40px;display:grid;grid-template-columns:220px minmax(0,1fr) 278px;gap:14px;align-items:start}
+.panel{border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:16px;min-width:0;box-shadow:0 8px 24px #1b3d5710}
+h2{font-size:17px;letter-spacing:-.02em;margin:0 0 12px}h3{font-size:14px;margin:14px 0 8px}.muted{font-size:12px;color:var(--muted);margin:0 0 11px;line-height:1.6}
+.templates{display:grid;gap:7px}.template-btn{background:#f6f9fd;color:var(--ink);border:1px solid var(--line);padding:11px;text-align:left;border-radius:11px;font-size:14px;font-weight:750}
+.template-btn[aria-pressed=true]{background:#eaf2fd;border-color:#8bb4df;color:#235e95}
+.warning{background:#fff9e8;color:#735220;border:1px solid #ead49a;border-radius:11px;padding:10px;font-size:12px;margin-top:13px;line-height:1.65}
+.center{min-width:0}
+.toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.btn{background:#fff;color:var(--ink);border:1px solid #bbcbd9;padding:9px 12px;border-radius:10px;font-size:13px;min-height:42px;font-weight:740}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn:active{transform:translateY(1px)}
+.toolbar .sep{height:25px;border-left:1px solid var(--line);margin:0 3px}
+.sheet-box{display:flex;align-items:start;justify-content:center;background:#e4eaf2;border:1px solid #ced9e5;border-radius:16px;padding:18px 12px;min-height:360px;overflow:hidden}
+#sheet{display:block;background:#fff;box-shadow:0 7px 24px #16395436;width:min(100%,595px);height:auto;touch-action:none;user-select:none;aspect-ratio:595/842;cursor:crosshair}
+#sheet [data-shape]{cursor:grab}#sheet [data-shape]:active{cursor:grabbing}
+.status{font-size:13px;color:var(--muted);min-height:22px;margin-top:12px}
+.status.error{color:#ba3f49}.status.success{color:#176f55}
+.panel .field{display:grid;gap:5px;margin-bottom:13px}
+.field label{font-size:12px;font-weight:800;color:#3c5268}
+.field input,.field textarea,.field select{width:100%;min-height:40px;padding:8px 10px;border:1px solid #c4d3e1;border-radius:9px;background:#fff;color:#1e344a}
+.field textarea{min-height:96px;resize:vertical}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.field input[type=color]{padding:2px 4px;height:41px}
+.blockbtn{width:100%;margin-top:7px}.muted-caption{font-size:12px;color:var(--muted);margin:12px 0 0}
+.secondary{background:#f6f9fd;color:var(--ink)}
+.divider{height:1px;background:var(--line);margin:15px 0}
+.shape-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.shape-grid .btn{font-size:12px;padding:7px 3px;min-height:42px}
+#advancedFrame{display:block;width:100%;border:0;min-height:570px;height:75vh;border-radius:12px;background:#222}
+.advanced{margin-top:16px}.advanced .panel{padding:18px}
+.advanced-intro{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.advanced-intro p{margin:0;color:var(--muted);font-size:13px}
+.footer{padding:0 24px 25px;font-size:12px;color:var(--muted);max-width:1420px;margin:auto}
+@media(max-width:1100px){.workspace{grid-template-columns:210px minmax(0,1fr)}.properties{grid-column:1/-1}.property-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 14px}}
+@media(max-width:690px){.workspace{display:flex;flex-direction:column;padding:0 12px 32px}.workspace>*{width:100%}.topbar,.hero{padding-left:16px;padding-right:16px}.templates{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:7px;padding-bottom:4px}.template-btn{flex:0 0 auto}.panel{padding:13px}.sheet-box{padding:9px 6px;min-height:0}.property-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.toolbar{gap:5px}.toolbar .btn{font-size:12px;padding:8px 9px}.toolbar .sep{display:none}.hero{padding-bottom:15px}}
+@page{size:A4 portrait;margin:0}
+@media print{
+ body{background:#fff}
+ .topbar,.hero,.templates-panel,.toolbar,.properties,.advanced,.status,.footer{display:none!important}
+ .workspace{display:block!important;max-width:none!important;padding:0!important;margin:0!important}
+ .center,.sheet-box{margin:0!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;display:block!important;overflow:visible!important}
+ #sheet{width:210mm!important;height:297mm!important;max-width:none!important;box-shadow:none!important;page-break-after:avoid!important}
+}
+</style>
+</head>
+<body>
+<header class="topbar"><a class="brand" href="index.html"><img alt="" src="logo.png">뚝딱교실</a><a class="back" href="index.html">← 전체 도구로 돌아가기</a></header>
+<section class="hero"><span class="eyebrow">자료·기록 / 수업자료 제작</span><h1>도안 뚝딱</h1><p>그림카드, 이름표, 순서표, 도형 활동지를 골라 편집하고 A4로 인쇄해 보세요.</p></section>
+<main class="workspace">
+ <aside class="panel templates-panel"><h2>1. 도안 선택</h2><p class="muted">예시를 고르면 현재 도안이 바뀌어요. 필요한 도안은 먼저 저장해 주세요.</p>
+  <div class="templates" id="templates">
+   <button class="template-btn" data-template="vocabulary" aria-pressed="true">낱말 그림카드</button>
+   <button class="template-btn" data-template="emotion" aria-pressed="false">좋아요·싫어요 카드</button>
+   <button class="template-btn" data-template="schedule" aria-pressed="false">하루 순서표</button>
+   <button class="template-btn" data-template="name" aria-pressed="false">이름표 만들기</button>
+   <button class="template-btn" data-template="geometry" aria-pressed="false">도형 탐험 활동지</button>
+   <button class="template-btn" data-template="blank" aria-pressed="false">빈 도안에서 시작</button>
+  </div>
+  <div class="divider"></div>
+  <h3>파일로 보관하기</h3>
+  <button type="button" class="btn blockbtn" id="saveProject">도안 원본 저장 (.json)</button>
+  <label class="btn blockbtn" style="display:block;text-align:center;cursor:pointer" for="loadProject">저장한 도안 불러오기<input id="loadProject" type="file" accept=".json,application/json" hidden></label>
+  <p class="muted-caption">학생 이름 등을 입력했다면 공용 기기에 파일을 남기지 않도록 유의하세요. 서버에 저장하지 않아요.</p>
+  <div class="warning">도안 하나를 A4 한 쪽으로 편집해요. 다른 도안을 고르면 현재 내용이 바뀌므로 반드시 먼저 저장하세요.</div>
+ </aside>
+ <section class="center" aria-label="도안 미리보기 및 편집">
+  <nav class="toolbar" aria-label="도안 편집 및 저장">
+   <button class="btn" id="undo" title="실행 취소">↶ 실행 취소</button>
+   <button class="btn" id="redo" title="다시 실행">↷ 다시 실행</button>
+   <span class="sep"></span>
+   <button class="btn" id="exportSvg">SVG 저장</button>
+   <button class="btn" id="exportPng">PNG 저장</button>
+   <button class="btn primary" id="print">A4 인쇄 / PDF 저장</button>
+  </nav>
+  <div class="sheet-box"><svg id="sheet" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 595 842" width="595" height="842" role="img" aria-label="편집 중인 인쇄용 도안"></svg></div>
+  <p class="status" role="status" aria-live="polite" id="status">도형이나 글씨를 누른 뒤 끌어서 이동해 보세요.</p>
+ </section>
+ <aside class="panel properties"><h2>2. 요소 편집</h2><p class="muted">도안의 도형이나 글씨를 누르면 아래에서 수정할 수 있어요.</p>
+  <div class="field"><label for="projectTitle">도안 이름</label><input id="projectTitle" maxlength="80" value="낱말 그림카드"></div>
+  <div class="field"><label for="paperSize">인쇄 크기</label><select id="paperSize" disabled><option value="A4">A4 (210 × 297mm)</option></select></div>
+  <h3>새 요소 넣기</h3>
+  <div class="shape-grid">
+   <button class="btn secondary" data-add="text">글씨</button>
+   <button class="btn secondary" data-add="rect">네모</button>
+   <button class="btn secondary" data-add="ellipse">동그라미</button>
+   <button class="btn secondary" data-add="triangle">세모</button>
+   <button class="btn secondary" data-add="star">별</button>
+   <button class="btn secondary" data-add="line">선</button>
+  </div>
+  <div class="divider"></div>
+  <div id="noSelection" class="muted">선택된 요소가 없어요. 도안 안의 요소를 눌러 주세요.</div>
+  <div id="selectedFields" hidden>
+   <p style="font-weight:800;font-size:14px" id="selectedType"></p>
+   <div class="field" id="textField"><label for="shapeText">글씨 내용</label><textarea id="shapeText" maxlength="400"></textarea></div>
+   <div class="property-grid">
+    <div class="field"><label for="shapeX">왼쪽 위치</label><input type="number" id="shapeX" min="-1000" max="1600"></div>
+    <div class="field"><label for="shapeY">위쪽 위치</label><input type="number" id="shapeY" min="-1000" max="1600"></div>
+    <div class="field"><label for="shapeW">너비</label><input type="number" id="shapeW" min="1" max="1300"></div>
+    <div class="field"><label for="shapeH">높이</label><input type="number" id="shapeH" min="-1000" max="1300"></div>
+    <div class="field"><label for="shapeFill">채우기·글씨색</label><input type="color" id="shapeFill"></div>
+    <div class="field"><label for="shapeStroke">테두리색</label><input type="color" id="shapeStroke"></div>
+    <div class="field" id="fontField"><label for="shapeFont">글씨 크기</label><input type="number" min="8" max="130" id="shapeFont"></div>
+    <div class="field"><label for="shapeStrokeWidth">테두리 굵기</label><input type="number" min="0" max="25" id="shapeStrokeWidth"></div>
+   </div>
+   <button class="btn blockbtn" id="duplicate">요소 복제</button>
+   <button class="btn blockbtn" id="bringForward">맨 앞으로</button>
+   <button class="btn blockbtn" id="sendBack">맨 뒤로</button>
+   <button class="btn blockbtn" id="deleteShape">선택 요소 지우기</button>
+  </div>
+  <p class="muted-caption">글씨와 도형은 드래그로 이동할 수 있어요. A4 인쇄는 브라우저의 인쇄 창에서 ‘PDF로 저장’을 고르면 돼요.</p>
+ </aside>
+</main>
+<section class="advanced" style="max-width:1420px;margin:0 auto;padding:0 24px 20px">
+ <div class="panel">
+  <div class="advanced-intro"><div><h2>VectorCraft 고급 벡터 편집기</h2><p>더 자유로운 곡선과 벡터 그림은 고급 편집기에서 만들 수 있어요. 휴대폰보다는 PC·태블릿에 적합해요.</p></div><button class="btn" id="openAdvanced">고급 편집기 실행</button></div>
+  <p class="muted" style="margin-top:9px">한국어 메뉴 지원은 원본 VectorCraft의 번역 범위와 브라우저 글꼴에 따라 일부 영어가 남을 수 있어요. 간편 제작실 도안이 자동 전달되지는 않습니다.</p>
+  <div id="advancedContent" hidden><p class="status" id="advancedStatus" role="status"></p><div style="display:flex;justify-content:flex-end;padding:8px"><a target="_blank" rel="noopener noreferrer" id="advancedTab" href="assets/artcraft/vectorcraft/index.html?lang=ko">고급 편집기 크게 열기 ↗</a></div><iframe title="VectorCraft 벡터 디자인 편집기" id="advancedFrame" sandbox="allow-scripts allow-same-origin allow-downloads allow-popups allow-forms" allow="fullscreen; clipboard-read; clipboard-write" loading="lazy"></iframe></div>
+ </div>
+</section>
+<footer class="footer">도안 뚝딱 · 뚝딱교실 · 도안 데이터는 자동 업로드되지 않으며 별도 저장이 필요해요. 고급 편집기: 오픈소스 <a href="https://github.com/storytold/vectorcraft" target="_blank" rel="noopener noreferrer">VectorCraft</a>.</footer>
+<script src="doan-core.js"></script>
+<script src="doan-ttak.js"></script>
+</body>
+</html>
