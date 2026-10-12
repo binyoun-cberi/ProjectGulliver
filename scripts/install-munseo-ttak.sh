@@ -42,6 +42,8 @@ done
 TARBALL="$TMP/npm/docx-${DOCX_VERSION}.tgz"
 test -s "$TARBALL"
 tar -xzf "$TARBALL" -C "$TMP/npm"
+echo "NPM docx distribution files:"
+find "$TMP/npm/package/dist" -maxdepth 1 -type f -printf "%f (%s bytes)\\n" | head -n 30
 test -s "$TMP/npm/package/dist/index.iife.min.js"
 test -s "$TMP/npm/package/dist/index.umd.cjs"
 test -s "$TMP/npm/package/LICENSE"
