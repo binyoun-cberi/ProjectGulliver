@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1초 뚝딱! 학급 체크리스트</title>
+    <title>1초 뚝딱! 제출·준비물 확인</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
     <style>
@@ -55,7 +55,7 @@
         <!-- 헤더 영역 -->
         <header class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 gap-4">
             <div>
-                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 mb-2">✅ 학급 체크리스트</h1>
+                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 mb-2">✅ 제출·준비물 확인</h1>
                 <p class="text-slate-500 font-medium" id="progress-text">현재 0명 제출 완료 (0%)</p>
             </div>
             
@@ -402,7 +402,7 @@
             }
         });
 
-        Gulliver.mountShell({title:'학급 체크리스트',icon:'✅'});
+        Gulliver.mountShell({title:'제출·준비물 확인',icon:'✅'});
         document.getElementById('load-classroom-btn').addEventListener('click', () => {
             const room = Gulliver.getClassroom();
             if (!room.students.length) {

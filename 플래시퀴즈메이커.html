@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#4f46e5">
-<title>플래시퀴즈 메이커+</title>
+<title>낱말카드·퀴즈</title>
 <style>
 :root{
   --bg:#f4f7fb;--panel:#fff;--ink:#172033;--muted:#68748a;--line:#dfe5ee;
@@ -39,7 +39,7 @@ textarea,input[type=text],input[type=number],select{width:100%;border:1px solid 
 <body>
 <header class="topbar">
   <div class="topbar-inner">
-    <div class="brand"><span class="brand-mark">▦</span><span>플래시퀴즈 메이커+</span></div>
+    <div class="brand"><span class="brand-mark">▦</span><span>낱말카드·퀴즈</span></div>
     <nav class="tabs" aria-label="기능 선택">
       <button class="tab active" data-tab="manage">카드 관리</button>
       <button class="tab" data-tab="flash">플래시카드</button>
@@ -48,7 +48,7 @@ textarea,input[type=text],input[type=number],select{width:100%;border:1px solid 
     </nav>
     <div class="top-actions">
       <button id="soundBtn" class="icon-btn" title="효과음 켜기/끄기" aria-label="효과음 켜기/끄기">♪</button>
-      <button id="fullBtn" class="icon-btn" title="전체 화면" aria-label="전체 화면">⛶</button>
+      <button id="fullBtn" hidden class="icon-btn" title="전체 화면" aria-label="전체 화면">⛶</button>
     </div>
   </div>
 </header>
@@ -315,6 +315,6 @@ document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].include
 load();$('#soundBtn').textContent=state.sound?'♪':'×';renderCards();switchTab('manage');
 })();
 </script>
-<script>Gulliver.mountShell({title:"플래시카드 & 퀴즈 메이커",icon:"🗂️"});</script>
+<script>Gulliver.mountShell({title:"낱말카드·퀴즈",icon:"🗂️"});</script>
 </body>
 </html>

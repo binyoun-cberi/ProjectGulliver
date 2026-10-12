@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>교실 뚝딱도구 | 교사용 프로그램 모음</title>
+  <title>뚝딱교실 | 교사용 프로그램 모음</title>
   <link rel="icon" type="image/png" href="logo.png">
   
   <style>
@@ -701,18 +701,24 @@
       .chip{padding:10px 13px}
       .section-head{margin-top:24px}
     }
-</style>
+
+    .home-intro{margin:4px 0 20px}.home-intro h1{font-size:28px;margin:0 0 8px;letter-spacing:-.04em}.home-intro p{margin:0;color:var(--muted)}
+    .card{min-height:210px!important;padding:22px!important}.card h3{font-size:20px}.card p{line-height:1.6}.card .tag{font-size:11px}.favorite-button{border:1px solid var(--line);background:white;border-radius:10px;width:38px;height:38px;font-size:24px;color:var(--brand);cursor:pointer}.favorite-button:hover{background:#eef2ff}
+    .toolbar{display:flex;flex-wrap:wrap}.search{flex:1 1 340px}.chips{flex-wrap:wrap}.dashboard{position:static!important;max-height:none!important}.dash-card{padding:18px!important}
+    @media(max-width:760px){.classroom-card{grid-column:1/-1}.home-intro h1{font-size:24px}.home-layout{gap:16px}.dashboard{display:grid;grid-template-columns:1fr 1fr}.student-preview{display:none}.card{min-height:190px!important}}
+    @media(max-width:420px){.dashboard{grid-template-columns:1fr}.toolbar .search{flex-basis:100%}}
+  </style>
 </head>
 <body>
   <div class="page">
     <header class="topbar">
-      <a class="brand" href="#" aria-label="교실 뚝딱도구 홈">
+      <a class="brand" href="#" aria-label="뚝딱교실 홈">
         <div class="brand-mark">
-          <img src="logo.png" alt="교실 뚝딱도구 로고">
+          <img src="logo.png" alt="뚝딱교실 로고">
         </div>
         <div class="brand-title">
-          <strong>교실 뚝딱도구</strong>
-          <span>학급운영 · 수업 · 업무 · 편의성을 한곳에</span>
+          <strong>뚝딱교실</strong>
+          <span>우리 반과 수업에 필요한 도구</span>
         </div>
       </a>
       <nav class="site-nav" aria-label="주요 메뉴">
@@ -741,16 +747,7 @@
       </aside>
 
       <div class="home-main">
-    <section class="area-section" aria-label="똑똑 영역 선택">
-      <div class="area-head">
-        <div>
-          <span class="section-kicker">무엇을 하려 하나요?</span>
-          <h2>똑똑 도구함</h2>
-          <p>기능 이름보다 지금 하려는 일에 맞춰 들어가세요.</p>
-        </div>
-      </div>
-      <div class="area-grid" id="areaGrid"></div>
-    </section>
+    <section class="home-intro"><h1>오늘도 뚝딱, 우리 교실</h1><p>시간 재기부터 모둠 만들기까지, 필요한 도구를 바로 꺼내 쓰세요.</p></section>
 
     <section id="tools">
       <div class="toolbar">
@@ -764,7 +761,7 @@
       <div class="section-head">
         <div>
           <h2 id="toolSectionTitle">전체 도구</h2>
-          <p>학급운영·수업·업무·편의성 도구를 한곳에서 찾을 수 있습니다.</p>
+          <p>필요한 일에 맞춰 골라보세요. ☆를 누르면 즐겨찾기에 모입니다.</p>
         </div>
         <div class="count" id="resultCount">0개 도구</div>
       </div>
@@ -776,7 +773,7 @@
     </div>
 
     <footer>
-      교실 뚝딱도구 · 필요한 일에 맞춰 꺼내 쓰는 교사용 도구함
+      뚝딱교실 · 필요한 일에 맞춰 꺼내 쓰는 교사용 도구함
     </footer>
   </div>
 
@@ -784,7 +781,7 @@
   <script>
     const tools = [
       {
-        name: "지도안식 원형 타이머",
+        name: "수업 흐름 타이머",
         subtitle: "수업 흐름을 원형 시간표로 보여주는 활동 타이머",
         href: "지도안식 원형 타이머.html",
         category: "똑똑 수업",
@@ -804,7 +801,7 @@
         situation: "가위바위보, 퀴즈, 발표, 체육 경기나 음식·책·인물 월드컵을 진행할 때"
       },
       {
-        name: "우리 반 만능 시계",
+        name: "타이머·스톱워치",
         subtitle: "스톱워치와 타이머, 기록판을 함께 쓰는 시간 경쟁 도구",
         href: "시간 경쟁 시스템.html",
         category: "똑똑 수업",
@@ -913,7 +910,7 @@
         situation: "학급 전체 목표를 정하고 칭찬 포인트를 누적해서 기록할 때"
       },
       {
-        name: "학급 체크리스트 (학급췍)",
+        name: "제출·준비물 확인",
         subtitle: "과제, 준비물, 안내장 제출 여부를 직관적으로 확인하는 도구",
         href: "학급췍.html",
         category: "똑똑 학급운영",
@@ -943,7 +940,7 @@
         situation: "현장체험학습이나 수학여행을 갈 때 조건에 맞춰 버스 자리를 배정할 때"
       },
       {
-        name: "행운의 모둠 메이커",
+        name: "모둠 만들기",
         subtitle: "돌려돌려 슬롯머신으로 재미있고 짜릿하게 모둠을 정하는 도구",
         href: "행운의 모둠 메이커.html",
         category: "똑똑 학급운영",
@@ -963,7 +960,7 @@
         situation: "발표자나 벌칙 당첨자를 정할 때, 실시간 역전극이 펼쳐지는 시각적 레이스를 보여주고 싶을 때"
       },
       {
-        name: "플래시카드 & 퀴즈 메이커",
+        name: "낱말카드·퀴즈",
         subtitle: "단어를 일괄 등록해 플래시카드(TTS 지원)와 선 긋기 게임을 만드는 도구",
         href: "플래시퀴즈메이커.html",
         category: "똑똑 수업",
@@ -1000,11 +997,16 @@
     const resultCount = document.getElementById("resultCount");
     const emptyState = document.getElementById("emptyState");
     const AREAS = [
-      { name:"똑똑 학급운영", icon:"👥", color:"#2fbf9b", desc:"자리·역할·투표·체크·모둠처럼 우리 반을 운영하는 도구" },
-      { name:"똑똑 수업", icon:"📚", color:"#6d5dfc", desc:"타이머·퀴즈·게임·수업 안내처럼 수업 시간에 바로 쓰는 도구" },
-      { name:"똑똑 업무", icon:"🗂️", color:"#f59e0b", desc:"성취기준·세특·자료 보관처럼 준비와 기록을 줄여주는 도구" },
-      { name:"똑똑 편의성", icon:"🛠️", color:"#3b82f6", desc:"QR처럼 작지만 자주 생기는 교실의 귀찮음을 해결하는 도구" }
+      {name:"시간·수업 안내"}, {name:"뽑기·편성"}, {name:"퀴즈·놀이"},
+      {name:"학급 관리"}, {name:"자료·기록"}
     ];
+    const PURPOSES = [
+      "시간·수업 안내","퀴즈·놀이","시간·수업 안내","뽑기·편성","자료·기록",
+      "퀴즈·놀이","뽑기·편성","퀴즈·놀이","퀴즈·놀이","뽑기·편성",
+      "시간·수업 안내","학급 관리","학급 관리","학급 관리","퀴즈·놀이",
+      "뽑기·편성","뽑기·편성","뽑기·편성","퀴즈·놀이","자료·기록","자료·기록"
+    ];
+    tools.forEach((tool,index)=>tool.category=PURPOSES[index]);
     let activeCategory = "전체";
 
     function getCategories() {
@@ -1019,19 +1021,7 @@
       `).join("");
     }
 
-    function renderAreas() {
-      const areaGrid = document.getElementById("areaGrid");
-      areaGrid.innerHTML = AREAS.map(area => {
-        const count = tools.filter(tool => tool.category === area.name).length;
-        return `
-          <button class="area-card ${activeCategory === area.name ? "active" : ""}" style="--area:${area.color}" type="button" onclick="openArea('${area.name}')">
-            <div class="area-icon">${area.icon}</div>
-            <h3>${area.name}</h3>
-            <p>${area.desc}</p>
-            <div class="area-foot"><span class="area-count">${count}개 도구</span><span class="area-arrow">→</span></div>
-          </button>`;
-      }).join("");
-    }
+    function renderAreas() {}
 
     function openArea(category) {
       setCategory(category);
@@ -1068,24 +1058,25 @@
       document.getElementById("toolSectionTitle").textContent = activeCategory === "전체" ? "전체 도구" : activeCategory;
       emptyState.style.display = filtered.length ? "none" : "block";
       cardsEl.innerHTML = filtered.map(tool => `
-        <a class="card" href="${tool.href}" style="--accent:${tool.accent}" title="${tool.name} 열기" onclick="Gulliver.trackTool({name:'${tool.name}',href:'${tool.href}',icon:'${tool.icon}'})">
+        <article class="card" style="--accent:${tool.accent}">
           <div>
-            <div class="card-top">
-              <div class="icon">${tool.icon}</div>
-              <span class="tag">${tool.category.replace("똑똑 ","")}</span>
+            <div class="card-top"><div class="icon">${tool.icon}</div>
+              <button class="favorite-button" type="button" data-tool-favorite="${tool.href}" aria-label="${Gulliver.isFavorite(tool.href)?'즐겨찾기 해제':'즐겨찾기 추가'}: ${tool.name}" aria-pressed="${Gulliver.isFavorite(tool.href)}">${Gulliver.isFavorite(tool.href)?'★':'☆'}</button>
             </div>
-            <h3>${tool.name}</h3>
-            <p>${tool.subtitle}</p>
-            <div class="meta">
-              ${(tool.tags || []).map(tag => `<span>#${tag}</span>`).join("")}
-            </div>
+            <h3><a href="${tool.href}">${tool.name}</a></h3>
+            <p>${tool.situation}</p>
           </div>
-          <div class="card-bottom">
-            <span class="open-text">열기 <span aria-hidden="true">→</span></span>
-            <span class="filename">바로 실행</span>
-          </div>
-        </a>
+          <div class="card-bottom"><span class="tag">${tool.category}</span><a class="open-text" href="${tool.href}">열기 →</a></div>
+        </article>
       `).join("");
+      cardsEl.querySelectorAll('[data-tool-favorite]').forEach(button=>button.onclick=()=>{
+        const tool=tools.find(item=>item.href===button.dataset.toolFavorite);
+        if(tool)Gulliver.toggleFavorite(tool);
+      });
+      cardsEl.querySelectorAll('a').forEach(link=>link.onclick=()=>{
+        const tool=tools.find(item=>item.href===link.getAttribute('href'));
+        if(tool)Gulliver.trackTool(tool);
+      });
     }
 
     function copySiteTip() {
@@ -1107,19 +1098,19 @@
       document.getElementById('dashClassMeta').textContent = room.students.length ? `${room.students.length}명 · 운영 프로필 ${profileCount}명 · 관계 ${relations.length}개` : '저장된 학생이 없습니다. 명단과 교사용 운영 정보를 한 번에 관리할 수 있어요.';
       document.getElementById('dashStudentPreview').innerHTML = room.students.slice(0,6).map(s=>`<span>${s.name}</span>`).join('') + (room.students.length>6 ? `<span>+${room.students.length-6}명</span>` : '');
 
-      const favorites = Gulliver.getFavorites();
+      const favorites = Gulliver.getFavorites().map(saved=>({...saved,...tools.find(tool=>tool.href===saved.href)}));
       const favSet = new Set(favorites.map(x=>x.href));
-      const recent = Gulliver.getRecent();
+      const recent = Gulliver.getRecent().map(saved=>({...saved,...tools.find(tool=>tool.href===saved.href)}));
       document.getElementById('recentTools').innerHTML = recent.length ? recent.slice(0,4).map(x=>`
         <div class="mini-tool">
           <a href="${x.href}" onclick="Gulliver.trackTool({name:'${x.name}',href:'${x.href}',icon:'${x.icon||'🧰'}'})">${x.icon||'🧰'} ${x.name}</a>
           <button type="button" data-favorite="${x.href}" title="즐겨찾기">${favSet.has(x.href)?'★':'☆'}</button>
         </div>`).join('') : '<div class="dash-empty">아직 사용한 도구가 없습니다.</div>';
-      document.getElementById('favoriteTools').innerHTML = favorites.length ? favorites.slice(0,4).map(x=>`
+      document.getElementById('favoriteTools').innerHTML = favorites.length ? favorites.map(x=>`
         <div class="mini-tool">
           <a href="${x.href}" onclick="Gulliver.trackTool({name:'${x.name}',href:'${x.href}',icon:'${x.icon||'🧰'}'})">${x.icon||'⭐'} ${x.name}</a>
           <button type="button" data-favorite="${x.href}" title="즐겨찾기 해제">★</button>
-        </div>`).join('') : '<div class="dash-empty">자주 쓰는 도구의 ☆를 눌러 여기에 모아두세요.</div>';
+        </div>`).join('') : '<div class="dash-empty">도구 카드의 ☆를 눌러 자주 쓰는 도구를 모아보세요.</div>';
       document.querySelectorAll('[data-favorite]').forEach(btn=>btn.onclick=()=>{
         const href=btn.dataset.favorite;
         const tool=tools.find(t=>t.href===href) || recent.find(t=>t.href===href) || favorites.find(t=>t.href===href);
@@ -1128,7 +1119,7 @@
     }
     window.addEventListener('gulliver:classroom-change', renderDashboard);
     window.addEventListener('gulliver:classroom-meta-change', renderDashboard);
-    window.addEventListener('gulliver:favorites-change', renderDashboard);
+    window.addEventListener('gulliver:favorites-change', ()=>{renderDashboard();renderCards();});
 
     searchInput.addEventListener("input", renderCards);
     renderChips();
