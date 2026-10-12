@@ -701,6 +701,15 @@
       .chip{padding:10px 13px}
       .section-head{margin-top:24px}
     }
+    /* Five tool areas: keep the dashboard balanced on desktop and tablet. */
+    @media (min-width:1281px) {
+      .area-grid { grid-template-columns:repeat(5,minmax(0,1fr)); }
+      .area-card { padding:16px; }
+      .area-card h3 { font-size:18px; }
+    }
+    @media (min-width:981px) and (max-width:1280px) {
+      .area-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    }
 </style>
 </head>
 <body>
@@ -764,7 +773,7 @@
       <div class="section-head">
         <div>
           <h2 id="toolSectionTitle">전체 도구</h2>
-          <p>학급운영·수업·업무·편의성 도구를 한곳에서 찾을 수 있습니다.</p>
+          <p>학급운영·수업·업무·제작·편의성 도구를 한곳에서 찾을 수 있습니다.</p>
         </div>
         <div class="count" id="resultCount">0개 도구</div>
       </div>
@@ -783,6 +792,16 @@
   <script src="gulliver-shared.js"></script>
   <script>
     const tools = [
+      {
+        name: "그림 뚝딱",
+        subtitle: "사진·그림카드를 꾸미는 오픈소스 PhotoCraft 이미지 편집기",
+        href: "그림 뚝딱.html",
+        category: "똑똑 제작실",
+        icon: "🎨",
+        accent: "#2875bb",
+        tags: ["사진편집", "그림카드", "이미지", "PhotoCraft", "아트크래프트", "활동지"],
+        situation: "수업용 사진을 정리하거나 그림과 글씨를 넣어 자료를 만들 때"
+      },
       {
         name: "지도안식 원형 타이머",
         subtitle: "수업 흐름을 원형 시간표로 보여주는 활동 타이머",
@@ -1003,7 +1022,8 @@
       { name:"똑똑 학급운영", icon:"👥", color:"#2fbf9b", desc:"자리·역할·투표·체크·모둠처럼 우리 반을 운영하는 도구" },
       { name:"똑똑 수업", icon:"📚", color:"#6d5dfc", desc:"타이머·퀴즈·게임·수업 안내처럼 수업 시간에 바로 쓰는 도구" },
       { name:"똑똑 업무", icon:"🗂️", color:"#f59e0b", desc:"성취기준·세특·자료 보관처럼 준비와 기록을 줄여주는 도구" },
-      { name:"똑똑 편의성", icon:"🛠️", color:"#3b82f6", desc:"QR처럼 작지만 자주 생기는 교실의 귀찮음을 해결하는 도구" }
+      { name:"똑똑 편의성", icon:"🛠️", color:"#3b82f6", desc:"QR처럼 작지만 자주 생기는 교실의 귀찮음을 해결하는 도구" },
+      { name:"똑똑 제작실", icon:"🎨", color:"#2875bb", desc:"그림·사진·문서를 수업자료로 바꾸는 제작 도구" }
     ];
     let activeCategory = "전체";
 
