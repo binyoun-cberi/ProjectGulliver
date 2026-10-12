@@ -2,6 +2,7 @@
 # Download a SHA256-pinned WordCraft web bundle and an exact npm version of docx.
 # Never run untrusted packages' lifecycle scripts. Only distribute static assets.
 set -euo pipefail
+trap 'echo "Document tools install failed at line $LINENO: $BASH_COMMAND" >&2' ERR
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VERSION="0.6.1"
 ARCHIVE="wordcraft-web-${VERSION}.zip"
@@ -24,8 +25,11 @@ print('Verified WordCraft ZIP',actual)
 PY
 unzip -q "$TMP/$ARCHIVE" -d "$TMP/upstream"
 SOURCE="$TMP/upstream/wordcraft-web-${VERSION}"
-test -s "$SOURCE/index.html"
+echo "Checking WordCraft archive layout:"
+find "$TMP/upstream" -maxdepth 3 -type f | head -n 18
+ test -s "$SOURCE/index.html"
 find "$SOURCE" -maxdepth 1 -name '*.wasm' -size +0c | grep -q . || { echo "WordCraft WebAssembly file missing" >&2; exit 1; }
+echo "WordCraft page and WASM validated."
 mkdir -p "$TMP/wordcraft-ready/licenses" "$TMP/docx-ready" "$TMP/npm"
 cp -a "$SOURCE/." "$TMP/wordcraft-ready/"
 for name in LICENSE-MIT LICENSE-APACHE NOTICE ATTRIBUTION.md; do
