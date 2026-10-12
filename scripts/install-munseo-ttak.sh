@@ -44,10 +44,10 @@ test -s "$TARBALL"
 tar -xzf "$TARBALL" -C "$TMP/npm"
 echo "NPM docx distribution files:"
 find "$TMP/npm/package/dist" -maxdepth 1 -type f -printf "%f (%s bytes)\\n" | head -n 30
-test -s "$TMP/npm/package/dist/index.iife.min.js"
+test -s "$TMP/npm/package/dist/index.iife.js"
 test -s "$TMP/npm/package/dist/index.umd.cjs"
 test -s "$TMP/npm/package/LICENSE"
-cp "$TMP/npm/package/dist/index.iife.min.js" "$TMP/docx-ready/docx.iife.min.js"
+cp "$TMP/npm/package/dist/index.iife.js" "$TMP/docx-ready/docx.iife.min.js"
 cp "$TMP/npm/package/dist/index.umd.cjs" "$TMP/docx-ready/docx.umd.cjs"
 cp "$TMP/npm/package/LICENSE" "$TMP/docx-ready/LICENSE"
 DOCX_PACKAGE="$TMP/npm/package/package.json" DOCX_TARBALL="$TARBALL" python3 - <<'PY'
