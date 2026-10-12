@@ -12,7 +12,7 @@ const THEMES={
   midnight:{name:'밤하늘',accent:'#F0C86F',background:'#16233B',foreground:'#FFFFFF',muted:'#C4D1E5'}
 };
 const LAYOUTS=['title','content','question','picture','closing'];
-const MAX_SLIDES=40,MAX_JSON_BYTES=5*1024*1024;
+const MAX_SLIDES=40,MAX_JSON_BYTES=45*1024*1024;
 let next=0;
 function slide(layout='content',title='',body='',eyebrow='',notes=''){
  return {id:'slide-'+(++next),layout,title,body,eyebrow,notes,image:''};
