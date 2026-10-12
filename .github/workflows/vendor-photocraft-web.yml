@@ -1,0 +1,80 @@
+name: Install PhotoCraft web into Gulliver
+
+# The official upstream release is downloaded only on explicit workflow/script changes
+# or a manual run. Generated vendor files never trigger this workflow again.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/vendor-photocraft-web.yml'
+      - 'scripts/install-photocraft-web.sh'
+  workflow_dispatch:
+
+concurrency:
+  group: gulliver-photocraft-web-vendor
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  install-photocraft:
+    if: github.repository == 'binyoun-cberi/ProjectGulliver'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out Gulliver
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: true
+
+      - name: Install verified PhotoCraft release
+        shell: bash
+        run: bash scripts/install-photocraft-web.sh
+
+      - name: Validate installed static assets and hosting limits
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIR="assets/artcraft/photocraft"
+          test -s "$DIR/index.html"
+          test -f "$DIR/gulliver-install.json"
+          test -s "$DIR/licenses/LICENSE-MIT"
+          test -s "$DIR/licenses/LICENSE-APACHE"
+          test -s "$DIR/licenses/NOTICE"
+          test -s "$DIR/licenses/ATTRIBUTION.md"
+          test "$(find "$DIR" -type f -name '*.wasm' | wc -l)" -ge 1
+          # A single Cloudflare Pages static file must remain at most 25 MiB.
+          if find "$DIR" -type f -size +26214400c | grep -q .; then
+            echo "PhotoCraft contains a static file larger than the 25 MiB hosting limit" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("assets/artcraft/photocraft")
+          manifest = json.loads((root/"gulliver-install.json").read_text())
+          assert manifest["product"] == "PhotoCraft"
+          assert manifest["source"] == "storytold/photocraft"
+          assert manifest["version"] == "0.7.0"
+          assert manifest["release_sha256"] == "dfcbaac00f81f5d05ccffba36a14b320c1b1c7b23a4135fe54877f527e550eec"
+          html = (root/"index.html").read_text()
+          assert "photocraft" in html.lower()
+          print("PhotoCraft web bundle verified:", len(list(root.rglob("*"))), "items")
+          PY
+
+      - name: Commit PhotoCraft web files to repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f -- assets/artcraft/photocraft/
+          if git diff --cached --quiet; then
+            echo "PhotoCraft v0.7.0 assets already committed."
+            exit 0
+          fi
+          git commit -m "chore(artcraft): vendor verified PhotoCraft v0.7.0 web release"
+          git pull --rebase origin main
+          git push origin HEAD:main
+          echo "PhotoCraft web files are now available under /assets/artcraft/photocraft/."
