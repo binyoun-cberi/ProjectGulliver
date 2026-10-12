@@ -219,14 +219,21 @@
     return saveClassroom(data||{});
   }
 
-    function getRecent(){return safeParse(localStorage.getItem(KEYS.recent),[]).filter(Boolean).slice(0,8)}
+  function normalizeToolList(items){
+    const seen=new Set();
+    return (Array.isArray(items)?items:[]).filter(Boolean).map(item=>{
+      let href=String(item.href||'');try{href=decodeURIComponent(href)}catch{}
+      return {...item,href};
+    }).filter(item=>item.href&&!seen.has(item.href)&&seen.add(item.href));
+  }
+  function getRecent(){return normalizeToolList(safeParse(localStorage.getItem(KEYS.recent),[])).slice(0,8)}
   function trackTool(tool){
     if(!tool||!tool.href) return;
-    const item={name:String(tool.name||document.title||'도구'),href:String(tool.href),icon:String(tool.icon||'🧰'),at:Date.now()};
+    const item={name:String(tool.name||document.title||'도구'),href:normalizeToolList([tool])[0]?.href||String(tool.href),icon:String(tool.icon||'🧰'),at:Date.now()};
     const next=[item,...getRecent().filter(x=>x.href!==item.href)].slice(0,8);
     localStorage.setItem(KEYS.recent,JSON.stringify(next));
   }
-  function getFavorites(){return safeParse(localStorage.getItem(KEYS.favorites),[]).filter(Boolean)}
+  function getFavorites(){return normalizeToolList(safeParse(localStorage.getItem(KEYS.favorites),[]))}
   function isFavorite(href){return getFavorites().some(x=>x.href===href)}
   function toggleFavorite(tool){
     const current=getFavorites();
