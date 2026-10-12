@@ -4,10 +4,10 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERSION="0.5.0"
+VERSION="0.7.0"
 ARCHIVE="photocraft-web-${VERSION}.zip"
 SOURCE="https://github.com/storytold/photocraft/releases/download/v${VERSION}/${ARCHIVE}"
-EXPECTED_SHA256="855da01e7ce518049c6f3a090f1218864f7b780811e340db409e5c3cef93cd6d"
+EXPECTED_SHA256="dfcbaac00f81f5d05ccffba36a14b320c1b1c7b23a4135fe54877f527e550eec"
 DEST="${ROOT}/assets/artcraft/photocraft"
 
 for command in curl unzip find; do
@@ -45,6 +45,14 @@ for filename in LICENSE-APACHE LICENSE-MIT NOTICE ATTRIBUTION.md; do
     "https://raw.githubusercontent.com/storytold/photocraft/v${VERSION}/${filename}" \
     -o "${TMP}/ready/licenses/${filename}"
 done
+cat > "${TMP}/ready/gulliver-install.json" <<EOF
+{
+  "product": "PhotoCraft",
+  "source": "storytold/photocraft",
+  "version": "${VERSION}",
+  "release_sha256": "${EXPECTED_SHA256}"
+}
+EOF
 mkdir -p "$(dirname "$DEST")"
 # A completed bundle replaces only this dedicated, upstream-owned directory.
 rm -rf "$DEST"

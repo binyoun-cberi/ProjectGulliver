@@ -4,8 +4,8 @@
 
 ## 현재 상태
 
-- 뚝딱교실 홈에 **똑똑 제작실 → 그림 뚝딱** 메뉴가 추가됩니다.
-- 사이트의 `assets/artcraft/photocraft/index.html`이 실제 설치되어 있으면 **동일 출처 iframe으로 실행**합니다.
+- 뚝딱교실 홈에 **자료·기록 → 그림 뚝딱** 메뉴가 추가됩니다.
+- 사이트의 `assets/artcraft/photocraft/gulliver-install.json`을 확인하면 **동일 출처 iframe으로 실행**합니다.
 - 설치되지 않았으면 '웹 편집기 체험하기'로 표시하고 사용자가 명시적으로 누를 때만 **비공식 독립 호스트**인 `https://photocraftweb.com/editor/`로 이동합니다. iframe 자동 연결이나 학생 이미지 업로드는 하지 않습니다.
 - 자료는 브라우저에서 편집하며, 저장은 PhotoCraft의 Save As / Export를 사용합니다. 자동 백업이나 계정 저장은 제공되지 않습니다.
 
@@ -17,8 +17,8 @@
 bash scripts/install-photocraft-web.sh
 ```
 
-설치 스크립트는 PhotoCraft **v0.5.0** 공식 웹용 ZIP을 지정된 SHA-256
-`855da01e7ce518049c6f3a090f1218864f7b780811e340db409e5c3cef93cd6d`
+설치 스크립트는 공식 웹 실행 파일과 라이선스를 배치하고 `gulliver-install.json`을 만듭니다. PhotoCraft **v0.7.0** 공식 웹용 ZIP을 지정된 SHA-256
+`dfcbaac00f81f5d05ccffba36a14b320c1b1c7b23a4135fe54877f527e550eec`
 로 검증하고, 파일을 `assets/artcraft/photocraft/`에 복사합니다.
 MIT/Apache-2.0 라이선스와 NOTICE/ATTRIBUTION 원문도 함께 포함합니다.
 스크립트는 **자동 실행되지 않으며**, 원격 코드 실행이나 서버 API를 요구하지 않습니다.
@@ -39,5 +39,5 @@ Cloudflare 25 MiB/파일 제한을 확인하세요. PhotoCraft는 WebGPU 또는 
 
 - PhotoCraft upstream: https://github.com/storytold/photocraft
 - Hosting guide: https://github.com/storytold/photocraft/blob/main/packaging/web/README.md
-- 배포 파일: https://github.com/storytold/photocraft/releases/tag/v0.5.0
+- 배포 파일: https://github.com/storytold/photocraft/releases/tag/v0.7.0
 - ArtCraft: https://getartcraft.com/apps/photocraft
