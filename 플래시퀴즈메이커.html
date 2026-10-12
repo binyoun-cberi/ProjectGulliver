@@ -34,7 +34,8 @@ textarea,input[type=text],input[type=number],select{width:100%;border:1px solid 
   body{background:#fff}.topbar,main,.toast,.modal-back{display:none!important}.print-area{display:block!important;padding:0 12mm;color:#111}.print-title{text-align:center;font-size:24pt;margin:0 0 8mm}.print-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid #777;border-left:1px solid #777}.print-cell{min-height:28mm;padding:6mm;border-right:1px solid #777;border-bottom:1px solid #777;display:flex;align-items:center;justify-content:center;text-align:center;font-size:15pt;break-inside:avoid}.print-cell.back{font-weight:700}.print-list-row{display:grid;grid-template-columns:55px 1fr 1fr;border-bottom:1px solid #aaa;break-inside:avoid}.print-list-row>div{padding:4mm;border-right:1px solid #bbb}.print-list-row:first-child{border-top:1px solid #aaa}.print-list-row>div:first-child{border-left:1px solid #bbb;text-align:center}
 }
 </style>
-  <script src="gulliver-shared.js?v=20261012-organized2"></script>
+  <script src="gulliver-shared.js?v=20261013-workspace1"></script>
+<script src="classroom-workspace.js?v=20261013-workspace1"></script>
 </head>
 <body>
 <header class="topbar">
@@ -313,6 +314,18 @@ window.addEventListener('resize',()=>{if(state.currentTab==='match')resizeMatchC
 document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;if(state.currentTab==='flash'){if(e.code==='Space'){e.preventDefault();toggleFlip()}else if(e.code==='ArrowRight')moveStudy(1);else if(e.code==='ArrowLeft')moveStudy(-1)}else if(state.currentTab==='quiz'&&!state.quiz?.answered&&/^[1-4]$/.test(e.key)){const b=$$('.choice')[Number(e.key)-1];b?.click()}else if(state.currentTab==='quiz'&&state.quiz?.answered&&(e.code==='Space'||e.code==='Enter')){e.preventDefault();nextQuiz()}});
 
 load();$('#soundBtn').textContent=state.sound?'♪':'×';renderCards();switchTab('manage');
+Gulliver.mountShell({title:'낱말카드·퀴즈',icon:'🗂️'});
+ClassroomWorkspace.mount({kind:'quiz',title:()=> '나의 낱말카드',
+  capture:()=>({cards:state.cards,known:[...state.known],sound:state.sound,currentTab:state.currentTab}),
+  blank:()=>({cards:[],known:[],currentTab:'manage'}),
+  apply(data){
+    if(!Array.isArray(data.cards))throw Error('낱말카드 형식을 확인해 주세요.');
+    const cards=data.cards.slice(0,2000).map(sanitizeCard).filter(Boolean);
+    stopMatch();state.cards=cards;state.known=new Set((Array.isArray(data.known)?data.known:[]).filter(id=>cards.some(c=>c.id===id)));state.sound=data.sound!==false;
+    state.studyOrder=[];state.studyIndex=0;state.flipped=false;state.quiz=null;state.match=null;
+    $('#soundBtn').textContent=state.sound?'♪':'×';save();renderCards();switchTab(['manage','flash','quiz','match'].includes(data.currentTab)?data.currentTab:'manage');
+  }
+});
 })();
 </script>
 <script>Gulliver.mountShell({title:"낱말카드·퀴즈",icon:"🗂️"});</script>
