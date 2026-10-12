@@ -111,6 +111,7 @@
   (() => {
     "use strict";
     const localUrl = "assets/artcraft/photocraft/index.html";
+    const manifestUrl = "assets/artcraft/photocraft/gulliver-install.json";
     const statusTitle = document.getElementById("workspace-title");
     const statusDesc = document.getElementById("statusDesc");
     const statusDot = document.getElementById("statusDot");
@@ -134,15 +135,21 @@
       externalNotice.hidden = false;
       openExternal.hidden = false;
     }
-    // Only enable the embedded editor when its own same-origin entry point exists.
+    // Only enable the embedded editor with our validated same-origin install manifest.
     // Never embed a third-party URL: external hosting needs an explicit user click.
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
-    fetch(localUrl, {method:"HEAD", cache:"no-store", signal:controller.signal})
-      .then(response => {
-        const type = response.headers.get("content-type") || "";
-        if (response.ok && type.includes("text/html")) showLocal();
-        else showExternal();
+    fetch(manifestUrl, {method:"GET", cache:"no-store", signal:controller.signal})
+      .then(async response => {
+        if (!response.ok) return showExternal();
+        const manifest = await response.json();
+        if (manifest && manifest.product === "PhotoCraft" &&
+            manifest.source === "storytold/photocraft" &&
+            manifest.version === "0.7.0") {
+          showLocal();
+        } else {
+          showExternal();
+        }
       })
       .catch(showExternal)
       .finally(() => clearTimeout(timeout));
