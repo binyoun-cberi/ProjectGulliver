@@ -25,7 +25,7 @@ jobs:
     env:
       RUST_BACKTRACE: '1'
       CARGO_BUILD_JOBS: '1'
-      SOURCE_DIR: ${{ runner.temp }}/photocraft-source
+      SOURCE_DIR: /tmp/photocraft-source
       EXPECTED_PHOTOCRAFT_SHA: '79261615956ab21334e49ca1d384390272e647da'
     steps:
       - name: Checkout Gulliver scripts (without credentials)
