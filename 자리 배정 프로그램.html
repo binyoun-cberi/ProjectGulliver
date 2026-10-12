@@ -127,7 +127,8 @@ body.flipped .seat.selected{transform:rotate(180deg) translateY(3px)}
 @media(max-width:600px){body{padding:72px 10px 30px}.topline{align-items:flex-start;flex-direction:column}.view-actions{justify-content:flex-start}.workspace{padding:12px}.settings{padding:12px}.scorebox{grid-template-columns:1fr 1fr}.seat{width:78px;height:64px}.mini-form{grid-template-columns:1fr 78px auto}.rule-form{grid-template-columns:1fr 1fr}.rule-form .btn{grid-column:1/-1}}
 @media print{body{padding:0;background:white}.topline,.settings,.board-actions,.scorebox,.notice,.gulliver-shell,.seat .pin,.seat .gender-pin{display:none!important}.layout{display:block}.panel,.workspace,.board-wrap{box-shadow:none;border:0;background:white}.board-wrap{overflow:visible}.seat{break-inside:avoid}.seat.fixed,.seat.conflict,.seat.gender-seat-m,.seat.gender-seat-f{box-shadow:none!important;border-color:#d8dee7!important;background:#fff!important}}
 </style>
-<script src="gulliver-shared.js?v=20261012-organized2"></script>
+<script src="gulliver-shared.js?v=20261013-workspace1"></script>
+<script src="classroom-workspace.js?v=20261013-workspace1"></script>
 </head>
 <body>
 <button class="btn exit-presentation floating-exit" id="exitPresentationBtn">설정으로 돌아가기</button>
@@ -1030,6 +1031,24 @@ loadState();
 refreshSharedContext();
 renderAll();
 Gulliver.mountShell({title:'교실 자리 배정',icon:'🎒'});
+ClassroomWorkspace.mount({kind:'seating',title:()=> (Gulliver.getClassroom().className||'우리 반')+' 자리표',
+  capture:()=>({...state,genderBalance:$('genderBalance').checked,historyBalance:$('historyBalance').checked}),
+  blank:()=>({cols:5,rows:4,layout:'individual',useClassroom:true}),
+  apply(data){
+    if(!data||typeof data!=='object')throw Error('자리표 형식을 확인해 주세요.');
+    const students=data.useClassroom?Gulliver.getClassroom().students:data.students;
+    if(!Array.isArray(students))throw Error('자리표 명단을 확인해 주세요.');
+    const cols=Math.max(1,Math.min(12,Math.round(Number(data.cols)||5))),rows=Math.max(1,Math.min(12,Math.round(Number(data.rows)||4)));
+    const clean={...data,cols,rows,students:students.slice(0,144)};
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(clean));loadState();
+    const ids=new Set(state.students.map(s=>s.id)),used=new Set();
+    state.assignment=Array(cols*rows).fill(null).map((_,index)=>{const id=String(data.assignment?.[index]||'');if(!state.activeSeats[index]||!ids.has(id)||used.has(id))return null;used.add(id);return id});
+    selectedSeat=null;seatEditMode=false;genderSeatEditMode=false;$('genderSeatTools').classList.remove('on');
+    $('genderBalance').checked=Boolean(data.genderBalance);$('historyBalance').checked=data.historyBalance!==false;
+    refreshSharedContext();renderAll();
+    $('resultBadge').textContent=hasAssignment()?'저장한 자리표':'아직 배정 전';
+  }
+});
 </script>
 </body>
 </html>
