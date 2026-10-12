@@ -143,7 +143,7 @@ $('loadProject').addEventListener('change',async event=>{
 $('slideImage').addEventListener('change',async e=>{
  const f=e.target.files?.[0];e.target.value='';
  if(!f)return;
- if(!['image/jpeg','image/png','image/webp'].includes(f.type)||f.size>MAX_IMAGE_BYTES)return say('PNG·JPG·WebP 사진 중 2MB 이하를 선택해 주세요.',true);
+ if(!['image/jpeg','image/png'].includes(f.type)||f.size>MAX_IMAGE_BYTES)return say('PNG·JPG 사진 중 2MB 이하를 선택해 주세요.',true);
  try{
   const uri=await new Promise((resolve,reject)=>{
    const reader=new FileReader();
@@ -152,6 +152,8 @@ $('slideImage').addEventListener('change',async e=>{
    reader.readAsDataURL(f);
   });
   if(!C.imageSafe(uri))throw Error('지원되지 않는 그림 파일이에요.');
+  const others=deck.slides.reduce((n,s,i)=>n+(i===index?0:s.image.length),0);
+  if(others+uri.length>40_000_000)throw Error('발표 자료에 들어간 사진 용량이 너무 커요. 불필요한 사진을 먼저 지워 주세요.');
   current().image=uri;
   current().layout='picture';
   dirty=true;render();say('사진을 넣었어요. 슬라이드 종류를 그림·사진으로 변경했어요.');
