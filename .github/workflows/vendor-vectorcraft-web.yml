@@ -1,0 +1,70 @@
+name: Install VectorCraft web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/vendor-vectorcraft-web.yml'
+      - 'scripts/install-vectorcraft-web.sh'
+  workflow_dispatch:
+
+concurrency:
+  group: gulliver-vectorcraft-vendor
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  install-vectorcraft:
+    if: github.repository == 'binyoun-cberi/ProjectGulliver'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: true
+
+      - name: Download official VectorCraft release and verify checksum
+        shell: bash
+        run: bash scripts/install-vectorcraft-web.sh
+
+      - name: Inspect verified release and licensing
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIR=assets/artcraft/vectorcraft
+          test -s "$DIR/index.html"
+          test -s "$DIR/gulliver-install.json"
+          test -s "$DIR/licenses/LICENSE-MIT"
+          test -s "$DIR/licenses/LICENSE-APACHE"
+          test -s "$DIR/licenses/NOTICE"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('assets/artcraft/vectorcraft')
+          info=json.loads((root/'gulliver-install.json').read_text())
+          assert info['source']=='storytold/vectorcraft'
+          assert info['version']=='0.10.0'
+          assert info['release_sha256']=='aaf1136d4e76606085294942563207111ab7f57cbe6d5f97f03573fa14d37968'
+          assert len(list(root.glob('vectorcraft-web-*.js')))==1
+          assert len(list(root.glob('vectorcraft-web-*_bg.wasm')))==1
+          assert all(file.stat().st_size<=94371840 for file in root.rglob('*') if file.is_file())
+          print('Verified',len(list(root.rglob('*'))),'VectorCraft distribution entries')
+          PY
+
+      - name: Commit vendor-only files into main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f -- assets/artcraft/vectorcraft/
+          if git diff --cached --quiet; then
+            echo "Already up to date"
+            exit 0
+          fi
+          git commit -m "chore(vectorcraft): add verified VectorCraft 0.10.0 web assets"
+          git pull --rebase origin main
+          git push origin HEAD:main
