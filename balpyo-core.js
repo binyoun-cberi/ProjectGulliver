@@ -60,7 +60,7 @@ function starter(kind='lesson'){
 function safeText(v,length=600){return String(v??'').slice(0,length);}
 function imageSafe(value){
  const s=String(value||'');
- return /^data:image\/(?:png|jpeg|webp);base64,[a-zA-Z0-9+/=]+$/.test(s)&&s.length<=3_000_000?s:'';
+ return /^data:image\/(?:png|jpeg);base64,[a-zA-Z0-9+/=]+$/.test(s)&&s.length<=3_000_000?s:'';
 }
 function normalizeSlide(raw,i){
  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw Error((i+1)+'번째 슬라이드 정보가 올바르지 않아요.');
