@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>행운의 모둠 메이커 | 교실 뚝딱도구</title>
+<title>모둠 만들기 | 뚝딱교실</title>
 <style>
 *{box-sizing:border-box}
 :root{
@@ -77,7 +77,7 @@ details.conditions>summary::after{content:"＋";color:#9aa4b4}details.conditions
 <body>
 <div class="app">
   <header class="head">
-    <div><h1>🎰 행운의 모둠 메이커</h1><p>재미있게 공개하고, 속으로는 조건을 꼼꼼하게 맞추는 모둠 편성 도구입니다.</p></div>
+    <div><h1>🎰 모둠 만들기</h1><p>재미있게 공개하고, 속으로는 조건을 꼼꼼하게 맞추는 모둠 편성 도구입니다.</p></div>
     <div class="head-actions"><button class="btn" id="soundBtn">🔊 효과음 켜기</button></div>
   </header>
 
@@ -497,7 +497,7 @@ $("soundBtn").onclick=()=>{state.sound=!state.sound;renderSound();saveConfig();i
 $("startBtn").onclick=start;$("backBtn").onclick=back;$("spinBtn").onclick=spin;$("revealAllBtn").onclick=revealAll;$("rerollBtn").onclick=reroll;$("confirmBtn").onclick=confirmGroups;$("cancelSelectBtn").onclick=()=>{selectedStudentId=null;renderResults()};
 
 loadConfig();refreshStudentUI();refreshSharedContext();renderHistory();
-Gulliver.mountShell({title:"행운의 모둠 메이커",icon:"🎰"});
+Gulliver.mountShell({title:"모둠 만들기",icon:"🎰"});
 })();
 </script>
 </body>

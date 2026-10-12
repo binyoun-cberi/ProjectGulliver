@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#5b7cfa">
-  <title>우리 반 만능 시계</title>
+  <title>타이머·스톱워치</title>
   <style>
     :root {
       --accent: #5b7cfa;
@@ -643,12 +643,12 @@
   <main class="app">
     <header class="topbar">
       <div class="title-wrap">
-        <h1>🏆 우리 반 만능 시계</h1>
+        <h1>🏆 타이머·스톱워치</h1>
         <p>스톱워치와 타이머 기록을 모드별로 안전하게 보관합니다.</p>
       </div>
       <div class="top-actions">
         <button type="button" class="icon-button" id="soundButton" aria-label="소리 켜기 또는 끄기" title="소리 켜기 또는 끄기">🔊 <span class="label">소리</span></button>
-        <button type="button" class="icon-button" id="fullscreenButton" aria-label="전체 화면" title="전체 화면">⛶ <span class="label">전체 화면</span></button>
+        <button type="button" hidden class="icon-button" id="fullscreenButton" aria-label="전체 화면" title="전체 화면">⛶ <span class="label">전체 화면</span></button>
       </div>
     </header>
 
@@ -688,7 +688,7 @@
         </div>
 
         <div class="student-entry">
-          <input type="text" class="student-name" id="studentName" maxlength="20" autocomplete="off" placeholder="기록할 학생 이름" aria-label="기록할 학생 이름">
+          <input type="text" class="student-name" id="studentName" maxlength="20" autocomplete="off" placeholder="기록할 학생 이름" aria-label="기록할 학생 이름" data-classroom-names>
           <button type="button" class="record-button" id="recordButton">✅ 현재 기록 저장</button>
         </div>
 
@@ -1371,6 +1371,6 @@
       renderAll();
     })();
   </script>
-<script>Gulliver.mountShell({title:"우리 반 만능 시계",icon:"🏆"});</script>
+<script>Gulliver.mountShell({title:"타이머·스톱워치",icon:"🏆"});</script>
 </body>
 </html>

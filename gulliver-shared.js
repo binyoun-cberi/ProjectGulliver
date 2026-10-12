@@ -240,6 +240,13 @@
     if(document.getElementById('gulliver-shared-style')) return;
     const style=document.createElement('style');style.id='gulliver-shared-style';
     style.textContent=`
+      body.gulliver-tool{padding-top:max(66px,var(--gulliver-original-top,0px))!important}
+      body.gulliver-tool [hidden]{display:none!important}
+      body.gulliver-tool > header.topbar{top:66px!important}
+      body.gulliver-tool .gulliver-shell-btn{font-family:inherit}
+      body.gulliver-tool.student-view{padding-top:0!important}
+      body.gulliver-tool.presentation .gulliver-shell{display:none}
+      @media print{.gulliver-shell{display:none!important}body.gulliver-tool{padding-top:0!important}}
       .gulliver-shell{position:fixed;z-index:99999;top:8px;left:50%;transform:translateX(-50%);width:min(1180px,calc(100% - 24px));font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
       .gulliver-shell-inner{min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px 8px 14px;border:1px solid rgba(148,163,184,.22);border-radius:16px;background:rgba(255,255,255,.94);box-shadow:0 8px 24px rgba(15,23,42,.07);backdrop-filter:blur(12px)}
       .gulliver-shell-left,.gulliver-shell-actions{display:flex;align-items:center;gap:8px;min-width:0}
@@ -263,13 +270,26 @@
     if(!el){el=document.createElement('div');el.className='gulliver-toast';document.body.appendChild(el)}
     el.textContent=msg;el.classList.add('show');clearTimeout(el._timer);el._timer=setTimeout(()=>el.classList.remove('show'),1700);
   }
+  function connectStudentNames(){
+    const inputs=document.querySelectorAll('input[data-classroom-names]');
+    if(!inputs.length)return;
+    let list=document.getElementById('gulliver-student-names');
+    if(!list){list=document.createElement('datalist');list.id='gulliver-student-names';document.body.appendChild(list)}
+    list.replaceChildren(...getNames().map(name=>{const option=document.createElement('option');option.value=name;return option}));
+    inputs.forEach(input=>{input.setAttribute('list',list.id);input.setAttribute('autocomplete','off')});
+  }
+  window.addEventListener('gulliver:classroom-change',connectStudentNames);
+  window.addEventListener('storage',event=>{if(event.key===KEYS.classroom)connectStudentNames()});
   function mountShell(options={}){
     if(document.querySelector('.gulliver-shell')) return;
     injectStyles();
+    document.body.style.setProperty('--gulliver-original-top',getComputedStyle(document.body).paddingTop);
+    if(options.reserveSpace!==false)document.body.classList.add('gulliver-tool');
+    connectStudentNames();
     const wrap=document.createElement('div');wrap.className='gulliver-shell';
     wrap.innerHTML=`<div class="gulliver-shell-inner">
       <div class="gulliver-shell-left">
-        <a class="gulliver-shell-brand" href="index.html">🧰 교실 뚝딱도구</a>
+        <a class="gulliver-shell-brand" href="index.html">🧰 뚝딱교실</a>
         <span class="gulliver-shell-sep">/</span>
         <span class="gulliver-shell-title"></span>
       </div>
@@ -294,7 +314,7 @@
     const b=document.createElement('button');b.type='button';b.className='gulliver-import-btn';b.textContent='👥 '+label;return b;
   }
   window.Gulliver={
-    keys:KEYS,getClassroom,saveClassroom,setNames,getNames,getNamesText,clearClassroom,
+    connectStudentNames,keys:KEYS,getClassroom,saveClassroom,setNames,getNames,getNamesText,clearClassroom,
     getProfiles,getStudentProfile,saveProfiles,updateStudentProfile,getRelations,saveRelations,upsertRelation,removeRelation,getRelation,relationPenalty,
     getOperations,recordOperation,clearOperations,exportClassroomBundle,importClassroomBundle,
     getRecent,trackTool,getFavorites,isFavorite,toggleFavorite,mountShell,makeImportButton,toast,normalizeStudents
