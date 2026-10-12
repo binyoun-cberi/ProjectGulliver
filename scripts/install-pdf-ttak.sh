@@ -63,9 +63,13 @@ cat > "$TMP/pdf-lib-ready/version.json" <<EOF
   "integrity_sha512_base64": "${PDFLIB_SHA512_BASE64}"
 }
 EOF
-# Protect hosts that reject individual assets over 25 MiB.
-if find "$TMP/pdfcraft-ready" "$TMP/pdf-lib-ready" -type f -size +26214400c | grep -q .; then
-  echo "File exceeds 25 MiB static hosting cap" >&2; exit 1
+# GitHub Pages is the deployment target. GitHub blocks files over 100 MiB;
+# leave margin for the limit. Cloudflare Pages' 25 MiB cap is different and
+# cannot host this upstream web release unchanged.
+echo "Largest PdfCraft/pdf-lib static files:"
+find "$TMP/pdfcraft-ready" "$TMP/pdf-lib-ready" -type f -printf '%s %p\\n' | sort -nr | head -n 4
+if find "$TMP/pdfcraft-ready" "$TMP/pdf-lib-ready" -type f -size +94371840c | grep -q .; then
+  echo "File exceeds the 90 MiB safe GitHub repository limit" >&2; exit 1
 fi
 mkdir -p "$(dirname "$DIR_PDFCRAFT")" "$(dirname "$DIR_PDFLIB")"
 rm -rf "$DIR_PDFCRAFT" "$DIR_PDFLIB"
