@@ -1047,6 +1047,7 @@ ClassroomWorkspace.mount({kind:'seating',title:()=> (Gulliver.getClassroom().cla
     $('genderBalance').checked=Boolean(data.genderBalance);$('historyBalance').checked=data.historyBalance!==false;
     refreshSharedContext();renderAll();
     $('resultBadge').textContent=hasAssignment()?'저장한 자리표':'아직 배정 전';
+    setNotice(hasAssignment()?'저장한 자리표를 불러왔습니다. 수정하거나 그대로 사용할 수 있어요.':'명단과 교실 구조를 확인한 뒤 자리를 배정하세요.','');
   }
 });
 </script>
