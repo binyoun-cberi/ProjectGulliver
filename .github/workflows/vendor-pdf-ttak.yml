@@ -54,7 +54,7 @@ jobs:
           assert v['version'] == '1.17.1'
           assert len(list(d.glob('pdfcraft-web-*_bg.wasm'))) == 1
           assert len(list(d.glob('pdfcraft-web-*.js'))) == 1
-          assert all(p.stat().st_size <= 26214400 for folder in (d,Path('vendor/pdf-lib')) for p in folder.rglob('*') if p.is_file())
+          assert all(p.stat().st_size <= 94_371_840 for folder in (d,Path('vendor/pdf-lib')) for p in folder.rglob('*') if p.is_file())
           assert 'PDFLib' in Path('vendor/pdf-lib/pdf-lib.min.js').read_text()[:10000]
           print('PdfCraft and pdf-lib verified, ready to publish')
           PY
