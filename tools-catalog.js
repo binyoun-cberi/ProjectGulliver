@@ -1,5 +1,7 @@
 (function(){const tools=[
       {name:"뚝딱 제작실",subtitle:"그림·PDF·도안·발표·문서·영상·음악을 한곳에서 제작",href:"뚝딱 제작실.html",category:"자료·기록",icon:"🛠️",accent:"#7547e8",tags:["제작실","그림","PDF","도안","발표","문서","영상","음악","WAV","WebM","HWPX","DOCX","PPTX","수업자료"],situation:"교실 수업자료를 만들고, 기기에 작업을 저장하거나 사진을 재사용할 때"},
+      {name:"영상 뚝딱",subtitle:"FilmCraft 고급 영상 편집과 간편 영상 제작",href:"영상 뚝딱.html",category:"자료·기록",icon:"🎬",accent:"#5d67c8",tags:["영상 편집","FilmCraft","타임라인","동영상","MP4","WebM","자막","수업영상"],situation:"수업 영상에 자막과 사진을 넣거나 동영상의 장면을 편집할 때"},
+      {name:"음악 뚝딱",subtitle:"SoundCraft 고급 오디오 편집과 간편 음악 제작",href:"음악 뚝딱.html",category:"자료·기록",icon:"🎵",accent:"#8a57c8",tags:["음악 만들기","SoundCraft","오디오","DAW","WAV","녹음","리듬","음악 편집"],situation:"수업·활동의 배경음악을 만들거나 오디오를 편집할 때"},
       {name:"그림 뚝딱",subtitle:"사진과 그림카드를 꾸미는 편집기",href:"그림 뚝딱.html",category:"자료·기록",studioLegacy:true,icon:"🎨",accent:"#2875bb",tags:["사진편집","그림카드","이미지","활동지"],situation:"사진을 자르고 글씨와 그림을 넣어 수업자료를 만들 때"},
       {name:"PDF 뚝딱",subtitle:"PDF 합치기·추출·나누기·회전, 고급 편집",href:"PDF 뚝딱.html",category:"자료·기록",studioLegacy:true,icon:"📄",accent:"#246c98",tags:["PDF","PDF 합치기","PDF 나누기","학습지","PDF 편집","페이지 추출"],situation:"학습지와 안내문 PDF를 합치거나 필요한 페이지만 골라 저장할 때"},
       {name:"도안 뚝딱",subtitle:"그림카드·이름표·도형 도안을 만들고 A4 인쇄",href:"도안 뚝딱.html",category:"자료·기록",studioLegacy:true,icon:"✂️",accent:"#6b77ba",tags:["도안","낱말 그림카드","감정카드","이름표","교구","도형","벡터"],situation:"교실 활동지, 이름표, 순서표와 그림카드를 만들어 인쇄할 때"},
@@ -215,7 +217,7 @@
         situation: "수업용 영상을 모아두고 다음 학년도에도 다시 활용하고 싶을 때"
       }
     ]; const purposes=[
-      "자료·기록","자료·기록","자료·기록","자료·기록","자료·기록","자료·기록",
+      "자료·기록","자료·기록","자료·기록","자료·기록","자료·기록","자료·기록","자료·기록","자료·기록",
       "시간·수업 안내","퀴즈·놀이","시간·수업 안내","뽑기·편성","자료·기록",
       "퀴즈·놀이","뽑기·편성","퀴즈·놀이","퀴즈·놀이","뽑기·편성",
       "시간·수업 안내","학급 관리","학급 관리","학급 관리","퀴즈·놀이",

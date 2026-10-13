@@ -34,7 +34,7 @@ function render(){
  }else if(view==='home'||view==='tools'||view==='favorites'){
    const isHome=view==='home',query=$('search').value.trim();
    if(isHome&&!query){
-     const quickNames=['수업 흐름 타이머','교실 자리 배정','범퍼 룰렛 레이스','낱말카드·퀴즈','뚝딱 제작실','QR 코드 도구','성취기준·세특 도우미','우리 반 투표판'];
+     const quickNames=['뚝딱 제작실','영상 뚝딱','음악 뚝딱','수업 흐름 타이머','교실 자리 배정','범퍼 룰렛 레이스','낱말카드·퀴즈','QR 코드 도구','성취기준·세특 도우미','우리 반 투표판'];
      html+='<nav class="quick-tools" aria-label="바로 쓰는 도구">'+quickNames.map(name=>tools.find(t=>t.name===name)).filter(Boolean).map(t=>'<a class="quick-tool" data-tool="'+esc(t.href)+'" href="'+esc(t.href)+'" style="--tool-accent:'+esc(t.accent)+'"><span class="quick-icon">'+esc(t.icon)+'</span><span>'+esc(t.name)+'</span></a>').join('')+'</nav>';
      if(activities.length)html+=section('이어서 작업하기','최근 저장한 활동을 다시 열어 보세요.','<div class="activity-grid">'+activities.slice(0,4).map(a=>activityCard(a)).join('')+'</div>','<button class="text-btn" data-view="activities">모두 보기 →</button>');
    }
