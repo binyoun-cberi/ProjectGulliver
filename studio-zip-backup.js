@@ -7,7 +7,9 @@ if(!S||!Z||!L||!C||!O||!M||!W||!B)throw Error('ZIP 보관함을 준비하지 못
 let busy=false;
 function binaryPath(kind,i,ext){return kind+'/'+i+'.'+ext}
 async function exportZip(){
- if(busy)return;busy=true;const btn=$('libraryZipBackup');btn.disabled=true;
+ if(busy)return;busy=true;const btn=$('libraryZipBackup'),original=btn.textContent;
+ btn.disabled=true;btn.textContent='ZIP 백업 만드는 중…';
+ B.status('원본 자료를 ZIP 전체 백업에 담고 있어요. 저장이 끝날 때까지 이 창을 닫지 마세요.');
  try{
   if(C.managed(B.getState().activeKind))await B.sync(true);
   const projects=(await S.projects()).map(C.normalizeProject),assets=await S.assets(),media=await S.media(),
@@ -39,11 +41,13 @@ async function exportZip(){
    folders,projects,assets:images,media:clips,official:originals,activities};
   const text=JSON.stringify(manifest);
   if(new Blob([text]).size>24*1024*1024)throw Error('ZIP 프로젝트 설명 데이터가 24MB를 넘어요.');
+  const estimated=new Blob([text]).size+files.reduce((sum,item)=>sum+item.blob.size+270,350);
+  if(estimated>Z.MAX_BYTES)throw Error('ZIP 백업 512MB 한도를 넘어요. 큰 공식 프로젝트는 개별 다운로드해 주세요.');
   const blob=await Z.create([{path:'manifest.json',blob:new Blob([text],{type:'application/json'})},...files]);
   B.download(blob,'뚝딱제작실-전체백업-'+new Date().toISOString().slice(0,10)+'.zip','application/zip');
   B.status('ZIP 전체 백업을 내려받았어요. '+projects.length+'개 간편 작업, '+official.length+'개 공식 원본, '+media.length+'개 미디어 원본을 모두 포함했어요. 백업 파일은 안전한 곳에 보관해 주세요.');
  }catch(e){B.status('ZIP 전체 백업 실패: '+(e.message||e),true)}
- finally{busy=false;btn.disabled=false}
+ finally{busy=false;btn.disabled=false;btn.textContent=original}
 }
 async function loadZip(blob){
  const zip=await Z.open(blob),manifest=JSON.parse(await zip.readText('manifest.json'));
