@@ -221,11 +221,15 @@ test('SoundCraft: compiled WASM opens real egui, audio context resumes after ges
   await page.waitForFunction(async()=>{
    const native=await GulliverStudioStorage.official();
    return native.some(x=>x.kind==='music'&&x.blob.size>1000000);
-  },{timeout:30000});
-  console.log('SOUNDCRAFT 2.3 ARCHIVE',JSON.stringify(await page.evaluate(async()=>{
-   const row=(await GulliverStudioStorage.official()).find(x=>x.kind==='music');
-   return{name:row.name,size:row.size};
-  })));
+  },null,{timeout:90000});
+  const savedDetails=await page.evaluate(async()=>{
+   const rows=await GulliverStudioStorage.official();
+   return {status:document.getElementById('officialStatus')?.textContent,
+    native:rows.map(x=>({name:x.name,size:x.size,blobSize:x.blob?.size,opfs:!!x.opfsKey}))};
+  });
+  console.log('SOUNDCRAFT 2.4 OPFS ARCHIVE',JSON.stringify(savedDetails));
+  assert.ok(savedDetails.native.some(x=>x.size===sessionBytes.length),
+   'Saved SoundCraft must retain the exact 66MB original: '+JSON.stringify(savedDetails));
 
   // SoundCraft's official web shell supports dropping a session bundle
   // anywhere on its canvas; unlike Ctrl+O this path needs no OS picker.
