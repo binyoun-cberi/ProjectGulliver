@@ -39,15 +39,25 @@ test('실제 Chromium: 자동 저장/새로고침 복원/사진 소재 삽입/JS
   await page.goto(URL,{waitUntil:'domcontentloaded'});
   await page.locator('#toolNav button[data-kind="design"]').click();
   const frame=page.frameLocator('#editorFrame');
-  await frame.locator('#projectTitle').waitFor();
+  await page.locator('#proxy-projectTitle').waitFor();
+  assert.equal(await page.locator('body').getAttribute('class'),'studio-managed');
+  assert.equal(await page.locator('#studioPalette').isVisible(),true);
   await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor({timeout:15000});
-  await frame.locator('#projectTitle').fill('저장 복원 자동검사 도안');
-  await frame.locator('#projectTitle').press('Tab');
+  await page.locator('#proxy-projectTitle').fill('저장 복원 자동검사 도안');
+  await page.locator('#proxy-projectTitle').press('Tab');
+  // New shared add palette operates the underlying native design tools.
+  await page.locator('[data-palette="add"]').click();
+  await page.locator('#insertList').getByRole('button',{name:'글씨'}).click();
+  await page.locator('#proxy-shapeText').waitFor();
+  await page.locator('#proxy-shapeText').fill('공통 편집 패널 테스트');
+  await page.locator('#proxy-shapeText').press('Tab');
+  assert.ok((await frame.locator('#sheet').textContent()).includes('공통 편집 패널 테스트'));
   await savedProject(page,'저장 복원 자동검사 도안');
 
   // Upload to common shelf, inject without constructing DataTransfer (iOS-safe).
   const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/bdoAAAAASUVORK5CYII=','base64');
   await page.locator('#assetUpload').setInputFiles({name:'test-pixel.png',mimeType:'image/png',buffer:png});
+  await page.locator('[data-inspector="assets"]').click();
   await page.locator('#assetList .asset-item').first().waitFor();
   await page.locator('#assetList .asset-item .tiny.open').first().click();
   await frame.locator('#sheet image').first().waitFor();
@@ -55,24 +65,32 @@ test('실제 Chromium: 자동 저장/새로고침 복원/사진 소재 삽입/JS
   await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor();
   await page.waitForTimeout(700);
   await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('[data-inspector="projects"]').click();
   await page.locator('#projectList .project-item').filter({hasText:'저장 복원 자동검사 도안'}).first().waitFor();
   await page.locator('#projectList .project-item').filter({hasText:'저장 복원 자동검사 도안'}).first().getByRole('button',{name:'열기'}).click();
-  await frame.locator('#projectTitle').waitFor();
-  assert.equal(await frame.locator('#projectTitle').inputValue(),'저장 복원 자동검사 도안');
+  await page.locator('#proxy-projectTitle').waitFor();
+  assert.equal(await page.locator('#proxy-projectTitle').inputValue(),'저장 복원 자동검사 도안');
+  assert.ok((await frame.locator('#sheet').textContent()).includes('공통 편집 패널 테스트'));
   assert.equal(await frame.locator('#sheet image').count(),1);
 
   // Slides: actual iframe editing and persisted project.
   await page.locator('#toolNav button[data-kind="slides"]').click();
   const slides=page.frameLocator('#editorFrame');
-  await slides.locator('#deckTitle').waitFor();
-  await slides.locator('#deckTitle').fill('자동검사 발표');
+  await page.locator('#proxy-deckTitle').waitFor();
+  await page.locator('#templateList').getByRole('button',{name:'우리 반 퀴즈'}).click();
+  await page.locator('#proxy-deckTitle').fill('자동검사 발표');
+  await page.locator('[data-palette="pages"]').click();
+  assert.ok(await page.locator('#pageList .palette-slide').count()>=3);
   await savedProject(page,'자동검사 발표');
 
   // Document: edit a real form and commit it to IndexedDB.
   await page.locator('#toolNav button[data-kind="document"]').click();
   const document=page.frameLocator('#editorFrame');
-  await document.locator('#titleInput').waitFor();
-  await document.locator('#titleInput').fill('자동검사 가정통신문');
+  await page.locator('#proxy-titleInput').waitFor();
+  await page.locator('[data-palette="add"]').click();
+  await page.locator('#insertList').getByRole('button',{name:'소제목'}).click();
+  await document.locator('#blocks .heading').last().waitFor();
+  await page.locator('#proxy-titleInput').fill('자동검사 가정통신문');
   await savedProject(page,'자동검사 가정통신문');
 
   // Existing standalone JSON imported from a different editor should be
@@ -85,6 +103,7 @@ test('실제 Chromium: 자동 저장/새로고침 복원/사진 소재 삽입/JS
 
   // Exported backup is a complete JSON project, not just the old format.
   const downloadPromise=page.waitForEvent('download');
+  await page.locator('[data-inspector="projects"]').click();
   await page.locator('#exportProject').click();
   const download=await downloadPromise;
   assert.ok(download.suggestedFilename().endsWith('.gulliver.json'));
@@ -96,10 +115,22 @@ test('실제 Chromium: 자동 저장/새로고침 복원/사진 소재 삽입/JS
   await page.evaluate(()=>{
    window.GulliverStudioStorage.saveProject=async()=>{throw new Error('가상 저장 공간 오류')};
   });
-  await document.locator('#titleInput').fill('저장 실패 보호 테스트');
+  await page.locator('[data-inspector="properties"]').click();
+  await page.locator('#proxy-titleInput').fill('저장 실패 보호 테스트');
   await page.locator('#toolNav button[data-kind="design"]').click();
   await page.locator('#saveStatus').filter({hasText:'저장 실패'}).waitFor();
   assert.equal(await page.locator('#toolNav button[data-kind="document"]').getAttribute('aria-current'),'true');
+  // Narrow viewport: both common drawers must be reachable and closeable.
+  await page.setViewportSize({width:390,height:844});
+  await page.locator('#openPalette').click();
+  assert.equal(await page.locator('#studioPalette').getAttribute('class'),'studio-palette is-open');
+  await page.locator('[data-palette="templates"]').click();
+  await page.locator('#drawerShade').click({position:{x:350,y:500}});
+  assert.ok(!(await page.locator('#studioPalette').getAttribute('class')).includes('is-open'));
+  await page.locator('#openInspector').click();
+  assert.ok((await page.locator('.sidebar').getAttribute('class')).includes('is-open'));
+  await page.locator('[data-inspector="assets"]').click();
+  await page.locator('#drawerShade').click({position:{x:10,y:500}});
   assert.deepEqual(errors,[],'Browser JavaScript errors: '+errors.join(' | '));
  }finally{
   if(browser)await browser.close();
