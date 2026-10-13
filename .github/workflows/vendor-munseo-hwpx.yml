@@ -1,0 +1,106 @@
+name: Install and validate 문서 뚝딱 HWPX export
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/vendor-munseo-hwpx.yml'
+      - 'scripts/install-munseo-hwpx.sh'
+      - 'munseo-hwpx-core.js'
+      - 'munseo-hwpx.js'
+      - 'tests/munseo-hwpx.test.cjs'
+  workflow_dispatch:
+
+concurrency:
+  group: gulliver-munseo-hwpx-vendor
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    if: github.repository == 'binyoun-cberi/ProjectGulliver'
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - name: Checkout ProjectGulliver
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: true
+
+      - name: Install exact HWPX browser module from npm
+        shell: bash
+        run: bash scripts/install-munseo-hwpx.sh
+
+      - name: Test templates and real HWPX archive generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/munseo-hwpx.test.cjs tests/munseo-ttak.test.cjs
+          node --check munseo-hwpx.js
+          node --check vendor/hwpxjs/hwpxjs.browser.mjs
+          test -s vendor/hwpxjs/LICENSE
+          test -s vendor/hwpxjs/version.json
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          import {createRequire} from 'node:module';
+          import {htmlToHwpx,default as HwpxReader} from './vendor/hwpxjs/hwpxjs.browser.mjs';
+          const require=createRequire(import.meta.url);
+          const C=require('./munseo-core.js'),H=require('./munseo-hwpx-core.js');
+          const d=C.template('notice');
+          d.title='가정통신문 한글 저장 테스트';
+          d.blocks.push({type:'paragraph',text:'학생 안내 내용과 한글이 보존됩니다.'});
+          const bytes=await htmlToHwpx(H.toHtml(C.validate(d)),{title:d.title,creator:'뚝딱교실'});
+          assert.ok(bytes instanceof Uint8Array&&bytes.length>1000);
+          fs.writeFileSync('/tmp/munseo-hwpx-smoke.hwpx',bytes);
+          const reader=new HwpxReader();
+          await reader.loadFromArrayBuffer(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.length));
+          const text=await reader.extractText();
+          assert.ok(text.includes('가정통신문')&&text.includes('학생 안내 내용'));
+          console.log('HWPX round trip read/produce succeeded. Bytes:',bytes.length);
+          JS
+          python3 - <<'PY'
+          from zipfile import ZipFile, ZIP_STORED
+          from xml.etree import ElementTree
+          from pathlib import Path
+          from hashlib import sha256
+          import json
+
+          p=Path('/tmp/munseo-hwpx-smoke.hwpx')
+          with ZipFile(p) as z:
+            names=z.namelist()
+            required=['mimetype','META-INF/container.xml','META-INF/manifest.xml',
+                      'version.xml','Contents/content.hpf','Contents/header.xml','Contents/section0.xml']
+            for path in required:
+              assert path in names, f'Missing required HWPX package entry: {path}'
+            assert names[0]=='mimetype', 'mimetype must be the first ZIP entry'
+            assert z.getinfo('mimetype').compress_type==ZIP_STORED
+            assert z.testzip() is None, 'Corrupt ZIP contents'
+            assert z.read('mimetype').decode().strip() in ('application/owpml','application/hwp+zip')
+            for path in names:
+              if path.lower().endswith(('.xml','.hpf')):
+                ElementTree.fromstring(z.read(path))
+            sec=z.read('Contents/section0.xml').decode('utf-8')
+            assert '가정통신문' in sec and '학생 안내 내용' in sec
+            assert 'Contents/section0.xml' in z.read('Contents/content.hpf').decode()
+          pkg=json.loads(Path('vendor/hwpxjs/version.json').read_text())
+          assert pkg['name']=='@ssabrojs/hwpxjs' and pkg['version']=='0.4.0' and pkg['license']=='MIT'
+          print('HWPX OWPML package and Korean XML validated')
+          PY
+
+      - name: Publish validated HWPX static runtime to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f -- vendor/hwpxjs/
+          if git diff --cached --quiet; then
+            echo "Same verified HWPX browser package already committed"
+            exit 0
+          fi
+          git commit -m 'chore(munseo): vendor verified HWPX browser writer v0.4.0'
+          git pull --rebase origin main
+          git push origin HEAD:main
