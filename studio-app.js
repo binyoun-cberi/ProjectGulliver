@@ -79,13 +79,6 @@ function updateNav(){
  $('workspaceSubtitle').textContent=tool?tool.export:'필요한 자료를 골라 만들고 다시 꺼내 보세요.';
  $('studioHome').hidden=!!tool;$('editorArea').hidden=!tool;
  $('saveStatus').hidden=!tool||!tool.managed||advancedOfficial;
- if(tool&&['video','music'].includes(activeKind)&&advancedOfficial){
-  $('newProject').hidden=true;
-  $('renameProject').hidden=true;
-  $('manualSave').hidden=true;
-  $('exportProject').hidden=true;
- }
-
  const targets=T.destinations(activeKind),canShare=targets.length>0;
  $('transferBar').hidden=!canShare;
  $('docPdfGuide').hidden=activeKind!=='document';
@@ -100,9 +93,16 @@ function updateNav(){
  $('renameProject').hidden=!tool||!tool.managed;
  $('manualSave').hidden=!tool||!tool.managed;
  $('exportProject').hidden=!tool||!tool.managed;
+ if(tool&&['video','music'].includes(activeKind)&&advancedOfficial){
+  $('newProject').hidden=true;
+  $('renameProject').hidden=true;
+  $('manualSave').hidden=true;
+  $('exportProject').hidden=true;
+ }
+
  $('openOriginal').hidden=!tool;
  if(tool){$('openOriginal').href=tool.href;$('editorFrame').title=tool.label+' 편집기';}
- $('frameHelp').textContent=tool?(tool.managed?'왼쪽 템플릿과 오른쪽 속성을 이용해 편집하세요. 변경 내용은 기기에 자동 저장돼요.':'그림·PDF의 원본은 자동 보관되지 않아요. 각 도구 안에서 직접 저장해 주세요.'):'';
+ $('frameHelp').textContent=advancedOfficial?'공식 ArtCraft 고급 편집기의 프로젝트는 별도로 저장해야 해요. 통합 작업 보관함과 자동 동기화되지 않아요.':tool?(tool.managed?'왼쪽 템플릿과 오른쪽 속성을 이용해 편집하세요. 변경 내용은 기기에 자동 저장돼요.':'그림·PDF의 원본은 자동 보관되지 않아요. 각 도구 안에서 직접 저장해 주세요.'):'';
  window.GulliverStudioLayout?.toolChanged(activeKind);
 }
 async function refreshProjects(){
