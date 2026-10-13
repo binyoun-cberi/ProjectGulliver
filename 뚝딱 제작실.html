@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f5f6fb">
-<meta name="description" content="뚝딱 제작실 — 그림, PDF, 도안, 발표, 문서를 한곳에서 만들고 프로젝트와 사진을 기기에 보관하는 교사용 통합 제작실">
+<meta name="description" content="뚝딱 제작실 — 그림, PDF, 도안, 발표, 문서, 영상, 음악을 한곳에서 만들고 보관하는 교사용 통합 제작실">
 <title>뚝딱 제작실 | 뚝딱교실</title>
 <link rel="icon" href="logo.png">
 <style>
@@ -228,7 +228,7 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
    <div class="intro" id="studioHome">
     <div><span class="eyebrow">모든 수업자료를 한곳에서</span><h1>오늘 필요한 자료, 여기에서 뚝딱.</h1><p>자료를 만들고, 이름을 붙여 보관하고, 다시 수정할 수 있어요. 자주 쓰는 사진도 소재함에 넣어 두고 여러 문서에서 꺼내 쓰세요.</p></div>
     <a class="btn primary" href="lesson.html" style="padding:16px;text-align:center">수업 만들기 · 자료를 모아 바로 수업하기 →</a><div class="start-grid" id="startCards"></div>
-    <section class="start-latest"><h2>최근에 작업한 자료</h2><p class="note" style="font-size:12px;color:var(--muted)">이 기기에 저장된 도안·발표·문서를 다시 열 수 있어요.</p><div id="recentProjects"></div></section>
+    <section class="start-latest"><h2>최근에 작업한 자료</h2><p class="note" style="font-size:12px;color:var(--muted)">이 기기에 저장된 도안·발표·문서·영상·음악을 다시 열 수 있어요.</p><div id="recentProjects"></div></section>
    </div>
    <div class="frame-wrap" id="editorArea" hidden>
     <div class="frame-notice"><span id="frameHelp">편집기를 불러오는 중이에요.</span><button type="button" id="exitEditor">제작실 홈으로</button></div>
@@ -251,12 +251,12 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
   </div>
   <section id="inspectorProjects" class="right-pane">
   <header><h2>내 작업</h2><button id="exportProject" type="button" class="tiny" hidden>원본 백업</button></header>
-  <p class="note">도안·발표·문서는 자동 저장돼요. 아래에서 검색하거나 폴더별로 정리할 수 있어요.</p>
+  <p class="note">도안·발표·문서·영상·음악은 자동 저장돼요. 아래에서 검색하거나 폴더별로 정리할 수 있어요.</p>
   <div class="library-controls" aria-label="내 작업 검색 및 정렬">
    <input id="librarySearch" type="search" placeholder="작업 이름 검색" aria-label="작업 이름 검색">
    <div class="library-filter-row">
     <select id="libraryFolder" aria-label="프로젝트 폴더 선택"><option value="all">전체 폴더</option><option value="unfiled">미분류</option></select>
-    <select id="libraryKind" aria-label="제작물 종류"><option value="all">모든 종류</option><option value="design">도안</option><option value="slides">발표</option><option value="document">문서</option></select>
+    <select id="libraryKind" aria-label="제작물 종류"><option value="all">모든 종류</option><option value="design">도안</option><option value="slides">발표</option><option value="document">문서</option><option value="video">영상</option><option value="music">음악</option></select>
    </div>
    <select id="librarySort" aria-label="정렬"><option value="recent">최근 수정순</option><option value="old">오래된 작업순</option><option value="name">이름순</option></select>
    <div class="library-actions">
@@ -272,7 +272,7 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
    <button id="libraryBackup" type="button" class="btn primary">전체 백업 저장</button>
    <label for="libraryRestore" class="btn" style="cursor:pointer;text-align:center">백업 복원<input id="libraryRestore" type="file" accept=".json,application/json" hidden></label>
   </div>
-  <p class="note" style="margin:9px 0">통합 백업에는 제작 프로젝트·사진·폴더·기존 내 활동이 포함돼요. 개인정보가 담길 수 있으니 파일을 안전하게 보관하세요. 복원은 기존 자료를 지우지 않고 추가해요.</p>
+  <p class="note" style="margin:9px 0">통합 백업에는 제작 프로젝트·사진·영상 원본·폴더·기존 내 활동이 포함돼요. 개인정보가 담길 수 있으니 파일을 안전하게 보관하세요. 복원은 기존 자료를 지우지 않고 추가해요.</p>
   <label for="importProject" class="btn" style="display:block;text-align:center;cursor:pointer;margin-top:10px">이전 JSON 작업 불러오기<input id="importProject" type="file" accept=".json,application/json" hidden></label>
   </section>
   <section id="inspectorAssets" class="right-pane" hidden>
@@ -293,6 +293,7 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
  </dialog>
  <div class="drawer-shade" id="drawerShade" hidden></div>
 </div>
+<script src="studio-media-core.js"></script>
 <script src="studio-core.js"></script>
 <script src="studio-storage.js"></script>
 <script src="studio-transfer-core.js"></script>
