@@ -243,15 +243,7 @@ function onFrameLoad(){
  }catch(e){busy=false;status('편집기 화면에 접근하지 못했어요. 새 창에서 열기를 이용해 주세요.',true);return;}
  if(!C.managed(expected)){
   busy=false;window.GulliverStudioLayout?.toolChanged(expected);
-  if(expected==='video'&&transfer.audio){
-   if(typeof adapter.attachStoredAudio!=='function')throw Error('영상 제작실 배경음악 연결 기능이 없어요.');
-   await adapter.attachStoredAudio(transfer.audio);
-   await sync(true);
-  }else if(expected==='video'&&transfer.assets){
-   if(typeof adapter.insertImage!=='function')throw Error('영상 장면 삽입 기능이 없어요.');
-   for(const asset of transfer.assets)await adapter.insertImage(new File([asset.blob],asset.name,{type:asset.mime}));
-   await sync(true);
-  }else if(expected==='pdf'){
+  if(expected==='pdf'){
    if(pendingTransfer?.target===expected)finishTransfer(expected,child.GulliverStudioAdapter).catch(()=>{});
    else if(pendingPdf)finishPrintedPdf(child.GulliverStudioAdapter).catch(()=>{});
   }
@@ -428,7 +420,15 @@ async function finishTransfer(expected,adapter){
  const transfer=pendingTransfer;pendingTransfer=null;
  try{
   if(!adapter)throw Error('받는 제작실이 준비되지 않았어요.');
-  if(expected==='pdf'){
+  if(expected==='video'&&transfer.audio){
+   if(typeof adapter.attachStoredAudio!=='function')throw Error('영상 제작실 배경음악 연결 기능이 없어요.');
+   await adapter.attachStoredAudio(transfer.audio);
+   await sync(true);
+  }else if(expected==='video'&&transfer.assets){
+   if(typeof adapter.insertImage!=='function')throw Error('영상 장면 삽입 기능이 없어요.');
+   for(const asset of transfer.assets)await adapter.insertImage(new File([asset.blob],asset.name,{type:asset.mime}));
+   await sync(true);
+  }else if(expected==='pdf'){
    if(typeof adapter.insertImagePdf!=='function')throw Error('PDF 이미지 변환 기능을 불러오지 못했어요.');
    await adapter.insertImagePdf(transfer.asset.blob,transfer.asset.name.replace(/\.(png|jpe?g)$/i,''));
   }else{
