@@ -43,6 +43,11 @@ label input{border:1px solid #d4dbea;border-radius:9px;padding:10px;width:100%;m
 #officialEditorFrame{width:100%;height:calc(100dvh - 225px);min-height:700px;border:1px solid #dbe0eb;border-radius:13px;display:block;background:#14151d}
 .media-disclaimer{font-size:11px;color:#6c7890;padding:7px 12px;line-height:1.65}
 @media(max-width:650px){.media-mode-switch{padding:9px}.media-mode-tabs button{font-size:11px;padding:8px 10px}.official-edit-panel{padding:5px}#officialEditorFrame{height:70dvh;min-height:540px}.official-edit-note a{margin-left:0}}
+
+.official-diagnostic-report{white-space:pre-wrap;overflow-wrap:anywhere;background:#252a3a;border:1px solid #4b546d;color:#eaf0ff;padding:13px;border-radius:9px;font:11px/1.65 ui-monospace,monospace}
+.official-edit-note button{min-height:34px;font-size:11px}
+#officialStatus[data-state="loading"]{color:#6e599a}
+#officialStatus[data-state="ready"]{color:#26764d}
 </style></head><body data-official-kind="music">
 <header class="top"><div><h1>음악 뚝딱</h1><p style="font-size:12px;margin:5px 0 0">박자를 누르고 멜로디를 만들어요. 파일을 업로드하지 않아도 돼요.</p></div><div class="actions"><button id="playMusic" class="primary">▶ 들어보기</button><button id="stopMusic">■ 멈춤</button><button id="exportWav" class="primary">WAV 저장</button></div></header>
 <section class="media-mode-switch" aria-label="제작 모드 선택"><div class="media-mode-tabs" role="tablist"><button id="simpleMode" type="button" role="tab" aria-selected="true">간편 편집</button><button id="officialMode" type="button" role="tab" aria-selected="false" disabled>고급 편집 · SoundCraft</button></div><p id="officialDescription" class="media-mode-description"></p><p id="officialStatus" role="status" aria-live="polite"></p></section>
@@ -68,7 +73,12 @@ label input{border:1px solid #d4dbea;border-radius:9px;padding:10px;width:100%;m
   <strong id="officialVersion">ArtCraft 공식 SoundCraft</strong>
   <span id="officialHelp">고급 편집 모드는 프로그램 자체 파일 저장 기능을 이용해 주세요.</span>
   <a id="officialExternal" href="assets/artcraft/soundcraft/index.html" target="_blank" rel="noopener noreferrer">새 창으로 편집기 열기 ↗</a>
+  <button id="officialRetry" type="button" hidden>편집기 다시 시작</button>
+  <button id="officialWebgl" type="button" hidden>WebGL 호환 모드</button>
+  <button id="officialCpu" type="button" hidden>CPU 안전 모드</button>
+  <button id="officialDiagnostics" type="button">환경 점검</button>
  </div>
+ <pre id="officialDiagnosticReport" class="official-diagnostic-report" role="status" aria-live="polite" hidden></pre>
  <iframe id="officialEditorFrame" title="SoundCraft 공식 ArtCraft 고급 편집기" allow="fullscreen; autoplay; microphone; clipboard-read; clipboard-write"></iframe>
  <p class="media-disclaimer">이 화면의 SoundCraft는 ArtCraft 팀이 배포한 공식 웹 프로그램입니다. 기존 간편 제작기와 작업 파일이 자동으로 합쳐지지는 않습니다. 파일은 공식 편집기에서 별도로 저장하세요.</p>
 </section>
