@@ -83,6 +83,17 @@ async function addClip(file){
  model.clips.push({mediaId:id,name:file.name.slice(0,75),mime:file.type,start:0,duration:seconds});
  current=model.clips.length-1;rerender();await showClip(current);status('장면을 기기 보관함에 추가했어요.');
 }
+$('cleanupMedia').addEventListener('click',async()=>{
+ try{
+  const projects=await S.projects(),used=new Set(model.clips.map(c=>c.mediaId));
+  for(const p of projects)if(p.kind==='video')for(const c of p.payload?.clips||[])used.add(c.mediaId);
+  const orphans=(await S.media()).filter(m=>!used.has(m.id));
+  if(!orphans.length){status('지울 수 있는 미사용 영상 원본이 없어요.');return}
+  if(!confirm('어느 작업에서도 사용하지 않는 원본 '+orphans.length+'개를 기기에서 지울까요?'))return;
+  for(const m of orphans)await S.deleteMedia(m.id);
+  status('사용하지 않는 원본 '+orphans.length+'개를 정리했어요. 다른 작업에서 사용하는 파일은 보존했어요.');
+ }catch(e){status('정리 중 오류: '+(e.message||e),true)}
+});
 $('clipFiles').addEventListener('change',async e=>{
  const files=[...e.target.files||[]];e.target.value='';
  for(const f of files){try{await addClip(f)}catch(err){status(err.message,true);break}}
