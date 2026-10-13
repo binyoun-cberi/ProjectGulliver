@@ -62,7 +62,8 @@ function updateNav(){
  $('exportProject').hidden=!tool||!tool.managed;
  $('openOriginal').hidden=!tool;
  if(tool){$('openOriginal').href=tool.href;$('editorFrame').title=tool.label+' 편집기';}
- $('frameHelp').textContent=tool?(tool.managed?'현재 작업은 기기에 자동 저장돼요. 오른쪽에서 다른 작업을 열 수 있어요.':'이 도구의 원본 파일은 자동 저장되지 않아요. 도구 안에서 직접 저장해 주세요.'):'';
+ $('frameHelp').textContent=tool?(tool.managed?'왼쪽 템플릿과 오른쪽 속성을 이용해 편집하세요. 변경 내용은 기기에 자동 저장돼요.':'그림·PDF의 원본은 자동 보관되지 않아요. 각 도구 안에서 직접 저장해 주세요.'):'';
+ window.GulliverStudioLayout?.toolChanged(activeKind);
 }
 async function refreshProjects(){
  try{latestProjects=(await S.projects()).map(x=>{try{return C.normalizeProject(x)}catch{return null}}).filter(Boolean)}
@@ -178,12 +179,13 @@ function onFrameLoad(){
  const expected=activeKind,signature=++token;
  let child;
  try{child=frame.contentWindow;const doc=frame.contentDocument;
-  if(!doc||!doc.body)return;
+  // Ignore about:blank load events from unloading the previous editor.
+  if(!doc||!doc.body||!doc.location?.search?.includes('studio=1'))return;
   const style=doc.createElement('style');style.id='gulliver-studio-inset';
   style.textContent='body>header,body>section.hero,body>section.intro,body>footer,body>section.advanced,body>.advanced,body>.topbar,body>.hero{display:none!important}body{margin:0!important;background:#fff!important}body>main,body>.workspace,body>.layout,body>.panels{max-width:none!important;width:100%!important;margin:0!important;padding:14px!important;gap:12px!important}body>.workspace{grid-template-columns:190px minmax(0,1fr) 230px!important}body>.layout{grid-template-columns:1fr!important}body>.panels{grid-template-columns:1fr!important}@media(max-width:1150px){body>.workspace{display:flex!important;flex-direction:column!important}body>.workspace>*{width:100%!important}}';
   doc.head.append(style);
  }catch(e){busy=false;status('편집기 화면에 접근하지 못했어요. 새 창에서 열기를 이용해 주세요.',true);return;}
- if(!C.managed(expected)){busy=false;return;}
+ if(!C.managed(expected)){busy=false;window.GulliverStudioLayout?.toolChanged(expected);return;}
  const adapter=child.GulliverStudioAdapter;
  if(!adapter||adapter.kind!==expected){busy=false;status('이 제작실의 자동 저장 연결을 찾을 수 없어요. 개별 원본 저장을 사용해 주세요.',true);return;}
  try{
@@ -191,6 +193,7 @@ function onFrameLoad(){
   if(signature!==token||expected!==activeKind)return;
   lastSnapshot='';
   busy=false;live=true;
+  window.GulliverStudioLayout?.mount(expected,frame);
   clearInterval(pulse);
   pulse=setInterval(()=>{if(expected===activeKind)sync().catch(()=>{})},1500);
   let debounceTimer=null;

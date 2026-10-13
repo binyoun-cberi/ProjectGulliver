@@ -88,3 +88,32 @@ test('도안·발표·문서는 통합 작업 저장 API 제공, 독립 저장 �
   assert.ok(code.includes('beforeunload'));
  }
 });
+
+test('1.2 공통 팔레트와 속성 도구는 실제 HTML 버튼/입력과 연동',()=>{
+ const html=fs.readFileSync('뚝딱 제작실.html','utf8');
+ const code=fs.readFileSync('studio-layout.js','utf8');
+ const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
+ const refs=[...code.matchAll(/\$\('([^']+)'\)/g)].map(x=>x[1]);
+ assert.deepEqual([...new Set(refs.filter(x=>!ids.has(x)))],[]);
+ for(const id of ['studioPalette','templateList','insertList','pageList','inspectorProperties','inspectorFields','studioQuickBar','openPalette','openInspector','drawerShade'])
+  assert.ok(ids.has(id),'공통 화면 컨트롤 누락: '+id);
+ assert.ok(code.includes('native.dispatchEvent'));
+ assert.ok(code.includes('studio-v12-embedded-style'));
+ assert.ok(code.includes('setRight(\'properties\')'));
+});
+test('1.2 개별 저장·발표 버튼은 공통 툴바에서 원래 구현을 호출',()=>{
+ const code=fs.readFileSync('studio-layout.js','utf8');
+ const expected={
+  '도안 뚝딱.html':['undo','redo','exportSvg','exportPng','print'],
+  '발표 뚝딱.html':['previous','next','present','exportPptx','printDeck'],
+  '문서 뚝딱.html':['undo','redo','saveHwpx','saveDocx','savePdf']
+ };
+ for(const [file,controls] of Object.entries(expected)){
+  const html=fs.readFileSync(file,'utf8');
+  for(const id of controls){
+   assert.ok(html.includes('id="'+id+'"'),file+': '+id);
+   assert.ok(code.includes("'"+id+"'"),'공통 툴바의 네이티브 버튼 연결 누락: '+id);
+  }
+ }
+ assert.ok(code.includes('target.click()'),'기존 버튼이 직접 실행되어야 함');
+});
