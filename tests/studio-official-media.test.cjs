@@ -31,6 +31,9 @@ test('Original Rust web app is not rebranded, custom quick editor is kept',()=>{
  }
  assert.match(bridge,/gulliver-install\.json/);
  assert.match(bridge,/show\('official'\)/);
+ assert.match(bridge,/restoreQuick/);
+ assert.match(bridge,/userSelectedMode/);
+ assert.match(parent,/editor=simple/);
  assert.match(parent,/gulliver:official-media/);
  assert.match(parent,/자동 동기화되지 않아요/);
 });

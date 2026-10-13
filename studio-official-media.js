@@ -10,6 +10,8 @@ const frame=q('officialEditorFrame'),panel=q('officialEditorPanel'),simple=q('si
 const status=q('officialStatus'),help=q('officialHelp'),link=q('officialExternal');
 const tabs=[q('simpleMode'),q('officialMode')];
 let available=null,loaded=false,selected='simple',ready=false,loadingSince=0,checker=null,loadError='',relPath='index.html';
+const restoreQuick=new URLSearchParams(location.search).get('editor')==='simple';
+let userSelectedMode=false;
 const TIMEOUT_MS=90000;
 function announce(message,state='ok'){
  status.textContent=message;status.dataset.state=state==='error'?'error':state;
@@ -132,13 +134,15 @@ async function check(){
   available=true;q('officialMode').disabled=false;
   q('officialMode').textContent='고급 편집 · '+title+' '+manifest.version;
   q('officialVersion').textContent='ArtCraft 공식 '+title+' '+manifest.version;
-  show('official');
+  // Do not replace an explicitly chosen mode, or hide a saved quick project
+  // behind the separately stored official WASM editor after async verification.
+  if(!restoreQuick&&!userSelectedMode)show('official');
  }catch(e){
   available=false;announce('간편 편집은 정상 사용 가능해요. 고급 프로그램 확인 실패: '+e.message,'error');
  }
 }
-q('simpleMode').addEventListener('click',()=>show('simple'));
-q('officialMode').addEventListener('click',()=>show('official'));
+q('simpleMode').addEventListener('click',()=>{userSelectedMode=true;show('simple')});
+q('officialMode').addEventListener('click',()=>{userSelectedMode=true;show('official')});
 q('officialRetry').addEventListener('click',()=>start());
 q('officialWebgl').addEventListener('click',()=>start('webgl'));
 q('officialCpu').addEventListener('click',()=>{if(isVideo)start('cpu')});
