@@ -46,7 +46,7 @@ jobs:
           import fs from 'node:fs';
           import assert from 'node:assert/strict';
           import {createRequire} from 'node:module';
-          import {htmlToHwpx,default as HwpxReader} from './vendor/hwpxjs/hwpxjs.browser.mjs';
+          import {htmlToHwpx,HwpxReader} from './vendor/hwpxjs/hwpxjs.browser.mjs';
           const require=createRequire(import.meta.url);
           const C=require('./munseo-core.js'),H=require('./munseo-hwpx-core.js');
           const d=C.template('notice');
