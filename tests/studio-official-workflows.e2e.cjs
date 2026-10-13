@@ -184,7 +184,9 @@ test('SoundCraft: compiled WASM opens real egui, audio context resumes after ges
   await page.keyboard.press('Control+o');
   const input=await picker;
   if(input instanceof Error)throw Error('SoundCraft Ctrl+O did not show a session file picker: '+input.message);
-  await input.setFiles({name:session.suggestedFilename(),mimeType:'application/zip',buffer:sessionBytes});
+  const restoredPath='/tmp/gulliver-soundcraft-qa.scraftz';
+  fs.writeFileSync(restoredPath,sessionBytes);
+  await input.setFiles(restoredPath);
   await sleep(1200);
   assert.equal(await frame.locator('#soundcraft_loading').count(),0,
     'SoundCraft restarted/froze after opening the saved session');
