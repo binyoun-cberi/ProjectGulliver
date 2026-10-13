@@ -108,7 +108,7 @@ function updateNav(){
 
  $('openOriginal').hidden=!tool;
  if(tool){$('openOriginal').href=tool.href;$('editorFrame').title=tool.label+' 편집기';}
- $('frameHelp').textContent=advancedOfficial?'공식 프로젝트를 내 작업에 보관할 수 있어요. 자동 저장·동기화는 지원하지 않습니다.':tool?(tool.managed?'왼쪽 템플릿과 오른쪽 속성을 이용해 편집하세요. 변경 내용은 기기에 자동 저장돼요.':'그림·PDF의 원본은 자동 보관되지 않아요. 각 도구 안에서 직접 저장해 주세요.'):'';
+ $('frameHelp').textContent=(advancedOfficial||openingOfficialId)?'공식 프로젝트를 내 작업에 보관할 수 있어요. 자동 저장·동기화는 지원하지 않습니다.':tool?(tool.managed?'왼쪽 템플릿과 오른쪽 속성을 이용해 편집하세요. 변경 내용은 기기에 자동 저장돼요.':'그림·PDF의 원본은 자동 보관되지 않아요. 각 도구 안에서 직접 저장해 주세요.'):'';
  window.GulliverStudioLayout?.toolChanged(activeKind);
 }
 async function refreshProjects(){
