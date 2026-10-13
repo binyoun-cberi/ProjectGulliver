@@ -79,9 +79,14 @@ test('Chrome: 프로젝트 폴더·검색·통합 백업·기기 변경 복원 �
   assert.deepEqual(await count(restored),{projects:0,assets:0,folders:0,activities:0});
   restored.once('dialog',d=>d.accept());
   await restored.locator('#libraryRestore').setInputFiles({name:'백업.json',mimeType:'application/json',buffer:bytes});
+  // Wait for the entire restoration handler to finish, not an intermediate
+  // IndexedDB count while the legacy localStorage import is still pending.
+  await restored.locator('#message').filter({hasText:'통합 백업 복원 완료'}).waitFor();
   await restored.waitForFunction(async()=>{
-   const p=await GulliverStudioStorage.projects();
-   return p.length===1&&ClassroomWorkspace.read().activities.length===1;
+   const s=GulliverStudioStorage;
+   return (await s.projects()).length===1&&(await s.assets()).length===1
+     &&(await s.folders()).length===1&&ClassroomWorkspace.read().activities.length===1
+     &&document.getElementById('legacyActivityList').textContent.includes('세계 여러 나라 퀴즈');
   });
   assert.deepEqual(await count(restored),{projects:1,assets:1,folders:1,activities:1});
   await restored.locator('#libraryFolder').selectOption({label:'세계 여러 나라'});
@@ -93,7 +98,11 @@ test('Chrome: 프로젝트 폴더·검색·통합 백업·기기 변경 복원 �
   // Restore again: append copies, never replace existing project or image IDs.
   restored.once('dialog',d=>d.accept());
   await restored.locator('#libraryRestore').setInputFiles({name:'백업.json',mimeType:'application/json',buffer:bytes});
-  await restored.waitForFunction(async()=> (await GulliverStudioStorage.projects()).length===2);
+  await restored.waitForFunction(async()=>{
+   const s=GulliverStudioStorage;
+   return (await s.projects()).length===2&&(await s.assets()).length===2
+     &&(await s.folders()).length===1&&ClassroomWorkspace.read().activities.length===2;
+  });
   assert.deepEqual(await count(restored),{projects:2,assets:2,folders:1,activities:2});
 
   const broken=Buffer.from(JSON.stringify({...archive,version:900}));

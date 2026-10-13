@@ -223,7 +223,8 @@ async function restoreArchive(event){
   // All IndexedDB assets, folders, and projects are written in one transaction.
   // On failure it rolls back. Original projects and assets are never overwritten.
   await S.importBatch({projects:newProjects,assets:newAssets,folders:newFolders,media:newMedia});
-  await B.refreshProjects();await B.refreshAssets();await refreshFolders();
+  // Complete legacy activity restoration before refreshing the unified UI.
+  // Partial cross-store states must not be presented as a finished restore.
   let legacyMessage='';
   if(value.activities?.activities?.length){
    try{
@@ -233,6 +234,7 @@ async function restoreArchive(event){
     legacyMessage=' 단, 기존 내 활동은 저장하지 못했어요: '+(e.message||e);
    }
   }
+  await B.refreshProjects();await B.refreshAssets();await refreshFolders();
   renderActivities();
   B.status('통합 백업 복원 완료: 프로젝트 '+newProjects.length+'개, 사진 '+newAssets.length+'개, 영상 원본 '+newMedia.length+'개를 추가했어요.'+legacyMessage);
  }catch(e){B.status('백업 복원 실패: '+(e.message||e),true)}

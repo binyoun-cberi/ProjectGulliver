@@ -198,6 +198,8 @@ async function leave(save=true){
 }
 async function moveAway(){
  if(navigationBusy)return false;
+ if(advancedOfficial&&['video','music'].includes(activeKind)&&
+    !confirm('공식 ArtCraft 고급 편집기의 작업은 뚝딱 제작실에 자동 저장되지 않아요. 공식 편집기에서 프로젝트를 별도로 저장하고 이동하시겠어요?'))return false;
  navigationBusy=true;
  try{await leave();return true}
  catch(e){saveError(e);return false}
@@ -216,7 +218,10 @@ async function start(kind,existing=null){
  saveLabel(C.managed(kind)?'편집기 시작 중…':'도구 내에서 직접 저장');
  updateNav();renderProjects();
  const path=C.TOOLS[kind].href;
- frame.src=path+'?studio=1';
+ // Saved quick-edit projects must reopen in the editor that created them.
+ // A separate official FilmCraft/SoundCraft session is never this saved payload.
+ const quickProject=!!existing&&(kind==='video'||kind==='music');
+ frame.src=path+'?studio=1'+(quickProject?'&editor=simple':'');
  status(C.managed(kind)?'작업을 여는 중이에요. 변경 사항은 자동으로 저장돼요.':'편집기를 불러오고 있어요. 파일은 해당 도구 안에서 저장해 주세요.');
  return true;
 }
@@ -475,6 +480,7 @@ window.addEventListener('pagehide',()=>{
 // Browsers cannot guarantee asynchronous database writes during tab close.
 // Warn instead of claiming success if a snapshot has not been committed.
 window.addEventListener('beforeunload',e=>{
+ if(advancedOfficial){e.preventDefault();e.returnValue='';return;}
  if(!activeKind||!C.managed(activeKind)||!live)return;
  try{
   const a=frame.contentWindow?.GulliverStudioAdapter;
