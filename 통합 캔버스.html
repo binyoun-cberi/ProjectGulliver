@@ -1,0 +1,87 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>통합 캔버스 · 뚝딱 제작실</title>
+<style>
+:root{font-family:system-ui,"Noto Sans KR",sans-serif;color:#24344a;background:#f5f6fa}*{box-sizing:border-box}body{margin:0}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:1px solid #dce2ed;border-radius:9px;background:#fff;color:#30435c;padding:9px 11px}
+button:hover{background:#f2f0ff}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #9888ed;outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:#6654bd;color:white;border-color:#6654bd}
+.canvas-app{display:flex;flex-direction:column;min-height:100vh}.top-tools{display:flex;flex-wrap:wrap;gap:7px;align-items:center;padding:11px;background:white;border-bottom:1px solid #e0e4ef}
+.group{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.group label{display:flex;align-items:center;gap:6px;font-size:12px}
+.divider{height:24px;border-left:1px solid #dce2ed;margin:0 5px}
+#designTitle{border:1px solid #e0e5ef;border-radius:8px;padding:8px;max-width:190px;width:160px}
+.editor-grid{display:grid;grid-template-columns:180px minmax(0,1fr) 198px;min-height:600px;flex:1;min-width:0}
+.shelf,.properties{background:#fff;padding:14px 11px;min-width:0;overflow-y:auto;border-right:1px solid #e2e6ef}
+.properties{border-left:1px solid #e2e6ef;border-right:0}
+.shelf h3,.properties h3{font-size:13px;margin:4px 0 12px}
+.shelf button{display:block;text-align:left;width:100%;margin:6px 0;font-size:12px}
+.shelf .separator{border-top:1px solid #e6e9f1;margin:15px 0}
+.shelf .notice,.properties .notice{font-size:11px;color:#7d8799;line-height:1.55}
+.props{display:grid;gap:10px}.props label{font-size:11px;color:#58637a;display:grid;gap:4px}
+.props input,.props select,.props textarea{max-width:100%;width:100%;border:1px solid #d9e0ea;border-radius:8px;padding:7px;background:#fff;color:#293a4e}
+.props textarea{min-height:85px;resize:vertical}.two{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.work{background:#e9ecf3;min-width:0;padding:20px 12px;display:flex;flex-direction:column;align-items:center;gap:10px}
+#stageView{width:100%;display:flex;justify-content:center;align-items:flex-start;overflow:visible;touch-action:pan-y}
+#stageSpace{position:relative;flex:none}
+#stage{position:absolute;top:0;left:0;transform-origin:top left;background:#fff;box-shadow:0 10px 38px #26384f33;overflow:hidden;touch-action:none}
+.item{position:absolute;box-sizing:border-box;touch-action:none;user-select:none;cursor:grab;white-space:pre-wrap;word-break:keep-all;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.item[data-type=text]{line-height:1.23}.item[data-type=image]{object-fit:contain}
+.item.selected{outline:3px solid #7764db;outline-offset:0;z-index:2;overflow:visible}
+.grip{position:absolute;right:-8px;bottom:-8px;width:17px;height:17px;border:2px solid #fff;border-radius:3px;background:#6654bd;cursor:nwse-resize;touch-action:none}
+#editText{position:absolute;z-index:20;resize:none;border:2px solid #6654bd;outline:0;padding:2px 5px;line-height:1.23;background:#fffdf4;box-shadow:0 4px 10px #33415533}
+#editText[hidden]{display:none}
+#status{font-size:12px;color:#51647a;min-height:20px;text-align:center}#pageStrip{width:100%;display:flex;gap:8px;align-items:center;overflow-x:auto;padding:10px 3px;max-width:100%}
+.page{min-width:115px;max-width:160px;display:flex;flex-direction:column;align-items:flex-start;gap:5px;flex-shrink:0;text-align:left;font-size:12px}
+.page.active{border:2px solid #6956c9;background:#f3f0ff}.mini{width:100%;height:49px;border:1px solid #d1d8e5;border-radius:5px;display:grid;place-items:center;color:#506078;overflow:hidden;font-size:10px}
+#photoPicker{display:none}
+@media(max-width:990px){.editor-grid{grid-template-columns:155px minmax(0,1fr)}.properties{grid-column:1/-1;border-top:1px solid #dce3ef;display:block}.props{display:flex;flex-wrap:wrap;gap:8px}.props>label,.props>.two{min-width:128px;max-width:190px;flex:1}}
+@media(max-width:620px){.top-tools{padding:7px;gap:5px}.top-tools button{padding:8px;font-size:12px}
+.editor-grid{display:flex;flex-direction:column}.shelf{display:flex;overflow-x:auto;gap:7px;padding:8px;flex-wrap:nowrap}.shelf h3,.shelf .notice,.shelf .separator{display:none}
+.shelf button{width:auto;flex-shrink:0;white-space:nowrap;margin:0}.work{padding:10px 6px}.properties{padding:9px}.group .divider{display:none}}
+@media print{.top-tools,.shelf,.properties,#pageStrip,#status{display:none!important}.editor-grid,.work,#stageView,#stageSpace{display:block!important;width:100%!important;height:auto!important;margin:0!important;padding:0!important;background:white!important}#stage{position:relative!important;transform:none!important;box-shadow:none!important}.item.selected{outline:none!important}.grip{display:none!important}@page{size:landscape;margin:0}}
+</style></head>
+<body><main class="canvas-app">
+ <div class="top-tools">
+  <label class="group">이름 <input id="designTitle" aria-label="프로젝트 이름" maxlength="90" value="새 발표 자료"></label>
+  <span class="divider"></span>
+  <div class="group">
+   <button id="undo" title="실행 취소 Ctrl+Z">↶ 취소</button><button id="redo" title="다시 실행 Ctrl+Shift+Z">↷ 다시</button>
+   <button id="duplicate" title="선택 요소 복제 Ctrl+D">복제</button><button id="delete" title="선택 요소 삭제">삭제</button>
+  </div>
+  <span class="divider"></span>
+  <div class="group"><label>크기 <select id="layout" aria-label="캔버스 크기"><option value="wide">16:9 발표</option><option value="a4">A4 활동지</option></select></label>
+   <button id="present" type="button">전체 화면 발표</button><button id="exportPng" class="primary" type="button">PNG 저장</button><button id="printPdf" type="button">PDF·인쇄</button></div>
+ </div>
+ <div class="editor-grid">
+  <aside class="shelf"><h3>요소 삽입</h3>
+   <button data-add="text">＋ 글씨</button><button data-add="rect">▭ 네모</button><button data-add="ellipse">◯ 동그라미</button>
+   <button data-add="triangle">△ 세모</button><button data-add="star">☆ 별</button><button data-add="line">╱ 선</button>
+   <button id="addPhoto">＋ 사진</button><input id="photoPicker" type="file" accept="image/png,image/jpeg">
+   <div class="separator"></div><h3>페이지</h3>
+   <button id="newPage">＋ 페이지</button><button id="clonePage">페이지 복제</button><button id="removePage">페이지 삭제</button>
+   <p class="notice">글씨는 두 번 눌러 바로 수정하고, 요소는 끌어서 옮기세요. 보라색 손잡이로 크기를 바꿀 수 있어요.</p>
+  </aside>
+  <section class="work" aria-label="통합 편집 작업 영역">
+   <div id="status" role="status" aria-live="polite">글씨·도형·사진을 선택해서 바로 편집하세요.</div>
+   <div id="stageView"><div id="stageSpace"><div id="stage" aria-label="편집할 현재 페이지">
+    <textarea id="editText" hidden aria-label="선택한 글씨 직접 수정"></textarea>
+   </div></div></div>
+   <div id="pageStrip" aria-label="페이지 목록"></div>
+  </section>
+  <aside class="properties"><h3>선택 요소 속성</h3>
+   <div class="props" id="propertyForm">
+    <label>글씨 <textarea id="propertyText" maxlength="800" placeholder="글씨를 선택하세요"></textarea></label>
+    <div class="two"><label>채우기·글씨색<input id="propertyFill" type="color" value="#253650"></label><label>테두리 색<input id="propertyStroke" type="color" value="#334155"></label></div>
+    <div class="two"><label>글씨 크기<input id="propertyFont" type="number" min="10" max="160" value="38"></label><label>투명도<input id="propertyOpacity" type="range" min="0" max="1" step=".05" value="1"></label></div>
+    <div class="two"><label>왼쪽 X<input id="propertyX" type="number"></label><label>위쪽 Y<input id="propertyY" type="number"></label></div>
+    <div class="two"><label>너비<input id="propertyW" type="number" min="10"></label><label>높이<input id="propertyH" type="number" min="10"></label></div>
+    <label>정렬 <select id="propertyAlign"><option value="left">왼쪽</option><option value="center">가운데</option><option value="right">오른쪽</option></select></label>
+    <div class="group"><button id="bringForward">앞으로</button><button id="sendBack">뒤로</button></div>
+    <label>페이지 배경색<input id="background" type="color" value="#ffffff"></label>
+   </div>
+   <p class="notice" id="propertyHint">요소를 선택하면 글씨·색·크기를 변경할 수 있어요.</p>
+  </aside>
+ </div>
+</main>
+<script src="studio-unified-core.js?v=20261014-30"></script>
+<script src="studio-unified-editor.js?v=20261014-30"></script>
+</body></html>
