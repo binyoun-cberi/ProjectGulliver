@@ -7,7 +7,7 @@ root.DoanCore=api;
 'use strict';
 const W=595,H=842,MAX_OBJECTS=200;
 const PALETTE=['#ffffff','#26384f','#367db4','#f1b64a','#ee7e83','#7cc9ae','#e9eefd','#ffdfe7'];
-const types=['rect','ellipse','triangle','star','line','text'];
+const types=['rect','ellipse','triangle','star','line','text','image'];
 const sizes={A4:{w:595,h:842},A5:{w:420,h:595}};
 let seed=1;
 const nextId=()=> 'shape-'+(seed++);
@@ -17,6 +17,7 @@ const text=(x,y,w,h,value,size=26,fill='#26384f',align='middle')=>({id:nextId(),
 const line=(x,y,w,h,stroke='#64748b',sw=2)=>({id:nextId(),type:'line',x,y,w,h,fill:'none',stroke,strokeWidth:sw});
 const star=(x,y,w,h,fill='#ffd778')=>({id:nextId(),type:'star',x,y,w,h,fill,stroke:'#d18b27',strokeWidth:2});
 const triangle=(x,y,w,h,fill='#eaf4ff')=>({id:nextId(),type:'triangle',x,y,w,h,fill,stroke:'#457cb2',strokeWidth:2});
+const imageShape=(x,y,w,h,src)=>({id:nextId(),type:'image',x,y,w,h,src,fill:'none',stroke:'none',strokeWidth:0});
 function makeTemplate(which='vocabulary'){
  const objects=[];
  const add=(...items)=>objects.push(...items);
@@ -68,6 +69,7 @@ function makeTemplate(which='vocabulary'){
  return {title:{vocabulary:'낱말 그림카드',emotion:'감정 카드',schedule:'하루 순서표',name:'이름표',geometry:'도형 탐험',blank:'빈 A4 도안'}[which]||'빈 A4 도안',size:'A4',objects};
 }
 function safeColor(value,fallback='#ffffff'){return typeof value==='string' && (/^#[0-9a-fA-F]{6}$/.test(value)||value==='none')?value:fallback;}
+function safeImage(value){return typeof value==='string'&&/^data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(value)&&value.length<=3000000?value:'';}
 function num(v,min,max,fallback){return Number.isFinite(Number(v))?Math.max(min,Math.min(max,Number(v))):fallback;}
 function cleanObject(raw,index){
  if(!raw||typeof raw!=='object'||!types.includes(raw.type))throw Error('지원하지 않는 도형이 들어 있어요.');
@@ -80,12 +82,16 @@ function cleanObject(raw,index){
   r:num(raw.r,0,100,10),
   fontSize:num(raw.fontSize,8,130,25),
   align:['start','middle','end'].includes(raw.align)?raw.align:'middle',
-  text:String(raw.text??'').slice(0,400)
+  text:String(raw.text??'').slice(0,400),
+  src:raw.type==='image'?safeImage(raw.src):''
  };
 }
 function validateProject(raw){
  if(!raw||typeof raw!=='object'||!Array.isArray(raw.objects)||raw.objects.length>MAX_OBJECTS)throw Error('올바른 도안 파일이 아니거나 요소가 너무 많아요.');
- return {title:String(raw.title||'교실 도안').slice(0,80),size:['A4','A5'].includes(raw.size)?raw.size:'A4',objects:raw.objects.map(cleanObject)};
+ const objects=raw.objects.map(cleanObject);
+ if(objects.some(o=>o.type==='image'&&!o.src))throw Error('지원하지 않는 이미지 데이터가 들어 있어요.');
+ if(objects.reduce((sum,o)=>sum+o.src.length,0)>20000000)throw Error('도안의 이미지 용량이 너무 커요.');
+ return {title:String(raw.title||'교실 도안').slice(0,80),size:['A4','A5'].includes(raw.size)?raw.size:'A4',objects};
 }
 function xml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));}
 function points(o,count=5,inner=0.48){
@@ -94,6 +100,7 @@ function points(o,count=5,inner=0.48){
 }
 function shape(o){
  const at=' fill="'+xml(safeColor(o.fill))+'" stroke="'+xml(safeColor(o.stroke,'#a7bdd0'))+'" stroke-width="'+num(o.strokeWidth,0,25,2)+'"';
+ if(o.type==='image')return o.src?'<image x="'+o.x+'" y="'+o.y+'" width="'+o.w+'" height="'+o.h+'" preserveAspectRatio="xMidYMid meet" href="'+xml(safeImage(o.src))+'"/>':'';
  if(o.type==='rect')return '<rect x="'+o.x+'" y="'+o.y+'" width="'+o.w+'" height="'+o.h+'" rx="'+o.r+'"'+at+'/>';
  if(o.type==='ellipse')return '<ellipse cx="'+(o.x+o.w/2)+'" cy="'+(o.y+o.h/2)+'" rx="'+Math.abs(o.w/2)+'" ry="'+Math.abs(o.h/2)+'"'+at+'/>';
  if(o.type==='triangle')return '<polygon points="'+(o.x+o.w/2)+','+o.y+' '+(o.x+o.w)+','+(o.y+o.h)+' '+o.x+','+(o.y+o.h)+'"'+at+'/>';
@@ -112,5 +119,5 @@ function svg(project){
  const p=validateProject(project),sz=sizes[p.size];
  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+(p.size==='A4'?'210mm':'148mm')+'" height="'+(p.size==='A4'?'297mm':'210mm')+'" viewBox="0 0 '+sz.w+' '+sz.h+'"><rect width="'+sz.w+'" height="'+sz.h+'" fill="#ffffff"/>'+drawObjects(p)+'</svg>';
 }
-return {W,H,sizes,types,PALETTE,makeTemplate,validateProject,cleanObject,rect,ellipse,text,line,star,triangle,drawObjects,svg,xml,num};
+return {W,H,sizes,types,PALETTE,makeTemplate,validateProject,cleanObject,rect,ellipse,text,line,star,triangle,imageShape,safeImage,drawObjects,svg,xml,num};
 });

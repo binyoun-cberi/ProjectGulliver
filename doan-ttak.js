@@ -30,7 +30,7 @@ function refreshPanel(){
  $('noSelection').hidden=!!o;
  $('selectedFields').hidden=!o;
  if(!o)return;
- const names={rect:'네모',ellipse:'동그라미',triangle:'세모',star:'별',line:'선',text:'글씨'};
+ const names={rect:'네모',ellipse:'동그라미',triangle:'세모',star:'별',line:'선',text:'글씨',image:'사진'};
  $('selectedType').textContent='선택: '+names[o.type];
  $('textField').hidden=o.type!=='text';
  $('fontField').hidden=o.type!=='text';
@@ -88,6 +88,19 @@ document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()
  model.objects.push(o);selected=o.id;
  record(old);render();message('요소가 추가됐어요. 손가락이나 마우스로 이동할 수 있어요.');
 }));
+$('addPhoto').addEventListener('change',async e=>{
+ const file=e.target.files?.[0];e.target.value='';if(!file)return;
+ if(model.objects.length>=200)return message('요소는 최대 200개까지 사용할 수 있어요.',true);
+ if(!['image/png','image/jpeg'].includes(file.type)||file.size>2000000)return message('JPG·PNG 이미지는 2MB 이하만 넣을 수 있어요.',true);
+ try{
+  const uri=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(Error('사진을 읽지 못했어요.'));reader.readAsDataURL(file)});
+  if(!C.safeImage(uri))throw Error('지원하지 않는 사진 형식이에요.');
+  const total=model.objects.reduce((n,o)=>n+(o.src||'').length,0);
+  if(total+uri.length>20000000)throw Error('현재 도안에 사진을 너무 많이 넣었어요.');
+  const old=snapshot();const obj=C.imageShape(188,327,220,165,uri);
+  model.objects.push(obj);selected=obj.id;record(old);render();message('사진을 도안에 넣었어요. 사진을 끌어 위치를 바꿔 보세요.');
+ }catch(err){message(err.message||'사진을 넣지 못했어요.',true)}
+});
 const changes=[
  ['shapeX','x',-1000,1600],['shapeY','y',-1000,1600],['shapeW','w',1,1300],['shapeH','h',-1000,1300],
  ['shapeFont','fontSize',8,130],['shapeStrokeWidth','strokeWidth',0,25]
@@ -161,7 +174,7 @@ $('saveProject').addEventListener('click',()=>{
 });
 $('loadProject').addEventListener('change',async e=>{
  const file=e.target.files?.[0];e.target.value='';if(!file)return;
- if(file.size>180000)return message('너무 큰 파일이에요. 180KB 이하의 도안 파일을 선택해 주세요.',true);
+ if(file.size>24000000)return message('도안 JSON 파일은 24MB 이하만 열 수 있어요.',true);
  if(dirty&&!confirm('지금 작업 중인 도안을 새 파일로 바꿀까요?'))return;
  try{const raw=JSON.parse(await file.text());const next=C.validateProject(raw);
   model=next;selected=null;undo=[];redo=[];dirty=false;currentTemplate='';
@@ -204,6 +217,9 @@ $('openAdvanced').addEventListener('click',async()=>{
  }catch(err){status.textContent=err.message||'고급 편집기를 실행하지 못했어요.';status.classList.add('error');}
  finally{btn.disabled=false;}
 });
-window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
+window.GulliverStudioAdapter={kind:'design',capture:()=>JSON.parse(JSON.stringify(model)),apply:raw=>{
+ model=C.validateProject(raw);selected=null;undo=[];redo=[];dirty=false;render();
+},rename:value=>{model.title=String(value).slice(0,80);dirty=true;render();}};
+window.addEventListener('beforeunload',e=>{if(dirty&&!new URLSearchParams(location.search).has('studio')){e.preventDefault();e.returnValue='';}});
 render();
 })();

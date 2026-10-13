@@ -266,7 +266,10 @@ $('openAdvanced').addEventListener('click',async()=>{
  }catch(err){status.textContent=err.message||'고급 편집기를 실행하지 못했어요.';status.className='message error';}
  finally{btn.disabled=false;}
 });
-window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
+window.GulliverStudioAdapter={kind:'slides',capture:()=>JSON.parse(JSON.stringify(deck)),apply:raw=>{
+ deck=C.validateDeck(raw);index=0;dirty=false;render();
+},rename:value=>{deck.title=String(value).slice(0,90);dirty=true;render();}};
+window.addEventListener('beforeunload',e=>{if(dirty&&!new URLSearchParams(location.search).has('studio')){e.preventDefault();e.returnValue='';}});
 render();
 if(!(window.pptxgen||window.PptxGenJS)){
  $('exportPptx').disabled=true;$('exportPptx').title='PptxGenJS 웹 실행 파일이 필요해요.';
