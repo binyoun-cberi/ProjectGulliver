@@ -1,0 +1,60 @@
+name: Install FilmCraft and SoundCraft official web builds
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/vendor-artcraft-media.yml'
+      - 'scripts/install-artcraft-media-web.sh'
+  workflow_dispatch:
+
+concurrency:
+  group: gulliver-official-media-vendor
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  install-media:
+    if: github.repository == 'binyoun-cberi/ProjectGulliver'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: true
+      - name: Retrieve official versions and SHA256-verify zip assets
+        run: bash scripts/install-artcraft-media-web.sh
+      - name: Validate both actual WebAssembly releases before committing
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          for name,version,hash in [
+            ('filmcraft','0.7.2','48d4f48728fa6b5c028612a4b7f59a5832ff38d430c6a7bd417a2c77d75ae4f9'),
+            ('soundcraft','0.6.1','de78ec829b8c876bef748a792ba97a82aa37abdb0cd687156a7753220c6a1bef')
+          ]:
+            d=Path('assets/artcraft')/name
+            meta=json.loads((d/'gulliver-install.json').read_text())
+            assert meta['version']==version and meta['release_sha256']==hash
+            assert (d/'index.html').stat().st_size>200
+            assert any(p.stat().st_size>1000 for p in d.rglob('*.wasm'))
+            assert any(p.stat().st_size>1000 for p in d.rglob('*.js'))
+            for license in ('LICENSE-MIT','LICENSE-APACHE','NOTICE','ATTRIBUTION.md'):
+              assert (d/'licenses'/license).stat().st_size>20
+            print('OK',name,'WASM files:',[(p.name,p.stat().st_size) for p in d.rglob('*.wasm')])
+          PY
+      - name: Commit only pinned vendor assets to main
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f -- assets/artcraft/filmcraft/ assets/artcraft/soundcraft/
+          if git diff --cached --quiet; then
+            echo "Already installed"
+            exit 0
+          fi
+          git commit -m "chore(media): vendor official FilmCraft 0.7.2 and SoundCraft 0.6.1 WASM"
+          git pull --rebase origin main
+          git push origin HEAD:main
