@@ -40,7 +40,7 @@ test('실제 Chromium: 자동 저장/새로고침 복원/사진 소재 삽입/JS
   await page.locator('#toolNav button[data-kind="design"]').click();
   const frame=page.frameLocator('#editorFrame');
   await frame.locator('#projectTitle').waitFor();
-  await page.locator('#saveStatus').getByText(/기기에 저장됨/).waitFor({timeout:15000});
+  await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor({timeout:15000});
   await frame.locator('#projectTitle').fill('저장 복원 자동검사 도안');
   await frame.locator('#projectTitle').press('Tab');
   await savedProject(page,'저장 복원 자동검사 도안');
@@ -52,7 +52,7 @@ test('실제 Chromium: 자동 저장/새로고침 복원/사진 소재 삽입/JS
   await page.locator('#assetList .asset-item .tiny.open').first().click();
   await frame.locator('#sheet image').first().waitFor();
   assert.ok((await frame.locator('#sheet image').first().getAttribute('href')).startsWith('data:image/png;base64,'));
-  await page.locator('#saveStatus').getByText(/기기에 저장됨/).waitFor();
+  await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor();
   await page.waitForTimeout(700);
   await page.reload({waitUntil:'domcontentloaded'});
   await page.locator('#projectList .project-item').filter({hasText:'저장 복원 자동검사 도안'}).first().waitFor();
@@ -92,6 +92,14 @@ test('실제 Chromium: 자동 저장/새로고침 복원/사진 소재 삽입/JS
   const backup=JSON.parse(fs.readFileSync(file,'utf8'));
   assert.equal(backup.kind,'document');
   assert.equal(backup.payload.title,'가져온 새 문서');
+  // A failed IndexedDB write must prevent editor switching and expose a warning.
+  await page.evaluate(()=>{
+   window.GulliverStudioStorage.saveProject=async()=>{throw new Error('가상 저장 공간 오류')};
+  });
+  await document.locator('#titleInput').fill('저장 실패 보호 테스트');
+  await page.locator('#toolNav button[data-kind="design"]').click();
+  await page.locator('#saveStatus').filter({hasText:'저장 실패'}).waitFor();
+  assert.equal(await page.locator('#toolNav button[data-kind="document"]').getAttribute('aria-current'),'true');
   assert.deepEqual(errors,[],'Browser JavaScript errors: '+errors.join(' | '));
  }finally{
   if(browser)await browser.close();
