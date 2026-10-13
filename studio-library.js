@@ -127,7 +127,7 @@ async function uriToBlob(uri,mime){
  return blob;
 }
 async function mediaBlobToUri(item){
- if(!M.fileAllowed(item.blob))throw Error('지원하지 않는 영상 소재가 있어요. '+(item.name||''));
+ if(!M.mediaAllowed(item.blob))throw Error('지원하지 않는 영상 소재가 있어요. '+(item.name||''));
  const bytes=new Uint8Array(await item.blob.arrayBuffer());
  return 'data:'+item.mime+';base64,'+bytesTo64(bytes);
 }
@@ -140,7 +140,7 @@ async function uriToMedia(value){
  const decoded=atob(base64),bytes=new Uint8Array(decoded.length);
  for(let i=0;i<decoded.length;i++)bytes[i]=decoded.charCodeAt(i);
  const blob=new Blob([bytes],{type:value.mime});
- if(!M.fileAllowed(blob))throw Error('영상 소재 크기가 올바르지 않아요.');
+ if(!M.mediaAllowed(blob))throw Error('영상·음원 소재 크기가 올바르지 않아요.');
  return blob;
 }
 async function saveArchive(){
