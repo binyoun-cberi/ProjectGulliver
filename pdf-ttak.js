@@ -74,7 +74,15 @@
     if(entries.length!==before+1)throw Error('PDF 파일을 목록에 추가하지 못했어요.');
     notice('제작실에서 보낸 이미지가 PDF 파일로 추가됐어요. 아래에서 저장·합치기·회전할 수 있어요.','success');
   }
-  window.GulliverStudioAdapter={kind:'pdf',insertImagePdf};
+  async function insertPdf(file){
+    if(!file||(!/\.pdf$/i.test(file.name)&&file.type!=='application/pdf')||file.size<1||file.size>maxFile)
+      throw Error('70MB 이하 PDF 파일을 선택해 주세요.');
+    const before=entries.length;
+    await addFiles([file]);
+    if(entries.length!==before+1)throw Error('저장한 PDF를 열지 못했어요. 파일을 확인해 주세요.');
+    notice('문서 뚝딱에서 저장한 PDF를 불러왔어요. 페이지 편집과 합치기를 계속할 수 있어요.','success');
+  }
+  window.GulliverStudioAdapter={kind:'pdf',insertImagePdf,insertPdf};
   function move(index, diff) {
     const dst = index + diff;
     if (active || dst < 0 || dst >= entries.length) return;
