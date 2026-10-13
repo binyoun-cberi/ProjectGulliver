@@ -31,7 +31,7 @@ function normalizeProject(value){
  if(detectLegacy(value.payload)!==value.kind)throw Error('프로젝트 종류와 문서 형식이 일치하지 않습니다.');
  const date=v=>Number.isFinite(v)&&v>0?v:Date.now();
  return{id:String(value.id||'').slice(0,110),kind:value.kind,title:safeTitle(value.title,TOOLS[value.kind].name+' 작업'),
-  payload:value.payload,createdAt:date(value.createdAt),updatedAt:date(value.updatedAt)};
+  payload:value.payload,folderId:typeof value.folderId==='string'?value.folderId.slice(0,110):'',createdAt:date(value.createdAt),updatedAt:date(value.updatedAt)};
 }
 function recognizeAsset(file){
  return !!file&&['image/png','image/jpeg'].includes(file.type)&&Number.isFinite(file.size)&&file.size>0&&file.size<=MAX_ASSET_BYTES;
