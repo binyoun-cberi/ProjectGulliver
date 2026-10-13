@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="문서 뚝딱 — 가정통신문, 학급 소식, 수업계획서, 관찰기록을 한글로 만들고 DOCX와 PDF로 저장하는 무료 문서 제작실">
+<meta name="description" content="문서 뚝딱 — 가정통신문, 학급 소식, 수업계획서, 관찰기록을 한글로 만들고 HWPX, DOCX, PDF로 저장하는 무료 문서 제작실">
 <meta name="color-scheme" content="light">
 <title>문서 뚝딱 | 뚝딱교실</title>
 <link rel="icon" href="logo.png" type="image/png">
@@ -85,7 +85,7 @@ a{color:#2267a5}
 </head>
 <body>
 <header class="top"><a class="brand" href="index.html"><img src="logo.png" alt="">뚝딱교실</a><a class="back" href="index.html">← 전체 도구로 돌아가기</a></header>
-<section class="intro"><span class="eyebrow">자료·기록 / 한글 문서 제작</span><h1>문서 뚝딱</h1><p>가정통신문부터 수업계획서까지 만들고, DOCX와 PDF로 저장해 보세요.</p><span class="badge-lite">문서 내용은 내 브라우저에서 처리해요</span></section>
+<section class="intro"><span class="eyebrow">자료·기록 / 한글 문서 제작</span><h1>문서 뚝딱</h1><p>가정통신문부터 수업계획서까지 작성하고, 한글용 HWPX·워드용 DOCX·PDF로 저장해 보세요.</p><span class="badge-lite">문서 내용은 내 브라우저에서 처리해요</span></section>
 <main class="workspace">
 <aside class="panel sidebar">
  <h2>1. 문서 틀 고르기</h2>
@@ -111,7 +111,8 @@ a{color:#2267a5}
   <button type="button" class="btn" id="undo">↶ 실행 취소</button>
   <button type="button" class="btn" id="redo">↷ 다시 실행</button>
   <span class="separator"></span>
-  <button type="button" class="btn primary" id="saveDocx">DOCX 저장</button>
+  <button type="button" class="btn primary" id="saveHwpx">HWPX 저장</button>
+  <button type="button" class="btn" id="saveDocx">DOCX 저장</button>
   <button type="button" class="btn" id="savePdf">PDF / 인쇄</button>
  </nav>
  <div class="paper-scroller">
@@ -121,7 +122,7 @@ a{color:#2267a5}
   </article>
  </div>
  <p id="status" class="status" role="status" aria-live="polite">문서 안의 글씨나 표를 눌러 수정할 수 있어요.</p>
- <p class="info">이 문서 제작실은 한글(.hwp)을 직접 저장하지 않아요. 한글 프로그램에서는 DOCX 파일을 열어 볼 수 있지만 일부 서식이 달라질 수 있어요.</p>
+ <p class="info">한글에서 열 수 있는 <strong>HWPX</strong>와 워드용 DOCX를 각각 저장할 수 있어요. 기존 바이너리 <strong>.hwp</strong>는 지원하지 않아요. 표·사진·글꼴은 한글 버전에 따라 배치가 달라질 수 있으니 저장한 파일을 확인해 주세요.</p>
 </section>
 <aside class="panel details">
  <h2>2. 문서 편집</h2><p class="info">문서를 누르면 직접 수정할 수 있어요. 요소는 아래에서 추가하고 옮길 수 있어요.</p>
@@ -157,8 +158,9 @@ a{color:#2267a5}
   <div id="advancedArea" hidden><p class="status" id="advancedStatus" role="status"></p><p style="text-align:right"><a id="advancedTab" href="assets/artcraft/wordcraft/index.html" target="_blank" rel="noopener noreferrer">새 창에서 크게 열기 ↗</a></p><iframe id="advancedFrame" title="WordCraft 고급 워드 편집기" sandbox="allow-scripts allow-same-origin allow-downloads allow-popups allow-forms" allow="fullscreen; clipboard-read; clipboard-write" loading="lazy"></iframe></div>
  </div>
 </section>
-<footer class="footer">문서 뚝딱 · 뚝딱교실 | 고급 편집: 오픈소스 <a href="https://github.com/storytold/wordcraft" target="_blank" rel="noopener noreferrer">WordCraft</a>. DOCX 생성: <a href="https://github.com/dolanmiu/docx" target="_blank" rel="noopener noreferrer">docx</a>.</footer>
+<footer class="footer">문서 뚝딱 · 뚝딱교실 | 고급 편집: 오픈소스 <a href="https://github.com/storytold/wordcraft" target="_blank" rel="noopener noreferrer">WordCraft</a>. HWPX 생성: <a href="https://github.com/ssabro/hwpxjs" target="_blank" rel="noopener noreferrer">hwpxjs (MIT)</a>. DOCX 생성: <a href="https://github.com/dolanmiu/docx" target="_blank" rel="noopener noreferrer">docx</a>.</footer>
 <script src="munseo-core.js"></script>
+<script src="munseo-hwpx-core.js"></script>
 <script src="vendor/docx/docx.iife.min.js"></script>
 <script src="munseo-ttak.js"></script>
 </body>
