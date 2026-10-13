@@ -1,8 +1,8 @@
 (() => {
 'use strict';
 const C=window.GulliverStudioCore,S=window.GulliverStudioStorage,L=window.GulliverStudioLibraryCore,
- B=window.GulliverStudioBridge,W=window.ClassroomWorkspace,M=window.GulliverMediaCore,$=id=>document.getElementById(id);
-if(!C||!S||!L||!B||!W||!M)throw Error('작업 보관함을 불러오지 못했어요.');
+ B=window.GulliverStudioBridge,W=window.ClassroomWorkspace,M=window.GulliverMediaCore,O=window.GulliverOfficialProjectCore,$=id=>document.getElementById(id);
+if(!C||!S||!L||!B||!W||!M||!O)throw Error('작업 보관함을 불러오지 못했어요.');
 let folders=[],moving=null,working=false;
 const uid=()=>window.crypto?.randomUUID?.()||'lib_'+Date.now().toString(36)+Math.random().toString(36).slice(2);
 const el=(tag,cls,body)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(body!==undefined)n.textContent=String(body);return n};
@@ -22,6 +22,52 @@ function renderProjects(){
   root.append(card);
  }
 }
+function renderOfficial(){
+ const root=$('officialProjectList');root.replaceChildren();
+ const state=B.getState(),filter=currentFilter();
+ const results=state.latestOfficial.filter(p=>{
+  if(filter.kind!=='all'&&filter.kind!==p.kind)return false;
+  if(filter.folder!=='all'&&(filter.folder==='unfiled'?!!p.folderId:p.folderId!==filter.folder))return false;
+  return !filter.query||(p.title+' '+p.name).toLocaleLowerCase('ko').includes(filter.query.trim().toLocaleLowerCase('ko'));
+ }).sort((a,b)=>filter.sort==='name'?a.title.localeCompare(b.title,'ko'):filter.sort==='old'?a.updatedAt-b.updatedAt:b.updatedAt-a.updatedAt);
+ if(!results.length){root.append(el('div','empty','표시할 고급 작업이 없어요. 공식 편집기에서 저장한 .fcproj 또는 .scraftz 파일을 보관할 수 있어요.'));return}
+ for(const p of results){
+  const card=el('article','project-item'),info=el('div'),name=el('strong','',p.title);
+  const folder=folders.find(f=>f.id===p.folderId)?.name||'미분류';
+  info.append(name,el('small','',(p.kind==='video'?'FilmCraft · ':'SoundCraft · ')+Math.ceil(p.size/1024)+'KB · '+folder));
+  const actions=el('div','row-actions');
+  function action(label,fn){const b=el('button','tiny',label);b.type='button';b.addEventListener('click',()=>Promise.resolve(fn()).catch(e=>B.status(e.message||String(e),true)));actions.append(b)}
+  action('열기',()=>B.openOfficial(p.kind,p.id));
+  action('원본 내려받기',async()=>{const original=await S.getOfficial(p.id);if(!original)throw Error('프로젝트 원본이 없어요.');B.download(original.blob,original.name,original.blob.type)});
+  action('이름 수정',async()=>{
+   const input=prompt('보관함에 표시할 이름',p.title);if(input===null)return;
+   const original=await S.getOfficial(p.id);if(!original)throw Error('프로젝트 원본이 없어요.');
+   original.title=C.safeTitle(input);original.updatedAt=Date.now();
+   await S.saveOfficial(original);await B.refreshOfficial();
+  });
+  action('삭제',async()=>{
+   if(!confirm('“'+p.title+'” 보관 사본을 삭제할까요? 공식 원본을 내려받았는지 확인해 주세요.'))return;
+   await S.deleteOfficial(p.id);await B.refreshOfficial();B.status('고급 작업 보관 사본을 삭제했어요.');
+  });
+  card.append(info,actions);root.append(card);
+ }
+}
+async function importOfficial(event){
+ const files=Array.from(event.target.files||[]);event.target.value='';if(!files.length)return;
+ if(working)return B.status('전체 백업·복원 중에는 고급 원본을 추가할 수 없어요.',true);
+ working=true;let saved=0;
+ try{
+  if((await S.official()).length+files.length>O.MAX_ITEMS)throw Error('고급 프로젝트는 이 기기에 30개까지만 보관할 수 있어요.');
+  for(const file of files)await O.validateFile(file);
+  for(const file of files){
+   const kind=O.kindForName(file.name),now=Date.now(),name=O.safeName(file.name,kind);
+   await S.saveOfficial({id:uid(),kind,name,title:name.replace(/\.(fcproj|scraftz)$/i,''),size:file.size,
+    createdAt:now,updatedAt:now,folderId:'',blob:new Blob([file],{type:O.TYPES[kind].mime})});saved++;
+  }
+  await B.refreshOfficial();B.status('공식 프로젝트 '+saved+'개를 내 작업에 보관했어요. 원본 파일은 별도로 백업하세요.');
+ }catch(e){await B.refreshOfficial();B.status('고급 작업 보관 실패: '+(e.message||e)+(saved?' · '+saved+'개는 보관됐어요.':''),true)}
+ finally{working=false}
+}
 function renderActivities(){
  const root=$('legacyActivityList');root.replaceChildren();
  const needle=$('librarySearch').value.trim().toLocaleLowerCase('ko');
@@ -40,7 +86,7 @@ function renderActivities(){
   root.append(card);
  }
 }
-function render(){renderProjects();renderActivities()}
+function render(){renderProjects();renderOfficial();renderActivities()}
 async function refreshFolders(){
  try{folders=await S.folders()}catch(e){folders=[];B.status('폴더를 불러오지 못했어요: '+(e.message||e),true)}
  const choice=$('libraryFolder'),old=choice.value;
@@ -142,6 +188,19 @@ async function uriToMedia(value){
  const blob=new Blob([bytes],{type:value.mime});
  if(!M.mediaAllowed(blob))throw Error('영상·음원 소재 크기가 올바르지 않아요.');
  return blob;
+}
+async function nativeToUri(value){
+ await O.validateFile(new File([value.blob],value.name,{type:value.blob.type}),value.kind);
+ const bytes=new Uint8Array(await value.blob.arrayBuffer());
+ return 'data:application/octet-stream;base64,'+bytesTo64(bytes);
+}
+async function uriToNative(entry){
+ const raw=O.checkedBundle(entry),encoded=raw.data.slice('data:application/octet-stream;base64,'.length);
+ const decoded=atob(encoded),bytes=new Uint8Array(decoded.length);
+ for(let i=0;i<decoded.length;i++)bytes[i]=decoded.charCodeAt(i);
+ const file=new File([bytes],raw.name,{type:O.TYPES[raw.kind].mime});
+ await O.validateFile(file,raw.kind);
+ return{kind:raw.kind,name:raw.name,title:raw.title,blob:new Blob([file],{type:file.type}),size:file.size};
 }
 async function saveArchive(){
  if(working)return;working=true;$('libraryBackup').disabled=true;
@@ -249,8 +308,9 @@ $('addLibraryFolder').addEventListener('click',createFolder);
 $('deleteLibraryFolder').addEventListener('click',deleteFolder);
 $('folderForm').addEventListener('submit',completeMove);
 $('folderCancel').addEventListener('click',()=>$('folderDialog').close());
+$('officialImport').addEventListener('change',importOfficial);
 $('libraryBackup').addEventListener('click',saveArchive);
 $('libraryRestore').addEventListener('change',restoreArchive);
-window.GulliverStudioLibrary={refreshFolders,renderProjects,moveProject};
+window.GulliverStudioLibrary={refreshFolders,renderProjects,renderOfficial,moveProject};
 refreshFolders();
 })();
