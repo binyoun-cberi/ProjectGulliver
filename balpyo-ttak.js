@@ -140,24 +140,24 @@ $('loadProject').addEventListener('change',async event=>{
   render();say('저장한 발표 자료를 불러왔어요.');
  }catch(err){say('발표 자료를 열지 못했어요: '+String(err.message||err),true);}
 });
+async function insertSlideImage(file){
+ if(!file||!['image/jpeg','image/png'].includes(file.type)||file.size>MAX_IMAGE_BYTES||file.size<=0)
+  throw Error('PNG·JPG 사진 중 2MB 이하를 선택해 주세요.');
+ const uri=await new Promise((resolve,reject)=>{
+  const reader=new FileReader();
+  reader.onload=()=>resolve(String(reader.result||''));
+  reader.onerror=()=>reject(Error('이미지 파일을 읽지 못했어요.'));
+  reader.readAsDataURL(file);
+ });
+ if(!C.imageSafe(uri))throw Error('지원되지 않는 그림 파일이에요.');
+ const others=deck.slides.reduce((n,s,i)=>n+(i===index?0:s.image.length),0);
+ if(others+uri.length>40_000_000)throw Error('발표 자료 사진의 전체 용량이 너무 커요.');
+ current().image=uri;current().layout='picture';
+ dirty=true;render();say('사진을 넣었어요. 슬라이드 종류를 그림·사진으로 변경했어요.');
+}
 $('slideImage').addEventListener('change',async e=>{
- const f=e.target.files?.[0];e.target.value='';
- if(!f)return;
- if(!['image/jpeg','image/png'].includes(f.type)||f.size>MAX_IMAGE_BYTES)return say('PNG·JPG 사진 중 2MB 이하를 선택해 주세요.',true);
- try{
-  const uri=await new Promise((resolve,reject)=>{
-   const reader=new FileReader();
-   reader.onload=()=>resolve(String(reader.result||''));
-   reader.onerror=()=>reject(Error('이미지 파일을 읽지 못했어요.'));
-   reader.readAsDataURL(f);
-  });
-  if(!C.imageSafe(uri))throw Error('지원되지 않는 그림 파일이에요.');
-  const others=deck.slides.reduce((n,s,i)=>n+(i===index?0:s.image.length),0);
-  if(others+uri.length>40_000_000)throw Error('발표 자료에 들어간 사진 용량이 너무 커요. 불필요한 사진을 먼저 지워 주세요.');
-  current().image=uri;
-  current().layout='picture';
-  dirty=true;render();say('사진을 넣었어요. 슬라이드 종류를 그림·사진으로 변경했어요.');
- }catch(err){say(String(err.message||err),true);}
+ const file=e.target.files?.[0];e.target.value='';if(!file)return;
+ try{await insertSlideImage(file)}catch(err){say(err.message||'사진을 넣지 못했어요.',true)}
 });
 $('removeImage').addEventListener('click',()=>{current().image='';dirty=true;render();say('현재 슬라이드 사진을 지웠어요.');});
 function show(indexValue){
@@ -266,7 +266,7 @@ $('openAdvanced').addEventListener('click',async()=>{
  }catch(err){status.textContent=err.message||'고급 편집기를 실행하지 못했어요.';status.className='message error';}
  finally{btn.disabled=false;}
 });
-window.GulliverStudioAdapter={kind:'slides',capture:()=>JSON.parse(JSON.stringify(deck)),apply:raw=>{
+window.GulliverStudioAdapter={kind:'slides',insertImage:insertSlideImage,capture:()=>JSON.parse(JSON.stringify(deck)),apply:raw=>{
  deck=C.validateDeck(raw);index=0;dirty=false;render();
 },rename:value=>{deck.title=String(value).slice(0,90);dirty=true;render();}};
 window.addEventListener('beforeunload',e=>{if(dirty&&!new URLSearchParams(location.search).has('studio')){e.preventDefault();e.returnValue='';}});
