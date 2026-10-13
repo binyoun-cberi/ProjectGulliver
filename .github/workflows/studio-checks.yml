@@ -11,6 +11,7 @@ on:
       - feat/studio-video-music-foundation-20261013
       - feat/official-filmcraft-soundcraft-web-20261013
       - fix/expose-video-music-home-20261013
+      - feat/studio-v2-2-cross-media-20261013
     paths:
       - '뚝딱 제작실.html'
       - 'studio-*.js'
@@ -89,8 +90,13 @@ jobs:
       - name: Install pinned browser driver without package scripts
         run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
 
+      - name: Install media probe for audio-stream verification
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+
       - name: Exercise real Chromium local storage, file imports and exports
-        run: node --test tests/studio-browser.e2e.cjs tests/studio-transfer.e2e.cjs tests/studio-library.e2e.cjs tests/studio-media.e2e.cjs tests/studio-visible-home.e2e.cjs
+        run: node --test tests/studio-browser.e2e.cjs tests/studio-transfer.e2e.cjs tests/studio-library.e2e.cjs tests/studio-media.e2e.cjs tests/studio-visible-home.e2e.cjs tests/studio-cross-media.e2e.cjs
 
   official-media-release:
     runs-on: ubuntu-latest
