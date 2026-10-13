@@ -114,6 +114,7 @@ async function sync(force=false){
 }
 async function leave(save=true){
  if(C.managed(activeKind)&&save&&live)await sync();
+ await pendingSave.catch(()=>{});
  clearPulse();token++;
  const previous=activeKind;activeKind='';activeProject=null;lastSnapshot='';
  frame.removeAttribute('src');updateNav();renderProjects();return previous;
