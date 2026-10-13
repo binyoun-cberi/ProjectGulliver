@@ -50,6 +50,8 @@ label input,label select{width:100%;min-width:0;border:1px solid #cdd6e3;border-
 
 .official-diagnostic-report{white-space:pre-wrap;overflow-wrap:anywhere;background:#252a3a;border:1px solid #4b546d;color:#eaf0ff;padding:13px;border-radius:9px;font:11px/1.65 ui-monospace,monospace}
 .official-edit-note button{min-height:34px;font-size:11px}
+ .official-edit-note .native-import{cursor:pointer;padding:9px 11px;min-height:34px;border:1px solid #c1b4e9;border-radius:9px;font-weight:700;background:white}
+ .official-edit-note .native-import input[hidden]{display:none}
 #officialStatus[data-state="loading"]{color:#6e599a}
 #officialStatus[data-state="ready"]{color:#26764d}
 </style></head><body data-official-kind="video">
@@ -83,15 +85,17 @@ label input,label select{width:100%;min-width:0;border:1px solid #cdd6e3;border-
 <section id="officialEditorPanel" class="official-edit-panel" hidden aria-label="ArtCraft 공식 고급 편집기">
  <div class="official-edit-note">
   <strong id="officialVersion">ArtCraft 공식 FilmCraft</strong>
-  <span id="officialHelp">고급 편집 모드는 프로그램 자체 파일 저장 기능을 이용해 주세요.</span>
+  <span id="officialHelp">고급 편집 결과를 내 작업에 보관하려면 아래 전용 버튼을 사용해 주세요. 보관된 사본은 이후 편집 내용과 자동 동기화되지 않아요.</span>
   <a id="officialExternal" href="assets/artcraft/filmcraft/index.html" target="_blank" rel="noopener noreferrer">새 창으로 편집기 열기 ↗</a>
-  <button id="officialRetry" type="button" hidden>편집기 다시 시작</button>
+  <button id="officialSaveNow" type="button" hidden>현재 FilmCraft 프로젝트 → 내 작업 보관</button>
+   <label class="native-import">공식 프로젝트 파일 보관<input id="officialProjectUpload" type="file" accept=".fcproj" hidden></label>
+   <button id="officialRetry" type="button" hidden>편집기 다시 시작</button>
   <button id="officialWebgl" type="button" hidden>WebGL 호환 모드</button>
   <button id="officialCpu" type="button" hidden>CPU 안전 모드</button>
   <button id="officialDiagnostics" type="button">환경 점검</button>
  </div>
  <pre id="officialDiagnosticReport" class="official-diagnostic-report" role="status" aria-live="polite" hidden></pre>
  <iframe id="officialEditorFrame" title="FilmCraft 공식 ArtCraft 고급 편집기" allow="fullscreen; autoplay; microphone; clipboard-read; clipboard-write"></iframe>
- <p class="media-disclaimer">이 화면의 FilmCraft는 ArtCraft 팀이 배포한 공식 웹 프로그램입니다. 기존 간편 제작기와 작업 파일이 자동으로 합쳐지지는 않습니다. 파일은 공식 편집기에서 별도로 저장하세요.</p>
+ <p class="media-disclaimer">이 화면의 FilmCraft는 ArtCraft 팀이 배포한 공식 웹 프로그램입니다. 기존 간편 제작기와 작업 파일이 자동으로 합쳐지지는 않습니다. 공식 프로젝트를 보관할 수 있지만 자동 저장되지는 않습니다. FilmCraft 프로젝트에 연결된 영상·사진 원본은 따로 보관하세요.</p>
 </section>
-<script src="studio-media-core.js"></script><script src="studio-storage.js"></script><script src="video-ttak.js?v=20261013-22"></script><script src="studio-official-media.js?v=20261013-21"></script></body></html>
+<script src="studio-media-core.js"></script><script src="studio-storage.js?v=20261014-23"></script><script src="video-ttak.js?v=20261013-22"></script><script src="studio-official-project-core.js?v=20261014-23"></script><script src="studio-official-media.js?v=20261014-23"></script></body></html>

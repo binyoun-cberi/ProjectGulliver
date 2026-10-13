@@ -1,8 +1,8 @@
 (() => {
 'use strict';
 const C=window.GulliverStudioCore,S=window.GulliverStudioStorage,L=window.GulliverStudioLibraryCore,
- B=window.GulliverStudioBridge,W=window.ClassroomWorkspace,M=window.GulliverMediaCore,$=id=>document.getElementById(id);
-if(!C||!S||!L||!B||!W||!M)throw Error('작업 보관함을 불러오지 못했어요.');
+ B=window.GulliverStudioBridge,W=window.ClassroomWorkspace,M=window.GulliverMediaCore,O=window.GulliverOfficialProjectCore,$=id=>document.getElementById(id);
+if(!C||!S||!L||!B||!W||!M||!O)throw Error('작업 보관함을 불러오지 못했어요.');
 let folders=[],moving=null,working=false;
 const uid=()=>window.crypto?.randomUUID?.()||'lib_'+Date.now().toString(36)+Math.random().toString(36).slice(2);
 const el=(tag,cls,body)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(body!==undefined)n.textContent=String(body);return n};
@@ -22,6 +22,53 @@ function renderProjects(){
   root.append(card);
  }
 }
+function renderOfficial(){
+ const root=$('officialProjectList');root.replaceChildren();
+ const state=B.getState(),filter=currentFilter();
+ const results=state.latestOfficial.filter(p=>{
+  if(filter.kind!=='all'&&filter.kind!==p.kind)return false;
+  if(filter.folder!=='all'&&(filter.folder==='unfiled'?!!p.folderId:p.folderId!==filter.folder))return false;
+  return !filter.query||(p.title+' '+p.name).toLocaleLowerCase('ko').includes(filter.query.trim().toLocaleLowerCase('ko'));
+ }).sort((a,b)=>filter.sort==='name'?a.title.localeCompare(b.title,'ko'):filter.sort==='old'?a.updatedAt-b.updatedAt:b.updatedAt-a.updatedAt);
+ if(!results.length){root.append(el('div','empty','표시할 고급 작업이 없어요. 공식 편집기에서 저장한 .fcproj 또는 .scraftz 파일을 보관할 수 있어요.'));return}
+ for(const p of results){
+  const card=el('article','project-item'),info=el('div'),name=el('strong','',p.title);
+  const folder=folders.find(f=>f.id===p.folderId)?.name||'미분류';
+  info.append(name,el('small','',(p.kind==='video'?'FilmCraft · ':'SoundCraft · ')+Math.ceil(p.size/1024)+'KB · '+folder));
+  const actions=el('div','row-actions');
+  function action(label,fn){const b=el('button','tiny',label);b.type='button';b.addEventListener('click',()=>Promise.resolve(fn()).catch(e=>B.status(e.message||String(e),true)));actions.append(b)}
+  action('열기',()=>B.openOfficial(p.kind,p.id));
+  action('폴더 이동',()=>openMove({...p,native:true}));
+  action('원본 내려받기',async()=>{const original=await S.getOfficial(p.id);if(!original)throw Error('프로젝트 원본이 없어요.');B.download(original.blob,original.name,original.blob.type)});
+  action('이름 수정',async()=>{
+   const input=prompt('보관함에 표시할 이름',p.title);if(input===null)return;
+   const original=await S.getOfficial(p.id);if(!original)throw Error('프로젝트 원본이 없어요.');
+   original.title=C.safeTitle(input);original.updatedAt=Date.now();
+   await S.saveOfficial(original);await B.refreshOfficial();
+  });
+  action('삭제',async()=>{
+   if(!confirm('“'+p.title+'” 보관 사본을 삭제할까요? 공식 원본을 내려받았는지 확인해 주세요.'))return;
+   await S.deleteOfficial(p.id);await B.refreshOfficial();B.status('고급 작업 보관 사본을 삭제했어요.');
+  });
+  card.append(info,actions);root.append(card);
+ }
+}
+async function importOfficial(event){
+ const files=Array.from(event.target.files||[]);event.target.value='';if(!files.length)return;
+ if(working)return B.status('전체 백업·복원 중에는 고급 원본을 추가할 수 없어요.',true);
+ working=true;let saved=0;
+ try{
+  if((await S.official()).length+files.length>O.MAX_ITEMS)throw Error('고급 프로젝트는 이 기기에 30개까지만 보관할 수 있어요.');
+  for(const file of files)await O.validateFile(file);
+  for(const file of files){
+   const kind=O.kindForName(file.name),now=Date.now(),name=O.safeName(file.name,kind);
+   await S.saveOfficial({id:uid(),kind,name,title:name.replace(/\.(fcproj|scraftz)$/i,''),size:file.size,
+    createdAt:now,updatedAt:now,folderId:'',blob:new Blob([file],{type:O.TYPES[kind].mime})});saved++;
+  }
+  await B.refreshOfficial();B.status('공식 프로젝트 '+saved+'개를 내 작업에 보관했어요. 원본 파일은 별도로 백업하세요.');
+ }catch(e){await B.refreshOfficial();B.status('고급 작업 보관 실패: '+(e.message||e)+(saved?' · '+saved+'개는 보관됐어요.':''),true)}
+ finally{working=false}
+}
 function renderActivities(){
  const root=$('legacyActivityList');root.replaceChildren();
  const needle=$('librarySearch').value.trim().toLocaleLowerCase('ko');
@@ -40,7 +87,7 @@ function renderActivities(){
   root.append(card);
  }
 }
-function render(){renderProjects();renderActivities()}
+function render(){renderProjects();renderOfficial();renderActivities()}
 async function refreshFolders(){
  try{folders=await S.folders()}catch(e){folders=[];B.status('폴더를 불러오지 못했어요: '+(e.message||e),true)}
  const choice=$('libraryFolder'),old=choice.value;
@@ -82,7 +129,7 @@ async function deleteFolder(){
   if(C.managed(B.getState().activeKind))await B.sync(true);
   await S.deleteFolder(folder.id);
   B.getState().latestProjects.filter(p=>p.folderId===folder.id).forEach(p=>B.updateActiveFolder(p.id,''));
-  await B.refreshProjects();await refreshFolders();
+  await B.refreshProjects();await B.refreshOfficial();await refreshFolders();
   B.status('폴더만 삭제했어요. 작업은 미분류에 남아 있어요.');
  }catch(e){B.status('폴더 삭제 실패: '+e.message,true)}
 }
@@ -94,15 +141,14 @@ async function completeMove(e){
  const folderId=$('folderMoveSelect').value;
  if(folderId&&!folders.some(f=>f.id===folderId))return B.status('폴더를 다시 선택해 주세요.',true);
  try{
-  if(B.getState().activeProject?.id===p.id)await B.sync(true);
-  const fresh=await S.getProject(p.id);
+  if(!p.native&&B.getState().activeProject?.id===p.id)await B.sync(true);
+  const fresh=p.native?await S.getOfficial(p.id):await S.getProject(p.id);
   if(!fresh)throw Error('이 작업을 찾지 못했어요.');
   fresh.folderId=folderId;fresh.updatedAt=Date.now();
   // Update the in-memory autosave source before the persistent write so a
   // concurrent autosave cannot silently move this project back to old folder.
-  B.updateActiveFolder(p.id,folderId);
-  await S.saveProject(C.normalizeProject(fresh));
-  await B.refreshProjects();
+  if(p.native){await S.saveOfficial(fresh);await B.refreshOfficial()}
+  else{B.updateActiveFolder(p.id,folderId);await S.saveProject(C.normalizeProject(fresh));await B.refreshProjects()}
   B.status('작업을 선택한 폴더로 옮겼어요.');
  }catch(e){B.status('폴더 이동 실패: '+e.message,true)}
 }
@@ -143,13 +189,31 @@ async function uriToMedia(value){
  if(!M.mediaAllowed(blob))throw Error('영상·음원 소재 크기가 올바르지 않아요.');
  return blob;
 }
+async function nativeToUri(value){
+ await O.validateFile(new File([value.blob],value.name,{type:value.blob.type}),value.kind);
+ const bytes=new Uint8Array(await value.blob.arrayBuffer());
+ return 'data:application/octet-stream;base64,'+bytesTo64(bytes);
+}
+async function uriToNative(entry){
+ const raw=O.checkedBundle(entry),encoded=raw.data.slice('data:application/octet-stream;base64,'.length);
+ const decoded=atob(encoded),bytes=new Uint8Array(decoded.length);
+ for(let i=0;i<decoded.length;i++)bytes[i]=decoded.charCodeAt(i);
+ const file=new File([bytes],raw.name,{type:O.TYPES[raw.kind].mime});
+ await O.validateFile(file,raw.kind);
+ return{kind:raw.kind,name:raw.name,title:raw.title,blob:new Blob([file],{type:file.type}),size:file.size};
+}
 async function saveArchive(){
  if(working)return;working=true;$('libraryBackup').disabled=true;
  try{
   const state=B.getState();
   if(C.managed(state.activeKind))await B.sync(true);
-  const projects=(await S.projects()).map(C.normalizeProject),assets=await S.assets(),storedFolders=await S.folders(),media=await S.media();
-  if(projects.length>L.MAX_PROJECTS||assets.length>L.MAX_ASSETS||storedFolders.length>L.MAX_FOLDERS||media.length>M.MEDIA_COUNT)throw Error('백업 가능한 개수를 넘었어요. 폴더별로 정리한 뒤 다시 시도해 주세요.');
+  const projects=(await S.projects()).map(C.normalizeProject),assets=await S.assets(),storedFolders=await S.folders(),media=await S.media(),official=await S.official();
+  if(projects.length>L.MAX_PROJECTS||assets.length>L.MAX_ASSETS||storedFolders.length>L.MAX_FOLDERS||media.length>M.MEDIA_COUNT||official.length>O.MAX_ITEMS)throw Error('백업 가능한 개수를 넘었어요. 폴더별로 정리한 뒤 다시 시도해 주세요.');
+  // Refuse oversized backups before base64 allocation.
+  const byteTotal=[...assets,...media,...official].reduce((n,x)=>n+(x.blob?.size||0),0);
+  const metaBytes=new Blob([JSON.stringify({projects,folders:storedFolders,activities:W.read()})]).size;
+  if(Math.ceil(byteTotal*4/3)+metaBytes+1024*128>L.MAX_BUNDLE_BYTES)
+   throw Error('고급 원본을 포함하면 120MB 전체 백업 한도를 넘어요. 고급 프로젝트를 개별 내려받아 보관하고 불필요한 사본을 정리해 주세요. 일부 파일을 몰래 제외하지 않아요.');
   const images=[];
   for(const asset of assets){
    images.push({name:C.assetName(asset.name),mime:asset.mime,createdAt:asset.createdAt||Date.now(),data:await blobToUri(asset.blob)});
@@ -163,14 +227,16 @@ async function saveArchive(){
    videoMedia.push({id:item.id,name:String(item.name||'영상').slice(0,90),mime:item.mime,
     createdAt:item.createdAt||Date.now(),data:await mediaBlobToUri(item)});
   }
-  // Read only. No destructive migration of legacy classroom activities.
+  const native=[];
+  for(const project of official)native.push({id:project.id,kind:project.kind,name:project.name,title:project.title,
+   createdAt:project.createdAt,updatedAt:project.updatedAt,folderId:project.folderId||'',data:await nativeToUri(project)});
   const activities=W.read();
-  const value={format:L.MAGIC,version:L.VERSION,createdAt:new Date().toISOString(),folders:storedFolders,projects,assets:images,media:videoMedia,activities};
+  const value={format:L.MAGIC,version:L.VERSION,createdAt:new Date().toISOString(),folders:storedFolders,projects,assets:images,media:videoMedia,official:native,activities};
   const json=JSON.stringify(value);
   if(new Blob([json]).size>L.MAX_BUNDLE_BYTES)throw Error('백업 파일이 120MB를 넘었어요. 프로젝트별 JSON도 별도로 내려받아 주세요.');
   const stamp=new Date().toISOString().slice(0,10);
   B.download(json,'뚝딱제작실-전체백업-'+stamp+'.json','application/json');
-  B.status('전체 백업을 내려받았어요. '+L.summary(value).projects+'개 프로젝트, '+L.summary(value).assets+'개 사진, 기존 내 활동 '+L.summary(value).activities+'개, 영상 원본 '+L.summary(value).media+'개가 포함돼요.');
+  B.status('전체 백업을 내려받았어요. '+L.summary(value).projects+'개 프로젝트, '+L.summary(value).assets+'개 사진, 기존 내 활동 '+L.summary(value).activities+'개, 영상 원본 '+L.summary(value).media+'개, 고급 프로젝트 '+L.summary(value).official+'개가 포함돼요.');
  }catch(e){B.status('전체 백업 실패: '+(e.message||e),true)}
  finally{working=false;$('libraryBackup').disabled=false}
 }
@@ -181,7 +247,7 @@ async function restoreArchive(event){
  try{
   const value=L.checkedManifest(JSON.parse(await file.text()));
   const counts=L.summary(value);
-  if(!confirm('프로젝트 '+counts.projects+'개, 사진 '+counts.assets+'개, 폴더 '+counts.folders+'개, 기존 내 활동 '+counts.activities+'개를 현재 기기에 추가할까요? 기존 자료는 삭제되지 않아요.'))return;
+  if(!confirm('간편 프로젝트 '+counts.projects+'개, 고급 프로젝트 '+counts.official+'개, 사진 '+counts.assets+'개, 기존 내 활동 '+counts.activities+'개를 추가할까요? 기존 자료는 삭제되지 않아요.'))return;
   const existingFolders=await S.folders(),nameToId=new Map(existingFolders.map(f=>[f.name,f.id]));
   const map=new Map(),newFolders=[];
   for(const item of value.folders){
@@ -224,9 +290,16 @@ async function restoreArchive(event){
    const blob=await uriToBlob(a?.data,mime);
    newAssets.push({id:uid(),name:C.assetName(a.name),mime,blob,createdAt:Date.now()});
   }
+  const newOfficial=[];
+  for(const entry of value.official||[]){
+   const source=await uriToNative(entry);
+   if(entry.folderId&&!map.has(entry.folderId))throw Error('공식 프로젝트의 폴더 연결이 손상됐어요.');
+   const now=Date.now();newOfficial.push({...source,id:uid(),folderId:map.get(entry.folderId)||'',createdAt:now,updatedAt:now});
+  }
+  if((await S.official()).length+newOfficial.length>O.MAX_ITEMS)throw Error('고급 프로젝트는 이 기기에 30개까지만 보관할 수 있어요.');
   // All IndexedDB assets, folders, and projects are written in one transaction.
   // On failure it rolls back. Original projects and assets are never overwritten.
-  await S.importBatch({projects:newProjects,assets:newAssets,folders:newFolders,media:newMedia});
+  await S.importBatch({projects:newProjects,assets:newAssets,folders:newFolders,media:newMedia,official:newOfficial});
   // Complete legacy activity restoration before refreshing the unified UI.
   // Partial cross-store states must not be presented as a finished restore.
   let legacyMessage='';
@@ -238,9 +311,9 @@ async function restoreArchive(event){
     legacyMessage=' 단, 기존 내 활동은 저장하지 못했어요: '+(e.message||e);
    }
   }
-  await B.refreshProjects();await B.refreshAssets();await refreshFolders();
+  await B.refreshProjects();await B.refreshAssets();await B.refreshOfficial();await refreshFolders();
   renderActivities();
-  B.status('통합 백업 복원 완료: 프로젝트 '+newProjects.length+'개, 사진 '+newAssets.length+'개, 영상 원본 '+newMedia.length+'개를 추가했어요.'+legacyMessage);
+  B.status('통합 백업 복원 완료: 프로젝트 '+newProjects.length+'개, 사진 '+newAssets.length+'개, 영상 원본 '+newMedia.length+'개, 고급 원본 '+newOfficial.length+'개를 추가했어요.'+legacyMessage);
  }catch(e){B.status('백업 복원 실패: '+(e.message||e),true)}
  finally{working=false}
 }
@@ -249,8 +322,9 @@ $('addLibraryFolder').addEventListener('click',createFolder);
 $('deleteLibraryFolder').addEventListener('click',deleteFolder);
 $('folderForm').addEventListener('submit',completeMove);
 $('folderCancel').addEventListener('click',()=>$('folderDialog').close());
+$('officialImport').addEventListener('change',importOfficial);
 $('libraryBackup').addEventListener('click',saveArchive);
 $('libraryRestore').addEventListener('change',restoreArchive);
-window.GulliverStudioLibrary={refreshFolders,renderProjects,moveProject};
+window.GulliverStudioLibrary={refreshFolders,renderProjects,renderOfficial,moveProject};
 refreshFolders();
 })();

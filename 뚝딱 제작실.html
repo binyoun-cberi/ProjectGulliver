@@ -269,13 +269,17 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
    <p id="libraryCount" class="library-count" role="status" aria-live="polite">작업을 불러오는 중이에요.</p>
   </div>
   <div class="project-list" id="projectList"></div>
+  <h3 class="library-heading">고급 편집기 원본 <small style="font-weight:400">(.fcproj / .scraftz · 기기 전용)</small></h3>
+  <p class="note">FilmCraft·SoundCraft 프로젝트는 파일로 보관한 시점의 사본이에요. 수정 내용은 자동 갱신되지 않으므로 다시 보관해야 해요.</p>
+  <label for="officialImport" class="btn soft" style="display:block;text-align:center;cursor:pointer;margin:10px 0">+ 공식 프로젝트 파일 보관<input id="officialImport" type="file" accept=".fcproj,.scraftz" multiple hidden></label>
+  <div class="project-list" id="officialProjectList"></div>
   <h3 class="library-heading">기존 내 활동 <small style="font-weight:400">(타이머·퀴즈·자리표)</small></h3>
   <div id="legacyActivityList"></div>
   <div class="library-actions" style="margin-top:12px">
    <button id="libraryBackup" type="button" class="btn primary">전체 백업 저장</button>
    <label for="libraryRestore" class="btn" style="cursor:pointer;text-align:center">백업 복원<input id="libraryRestore" type="file" accept=".json,application/json" hidden></label>
   </div>
-  <p class="note" style="margin:9px 0">통합 백업에는 제작 프로젝트·사진·영상 원본·WAV 배경음악·폴더·기존 내 활동이 포함돼요. 개인정보가 담길 수 있으니 파일을 안전하게 보관하세요. 복원은 기존 자료를 지우지 않고 추가해요.</p>
+  <p class="note" style="margin:9px 0">통합 백업에는 간편 제작물·사진·영상·WAV·별도로 보관한 공식 FilmCraft·SoundCraft 원본·폴더·기존 내 활동이 포함돼요. 120MB를 초과하면 백업이 생성되지 않으니 고급 원본은 개별 내려받기도 해주세요. 개인정보가 담길 수 있으니 파일을 안전하게 보관하세요. 복원은 기존 자료를 지우지 않고 추가해요.</p>
   <label for="importProject" class="btn" style="display:block;text-align:center;cursor:pointer;margin-top:10px">이전 JSON 작업 불러오기<input id="importProject" type="file" accept=".json,application/json" hidden></label>
   </section>
   <section id="inspectorAssets" class="right-pane" hidden>
@@ -298,12 +302,13 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
 </div>
 <script src="studio-media-core.js?v=20261013-22"></script>
 <script src="studio-core.js"></script>
-<script src="studio-storage.js"></script>
+<script src="studio-storage.js?v=20261014-23"></script>
 <script src="studio-transfer-core.js?v=20261013-22"></script>
-<script src="studio-app.js?v=20261013-22"></script>
+<script src="studio-official-project-core.js?v=20261014-23"></script>
+<script src="studio-app.js?v=20261014-23"></script>
 <script src="classroom-workspace.js"></script>
-<script src="studio-library-core.js"></script>
+<script src="studio-library-core.js?v=20261014-23"></script>
 <script src="studio-layout.js"></script>
-<script src="studio-library.js?v=20261013-22"></script>
+<script src="studio-library.js?v=20261014-23"></script>
 </body>
 </html>

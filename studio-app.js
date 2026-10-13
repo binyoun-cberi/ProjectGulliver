@@ -1,9 +1,9 @@
 (() => {
 'use strict';
-const C=window.GulliverStudioCore,S=window.GulliverStudioStorage,T=window.GulliverStudioTransfer,$=id=>document.getElementById(id);
-if(!C||!S||!T)throw Error('제작실 파일을 불러오지 못했어요.');
+const C=window.GulliverStudioCore,S=window.GulliverStudioStorage,T=window.GulliverStudioTransfer,O=window.GulliverOfficialProjectCore,$=id=>document.getElementById(id);
+if(!C||!S||!T||!O)throw Error('제작실 파일을 불러오지 못했어요.');
 const frame=$('editorFrame');
-let advancedOfficial=false;
+let advancedOfficial=false,openingOfficialId='',latestOfficial=[];
 let activeKind='',activeProject=null,latestProjects=[],latestAssets=[],live=false,lastSnapshot='',busy=false,token=0,pulse=null,pendingSave=Promise.resolve(),previews=[],saveInFlight=0,navigationBusy=false,saveFailure=false,pendingTransfer=null,transferBusy=false,pendingPdf=null;
 function node(tag,className,text){const e=document.createElement(tag);if(className)e.className=className;if(text!==undefined)e.textContent=String(text);return e;}
 function uuid(){return window.crypto?.randomUUID?.()||'studio-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);}
@@ -61,15 +61,16 @@ function updateOfficialMode(mode){
  advancedOfficial=!!mode;
  updateNav();
  if(advancedOfficial){
-  $('frameHelp').textContent='공식 ArtCraft 고급 편집기입니다. 고급 편집기의 작업은 아래 자체 기능으로 따로 저장해야 하며, 뚝딱 제작실의 자동 저장·전체 백업에는 포함되지 않아요.';
-  status('고급 모드의 파일 저장은 공식 편집기 안에서 진행해 주세요.');
+  $('frameHelp').textContent='고급 편집기 작업은 별도로 저장·보관한 사본만 내 작업에 남아요. 편집 내용은 자동으로 동기화되지 않습니다.';
+  status('고급 작업을 마친 뒤 프로젝트 파일을 내 작업에 보관해 주세요.');
  }
 }
 window.addEventListener('message',event=>{
  if(event.origin!==location.origin||event.source!==frame.contentWindow)return;
  const data=event.data;
- if(!data||data.type!=='gulliver:official-media'||data.kind!==activeKind||!['video','music'].includes(activeKind))return;
- updateOfficialMode(data.advanced);
+ if(!data||data.kind!==activeKind||!['video','music'].includes(activeKind))return;
+ if(data.type==='gulliver:official-saved'){refreshOfficial().catch(()=>{});return}
+ if(data.type==='gulliver:official-media')updateOfficialMode(data.advanced);
 });
 function updateNav(){
  document.querySelectorAll('#toolNav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.kind===activeKind)));
@@ -79,7 +80,7 @@ function updateNav(){
  $('workspaceTitle').textContent=tool?tool.label:'뚝딱 제작실';
  $('workspaceSubtitle').textContent=tool?tool.export:'필요한 자료를 골라 만들고 다시 꺼내 보세요.';
  $('studioHome').hidden=!!tool;$('editorArea').hidden=!tool;
- $('saveStatus').hidden=!tool||!tool.managed||advancedOfficial;
+ $('saveStatus').hidden=!tool||!tool.managed||advancedOfficial||!!openingOfficialId;
  const targets=T.destinations(activeKind),canShare=targets.length>0&&!advancedOfficial;
  $('transferBar').hidden=!canShare;
  $('pictureShareLabel').hidden=activeKind!=='picture';
@@ -98,7 +99,7 @@ function updateNav(){
  $('renameProject').hidden=!tool||!tool.managed;
  $('manualSave').hidden=!tool||!tool.managed;
  $('exportProject').hidden=!tool||!tool.managed;
- if(tool&&['video','music'].includes(activeKind)&&advancedOfficial){
+ if(tool&&['video','music'].includes(activeKind)&&(advancedOfficial||openingOfficialId)){
   $('newProject').hidden=true;
   $('renameProject').hidden=true;
   $('manualSave').hidden=true;
@@ -107,13 +108,22 @@ function updateNav(){
 
  $('openOriginal').hidden=!tool;
  if(tool){$('openOriginal').href=tool.href;$('editorFrame').title=tool.label+' 편집기';}
- $('frameHelp').textContent=advancedOfficial?'공식 ArtCraft 고급 편집기의 프로젝트는 별도로 저장해야 해요. 통합 작업 보관함과 자동 동기화되지 않아요.':tool?(tool.managed?'왼쪽 템플릿과 오른쪽 속성을 이용해 편집하세요. 변경 내용은 기기에 자동 저장돼요.':'그림·PDF의 원본은 자동 보관되지 않아요. 각 도구 안에서 직접 저장해 주세요.'):'';
+ $('frameHelp').textContent=(advancedOfficial||openingOfficialId)?'공식 프로젝트를 내 작업에 보관할 수 있어요. 이후 편집 내용은 자동 동기화되지 않아요.':tool?(tool.managed?'왼쪽 템플릿과 오른쪽 속성을 이용해 편집하세요. 변경 내용은 기기에 자동 저장돼요.':'그림·PDF의 원본은 자동 보관되지 않아요. 각 도구 안에서 직접 저장해 주세요.'):'';
  window.GulliverStudioLayout?.toolChanged(activeKind);
 }
 async function refreshProjects(){
  try{latestProjects=(await S.projects()).map(x=>{try{return C.normalizeProject(x)}catch{return null}}).filter(Boolean)}
  catch(e){latestProjects=[];status('이 기기의 프로젝트 보관 기능을 사용할 수 없어요. 도구 안에서 원본을 내려받아 주세요.',true)}
  renderProjects();
+}
+async function refreshOfficial(){
+ try{latestOfficial=await S.official()}catch(e){latestOfficial=[];status('고급 작업 보관함을 읽지 못했어요: '+(e.message||e),true)}
+ window.GulliverStudioLibrary?.renderOfficial();
+}
+async function openOfficial(kind,id){
+ const record=await S.getOfficial(id);
+ if(!record||record.kind!==kind||!O.TYPES[kind])throw Error('보관한 공식 프로젝트를 찾을 수 없어요.');
+ return start(kind,null,id);
 }
 function projectCard(p){
  const item=node('article','project-item'+(activeProject?.id===p.id?' active':''));
@@ -197,7 +207,7 @@ async function leave(save=true){
  if(C.managed(activeKind)&&save&&live)await sync(true);
  await pendingSave;
  clearPulse();token++;
- advancedOfficial=false;activeKind='';activeProject=null;lastSnapshot='';saveFailure=false;
+ advancedOfficial=false;openingOfficialId='';activeKind='';activeProject=null;lastSnapshot='';saveFailure=false;
  frame.removeAttribute('src');updateNav();renderProjects();
  return true;
 }
@@ -214,11 +224,11 @@ async function home(){
  if(activeKind&& !C.managed(activeKind) && !confirm('그림·PDF 도구는 자동 저장되지 않아요. 편집한 원본을 먼저 저장했나요?'))return;
  if(await moveAway())status('제작실 홈으로 돌아왔어요.');
 }
-async function start(kind,existing=null){
+async function start(kind,existing=null,officialId=''){
  if(!C.TOOLS[kind])return;
  if(activeKind&& !C.managed(activeKind) && !(activeKind==='picture'&&pendingTransfer?.target===kind) && !confirm('그림·PDF 작업은 자동 저장되지 않아요. 작업 결과를 저장하고 이동하시겠어요?'))return;
  if(!(await moveAway()))return false;
- advancedOfficial=false;
+ advancedOfficial=false;openingOfficialId=officialId;
  activeKind=kind;activeProject=existing?C.normalizeProject(existing):null;busy=true;
  saveLabel(C.managed(kind)?'편집기 시작 중…':'도구 내에서 직접 저장');
  updateNav();renderProjects();
@@ -226,7 +236,7 @@ async function start(kind,existing=null){
  // Saved quick-edit projects must reopen in the editor that created them.
  // A separate official FilmCraft/SoundCraft session is never this saved payload.
  const quickProject=(!!existing&&(kind==='video'||kind==='music'))||(pendingTransfer?.target===kind&&kind==='video');
- frame.src=path+'?studio=1'+(quickProject?'&editor=simple':'');
+ frame.src=path+'?studio=1'+(officialId?'&officialId='+encodeURIComponent(officialId):(quickProject?'&editor=simple':''));
  status(C.managed(kind)?'작업을 여는 중이에요. 변경 사항은 자동으로 저장돼요.':'편집기를 불러오고 있어요. 파일은 해당 도구 안에서 저장해 주세요.');
  return true;
 }
@@ -241,6 +251,10 @@ function onFrameLoad(){
   style.textContent='body>header,body>section.hero,body>section.intro,body>footer,body>section.advanced,body>.advanced,body>.topbar,body>.hero{display:none!important}body{margin:0!important;background:#fff!important}body>main,body>.workspace,body>.layout,body>.panels{max-width:none!important;width:100%!important;margin:0!important;padding:14px!important;gap:12px!important}body>.workspace{grid-template-columns:190px minmax(0,1fr) 230px!important}body>.layout{grid-template-columns:1fr!important}body>.panels{grid-template-columns:1fr!important}@media(max-width:1150px){body>.workspace{display:flex!important;flex-direction:column!important}body>.workspace>*{width:100%!important}}';
   if(expected!=='video'&&expected!=='music')doc.head.append(style);
  }catch(e){busy=false;status('편집기 화면에 접근하지 못했어요. 새 창에서 열기를 이용해 주세요.',true);return;}
+ if(openingOfficialId&&['video','music'].includes(expected)){
+  busy=false;live=false;window.GulliverStudioLayout?.toolChanged(expected);
+  return; // Original native project runs inside official WASM; never create a quick-edit autosave.
+ }
  if(!C.managed(expected)){
   busy=false;window.GulliverStudioLayout?.toolChanged(expected);
   if(expected==='pdf'){
@@ -545,10 +559,10 @@ window.addEventListener('beforeunload',e=>{
  }catch(e){}
 });
 window.GulliverStudioBridge={
- getState:()=>({activeKind,activeProject,latestProjects:[...latestProjects],latestAssets:[...latestAssets]}),
- sync,refreshProjects,refreshAssets,projectCard,download,status,uuid,start,
+ getState:()=>({activeKind,activeProject,latestProjects:[...latestProjects],latestAssets:[...latestAssets],latestOfficial:[...latestOfficial]}),
+ sync,refreshProjects,refreshAssets,refreshOfficial,openOfficial,projectCard,download,status,uuid,start,
  updateActiveFolder:(id,folderId)=>{if(activeProject?.id===id)activeProject.folderId=folderId}
 };
 setupMenu();
-updateNav();refreshProjects();refreshAssets();
+updateNav();refreshProjects();refreshAssets();refreshOfficial();
 })();
