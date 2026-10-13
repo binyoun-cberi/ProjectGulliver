@@ -146,7 +146,7 @@ function rebuildAdd(){
 }
 function rebuildFields(){
  const root=$('inspectorFields'),actions=$('inspectorActions');
- root.replaceChildren();actions.replaceChildren();fieldControls.clear();buttonPairs=[];
+ root.replaceChildren();actions.replaceChildren();fieldControls.clear();
  for(const [id,label] of fields[kind]){
   const native=doc().getElementById(id);if(!native)continue;
   const row=make('div','inspector-field'),heading=make('label','',label);
