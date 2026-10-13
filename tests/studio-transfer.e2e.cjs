@@ -64,6 +64,9 @@ test('Chrome: 도안 → 문서, 슬라이드 → 도안·PDF 자동 전달과 �
   assert.match(notice,/PDF|전달/);
   // Document PDF print uses the browser's native save dialog. After saving,
   // the user can choose the result once and open it in the PDF editor.
+  // PDF workspace warns before leaving because PDF state is not autosaved.
+  // Confirm that the user has saved their PDF before switching editors.
+  page.once('dialog',dialog=>dialog.accept());
   await page.locator('#toolNav [data-kind="document"]').click();
   await page.locator('#docPdfImportLabel').waitFor();
   await page.addScriptTag({url:base+'vendor/pdf-lib/pdf-lib.min.js'});
