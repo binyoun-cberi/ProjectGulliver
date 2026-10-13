@@ -29,6 +29,15 @@ test('Chrome: native FilmCraft/SoundCraft vault, original downloads, complete ba
   });
   assert.deepEqual(before,{length:2,types:['music','video'],projects:0});
   const movie=page.locator('#officialProjectList .project-item').filter({hasText:'아침 영상'});
+  page.once('dialog',d=>d.accept('가을 프로젝트'));
+  await page.locator('#addLibraryFolder').click();
+  await movie.getByRole('button',{name:'폴더 이동'}).click();
+  await page.locator('#folderMoveSelect').selectOption({label:'가을 프로젝트'});
+  await page.locator('#folderForm button[type="submit"]').click();
+  await page.waitForFunction(async()=>{
+   const f=(await GulliverStudioStorage.folders()).find(x=>x.name==='가을 프로젝트');
+   return !!f&&(await GulliverStudioStorage.official()).some(x=>x.kind==='video'&&x.folderId===f.id);
+  });
   const filePromise=page.waitForEvent('download');
   await movie.getByRole('button',{name:'원본 내려받기'}).click();
   const file=await filePromise;assert.ok(file.suggestedFilename().endsWith('.fcproj'));
@@ -38,6 +47,7 @@ test('Chrome: native FilmCraft/SoundCraft vault, original downloads, complete ba
   const backup=JSON.parse(fs.readFileSync(await (await backupPromise).path(),'utf8'));
   assert.equal(backup.official.length,2);
   assert.equal(backup.version,1); // Preserve compatibility with v1 bundles.
+  assert.ok(backup.official.some(x=>x.kind==='video'&&x.folderId),'Folder association is backed up');
   assert.ok(backup.official.some(x=>x.name.endsWith('.scraftz')));
   await movie.getByRole('button',{name:'열기'}).click();
   await page.locator('#toolNav [data-kind="video"][aria-current="true"]').waitFor();
