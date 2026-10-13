@@ -79,7 +79,7 @@ async function deleteFolder(){
  if(!folder){B.status('삭제할 폴더를 선택해 주세요. 미분류·전체 폴더는 삭제할 수 없어요.',true);return}
  if(!confirm('“'+folder.name+'” 폴더를 지울까요? 작업은 삭제되지 않고 미분류로 옮겨져요.'))return;
  try{
-  await B.sync().catch(()=>{});
+  if(C.managed(B.getState().activeKind))await B.sync(true);
   await S.deleteFolder(folder.id);
   B.getState().latestProjects.filter(p=>p.folderId===folder.id).forEach(p=>B.updateActiveFolder(p.id,''));
   await B.refreshProjects();await refreshFolders();
