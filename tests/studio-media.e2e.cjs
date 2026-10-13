@@ -54,6 +54,10 @@ test('Chrome: 영상·음악 편집·WAV/WebM 내보내기·자동 저장·전�
    const ps=await GulliverStudioStorage.projects(),m=await GulliverStudioStorage.media();
    return ps.some(p=>p.kind==='video'&&p.payload.clips.length===1)&&m.length===1;
   });
+  await iframe.locator('#cleanupMedia').click();
+  await iframe.locator('#msg').filter({hasText:'미사용 영상 원본이 없어요'}).waitFor();
+  assert.equal(await page.evaluate(async()=> (await GulliverStudioStorage.media()).length),1);
+
   const webmPromise=page.waitForEvent('download',{timeout:35000});
   await iframe.locator('#exportVideo').click();
   const webm=await webmPromise;
