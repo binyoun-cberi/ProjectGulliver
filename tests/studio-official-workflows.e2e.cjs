@@ -163,6 +163,15 @@ test('SoundCraft: compiled WASM opens real egui, audio context resumes after ges
   assert.equal(report.runtime.loaderVisible,false);
   assert.equal(report.capabilities.audioContext,true);
   console.log('SOUNDCRAFT RUNTIME',JSON.stringify(report).slice(0,2400));
+  await frame.locator('#soundcraft_canvas').click({position:{x:420,y:170}});
+  await page.keyboard.press('Control+s');
+  await sleep(400);
+  const savePopupPng=await frame.locator('#soundcraft_canvas').screenshot();
+  fs.writeFileSync('/tmp/soundcraft-save-qa.png',savePopupPng);
+  cp.spawnSync('ffmpeg',['-hide_banner','-loglevel','error','-y','-i','/tmp/soundcraft-save-qa.png',
+    '-vf','scale=700:-1','-q:v','12','/tmp/soundcraft-save-qa.jpg']);
+  console.log('SOUNDCRAFT_SAVE_DIALOG_JPEG='+fs.readFileSync('/tmp/soundcraft-save-qa.jpg').toString('base64'));
+
   assert.equal(failures.filter(x=>/RuntimeError|panic|unreachable/i.test(x)).length,0,
     'WASM startup crash detected: '+failures.join(' | '));
  }finally{await browser?.close();server.kill('SIGTERM')}
