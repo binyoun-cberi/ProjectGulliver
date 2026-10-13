@@ -42,6 +42,7 @@ test('Chrome: 프로젝트 폴더·검색·통합 백업·기기 변경 복원 �
   await page.locator('#projectList .project-item').filter({hasText:'가을 활동 도안'}).getByRole('button',{name:'폴더 이동'}).click();
   await page.locator('#folderMoveSelect').selectOption({label:'세계 여러 나라'});
   await page.locator('#folderForm button[type="submit"]').click();
+  await page.locator('#message').filter({hasText:'폴더로 옮겼어요'}).waitFor();
   await page.locator('#libraryFolder').selectOption({label:'세계 여러 나라'});
   assert.equal(await page.locator('#projectList .project-item').count(),1);
   await page.locator('#librarySearch').fill('없는 자료');
