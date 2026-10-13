@@ -152,8 +152,9 @@ async function importBatch({projects=[],assets=[],folders=[],media:mediaItems=[]
  const staged=[];
  try{for(const row of officialItems)staged.push(await stageNative(row))}
  catch(e){await cleanupStaged(staged);throw e}
- const db=await open();
- try{await new Promise((resolve,reject)=>{
+ try{
+  const db=await open();
+  await new Promise((resolve,reject)=>{
   const tx=db.transaction(['folders','projects','assets','media','official'],'readwrite');
   try{
    const f=tx.objectStore('folders'),p=tx.objectStore('projects'),a=tx.objectStore('assets'),m=tx.objectStore('media'),o=tx.objectStore('official');
