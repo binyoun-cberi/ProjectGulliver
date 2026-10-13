@@ -189,20 +189,25 @@ $('exportSvg').addEventListener('click',()=>{
  try{download(C.svg(model),filename('svg'),'image/svg+xml;charset=utf-8');message('SVG 도안을 저장했어요.');}
  catch(err){message('SVG 저장에 실패했어요: '+err.message,true);}
 });
-$('exportPng').addEventListener('click',async()=>{
+async function exportDesignImage(){
+ // Use the same full-resolution SVG renderer as the existing PNG download.
+ const svg=C.svg(model);
+ const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
+ const image=new Image();
  try{
-  const svg=C.svg(model),url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
-  const image=new Image();
-  await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('그림을 읽을 수 없어요.'));image.src=url;});
+  await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('도안 그림을 읽을 수 없어요.'));image.src=url;});
   const canvas=document.createElement('canvas');canvas.width=1190;canvas.height=1684;
   const ctx=canvas.getContext('2d');if(!ctx)throw Error('캔버스를 열 수 없어요.');
   ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
   ctx.drawImage(image,0,0,canvas.width,canvas.height);
-  URL.revokeObjectURL(url);
   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
-  if(!blob)throw Error('PNG 내보내기를 지원하지 않는 브라우저예요.');
-  download(blob,filename('png'),'image/png');message('인쇄용 PNG 이미지를 저장했어요.');
- }catch(err){message('PNG 저장에 실패했어요: '+err.message,true);}
+  if(!blob)throw Error('PNG 이미지를 만들 수 없는 브라우저예요.');
+  return blob;
+ }finally{URL.revokeObjectURL(url)}
+}
+$('exportPng').addEventListener('click',async()=>{
+ try{download(await exportDesignImage(),filename('png'),'image/png');message('인쇄용 PNG 이미지를 저장했어요.');}
+ catch(err){message('PNG 저장에 실패했어요: '+err.message,true);}
 });
 $('print').addEventListener('click',()=>{message('인쇄 창에서 PDF로 저장하거나 A4 용지로 인쇄해 주세요.');window.print();});
 $('openAdvanced').addEventListener('click',async()=>{
@@ -220,7 +225,7 @@ $('openAdvanced').addEventListener('click',async()=>{
  }catch(err){status.textContent=err.message||'고급 편집기를 실행하지 못했어요.';status.classList.add('error');}
  finally{btn.disabled=false;}
 });
-window.GulliverStudioAdapter={kind:'design',insertImage:insertPhoto,capture:()=>JSON.parse(JSON.stringify(model)),apply:raw=>{
+window.GulliverStudioAdapter={kind:'design',insertImage:insertPhoto,exportImage:exportDesignImage,capture:()=>JSON.parse(JSON.stringify(model)),apply:raw=>{
  model=C.validateProject(raw);selected=null;undo=[];redo=[];dirty=false;render();
 },rename:value=>{model.title=String(value).slice(0,80);dirty=true;render();}};
 window.addEventListener('beforeunload',e=>{if(dirty&&!new URLSearchParams(location.search).has('studio')){e.preventDefault();e.returnValue='';}});
