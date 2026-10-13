@@ -135,7 +135,24 @@ test('FilmCraft: verified WASM startup, real video import, new sequence, H.264 e
    return id;
   });
   await page.goto(BASE+encodeURIComponent('영상 뚝딱.html')+'?officialId='+encodeURIComponent(savedNativeId),{waitUntil:'domcontentloaded'});
-  await page.locator('#officialStatus').filter({hasText:'프로젝트를 FilmCraft에서 열었어요'}).waitFor({timeout:180000});
+  // Detect success or an actionable error quickly; record the native loader
+  // state instead of waiting silently for a missing success string.
+  try{
+   await page.waitForFunction(()=>{
+    const el=document.querySelector('#officialStatus');
+    return /FilmCraft에서 열었어요|고급 작업 재열기 실패|실행을 확인하지 못했어요/.test(el?.textContent||'');
+   },null,{timeout:90000});
+  }catch(e){console.log('FILMCRAFT 2.3 REOPEN WAIT',String(e))}
+  const nativeDiagnostics=await page.evaluate(async()=>{
+   const element=document.getElementById('officialStatus'),frame=document.getElementById('officialEditorFrame');
+   const w=frame?.contentWindow,native=await GulliverStudioStorage.official();
+   return {status:element?.textContent,state:element?.dataset.state,frameSrc:frame?.getAttribute('src'),
+    mode:document.getElementById('officialMode')?.getAttribute('aria-selected'),
+    native:native.map(x=>({id:x.id,name:x.name,bytes:x.blob?.size})),
+    load:w?.filmcraftLoad||null,hasApi:!!w?.filmcraft?.openProject};
+  });
+  console.log('FILMCRAFT 2.3 REOPEN DIAGNOSTICS',JSON.stringify(nativeDiagnostics).slice(0,4000));
+  assert.match(nativeDiagnostics.status||'',/프로젝트를 FilmCraft에서 열었어요/);
   const reopenedNative=await page.frameLocator('#officialEditorFrame').locator('body').evaluate(async()=>{
    const state=await window.filmcraft.inspect();
    return {active:state.activeSequence,crash:window.filmcraftLoad.fatal||null};
@@ -198,7 +215,9 @@ test('SoundCraft: compiled WASM opens real egui, audio context resumes after ges
   assert.equal(sessionBytes.subarray(0,2).toString('ascii'),'PK','SoundCraft saved session must be ZIP');
   console.log('SOUNDCRAFT SESSION SAVED',JSON.stringify({file:session.suggestedFilename(),bytes:sessionBytes.length}));
   // Store the REAL SoundCraft session bundle without altering the original WASM.
-  await page.locator('#officialProjectUpload').setInputFiles({name:session.suggestedFilename(),mimeType:'application/zip',buffer:sessionBytes});
+  const originalSoundBundle='tests/fixtures/soundcraft-qa.scraftz';
+  fs.writeFileSync(originalSoundBundle,sessionBytes);
+  await page.locator('#officialProjectUpload').setInputFiles(originalSoundBundle);
   await page.waitForFunction(async()=>{
    const native=await GulliverStudioStorage.official();
    return native.some(x=>x.kind==='music'&&x.blob.size>1000000);
