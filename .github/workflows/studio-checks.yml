@@ -1,0 +1,55 @@
+name: 뚝딱 제작실 integration checks
+on:
+  push:
+    branches:
+      - main
+      - feat/ttak-studio-unified-workspace-20261013
+    paths:
+      - '뚝딱 제작실.html'
+      - 'studio-*.js'
+      - 'doan-*.js'
+      - 'balpyo-*.js'
+      - 'munseo-*.js'
+      - '*뚝딱.html'
+      - 'tools-catalog.js'
+      - 'index.html'
+      - 'tests/**'
+      - '.github/workflows/studio-checks.yml'
+  pull_request:
+    paths:
+      - '뚝딱 제작실.html'
+      - 'studio-*.js'
+      - 'doan-*.js'
+      - 'balpyo-*.js'
+      - 'munseo-*.js'
+      - '*뚝딱.html'
+      - 'tools-catalog.js'
+      - 'index.html'
+      - 'tests/**'
+      - '.github/workflows/studio-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Verify JavaScript syntax
+        run: |
+          node --check studio-core.js
+          node --check studio-storage.js
+          node --check studio-app.js
+          node --check doan-core.js
+          node --check doan-ttak.js
+          node --check balpyo-core.js
+          node --check balpyo-ttak.js
+          node --check munseo-core.js
+          node --check munseo-ttak.js
+          node --check munseo-hwpx.js
+      - name: Run all existing and studio integration tests
+        run: node --test tests/*.test.cjs
