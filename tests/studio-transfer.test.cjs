@@ -8,6 +8,7 @@ test('공유 대상은 이미지를 지원하는 제작실로만 제한한다',(
  assert.deepEqual(T.destinations('design'),['slides','document','pdf','video']);
  assert.deepEqual(T.destinations('slides'),['design','document','pdf','video']);
  assert.deepEqual(T.destinations('document'),[]);
+ assert.deepEqual(T.destinations('music'),['video']);
  assert.deepEqual(T.destinations('pdf'),[]);
  assert.deepEqual(T.destinations('picture'),['document','video']);
  assert.deepEqual(T.destinations('music'),['video']);
