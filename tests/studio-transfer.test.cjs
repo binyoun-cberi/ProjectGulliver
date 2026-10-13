@@ -5,11 +5,12 @@ const fs=require('node:fs');
 const T=require('../studio-transfer-core.js');
 
 test('공유 대상은 이미지를 지원하는 제작실로만 제한한다',()=>{
- assert.deepEqual(T.destinations('design'),['slides','document','pdf']);
- assert.deepEqual(T.destinations('slides'),['design','document','pdf']);
+ assert.deepEqual(T.destinations('design'),['slides','document','pdf','video']);
+ assert.deepEqual(T.destinations('slides'),['design','document','pdf','video']);
  assert.deepEqual(T.destinations('document'),[]);
  assert.deepEqual(T.destinations('pdf'),[]);
- assert.deepEqual(T.destinations('picture'),[]);
+ assert.deepEqual(T.destinations('picture'),['document','video']);
+ assert.deepEqual(T.destinations('music'),['video']);
  for(const kind of T.destinations('design'))assert.equal(T.safeHandoff('design',kind).target,kind);
  assert.throws(()=>T.safeHandoff('document','pdf'),/전달/);
  assert.throws(()=>T.safeHandoff('design','design'),/전달/);
@@ -34,6 +35,11 @@ test('이미지 전달은 원본 제작기의 검증된 어댑터와 기존 PDFL
  assert.match(app,/await adapter\.insertImage\(file\)/);
  assert.match(app,/await adapter\.insertImagePdf\(/);
  assert.match(app,/await S\.saveAsset\(asset\)/);
+ assert.match(app,/shareAllSlides/);
+ assert.match(app,/adapter\.attachStoredAudio/);
+ assert.match(slides,/exportSlides/);
+ assert.match(fs.readFileSync('music-ttak.js','utf8'),/exportAudio:renderAudio/);
+ for(const id of ['sendAllSlides','pictureShareFile'])assert.ok(html.includes('id="'+id+'"'));
  for(const id of ['transferTarget','transferBar','sendToTool','saveImageToShelf','docPdfGuide'])
   assert.ok(html.includes('id="'+id+'"'),id);
 });
