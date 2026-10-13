@@ -3,7 +3,7 @@
 const C=window.GulliverStudioCore,S=window.GulliverStudioStorage,T=window.GulliverStudioTransfer,$=id=>document.getElementById(id);
 if(!C||!S||!T)throw Error('제작실 파일을 불러오지 못했어요.');
 const frame=$('editorFrame');
-let activeKind='',activeProject=null,latestProjects=[],latestAssets=[],live=false,lastSnapshot='',busy=false,token=0,pulse=null,pendingSave=Promise.resolve(),previews=[],saveInFlight=0,navigationBusy=false,saveFailure=false,pendingTransfer=null,transferBusy=false;
+let activeKind='',activeProject=null,latestProjects=[],latestAssets=[],live=false,lastSnapshot='',busy=false,token=0,pulse=null,pendingSave=Promise.resolve(),previews=[],saveInFlight=0,navigationBusy=false,saveFailure=false,pendingTransfer=null,transferBusy=false,pendingPdf=null;
 function node(tag,className,text){const e=document.createElement(tag);if(className)e.className=className;if(text!==undefined)e.textContent=String(text);return e;}
 function uuid(){return window.crypto?.randomUUID?.()||'studio-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);}
 function status(message,error=false){$('message').textContent=message;$('message').className=error?'error':'success';}
@@ -47,6 +47,7 @@ function setupMenu(){
  $('assetUpload').addEventListener('change',uploadAssets);
  $('saveImageToShelf').addEventListener('click',()=>shareCurrent(''));
  $('sendToTool').addEventListener('click',()=>shareCurrent($('transferTarget').value));
+ $('docPdfImport').addEventListener('change',importPrintedPdf);
  $('docPdfGuide').addEventListener('click',()=>{
   if(activeKind!=='document')return;
   status('먼저 인쇄 창에서 “PDF로 저장”을 선택해 주세요. 저장한 파일은 왼쪽 PDF 뚝딱에 들어가 “PDF 파일 추가”로 불러올 수 있어요.');
@@ -66,6 +67,7 @@ function updateNav(){
  const targets=T.destinations(activeKind),canShare=targets.length>0;
  $('transferBar').hidden=!canShare;
  $('docPdfGuide').hidden=activeKind!=='document';
+ $('docPdfImportLabel').hidden=activeKind!=='document';
  const select=$('transferTarget'),prior=select.value;
  select.replaceChildren();
  for(const target of targets){const option=node('option','',T.DEST_NAMES[target]);option.value=target;select.append(option)}
@@ -204,7 +206,10 @@ function onFrameLoad(){
  }catch(e){busy=false;status('편집기 화면에 접근하지 못했어요. 새 창에서 열기를 이용해 주세요.',true);return;}
  if(!C.managed(expected)){
   busy=false;window.GulliverStudioLayout?.toolChanged(expected);
-  if(expected==='pdf')finishTransfer(expected,child.GulliverStudioAdapter).catch(()=>{});
+  if(expected==='pdf'){
+   if(pendingTransfer?.target===expected)finishTransfer(expected,child.GulliverStudioAdapter).catch(()=>{});
+   else if(pendingPdf)finishPrintedPdf(child.GulliverStudioAdapter).catch(()=>{});
+  }
   return;
  }
  const adapter=child.GulliverStudioAdapter;
@@ -347,6 +352,28 @@ async function finishTransfer(expected,adapter){
  }catch(e){
   status('이미지를 자동으로 넣지 못했어요. 소재함에 보관돼 있으니 다시 넣을 수 있어요: '+(e?.message||e),true);
  }
+}
+async function importPrintedPdf(event){
+ const file=event.target.files?.[0];event.target.value='';if(!file)return;
+ if(activeKind!=='document'){status('문서 제작실에서 PDF를 저장한 뒤 가져와 주세요.',true);return;}
+ if(!(/\.pdf$/i.test(file.name)||file.type==='application/pdf')||file.size<=0||file.size>70*1024*1024){
+  status('70MB 이하 PDF 파일을 선택해 주세요.',true);return;
+ }
+ try{
+  await sync(true);
+  pendingPdf=file;
+  const ok=await start('pdf');
+  if(!ok){pendingPdf=null;throw Error('편집기를 열지 못했어요. 저장한 PDF 파일은 그대로 보존돼요.');}
+  status('저장한 PDF 파일을 PDF 뚝딱으로 가져오는 중이에요.');
+ }catch(e){pendingPdf=null;status('PDF 파일 전달 실패: '+(e?.message||e),true)}
+}
+async function finishPrintedPdf(adapter){
+ const file=pendingPdf;pendingPdf=null;if(!file)return;
+ try{
+  if(!adapter?.insertPdf)throw Error('PDF 파일을 받는 기능을 불러오지 못했어요.');
+  await adapter.insertPdf(file);
+  status('한글 문서에서 저장한 PDF를 편집기로 가져왔어요.');
+ }catch(e){status('PDF 파일을 불러오지 못했어요. PDF 뚝딱의 파일 추가를 이용해 주세요: '+(e?.message||e),true)}
 }
 async function uploadAssets(e){
  const files=Array.from(e.target.files||[]);e.target.value='';if(!files.length)return;
