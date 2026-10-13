@@ -12,7 +12,7 @@ const TOOLS=Object.freeze({
  slides:{name:'발표',label:'발표 뚝딱',icon:'📽️',href:'발표 뚝딱.html',export:'PPTX · PDF',managed:true},
  document:{name:'문서',label:'문서 뚝딱',icon:'📝',href:'문서 뚝딱.html',export:'HWPX · DOCX · PDF',managed:true}
 });
-const MAX_PROJECT_BYTES=26*1024*1024,MAX_ASSET_BYTES=2*1024*1024;
+const MAX_PROJECT_BYTES=26*1024*1024,MAX_ASSET_BYTES=2000000;
 function types(){return Object.keys(TOOLS);}
 function managed(kind){return Boolean(TOOLS[kind]?.managed);}
 function safeTitle(value,fallback='이름 없는 작업'){
