@@ -160,16 +160,22 @@ function rebuildFields(){
    if(native.maxLength>0)field.maxLength=native.maxLength;
    if(native.min)field.min=native.min;if(native.max)field.max=native.max;if(native.step)field.step=native.step;
   }
-  field.addEventListener('input',()=>{
-   if(native.disabled)return;
+  // Use the field's own document instead of the mutable current iframe.
+  // A delayed blur/input from the previous editor must never target a new one.
+  const eventToNative=(eventName)=>{
+   if(!native.isConnected||!child||doc()!==native.ownerDocument||native.disabled)return false;
+   const view=native.ownerDocument.defaultView;
+   if(!view)return false;
    native.value=field.value;
-   native.dispatchEvent(new child.contentWindow.Event('input',{bubbles:true}));
-   if(field.type==='color'||field.tagName==='SELECT')native.dispatchEvent(new child.contentWindow.Event('change',{bubbles:true}));
+   native.dispatchEvent(new view.Event(eventName,{bubbles:true}));
+   return true;
+  };
+  field.addEventListener('input',()=>{
+   if(!eventToNative('input'))return;
+   if(field.type==='color'||field.tagName==='SELECT')eventToNative('change');
   });
   field.addEventListener('change',()=>{
-   if(native.disabled)return;
-   native.value=field.value;
-   native.dispatchEvent(new child.contentWindow.Event('change',{bubbles:true}));
+   if(!eventToNative('change'))return;
    refreshSoon();
   });
   row.append(heading,field);root.append(row);
