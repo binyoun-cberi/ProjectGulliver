@@ -55,7 +55,8 @@ async function check(){
   q('officialMode').disabled=false;
   q('officialMode').textContent='고급 편집 · '+title+' '+info.version;
   q('officialVersion').textContent='ArtCraft 공식 '+title+' '+info.version;
-  announce('ArtCraft 공식 '+title+' 웹 편집기가 설치되어 있어요. 고급 편집을 선택해 주세요.');
+  announce('ArtCraft 공식 '+title+' 웹 편집기가 설치되어 있어요. 고급 편집기로 전환해요.');
+  show('official');
  }catch(err){
   available=false;
   announce('간편 편집은 정상 사용 가능해요. 고급 편집 설치 확인 중: '+err.message,true);
