@@ -53,6 +53,36 @@
     $('inputFiles').value = '';
     notice(errors.length ? (added ? added + '개 추가했어요. ' : '') + errors.join(' ') : added + '개 파일을 준비했어요.', errors.length ? 'error' : 'success');
   }
+  // Accept a portable image from the studio and make a real single-page PDF.
+  async function insertImagePdf(imageFile, title='수업자료'){
+    if(!PDF||!imageFile||!['image/png','image/jpeg'].includes(imageFile.type)||imageFile.size>2000000)
+      throw Error('PNG·JPG 이미지 2MB 이하만 PDF로 전달할 수 있어요.');
+    const pdf=await PDF.PDFDocument.create();
+    const bytes=new Uint8Array(await imageFile.arrayBuffer());
+    const image=imageFile.type==='image/png'?await pdf.embedPng(bytes):await pdf.embedJpg(bytes);
+    const landscape=image.width>image.height;
+    const width=landscape?841.89:595.28,height=landscape?595.28:841.89;
+    const page=pdf.addPage([width,height]);
+    const scale=Math.min((width-36)/image.width,(height-36)/image.height);
+    const w=image.width*scale,h=image.height*scale;
+    page.drawImage(image,{x:(width-w)/2,y:(height-h)/2,width:w,height:h});
+    const output=await pdf.save();
+    const safe=String(title||'수업자료').replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').slice(0,70);
+    const file=new File([output],(safe||'수업자료')+'.pdf',{type:'application/pdf'});
+    const before=entries.length;
+    await addFiles([file]);
+    if(entries.length!==before+1)throw Error('PDF 파일을 목록에 추가하지 못했어요.');
+    notice('제작실에서 보낸 이미지가 PDF 파일로 추가됐어요. 아래에서 저장·합치기·회전할 수 있어요.','success');
+  }
+  async function insertPdf(file){
+    if(!file||(!/\.pdf$/i.test(file.name)&&file.type!=='application/pdf')||file.size<1||file.size>maxFile)
+      throw Error('70MB 이하 PDF 파일을 선택해 주세요.');
+    const before=entries.length;
+    await addFiles([file]);
+    if(entries.length!==before+1)throw Error('저장한 PDF를 열지 못했어요. 파일을 확인해 주세요.');
+    notice('문서 뚝딱에서 저장한 PDF를 불러왔어요. 페이지 편집과 합치기를 계속할 수 있어요.','success');
+  }
+  window.GulliverStudioAdapter={kind:'pdf',insertImagePdf,insertPdf};
   function move(index, diff) {
     const dst = index + diff;
     if (active || dst < 0 || dst >= entries.length) return;

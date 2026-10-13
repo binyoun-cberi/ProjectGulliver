@@ -266,7 +266,54 @@ $('openAdvanced').addEventListener('click',async()=>{
  }catch(err){status.textContent=err.message||'고급 편집기를 실행하지 못했어요.';status.className='message error';}
  finally{btn.disabled=false;}
 });
-window.GulliverStudioAdapter={kind:'slides',insertImage:insertSlideImage,capture:()=>JSON.parse(JSON.stringify(deck)),apply:raw=>{
+// Build a portable, self-contained image for sharing a single slide.
+// The graphic preserves title/text/photo but is not a pixel-identical PPTX screenshot.
+function writeLines(ctx,value,x,y,maxWidth,lineHeight,maxLines){
+ const lines=String(value||'').split(/\n/);let list=[];
+ for(const source of lines){
+  let buffer='';
+  for(const ch of source){
+   const test=buffer+ch;
+   if(buffer&&ctx.measureText(test).width>maxWidth){list.push(buffer);buffer=ch;}
+   else buffer=test;
+   if(list.length>=maxLines)break;
+  }
+  if(buffer&&list.length<maxLines)list.push(buffer);
+  if(list.length>=maxLines)break;
+ }
+ for(const [i,line] of list.entries())ctx.fillText(line,x,y+i*lineHeight);
+}
+async function exportSlideImage(){
+ const slide=current(),theme=C.THEMES[deck.theme]||C.THEMES.sky;
+ const canvas=document.createElement('canvas');canvas.width=960;canvas.height=540;
+ const ctx=canvas.getContext('2d');if(!ctx)throw Error('이미지 편집 기능을 사용할 수 없어요.');
+ ctx.fillStyle=theme.background;ctx.fillRect(0,0,960,540);
+ ctx.fillStyle=theme.accent;ctx.fillRect(0,0,960,12);
+ ctx.font='700 22px "Malgun Gothic", "Apple SD Gothic Neo", sans-serif';
+ ctx.fillStyle=theme.accent;
+ const photo=slide.layout==='picture';
+ if(slide.eyebrow)writeLines(ctx,slide.eyebrow,photo?515:60,photo?94:90,photo?385:840,30,2);
+ if(photo){
+  ctx.fillStyle='#e9eff7';ctx.fillRect(42,100,430,360);
+  if(slide.image){
+   const picture=new Image();picture.src=slide.image;
+   await new Promise((resolve,reject)=>{picture.onload=resolve;picture.onerror=()=>reject(Error('슬라이드의 사진을 불러오지 못했어요.'));});
+   const ratio=Math.min(430/picture.naturalWidth,360/picture.naturalHeight);
+   const w=picture.naturalWidth*ratio,h=picture.naturalHeight*ratio;
+   ctx.drawImage(picture,42+(430-w)/2,100+(360-h)/2,w,h);
+  }
+ }
+ ctx.fillStyle=theme.foreground;
+ ctx.font='800 42px "Malgun Gothic", "Apple SD Gothic Neo", sans-serif';
+ writeLines(ctx,slide.title,photo?515:60,photo?185:205,photo?385:840,54,3);
+ ctx.font='25px "Malgun Gothic", "Apple SD Gothic Neo", sans-serif';
+ writeLines(ctx,slide.body,photo?515:68,photo?325:322,photo?375:805,38,4);
+ ctx.fillStyle=theme.muted;ctx.font='18px sans-serif';ctx.fillText(String(index+1),906,509);
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+ if(!blob)throw Error('슬라이드 이미지를 만들 수 없어요.');
+ return blob;
+}
+window.GulliverStudioAdapter={kind:'slides',insertImage:insertSlideImage,exportImage:exportSlideImage,capture:()=>JSON.parse(JSON.stringify(deck)),apply:raw=>{
  deck=C.validateDeck(raw);index=0;dirty=false;render();
 },rename:value=>{deck.title=String(value).slice(0,90);dirty=true;render();}};
 window.addEventListener('beforeunload',e=>{if(dirty&&!new URLSearchParams(location.search).has('studio')){e.preventDefault();e.returnValue='';}});

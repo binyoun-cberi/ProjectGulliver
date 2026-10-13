@@ -1,9 +1,9 @@
 (() => {
 'use strict';
-const C=window.GulliverStudioCore,S=window.GulliverStudioStorage,$=id=>document.getElementById(id);
-if(!C||!S)throw Error('제작실 파일을 불러오지 못했어요.');
+const C=window.GulliverStudioCore,S=window.GulliverStudioStorage,T=window.GulliverStudioTransfer,$=id=>document.getElementById(id);
+if(!C||!S||!T)throw Error('제작실 파일을 불러오지 못했어요.');
 const frame=$('editorFrame');
-let activeKind='',activeProject=null,latestProjects=[],latestAssets=[],live=false,lastSnapshot='',busy=false,token=0,pulse=null,pendingSave=Promise.resolve(),previews=[],saveInFlight=0,navigationBusy=false,saveFailure=false;
+let activeKind='',activeProject=null,latestProjects=[],latestAssets=[],live=false,lastSnapshot='',busy=false,token=0,pulse=null,pendingSave=Promise.resolve(),previews=[],saveInFlight=0,navigationBusy=false,saveFailure=false,pendingTransfer=null,transferBusy=false,pendingPdf=null;
 function node(tag,className,text){const e=document.createElement(tag);if(className)e.className=className;if(text!==undefined)e.textContent=String(text);return e;}
 function uuid(){return window.crypto?.randomUUID?.()||'studio-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);}
 function status(message,error=false){$('message').textContent=message;$('message').className=error?'error':'success';}
@@ -45,6 +45,14 @@ function setupMenu(){
  $('exportProject').addEventListener('click',exportCurrent);
  $('importProject').addEventListener('change',importLegacy);
  $('assetUpload').addEventListener('change',uploadAssets);
+ $('saveImageToShelf').addEventListener('click',()=>shareCurrent(''));
+ $('sendToTool').addEventListener('click',()=>shareCurrent($('transferTarget').value));
+ $('docPdfImport').addEventListener('change',importPrintedPdf);
+ $('docPdfGuide').addEventListener('click',()=>{
+  if(activeKind!=='document')return;
+  status('먼저 인쇄 창에서 “PDF로 저장”을 선택해 주세요. 저장한 파일은 왼쪽 PDF 뚝딱에 들어가 “PDF 파일 추가”로 불러올 수 있어요.');
+  try{frame.contentDocument?.getElementById('savePdf')?.click()}catch(e){status('문서의 PDF / 인쇄 버튼을 이용해 파일을 저장해 주세요.',true)}
+ });
  frame.addEventListener('load',onFrameLoad);
 }
 function updateNav(){
@@ -56,6 +64,16 @@ function updateNav(){
  $('workspaceSubtitle').textContent=tool?tool.export:'필요한 자료를 골라 만들고 다시 꺼내 보세요.';
  $('studioHome').hidden=!!tool;$('editorArea').hidden=!tool;
  $('saveStatus').hidden=!tool||!tool.managed;
+ const targets=T.destinations(activeKind),canShare=targets.length>0;
+ $('transferBar').hidden=!canShare;
+ $('docPdfGuide').hidden=activeKind!=='document';
+ $('docPdfImportLabel').hidden=activeKind!=='document';
+ const select=$('transferTarget'),prior=select.value;
+ select.replaceChildren();
+ for(const target of targets){const option=node('option','',T.DEST_NAMES[target]);option.value=target;select.append(option)}
+ if(targets.includes(prior))select.value=prior;
+ $('sendToTool').disabled=!canShare||transferBusy;
+ $('saveImageToShelf').disabled=!canShare||transferBusy;
  $('newProject').hidden=!tool||!tool.managed;
  $('renameProject').hidden=!tool||!tool.managed;
  $('manualSave').hidden=!tool||!tool.managed;
@@ -166,13 +184,14 @@ async function home(){
 async function start(kind,existing=null){
  if(!C.TOOLS[kind])return;
  if(activeKind&& !C.managed(activeKind) && !confirm('그림·PDF 작업은 자동 저장되지 않아요. 작업 결과를 저장하고 이동하시겠어요?'))return;
- if(!(await moveAway()))return;
+ if(!(await moveAway()))return false;
  activeKind=kind;activeProject=existing?C.normalizeProject(existing):null;busy=true;
  saveLabel(C.managed(kind)?'편집기 시작 중…':'도구 내에서 직접 저장');
  updateNav();renderProjects();
  const path=C.TOOLS[kind].href;
  frame.src=path+'?studio=1';
  status(C.managed(kind)?'작업을 여는 중이에요. 변경 사항은 자동으로 저장돼요.':'편집기를 불러오고 있어요. 파일은 해당 도구 안에서 저장해 주세요.');
+ return true;
 }
 function onFrameLoad(){
  if(!activeKind)return;
@@ -185,7 +204,14 @@ function onFrameLoad(){
   style.textContent='body>header,body>section.hero,body>section.intro,body>footer,body>section.advanced,body>.advanced,body>.topbar,body>.hero{display:none!important}body{margin:0!important;background:#fff!important}body>main,body>.workspace,body>.layout,body>.panels{max-width:none!important;width:100%!important;margin:0!important;padding:14px!important;gap:12px!important}body>.workspace{grid-template-columns:190px minmax(0,1fr) 230px!important}body>.layout{grid-template-columns:1fr!important}body>.panels{grid-template-columns:1fr!important}@media(max-width:1150px){body>.workspace{display:flex!important;flex-direction:column!important}body>.workspace>*{width:100%!important}}';
   doc.head.append(style);
  }catch(e){busy=false;status('편집기 화면에 접근하지 못했어요. 새 창에서 열기를 이용해 주세요.',true);return;}
- if(!C.managed(expected)){busy=false;window.GulliverStudioLayout?.toolChanged(expected);return;}
+ if(!C.managed(expected)){
+  busy=false;window.GulliverStudioLayout?.toolChanged(expected);
+  if(expected==='pdf'){
+   if(pendingTransfer?.target===expected)finishTransfer(expected,child.GulliverStudioAdapter).catch(()=>{});
+   else if(pendingPdf)finishPrintedPdf(child.GulliverStudioAdapter).catch(()=>{});
+  }
+  return;
+ }
  const adapter=child.GulliverStudioAdapter;
  if(!adapter||adapter.kind!==expected){busy=false;status('이 제작실의 자동 저장 연결을 찾을 수 없어요. 개별 원본 저장을 사용해 주세요.',true);return;}
  try{
@@ -204,7 +230,11 @@ function onFrameLoad(){
   for(const eventName of ['input','change','pointerup','keyup'])frame.contentDocument.addEventListener(eventName,debounce,{passive:true});
   // Imported legacy JSON may not exist in IndexedDB yet. Always commit it
   // after its adapter has validated and applied the payload.
-  sync(true).then(()=>{if(signature===token)status('작업을 열고 기기에 저장했어요.')}).catch(()=>{});
+  sync(true).then(async()=>{
+   if(signature!==token||expected!==activeKind)return;
+   if(pendingTransfer?.target===expected)await finishTransfer(expected,adapter);
+   else status('작업을 열고 기기에 저장했어요.');
+  }).catch(()=>{});
   
  }catch(err){
   busy=false;status('저장한 프로젝트를 열지 못했어요. '+(err.message||err),true);
@@ -243,6 +273,108 @@ async function importLegacy(e){
   if(activeKind===kind)status('원본을 불러오는 중이에요. 열리면 자동 저장돼요.');
  }catch(err){status('파일을 가져오지 못했어요. '+(err.message||err),true)}
 }
+// Bound images are passed between editors through IndexedDB, not a remote server.
+// A failed destination insert leaves the asset in the shelf for manual recovery.
+async function normalizeSharedImage(value){
+ if(!value||!['image/png','image/jpeg'].includes(value.type)||!Number.isFinite(value.size)||value.size<=0)
+  throw Error('사진을 내보내지 못했어요.');
+ let blob=new Blob([await value.arrayBuffer()],{type:value.type});
+ if(T.validImage(blob))return blob;
+ const objectUrl=URL.createObjectURL(blob);
+ try{
+  const image=new Image();
+  await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('큰 이미지를 줄이지 못했어요.'));image.src=objectUrl;});
+  for(const [max,q] of [[1100,.84],[850,.77],[680,.7]]){
+   const scale=Math.min(1,max/Math.max(image.naturalWidth,image.naturalHeight));
+   const canvas=document.createElement('canvas');
+   canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
+   canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+   const ctx=canvas.getContext('2d');if(!ctx)throw Error('이미지 축소를 지원하지 않는 브라우저예요.');
+   ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+   ctx.drawImage(image,0,0,canvas.width,canvas.height);
+   blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',q));
+   if(T.validImage(blob))return blob;
+  }
+  throw Error('제작물이 너무 커서 공유할 수 없어요. 원본 파일을 저장해 주세요.');
+ }finally{URL.revokeObjectURL(objectUrl)}
+}
+async function createSharedAsset(){
+ const kind=activeKind;
+ if(!T.destinations(kind).length||!live||busy)throw Error('도안 또는 발표 편집기를 열어 주세요.');
+ await sync(true);
+ const adapter=frame.contentWindow?.GulliverStudioAdapter;
+ if(!adapter?.exportImage)throw Error('현재 제작실에서 이미지를 추출할 수 없어요.');
+ const blob=await normalizeSharedImage(await adapter.exportImage());
+ const id=uuid(),name=T.imageFilename(activeProject?.title||C.TOOLS[kind].name,blob.type==='image/jpeg'?'jpeg':'png');
+ const asset={id,name,mime:blob.type,blob,createdAt:Date.now(),from:kind};
+ await S.saveAsset(asset);await refreshAssets();
+ return asset;
+}
+async function shareCurrent(target){
+ if(transferBusy)return;
+ transferBusy=true;$('sendToTool').disabled=true;$('saveImageToShelf').disabled=true;
+ try{
+  const source=activeKind;
+  if(target)T.safeHandoff(source,target);
+  status('현재 작업을 저장하고 공유할 이미지를 준비하고 있어요.');
+  const asset=await createSharedAsset();
+  if(!target){
+   window.GulliverStudioLayout?.setRight('assets');
+   status('현재 작업 이미지를 소재함에 보관했어요. 다른 제작실에서 다시 사용할 수 있어요.');
+   return;
+  }
+  pendingTransfer={target,asset};
+  const ok=await start(target);
+  if(!ok){pendingTransfer=null;throw Error('다음 제작실로 이동하지 못했어요. 소재함에 이미지를 보관해 뒀어요.');}
+  status('새 제작실을 여는 중이에요. 이미지는 자동으로 전달돼요.');
+ }catch(e){
+  pendingTransfer=null;
+  status('제작물 공유 실패: '+(e?.message||e),true);
+ }finally{
+  transferBusy=false;$('sendToTool').disabled=false;$('saveImageToShelf').disabled=false;
+ }
+}
+async function finishTransfer(expected,adapter){
+ if(!pendingTransfer||pendingTransfer.target!==expected)return;
+ const transfer=pendingTransfer;pendingTransfer=null;
+ try{
+  if(!adapter)throw Error('받는 제작실이 준비되지 않았어요.');
+  if(expected==='pdf'){
+   if(typeof adapter.insertImagePdf!=='function')throw Error('PDF 이미지 변환 기능을 불러오지 못했어요.');
+   await adapter.insertImagePdf(transfer.asset.blob,transfer.asset.name.replace(/\.(png|jpe?g)$/i,''));
+  }else{
+   if(!live||typeof adapter.insertImage!=='function')throw Error('사진 삽입 기능이 준비되지 않았어요.');
+   const file=new File([transfer.asset.blob],transfer.asset.name,{type:transfer.asset.mime});
+   await adapter.insertImage(file);
+   await sync(true);
+  }
+  status('이미지를 '+T.DEST_NAMES[expected]+'에 전달했어요. 기존 제작물은 그대로 보관돼요.');
+ }catch(e){
+  status('이미지를 자동으로 넣지 못했어요. 소재함에 보관돼 있으니 다시 넣을 수 있어요: '+(e?.message||e),true);
+ }
+}
+async function importPrintedPdf(event){
+ const file=event.target.files?.[0];event.target.value='';if(!file)return;
+ if(activeKind!=='document'){status('문서 제작실에서 PDF를 저장한 뒤 가져와 주세요.',true);return;}
+ if(!(/\.pdf$/i.test(file.name)||file.type==='application/pdf')||file.size<=0||file.size>70*1024*1024){
+  status('70MB 이하 PDF 파일을 선택해 주세요.',true);return;
+ }
+ try{
+  await sync(true);
+  pendingPdf=file;
+  const ok=await start('pdf');
+  if(!ok){pendingPdf=null;throw Error('편집기를 열지 못했어요. 저장한 PDF 파일은 그대로 보존돼요.');}
+  status('저장한 PDF 파일을 PDF 뚝딱으로 가져오는 중이에요.');
+ }catch(e){pendingPdf=null;status('PDF 파일 전달 실패: '+(e?.message||e),true)}
+}
+async function finishPrintedPdf(adapter){
+ const file=pendingPdf;pendingPdf=null;if(!file)return;
+ try{
+  if(!adapter?.insertPdf)throw Error('PDF 파일을 받는 기능을 불러오지 못했어요.');
+  await adapter.insertPdf(file);
+  status('한글 문서에서 저장한 PDF를 편집기로 가져왔어요.');
+ }catch(e){status('PDF 파일을 불러오지 못했어요. PDF 뚝딱의 파일 추가를 이용해 주세요: '+(e?.message||e),true)}
+}
 async function uploadAssets(e){
  const files=Array.from(e.target.files||[]);e.target.value='';if(!files.length)return;
  let count=0;
@@ -277,11 +409,17 @@ function renderAssets(){
 }
 async function insertAsset(asset){
  const selector={design:'addPhoto',slides:'slideImage',document:'addImage'}[activeKind];
- if(!selector)return status('사진을 넣으려면 도안·발표·문서 제작실을 먼저 선택해 주세요.',true);
+ if(!selector&&activeKind!=='pdf')return status('사진을 넣으려면 도안·발표·문서·PDF 제작실을 선택해 주세요.',true);
  try{
   const child=frame.contentWindow,input=frame.contentDocument?.getElementById(selector);
-  if(!input)throw Error('해당 제작실의 사진 넣기 기능이 준비되지 않았어요.');
+  if(!input&&activeKind!=='pdf')throw Error('해당 제작실의 사진 넣기 기능이 준비되지 않았어요.');
   const adapter=child.GulliverStudioAdapter;
+  if(activeKind==='pdf'){
+   if(!adapter?.insertImagePdf)throw Error('PDF 변환기가 준비되지 않았어요.');
+   await adapter.insertImagePdf(asset.blob,asset.name.replace(/\.(png|jpe?g)$/i,''));
+   status('소재함 이미지를 PDF로 추가했어요.');
+   return;
+  }
   if(adapter?.insertImage){
    await adapter.insertImage(asset.blob);
    await sync(true);

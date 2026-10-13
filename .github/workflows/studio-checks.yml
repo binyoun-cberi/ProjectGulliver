@@ -6,6 +6,7 @@ on:
       - feat/ttak-studio-unified-workspace-20261013
       - fix/studio-v1-1-reliable-autosave-20261013
       - feat/studio-v1-2-unified-editor-panels-20261013
+      - feat/studio-v1-3-cross-tool-transfer-20261013
     paths:
       - '뚝딱 제작실.html'
       - 'studio-*.js'
@@ -47,6 +48,7 @@ jobs:
           node --check studio-storage.js
           node --check studio-app.js
           node --check studio-layout.js
+          node --check studio-transfer-core.js
           node --check doan-core.js
           node --check doan-ttak.js
           node --check balpyo-core.js
@@ -73,4 +75,4 @@ jobs:
         run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
 
       - name: Exercise real Chromium local storage, file imports and exports
-        run: node --test tests/studio-browser.e2e.cjs
+        run: node --test tests/studio-browser.e2e.cjs tests/studio-transfer.e2e.cjs
