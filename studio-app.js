@@ -179,7 +179,8 @@ function onFrameLoad(){
  const expected=activeKind,signature=++token;
  let child;
  try{child=frame.contentWindow;const doc=frame.contentDocument;
-  if(!doc||!doc.body)return;
+  // Ignore about:blank load events from unloading the previous editor.
+  if(!doc||!doc.body||!doc.location?.search?.includes('studio=1'))return;
   const style=doc.createElement('style');style.id='gulliver-studio-inset';
   style.textContent='body>header,body>section.hero,body>section.intro,body>footer,body>section.advanced,body>.advanced,body>.topbar,body>.hero{display:none!important}body{margin:0!important;background:#fff!important}body>main,body>.workspace,body>.layout,body>.panels{max-width:none!important;width:100%!important;margin:0!important;padding:14px!important;gap:12px!important}body>.workspace{grid-template-columns:190px minmax(0,1fr) 230px!important}body>.layout{grid-template-columns:1fr!important}body>.panels{grid-template-columns:1fr!important}@media(max-width:1150px){body>.workspace{display:flex!important;flex-direction:column!important}body>.workspace>*{width:100%!important}}';
   doc.head.append(style);
