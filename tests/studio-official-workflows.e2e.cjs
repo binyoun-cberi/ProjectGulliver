@@ -124,6 +124,24 @@ test('FilmCraft: verified WASM startup, real video import, new sequence, H.264 e
   assert.ok(reopened.bytes>100,'Project file too small');
   assert.equal(reopened.fatal,null,'Project reopen caused a WASM fatal error');
   console.log('FILMCRAFT REOPEN',JSON.stringify(reopened));
+  // Persist a REAL original FilmCraft project in the unified browser vault,
+  // then reload the standalone official editor through the 2.3 deep link.
+  const savedNativeId=await page.evaluate(async()=>{
+   const bytes=await document.getElementById('officialEditorFrame').contentWindow.filmcraft.readFile('/exports/gulliver-qa-project.fcproj');
+   const blob=new Blob([bytes],{type:'application/json'});
+   const id='official-film-qa-'+Date.now();
+   await GulliverStudioStorage.saveOfficial({id,kind:'video',name:'gulliver-qa-project.fcproj',title:'실제 영상 원본',
+    size:blob.size,blob,createdAt:Date.now(),updatedAt:Date.now(),folderId:''});
+   return id;
+  });
+  await page.goto(BASE+encodeURIComponent('영상 뚝딱.html')+'?officialId='+encodeURIComponent(savedNativeId),{waitUntil:'domcontentloaded'});
+  await page.locator('#officialStatus').filter({hasText:'프로젝트를 FilmCraft에서 열었어요'}).waitFor({timeout:180000});
+  const reopenedNative=await page.frameLocator('#officialEditorFrame').locator('body').evaluate(async()=>{
+   const state=await window.filmcraft.inspect();
+   return {active:state.activeSequence,crash:window.filmcraftLoad.fatal||null};
+  });
+  assert.equal(reopenedNative.crash,null,'Reloading the vault copy crashed FilmCraft');
+  console.log('FILMCRAFT 2.3 VAULT REOPEN',JSON.stringify(reopenedNative).slice(0,1500));
   assert.equal(failures.filter(x=>/RuntimeError|panic|unreachable/i.test(x)).length,0,
     'WASM crash detected: '+failures.join(' | '));
  }finally{await browser?.close();server.kill('SIGTERM')}
@@ -179,6 +197,16 @@ test('SoundCraft: compiled WASM opens real egui, audio context resumes after ges
     'SoundCraft should export a portable session bundle: '+session.suggestedFilename());
   assert.equal(sessionBytes.subarray(0,2).toString('ascii'),'PK','SoundCraft saved session must be ZIP');
   console.log('SOUNDCRAFT SESSION SAVED',JSON.stringify({file:session.suggestedFilename(),bytes:sessionBytes.length}));
+  // Store the REAL SoundCraft session bundle without altering the original WASM.
+  await page.locator('#officialProjectUpload').setInputFiles({name:session.suggestedFilename(),mimeType:'application/zip',buffer:sessionBytes});
+  await page.waitForFunction(async()=>{
+   const native=await GulliverStudioStorage.official();
+   return native.some(x=>x.kind==='music'&&x.blob.size>1000000);
+  },{timeout:30000});
+  console.log('SOUNDCRAFT 2.3 ARCHIVE',JSON.stringify(await page.evaluate(async()=>{
+   const row=(await GulliverStudioStorage.official()).find(x=>x.kind==='music');
+   return{name:row.name,size:row.size};
+  })));
 
   // SoundCraft's official web shell supports dropping a session bundle
   // anywhere on its canvas; unlike Ctrl+O this path needs no OS picker.
