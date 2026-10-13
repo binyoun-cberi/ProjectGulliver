@@ -14,6 +14,7 @@ on:
       - feat/studio-v2-2-cross-media-20261013
       - feat/studio-v2-3-native-project-library-20261014
       - feat/studio-v2-4-offline-binary-backup-20261014
+      - feat/studio-v3-unified-canvas-20261014
     paths:
       - '뚝딱 제작실.html'
       - 'studio-*.js'
@@ -56,6 +57,8 @@ jobs:
       - name: Verify JavaScript syntax
         run: |
           node --check studio-core.js
+          node --check studio-unified-core.js
+          node --check studio-unified-editor.js
           node --check studio-storage.js
           node --check studio-official-project-core.js
           node --check studio-app.js
@@ -102,7 +105,7 @@ jobs:
           sudo apt-get install -y -qq ffmpeg
 
       - name: Exercise real Chromium local storage, file imports and exports
-        run: node --test tests/studio-browser.e2e.cjs tests/studio-transfer.e2e.cjs tests/studio-library.e2e.cjs tests/studio-media.e2e.cjs tests/studio-visible-home.e2e.cjs tests/studio-v22.e2e.cjs tests/studio-cross-media.e2e.cjs tests/studio-official-library.e2e.cjs tests/studio-v24.e2e.cjs
+        run: node --test tests/studio-browser.e2e.cjs tests/studio-transfer.e2e.cjs tests/studio-library.e2e.cjs tests/studio-media.e2e.cjs tests/studio-visible-home.e2e.cjs tests/studio-v22.e2e.cjs tests/studio-cross-media.e2e.cjs tests/studio-official-library.e2e.cjs tests/studio-v24.e2e.cjs tests/studio-v30.e2e.cjs
 
   official-media-release:
     runs-on: ubuntu-latest

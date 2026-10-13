@@ -4,6 +4,7 @@ root.GulliverStudioTransfer=result;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
 const FROM=Object.freeze({
+ canvas:['design','document','pdf','video'],
  design:['slides','document','pdf','video'],
  slides:['design','document','pdf','video'],
  picture:['document','video'],

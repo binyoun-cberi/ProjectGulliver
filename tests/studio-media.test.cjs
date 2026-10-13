@@ -3,8 +3,8 @@ const testFn=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const M=require('../studio-media-core.js'),Music=require('../music-core.js'),C=require('../studio-core.js');
-testFn('7개 제작실 중 음악·영상은 자동 저장 대상이고 파일 진입점이 존재',()=>{
- assert.equal(C.types().length,7);
+testFn('8개 제작실 중 음악·영상은 자동 저장 대상이고 파일 진입점이 존재',()=>{
+ assert.equal(C.types().length,8);
  for(const kind of ['video','music']){assert.equal(C.managed(kind),true);assert.ok(fs.existsSync(C.TOOLS[kind].href));}
  assert.equal(C.detectLegacy(M.makeVideo()),'video');
  assert.equal(C.detectLegacy(M.makeMusic()),'music');

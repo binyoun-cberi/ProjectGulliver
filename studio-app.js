@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const C=window.GulliverStudioCore,S=window.GulliverStudioStorage,T=window.GulliverStudioTransfer,O=window.GulliverOfficialProjectCore,$=id=>document.getElementById(id);
+const C=window.GulliverStudioCore,S=window.GulliverStudioStorage,T=window.GulliverStudioTransfer,O=window.GulliverOfficialProjectCore,U=window.GulliverUnifiedCore,$=id=>document.getElementById(id);
 if(!C||!S||!T||!O)throw Error('제작실 파일을 불러오지 못했어요.');
 const frame=$('editorFrame');
 let advancedOfficial=false,openingOfficialId='',latestOfficial=[];
@@ -84,7 +84,7 @@ function updateNav(){
  const targets=T.destinations(activeKind),canShare=targets.length>0&&!advancedOfficial;
  $('transferBar').hidden=!canShare;
  $('pictureShareLabel').hidden=activeKind!=='picture';
- $('sendAllSlides').hidden=activeKind!=='slides'||!canShare;
+ $('sendAllSlides').hidden=!['slides','canvas'].includes(activeKind)||!canShare;
  $('saveImageToShelf').hidden=activeKind==='music';
  $('sendToTool').textContent=activeKind==='music'?'배경음악 보내기 →':'이미지 보내기 →';
  $('docPdfGuide').hidden=activeKind!=='document';
@@ -108,7 +108,7 @@ function updateNav(){
 
  $('openOriginal').hidden=!tool;
  if(tool){$('openOriginal').href=tool.href;$('editorFrame').title=tool.label+' 편집기';}
- $('frameHelp').textContent=(advancedOfficial||openingOfficialId)?'공식 프로젝트를 내 작업에 보관할 수 있어요. 이후 편집 내용은 자동 동기화되지 않아요.':tool?(tool.managed?'왼쪽 템플릿과 오른쪽 속성을 이용해 편집하세요. 변경 내용은 기기에 자동 저장돼요.':'그림·PDF의 원본은 자동 보관되지 않아요. 각 도구 안에서 직접 저장해 주세요.'):'';
+ $('frameHelp').textContent=(advancedOfficial||openingOfficialId)?'공식 프로젝트를 내 작업에 보관할 수 있어요. 이후 편집 내용은 자동 동기화되지 않아요.':tool?(activeKind==='canvas'?'글씨·도형·사진을 직접 선택해 편집하세요. 페이지와 변경사항은 자동 저장돼요.':tool.managed?'왼쪽 템플릿과 오른쪽 속성을 이용해 편집하세요. 변경 내용은 기기에 자동 저장돼요.':'그림·PDF의 원본은 자동 보관되지 않아요. 각 도구 안에서 직접 저장해 주세요.'):'';
  window.GulliverStudioLayout?.toolChanged(activeKind);
 }
 async function refreshProjects(){
@@ -146,9 +146,27 @@ function projectCard(p){
    await S.deleteProject(p.id);await refreshProjects();status('선택한 작업을 삭제했어요.');
   }catch(e){status(e.message,true)}
  });
+ if(U&&['design','slides'].includes(p.kind)){
+  const convert=node('button','tiny','통합에서 편집');convert.type='button';
+  convert.title='원본을 그대로 두고 선택 가능한 글씨·도형·사진이 있는 통합 프로젝트로 복사';
+  convert.addEventListener('click',()=>importIntoCanvas(p));actions.append(convert);
+ }
  const folder=node('button','tiny','폴더 이동');folder.type='button';
  folder.addEventListener('click',()=>window.GulliverStudioLibrary?.moveProject(p));
  actions.append(open,copy,folder,del);item.append(head,actions);return item;
+}
+async function importIntoCanvas(source){
+ try{
+  if(!U)throw Error('통합 캔버스 엔진이 준비되지 않았어요.');
+  if(activeProject?.id===source.id&&live)await sync(true);
+  const fresh=await S.getProject(source.id),payload=U.fromLegacy(fresh.kind,fresh.payload);
+  const now=Date.now(),converted=C.normalizeProject({id:uuid(),kind:'canvas',title:C.safeTitle(fresh.title+' · 통합'),payload,
+   folderId:fresh.folderId||'',createdAt:now,updatedAt:now});
+  await S.saveProject(converted);
+  await refreshProjects();
+  await start('canvas',converted);
+  status('기존 '+C.TOOLS[source.kind].name+' 원본은 보관하고, 통합 캔버스에서 요소를 직접 편집할 수 있는 복사본을 만들었어요.');
+ }catch(e){status('통합 캔버스로 가져오지 못했어요: '+(e.message||e),true)}
 }
 function renderProjects(){
  $('projectList').replaceChildren();
@@ -373,7 +391,7 @@ async function pictureAsset(){
  return asset;
 }
 async function shareAllSlides(){
- if(transferBusy||activeKind!=='slides'||advancedOfficial)return;
+ if(transferBusy||!['slides','canvas'].includes(activeKind)||advancedOfficial)return;
  transferBusy=true;
  try{
   await sync(true);
