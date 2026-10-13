@@ -38,6 +38,7 @@ function renderOfficial(){
   const actions=el('div','row-actions');
   function action(label,fn){const b=el('button','tiny',label);b.type='button';b.addEventListener('click',()=>Promise.resolve(fn()).catch(e=>B.status(e.message||String(e),true)));actions.append(b)}
   action('열기',()=>B.openOfficial(p.kind,p.id));
+  action('폴더 이동',()=>openMove({...p,native:true}));
   action('원본 내려받기',async()=>{const original=await S.getOfficial(p.id);if(!original)throw Error('프로젝트 원본이 없어요.');B.download(original.blob,original.name,original.blob.type)});
   action('이름 수정',async()=>{
    const input=prompt('보관함에 표시할 이름',p.title);if(input===null)return;
@@ -128,7 +129,7 @@ async function deleteFolder(){
   if(C.managed(B.getState().activeKind))await B.sync(true);
   await S.deleteFolder(folder.id);
   B.getState().latestProjects.filter(p=>p.folderId===folder.id).forEach(p=>B.updateActiveFolder(p.id,''));
-  await B.refreshProjects();await refreshFolders();
+  await B.refreshProjects();await B.refreshOfficial();await refreshFolders();
   B.status('폴더만 삭제했어요. 작업은 미분류에 남아 있어요.');
  }catch(e){B.status('폴더 삭제 실패: '+e.message,true)}
 }
@@ -140,15 +141,14 @@ async function completeMove(e){
  const folderId=$('folderMoveSelect').value;
  if(folderId&&!folders.some(f=>f.id===folderId))return B.status('폴더를 다시 선택해 주세요.',true);
  try{
-  if(B.getState().activeProject?.id===p.id)await B.sync(true);
-  const fresh=await S.getProject(p.id);
+  if(!p.native&&B.getState().activeProject?.id===p.id)await B.sync(true);
+  const fresh=p.native?await S.getOfficial(p.id):await S.getProject(p.id);
   if(!fresh)throw Error('이 작업을 찾지 못했어요.');
   fresh.folderId=folderId;fresh.updatedAt=Date.now();
   // Update the in-memory autosave source before the persistent write so a
   // concurrent autosave cannot silently move this project back to old folder.
-  B.updateActiveFolder(p.id,folderId);
-  await S.saveProject(C.normalizeProject(fresh));
-  await B.refreshProjects();
+  if(p.native){await S.saveOfficial(fresh);await B.refreshOfficial()}
+  else{B.updateActiveFolder(p.id,folderId);await S.saveProject(C.normalizeProject(fresh));await B.refreshProjects()}
   B.status('작업을 선택한 폴더로 옮겼어요.');
  }catch(e){B.status('폴더 이동 실패: '+e.message,true)}
 }
