@@ -293,7 +293,10 @@ $('openAdvanced').addEventListener('click',async()=>{
  }catch(err){status.textContent=String(err.message||err);status.className='status error';}
  finally{btn.disabled=false;}
 });
-window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
+window.GulliverStudioAdapter={kind:'document',capture:()=>JSON.parse(JSON.stringify(doc)),apply:raw=>{
+ doc=C.validate(raw);active=null;undo=[];redo=[];dirty=false;render();
+},rename:value=>{doc.title=String(value).slice(0,120);dirty=true;render();}};
+window.addEventListener('beforeunload',e=>{if(dirty&&!new URLSearchParams(location.search).has('studio')){e.preventDefault();e.returnValue='';}});
 render();
 if(!docxAvailable()){announce('문서 편집은 사용할 수 있지만 DOCX 저장 라이브러리가 아직 배포되지 않았어요.',true);$('saveDocx').disabled=true;}
 })();
