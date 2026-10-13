@@ -251,6 +251,22 @@ function toDocx(){
   sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:1134,bottom:1134,left:1134,right:1134}}},children}]
  });
 }
+$('saveHwpx').addEventListener('click',async()=>{
+ if(processing)return;
+ processing=true;
+ const button=$('saveHwpx');button.disabled=true;button.textContent='HWPX 만드는 중…';
+ try{
+  // Imported only on demand; nothing leaves the browser.
+  const {makeHwpx}=await import('./munseo-hwpx.js');
+  const bytes=await makeHwpx(doc);
+  download(new Blob([bytes],{type:'application/octet-stream'}),C.filename(doc.title,'hwpx'),'application/octet-stream');
+  announce('HWPX를 저장했어요. 한글 프로그램에서 열어 서식과 사진을 확인해 주세요.');
+ }catch(err){
+  announce('HWPX 저장에 실패했어요: '+String(err?.message||err),true);
+ }finally{
+  processing=false;button.disabled=false;button.textContent='HWPX 저장';
+ }
+});
 $('saveDocx').addEventListener('click',async()=>{
  if(processing)return;
  if(!docxAvailable())return announce('DOCX 저장 도구가 아직 배포되지 않았어요. 잠시 후 다시 시도해 주세요.',true);
