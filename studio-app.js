@@ -3,10 +3,19 @@
 const C=window.GulliverStudioCore,S=window.GulliverStudioStorage,$=id=>document.getElementById(id);
 if(!C||!S)throw Error('제작실 파일을 불러오지 못했어요.');
 const frame=$('editorFrame');
-let activeKind='',activeProject=null,latestProjects=[],latestAssets=[],live=false,lastSnapshot='',busy=false,token=0,pulse=null,pendingSave=Promise.resolve(),previews=[];
+let activeKind='',activeProject=null,latestProjects=[],latestAssets=[],live=false,lastSnapshot='',busy=false,token=0,pulse=null,pendingSave=Promise.resolve(),previews=[],saveInFlight=0,navigationBusy=false,saveFailure=false;
 function node(tag,className,text){const e=document.createElement(tag);if(className)e.className=className;if(text!==undefined)e.textContent=String(text);return e;}
 function uuid(){return window.crypto?.randomUUID?.()||'studio-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);}
 function status(message,error=false){$('message').textContent=message;$('message').className=error?'error':'success';}
+function saveLabel(text,error=false){
+ const label=$('saveStatus');if(!label)return;
+ label.textContent=text;label.dataset.state=error?'error':'ok';
+}
+function saveError(e){
+ saveFailure=true;
+ const message='기기 내 자동 저장에 실패했어요. '+(e?.message||e)+' 원본 JSON을 직접 저장해 주세요.';
+ saveLabel('저장 실패 — 원본을 백업하세요',true);status(message,true);
+}
 function download(value,name,mime){
  const blob=value instanceof Blob?value:new Blob([value],{type:mime});
  const url=URL.createObjectURL(blob),link=node('a');link.href=url;link.download=name;
@@ -29,7 +38,9 @@ function setupMenu(){
  $('navHome').addEventListener('click',home);
  $('exitEditor').addEventListener('click',home);
  $('newProject').addEventListener('click',()=>start(activeKind));
- $('manualSave').addEventListener('click',async()=>{await sync(true);status('현재 작업을 기기에 저장했어요.');});
+ $('manualSave').addEventListener('click',async()=>{
+  try{await sync(true);}catch(e){/* Error has already been displayed. */}
+ });
  $('renameProject').addEventListener('click',renameCurrent);
  $('exportProject').addEventListener('click',exportCurrent);
  $('importProject').addEventListener('change',importLegacy);
@@ -44,6 +55,7 @@ function updateNav(){
  $('workspaceTitle').textContent=tool?tool.label:'뚝딱 제작실';
  $('workspaceSubtitle').textContent=tool?tool.export:'필요한 자료를 골라 만들고 다시 꺼내 보세요.';
  $('studioHome').hidden=!!tool;$('editorArea').hidden=!tool;
+ $('saveStatus').hidden=!tool||!tool.managed;
  $('newProject').hidden=!tool||!tool.managed;
  $('renameProject').hidden=!tool||!tool.managed;
  $('manualSave').hidden=!tool||!tool.managed;
@@ -64,15 +76,17 @@ function projectCard(p){
  const open=node('button','tiny open','열기');open.type='button';open.addEventListener('click',()=>start(p.kind,p));
  const copy=node('button','tiny','복제');copy.type='button';copy.addEventListener('click',async()=>{
   try{
-   const clone={...p,id:uuid(),title:C.safeTitle(p.title+' (복사)'),createdAt:Date.now(),updatedAt:Date.now()};
+   if(activeProject?.id===p.id)await sync(true);
+   const source=activeProject?.id===p.id?activeProject:p;
+   const clone={...source,id:uuid(),title:C.safeTitle(source.title+' (복사)'),createdAt:Date.now(),updatedAt:Date.now()};
    await S.saveProject(clone);await refreshProjects();status('작업을 복제했어요.');
   }catch(e){status(e.message,true)}
  });
  const del=node('button','tiny','삭제');del.type='button';del.addEventListener('click',async()=>{
   if(!confirm('“'+p.title+'” 작업을 이 기기에서 삭제할까요?'))return;
   try{
-   if(activeProject?.id===p.id){await pendingSave.catch(()=>{});await leave(false)}
-   await pendingSave.catch(()=>{});
+   if(activeProject?.id===p.id)await leave(false);
+   await pendingSave;
    await S.deleteProject(p.id);await refreshProjects();status('선택한 작업을 삭제했어요.');
   }catch(e){status(e.message,true)}
  });
@@ -93,41 +107,67 @@ function renderProjects(){
 }
 function clearPulse(){clearInterval(pulse);pulse=null;live=false;}
 async function sync(force=false){
- if(!activeKind||!C.managed(activeKind)||!live||busy)return;
+ if(!activeKind||!C.managed(activeKind)||!live||busy){
+  if(force)throw Error('편집기 로딩이 끝나면 다시 저장해 주세요.');
+  return false;
+ }
  const a=frame.contentWindow?.GulliverStudioAdapter;
- if(!a||a.kind!==activeKind)return;
+ if(!a||a.kind!==activeKind){
+  if(force)throw Error('편집기 저장 연결이 준비되지 않았어요.');
+  return false;
+ }
+ let json='',next;
  try{
   const payload=a.capture();
-  const json=JSON.stringify(payload);
-  if(!force&&json===lastSnapshot)return;
-  const size=new Blob([json]).size;
-  if(size>C.MAX_PROJECT_BYTES)throw Error('이 프로젝트는 26MB를 넘었어요. 필요 없는 사진을 지우거나 원본을 직접 저장해 주세요.');
-  lastSnapshot=json;
-  const now=Date.now(),prev=activeProject;
-  const next={id:prev?.id||uuid(),kind:activeKind,title:C.safeTitle(payload.title,C.TOOLS[activeKind].name+' 작업'),payload,createdAt:prev?.createdAt||now,updatedAt:now};
-  const validated=C.normalizeProject(next);
-  activeProject=validated;
-  pendingSave=pendingSave.catch(()=>{}).then(()=>S.saveProject(validated));
-  await pendingSave;await refreshProjects();
-  if(force)status('저장이 완료됐어요.');
- }catch(e){lastSnapshot='';status('기기 내 저장에 실패했어요. '+(e?.message||e)+' 도구 안에서 JSON 원본을 내려받아 주세요.',true)}
+  json=JSON.stringify(payload);
+  if(!force&&json===lastSnapshot){await pendingSave;return true;}
+  if(new Blob([json]).size>C.MAX_PROJECT_BYTES)throw Error('프로젝트가 26MB를 넘었어요. 사진을 줄이거나 원본을 직접 저장해 주세요.');
+  const kind=activeKind,now=Date.now(),prev=activeProject;
+  next=C.normalizeProject({id:prev?.id||uuid(),kind,title:C.safeTitle(payload.title,C.TOOLS[kind].name+' 작업'),payload,createdAt:prev?.createdAt||now,updatedAt:now});
+  activeProject=next;
+  saveInFlight++;saveLabel('저장 중…');
+  // Serialize every IndexedDB write. This prevents an older snapshot from
+  // overwriting a newer change when async events arrive quickly.
+  const write=pendingSave.catch(()=>{}).then(()=>S.saveProject(next));
+  pendingSave=write;
+  await write;
+  if(kind===activeKind && activeProject?.id===next.id){
+   lastSnapshot=json;saveFailure=false;
+   saveLabel('기기에 저장됨 · '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}));
+   await refreshProjects();
+  }
+  if(force)status('현재 작업을 기기에 저장했어요.');
+  return true;
+ }catch(e){
+  lastSnapshot='';saveError(e);throw e;
+ }finally{if(next)saveInFlight=Math.max(0,saveInFlight-1)}
 }
 async function leave(save=true){
- if(C.managed(activeKind)&&save&&live)await sync();
- await pendingSave.catch(()=>{});
+ // Do not discard a live editor until its latest state was committed.
+ if(C.managed(activeKind)&&save&&live)await sync(true);
+ await pendingSave;
  clearPulse();token++;
- const previous=activeKind;activeKind='';activeProject=null;lastSnapshot='';
- frame.removeAttribute('src');updateNav();renderProjects();return previous;
+ activeKind='';activeProject=null;lastSnapshot='';saveFailure=false;
+ frame.removeAttribute('src');updateNav();renderProjects();
+ return true;
+}
+async function moveAway(){
+ if(navigationBusy)return false;
+ navigationBusy=true;
+ try{await leave();return true}
+ catch(e){saveError(e);return false}
+ finally{navigationBusy=false}
 }
 async function home(){
  if(activeKind&& !C.managed(activeKind) && !confirm('그림·PDF 도구는 자동 저장되지 않아요. 편집한 원본을 먼저 저장했나요?'))return;
- await leave();status('제작실 홈으로 돌아왔어요.');
+ if(await moveAway())status('제작실 홈으로 돌아왔어요.');
 }
 async function start(kind,existing=null){
  if(!C.TOOLS[kind])return;
  if(activeKind&& !C.managed(activeKind) && !confirm('그림·PDF 작업은 자동 저장되지 않아요. 작업 결과를 저장하고 이동하시겠어요?'))return;
- await leave();
+ if(!(await moveAway()))return;
  activeKind=kind;activeProject=existing?C.normalizeProject(existing):null;busy=true;
+ saveLabel(C.managed(kind)?'편집기 시작 중…':'도구 내에서 직접 저장');
  updateNav();renderProjects();
  const path=C.TOOLS[kind].href;
  frame.src=path+'?studio=1';
@@ -149,14 +189,20 @@ function onFrameLoad(){
  try{
   if(activeProject?.payload)adapter.apply(activeProject.payload);
   if(signature!==token||expected!==activeKind)return;
-  lastSnapshot=activeProject?JSON.stringify(adapter.capture()):'';
+  lastSnapshot='';
   busy=false;live=true;
   clearInterval(pulse);
-  pulse=setInterval(()=>{if(expected===activeKind)sync()},1900);
-  const debounce=()=>setTimeout(()=>{if(expected===activeKind)sync()},450);
+  pulse=setInterval(()=>{if(expected===activeKind)sync().catch(()=>{})},1500);
+  let debounceTimer=null;
+  const debounce=()=>{
+   clearTimeout(debounceTimer);
+   debounceTimer=setTimeout(()=>{if(expected===activeKind)sync().catch(()=>{})},350);
+  };
   for(const eventName of ['input','change','pointerup','keyup'])frame.contentDocument.addEventListener(eventName,debounce,{passive:true});
-  if(!activeProject)sync(true);
-  else status('보관한 작업을 다시 열었어요.');
+  // Imported legacy JSON may not exist in IndexedDB yet. Always commit it
+  // after its adapter has validated and applied the payload.
+  sync(true).then(()=>{if(signature===token)status('작업을 열고 기기에 저장했어요.')}).catch(()=>{});
+  
  }catch(err){
   busy=false;status('저장한 프로젝트를 열지 못했어요. '+(err.message||err),true);
  }
@@ -173,7 +219,7 @@ async function renameCurrent(){
 }
 async function exportCurrent(){
  try{
-  await sync();
+  await sync(true);
   if(!activeProject)throw Error('먼저 작업을 열어 주세요.');
   const {id,kind,title,payload,createdAt,updatedAt}=activeProject;
   download(JSON.stringify({version:1,id,kind,title,payload,createdAt,updatedAt},null,2),C.safeTitle(title).replace(/[\\/:*?"<>|]/g,'_')+'.gulliver.json','application/json');
@@ -191,7 +237,7 @@ async function importLegacy(e){
   const title=C.safeTitle(raw.title||payload.title||'가져온 작업');
   const now=Date.now();
   await start(kind,{id:uuid(),kind,title,payload,createdAt:now,updatedAt:now});
-  status('이전 원본을 불러오는 중이에요. 화면이 열리면 기기에 저장돼요.');
+  if(activeKind===kind)status('원본을 불러오는 중이에요. 열리면 자동 저장돼요.');
  }catch(err){status('파일을 가져오지 못했어요. '+(err.message||err),true)}
 }
 async function uploadAssets(e){
@@ -232,6 +278,14 @@ async function insertAsset(asset){
  try{
   const child=frame.contentWindow,input=frame.contentDocument?.getElementById(selector);
   if(!input)throw Error('해당 제작실의 사진 넣기 기능이 준비되지 않았어요.');
+  const adapter=child.GulliverStudioAdapter;
+  if(adapter?.insertImage){
+   await adapter.insertImage(asset.blob);
+   await sync(true);
+   status('사진을 넣고 작업을 기기에 저장했어요.');
+   return;
+  }
+  if(typeof child.DataTransfer!=='function')throw Error('이 브라우저의 파일 전달 기능이 제한돼 있어요.');
   const dt=new child.DataTransfer();
   const file=new child.File([asset.blob],asset.name,{type:asset.mime});
   dt.items.add(file);input.files=dt.files;
@@ -239,6 +293,26 @@ async function insertAsset(asset){
   status('사진을 편집기에 전달했어요. 작업을 확인해 주세요.');
  }catch(e){status('사진을 바로 전달하지 못했어요. 소재함에서 내려받아 직접 넣어 주세요. '+e.message,true)}
 }
+document.addEventListener('visibilitychange',()=>{
+ if(document.visibilityState==='hidden'&&activeKind&&C.managed(activeKind)){
+  sync(true).catch(()=>{});
+ }
+});
+window.addEventListener('pagehide',()=>{
+ if(activeKind&&C.managed(activeKind))sync(true).catch(()=>{});
+ freePreviews();
+});
+// Browsers cannot guarantee asynchronous database writes during tab close.
+// Warn instead of claiming success if a snapshot has not been committed.
+window.addEventListener('beforeunload',e=>{
+ if(!activeKind||!C.managed(activeKind)||!live)return;
+ try{
+  const a=frame.contentWindow?.GulliverStudioAdapter;
+  if(saveFailure||saveInFlight>0||(a&&JSON.stringify(a.capture())!==lastSnapshot)){
+   e.preventDefault();e.returnValue='';
+  }
+ }catch(e){}
+});
 setupMenu();
 updateNav();refreshProjects();refreshAssets();
 })();

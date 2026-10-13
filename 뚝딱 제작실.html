@@ -24,7 +24,7 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;curs
 .nav-bottom .light-link{font-size:12px;font-weight:800;color:#6654a5}
 .center{min-width:0;display:flex;flex-direction:column;min-height:100vh}
 .top{height:auto;min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:13px;padding:13px 23px;background:#fff;border-bottom:1px solid var(--line);flex-wrap:wrap}
-.heading{display:grid;gap:3px}.heading strong{font-size:17px;letter-spacing:-.025em}.heading span{font-size:11px;color:var(--muted)}
+.heading{display:grid;gap:3px}.heading strong{font-size:17px;letter-spacing:-.025em}.heading span{font-size:11px;color:var(--muted)}#saveStatus{font-weight:800;color:#237654}#saveStatus[data-state=error]{color:#b63943}
 .actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .btn{border:1px solid #c8d3e1;background:#fff;border-radius:10px;padding:9px 12px;min-height:40px;font-size:12px;font-weight:780;color:#384963}
 .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.soft{background:var(--soft);border-color:#e5ddfe;color:#634ac6}
@@ -83,7 +83,7 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;curs
  </nav>
  <main class="center">
   <header class="top">
-   <div class="heading"><strong id="workspaceTitle">뚝딱 제작실</strong><span id="workspaceSubtitle">필요한 자료를 골라 만들고 다시 꺼내 보세요.</span></div>
+   <div class="heading"><strong id="workspaceTitle">뚝딱 제작실</strong><span id="workspaceSubtitle">필요한 자료를 골라 만들고 다시 꺼내 보세요.</span><span id="saveStatus" role="status" aria-live="polite" hidden>저장 준비 중…</span></div>
    <div class="actions">
     <button type="button" class="btn" id="newProject" hidden>+ 새 작업</button>
     <button type="button" class="btn soft" id="renameProject" hidden>이름 바꾸기</button>

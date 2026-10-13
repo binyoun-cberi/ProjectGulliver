@@ -170,17 +170,19 @@ function imageToData(file){
   reader.readAsDataURL(file);
  });
 }
+async function insertDocImage(file){
+ if(!file||!['image/png','image/jpeg'].includes(file.type)||file.size>2000000||file.size<=0)
+  throw Error('2MB 이하 JPG 또는 PNG 사진을 선택해 주세요.');
+ if(doc.blocks.length>=C.MAX_BLOCKS)throw Error('문서 요소 수가 너무 많아요.');
+ const data=await imageToData(file);
+ if(!C.safeImage(data))throw Error('지원하지 않는 이미지 형식이에요.');
+ const total=doc.blocks.reduce((n,b)=>n+(b.src||'').length,0);
+ if(total+data.length>20_000_000)throw Error('첨부한 사진의 전체 용량이 너무 커요.');
+ add('image',{src:data,caption:'사진 설명'});
+}
 $('addImage').addEventListener('change',async e=>{
- const file=e.target.files?.[0];e.target.value='';
- if(!file)return;
- if(!['image/png','image/jpeg'].includes(file.type)||file.size>2_000_000)return announce('2MB 이하 JPG 또는 PNG 사진을 선택해 주세요.',true);
- try{
-  const data=await imageToData(file);
-  if(!C.safeImage(data))throw Error('지원하지 않는 이미지 형식이에요.');
-  const total=doc.blocks.reduce((n,b)=>n+(b.src||'').length,0);
-  if(total+data.length>20_000_000)throw Error('첨부한 사진의 전체 용량이 너무 커요.');
-  add('image',{src:data,caption:'사진 설명'});
- }catch(err){announce(String(err.message||err),true);}
+ const file=e.target.files?.[0];e.target.value='';if(!file)return;
+ try{await insertDocImage(file)}catch(err){announce(err.message||'사진을 넣지 못했어요.',true)}
 });
 function cleanPaste(e){
  const target=e.target.closest('[contenteditable]');
@@ -293,7 +295,7 @@ $('openAdvanced').addEventListener('click',async()=>{
  }catch(err){status.textContent=String(err.message||err);status.className='status error';}
  finally{btn.disabled=false;}
 });
-window.GulliverStudioAdapter={kind:'document',capture:()=>JSON.parse(JSON.stringify(doc)),apply:raw=>{
+window.GulliverStudioAdapter={kind:'document',insertImage:insertDocImage,capture:()=>JSON.parse(JSON.stringify(doc)),apply:raw=>{
  doc=C.validate(raw);active=null;undo=[];redo=[];dirty=false;render();
 },rename:value=>{doc.title=String(value).slice(0,120);dirty=true;render();}};
 window.addEventListener('beforeunload',e=>{if(dirty&&!new URLSearchParams(location.search).has('studio')){e.preventDefault();e.returnValue='';}});

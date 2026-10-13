@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - feat/ttak-studio-unified-workspace-20261013
+      - fix/studio-v1-1-reliable-autosave-20261013
     paths:
       - '뚝딱 제작실.html'
       - 'studio-*.js'
@@ -53,3 +54,21 @@ jobs:
           node --check munseo-hwpx.js
       - name: Run all existing and studio integration tests
         run: node --test tests/*.test.cjs
+
+  browser-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout site and local tools
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Use preinstalled Google Chrome
+        run: |
+          command -v google-chrome || command -v google-chrome-stable
+          node --version
+
+      - name: Install pinned browser driver without package scripts
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
+
+      - name: Exercise real Chromium local storage, file imports and exports
+        run: node --test tests/studio-browser.e2e.cjs
