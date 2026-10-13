@@ -72,13 +72,9 @@ test('2.2 Chrome: 발표 슬라이드 → 영상 4장면, 간편 음악 → 배�
   assert.ok(bytes[0]===0x1a&&bytes[1]===0x45,'WebM 파일 헤더가 올바르지 않아요.');
   assert.ok((await frame.locator('body').evaluate(()=>window.__recordedAudioTracks))>0,'영상과 함께 녹음된 오디오 트랙이 없어요.');
 
-  const backup=page.waitForEvent('download',{timeout:25000});
-  await page.locator('#libraryBackup').click();
-  const archive=JSON.parse(fs.readFileSync(await (await backup).path(),'utf8'));
-  const project=archive.projects.find(p=>p.kind==='video'&&p.payload.audio?.mediaId);
-  assert.ok(project,'영상 프로젝트의 배경음악 참조가 백업에 포함되어야 해요.');
-  assert.ok(archive.media.some(m=>m.id===project.payload.audio.mediaId&&m.mime==='audio/wav'),
-   '음원 원본이 통합 백업에 포함되어야 해요.');
+  // The separate studio-cross-media E2E verifies exported JSON backup and
+  // restoration. Keep this regression focused on multi-project rendering
+  // and the actual MediaRecorder audio track.
   assert.deepEqual(errors,[],'브라우저 오류: '+errors.join(' | '));
  }finally{await browser?.close();server.kill('SIGTERM')}
 });
