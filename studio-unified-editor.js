@@ -259,6 +259,10 @@ async function addImageFile(file){
  addElement('image',{x:145,y:105,w:320,h:240,src:data,fill:'#ffffff'});
 }
 function bind(){
+ document.querySelectorAll('[data-template]').forEach(b=>b.addEventListener('click',()=>{
+  if(!confirm('현재 전체 페이지를 선택한 템플릿으로 바꿀까요? 실행 취소로 되돌릴 수 있어요.'))return;
+  edit(()=>{model=C.starter(b.dataset.template)},'');notice('새 템플릿을 적용했어요. 이전 작업은 실행 취소로 되돌릴 수 있어요.');
+ }));
  document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>addElement(b.dataset.add)));
  $('addPhoto').addEventListener('click',()=>$('photoPicker').click());
  $('photoPicker').addEventListener('change',async ev=>{const file=ev.target.files?.[0];ev.target.value='';try{await addImageFile(file)}catch(e){notice(e.message,true)}});
@@ -295,7 +299,13 @@ function bind(){
  textEditor.addEventListener('blur',closeEditor);
  textEditor.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();closeEditor()}});
  $('exportPng').addEventListener('click',async()=>{try{closeEditor();const blob=await pagePng(page());download(blob,(model.title||'수업자료').replace(/[\\/:*?"<>|]/g,'_')+'.png');notice('PNG를 저장했어요.')}catch(e){notice(e.message,true)}});
- $('printPdf').addEventListener('click',()=>{closeEditor();window.print()});
+ $('printPdf').addEventListener('click',()=>{
+  closeEditor();document.getElementById('print-page-size')?.remove();
+  const style=document.createElement('style');style.id='print-page-size';
+  style.textContent='@page { size: '+(model.layout==='a4'?'A4 portrait':'landscape')+'; margin: 0 }';
+  document.head.append(style);window.print();
+ });
+ window.addEventListener('afterprint',()=>document.getElementById('print-page-size')?.remove());
  $('present').addEventListener('click',async()=>{try{await $('stageView').requestFullscreen()}catch(e){notice('전체 화면을 사용할 수 없는 브라우저예요.',true)}});
  window.addEventListener('resize',size);document.addEventListener('fullscreenchange',size);
  document.addEventListener('keydown',e=>{
