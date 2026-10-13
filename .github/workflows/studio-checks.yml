@@ -113,3 +113,8 @@ jobs:
             print(name, [(x.relative_to(p).as_posix(), x.stat().st_size) for x in p.rglob('*') if x.is_file()][:18])
             print('INDEX:', (p/'index.html').read_text(errors='replace')[:1800])
           PY
+      - name: Install pinned browser driver
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
+      - name: Load original bundled FilmCraft and SoundCraft canvases in Chrome
+        run: node --test tests/studio-official-media.e2e.cjs
+
