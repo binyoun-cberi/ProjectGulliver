@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
 const Zip=require('../studio-zip-core.js');
-function b(value){return new Blob([value],{type:'application/octet-stream'})}
+function b(value){return new Blob([Array.isArray(value)?new Uint8Array(value):value],{type:'application/octet-stream'})}
 test('2.4 binary ZIP produces standard STORE archive and roundtrips binary data',async()=>{
  const a=b(new Uint8Array([0,1,2,0,254,255,32])),text=new Blob(['{"version":2}']);
  const pack=await Zip.create([{path:'manifest.json',blob:text},{path:'official/0.scraftz',blob:a}]);
