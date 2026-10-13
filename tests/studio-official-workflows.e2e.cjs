@@ -53,7 +53,7 @@ test('FilmCraft: verified WASM startup, real video import, new sequence, H.264 e
   console.log('FILMCRAFT RUNTIME',JSON.stringify({startupMs:report.runtime.startupMs,
    info:report.filmcraftInfo,capabilities:report.capabilities}).slice(0,2500));
 
-  const imported=await frame.locator('body').evaluate(async path=>{
+  const imported=await frame.locator('body').evaluate(async (_element,path)=>{
    const importInfo=await window.filmcraft.importUrl('/'+path);
    const item=importInfo.items?.[0];
    if(item===undefined)throw Error('No imported clips '+JSON.stringify(importInfo));
@@ -83,7 +83,7 @@ test('FilmCraft: verified WASM startup, real video import, new sequence, H.264 e
   });
   assert.ok(exportResult?.job!==undefined,'Export must create a real render job');
   console.log('FILMCRAFT EXPORT START',JSON.stringify(exportResult));
-  const exportStatus=await frame.locator('body').evaluate(async job=>{
+  const exportStatus=await frame.locator('body').evaluate(async (_element,job)=>{
    const until=Date.now()+230000;
    while(Date.now()<until){
     const jobs=await window.filmcraft.execute('jobs.list');
