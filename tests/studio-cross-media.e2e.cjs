@@ -103,6 +103,8 @@ test('Chrome: all presentation slides -> video and exported picture -> document'
   await page.locator('#toolNav [data-kind="picture"]').click();
   await page.locator('#pictureShareFile').setInputFiles({name:'그림.png',mimeType:'image/png',buffer:png});
   await page.locator('#transferTarget').selectOption('document');
+  // Leaving the standalone picture editor intentionally asks for confirmation.
+  page.once('dialog',dialog=>dialog.accept());
   await page.locator('#sendToTool').click();
   await page.locator('#toolNav [data-kind="document"][aria-current="true"]').waitFor();
   await frame.locator('#blocks .image img').first().waitFor({timeout:30000});
