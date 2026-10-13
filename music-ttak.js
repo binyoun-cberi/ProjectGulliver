@@ -48,7 +48,7 @@ for(const b of document.querySelectorAll('[data-template]'))b.onclick=()=>{
  model=C.validateMusic(M.presets()[b.dataset.template]);stop();rebuild();notify('선택한 음악으로 바꿨어요.');
 };
 window.GulliverStudioAdapter={kind:'music',capture:()=>JSON.parse(JSON.stringify(C.validateMusic(model))),
- apply:p=>{model=C.validateMusic(p);stop();rebuild()},rename:title=>{model.title=String(title).slice(0,90);rebuild()}};
+ apply:p=>{model=C.validateMusic(p);stop();rebuild()},rename:title=>{model.title=String(title).slice(0,90);rebuild()},exportAudio:renderAudio};
 window.addEventListener('pagehide',()=>{stop();if(url)URL.revokeObjectURL(url)});
 rebuild();
 })();

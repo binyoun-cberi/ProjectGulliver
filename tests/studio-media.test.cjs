@@ -32,10 +32,38 @@ testFn('영상은 최대 5장면/45초, 등록 미디어 형식을 검사',()=>{
  assert.throws(()=>M.validateVideo({...v,clips:Array(6).fill(clip)}),/최대 5/);
  assert.throws(()=>M.validateVideo({...v,clips:[{...clip,mediaId:'../../../x'}]}),/올바르지/);
 });
+testFn('2.2 배경음악 참조와 WAV 미디어 검증',()=>{
+ const video=M.makeVideo();
+ video.audio={mediaId:'bgm-1',mime:'audio/wav',name:'배경',volume:.5,loop:true};
+ assert.equal(M.validateVideo(video).audio.mediaId,'bgm-1');
+ assert.equal(M.audioAllowed({type:'audio/wav',size:1000}),true);
+ assert.equal(M.audioAllowed({type:'image/png',size:1000}),false);
+ assert.throws(()=>M.validateVideo({...video,audio:{...video.audio,mediaId:'../secret'}}),/배경음악/);
+});
 testFn('통합 백업에는 영상 원본과 음악 프로젝트 복원을 위한 미디어 스토어가 있다',()=>{
  const store=fs.readFileSync('studio-storage.js','utf8');
  const library=fs.readFileSync('studio-library.js','utf8');
  assert.match(store,/DB_VERSION=3/);assert.match(store,/createObjectStore\('media'/);
  assert.match(library,/mediaIdMap/);assert.match(library,/media:videoMedia/);
  assert.match(library,/await S\.importBatch\(\{projects:newProjects,assets:newAssets,folders:newFolders,media:newMedia\}\)/);
+});
+
+testFn('2.2 배경음악 자료는 안전하게 검증되고 기존 무음 영상과 호환',()=>{
+ const original=M.validateVideo(M.makeVideo());
+ assert.equal(original.audio,null);
+ const withSound=M.validateVideo({...original,audio:{mediaId:'wav_1',mime:'audio/wav',name:'수업.wav',volume:3,loop:false}});
+ assert.equal(withSound.audio.volume,1);
+ assert.equal(withSound.audio.loop,false);
+ assert.equal(M.validateVideo({...original,audio:{mediaId:'wav_1',mime:'audio/wav',volume:-1}}).audio.volume,0);
+ assert.throws(()=>M.validateVideo({...original,audio:{mediaId:'../bad',mime:'audio/wav'}}),/배경음악/);
+ assert.throws(()=>M.validateVideo({...original,audio:{mediaId:'a',mime:'audio/mpeg'}}),/배경음악/);
+ assert.equal(M.audioAllowed({type:'audio/wav',size:8000}),true);
+ assert.equal(M.audioAllowed({type:'audio/mpeg',size:8000}),false);
+ assert.equal(M.fileAllowed({type:'audio/wav',size:8000}),false);
+ assert.equal(M.mediaAllowed({type:'audio/wav',size:8000}),true);
+ const lib=fs.readFileSync('studio-library.js','utf8');
+ assert.match(lib,/project\.payload\.audio\.mediaId=mediaIdMap\.get/);
+ const video=fs.readFileSync('video-ttak.js','utf8');
+ assert.match(video,/createMediaStreamDestination/);
+ assert.match(video,/addTrack\(track\)/);
 });

@@ -151,7 +151,8 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
 }
 
 
-/* 1.3 cross-tool handoff, shared image shelf and responsive transfer actions */
+[hidden]#pictureShareLabel,[hidden]#sendAllSlides,[hidden]#saveImageToShelf,[hidden]#transferBar{display:none!important}
+ /* 1.3 cross-tool handoff, shared image shelf and responsive transfer actions */
 .transfer-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 5px;background:#f8f6ff;border:1px solid #dfd8f7;border-radius:11px}
 .transfer-actions .btn{min-height:35px;padding:7px 9px}
 .transfer-destination{display:flex;align-items:center;gap:5px;color:#574a7e;font-size:11px;font-weight:800}
@@ -211,10 +212,12 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
     <div class="common-bar" id="studioQuickBar" hidden aria-label="공통 편집 및 내보내기"></div>
     <div class="transfer-actions" id="transferBar" hidden aria-label="제작물 공유">
       <button id="saveImageToShelf" class="btn soft" type="button">현재 화면을 소재함에 보관</button>
+       <label id="pictureShareLabel" class="btn soft" for="pictureShareFile" hidden>그림에서 저장한 PNG·JPG 선택<input id="pictureShareFile" type="file" accept="image/png,image/jpeg" hidden></label>
       <label class="transfer-destination" for="transferTarget">다른 제작실
        <select id="transferTarget" aria-label="이미지를 보낼 제작실"></select>
       </label>
       <button id="sendToTool" class="btn primary" type="button">이미지 보내기 →</button>
+       <button id="sendAllSlides" class="btn soft" type="button" hidden>전체 슬라이드 → 영상</button>
     </div>
     <button id="docPdfGuide" class="btn soft" type="button" hidden>PDF 저장 → 편집 안내</button>
     <label class="btn soft" id="docPdfImportLabel" for="docPdfImport" hidden style="cursor:pointer">저장한 PDF를 편집기로 보내기<input id="docPdfImport" type="file" accept="application/pdf,.pdf" hidden></label>
@@ -272,12 +275,12 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
    <button id="libraryBackup" type="button" class="btn primary">전체 백업 저장</button>
    <label for="libraryRestore" class="btn" style="cursor:pointer;text-align:center">백업 복원<input id="libraryRestore" type="file" accept=".json,application/json" hidden></label>
   </div>
-  <p class="note" style="margin:9px 0">통합 백업에는 제작 프로젝트·사진·영상 원본·폴더·기존 내 활동이 포함돼요. 개인정보가 담길 수 있으니 파일을 안전하게 보관하세요. 복원은 기존 자료를 지우지 않고 추가해요.</p>
+  <p class="note" style="margin:9px 0">통합 백업에는 제작 프로젝트·사진·영상 원본·WAV 배경음악·폴더·기존 내 활동이 포함돼요. 개인정보가 담길 수 있으니 파일을 안전하게 보관하세요. 복원은 기존 자료를 지우지 않고 추가해요.</p>
   <label for="importProject" class="btn" style="display:block;text-align:center;cursor:pointer;margin-top:10px">이전 JSON 작업 불러오기<input id="importProject" type="file" accept=".json,application/json" hidden></label>
   </section>
   <section id="inspectorAssets" class="right-pane" hidden>
   <header><h2>내 사진 소재함</h2><span style="font-size:10px;color:var(--muted)">이 기기 전용</span></header>
-  <p class="note">사진을 넣어 두면 도안·발표·문서에서 다시 사용할 수 있어요. JPG·PNG만, 파일당 2MB 이하.</p>
+  <p class="note">사진을 넣어 두면 도안·발표·문서·영상에서 다시 사용할 수 있어요. JPG·PNG만, 파일당 2MB 이하.</p>
   <label for="assetUpload" class="btn" style="display:block;text-align:center;cursor:pointer;margin:0 0 11px">+ 사진 소재 추가<input id="assetUpload" type="file" multiple accept="image/png,image/jpeg" hidden></label>
   <div class="asset-list" id="assetList"></div>
   <hr class="panel-separator">
@@ -293,14 +296,14 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
  </dialog>
  <div class="drawer-shade" id="drawerShade" hidden></div>
 </div>
-<script src="studio-media-core.js"></script>
+<script src="studio-media-core.js?v=20261013-22"></script>
 <script src="studio-core.js"></script>
 <script src="studio-storage.js"></script>
-<script src="studio-transfer-core.js"></script>
-<script src="studio-app.js?v=20261013-21"></script>
+<script src="studio-transfer-core.js?v=20261013-22"></script>
+<script src="studio-app.js?v=20261013-22"></script>
 <script src="classroom-workspace.js"></script>
 <script src="studio-library-core.js"></script>
 <script src="studio-layout.js"></script>
-<script src="studio-library.js?v=20261013-21"></script>
+<script src="studio-library.js?v=20261013-22"></script>
 </body>
 </html>

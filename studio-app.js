@@ -48,6 +48,7 @@ function setupMenu(){
  $('assetUpload').addEventListener('change',uploadAssets);
  $('saveImageToShelf').addEventListener('click',()=>shareCurrent(''));
  $('sendToTool').addEventListener('click',()=>shareCurrent($('transferTarget').value));
+ $('sendAllSlides').addEventListener('click',shareAllSlides);
  $('docPdfImport').addEventListener('change',importPrintedPdf);
  $('docPdfGuide').addEventListener('click',()=>{
   if(activeKind!=='document')return;
@@ -79,8 +80,12 @@ function updateNav(){
  $('workspaceSubtitle').textContent=tool?tool.export:'필요한 자료를 골라 만들고 다시 꺼내 보세요.';
  $('studioHome').hidden=!!tool;$('editorArea').hidden=!tool;
  $('saveStatus').hidden=!tool||!tool.managed||advancedOfficial;
- const targets=T.destinations(activeKind),canShare=targets.length>0;
+ const targets=T.destinations(activeKind),canShare=targets.length>0&&!advancedOfficial;
  $('transferBar').hidden=!canShare;
+ $('pictureShareLabel').hidden=activeKind!=='picture';
+ $('sendAllSlides').hidden=activeKind!=='slides'||!canShare;
+ $('saveImageToShelf').hidden=activeKind==='music';
+ $('sendToTool').textContent=activeKind==='music'?'배경음악 보내기 →':'이미지 보내기 →';
  $('docPdfGuide').hidden=activeKind!=='document';
  $('docPdfImportLabel').hidden=activeKind!=='document';
  const select=$('transferTarget'),prior=select.value;
@@ -211,7 +216,7 @@ async function home(){
 }
 async function start(kind,existing=null){
  if(!C.TOOLS[kind])return;
- if(activeKind&& !C.managed(activeKind) && !confirm('그림·PDF 작업은 자동 저장되지 않아요. 작업 결과를 저장하고 이동하시겠어요?'))return;
+ if(activeKind&& !C.managed(activeKind) && !(activeKind==='picture'&&pendingTransfer?.target===kind) && !confirm('그림·PDF 작업은 자동 저장되지 않아요. 작업 결과를 저장하고 이동하시겠어요?'))return;
  if(!(await moveAway()))return false;
  advancedOfficial=false;
  activeKind=kind;activeProject=existing?C.normalizeProject(existing):null;busy=true;
@@ -220,7 +225,7 @@ async function start(kind,existing=null){
  const path=C.TOOLS[kind].href;
  // Saved quick-edit projects must reopen in the editor that created them.
  // A separate official FilmCraft/SoundCraft session is never this saved payload.
- const quickProject=!!existing&&(kind==='video'||kind==='music');
+ const quickProject=(!!existing&&(kind==='video'||kind==='music'))||(pendingTransfer?.target===kind&&kind==='video');
  frame.src=path+'?studio=1'+(quickProject?'&editor=simple':'');
  status(C.managed(kind)?'작업을 여는 중이에요. 변경 사항은 자동으로 저장돼요.':'편집기를 불러오고 있어요. 파일은 해당 도구 안에서 저장해 주세요.');
  return true;
@@ -344,6 +349,35 @@ async function createSharedAsset(){
  await S.saveAsset(asset);await refreshAssets();
  return asset;
 }
+async function pictureAsset(){
+ const file=$('pictureShareFile').files?.[0];
+ if(!file)throw Error('그림 뚝딱에서 PNG·JPG 파일을 먼저 저장하고 위 버튼으로 선택해 주세요.');
+ const blob=await normalizeSharedImage(file);
+ const asset={id:uuid(),name:T.imageFilename(file.name.replace(/\.(png|jpe?g)$/i,''),blob.type==='image/jpeg'?'jpeg':'png'),
+  mime:blob.type,blob,createdAt:Date.now(),from:'picture'};
+ await S.saveAsset(asset);await refreshAssets();
+ return asset;
+}
+async function shareAllSlides(){
+ if(transferBusy||activeKind!=='slides'||advancedOfficial)return;
+ transferBusy=true;
+ try{
+  await sync(true);
+  const adapter=frame.contentWindow?.GulliverStudioAdapter;
+  if(!adapter?.exportSlides)throw Error('슬라이드 일괄 내보내기 기능이 없어요.');
+  const images=await adapter.exportSlides(),assets=[];
+  for(const [i,result] of images.entries()){
+   const blob=await normalizeSharedImage(result.blob);
+   const asset={id:uuid(),name:(i+1)+'_슬라이드.'+(blob.type==='image/jpeg'?'jpg':'png'),mime:blob.type,blob,createdAt:Date.now(),from:'slides'};
+   await S.saveAsset(asset);assets.push(asset);
+  }
+  await refreshAssets();
+  pendingTransfer={target:'video',assets};
+  if(!(await start('video')))throw Error('영상 제작실로 이동하지 못했어요.');
+  status(assets.length+'개 슬라이드를 영상 장면으로 전달하는 중이에요.');
+ }catch(e){pendingTransfer=null;status('슬라이드 전달 실패: '+(e?.message||e),true)}
+ finally{transferBusy=false;updateNav()}
+}
 async function shareCurrent(target){
  if(transferBusy)return;
  transferBusy=true;$('sendToTool').disabled=true;$('saveImageToShelf').disabled=true;
@@ -351,13 +385,26 @@ async function shareCurrent(target){
   const source=activeKind;
   if(target)T.safeHandoff(source,target);
   status('현재 작업을 저장하고 공유할 이미지를 준비하고 있어요.');
-  const asset=await createSharedAsset();
+  let asset=null,audio=null;
+  if(source==='music'){
+   if(advancedOfficial)throw Error('SoundCraft 고급 편집에서는 WAV를 별도로 저장한 뒤 영상에서 가져와 주세요.');
+   await sync(true);
+   const adapter=frame.contentWindow?.GulliverStudioAdapter;
+   if(!adapter?.exportAudio)throw Error('간편 음악 제작실이 준비되지 않았어요.');
+   const blob=await adapter.exportAudio();
+   if(!window.GulliverMediaCore.audioAllowed(blob))throw Error('음악 파일이 15MB를 넘거나 WAV 형식이 아니에요.');
+   if((await S.media()).length>=window.GulliverMediaCore.MEDIA_COUNT)throw Error('미디어 보관함이 가득 찼어요.');
+   audio={id:uuid(),name:C.safeTitle(activeProject?.title||'배경음악')+'.wav',mime:'audio/wav',blob,createdAt:Date.now()};
+   await S.saveMedia(audio);
+  }else if(source==='picture')asset=await pictureAsset();
+  else asset=await createSharedAsset();
   if(!target){
+   if(!asset)throw Error('음악은 영상에 보내거나 WAV로 내려받아 주세요.');
    window.GulliverStudioLayout?.setRight('assets');
    status('현재 작업 이미지를 소재함에 보관했어요. 다른 제작실에서 다시 사용할 수 있어요.');
    return;
   }
-  pendingTransfer={target,asset};
+  pendingTransfer={target,asset,audio};
   const ok=await start(target);
   if(!ok){pendingTransfer=null;throw Error('다음 제작실로 이동하지 못했어요. 소재함에 이미지를 보관해 뒀어요.');}
   status('새 제작실을 여는 중이에요. 이미지는 자동으로 전달돼요.');
@@ -373,7 +420,15 @@ async function finishTransfer(expected,adapter){
  const transfer=pendingTransfer;pendingTransfer=null;
  try{
   if(!adapter)throw Error('받는 제작실이 준비되지 않았어요.');
-  if(expected==='pdf'){
+  if(expected==='video'&&transfer.audio){
+   if(typeof adapter.attachStoredAudio!=='function')throw Error('영상 제작실 배경음악 연결 기능이 없어요.');
+   await adapter.attachStoredAudio(transfer.audio);
+   await sync(true);
+  }else if(expected==='video'&&transfer.assets){
+   if(typeof adapter.insertImage!=='function')throw Error('영상 장면 삽입 기능이 없어요.');
+   for(const asset of transfer.assets)await adapter.insertImage(new File([asset.blob],asset.name,{type:asset.mime}));
+   await sync(true);
+  }else if(expected==='pdf'){
    if(typeof adapter.insertImagePdf!=='function')throw Error('PDF 이미지 변환 기능을 불러오지 못했어요.');
    await adapter.insertImagePdf(transfer.asset.blob,transfer.asset.name.replace(/\.(png|jpe?g)$/i,''));
   }else{
@@ -382,7 +437,7 @@ async function finishTransfer(expected,adapter){
    await adapter.insertImage(file);
    await sync(true);
   }
-  status('이미지를 '+T.DEST_NAMES[expected]+'에 전달했어요. 기존 제작물은 그대로 보관돼요.');
+  status((transfer.audio?'배경음악을 ':transfer.assets?'슬라이드 '+transfer.assets.length+'장을 ':'이미지를 ')+T.DEST_NAMES[expected]+'에 전달했어요. 기존 제작물은 그대로 보관돼요.');
  }catch(e){
   status('이미지를 자동으로 넣지 못했어요. 소재함에 보관돼 있으니 다시 넣을 수 있어요: '+(e?.message||e),true);
  }
@@ -455,7 +510,7 @@ async function insertAsset(asset){
    return;
   }
   if(adapter?.insertImage){
-   await adapter.insertImage(asset.blob);
+   await adapter.insertImage(new File([asset.blob],asset.name,{type:asset.mime}));
    await sync(true);
    status('사진을 넣고 작업을 기기에 저장했어요.');
    return;
