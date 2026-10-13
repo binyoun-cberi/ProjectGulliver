@@ -62,6 +62,21 @@ test('Chrome: 도안 → 문서, 슬라이드 → 도안·PDF 자동 전달과 �
   assert.ok(pdf.includes('.pdf'),'공유한 이미지가 PDF가 되어야 함');
   const notice=await page.locator('#message').textContent();
   assert.match(notice,/PDF|전달/);
+  // Document PDF print uses the browser's native save dialog. After saving,
+  // the user can choose the result once and open it in the PDF editor.
+  await page.locator('#toolNav [data-kind="document"]').click();
+  await page.locator('#docPdfImportLabel').waitFor();
+  await page.addScriptTag({url:base+'vendor/pdf-lib/pdf-lib.min.js'});
+  const bytes=await page.evaluate(async()=>{
+   const pdf=await PDFLib.PDFDocument.create();pdf.addPage([595,842]);
+   return Array.from(await pdf.save());
+  });
+  await page.locator('#docPdfImport').setInputFiles({
+   name:'가정통신문.pdf',mimeType:'application/pdf',buffer:Buffer.from(bytes)
+  });
+  await page.locator('#toolNav [data-kind="pdf"][aria-current="true"]').waitFor();
+  await frame.locator('#fileList li').first().waitFor();
+  assert.ok((await frame.locator('#fileList').textContent()).includes('가정통신문.pdf'));
   assert.deepEqual(pageErrors,[],'Browser exceptions: '+pageErrors.join(' | '));
  }finally{if(browser)await browser.close();server.kill('SIGTERM')}
 });
