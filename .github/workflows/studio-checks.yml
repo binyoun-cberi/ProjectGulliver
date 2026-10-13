@@ -96,7 +96,7 @@ jobs:
           sudo apt-get install -y -qq ffmpeg
 
       - name: Exercise real Chromium local storage, file imports and exports
-        run: node --test tests/studio-browser.e2e.cjs tests/studio-transfer.e2e.cjs tests/studio-library.e2e.cjs tests/studio-media.e2e.cjs tests/studio-visible-home.e2e.cjs tests/studio-cross-media.e2e.cjs
+        run: node --test tests/studio-browser.e2e.cjs tests/studio-transfer.e2e.cjs tests/studio-library.e2e.cjs tests/studio-media.e2e.cjs tests/studio-visible-home.e2e.cjs tests/studio-v22.e2e.cjs tests/studio-cross-media.e2e.cjs
 
   official-media-release:
     runs-on: ubuntu-latest
