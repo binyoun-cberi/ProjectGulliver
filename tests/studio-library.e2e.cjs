@@ -96,13 +96,12 @@ test('Chrome: 프로젝트 폴더·검색·통합 백업·기기 변경 복원 �
   assert.ok((await restored.locator('#legacyActivityList').textContent()).includes('세계 여러 나라 퀴즈'));
 
   // Restore again: append copies, never replace existing project or image IDs.
+  await restored.locator('#message').evaluate(el=>{el.textContent='복원 진행 중';});
   restored.once('dialog',d=>d.accept());
   await restored.locator('#libraryRestore').setInputFiles({name:'백업.json',mimeType:'application/json',buffer:bytes});
-  await restored.waitForFunction(async()=>{
-   const s=GulliverStudioStorage;
-   return (await s.projects()).length===2&&(await s.assets()).length===2
-     &&(await s.folders()).length===1&&ClassroomWorkspace.read().activities.length===2;
-  });
+  // Wait for the second restore completion event, not an async waitForFunction
+  // whose Promise can be misinterpreted as a truthy polling result.
+  await restored.locator('#message').filter({hasText:'통합 백업 복원 완료'}).waitFor();
   assert.deepEqual(await count(restored),{projects:2,assets:2,folders:1,activities:2});
 
   const broken=Buffer.from(JSON.stringify({...archive,version:900}));
