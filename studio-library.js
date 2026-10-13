@@ -98,8 +98,10 @@ async function completeMove(e){
   const fresh=await S.getProject(p.id);
   if(!fresh)throw Error('이 작업을 찾지 못했어요.');
   fresh.folderId=folderId;fresh.updatedAt=Date.now();
-  await S.saveProject(C.normalizeProject(fresh));
+  // Update the in-memory autosave source before the persistent write so a
+  // concurrent autosave cannot silently move this project back to old folder.
   B.updateActiveFolder(p.id,folderId);
+  await S.saveProject(C.normalizeProject(fresh));
   await B.refreshProjects();
   B.status('작업을 선택한 폴더로 옮겼어요.');
  }catch(e){B.status('폴더 이동 실패: '+e.message,true)}
