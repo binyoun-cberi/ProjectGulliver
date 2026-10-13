@@ -10,7 +10,9 @@ const TOOLS=Object.freeze({
  pdf:{name:'PDF',label:'PDF 뚝딱',icon:'📄',href:'PDF 뚝딱.html',export:'PDF 합치기·나누기',managed:false},
  design:{name:'도안',label:'도안 뚝딱',icon:'✂️',href:'도안 뚝딱.html',export:'SVG · PNG · PDF',managed:true},
  slides:{name:'발표',label:'발표 뚝딱',icon:'📽️',href:'발표 뚝딱.html',export:'PPTX · PDF',managed:true},
- document:{name:'문서',label:'문서 뚝딱',icon:'📝',href:'문서 뚝딱.html',export:'HWPX · DOCX · PDF',managed:true}
+ document:{name:'문서',label:'문서 뚝딱',icon:'📝',href:'문서 뚝딱.html',export:'HWPX · DOCX · PDF',managed:true},
+ video:{name:'영상',label:'영상 뚝딱',icon:'🎬',href:'영상 뚝딱.html',export:'장면 편집 · WebM 영상',managed:true},
+ music:{name:'음악',label:'음악 뚝딱',icon:'🎵',href:'음악 뚝딱.html',export:'리듬 만들기 · WAV 음악',managed:true}
 });
 const MAX_PROJECT_BYTES=26*1024*1024,MAX_ASSET_BYTES=2000000;
 function types(){return Object.keys(TOOLS);}
@@ -24,6 +26,8 @@ function detectLegacy(raw){
  if(Array.isArray(raw.objects)&&raw.objects.length<=200)return'design';
  if(Array.isArray(raw.slides)&&raw.slides.length<=40)return'slides';
  if(Array.isArray(raw.blocks)&&raw.blocks.length<=90)return'document';
+ if(Array.isArray(raw.clips)&&raw.clips.length<=5)return'video';
+ if(raw.notes&&typeof raw.notes==='object'&&!Array.isArray(raw.notes)&&Array.isArray(raw.notes.melody))return'music';
  return null;
 }
 function normalizeProject(value){
