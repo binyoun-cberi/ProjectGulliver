@@ -26,9 +26,27 @@ label input{border:1px solid #d4dbea;border-radius:9px;padding:10px;width:100%;m
 .help{margin-top:16px;padding:12px;background:#f7f8fc;border-radius:12px;font-size:12px}
 #msg{font-size:12px;color:#2d7b57;min-height:20px}
 @media(max-width:780px){.workspace{display:flex;flex-direction:column;padding:9px;gap:9px;margin:0}.panel,.editor{padding:14px}.beat-grid{grid-template-columns:76px repeat(16,26px);min-width:590px}}
-</style></head><body>
+
+/* ArtCraft official editor: preserve vendor HTML, WASM and branding unchanged. */
+.media-mode-switch{background:#fff;border-bottom:1px solid #e1e5ee;padding:10px 20px}
+.media-mode-tabs{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.media-mode-tabs button{border:1px solid #d7deeb;background:#f8f9fd;color:#52617a;border-radius:10px;min-height:40px;padding:10px 16px;font-weight:800;font-size:13px}
+.media-mode-tabs button[aria-selected=true]{background:#eae5ff;color:#563db0;border-color:#ad99e5}
+.media-mode-tabs button:disabled{opacity:.6;cursor:wait}
+.media-mode-description{margin:8px 0 2px;font-size:12px;max-width:1200px}
+#officialStatus{font-size:11px;min-height:1.3em;margin:5px 0 0;color:#27724f}
+#officialStatus[data-state=error]{color:#a1444a}
+.official-edit-panel{padding:10px;max-width:100%}
+.official-edit-panel[hidden],#simpleEditor[hidden]{display:none!important}
+.official-edit-note{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#f4f1ff;border:1px solid #e0d8fa;border-radius:10px;padding:12px 14px;font-size:12px;color:#514570}
+.official-edit-note strong{color:#34265a}.official-edit-note a{margin-left:auto;color:#5140a7;font-weight:850;text-decoration:underline}
+#officialEditorFrame{width:100%;height:calc(100dvh - 225px);min-height:700px;border:1px solid #dbe0eb;border-radius:13px;display:block;background:#14151d}
+.media-disclaimer{font-size:11px;color:#6c7890;padding:7px 12px;line-height:1.65}
+@media(max-width:650px){.media-mode-switch{padding:9px}.media-mode-tabs button{font-size:11px;padding:8px 10px}.official-edit-panel{padding:5px}#officialEditorFrame{height:70dvh;min-height:540px}.official-edit-note a{margin-left:0}}
+</style></head><body data-official-kind="music">
 <header class="top"><div><h1>음악 뚝딱</h1><p style="font-size:12px;margin:5px 0 0">박자를 누르고 멜로디를 만들어요. 파일을 업로드하지 않아도 돼요.</p></div><div class="actions"><button id="playMusic" class="primary">▶ 들어보기</button><button id="stopMusic">■ 멈춤</button><button id="exportWav" class="primary">WAV 저장</button></div></header>
-<main class="workspace">
+<section class="media-mode-switch" aria-label="제작 모드 선택"><div class="media-mode-tabs" role="tablist"><button id="simpleMode" type="button" role="tab" aria-selected="true">간편 편집</button><button id="officialMode" type="button" role="tab" aria-selected="false" disabled>고급 편집 · SoundCraft</button></div><p id="officialDescription" class="media-mode-description"></p><p id="officialStatus" role="status" aria-live="polite"></p></section>
+<div id="simpleEditor"><main class="workspace">
 <aside class="panel">
 <h2>음악 설정</h2>
 <label for="titleInput">음악 이름<input id="titleInput" maxlength="90"></label>
@@ -44,5 +62,14 @@ label input{border:1px solid #d4dbea;border-radius:9px;padding:10px;width:100%;m
 <div class="preview"><strong style="font-size:12px">들어보기</strong><audio id="audioPreview" controls aria-label="미리 듣기"></audio></div>
 <div class="help">멜로디와 베이스, 손뼉, 작은 심벌즈를 조합할 수 있어. WAV 파일은 다른 발표·영상 프로그램에서도 쓸 수 있는 일반 오디오 파일이야. 아직 MP3 변환과 녹음·실제 악기 샘플 편집은 지원하지 않아.</div>
 <p id="msg" role="status" aria-live="polite"></p>
-</section></main>
-<script src="studio-media-core.js"></script><script src="music-core.js"></script><script src="music-ttak.js"></script></body></html>
+</section></main></div>
+<section id="officialEditorPanel" class="official-edit-panel" hidden aria-label="ArtCraft 공식 고급 편집기">
+ <div class="official-edit-note">
+  <strong id="officialVersion">ArtCraft 공식 SoundCraft</strong>
+  <span id="officialHelp">고급 편집 모드는 프로그램 자체 파일 저장 기능을 이용해 주세요.</span>
+  <a id="officialExternal" href="assets/artcraft/soundcraft/index.html" target="_blank" rel="noopener noreferrer">새 창으로 편집기 열기 ↗</a>
+ </div>
+ <iframe id="officialEditorFrame" title="SoundCraft 공식 ArtCraft 고급 편집기" allow="fullscreen; autoplay; microphone; clipboard-read; clipboard-write"></iframe>
+ <p class="media-disclaimer">이 화면의 SoundCraft는 ArtCraft 팀이 배포한 공식 웹 프로그램입니다. 기존 간편 제작기와 작업 파일이 자동으로 합쳐지지는 않습니다. 파일은 공식 편집기에서 별도로 저장하세요.</p>
+</section>
+<script src="studio-media-core.js"></script><script src="music-core.js"></script><script src="music-ttak.js"></script><script src="studio-official-media.js"></script></body></html>
