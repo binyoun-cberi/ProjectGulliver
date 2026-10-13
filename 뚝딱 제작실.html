@@ -275,11 +275,19 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
   <div class="project-list" id="officialProjectList"></div>
   <h3 class="library-heading">기존 내 활동 <small style="font-weight:400">(타이머·퀴즈·자리표)</small></h3>
   <div id="legacyActivityList"></div>
-  <div class="library-actions" style="margin-top:12px">
-   <button id="libraryBackup" type="button" class="btn primary">전체 백업 저장</button>
-   <label for="libraryRestore" class="btn" style="cursor:pointer;text-align:center">백업 복원<input id="libraryRestore" type="file" accept=".json,application/json" hidden></label>
+  <h3 class="library-heading">이 기기의 저장 공간</h3>
+  <p id="studioStorageInfo" class="note" role="status" aria-live="polite">저장 공간 정보를 확인하는 중이에요.</p>
+  <div class="library-actions">
+   <button id="storageRefresh" type="button" class="tiny">용량 새로고침</button>
+   <button id="storagePersist" type="button" class="tiny">저장 공간 보호 요청</button>
   </div>
-  <p class="note" style="margin:9px 0">통합 백업에는 간편 제작물·사진·영상·WAV·별도로 보관한 공식 FilmCraft·SoundCraft 원본·폴더·기존 내 활동이 포함돼요. 120MB를 초과하면 백업이 생성되지 않으니 고급 원본은 개별 내려받기도 해주세요. 개인정보가 담길 수 있으니 파일을 안전하게 보관하세요. 복원은 기존 자료를 지우지 않고 추가해요.</p>
+  <p class="note">브라우저 데이터 삭제·기기 고장·저장 공간 부족에 대비해 아래 ZIP 파일을 별도로 보관하세요. 저장 공간 보호 요청은 브라우저가 거절할 수 있어요.</p>
+  <div class="library-actions" style="margin-top:12px">
+   <button id="libraryZipBackup" type="button" class="btn primary">ZIP 전체 백업 (권장)</button>
+   <label for="libraryRestore" class="btn" style="cursor:pointer;text-align:center">백업 복원 (.zip / .json)<input id="libraryRestore" type="file" accept=".zip,.json,application/zip,application/json" hidden></label>
+   <button id="libraryBackup" type="button" class="tiny">예전 JSON 백업 (120MB 제한)</button>
+  </div>
+  <p class="note" style="margin:9px 0">ZIP 전체 백업에는 간편 작업·사진·영상·WAV·공식 FilmCraft·SoundCraft 원본·폴더·기존 내 활동이 모두 포함돼요. 이미지·음원은 Base64가 아닌 원본 파일로 저장하고, CRC32로 파일 손상 여부를 확인해요. 최대 512MB까지 지원하며 이전 JSON 백업도 복원할 수 있어요. 개인정보에 주의하고, 복원은 기존 자료를 삭제하지 않고 추가해요.</p>
   <label for="importProject" class="btn" style="display:block;text-align:center;cursor:pointer;margin-top:10px">이전 JSON 작업 불러오기<input id="importProject" type="file" accept=".json,application/json" hidden></label>
   </section>
   <section id="inspectorAssets" class="right-pane" hidden>
@@ -302,13 +310,16 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
 </div>
 <script src="studio-media-core.js?v=20261013-22"></script>
 <script src="studio-core.js"></script>
-<script src="studio-storage.js?v=20261014-23"></script>
+<script src="studio-storage.js?v=20261014-24"></script>
 <script src="studio-transfer-core.js?v=20261013-22"></script>
 <script src="studio-official-project-core.js?v=20261014-23"></script>
 <script src="studio-app.js?v=20261014-23"></script>
 <script src="classroom-workspace.js"></script>
 <script src="studio-library-core.js?v=20261014-23"></script>
 <script src="studio-layout.js"></script>
-<script src="studio-library.js?v=20261014-23"></script>
+<script src="studio-zip-core.js?v=20261014-24"></script>
+<script src="studio-library.js?v=20261014-24"></script>
+<script src="studio-zip-backup.js?v=20261014-24"></script>
+<script src="studio-storage-ui.js?v=20261014-24"></script>
 </body>
 </html>
