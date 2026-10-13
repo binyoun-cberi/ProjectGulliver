@@ -25,8 +25,7 @@ test('Chrome: 영상·음악 편집·WAV/WebM 내보내기·자동 저장·전�
   await page.locator('#toolNav button[data-kind="music"]').click();
   // Official ArtCraft mode is selected automatically when vendored bundles exist.
   // This test intentionally exercises the original quick editor's WAV/WebM workflow.
-  await page.frameLocator('#editorFrame').locator('#officialStatus')
-   .filter({hasText:/편집기가 설치되어|고급 편집 설치 확인 중/}).waitFor();
+  await page.frameLocator('#editorFrame').locator('#simpleMode').waitFor();
   await page.frameLocator('#editorFrame').locator('#simpleMode').click();
   const iframe=page.frameLocator('#editorFrame');
   await iframe.locator('#titleInput').waitFor();
@@ -51,8 +50,7 @@ test('Chrome: 영상·음악 편집·WAV/WebM 내보내기·자동 저장·전�
   await page.locator('#toolNav button[data-kind="video"]').click();
   // Official ArtCraft mode is selected automatically when vendored bundles exist.
   // This test intentionally exercises the original quick editor's WAV/WebM workflow.
-  await page.frameLocator('#editorFrame').locator('#officialStatus')
-   .filter({hasText:/편집기가 설치되어|고급 편집 설치 확인 중/}).waitFor();
+  await page.frameLocator('#editorFrame').locator('#simpleMode').waitFor();
   await page.frameLocator('#editorFrame').locator('#simpleMode').click();
   await iframe.locator('#titleInput').waitFor();
   await iframe.locator('#titleInput').fill('우리 반 가을 영상');
@@ -106,6 +104,7 @@ test('Chrome: 영상·음악 편집·WAV/WebM 내보내기·자동 저장·전�
   assert.ok(titles.includes('우리 반 가을 영상'),'복원 후 화면의 프로젝트 제목: '+JSON.stringify(titles)+' / DB 제목: '+JSON.stringify(backupNames));
   await restore.locator('#projectList .project-item').filter({hasText:'우리 반 가을 영상'}).getByRole('button',{name:'열기'}).click();
   const restoredFrame=restore.frameLocator('#editorFrame');
+  await restoredFrame.locator('#simpleMode').click();
   await restoredFrame.locator('#clipList .clip').first().waitFor();
   assert.equal(await restoredFrame.locator('#previewImage').getAttribute('src')!==null,true);
   assert.deepEqual(errors,[],'원본 콘솔 오류: '+errors.join(' | '));
