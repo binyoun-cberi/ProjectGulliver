@@ -15,7 +15,7 @@ function open(){
    if(!db.objectStoreNames.contains('projects'))db.createObjectStore('projects',{keyPath:'id'});
    if(!db.objectStoreNames.contains('assets'))db.createObjectStore('assets',{keyPath:'id'});
   };
-  req.onsuccess=()=>{const db=req.result;db.onversionchange=()=>db.close();resolve(db)};
+  req.onsuccess=()=>{const db=req.result;db.onversionchange=()=>{db.close();connection=null};resolve(db)};
   req.onerror=()=>reject(req.error||Error('저장소 연결 오류'));
   req.onblocked=()=>reject(Error('기존 제작실 탭을 닫고 다시 시도해 주세요.'));
  }).catch(err=>{connection=null;throw err});
