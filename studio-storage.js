@@ -52,7 +52,7 @@ async function official(){return (await all('official')).sort((a,b)=>b.updatedAt
 async function removeFolder(id){
  const db=await open();
  return new Promise((resolve,reject)=>{
-  const tx=db.transaction(['folders','projects'],'readwrite');
+  const tx=db.transaction(['folders','projects','official'],'readwrite');
   tx.objectStore('folders').delete(id);
   const cursor=tx.objectStore('projects').openCursor();
   cursor.onsuccess=()=>{
@@ -60,6 +60,12 @@ async function removeFolder(id){
    if(c){if(c.value.folderId===id){c.value.folderId='';c.update(c.value)}c.continue()}
   };
   cursor.onerror=()=>{try{tx.abort()}catch(e){}};
+  const native=tx.objectStore('official').openCursor();
+  native.onsuccess=()=>{
+   const c=native.result;
+   if(c){if(c.value.folderId===id){c.value.folderId='';c.update(c.value)}c.continue()}
+  };
+  native.onerror=()=>{try{tx.abort()}catch(e){}};
   tx.oncomplete=()=>resolve();
   tx.onerror=()=>reject(tx.error||Error('폴더를 삭제하지 못했어요.'));
   tx.onabort=()=>reject(tx.error||Error('폴더 정리가 중단됐어요.'));
