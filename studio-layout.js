@@ -170,6 +170,13 @@ function rebuildFields(){
    native.dispatchEvent(new view.Event(eventName,{bubbles:true}));
    return true;
   };
+  // Native document title inputs snapshot history on focus. Forward that
+  // lifecycle event as well, so Undo/Redo still works via the shared panel.
+  field.addEventListener('focus',()=>{
+   if(!native.isConnected||!child||doc()!==native.ownerDocument)return;
+   const view=native.ownerDocument.defaultView;
+   if(view)native.dispatchEvent(new view.Event('focus'));
+  });
   field.addEventListener('input',()=>{
    if(!eventToNative('input'))return;
    if(field.type==='color'||field.tagName==='SELECT')eventToNative('change');
