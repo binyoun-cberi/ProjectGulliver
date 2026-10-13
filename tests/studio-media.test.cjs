@@ -39,3 +39,23 @@ testFn('통합 백업에는 영상 원본과 음악 프로젝트 복원을 위�
  assert.match(library,/mediaIdMap/);assert.match(library,/media:videoMedia/);
  assert.match(library,/await S\.importBatch\(\{projects:newProjects,assets:newAssets,folders:newFolders,media:newMedia\}\)/);
 });
+
+testFn('2.2 배경음악 자료는 안전하게 검증되고 기존 무음 영상과 호환',()=>{
+ const original=M.validateVideo(M.makeVideo());
+ assert.equal(original.audio,null);
+ const withSound=M.validateVideo({...original,audio:{mediaId:'wav_1',mime:'audio/wav',name:'수업.wav',volume:3,loop:false}});
+ assert.equal(withSound.audio.volume,1);
+ assert.equal(withSound.audio.loop,false);
+ assert.equal(M.validateVideo({...original,audio:{mediaId:'wav_1',mime:'audio/wav',volume:-1}}).audio.volume,0);
+ assert.throws(()=>M.validateVideo({...original,audio:{mediaId:'../bad',mime:'audio/wav'}}),/배경음악/);
+ assert.throws(()=>M.validateVideo({...original,audio:{mediaId:'a',mime:'audio/mpeg'}}),/배경음악/);
+ assert.equal(M.audioAllowed({type:'audio/wav',size:8000}),true);
+ assert.equal(M.audioAllowed({type:'audio/mpeg',size:8000}),false);
+ assert.equal(M.fileAllowed({type:'audio/wav',size:8000}),false);
+ assert.equal(M.mediaAllowed({type:'audio/wav',size:8000}),true);
+ const lib=fs.readFileSync('studio-library.js','utf8');
+ assert.match(lib,/project\.payload\.audio\.mediaId=mediaIdMap\.get/);
+ const video=fs.readFileSync('video-ttak.js','utf8');
+ assert.match(video,/createMediaStreamDestination/);
+ assert.match(video,/addTrack\(track\)/);
+});
