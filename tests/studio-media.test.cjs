@@ -43,7 +43,7 @@ testFn('2.2 배경음악 참조와 WAV 미디어 검증',()=>{
 testFn('통합 백업에는 영상 원본과 음악 프로젝트 복원을 위한 미디어 스토어가 있다',()=>{
  const store=fs.readFileSync('studio-storage.js','utf8');
  const library=fs.readFileSync('studio-library.js','utf8');
- assert.match(store,/DB_VERSION=3/);assert.match(store,/createObjectStore\('media'/);
+ assert.match(store,/DB_VERSION=4/);assert.match(store,/createObjectStore\('media'/);
  assert.match(library,/mediaIdMap/);assert.match(library,/media:videoMedia/);
  assert.match(library,/await S\.importBatch\(\{projects:newProjects,assets:newAssets,folders:newFolders,media:newMedia\}\)/);
 });
