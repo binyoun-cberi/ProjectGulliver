@@ -91,7 +91,13 @@ test('실제 Chromium: 자동 저장/새로고침 복원/사진 소재 삽입/JS
   await page.locator('#insertList').getByRole('button',{name:'소제목'}).click();
   await document.locator('#blocks .heading').last().waitFor();
   await page.locator('#proxy-titleInput').fill('자동검사 가정통신문');
+  await page.locator('#proxy-titleInput').press('Tab');
   await savedProject(page,'자동검사 가정통신문');
+  // Editing through the shared inspector must retain the document's Undo/Redo history.
+  await page.locator('#studioQuickBar [data-native="#undo"]').click();
+  await page.waitForFunction(()=>document.querySelector('#proxy-titleInput')?.value==='가정통신문');
+  await page.locator('#studioQuickBar [data-native="#redo"]').click();
+  await page.waitForFunction(()=>document.querySelector('#proxy-titleInput')?.value==='자동검사 가정통신문');
 
   // Existing standalone JSON imported from a different editor should be
   // committed even without a subsequent keystroke.
