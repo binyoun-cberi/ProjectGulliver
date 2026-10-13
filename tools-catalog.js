@@ -1,5 +1,5 @@
 (function(){const tools=[
-      {name:"뚝딱 제작실",subtitle:"그림·PDF·도안·발표·문서 한곳에서 제작하고 보관",href:"뚝딱 제작실.html",category:"자료·기록",icon:"🛠️",accent:"#7547e8",tags:["제작실","그림","PDF","도안","발표","문서","HWPX","DOCX","PPTX","수업자료"],situation:"교실 수업자료를 만들고, 기기에 작업을 저장하거나 사진을 재사용할 때"},
+      {name:"뚝딱 제작실",subtitle:"그림·PDF·도안·발표·문서·영상·음악을 한곳에서 제작",href:"뚝딱 제작실.html",category:"자료·기록",icon:"🛠️",accent:"#7547e8",tags:["제작실","그림","PDF","도안","발표","문서","영상","음악","WAV","WebM","HWPX","DOCX","PPTX","수업자료"],situation:"교실 수업자료를 만들고, 기기에 작업을 저장하거나 사진을 재사용할 때"},
       {name:"그림 뚝딱",subtitle:"사진과 그림카드를 꾸미는 편집기",href:"그림 뚝딱.html",category:"자료·기록",studioLegacy:true,icon:"🎨",accent:"#2875bb",tags:["사진편집","그림카드","이미지","활동지"],situation:"사진을 자르고 글씨와 그림을 넣어 수업자료를 만들 때"},
       {name:"PDF 뚝딱",subtitle:"PDF 합치기·추출·나누기·회전, 고급 편집",href:"PDF 뚝딱.html",category:"자료·기록",studioLegacy:true,icon:"📄",accent:"#246c98",tags:["PDF","PDF 합치기","PDF 나누기","학습지","PDF 편집","페이지 추출"],situation:"학습지와 안내문 PDF를 합치거나 필요한 페이지만 골라 저장할 때"},
       {name:"도안 뚝딱",subtitle:"그림카드·이름표·도형 도안을 만들고 A4 인쇄",href:"도안 뚝딱.html",category:"자료·기록",studioLegacy:true,icon:"✂️",accent:"#6b77ba",tags:["도안","낱말 그림카드","감정카드","이름표","교구","도형","벡터"],situation:"교실 활동지, 이름표, 순서표와 그림카드를 만들어 인쇄할 때"},

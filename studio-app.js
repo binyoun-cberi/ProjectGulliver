@@ -206,7 +206,7 @@ function onFrameLoad(){
   if(!doc||!doc.body||!doc.location?.search?.includes('studio=1'))return;
   const style=doc.createElement('style');style.id='gulliver-studio-inset';
   style.textContent='body>header,body>section.hero,body>section.intro,body>footer,body>section.advanced,body>.advanced,body>.topbar,body>.hero{display:none!important}body{margin:0!important;background:#fff!important}body>main,body>.workspace,body>.layout,body>.panels{max-width:none!important;width:100%!important;margin:0!important;padding:14px!important;gap:12px!important}body>.workspace{grid-template-columns:190px minmax(0,1fr) 230px!important}body>.layout{grid-template-columns:1fr!important}body>.panels{grid-template-columns:1fr!important}@media(max-width:1150px){body>.workspace{display:flex!important;flex-direction:column!important}body>.workspace>*{width:100%!important}}';
-  doc.head.append(style);
+  if(expected!=='video'&&expected!=='music')doc.head.append(style);
  }catch(e){busy=false;status('편집기 화면에 접근하지 못했어요. 새 창에서 열기를 이용해 주세요.',true);return;}
  if(!C.managed(expected)){
   busy=false;window.GulliverStudioLayout?.toolChanged(expected);
@@ -258,6 +258,7 @@ async function exportCurrent(){
  try{
   await sync(true);
   if(!activeProject)throw Error('먼저 작업을 열어 주세요.');
+  if(activeProject.kind==='video')throw Error('영상 원본 파일은 개별 JSON에 들어가지 않아요. 내 작업의 “전체 백업 저장”을 사용해 주세요.');
   const {id,kind,title,payload,folderId,createdAt,updatedAt}=activeProject;
   download(JSON.stringify({version:1,id,kind,title,payload,folderId,createdAt,updatedAt},null,2),C.safeTitle(title).replace(/[\\/:*?"<>|]/g,'_')+'.gulliver.json','application/json');
   status('통합 작업 원본을 내려받았어요.');
@@ -273,6 +274,7 @@ async function importLegacy(e){
   const payload=raw.payload||raw;
   const title=C.safeTitle(raw.title||payload.title||'가져온 작업');
   const now=Date.now();
+  if(kind==='video')throw Error('영상의 원본 파일까지 복원하려면 “전체 백업 복원”을 이용해 주세요.');
   await start(kind,{id:uuid(),kind,title,payload,folderId:'',createdAt:now,updatedAt:now});
   if(activeKind===kind)status('원본을 불러오는 중이에요. 열리면 자동 저장돼요.');
  }catch(err){status('파일을 가져오지 못했어요. '+(err.message||err),true)}
@@ -412,8 +414,8 @@ function renderAssets(){
  });
 }
 async function insertAsset(asset){
- const selector={design:'addPhoto',slides:'slideImage',document:'addImage'}[activeKind];
- if(!selector&&activeKind!=='pdf')return status('사진을 넣으려면 도안·발표·문서·PDF 제작실을 선택해 주세요.',true);
+ const selector={design:'addPhoto',slides:'slideImage',document:'addImage',video:'clipFiles'}[activeKind];
+ if(!selector&&activeKind!=='pdf')return status('사진을 넣으려면 도안·발표·문서·영상·PDF 제작실을 선택해 주세요.',true);
  try{
   const child=frame.contentWindow,input=frame.contentDocument?.getElementById(selector);
   if(!input&&activeKind!=='pdf')throw Error('해당 제작실의 사진 넣기 기능이 준비되지 않았어요.');

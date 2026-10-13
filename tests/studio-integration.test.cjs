@@ -7,8 +7,8 @@ const D=require('../doan-core.js');
 const B=require('../balpyo-core.js');
 const M=require('../munseo-core.js');
 
-test('통합 제작실 다섯 모드는 모두 로컬 HTML 진입점을 가진다',()=>{
- const expected=['picture','pdf','design','slides','document'];
+test('통합 제작실 일곱 모드는 모두 로컬 HTML 진입점을 가진다',()=>{
+ const expected=['picture','pdf','design','slides','document','video','music'];
  assert.deepEqual(C.types(),expected);
  for(const kind of expected){
   const def=C.TOOLS[kind];
@@ -19,6 +19,8 @@ test('통합 제작실 다섯 모드는 모두 로컬 HTML 진입점을 가진�
  assert.equal(C.managed('design'),true);
  assert.equal(C.managed('slides'),true);
  assert.equal(C.managed('document'),true);
+ assert.equal(C.managed('video'),true);
+ assert.equal(C.managed('music'),true);
  assert.equal(C.managed('pdf'),false);
  assert.equal(C.managed('picture'),false);
 });

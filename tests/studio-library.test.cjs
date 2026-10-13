@@ -26,7 +26,7 @@ test('기존 프로젝트를 읽고 저장해도 폴더 값이 유지',()=>{
 test('통합 백업 버전·개수·사진 형식·위험한 확장자를 제한',()=>{
  const valid={format:L.MAGIC,version:1,folders:[],projects:[],assets:[],activities:{version:1,folders:[],activities:[]}};
  assert.deepEqual(L.checkedManifest(valid),valid);
- assert.deepEqual(L.summary(valid),{projects:0,assets:0,folders:0,activities:0});
+ assert.deepEqual(L.summary(valid),{projects:0,assets:0,folders:0,activities:0,media:0});
  assert.throws(()=>L.checkedManifest({...valid,version:99}),/통합 백업/);
  assert.throws(()=>L.checkedManifest({...valid,projects:[] ,assets:[...Array(151)]}),/개수/);
  assert.throws(()=>L.checkedManifest({...valid,activities:{version:4,folders:[],activities:[]}}),/기존 내 활동/);
@@ -46,6 +46,6 @@ test('기존 도구 데이터와 신규 보관함 검색/복원 UI가 실제 연
  assert.match(js,/W\.importBundle/);
  assert.match(js,/await B\.sync\(true\)/);
  const storage=fs.readFileSync('studio-storage.js','utf8');
- assert.match(storage,/DB_VERSION=2/);
- assert.match(storage,/db\.transaction\(\['folders','projects','assets'\],'readwrite'\)/);
+ assert.match(storage,/DB_VERSION=3/);
+ assert.ok(storage.includes("db.transaction(['folders','projects','assets','media'],'readwrite')"));
 });
