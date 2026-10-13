@@ -180,17 +180,31 @@ test('SoundCraft: compiled WASM opens real egui, audio context resumes after ges
   assert.equal(sessionBytes.subarray(0,2).toString('ascii'),'PK','SoundCraft saved session must be ZIP');
   console.log('SOUNDCRAFT SESSION SAVED',JSON.stringify({file:session.suggestedFilename(),bytes:sessionBytes.length}));
 
-  const picker=page.waitForEvent('filechooser',{timeout:12000}).catch(error=>error);
-  await page.keyboard.press('Control+o');
-  const input=await picker;
-  if(input instanceof Error)throw Error('SoundCraft Ctrl+O did not show a session file picker: '+input.message);
-  const restoredPath='/tmp/gulliver-soundcraft-qa.scraftz';
+  // SoundCraft's official web shell supports dropping a session bundle
+  // anywhere on its canvas; unlike Ctrl+O this path needs no OS picker.
+  const restoredPath='tests/fixtures/soundcraft-qa.scraftz';
   fs.writeFileSync(restoredPath,sessionBytes);
-  await input.setFiles(restoredPath);
-  await sleep(1200);
+  const drop=await frame.locator('#soundcraft_canvas').evaluate(async element=>{
+   const result=await fetch('/tests/fixtures/soundcraft-qa.scraftz');
+   if(!result.ok)throw Error('Test bundle HTTP status: '+result.status);
+   const bytes=await result.blob();
+   const file=new File([bytes],'Midnight Groove.scraftz',{type:'application/zip'});
+   const dt=new DataTransfer();dt.items.add(file);
+   element.dispatchEvent(new DragEvent('dragenter',{bubbles:true,cancelable:true,dataTransfer:dt}));
+   element.dispatchEvent(new DragEvent('dragover',{bubbles:true,cancelable:true,dataTransfer:dt}));
+   element.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:dt}));
+   return{file:file.name,size:file.size,count:dt.files.length};
+  });
+  assert.equal(drop.count,1,'Native canvas drop failed to attach its session file');
+  await sleep(2100);
   assert.equal(await frame.locator('#soundcraft_loading').count(),0,
     'SoundCraft restarted/froze after opening the saved session');
-  console.log('SOUNDCRAFT SESSION REOPENED',session.suggestedFilename());
+  const reopenPng=await frame.locator('#soundcraft_canvas').screenshot();
+  fs.writeFileSync('/tmp/soundcraft-reopen-qa.png',reopenPng);
+  cp.spawnSync('ffmpeg',['-hide_banner','-loglevel','error','-y','-i','/tmp/soundcraft-reopen-qa.png',
+    '-vf','scale=700:-1','-q:v','12','/tmp/soundcraft-reopen-qa.jpg']);
+  console.log('SOUNDCRAFT_REOPEN_JPEG='+fs.readFileSync('/tmp/soundcraft-reopen-qa.jpg').toString('base64'));
+  console.log('SOUNDCRAFT SESSION REOPEN DROP',JSON.stringify(drop));
 
   assert.equal(failures.filter(x=>/RuntimeError|panic|unreachable/i.test(x)).length,0,
     'WASM startup crash detected: '+failures.join(' | '));
