@@ -1,0 +1,8 @@
+{
+  "product": "filmcraft",
+  "source": "storytold/filmcraft",
+  "version": "0.7.2",
+  "release_sha256": "48d4f48728fa6b5c028612a4b7f59a5832ff38d430c6a7bd417a2c77d75ae4f9",
+  "upstream_index": "index.html",
+  "distribution": "unchanged release files"
+}
