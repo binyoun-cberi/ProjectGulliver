@@ -132,7 +132,7 @@ async function mediaBlobToUri(item){
  return 'data:'+item.mime+';base64,'+bytesTo64(bytes);
 }
 async function uriToMedia(value){
- if(!value||!M.VIDEO_MIME.includes(value.mime)||typeof value.data!=='string'||!value.data.startsWith('data:'+value.mime+';base64,'))
+ if(!value||![...M.VIDEO_MIME,...M.AUDIO_MIME].includes(value.mime)||typeof value.data!=='string'||!value.data.startsWith('data:'+value.mime+';base64,'))
   throw Error('영상 소재의 형식이 올바르지 않아요.');
  const base64=value.data.slice(value.data.indexOf(',')+1);
  if(base64.length>Math.ceil(M.VIDEO_MAX*4/3)+12||!/^[A-Za-z0-9+/]*={0,2}$/.test(base64))
@@ -209,6 +209,10 @@ async function restoreArchive(event){
     for(const clip of project.payload.clips){
      if(!mediaIdMap.has(clip.mediaId))throw Error('영상 프로젝트의 원본 파일이 백업에 빠져 있어요.');
      clip.mediaId=mediaIdMap.get(clip.mediaId);
+    }
+    if(project.payload.audio){
+     if(!mediaIdMap.has(project.payload.audio.mediaId))throw Error('영상 배경음악 원본이 백업에 빠져 있어요.');
+     project.payload.audio.mediaId=mediaIdMap.get(project.payload.audio.mediaId);
     }
    }
    if(project.kind==='music')project.payload=M.validateMusic(project.payload);

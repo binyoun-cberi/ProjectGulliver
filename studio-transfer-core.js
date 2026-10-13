@@ -4,10 +4,12 @@ root.GulliverStudioTransfer=result;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
 const FROM=Object.freeze({
- design:['slides','document','pdf'],
- slides:['design','document','pdf']
+ design:['slides','document','pdf','video'],
+ slides:['design','document','pdf','video'],
+ picture:['document','video'],
+ music:['video']
 });
-const DEST_NAMES=Object.freeze({design:'도안 뚝딱',slides:'발표 뚝딱',document:'문서 뚝딱',pdf:'PDF 뚝딱'});
+const DEST_NAMES=Object.freeze({design:'도안 뚝딱',slides:'발표 뚝딱',document:'문서 뚝딱',pdf:'PDF 뚝딱',video:'영상 뚝딱'});
 const MAX_IMAGE_BYTES=2000000;
 function destinations(kind){return [...(FROM[kind]||[])];}
 function eligible(source,target){return destinations(source).includes(target);}

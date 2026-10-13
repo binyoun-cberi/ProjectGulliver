@@ -283,8 +283,8 @@ function writeLines(ctx,value,x,y,maxWidth,lineHeight,maxLines){
  }
  for(const [i,line] of list.entries())ctx.fillText(line,x,y+i*lineHeight);
 }
-async function exportSlideImage(){
- const slide=current(),theme=C.THEMES[deck.theme]||C.THEMES.sky;
+async function exportSlideImage(slideIndex=index){
+ const slide=deck.slides[slideIndex],theme=C.THEMES[deck.theme]||C.THEMES.sky;
  const canvas=document.createElement('canvas');canvas.width=960;canvas.height=540;
  const ctx=canvas.getContext('2d');if(!ctx)throw Error('이미지 편집 기능을 사용할 수 없어요.');
  ctx.fillStyle=theme.background;ctx.fillRect(0,0,960,540);
@@ -308,12 +308,18 @@ async function exportSlideImage(){
  writeLines(ctx,slide.title,photo?515:60,photo?185:205,photo?385:840,54,3);
  ctx.font='25px "Malgun Gothic", "Apple SD Gothic Neo", sans-serif';
  writeLines(ctx,slide.body,photo?515:68,photo?325:322,photo?375:805,38,4);
- ctx.fillStyle=theme.muted;ctx.font='18px sans-serif';ctx.fillText(String(index+1),906,509);
+ ctx.fillStyle=theme.muted;ctx.font='18px sans-serif';ctx.fillText(String(slideIndex+1),906,509);
  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
  if(!blob)throw Error('슬라이드 이미지를 만들 수 없어요.');
  return blob;
 }
-window.GulliverStudioAdapter={kind:'slides',insertImage:insertSlideImage,exportImage:exportSlideImage,capture:()=>JSON.parse(JSON.stringify(deck)),apply:raw=>{
+async function exportSlides(){
+  if(deck.slides.length>5)throw Error('간편 영상은 장면 5개까지 지원해요. 발표 슬라이드를 5장 이하로 정리한 뒤 다시 보내 주세요.');
+  const images=[];
+  for(let i=0;i<deck.slides.length;i++)images.push({name:(i+1)+'번째 슬라이드.png',blob:await exportSlideImage(i)});
+  return images;
+ }
+ window.GulliverStudioAdapter={kind:'slides',insertImage:insertSlideImage,exportImage:exportSlideImage,exportSlides,capture:()=>JSON.parse(JSON.stringify(deck)),apply:raw=>{
  deck=C.validateDeck(raw);index=0;dirty=false;render();
 },rename:value=>{deck.title=String(value).slice(0,90);dirty=true;render();}};
 window.addEventListener('beforeunload',e=>{if(dirty&&!new URLSearchParams(location.search).has('studio')){e.preventDefault();e.returnValue='';}});
