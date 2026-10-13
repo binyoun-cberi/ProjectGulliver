@@ -170,7 +170,25 @@ test('SoundCraft: compiled WASM opens real egui, audio context resumes after ges
   fs.writeFileSync('/tmp/soundcraft-save-qa.png',savePopupPng);
   cp.spawnSync('ffmpeg',['-hide_banner','-loglevel','error','-y','-i','/tmp/soundcraft-save-qa.png',
     '-vf','scale=700:-1','-q:v','12','/tmp/soundcraft-save-qa.jpg']);
-  console.log('SOUNDCRAFT_SAVE_DIALOG_JPEG='+fs.readFileSync('/tmp/soundcraft-save-qa.jpg').toString('base64'));
+  const savePromise=page.waitForEvent('download',{timeout:15000}).catch(error=>error);
+  await page.keyboard.press('Enter');
+  const session=await savePromise;
+  if(session instanceof Error)throw new Error('SoundCraft Ctrl+S dialog did not save .scraftz: '+session.message);
+  const sessionBytes=fs.readFileSync(await session.path());
+  assert.ok(session.suggestedFilename().endsWith('.scraftz'),
+    'SoundCraft should export a portable session bundle: '+session.suggestedFilename());
+  assert.equal(sessionBytes.subarray(0,2).toString('ascii'),'PK','SoundCraft saved session must be ZIP');
+  console.log('SOUNDCRAFT SESSION SAVED',JSON.stringify({file:session.suggestedFilename(),bytes:sessionBytes.length}));
+
+  const picker=page.waitForEvent('filechooser',{timeout:12000}).catch(error=>error);
+  await page.keyboard.press('Control+o');
+  const input=await picker;
+  if(input instanceof Error)throw Error('SoundCraft Ctrl+O did not show a session file picker: '+input.message);
+  await input.setFiles({name:session.suggestedFilename(),mimeType:'application/zip',buffer:sessionBytes});
+  await sleep(1200);
+  assert.equal(await frame.locator('#soundcraft_loading').count(),0,
+    'SoundCraft restarted/froze after opening the saved session');
+  console.log('SOUNDCRAFT SESSION REOPENED',session.suggestedFilename());
 
   assert.equal(failures.filter(x=>/RuntimeError|panic|unreachable/i.test(x)).length,0,
     'WASM startup crash detected: '+failures.join(' | '));
