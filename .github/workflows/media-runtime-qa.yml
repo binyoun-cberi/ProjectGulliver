@@ -38,6 +38,10 @@ jobs:
           node --test tests/studio-official-media.test.cjs
           test -s assets/artcraft/filmcraft/filmcraft_web_bg.wasm
           test -s assets/artcraft/soundcraft/soundcraft-web-df25e49daa9fa867_bg.wasm
+      - name: Install ffmpeg and ffprobe for real media output verification
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
       - name: Prepare a real, small H264 and AAC import fixture
         run: |
           mkdir -p tests/fixtures
