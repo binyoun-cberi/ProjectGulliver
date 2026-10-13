@@ -218,10 +218,9 @@ test('SoundCraft: compiled WASM opens real egui, audio context resumes after ges
   const originalSoundBundle='tests/fixtures/soundcraft-qa.scraftz';
   fs.writeFileSync(originalSoundBundle,sessionBytes);
   await page.locator('#officialProjectUpload').setInputFiles(originalSoundBundle);
-  await page.waitForFunction(async()=>{
-   const native=await GulliverStudioStorage.official();
-   return native.some(x=>x.kind==='music'&&x.blob.size>1000000);
-  },null,{timeout:90000});
+  // Wait for the actual async storage write to complete. Polling an async
+  // predicate with waitForFunction can treat a Promise itself as truthy.
+  await page.locator('#officialStatus').filter({hasText:'파일을 내 작업에 보관했어요'}).waitFor({timeout:90000});
   const savedDetails=await page.evaluate(async()=>{
    const rows=await GulliverStudioStorage.official();
    return {status:document.getElementById('officialStatus')?.textContent,
