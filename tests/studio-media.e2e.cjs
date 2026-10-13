@@ -30,9 +30,14 @@ test('Chrome: 영상·음악 편집·WAV/WebM 내보내기·자동 저장·전�
   await iframe.locator('#titleInput').press('Tab');
   const cell=iframe.locator('[data-track="melody"][data-step="1"]');
   await cell.click();assert.equal(await cell.getAttribute('aria-pressed'),'true');
-  const wavDownload=page.waitForEvent('download');
+  const wavDownload=page.waitForEvent('download',{timeout:11000});
   await iframe.locator('#exportWav').click();
-  const wav=await wavDownload;
+  const wav=await wavDownload.catch(async e=>{
+   const msg=await iframe.locator('#msg').textContent();
+   const state=await iframe.locator('#exportWav').isEnabled();
+   const js=await page.frameLocator('#editorFrame').locator('body').evaluate(()=>({media:typeof window.GulliverMediaCore,music:typeof window.GulliverMusicCore,adapter:typeof window.GulliverStudioAdapter}));
+   throw new Error('WAV browser export failed: '+e.message+'; msg='+msg+'; enabled='+state+'; objects='+JSON.stringify(js));
+  });
   const wavBytes=fs.readFileSync(await wav.path());
   assert.equal(wav.suggestedFilename().endsWith('.wav'),true);
   assert.equal(wavBytes.toString('ascii',0,4),'RIFF');
