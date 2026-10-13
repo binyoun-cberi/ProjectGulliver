@@ -207,8 +207,13 @@ async function saveArchive(){
  try{
   const state=B.getState();
   if(C.managed(state.activeKind))await B.sync(true);
-  const projects=(await S.projects()).map(C.normalizeProject),assets=await S.assets(),storedFolders=await S.folders(),media=await S.media();
-  if(projects.length>L.MAX_PROJECTS||assets.length>L.MAX_ASSETS||storedFolders.length>L.MAX_FOLDERS||media.length>M.MEDIA_COUNT)throw Error('백업 가능한 개수를 넘었어요. 폴더별로 정리한 뒤 다시 시도해 주세요.');
+  const projects=(await S.projects()).map(C.normalizeProject),assets=await S.assets(),storedFolders=await S.folders(),media=await S.media(),official=await S.official();
+  if(projects.length>L.MAX_PROJECTS||assets.length>L.MAX_ASSETS||storedFolders.length>L.MAX_FOLDERS||media.length>M.MEDIA_COUNT||official.length>O.MAX_ITEMS)throw Error('백업 가능한 개수를 넘었어요. 폴더별로 정리한 뒤 다시 시도해 주세요.');
+  // Refuse oversized backups before base64 allocation.
+  const byteTotal=[...assets,...media,...official].reduce((n,x)=>n+(x.blob?.size||0),0);
+  const metaBytes=new Blob([JSON.stringify({projects,folders:storedFolders,activities:W.read()})]).size;
+  if(Math.ceil(byteTotal*4/3)+metaBytes+1024*128>L.MAX_BUNDLE_BYTES)
+   throw Error('고급 원본을 포함하면 120MB 전체 백업 한도를 넘어요. 고급 프로젝트를 개별 내려받아 보관하고 불필요한 사본을 정리해 주세요. 일부 파일을 몰래 제외하지 않아요.');
   const images=[];
   for(const asset of assets){
    images.push({name:C.assetName(asset.name),mime:asset.mime,createdAt:asset.createdAt||Date.now(),data:await blobToUri(asset.blob)});
@@ -222,14 +227,16 @@ async function saveArchive(){
    videoMedia.push({id:item.id,name:String(item.name||'영상').slice(0,90),mime:item.mime,
     createdAt:item.createdAt||Date.now(),data:await mediaBlobToUri(item)});
   }
-  // Read only. No destructive migration of legacy classroom activities.
+  const native=[];
+  for(const project of official)native.push({id:project.id,kind:project.kind,name:project.name,title:project.title,
+   createdAt:project.createdAt,updatedAt:project.updatedAt,folderId:project.folderId||'',data:await nativeToUri(project)});
   const activities=W.read();
-  const value={format:L.MAGIC,version:L.VERSION,createdAt:new Date().toISOString(),folders:storedFolders,projects,assets:images,media:videoMedia,activities};
+  const value={format:L.MAGIC,version:L.VERSION,createdAt:new Date().toISOString(),folders:storedFolders,projects,assets:images,media:videoMedia,official:native,activities};
   const json=JSON.stringify(value);
   if(new Blob([json]).size>L.MAX_BUNDLE_BYTES)throw Error('백업 파일이 120MB를 넘었어요. 프로젝트별 JSON도 별도로 내려받아 주세요.');
   const stamp=new Date().toISOString().slice(0,10);
   B.download(json,'뚝딱제작실-전체백업-'+stamp+'.json','application/json');
-  B.status('전체 백업을 내려받았어요. '+L.summary(value).projects+'개 프로젝트, '+L.summary(value).assets+'개 사진, 기존 내 활동 '+L.summary(value).activities+'개, 영상 원본 '+L.summary(value).media+'개가 포함돼요.');
+  B.status('전체 백업을 내려받았어요. '+L.summary(value).projects+'개 프로젝트, '+L.summary(value).assets+'개 사진, 기존 내 활동 '+L.summary(value).activities+'개, 영상 원본 '+L.summary(value).media+'개, 고급 프로젝트 '+L.summary(value).official+'개가 포함돼요.');
  }catch(e){B.status('전체 백업 실패: '+(e.message||e),true)}
  finally{working=false;$('libraryBackup').disabled=false}
 }
@@ -240,7 +247,7 @@ async function restoreArchive(event){
  try{
   const value=L.checkedManifest(JSON.parse(await file.text()));
   const counts=L.summary(value);
-  if(!confirm('프로젝트 '+counts.projects+'개, 사진 '+counts.assets+'개, 폴더 '+counts.folders+'개, 기존 내 활동 '+counts.activities+'개를 현재 기기에 추가할까요? 기존 자료는 삭제되지 않아요.'))return;
+  if(!confirm('간편 프로젝트 '+counts.projects+'개, 고급 프로젝트 '+counts.official+'개, 사진 '+counts.assets+'개, 기존 내 활동 '+counts.activities+'개를 추가할까요? 기존 자료는 삭제되지 않아요.'))return;
   const existingFolders=await S.folders(),nameToId=new Map(existingFolders.map(f=>[f.name,f.id]));
   const map=new Map(),newFolders=[];
   for(const item of value.folders){
@@ -283,9 +290,16 @@ async function restoreArchive(event){
    const blob=await uriToBlob(a?.data,mime);
    newAssets.push({id:uid(),name:C.assetName(a.name),mime,blob,createdAt:Date.now()});
   }
+  const newOfficial=[];
+  for(const entry of value.official||[]){
+   const source=await uriToNative(entry);
+   if(entry.folderId&&!map.has(entry.folderId))throw Error('공식 프로젝트의 폴더 연결이 손상됐어요.');
+   const now=Date.now();newOfficial.push({...source,id:uid(),folderId:map.get(entry.folderId)||'',createdAt:now,updatedAt:now});
+  }
+  if((await S.official()).length+newOfficial.length>O.MAX_ITEMS)throw Error('고급 프로젝트는 이 기기에 30개까지만 보관할 수 있어요.');
   // All IndexedDB assets, folders, and projects are written in one transaction.
   // On failure it rolls back. Original projects and assets are never overwritten.
-  await S.importBatch({projects:newProjects,assets:newAssets,folders:newFolders,media:newMedia});
+  await S.importBatch({projects:newProjects,assets:newAssets,folders:newFolders,media:newMedia,official:newOfficial});
   // Complete legacy activity restoration before refreshing the unified UI.
   // Partial cross-store states must not be presented as a finished restore.
   let legacyMessage='';
@@ -297,9 +311,9 @@ async function restoreArchive(event){
     legacyMessage=' 단, 기존 내 활동은 저장하지 못했어요: '+(e.message||e);
    }
   }
-  await B.refreshProjects();await B.refreshAssets();await refreshFolders();
+  await B.refreshProjects();await B.refreshAssets();await B.refreshOfficial();await refreshFolders();
   renderActivities();
-  B.status('통합 백업 복원 완료: 프로젝트 '+newProjects.length+'개, 사진 '+newAssets.length+'개, 영상 원본 '+newMedia.length+'개를 추가했어요.'+legacyMessage);
+  B.status('통합 백업 복원 완료: 프로젝트 '+newProjects.length+'개, 사진 '+newAssets.length+'개, 영상 원본 '+newMedia.length+'개, 고급 원본 '+newOfficial.length+'개를 추가했어요.'+legacyMessage);
  }catch(e){B.status('백업 복원 실패: '+(e.message||e),true)}
  finally{working=false}
 }
