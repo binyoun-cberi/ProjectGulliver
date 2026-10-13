@@ -20,8 +20,10 @@ test('Homepage and new-activity modal expose video/music editor links in Chrome'
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'index.html',{waitUntil:'domcontentloaded'});
   // The separate cards are not studioLegacy-hidden.
-  await page.locator('.tool-card').filter({hasText:'영상 뚝딱'}).first().waitFor();
-  await page.locator('.tool-card').filter({hasText:'음악 뚝딱'}).first().waitFor();
+  await page.locator('.quick-tool[href="영상 뚝딱.html"]').waitFor();
+  await page.locator('.quick-tool[href="음악 뚝딱.html"]').waitFor();
+  await page.locator('.tool-row').filter({hasText:'영상 뚝딱'}).first().waitFor();
+  await page.locator('.tool-row').filter({hasText:'음악 뚝딱'}).first().waitFor();
   await page.locator('#topCreate').click();
   await page.locator('#createDialog a[href="영상 뚝딱.html"]').waitFor();
   await page.locator('#createDialog a[href="음악 뚝딱.html"]').waitFor();
