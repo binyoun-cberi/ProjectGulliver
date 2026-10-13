@@ -198,6 +198,8 @@ async function leave(save=true){
 }
 async function moveAway(){
  if(navigationBusy)return false;
+ if(advancedOfficial&&['video','music'].includes(activeKind)&&
+    !confirm('공식 ArtCraft 고급 편집기의 작업은 뚝딱 제작실에 자동 저장되지 않아요. 공식 편집기에서 프로젝트를 별도로 저장하고 이동하시겠어요?'))return false;
  navigationBusy=true;
  try{await leave();return true}
  catch(e){saveError(e);return false}
@@ -475,6 +477,7 @@ window.addEventListener('pagehide',()=>{
 // Browsers cannot guarantee asynchronous database writes during tab close.
 // Warn instead of claiming success if a snapshot has not been committed.
 window.addEventListener('beforeunload',e=>{
+ if(advancedOfficial){e.preventDefault();e.returnValue='';return;}
  if(!activeKind||!C.managed(activeKind)||!live)return;
  try{
   const a=frame.contentWindow?.GulliverStudioAdapter;
