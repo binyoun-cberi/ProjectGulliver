@@ -38,7 +38,7 @@ test('Chrome: 프로젝트 폴더·검색·통합 백업·기기 변경 복원 �
   await page.locator('[data-inspector="projects"]').click();
   page.once('dialog',d=>d.accept('세계 여러 나라'));
   await page.locator('#addLibraryFolder').click();
-  await page.locator('#libraryFolder option').filter({hasText:'세계 여러 나라'}).waitFor();
+  await page.waitForFunction(()=>[...document.querySelectorAll('#libraryFolder option')].some(o=>o.textContent==='세계 여러 나라'));
   await page.locator('#projectList .project-item').filter({hasText:'가을 활동 도안'}).getByRole('button',{name:'폴더 이동'}).click();
   await page.locator('#folderMoveSelect').selectOption({label:'세계 여러 나라'});
   await page.locator('#folderForm button[type="submit"]').click();
