@@ -30,9 +30,27 @@ label input,label select{width:100%;min-width:0;border:1px solid #cdd6e3;border-
 #msg{color:#28724d;font-size:12px;min-height:18px}
 .note{background:#f6f8fc;padding:11px;border-radius:9px;font-size:11px;line-height:1.65;color:#586a82}
 @media(max-width:800px){.workspace{display:flex;flex-direction:column;gap:8px;margin:0;padding:9px}.panel,.editor{padding:12px}.stage{width:100%}}
-</style></head><body>
+
+/* ArtCraft official editor: preserve vendor HTML, WASM and branding unchanged. */
+.media-mode-switch{background:#fff;border-bottom:1px solid #e1e5ee;padding:10px 20px}
+.media-mode-tabs{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.media-mode-tabs button{border:1px solid #d7deeb;background:#f8f9fd;color:#52617a;border-radius:10px;min-height:40px;padding:10px 16px;font-weight:800;font-size:13px}
+.media-mode-tabs button[aria-selected=true]{background:#eae5ff;color:#563db0;border-color:#ad99e5}
+.media-mode-tabs button:disabled{opacity:.6;cursor:wait}
+.media-mode-description{margin:8px 0 2px;font-size:12px;max-width:1200px}
+#officialStatus{font-size:11px;min-height:1.3em;margin:5px 0 0;color:#27724f}
+#officialStatus[data-state=error]{color:#a1444a}
+.official-edit-panel{padding:10px;max-width:100%}
+.official-edit-panel[hidden],#simpleEditor[hidden]{display:none!important}
+.official-edit-note{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#f4f1ff;border:1px solid #e0d8fa;border-radius:10px;padding:12px 14px;font-size:12px;color:#514570}
+.official-edit-note strong{color:#34265a}.official-edit-note a{margin-left:auto;color:#5140a7;font-weight:850;text-decoration:underline}
+#officialEditorFrame{width:100%;height:calc(100dvh - 225px);min-height:700px;border:1px solid #dbe0eb;border-radius:13px;display:block;background:#14151d}
+.media-disclaimer{font-size:11px;color:#6c7890;padding:7px 12px;line-height:1.65}
+@media(max-width:650px){.media-mode-switch{padding:9px}.media-mode-tabs button{font-size:11px;padding:8px 10px}.official-edit-panel{padding:5px}#officialEditorFrame{height:70dvh;min-height:540px}.official-edit-note a{margin-left:0}}
+</style></head><body data-official-kind="video">
 <header class="top"><div><h1>영상 뚝딱</h1><p style="margin:5px 0 0">사진·짧은 영상 클립을 이어 붙여 우리 반 기록 영상을 만들어요.</p></div><div class="actions"><button id="previewPlay">▶ 미리보기</button><button id="stopPreview">■ 멈춤</button><button id="exportVideo" class="primary">영상 내보내기</button></div></header>
-<main class="workspace">
+<section class="media-mode-switch" aria-label="제작 모드 선택"><div class="media-mode-tabs" role="tablist"><button id="simpleMode" type="button" role="tab" aria-selected="true">간편 편집</button><button id="officialMode" type="button" role="tab" aria-selected="false" disabled>고급 편집 · FilmCraft</button></div><p id="officialDescription" class="media-mode-description"></p><p id="officialStatus" role="status" aria-live="polite"></p></section>
+<div id="simpleEditor"><main class="workspace">
 <aside class="panel"><h2>영상 기본 설정</h2>
 <label for="titleInput">작업 이름<input id="titleInput" maxlength="90"></label>
 <label for="captionInput">화면 아래 제목<input id="captionInput" maxlength="90"></label>
@@ -49,5 +67,14 @@ label input,label select{width:100%;min-width:0;border:1px solid #cdd6e3;border-
 <h3>장면 순서 · 재생 구간 <span id="durationTotal"></span></h3>
 <div id="clipList" class="timeline"></div>
 <p id="msg" role="status" aria-live="polite"></p>
-</section></main>
-<script src="studio-media-core.js"></script><script src="studio-storage.js"></script><script src="video-ttak.js"></script></body></html>
+</section></main></div>
+<section id="officialEditorPanel" class="official-edit-panel" hidden aria-label="ArtCraft 공식 고급 편집기">
+ <div class="official-edit-note">
+  <strong id="officialVersion">ArtCraft 공식 FilmCraft</strong>
+  <span id="officialHelp">고급 편집 모드는 프로그램 자체 파일 저장 기능을 이용해 주세요.</span>
+  <a id="officialExternal" href="assets/artcraft/filmcraft/index.html" target="_blank" rel="noopener noreferrer">새 창으로 편집기 열기 ↗</a>
+ </div>
+ <iframe id="officialEditorFrame" title="FilmCraft 공식 ArtCraft 고급 편집기" allow="fullscreen; autoplay; microphone; clipboard-read; clipboard-write"></iframe>
+ <p class="media-disclaimer">이 화면의 FilmCraft는 ArtCraft 팀이 배포한 공식 웹 프로그램입니다. 기존 간편 제작기와 작업 파일이 자동으로 합쳐지지는 않습니다. 파일은 공식 편집기에서 별도로 저장하세요.</p>
+</section>
+<script src="studio-media-core.js"></script><script src="studio-storage.js"></script><script src="video-ttak.js"></script><script src="studio-official-media.js"></script></body></html>

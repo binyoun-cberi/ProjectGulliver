@@ -3,6 +3,7 @@
 const C=window.GulliverStudioCore,S=window.GulliverStudioStorage,T=window.GulliverStudioTransfer,$=id=>document.getElementById(id);
 if(!C||!S||!T)throw Error('제작실 파일을 불러오지 못했어요.');
 const frame=$('editorFrame');
+let advancedOfficial=false;
 let activeKind='',activeProject=null,latestProjects=[],latestAssets=[],live=false,lastSnapshot='',busy=false,token=0,pulse=null,pendingSave=Promise.resolve(),previews=[],saveInFlight=0,navigationBusy=false,saveFailure=false,pendingTransfer=null,transferBusy=false,pendingPdf=null;
 function node(tag,className,text){const e=document.createElement(tag);if(className)e.className=className;if(text!==undefined)e.textContent=String(text);return e;}
 function uuid(){return window.crypto?.randomUUID?.()||'studio-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);}
@@ -55,6 +56,20 @@ function setupMenu(){
  });
  frame.addEventListener('load',onFrameLoad);
 }
+function updateOfficialMode(mode){
+ advancedOfficial=!!mode;
+ updateNav();
+ if(advancedOfficial){
+  $('frameHelp').textContent='공식 ArtCraft 고급 편집기입니다. 고급 편집기의 작업은 아래 자체 기능으로 따로 저장해야 하며, 뚝딱 제작실의 자동 저장·전체 백업에는 포함되지 않아요.';
+  status('고급 모드의 파일 저장은 공식 편집기 안에서 진행해 주세요.');
+ }
+}
+window.addEventListener('message',event=>{
+ if(event.origin!==location.origin||event.source!==frame.contentWindow)return;
+ const data=event.data;
+ if(!data||data.type!=='gulliver:official-media'||data.kind!==activeKind||!['video','music'].includes(activeKind))return;
+ updateOfficialMode(data.advanced);
+});
 function updateNav(){
  document.querySelectorAll('#toolNav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.kind===activeKind)));
  $('navHome').setAttribute('aria-current',String(!activeKind));
@@ -63,7 +78,7 @@ function updateNav(){
  $('workspaceTitle').textContent=tool?tool.label:'뚝딱 제작실';
  $('workspaceSubtitle').textContent=tool?tool.export:'필요한 자료를 골라 만들고 다시 꺼내 보세요.';
  $('studioHome').hidden=!!tool;$('editorArea').hidden=!tool;
- $('saveStatus').hidden=!tool||!tool.managed;
+ $('saveStatus').hidden=!tool||!tool.managed||advancedOfficial;
  const targets=T.destinations(activeKind),canShare=targets.length>0;
  $('transferBar').hidden=!canShare;
  $('docPdfGuide').hidden=activeKind!=='document';
@@ -78,9 +93,16 @@ function updateNav(){
  $('renameProject').hidden=!tool||!tool.managed;
  $('manualSave').hidden=!tool||!tool.managed;
  $('exportProject').hidden=!tool||!tool.managed;
+ if(tool&&['video','music'].includes(activeKind)&&advancedOfficial){
+  $('newProject').hidden=true;
+  $('renameProject').hidden=true;
+  $('manualSave').hidden=true;
+  $('exportProject').hidden=true;
+ }
+
  $('openOriginal').hidden=!tool;
  if(tool){$('openOriginal').href=tool.href;$('editorFrame').title=tool.label+' 편집기';}
- $('frameHelp').textContent=tool?(tool.managed?'왼쪽 템플릿과 오른쪽 속성을 이용해 편집하세요. 변경 내용은 기기에 자동 저장돼요.':'그림·PDF의 원본은 자동 보관되지 않아요. 각 도구 안에서 직접 저장해 주세요.'):'';
+ $('frameHelp').textContent=advancedOfficial?'공식 ArtCraft 고급 편집기의 프로젝트는 별도로 저장해야 해요. 통합 작업 보관함과 자동 동기화되지 않아요.':tool?(tool.managed?'왼쪽 템플릿과 오른쪽 속성을 이용해 편집하세요. 변경 내용은 기기에 자동 저장돼요.':'그림·PDF의 원본은 자동 보관되지 않아요. 각 도구 안에서 직접 저장해 주세요.'):'';
  window.GulliverStudioLayout?.toolChanged(activeKind);
 }
 async function refreshProjects(){
@@ -170,7 +192,7 @@ async function leave(save=true){
  if(C.managed(activeKind)&&save&&live)await sync(true);
  await pendingSave;
  clearPulse();token++;
- activeKind='';activeProject=null;lastSnapshot='';saveFailure=false;
+ advancedOfficial=false;activeKind='';activeProject=null;lastSnapshot='';saveFailure=false;
  frame.removeAttribute('src');updateNav();renderProjects();
  return true;
 }
@@ -189,6 +211,7 @@ async function start(kind,existing=null){
  if(!C.TOOLS[kind])return;
  if(activeKind&& !C.managed(activeKind) && !confirm('그림·PDF 작업은 자동 저장되지 않아요. 작업 결과를 저장하고 이동하시겠어요?'))return;
  if(!(await moveAway()))return false;
+ advancedOfficial=false;
  activeKind=kind;activeProject=existing?C.normalizeProject(existing):null;busy=true;
  saveLabel(C.managed(kind)?'편집기 시작 중…':'도구 내에서 직접 저장');
  updateNav();renderProjects();

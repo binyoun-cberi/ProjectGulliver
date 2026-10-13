@@ -23,6 +23,11 @@ test('Chrome: 영상·음악 편집·WAV/WebM 내보내기·자동 저장·전�
   await page.goto(url,{waitUntil:'domcontentloaded'});
   assert.equal(await page.locator('#toolNav button').count(),7);
   await page.locator('#toolNav button[data-kind="music"]').click();
+  // Official ArtCraft mode is selected automatically when vendored bundles exist.
+  // This test intentionally exercises the original quick editor's WAV/WebM workflow.
+  await page.frameLocator('#editorFrame').locator('#officialStatus')
+   .filter({hasText:/편집기가 설치되어|고급 편집 설치 확인 중/}).waitFor();
+  await page.frameLocator('#editorFrame').locator('#simpleMode').click();
   const iframe=page.frameLocator('#editorFrame');
   await iframe.locator('#titleInput').waitFor();
   await iframe.locator('[data-template="dance"]').click();
@@ -44,6 +49,11 @@ test('Chrome: 영상·음악 편집·WAV/WebM 내보내기·자동 저장·전�
   await page.waitForFunction(async()=> (await GulliverStudioStorage.projects()).some(p=>p.kind==='music'&&p.title==='신나는 우리 반 음악'));
 
   await page.locator('#toolNav button[data-kind="video"]').click();
+  // Official ArtCraft mode is selected automatically when vendored bundles exist.
+  // This test intentionally exercises the original quick editor's WAV/WebM workflow.
+  await page.frameLocator('#editorFrame').locator('#officialStatus')
+   .filter({hasText:/편집기가 설치되어|고급 편집 설치 확인 중/}).waitFor();
+  await page.frameLocator('#editorFrame').locator('#simpleMode').click();
   await iframe.locator('#titleInput').waitFor();
   await iframe.locator('#titleInput').fill('우리 반 가을 영상');
   await iframe.locator('#titleInput').press('Tab');
