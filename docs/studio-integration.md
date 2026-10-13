@@ -193,3 +193,31 @@
 - Node 회귀: 7개 진입점, 영상 스키마, 음악 음표 제한, 실제 WAV RIFF 출력, 미디어 저장/복원 코드 연결.
 - Chrome E2E: 음악 생성·WAV 다운로드, 영상 이미지 클립·WebM 출력, 자동 저장, 통합 백업 파일의 미디어 포함, 새 브라우저 프로필에서 ID 재매핑과 재생 자료 복원.
 - 남은 후속 단계: 음악을 영상 배경음으로 삽입, 원본 동영상 오디오 합치기, MP4 출력 확장, iPhone Safari/태블릿 실기기 검수.
+
+## ArtCraft 공식 영상·음악 편집기 통합 (2026-10-13)
+
+### 사실 확인 및 원본 프로그램
+
+- **FilmCraft 0.7.2**: ArtCraft 팀의 오픈소스 비선형 영상 편집 프로그램. 공식 GitHub `storytold/filmcraft`, 정적 WebAssembly 릴리스 `filmcraft-web-0.7.2.zip`, SHA256 `48d4f48728fa6b5c028612a4b7f59a5832ff38d430c6a7bd417a2c77d75ae4f9`.
+- **SoundCraft 0.6.1**: ArtCraft 팀의 오픈소스 디지털 오디오 워크스테이션. 공식 GitHub `storytold/soundcraft`, 정적 WebAssembly 릴리스 `soundcraft-web-0.6.1.zip`, SHA256 `de78ec829b8c876bef748a792ba97a82aa37abdb0cd687156a7753220c6a1bef`.
+- 두 공식 프로그램 모두 MIT 또는 Apache-2.0 중 선택하는 이중 라이선스. 배포 파일은 **수정하지 않고** `assets/artcraft/filmcraft/`, `assets/artcraft/soundcraft/`에 설치합니다.
+- ArtCraft 상표와 로고는 일반 오픈소스 라이선스가 **아닙니다**. 배포 프로그램 내부에서 원래 그대로만 사용하며, 뚝딱 제작실의 명칭·브랜드·아이콘으로 사용하지 않습니다. 공식 프로젝트의 파일/Notice/Attribution 라이선스를 각 `licenses/`에 보관하고 웹 앱 내부에 담긴 원래 마크는 변경하지 않습니다.
+
+### 실제 사용 방식
+
+- `영상 뚝딱.html`: 기존 간편 영상(최대 45초)과 원본 FilmCraft **고급 영상 편집** 탭.
+- `음악 뚝딱.html`: 기존 간편 음악(16박자)과 원본 SoundCraft **고급 오디오·MIDI 편집** 탭.
+- GitHub Actions `vendor-artcraft-media.yml`로 SHA256 핀 검증 후 공식 릴리스 전체를 리포지토리 main에 커밋. 고급 탭은 `assets/artcraft/.../index.html`을 같은 사이트의 iframe으로 실행합니다.
+- 설치 파일이 확인되면 고급 모드를 기본으로 열 수 있습니다. 설치 전이라면 기존 간편 제작기는 계속 작동합니다. 정적 GitHub Pages에서 모든 기능의 호환성을 보장하지는 않습니다.
+- FilmCraft 고급 편집기는 기존 간편 제작기의 **인위적인 45초 상한을 받지 않습니다**. 다만 영상 길이와 렌더링 가능 범위는 브라우저 메모리, WebGPU/WebGL, 파일 코덱과 기기의 처리 능력에 의존합니다. 수십 분 영상의 안정적인 출력은 실기기 검수 필요.
+- SoundCraft 고급 편집기는 다중 트랙 녹음/믹싱 기능을 사용합니다. 마이크 등 권한은 사용자가 직접 허용해야 합니다. 일부 브라우저는 브라우저 보안 정책/격리 헤더 때문에 고급 WebAssembly 기능이 제한될 수 있습니다.
+- 두 공식 앱은 **기존 `GulliverStudioAdapter` JSON과 서로 다른 프로젝트 형식**을 사용합니다. 즉, 고급 편집기의 프로젝트는 기존 뚝딱 제작실 '내 작업' 자동 저장 또는 전체 백업에 **포함되지 않습니다**. 공식 프로그램 안에서 직접 프로젝트를 저장하고 별도 백업해야 합니다. 이 제한을 UI와 부모 통합 제작실에 분명히 표시합니다.
+- 고급 프로그램의 화면을 사용자 맞춤으로 패치하거나 편집 이력을 가짜로 동기화하지 않습니다. 간편 제작기의 WAV/WebM 출력과 과거 프로젝트는 그대로 유지됩니다.
+
+### 배포 및 품질 검증
+
+- `scripts/install-artcraft-media-web.sh`: 공식 GitHub 릴리스 다운로드, 공개 SHA256 일치 검증, ZIP 경로 안전성 검사, WASM/JS/HTML 및 NOTICE/LICENSE/ATTRIBUTION 확인.
+- `.github/workflows/vendor-artcraft-media.yml`: 원본 릴리스와 라이선스를 SHA256 핀으로 다운로드하고 미디어 바이너리만 `main`으로 별도 커밋.
+- `tests/studio-official-media.test.cjs`: 릴리스 핀, 브랜드 경계, 고급/간편 탭, 공식 프로젝트/간편 프로젝트 저장 구분 검증.
+- `.github/workflows/studio-checks.yml`: PR 시 기존 60개 기능 테스트와 실제 Chrome 간편 편집 회귀, 별도 공식 ZIP 다운로드/검증 단계.
+- 한계: GitHub Pages는 ZIP 안의 `_headers`/Apache `.htaccess` 파일을 웹서버 헤더 설정으로 적용하지 않습니다. cross-origin isolation 및 브라우저 제한 기능은 향후 Cloudflare 등에서 추가 점검할 수 있습니다.
