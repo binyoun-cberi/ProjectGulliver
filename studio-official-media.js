@@ -47,7 +47,8 @@ async function loadNative(id){
   const w=frame.contentWindow;
   if(isVideo){
    if(typeof w?.filmcraft?.openProject!=='function')throw Error('FilmCraft 프로젝트 열기 기능을 불러오지 못했어요.');
-   await w.filmcraft.openProject(new File([record.blob],record.name,{type:'application/json'}));
+   // FilmCraft's control API checks instanceof File in its own iframe realm.
+   await w.filmcraft.openProject(new w.File([record.blob],record.name,{type:'application/json'}));
    announce('“'+record.name+'” 프로젝트를 FilmCraft에서 열었어요. 원본 영상·사진이 누락되었다면 별도로 다시 연결해 주세요.','ready');
   }else{
    const canvas=frame.contentDocument?.getElementById('soundcraft_canvas');
