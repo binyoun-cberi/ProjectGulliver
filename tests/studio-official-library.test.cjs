@@ -11,7 +11,7 @@ test('2.3 accepts genuine file signatures and refuses misleading extensions or o
  await assert.rejects(O.validateFile(file(Buffer.from('{"ok":true}'),'fake.scraftz')),/형식/);
  await assert.rejects(O.validateFile(file(Buffer.from('{"ok":true}'),'wrong.txt')),/지원/);
  await assert.rejects(O.validateFile(file(Buffer.alloc(0),'empty.fcproj')),/95MB/);
- assert.throws(()=>O.safeName('../../secret.fcproj','video'),/\.fcproj/);
+ assert.ok(!O.safeName('../../secret.fcproj','video').includes('/'));
 });
 test('2.3 backup accepts older version-one manifests, limits archive count',()=>{
  const old={format:L.MAGIC,version:L.VERSION,projects:[],assets:[],folders:[],media:[],activities:{version:1,folders:[],activities:[]}};
