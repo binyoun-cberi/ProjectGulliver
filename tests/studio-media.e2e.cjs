@@ -72,6 +72,7 @@ test('Chrome: 영상·음악 편집·WAV/WebM 내보내기·자동 저장·전�
   const archive=JSON.parse(body.toString('utf8'));
   assert.equal(archive.media.length,1);
   assert.equal(archive.projects.filter(p=>p.kind==='video').length,1);
+  assert.equal(archive.projects.find(p=>p.kind==='video').title,'우리 반 가을 영상','영상 편집 제목이 백업에 유지되어야 함');
   assert.equal(archive.projects.filter(p=>p.kind==='music').length,1);
 
   const fresh=await browser.newContext(),restore=await fresh.newPage();restore.setDefaultTimeout(25000);
@@ -89,6 +90,10 @@ test('Chrome: 영상·음악 편집·WAV/WebM 내보내기·자동 저장·전�
    return {music:projects.some(p=>p.kind==='music'),mediaStored:media.some(m=>m.id===p.payload.clips[0].mediaId)};
   });
   assert.deepEqual(info,{music:true,mediaStored:true});
+  await restore.waitForFunction(()=>document.querySelector('#libraryCount')?.textContent?.includes('2개 작업'),{timeout:10000});
+  const titles=await restore.locator('#projectList .project-item strong').allTextContents();
+  const backupNames=await restore.evaluate(async()=> (await GulliverStudioStorage.projects()).map(x=>x.title));
+  assert.ok(titles.includes('우리 반 가을 영상'),'복원 후 화면의 프로젝트 제목: '+JSON.stringify(titles)+' / DB 제목: '+JSON.stringify(backupNames));
   await restore.locator('#projectList .project-item').filter({hasText:'우리 반 가을 영상'}).getByRole('button',{name:'열기'}).click();
   const restoredFrame=restore.frameLocator('#editorFrame');
   await restoredFrame.locator('#clipList .clip').first().waitFor();
