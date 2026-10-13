@@ -159,6 +159,24 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
 .transfer-actions button:disabled{opacity:.5}
 @media(max-width:620px){.transfer-actions{width:100%}.transfer-destination{flex:1}.transfer-actions .btn{font-size:10px}}
 
+
+/* 1.4 Shared local library: search, folders, archive & legacy activities */
+.library-controls{display:grid;gap:8px;padding:10px 0}
+.library-controls input,.library-controls select,.library-dialog input,.library-dialog select{width:100%;min-width:0;min-height:36px;padding:8px 9px;font-size:12px;font-family:inherit;border:1px solid #d7deea;border-radius:9px;background:#fff;color:var(--ink)}
+.library-filter-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.library-actions{display:flex;gap:6px;flex-wrap:wrap}
+.library-actions .tiny{flex:1;white-space:nowrap}
+.library-count{font-size:11px;color:var(--muted);line-height:1.5}
+.library-heading{font-size:12px;margin:14px 0 9px;color:#384866}
+.library-dialog{border:1px solid #e0e4ee;border-radius:16px;box-shadow:0 25px 70px #18254244;padding:23px;width:min(370px,calc(100vw - 30px));color:var(--ink)}
+.library-dialog::backdrop{background:#18253b72}
+.library-dialog form{display:grid;gap:12px}.library-dialog label{font-size:12px;display:grid;gap:6px}
+.library-dialog menu{display:flex;gap:8px;justify-content:flex-end;margin:0;padding:0}
+.library-dialog h2{margin:0;font-size:17px}
+.legacy-item{display:flex;justify-content:space-between;align-items:center;gap:7px;border:1px solid var(--line);border-radius:9px;padding:10px;margin-bottom:6px;background:#fafbff}
+.legacy-item a{font-size:12px;color:#6249bd;font-weight:750;overflow:hidden;text-overflow:ellipsis}
+.legacy-item small{font-size:10px;color:var(--muted);white-space:nowrap}
+
 </style>
 </head>
 <body>
@@ -233,8 +251,28 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
   </div>
   <section id="inspectorProjects" class="right-pane">
   <header><h2>내 작업</h2><button id="exportProject" type="button" class="tiny" hidden>원본 백업</button></header>
-  <p class="note">도안·발표·문서는 자동 저장돼요. 학생 개인정보가 들어간 파일은 공용 기기에서 주의해 주세요.</p>
+  <p class="note">도안·발표·문서는 자동 저장돼요. 아래에서 검색하거나 폴더별로 정리할 수 있어요.</p>
+  <div class="library-controls" aria-label="내 작업 검색 및 정렬">
+   <input id="librarySearch" type="search" placeholder="작업 이름 검색" aria-label="작업 이름 검색">
+   <div class="library-filter-row">
+    <select id="libraryFolder" aria-label="프로젝트 폴더 선택"><option value="all">전체 폴더</option><option value="unfiled">미분류</option></select>
+    <select id="libraryKind" aria-label="제작물 종류"><option value="all">모든 종류</option><option value="design">도안</option><option value="slides">발표</option><option value="document">문서</option></select>
+   </div>
+   <select id="librarySort" aria-label="정렬"><option value="recent">최근 수정순</option><option value="old">오래된 작업순</option><option value="name">이름순</option></select>
+   <div class="library-actions">
+    <button id="addLibraryFolder" class="tiny" type="button">+ 폴더</button>
+    <button id="deleteLibraryFolder" class="tiny" type="button">폴더 삭제</button>
+   </div>
+   <p id="libraryCount" class="library-count" role="status" aria-live="polite">작업을 불러오는 중이에요.</p>
+  </div>
   <div class="project-list" id="projectList"></div>
+  <h3 class="library-heading">기존 내 활동 <small style="font-weight:400">(타이머·퀴즈·자리표)</small></h3>
+  <div id="legacyActivityList"></div>
+  <div class="library-actions" style="margin-top:12px">
+   <button id="libraryBackup" type="button" class="btn primary">전체 백업 저장</button>
+   <label for="libraryRestore" class="btn" style="cursor:pointer;text-align:center">백업 복원<input id="libraryRestore" type="file" accept=".json,application/json" hidden></label>
+  </div>
+  <p class="note" style="margin:9px 0">통합 백업에는 제작 프로젝트·사진·폴더·기존 내 활동이 포함돼요. 개인정보가 담길 수 있으니 파일을 안전하게 보관하세요. 복원은 기존 자료를 지우지 않고 추가해요.</p>
   <label for="importProject" class="btn" style="display:block;text-align:center;cursor:pointer;margin-top:10px">이전 JSON 작업 불러오기<input id="importProject" type="file" accept=".json,application/json" hidden></label>
   </section>
   <section id="inspectorAssets" class="right-pane" hidden>
@@ -246,12 +284,22 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
   <p class="note">저장은 브라우저의 IndexedDB에만 이뤄져요. 기기나 브라우저를 바꾸면 자동으로 옮겨지지 않으니 필요한 파일은 별도로 내려받아 보관하세요.</p>
   </section>
  </aside>
+ <dialog class="library-dialog" id="folderDialog" aria-labelledby="folderDialogTitle">
+  <form method="dialog" id="folderForm">
+   <h2 id="folderDialogTitle">폴더 이동</h2>
+   <label for="folderMoveSelect">폴더 선택<select id="folderMoveSelect"><option value="">미분류</option></select></label>
+   <menu><button class="btn" type="button" id="folderCancel">취소</button><button class="btn primary" type="submit">이동</button></menu>
+  </form>
+ </dialog>
  <div class="drawer-shade" id="drawerShade" hidden></div>
 </div>
 <script src="studio-core.js"></script>
 <script src="studio-storage.js"></script>
 <script src="studio-transfer-core.js"></script>
 <script src="studio-app.js"></script>
+<script src="classroom-workspace.js"></script>
+<script src="studio-library-core.js"></script>
 <script src="studio-layout.js"></script>
+<script src="studio-library.js"></script>
 </body>
 </html>
