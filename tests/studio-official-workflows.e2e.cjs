@@ -141,10 +141,11 @@ test('SoundCraft: compiled WASM opens real egui, audio context resumes after ges
   const ready=await statusReady(page,frame);
   assert.ok(ready.soundReady,'SoundCraft loading overlay did not clear after Rust app startup');
   const uiPng=await frame.locator('#soundcraft_canvas').screenshot({timeout:30000});
-  const png64=uiPng.toString('base64');
-  for(let i=0;i<png64.length;i+=12000){
-   console.log('SOUNDCRAFT_QA_IMAGE_CHUNK_'+String(Math.floor(i/12000)).padStart(3,'0')+'='+png64.slice(i,i+12000));
-  }
+  fs.writeFileSync('/tmp/soundcraft-qa.png',uiPng);
+  const jpegResult=cp.spawnSync('ffmpeg',['-hide_banner','-loglevel','error','-y',
+    '-i','/tmp/soundcraft-qa.png','-vf','scale=700:-1','-q:v','12','/tmp/soundcraft-qa.jpg']);
+  assert.equal(jpegResult.status,0,'Screenshot compression failed');
+  console.log('SOUNDCRAFT_QA_JPEG='+fs.readFileSync('/tmp/soundcraft-qa.jpg').toString('base64'));
 
   assert.ok(ready.canvas.width>300&&ready.canvas.height>200,'SoundCraft canvas has no area');
   const bindings=await frame.locator('body').evaluate(()=>({bindings:!!window.wasmBindings,
