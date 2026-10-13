@@ -34,8 +34,9 @@ function validateMusic(raw){
  return{title:String(raw.title||'우리 반 음악').slice(0,90),bpm:Number.isFinite(bpm)?Math.max(60,Math.min(180,bpm)):110,
  loops:Number.isFinite(loops)?Math.max(1,Math.min(8,loops)):2,notes,melodyPitch:Number.isFinite(pitch)?Math.max(48,Math.min(84,pitch)):64};
 }
-function fileAllowed(file){return!!file&&[...VIDEO_MIME,...AUDIO_MIME].includes(file.type)&&file.size>0&&file.size<=VIDEO_MAX}
+function fileAllowed(file){return!!file&&VIDEO_MIME.includes(file.type)&&file.size>0&&file.size<=VIDEO_MAX}
+function mediaAllowed(file){return!!file&&[...VIDEO_MIME,...AUDIO_MIME].includes(file.type)&&file.size>0&&file.size<=VIDEO_MAX}
 function audioAllowed(file){return!!file&&AUDIO_MIME.includes(file.type)&&Number.isFinite(file.size)&&file.size>44&&file.size<=VIDEO_MAX}
 function durationOf(project){return validateVideo(project).clips.reduce((n,c)=>n+c.duration,0)}
-return{VIDEO_MAX,MEDIA_COUNT,VIDEO_CLIPS,VIDEO_SECONDS,BEATS,TRACKS,VIDEO_MIME,AUDIO_MIME,audioAllowed,makeVideo,makeMusic,validateVideo,validateMusic,fileAllowed,durationOf};
+return{VIDEO_MAX,MEDIA_COUNT,VIDEO_CLIPS,VIDEO_SECONDS,BEATS,TRACKS,VIDEO_MIME,AUDIO_MIME,audioAllowed,mediaAllowed,makeVideo,makeMusic,validateVideo,validateMusic,fileAllowed,durationOf};
 });
