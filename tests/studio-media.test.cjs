@@ -32,6 +32,14 @@ testFn('영상은 최대 5장면/45초, 등록 미디어 형식을 검사',()=>{
  assert.throws(()=>M.validateVideo({...v,clips:Array(6).fill(clip)}),/최대 5/);
  assert.throws(()=>M.validateVideo({...v,clips:[{...clip,mediaId:'../../../x'}]}),/올바르지/);
 });
+testFn('2.2 배경음악 참조와 WAV 미디어 검증',()=>{
+ const video=M.makeVideo();
+ video.audio={mediaId:'bgm-1',mime:'audio/wav',name:'배경',volume:.5,loop:true};
+ assert.equal(M.validateVideo(video).audio.mediaId,'bgm-1');
+ assert.equal(M.audioAllowed({type:'audio/wav',size:1000}),true);
+ assert.equal(M.audioAllowed({type:'image/png',size:1000}),false);
+ assert.throws(()=>M.validateVideo({...video,audio:{...video.audio,mediaId:'../secret'}}),/배경음악/);
+});
 testFn('통합 백업에는 영상 원본과 음악 프로젝트 복원을 위한 미디어 스토어가 있다',()=>{
  const store=fs.readFileSync('studio-storage.js','utf8');
  const library=fs.readFileSync('studio-library.js','utf8');
