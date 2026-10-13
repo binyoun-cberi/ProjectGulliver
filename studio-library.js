@@ -1,8 +1,8 @@
 (() => {
 'use strict';
 const C=window.GulliverStudioCore,S=window.GulliverStudioStorage,L=window.GulliverStudioLibraryCore,
- B=window.GulliverStudioBridge,W=window.ClassroomWorkspace,$=id=>document.getElementById(id);
-if(!C||!S||!L||!B||!W)throw Error('작업 보관함을 불러오지 못했어요.');
+ B=window.GulliverStudioBridge,W=window.ClassroomWorkspace,M=window.GulliverMediaCore,$=id=>document.getElementById(id);
+if(!C||!S||!L||!B||!W||!M)throw Error('작업 보관함을 불러오지 못했어요.');
 let folders=[],moving=null,working=false;
 const uid=()=>window.crypto?.randomUUID?.()||'lib_'+Date.now().toString(36)+Math.random().toString(36).slice(2);
 const el=(tag,cls,body)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(body!==undefined)n.textContent=String(body);return n};
@@ -124,25 +124,51 @@ async function uriToBlob(uri,mime){
  if(!C.recognizeAsset(blob))throw Error('사진 크기 또는 형식이 올바르지 않아요.');
  return blob;
 }
+async function mediaBlobToUri(item){
+ if(!M.fileAllowed(item.blob))throw Error('지원하지 않는 영상 소재가 있어요. '+(item.name||''));
+ const bytes=new Uint8Array(await item.blob.arrayBuffer());
+ return 'data:'+item.mime+';base64,'+bytesTo64(bytes);
+}
+async function uriToMedia(value){
+ if(!value||!M.VIDEO_MIME.includes(value.mime)||typeof value.data!=='string'||!value.data.startsWith('data:'+value.mime+';base64,'))
+  throw Error('영상 소재의 형식이 올바르지 않아요.');
+ const base64=value.data.slice(value.data.indexOf(',')+1);
+ if(base64.length>Math.ceil(M.VIDEO_MAX*4/3)+12||!/^[A-Za-z0-9+/]*={0,2}$/.test(base64))
+  throw Error('영상 소재가 너무 크거나 잘못됐어요.');
+ const decoded=atob(base64),bytes=new Uint8Array(decoded.length);
+ for(let i=0;i<decoded.length;i++)bytes[i]=decoded.charCodeAt(i);
+ const blob=new Blob([bytes],{type:value.mime});
+ if(!M.fileAllowed(blob))throw Error('영상 소재 크기가 올바르지 않아요.');
+ return blob;
+}
 async function saveArchive(){
  if(working)return;working=true;$('libraryBackup').disabled=true;
  try{
   const state=B.getState();
   if(C.managed(state.activeKind))await B.sync(true);
-  const projects=(await S.projects()).map(C.normalizeProject),assets=await S.assets(),storedFolders=await S.folders();
-  if(projects.length>L.MAX_PROJECTS||assets.length>L.MAX_ASSETS||storedFolders.length>L.MAX_FOLDERS)throw Error('백업 가능한 개수를 넘었어요. 폴더별로 정리한 뒤 다시 시도해 주세요.');
+  const projects=(await S.projects()).map(C.normalizeProject),assets=await S.assets(),storedFolders=await S.folders(),media=await S.media();
+  if(projects.length>L.MAX_PROJECTS||assets.length>L.MAX_ASSETS||storedFolders.length>L.MAX_FOLDERS||media.length>M.MEDIA_COUNT)throw Error('백업 가능한 개수를 넘었어요. 폴더별로 정리한 뒤 다시 시도해 주세요.');
   const images=[];
   for(const asset of assets){
    images.push({name:C.assetName(asset.name),mime:asset.mime,createdAt:asset.createdAt||Date.now(),data:await blobToUri(asset.blob)});
   }
+  // All local video source clips are included. Their binary data is never
+  // silently omitted from a user-facing complete backup.
+  if(media.reduce((n,item)=>n+(item.blob?.size||0),0)>86*1024*1024)
+   throw Error('영상 원본 용량이 커서 JSON 전체 백업 한도를 넘었어요. 영상 파일은 따로 보관해 주세요.');
+  const videoMedia=[];
+  for(const item of media){
+   videoMedia.push({id:item.id,name:String(item.name||'영상').slice(0,90),mime:item.mime,
+    createdAt:item.createdAt||Date.now(),data:await mediaBlobToUri(item)});
+  }
   // Read only. No destructive migration of legacy classroom activities.
   const activities=W.read();
-  const value={format:L.MAGIC,version:L.VERSION,createdAt:new Date().toISOString(),folders:storedFolders,projects,assets:images,activities};
+  const value={format:L.MAGIC,version:L.VERSION,createdAt:new Date().toISOString(),folders:storedFolders,projects,assets:images,media:videoMedia,activities};
   const json=JSON.stringify(value);
   if(new Blob([json]).size>L.MAX_BUNDLE_BYTES)throw Error('백업 파일이 120MB를 넘었어요. 프로젝트별 JSON도 별도로 내려받아 주세요.');
   const stamp=new Date().toISOString().slice(0,10);
   B.download(json,'뚝딱제작실-전체백업-'+stamp+'.json','application/json');
-  B.status('전체 백업을 내려받았어요. '+L.summary(value).projects+'개 프로젝트, '+L.summary(value).assets+'개 사진, 기존 내 활동 '+L.summary(value).activities+'개가 포함돼요.');
+  B.status('전체 백업을 내려받았어요. '+L.summary(value).projects+'개 프로젝트, '+L.summary(value).assets+'개 사진, 기존 내 활동 '+L.summary(value).activities+'개, 영상 원본 '+L.summary(value).media+'개가 포함돼요.');
  }catch(e){B.status('전체 백업 실패: '+(e.message||e),true)}
  finally{working=false;$('libraryBackup').disabled=false}
 }
@@ -163,12 +189,27 @@ async function restoreArchive(event){
    if(!id){id=uid();nameToId.set(name,id);newFolders.push({id,name,createdAt:Date.now()})}
    map.set(item.id,id);
   }
+  const mediaIdMap=new Map(),newMedia=[];
+  for(const source of value.media||[]){
+   if(typeof source.id!=='string'||!source.id||mediaIdMap.has(source.id))throw Error('영상 파일 식별자가 올바르지 않아요.');
+   const blob=await uriToMedia(source),id=uid();
+   mediaIdMap.set(source.id,id);
+   newMedia.push({id,name:String(source.name||'영상').slice(0,90),mime:source.mime,blob,createdAt:Date.now()});
+  }
   const newProjects=[];
   for(const entry of value.projects){
    const project=C.normalizeProject(entry);
    const payloadSize=new Blob([JSON.stringify(project.payload)]).size;
    if(payloadSize>C.MAX_PROJECT_BYTES)throw Error('프로젝트 하나가 26MB를 넘었어요.');
    if(project.folderId&&!map.has(project.folderId))throw Error('프로젝트의 폴더 연결이 손상됐어요.');
+   if(project.kind==='video'){
+    project.payload=M.validateVideo(project.payload);
+    for(const clip of project.payload.clips){
+     if(!mediaIdMap.has(clip.mediaId))throw Error('영상 프로젝트의 원본 파일이 백업에 빠져 있어요.');
+     clip.mediaId=mediaIdMap.get(clip.mediaId);
+    }
+   }
+   if(project.kind==='music')project.payload=M.validateMusic(project.payload);
    newProjects.push({...project,id:uid(),folderId:map.get(project.folderId)||'',updatedAt:Date.now()});
   }
   const newAssets=[];
@@ -179,7 +220,7 @@ async function restoreArchive(event){
   }
   // All IndexedDB assets, folders, and projects are written in one transaction.
   // On failure it rolls back. Original projects and assets are never overwritten.
-  await S.importBatch({projects:newProjects,assets:newAssets,folders:newFolders});
+  await S.importBatch({projects:newProjects,assets:newAssets,folders:newFolders,media:newMedia});
   await B.refreshProjects();await B.refreshAssets();await refreshFolders();
   let legacyMessage='';
   if(value.activities?.activities?.length){
@@ -191,7 +232,7 @@ async function restoreArchive(event){
    }
   }
   renderActivities();
-  B.status('통합 백업 복원 완료: 프로젝트 '+newProjects.length+'개, 사진 '+newAssets.length+'개를 추가했어요.'+legacyMessage);
+  B.status('통합 백업 복원 완료: 프로젝트 '+newProjects.length+'개, 사진 '+newAssets.length+'개, 영상 원본 '+newMedia.length+'개를 추가했어요.'+legacyMessage);
  }catch(e){B.status('백업 복원 실패: '+(e.message||e),true)}
  finally{working=false}
 }
