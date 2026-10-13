@@ -26,6 +26,12 @@ test('3.0 browser: editable page, drag, resize, text, undo/redo, PNG and persist
   await page.mouse.down();await page.mouse.move(geom.x+85,geom.y+50,{steps:6});await page.mouse.up();
   let moved=await frame.locator('#stage .item').filter({hasText:'안녕, 한빛반!'}).evaluate(n=>parseInt(n.style.left));
   assert.ok(moved>original,'Dragging must update the editable object position');
+  const widthBefore=await frame.locator('#stage .item.selected').evaluate(n=>parseInt(n.style.width));
+  const grip=await frame.locator('#stage .item.selected .grip').boundingBox();
+  await page.mouse.move(grip.x+grip.width/2,grip.y+grip.height/2);
+  await page.mouse.down();await page.mouse.move(grip.x+grip.width/2+32,grip.y+grip.height/2+19,{steps:6});await page.mouse.up();
+  const widthAfter=await frame.locator('#stage .item.selected').evaluate(n=>parseInt(n.style.width));
+  assert.ok(widthAfter>widthBefore,'Dragging the resize grip must increase width');
   await frame.locator('#duplicate').click();assert.equal(await frame.locator('#stage .item').count(),5);
   await frame.locator('#undo').click();assert.equal(await frame.locator('#stage .item').count(),4);
   await frame.locator('#redo').click();assert.equal(await frame.locator('#stage .item').count(),5);
@@ -36,6 +42,14 @@ test('3.0 browser: editable page, drag, resize, text, undo/redo, PNG and persist
   await frame.locator('#exportPng').click();
   const png=await pngDownload;assert.ok(png.suggestedFilename().endsWith('.png'));
   assert.deepEqual([...fs.readFileSync(await png.path()).subarray(0,8)],[137,80,78,71,13,10,26,10]);
+  // PNG/JPG photos remain independent editable elements and rasterize to PNG.
+  const photo=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/bdoAAAAASUVORK5CYII=','base64');
+  await frame.locator('#photoPicker').setInputFiles({name:'우리반.png',mimeType:'image/png',buffer:photo});
+  await frame.locator('#stage .item[data-type="image"]').waitFor();
+  const photoDownload=page.waitForEvent('download');
+  await frame.locator('#exportPng').click();
+  const withPhoto=await photoDownload;
+  assert.ok(fs.statSync(await withPhoto.path()).size>100);
   // Cross-frame common autosave writes both pages, undo changes and text.
   await page.waitForFunction(async()=>{
    const data=await GulliverStudioStorage.projects();
