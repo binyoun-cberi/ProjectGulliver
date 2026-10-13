@@ -21,7 +21,7 @@ test('Chrome: 영상·음악 편집·WAV/WebM 내보내기·자동 저장·전�
   const page=await profile.newPage();page.setDefaultTimeout(25000);
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(url,{waitUntil:'domcontentloaded'});
-  assert.equal(await page.locator('#toolNav button').count(),7);
+  assert.equal(await page.locator('#toolNav button').count(),8);
   await page.locator('#toolNav button[data-kind="music"]').click();
   // Official ArtCraft mode is selected automatically when vendored bundles exist.
   // This test intentionally exercises the original quick editor's WAV/WebM workflow.
