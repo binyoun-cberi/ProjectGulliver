@@ -71,7 +71,8 @@ function projectCard(p){
  const del=node('button','tiny','삭제');del.type='button';del.addEventListener('click',async()=>{
   if(!confirm('“'+p.title+'” 작업을 이 기기에서 삭제할까요?'))return;
   try{
-   if(activeProject?.id===p.id){await leave(false)}
+   if(activeProject?.id===p.id){await pendingSave.catch(()=>{});await leave(false)}
+   await pendingSave.catch(()=>{});
    await S.deleteProject(p.id);await refreshProjects();status('선택한 작업을 삭제했어요.');
   }catch(e){status(e.message,true)}
  });
