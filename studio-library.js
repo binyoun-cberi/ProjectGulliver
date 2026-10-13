@@ -242,10 +242,13 @@ async function saveArchive(){
 }
 async function restoreArchive(event){
  const file=event.target.files?.[0];event.target.value='';if(!file||working)return;
- if(file.size>L.MAX_BUNDLE_BYTES){B.status('통합 백업은 120MB 이하만 복원할 수 있어요.',true);return}
+ const isZip=/\.zip$/i.test(file.name);
+ if(file.size>(isZip?window.GulliverStudioZip.MAX_BYTES:L.MAX_BUNDLE_BYTES)){
+  B.status(isZip?'ZIP 전체 백업은 512MB 이하만 복원할 수 있어요.':'구형 JSON 통합 백업은 120MB 이하만 복원할 수 있어요.',true);return
+ }
  working=true;
  try{
-  const value=L.checkedManifest(JSON.parse(await file.text()));
+  const value=isZip?await window.GulliverStudioZipBackup.loadZip(file):L.checkedManifest(JSON.parse(await file.text()));
   const counts=L.summary(value);
   if(!confirm('간편 프로젝트 '+counts.projects+'개, 고급 프로젝트 '+counts.official+'개, 사진 '+counts.assets+'개, 기존 내 활동 '+counts.activities+'개를 추가할까요? 기존 자료는 삭제되지 않아요.'))return;
   const existingFolders=await S.folders(),nameToId=new Map(existingFolders.map(f=>[f.name,f.id]));
@@ -260,7 +263,8 @@ async function restoreArchive(event){
   const mediaIdMap=new Map(),newMedia=[];
   for(const source of value.media||[]){
    if(typeof source.id!=='string'||!source.id||mediaIdMap.has(source.id))throw Error('영상 파일 식별자가 올바르지 않아요.');
-   const blob=await uriToMedia(source),id=uid();
+   const blob=isZip?source.blob:await uriToMedia(source),id=uid();
+   if(!M.mediaAllowed(blob))throw Error('백업 영상·음원 파일이 올바르지 않아요.');
    mediaIdMap.set(source.id,id);
    newMedia.push({id,name:String(source.name||'영상').slice(0,90),mime:source.mime,blob,createdAt:Date.now()});
   }
@@ -287,12 +291,14 @@ async function restoreArchive(event){
   const newAssets=[];
   for(const a of value.assets){
    const mime=a?.mime;
-   const blob=await uriToBlob(a?.data,mime);
+   const blob=isZip?a.blob:await uriToBlob(a?.data,mime);
+   if(!C.recognizeAsset(blob))throw Error('백업 이미지 원본이 올바르지 않아요.');
    newAssets.push({id:uid(),name:C.assetName(a.name),mime,blob,createdAt:Date.now()});
   }
   const newOfficial=[];
   for(const entry of value.official||[]){
-   const source=await uriToNative(entry);
+   const source=isZip?{kind:entry.kind,name:entry.name,title:entry.title,blob:entry.blob,size:entry.size}:await uriToNative(entry);
+   await O.validateFile(new File([source.blob],source.name,{type:source.blob.type}),source.kind);
    if(entry.folderId&&!map.has(entry.folderId))throw Error('공식 프로젝트의 폴더 연결이 손상됐어요.');
    const now=Date.now();newOfficial.push({...source,id:uid(),folderId:map.get(entry.folderId)||'',createdAt:now,updatedAt:now});
   }
