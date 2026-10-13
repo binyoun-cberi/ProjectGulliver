@@ -80,6 +80,19 @@ test('Chrome with mobile touch viewport: 25MiB SoundCraft uses OPFS or safe fall
   assert.equal(before.byteLength,25*1024*1024+4);
   if(before.opfs){assert.ok(before.hasKey,'Large files should use OPFS on supported browsers');assert.equal(before.inline,false)}
   else assert.equal(before.inline,true,'Fallback must keep the real original Blob in IndexedDB');
+  if(before.opfs){
+   const rollback=await page.evaluate(async()=>{
+    const S=GulliverStudioStorage,dir=await (await navigator.storage.getDirectory()).getDirectoryHandle('gulliver-studio-native-v24');
+    const paths=async()=>{const all=[];for await(const k of dir.keys())all.push(k);return all.sort()};
+    const prior=await paths(),stored=await S.getOfficial('native-big');
+    let rejected=false;
+    try{await S.importBatch({official:[{...stored,blob:stored.blob}]})}catch(e){rejected=true}
+    const after=await paths(),current=await S.getOfficial('native-big');
+    return {rejected,sameFiles:JSON.stringify(prior)===JSON.stringify(after),sameBytes:current.blob.size===stored.blob.size};
+   });
+   assert.deepEqual(rollback,{rejected:true,sameFiles:true,sameBytes:true},
+    'Failed atomic restore must remove staged OPFS files without changing originals');
+  }
   await page.reload({waitUntil:'domcontentloaded'});
   assert.equal(await page.evaluate(async()=>(await GulliverStudioStorage.getOfficial('native-big')).blob.size),25*1024*1024+4);
   await page.locator('#storageRefresh').tap();
