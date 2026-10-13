@@ -41,7 +41,11 @@ test('2.2 Chrome: 발표 슬라이드 → 영상 4장면, 간편 음악 → 배�
   await frame.locator('[data-template="dance"]').click();
   await page.locator('#transferTarget').selectOption('video');
   await page.locator('#sendToTool').click();
+  await page.locator('#toolNav [data-kind="video"][aria-current="true"]').waitFor();
   await frame.locator('#simpleMode[aria-selected="true"]').waitFor();
+  // A previous video project exists from the slide transfer: require the new
+  // handoff to finish saving, not merely any transient project snapshot.
+  await page.locator('#message').filter({hasText:'배경음악을 영상 뚝딱에 전달했어요'}).waitFor();
   await page.waitForFunction(async()=>{
    return (await GulliverStudioStorage.projects()).some(p=>p.kind==='video'&&p.payload.audio?.mediaId);
   });
