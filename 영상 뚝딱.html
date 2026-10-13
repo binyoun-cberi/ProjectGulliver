@@ -61,9 +61,16 @@ label input,label select{width:100%;min-width:0;border:1px solid #cdd6e3;border-
 <label for="captionInput">화면 아래 제목<input id="captionInput" maxlength="90"></label>
 <label for="formatInput">화면 크기<select id="formatInput"><option value="wide">가로형 16:9</option><option value="square">정사각형 1:1</option></select></label>
 <label for="clipFiles" class="button" style="cursor:pointer;text-align:center;display:block">+ 사진·영상 추가<input id="clipFiles" type="file" accept="image/png,image/jpeg,video/mp4,video/webm" multiple hidden></label>
-<button id="cleanupMedia" type="button" style="width:100%;margin-bottom:12px">사용하지 않는 영상 원본 정리</button>
+<label for="audioFile" class="button" style="cursor:pointer;text-align:center;display:block">+ 배경음악 WAV 넣기<input id="audioFile" type="file" accept=".wav,audio/wav,audio/x-wav,audio/wave" hidden></label>
+<div class="soundtrack-settings">
+ <p><strong id="soundtrackName">배경음악 없음</strong></p>
+ <label for="audioVolume">배경음악 음량 <input id="audioVolume" type="range" min="0" max="1" step="0.05" value="0.7"></label>
+ <label for="audioLoop"><input id="audioLoop" type="checkbox" checked> 영상 길이까지 반복</label>
+ <button id="removeAudio" type="button" disabled>배경음악 빼기</button>
+</div>
+<button id="cleanupMedia" type="button" style="width:100%;margin-bottom:12px">사용하지 않는 영상·음원 정리</button>
 <p class="note">PNG·JPG·MP4·WebM, 파일당 최대 15MB. 최대 5개 장면, 총 길이 45초까지. 원본은 이 기기의 브라우저에만 보관돼요.</p>
-<p class="note"><strong>출력:</strong> Chrome 등 지원 브라우저에서는 WebM 영상으로 저장해요. 현재는 영상 원본의 소리와 배경음악을 출력에 합치지 않는 **무음 영상 제작** 기능이에요. 일부 iPhone Safari 환경에서는 영상 내보내기가 지원되지 않을 수 있어요.</p>
+<p class="note"><strong>출력:</strong> Chrome 등 지원 브라우저에서는 WebM 영상으로 저장해요. WAV 배경음악을 넣으면 영상과 함께 WebM에 저장해요. 원본 영상 클립의 소리는 아직 합치지 않아요. 일부 iPhone Safari 환경에서는 영상 내보내기가 지원되지 않을 수 있어요.</p>
 </aside>
 <section class="editor">
 <h2>영상 미리보기</h2>
@@ -87,4 +94,4 @@ label input,label select{width:100%;min-width:0;border:1px solid #cdd6e3;border-
  <iframe id="officialEditorFrame" title="FilmCraft 공식 ArtCraft 고급 편집기" allow="fullscreen; autoplay; microphone; clipboard-read; clipboard-write"></iframe>
  <p class="media-disclaimer">이 화면의 FilmCraft는 ArtCraft 팀이 배포한 공식 웹 프로그램입니다. 기존 간편 제작기와 작업 파일이 자동으로 합쳐지지는 않습니다. 파일은 공식 편집기에서 별도로 저장하세요.</p>
 </section>
-<script src="studio-media-core.js"></script><script src="studio-storage.js"></script><script src="video-ttak.js"></script><script src="studio-official-media.js?v=20261013-21"></script></body></html>
+<script src="studio-media-core.js"></script><script src="studio-storage.js"></script><script src="video-ttak.js?v=20261013-22"></script><script src="studio-official-media.js?v=20261013-21"></script></body></html>

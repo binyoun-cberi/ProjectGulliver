@@ -34,6 +34,10 @@ function rerender(){
  $('titleInput').value=model.title;$('captionInput').value=model.caption;$('formatInput').value=model.format;
  $('stage').classList.toggle('square',model.format==='square');
  $('previewCaption').textContent=model.caption;
+ $('soundtrackName').textContent=model.audio?model.audio.name:'배경음악 없음';
+ $('audioVolume').value=model.audio?model.audio.volume:0.7;
+ $('audioLoop').checked=model.audio?model.audio.loop:true;
+ $('removeAudio').disabled=!model.audio;
  const root=$('clipList');root.replaceChildren();
  $('durationTotal').textContent='('+duration().toFixed(1)+' / 45초)';
  model.clips.forEach((clip,i)=>{
@@ -71,6 +75,26 @@ async function durationFromVideo(blob){
   return Math.min(10,video.duration);
  }finally{video.removeAttribute('src');video.load();URL.revokeObjectURL(u)}
 }
+async function addAudio(file){
+ if(!C.audioAllowed(file))throw Error('15MB 이하 WAV 파일만 배경음악으로 사용할 수 있어요.');
+ if((await S.media()).length>=C.MEDIA_COUNT)throw Error('미디어 보관함이 가득 찼어요. 미사용 원본을 정리해 주세요.');
+ const A=window.AudioContext||window.webkitAudioContext;
+ if(!A)throw Error('이 브라우저에서는 WAV 음악 재생을 지원하지 않아요.');
+ const check=new A();
+ try{await check.decodeAudioData(await file.arrayBuffer())}
+ catch(e){throw Error('재생할 수 없는 WAV 파일이에요.')}
+ finally{await check.close()}
+ const id=uuid(),name=String(file.name||'배경음악.wav').slice(0,90);
+ await S.saveMedia({id,name,mime:'audio/wav',blob:new Blob([file],{type:'audio/wav'}),createdAt:Date.now()});
+ model.audio={mediaId:id,name,mime:'audio/wav',volume:0.7,loop:true};
+ rerender();status('배경음악을 연결했어요. WebM 저장 시 음악이 합쳐져요.');
+}
+async function attachStoredAudio(media){
+ const stored=media?.id&&await S.getMedia(media.id);
+ if(!stored||!C.audioAllowed(stored.blob))throw Error('전달한 배경음악을 저장소에서 찾지 못했어요.');
+ model.audio={mediaId:stored.id,name:String(stored.name||'배경음악').slice(0,90),mime:'audio/wav',volume:0.7,loop:true};
+ rerender();status('음악 뚝딱에서 만든 WAV를 배경음악으로 연결했어요.');
+}
 async function addClip(file){
  if(!C.fileAllowed(file))throw Error('15MB 이하 PNG·JPG·MP4·WebM 파일만 추가할 수 있어요.');
  if(model.clips.length>=C.VIDEO_CLIPS)throw Error('장면은 최대 5개까지예요.');
@@ -79,14 +103,18 @@ async function addClip(file){
  if(duration()+seconds>C.VIDEO_SECONDS)seconds=C.VIDEO_SECONDS-duration();
  if(seconds<.5)throw Error('영상 총 길이는 45초를 넘을 수 없어요.');
  const id=uuid();
- await S.saveMedia({id,name:file.name.slice(0,90),mime:file.type,blob:file,createdAt:Date.now()});
- model.clips.push({mediaId:id,name:file.name.slice(0,75),mime:file.type,start:0,duration:seconds});
+ await S.saveMedia({id,name:String(file.name||'공유 이미지.png').slice(0,90),mime:file.type,blob:file,createdAt:Date.now()});
+ model.clips.push({mediaId:id,name:String(file.name||'공유 이미지.png').slice(0,75),mime:file.type,start:0,duration:seconds});
  current=model.clips.length-1;rerender();await showClip(current);status('장면을 기기 보관함에 추가했어요.');
 }
 $('cleanupMedia').addEventListener('click',async()=>{
  try{
   const projects=await S.projects(),used=new Set(model.clips.map(c=>c.mediaId));
-  for(const p of projects)if(p.kind==='video')for(const c of p.payload?.clips||[])used.add(c.mediaId);
+  if(model.audio)used.add(model.audio.mediaId);
+  for(const p of projects)if(p.kind==='video'){
+   for(const c of p.payload?.clips||[])used.add(c.mediaId);
+   if(p.payload?.audio?.mediaId)used.add(p.payload.audio.mediaId);
+  }
   const orphans=(await S.media()).filter(m=>!used.has(m.id));
   if(!orphans.length){status('지울 수 있는 미사용 영상 원본이 없어요.');return}
   if(!confirm('어느 작업에서도 사용하지 않는 원본 '+orphans.length+'개를 기기에서 지울까요?'))return;
@@ -94,6 +122,13 @@ $('cleanupMedia').addEventListener('click',async()=>{
   status('사용하지 않는 원본 '+orphans.length+'개를 정리했어요. 다른 작업에서 사용하는 파일은 보존했어요.');
  }catch(e){status('정리 중 오류: '+(e.message||e),true)}
 });
+$('audioFile').addEventListener('change',async e=>{
+ const file=e.target.files?.[0];e.target.value='';if(!file)return;
+ try{await addAudio(file)}catch(err){status(err.message,true)}
+});
+$('audioVolume').addEventListener('input',e=>{if(model.audio){model.audio.volume=Number(e.target.value);status('배경음악 음량을 변경했어요.')}});
+$('audioLoop').addEventListener('change',e=>{if(model.audio)model.audio.loop=e.target.checked});
+$('removeAudio').addEventListener('click',()=>{model.audio=null;rerender();status('영상에서 배경음악을 제외했어요.')});
 $('clipFiles').addEventListener('change',async e=>{
  const files=[...e.target.files||[]];e.target.value='';
  for(const f of files){try{await addClip(f)}catch(err){status(err.message,true);break}}
@@ -123,18 +158,37 @@ async function sequence(record=false){
  const size=model.format==='square'?[540,540]:[720,405],canvas=document.createElement('canvas');
  canvas.width=size[0];canvas.height=size[1];const ctx=canvas.getContext('2d');
  if(!ctx){playing=false;exporting=false;throw Error('캔버스를 사용할 수 없어요.')}
- const mime=typeof MediaRecorder!=='undefined'&&MediaRecorder.isTypeSupported('video/webm;codecs=vp8')?'video/webm;codecs=vp8':
-  typeof MediaRecorder!=='undefined'&&MediaRecorder.isTypeSupported('video/webm')?'video/webm':'';
+ const wantAudio=!!model.audio;
+ const formats=wantAudio?['video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/webm']:
+  ['video/webm;codecs=vp8','video/webm'];
+ const mime=typeof MediaRecorder==='undefined'?'':formats.find(t=>MediaRecorder.isTypeSupported(t))||'';
  if(record&&(!mime||!canvas.captureStream)){playing=false;exporting=false;throw Error('이 브라우저에서는 WebM 영상 저장을 지원하지 않아요. PC Chrome을 사용해 주세요.')}
  const stream=record?canvas.captureStream(20):null;
- let recorder=null,chunks=[],stopped=null;
+ let recorder=null,chunks=[],stopped=null,audioCtx=null,audioSource=null;
+ try{
+ if(wantAudio){
+  const stored=await S.getMedia(model.audio.mediaId);
+  if(!stored?.blob)throw Error('배경음악 원본이 없어요. WAV를 다시 넣어 주세요.');
+  const A=window.AudioContext||window.webkitAudioContext;
+  if(!A)throw Error('이 브라우저에서는 음원을 합성할 수 없어요.');
+  audioCtx=new A();
+  const buffer=await audioCtx.decodeAudioData(await stored.blob.arrayBuffer());
+  await audioCtx.resume();
+  audioSource=audioCtx.createBufferSource();audioSource.buffer=buffer;audioSource.loop=model.audio.loop;
+  const gain=audioCtx.createGain();gain.gain.value=model.audio.volume;
+  audioSource.connect(gain);
+  if(record){
+   const mixed=audioCtx.createMediaStreamDestination();gain.connect(mixed);
+   const track=mixed.stream.getAudioTracks()[0];stream.addTrack(track);
+  }else gain.connect(audioCtx.destination);
+ }
  if(record){
   recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:1800000});
   stopped=new Promise((ok,bad)=>{recorder.onstop=()=>ok(new Blob(chunks,{type:'video/webm'}));recorder.onerror=e=>bad(Error('영상 기록이 중단되었어요.'))});
   recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
   recorder.start(200);status('영상을 만드는 중이에요. 이 창을 닫지 마세요.');
  }
- try{
+ if(audioSource)audioSource.start();
   for(let j=0;j<model.clips.length&&!stopRequested;j++){
    const clip=model.clips[j],r=await loadRenderable(clip);
    try{
@@ -154,11 +208,14 @@ async function sequence(record=false){
    recorder.stop();const blob=await stopped;
    if(!blob.size)throw Error('빈 영상 파일이 만들어졌어요.');
    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=title()+'.webm';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
-   status('WebM 영상을 저장했어요. 원본 소리는 포함되지 않아요.');
+   status(wantAudio?'배경음악이 포함된 WebM 영상을 저장했어요.':'WebM 영상을 저장했어요. 원본 영상 소리는 포함되지 않아요.');
   }else status('영상 미리보기가 끝났어요.');
  }finally{
+  if(audioSource){try{audioSource.stop()}catch(e){}}
   if(record&&recorder?.state==='recording')recorder.stop();
-  stream?.getTracks().forEach(t=>t.stop());playing=false;exporting=false;
+  stream?.getTracks().forEach(t=>t.stop());
+  if(audioCtx)await audioCtx.close().catch(()=>{});
+  playing=false;exporting=false;
  }
 }
 $('previewPlay').onclick=()=>{if(!model.clips.length)return status('먼저 장면을 추가해 주세요.',true);sequence(false).catch(e=>status(e.message,true))};
@@ -166,6 +223,6 @@ $('exportVideo').onclick=()=>{if(!model.clips.length)return status('먼저 장�
 window.GulliverStudioAdapter={kind:'video',capture:()=>JSON.parse(JSON.stringify(C.validateVideo(model))),
  apply:raw=>{stop();model=C.validateVideo(raw);current=model.clips.length?0:-1;rerender();showClip(current).catch(e=>status(e.message,true))},
  rename:label=>{model.title=String(label).slice(0,90);rerender()},
- insertImage:async file=>addClip(file)};
+ insertImage:async file=>addClip(file),insertAudio:addAudio,attachStoredAudio};
 window.addEventListener('pagehide',()=>{stop();freeUrls()});
 rerender();})();
