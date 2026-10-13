@@ -146,8 +146,14 @@ function startMove(event){
  event.preventDefault();
  const before=clone(model),resizing=!!event.target.closest('.grip');
  selected=e.id;drag={id:e.id,before,resizing,x:event.clientX,y:event.clientY,original:{x:e.x,y:e.y,w:e.w,h:e.h},pointerId:event.pointerId};
- // Do not replace a node during pointerdown until its geometry was captured.
- render();
+ // Keep the SAME DOM node through both pointerdowns: replacing it prevents
+ // the browser from delivering a dblclick for inline text editing.
+ for(const item of stage.querySelectorAll('.item')){
+  const active=item.dataset.id===selected;item.classList.toggle('selected',active);
+  item.querySelector('.grip')?.remove();
+  if(active){const grip=document.createElement('span');grip.className='grip';grip.setAttribute('aria-label','크기 조절');item.append(grip)}
+ }
+ properties();
 }
 function moveDrag(event){
  if(!drag||event.pointerId!==drag.pointerId)return;
