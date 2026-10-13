@@ -6,6 +6,7 @@ root.GulliverStudioCore=lib;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
 const TOOLS=Object.freeze({
+ canvas:{name:'통합',label:'통합 캔버스',icon:'🧩',href:'통합 캔버스.html',export:'글씨·도형·사진·여러 페이지 직접 편집 · PNG·PDF',managed:true},
  picture:{name:'그림',label:'그림 뚝딱',icon:'🎨',href:'그림 뚝딱.html',export:'이미지 편집·내보내기',managed:false},
  pdf:{name:'PDF',label:'PDF 뚝딱',icon:'📄',href:'PDF 뚝딱.html',export:'PDF 합치기·나누기',managed:false},
  design:{name:'도안',label:'도안 뚝딱',icon:'✂️',href:'도안 뚝딱.html',export:'SVG · PNG · PDF',managed:true},
@@ -23,6 +24,7 @@ function safeTitle(value,fallback='이름 없는 작업'){
 }
 function detectLegacy(raw){
  if(!raw||typeof raw!=='object'||Array.isArray(raw))return null;
+ if(raw.format==='gulliver.unified.canvas.v1'&&Array.isArray(raw.pages)&&raw.pages.length<=40)return'canvas';
  if(Array.isArray(raw.objects)&&raw.objects.length<=200)return'design';
  if(Array.isArray(raw.slides)&&raw.slides.length<=40)return'slides';
  if(Array.isArray(raw.blocks)&&raw.blocks.length<=90)return'document';
