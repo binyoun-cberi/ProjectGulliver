@@ -216,7 +216,7 @@ async function home(){
 }
 async function start(kind,existing=null){
  if(!C.TOOLS[kind])return;
- if(activeKind&& !C.managed(activeKind) && !confirm('그림·PDF 작업은 자동 저장되지 않아요. 작업 결과를 저장하고 이동하시겠어요?'))return;
+ if(activeKind&& !C.managed(activeKind) && !(activeKind==='picture'&&pendingTransfer?.target===kind) && !confirm('그림·PDF 작업은 자동 저장되지 않아요. 작업 결과를 저장하고 이동하시겠어요?'))return;
  if(!(await moveAway()))return false;
  advancedOfficial=false;
  activeKind=kind;activeProject=existing?C.normalizeProject(existing):null;busy=true;
