@@ -32,6 +32,8 @@ test('2.2 Chrome: 발표 슬라이드 → 영상 4장면, 간편 음악 → 배�
    const video=(await GulliverStudioStorage.projects()).find(p=>p.kind==='video'&&p.payload.clips.length===4);
    return Boolean(video);
   });
+  await page.locator('#message').filter({hasText:'슬라이드 4장을 영상 뚝딱에 전달했어요'}).waitFor();
+  await frame.locator('#clipList .clip').nth(3).waitFor();
   assert.equal(await frame.locator('#clipList .clip').count(),4);
   assert.equal((await page.evaluate(async()=> (await GulliverStudioStorage.assets()).length))>=4,true);
 
