@@ -13,6 +13,7 @@ on:
       - fix/expose-video-music-home-20261013
       - feat/studio-v2-2-cross-media-20261013
       - feat/studio-v2-3-native-project-library-20261014
+      - feat/studio-v2-4-offline-binary-backup-20261014
     paths:
       - '뚝딱 제작실.html'
       - 'studio-*.js'
@@ -62,6 +63,9 @@ jobs:
           node --check studio-transfer-core.js
           node --check studio-library-core.js
           node --check studio-library.js
+          node --check studio-zip-core.js
+          node --check studio-zip-backup.js
+          node --check studio-storage-ui.js
           node --check studio-media-core.js
           node --check music-core.js
           node --check music-ttak.js
@@ -98,7 +102,7 @@ jobs:
           sudo apt-get install -y -qq ffmpeg
 
       - name: Exercise real Chromium local storage, file imports and exports
-        run: node --test tests/studio-browser.e2e.cjs tests/studio-transfer.e2e.cjs tests/studio-library.e2e.cjs tests/studio-media.e2e.cjs tests/studio-visible-home.e2e.cjs tests/studio-v22.e2e.cjs tests/studio-cross-media.e2e.cjs tests/studio-official-library.e2e.cjs
+        run: node --test tests/studio-browser.e2e.cjs tests/studio-transfer.e2e.cjs tests/studio-library.e2e.cjs tests/studio-media.e2e.cjs tests/studio-visible-home.e2e.cjs tests/studio-v22.e2e.cjs tests/studio-cross-media.e2e.cjs tests/studio-official-library.e2e.cjs tests/studio-v24.e2e.cjs
 
   official-media-release:
     runs-on: ubuntu-latest
