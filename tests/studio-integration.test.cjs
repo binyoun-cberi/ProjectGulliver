@@ -68,7 +68,7 @@ test('홈에는 제작실 한 개만 노출하고 예전 다섯 개 편집 URL�
  assert.equal((code.match(/href:"뚝딱 제작실.html"/g)||[]).length,1);
  for(const name of ['그림 뚝딱','PDF 뚝딱','도안 뚝딱','발표 뚝딱','문서 뚝딱']){
   assert.ok(fs.existsSync(name+'.html'));
-  assert.ok(!code.includes('href:"'+name+'.html"'),'별도 제작실 카드 중복: '+name);
+  assert.ok(code.includes('href:"'+name+'.html"'),'즐겨찾기 호환을 위해 기존 URL 유지: '+name);
  }
 });
 test('통합 화면의 JS 버튼과 폼 id를 선언',()=>{
