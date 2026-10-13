@@ -3,7 +3,7 @@
       {name:"PDF 뚝딱",subtitle:"PDF 합치기·추출·나누기·회전, 고급 편집",href:"PDF 뚝딱.html",category:"자료·기록",icon:"📄",accent:"#246c98",tags:["PDF","PDF 합치기","PDF 나누기","학습지","PDF 편집","페이지 추출"],situation:"학습지와 안내문 PDF를 합치거나 필요한 페이지만 골라 저장할 때"},
       {name:"도안 뚝딱",subtitle:"그림카드·이름표·도형 도안을 만들고 A4 인쇄",href:"도안 뚝딱.html",category:"자료·기록",icon:"✂️",accent:"#6b77ba",tags:["도안","낱말 그림카드","감정카드","이름표","교구","도형","벡터"],situation:"교실 활동지, 이름표, 순서표와 그림카드를 만들어 인쇄할 때"},
       {name:"발표 뚝딱",subtitle:"수업 슬라이드·퀴즈 제작, PPTX 저장과 발표",href:"발표 뚝딱.html",category:"자료·기록",icon:"📽️",accent:"#486ec2",tags:["발표","슬라이드","파워포인트","PPTX","퀴즈","수업자료","프레젠테이션"],situation:"한글 수업 발표 자료를 만들고 바로 보여 주거나 PPTX로 저장할 때"},
-      {name:"문서 뚝딱",subtitle:"가정통신문·계획서·관찰기록 작성, DOCX 저장",href:"문서 뚝딱.html",category:"자료·기록",icon:"📝",accent:"#286eab",tags:["문서","한글문서","워드","DOCX","가정통신문","학급 소식지","수업계획서","관찰기록"],situation:"가정통신문, 안내장, 관찰기록과 수업계획 문서를 작성하거나 저장할 때"},
+      {name:"문서 뚝딱",subtitle:"가정통신문·계획서 작성, 한글 HWPX·DOCX 저장",href:"문서 뚝딱.html",category:"자료·기록",icon:"📝",accent:"#286eab",tags:["문서","한글문서","HWPX","워드","DOCX","가정통신문","학급 소식지","수업계획서","관찰기록"],situation:"가정통신문, 안내장, 관찰기록과 수업계획 문서를 작성하고 한글 HWPX로 저장할 때"},
       {
         name: "수업 흐름 타이머",
         subtitle: "수업 흐름을 원형 시간표로 보여주는 활동 타이머",
