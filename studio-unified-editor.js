@@ -2,7 +2,8 @@
 'use strict';
 const C=window.GulliverUnifiedCore,$=id=>document.getElementById(id);
 if(!C)throw Error('공통 캔버스 엔진을 불러오지 못했어요.');
-let model=C.starter(),selected='',undoStack=[],redoStack=[],scale=1,drag=null,editing=false,timeline=null,videoController=null;
+const preset=new URLSearchParams(location.search).get('preset');
+let model=C.starter(['blank','presentation','worksheet'].includes(preset)?preset:'presentation'),selected='',undoStack=[],redoStack=[],scale=1,drag=null,editing=false,timeline=null,videoController=null;
 let mediaProvider=id=>window.GulliverStudioStorage.getMedia(id),pageChange=()=>{},playbackChange=()=>{};
 const stage=$('stage'),textEditor=$('editText'),stackLimit=80;
 const clone=obj=>JSON.parse(JSON.stringify(obj)),page=()=>model.pages[model.active],
