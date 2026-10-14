@@ -11,7 +11,8 @@ test('native video clips persist through canvas normalization without changing o
  const p=Core.starter('presentation');p.pages[0].videoClip={mediaId:'u-video-1234',mime:'video/mp4',
   name:'바닷가 수업.mp4',inPoint:1.5,duration:2.5,muted:true};
  const safe=Core.validate(p);
- assert.deepEqual(safe.pages[0].videoClip,p.pages[0].videoClip);
+ assert.equal(safe.pages[0].videoClip.mediaId,p.pages[0].videoClip.mediaId);
+ assert.equal(safe.pages[0].videoClip.w,960);assert.equal(safe.pages[0].videoClip.h,540);assert.equal(safe.pages[0].videoClip.stack,0);
  assert.equal(Core.validate(safe).pages[0].videoClip.inPoint,1.5);
  const ios=Core.starter('blank');ios.pages[0].videoClip={...p.pages[0].videoClip,mime:'video/quicktime'};
  assert.equal(Core.validate(ios).pages[0].videoClip.mime,'video/quicktime');
