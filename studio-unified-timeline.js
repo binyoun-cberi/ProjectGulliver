@@ -3,7 +3,7 @@
 const C=window.GulliverUnifiedCore,S=window.GulliverStudioStorage,M=window.GulliverMediaCore,$=id=>document.getElementById(id);
 if(!C||!S||!M)throw Error('타임라인 또는 로컬 오디오 저장소를 불러오지 못했어요.');
 function create({getModel,getSelected,edit,showPage,notice,stage}){
- let seconds=0,playing=false,raf=0,origin=0,blobUrl='',audio=null,loadedId='',disposed=false;
+ let seconds=0,playing=false,preview=false,raf=0,origin=0,blobUrl='',audio=null,loadedId='',disposed=false;
  const get=()=>getModel(),selectedElement=()=>get().pages[get().active]?.elements.find(e=>e.id===getSelected());
  const absoluteStart=index=>get().pages.slice(0,index).reduce((t,p)=>t+p.duration,0);
  const total=()=>C.totalDuration(get());
@@ -19,7 +19,15 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
   audio=new Audio(blobUrl);audio.preload='auto';audio.loop=bg.loop;audio.volume=bg.volume;
   return audio;
  }
+ function clearPreview(){
+  stage.style.opacity='1';stage.style.translate='0px 0px';
+  for(const node of stage.querySelectorAll('.item')){
+   const spec=get().pages[get().active].elements.find(e=>e.id===node.dataset.id);
+   node.style.opacity=String(spec?.opacity??1);node.style.translate='0px 0px';node.style.scale='1';
+  }
+ }
  function paint(t){
+  preview=true;
   const m=get(),position=C.locateTime(m,t);
   if(m.active!==position.index)showPage(position.index);
   const page=m.pages[position.index],transition=C.transitionFrame(page,position.local);
@@ -52,12 +60,16 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
   playing=false;cancelAnimationFrame(raf);audio?.pause();
   syncPlayback();
  }
- function halt(){pause();seconds=absoluteStart(get().active);syncPlayback()}
- function syncToActive(){seconds=absoluteStart(get().active)}
+ function halt(){pause();seconds=absoluteStart(get().active);preview=false;clearPreview();syncPlayback()}
+ function syncToActive(){seconds=absoluteStart(get().active);preview=false;clearPreview()}
  function stop(reset=true){
-  pause();if(reset)seconds=0;
+  pause();if(reset){seconds=0;preview=false}
   if(audio){audio.pause();try{audio.currentTime=0}catch(e){}}
-  paint(seconds);syncPlayback();
+  if(reset&&get().active!==0)showPage(0);
+  if(preview)paint(seconds);else clearPreview();
+  syncPlayback();
+  $('timelineProgress').value=String(seconds);
+  $('timelineClock').textContent=textTime(seconds)+' / '+textTime(total());
  }
  function seek(t){
   const wasPlaying=playing;
@@ -71,7 +83,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
  function play(){
   if(playing)return;
   if(seconds>=total())seconds=0;
-  playing=true;origin=performance.now()-seconds*1000;
+  playing=true;preview=true;origin=performance.now()-seconds*1000;
   syncPlayback();raf=requestAnimationFrame(tick);
   // Audio is user-gesture-initiated; visual playback works when autoplay is restricted.
   prepareAudio().then(entry=>{
@@ -106,7 +118,14 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
   $('audioVolume').value=sound?.volume??.7;$('audioLoop').checked=sound?.loop!==false;
   $('audioVolume').disabled=!sound;$('audioLoop').disabled=!sound;$('removeAudio').disabled=!sound;
   seconds=Math.min(seconds,total());
-  paint(seconds);syncPlayback();
+  if(preview)paint(seconds);
+  else{
+   clearPreview();$('timelineProgress').max=String(Math.max(1,total()));
+   $('timelineProgress').value=String(seconds);
+   $('timelineClock').textContent=textTime(seconds)+' / '+textTime(total());
+   for(const b of $('sceneTrack').querySelectorAll('button[data-scene]'))b.dataset.active=String(Number(b.dataset.scene)===get().active);
+  }
+  syncPlayback();
  }
  async function refreshSoundShelf(){
   const files=(await S.media()).filter(row=>row.mime==='audio/wav'&&M.audioAllowed(row.blob));
