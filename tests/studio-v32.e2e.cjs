@@ -60,6 +60,13 @@ test('3.2 Chrome exports actual changing video frames AND WAV track without a se
   assert.ok(lastFrame>=1.5,'Video stream ends too early: '+lastFrame);
   assert.ok(lastFrame<5,'Unexpected video stream length: '+lastFrame);
   assert.ok(fs.statSync(output).size>3000,'Video export is unexpectedly tiny');
+  // An audio stream can be present but completely silent. Check that real WAV
+  // samples reach the encoded Opus track (the fixture contains a 440Hz tone).
+  const sound=spawnSync('ffmpeg',['-hide_banner','-i',output,'-vn','-af','volumedetect','-f','null','-'],{encoding:'utf8'});
+  assert.equal(sound.status,0,'ffmpeg audio decode failed: '+sound.stderr);
+  const loudness=sound.stderr.match(/mean_volume:\\s*(-?[0-9.]+) dB/);
+  assert.ok(loudness,'No measurable Opus audio in exported WebM: '+sound.stderr.slice(-1200));
+  assert.ok(Number(loudness[1])>-65,'Opus soundtrack appears silent: '+loudness[1]);
   const md5=spawnSync('ffmpeg',['-v','error','-i',output,'-vf','fps=2,scale=64:36','-f','framemd5','-'],{encoding:'utf8'});
   assert.equal(md5.status,0,'ffmpeg frame inspect: '+md5.stderr);
   const signatures=md5.stdout.split('\n').filter(line=>line&&!line.startsWith('#')).map(line=>line.split(',').at(-1).trim());
