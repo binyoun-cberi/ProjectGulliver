@@ -54,3 +54,30 @@ body:not(.studio-managed):not(.studio-canvas) .intro .start-grid{grid-template-c
 @media(prefers-reduced-motion:reduce){
  .studio-picker .picker-grid button{transition:none}
 }
+
+/* Creation menus distinguish the consistent canvas editor from specialist file tools. */
+.studio-picker{padding:21px;width:min(480px,calc(100vw - 30px))}
+.studio-picker h2{margin-bottom:6px}
+.studio-picker p{margin-bottom:16px}
+.picker-quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.picker-quick button{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;min-height:111px;border:1px solid #d9c6f5;background:#f9f5ff;color:#50329b;border-radius:15px;padding:10px 5px}
+.picker-quick button:hover,.picker-quick button:focus-visible{background:#efe6fc;border-color:#a987e5}
+.picker-quick button>span{font-size:27px;line-height:1}
+.picker-quick button strong{font-size:13px;white-space:nowrap}
+.picker-quick button small{font-size:10px;color:#80748f;line-height:1.3;text-align:center}
+.picker-specialists{border-top:1px solid #ede9f3;margin-top:17px;padding-top:14px}
+.picker-specialists summary{display:flex;flex-wrap:wrap;align-items:center;gap:5px;color:#594777;font-size:13px;font-weight:800;padding:8px 0;cursor:pointer}
+.picker-specialists summary:before{content:'⌄';font-size:17px;margin-right:5px}
+.picker-specialists[open] summary:before{content:'⌃'}
+.picker-specialists summary small{width:100%;font-size:11px;font-weight:450;color:#8a8398}
+.picker-specialists .picker-grid{max-height:min(36dvh,310px);margin-top:12px;overflow:auto}
+.picker-specialists .picker-grid button{min-height:56px;padding:10px;border-radius:12px}
+.picker-specialists .picker-grid small{font-size:10px;color:#9690a2;font-weight:400}
+@media(max-width:620px){
+ .studio-picker{inset:auto 10px calc(10px + env(safe-area-inset-bottom));width:calc(100vw - 20px);max-height:67dvh;overflow:auto;padding:20px 16px 13px}
+ .studio-picker::backdrop{background:#20172d87}
+ .picker-quick button{min-height:97px}
+ .picker-quick button strong{font-size:12px}
+ .picker-specialists .picker-grid{max-height:30dvh}
+ .studio-picker .picker-close{position:sticky;bottom:-13px;margin:10px 0 0 auto;background:#efebf4;min-width:70px}
+}
