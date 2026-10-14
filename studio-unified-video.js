@@ -10,7 +10,7 @@ const FORMATS=['video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/
 function plan(project){
  const C=root.GulliverUnifiedCore||require('./studio-unified-core.js');
  const safe=C.validate(project),seconds=C.totalDuration(safe);
- if(safe.pages.some(page=>page.videoClip))throw Error('가져온 영상 클립의 합성 출력은 아직 지원하지 않아요. 원본 클립은 보관되며 미리보기·자르기는 가능합니다.');
+ if(safe.pages.some(page=>page.videoClip&&!page.videoClip.muted))throw Error('영상 원본 소리를 포함하는 출력은 아직 지원하지 않아요. 영상 클립을 음소거로 설정하거나 WAV 배경음악을 사용해 주세요.');
  if(seconds>MAX_SECONDS)throw Error('영상으로 저장할 수 있는 길이는 60초까지예요. 장면 시간을 줄여 주세요.');
  return{project:safe,duration:seconds,width:C.LAYOUTS[safe.layout].w,height:C.LAYOUTS[safe.layout].h};
 }
@@ -18,12 +18,19 @@ function mimeType(){
  if(typeof root.MediaRecorder==='undefined')return '';
  return FORMATS.find(value=>root.MediaRecorder.isTypeSupported(value))||'';
 }
-function drawFrame(ctx,model,seconds,images=new Map()){
+function drawFrame(ctx,model,seconds,images=new Map(),videos=new Map()){
  const C=root.GulliverUnifiedCore||require('./studio-unified-core.js');
  const {w,h}=C.LAYOUTS[model.layout],position=C.locateTime(model,seconds),p=model.pages[position.index],transition=C.transitionFrame(p,position.local);
  ctx.save();ctx.clearRect(0,0,w,h);ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h);
  ctx.globalAlpha=transition.opacity;ctx.translate(transition.slide,0);
  ctx.fillStyle=p.background;ctx.fillRect(0,0,w,h);
+ if(p.videoClip){
+  const movie=videos.get(p.videoClip.mediaId);
+  if(!movie||movie.readyState<2||!movie.videoWidth||!movie.videoHeight)throw Error('영상 클립의 프레임을 읽지 못했어요. 사용 가능한 코덱을 확인해 주세요.');
+  const ratio=Math.max(w/movie.videoWidth,h/movie.videoHeight);
+  const sw=w/ratio,sh=h/ratio;
+  ctx.drawImage(movie,(movie.videoWidth-sw)/2,(movie.videoHeight-sh)/2,sw,sh,0,0,w,h);
+ }
  for(const item of p.elements){
   const animation=C.animationFrame(item,position.local);
   ctx.save();
@@ -74,12 +81,52 @@ async function loadImages(project){
  }
  return images;
 }
+async function loadClips(project,getMedia,signal){
+ const sources=new Map(),urls=[];
+ const clips=project.pages.map(p=>p.videoClip).filter(Boolean);
+ if(!clips.length)return{videos:sources,release:()=>{}};
+ if(typeof getMedia!=='function')throw Error('영상 클립 원본 저장소를 찾지 못했어요.');
+ const waitFor=(video,success,description)=>new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>{cleanup();reject(Error(description+' 정보를 읽는 시간이 너무 길어요. 다른 형식으로 바꿔 보세요.'))},12000);
+  const ok=()=>{cleanup();resolve()},bad=()=>{cleanup();reject(Error(description+' 코덱을 이 브라우저에서 재생하지 못해요.'))};
+  const cleanup=()=>{clearTimeout(timer);video.removeEventListener(success,ok);video.removeEventListener('error',bad)};
+  video.addEventListener(success,ok,{once:true});video.addEventListener('error',bad,{once:true});
+ });
+ const release=()=>{for(const v of sources.values()){v.pause();v.removeAttribute('src');v.load()}for(const url of urls)URL.revokeObjectURL(url)};
+ try{
+  for(const clip of clips){
+   if(sources.has(clip.mediaId))continue;
+   if(signal?.aborted)throw Error('영상 저장이 취소됐어요.');
+   const media=await getMedia(clip.mediaId);
+   if(!media?.blob||media.mime!==clip.mime||media.blob.size<=0||media.blob.size>15*1024*1024)throw Error('가져온 영상 클립 원본이 이 기기에 없어요. 자료를 다시 불러와 주세요.');
+   const movie=root.document.createElement('video');
+   movie.muted=true;movie.playsInline=true;movie.preload='auto';
+   const url=URL.createObjectURL(media.blob);urls.push(url);
+   const metadata=waitFor(movie,'loadedmetadata','영상');
+   movie.src=url;movie.load();await metadata;
+   if(!Number.isFinite(movie.duration)||movie.duration<.5)throw Error('영상의 재생 시간을 읽을 수 없어요.');
+   sources.set(clip.mediaId,movie);
+  }
+  // Seek every unique source to the first scene that uses it before recording.
+  for(const clip of clips){
+   const movie=sources.get(clip.mediaId);
+   if(!movie||movie.dataset.prepared)continue;
+   if(clip.inPoint>=movie.duration-.05)throw Error('클립 시작 위치가 원본 영상보다 길어요. 시작점을 줄여 주세요.');
+   const loaded=movie.readyState>=2?Promise.resolve():waitFor(movie,'loadeddata','영상 첫 화면');
+   if(clip.inPoint>0.05){const seek=waitFor(movie,'seeked','영상 시작점');movie.currentTime=clip.inPoint;await seek}
+   await loaded;movie.dataset.prepared='1';
+  }
+  return{videos:sources,release};
+ }catch(e){release();throw e}
+}
+
 async function exportWebM(project,{getMedia,onProgress=()=>{},signal}={}){
  const {project:safe,duration,width,height}=plan(project),mime=mimeType();
  if(!mime)throw Error('이 브라우저에서 WebM 영상 출력을 지원하지 않아요. PC Chrome 또는 Edge에서 이용해 주세요.');
  if(typeof root.document==='undefined')throw Error('브라우저에서만 영상을 만들 수 있어요.');
  if(signal?.aborted)throw Error('영상 저장이 취소됐어요.');
  let audioContext=null,source=null,recorder=null,stream=null,timer=0,visibilityListener=null,stopPromise=null;
+ let videoAssets=null,videoPage=-1;
  try{
   // Start decoding from the user-clicked export action; never upload any file.
   let decoded=null;
@@ -96,12 +143,29 @@ async function exportWebM(project,{getMedia,onProgress=()=>{},signal}={}){
    if(!decoded.duration||!decoded.length)throw Error('내용이 없는 WAV 음악은 사용할 수 없어요.');
   }
   const images=await loadImages(safe);
+  videoAssets=await loadClips(safe,getMedia,signal);
   if(signal?.aborted)throw Error('영상 저장이 취소됐어요.');
   if(root.document.visibilityState==='hidden')throw Error('화면이 보이는 상태에서 영상으로 저장해 주세요.');
   const canvas=root.document.createElement('canvas');canvas.width=width;canvas.height=height;
   const ctx=canvas.getContext('2d',{alpha:false});
   if(!ctx||typeof canvas.captureStream!=='function')throw Error('이 브라우저에서 영상 캔버스를 녹화할 수 없어요.');
-  drawFrame(ctx,safe,0,images);
+  const C=root.GulliverUnifiedCore||require('./studio-unified-core.js');
+  function alignVideo(t,playing){
+   const pos=C.locateTime(safe,t),clip=safe.pages[pos.index].videoClip;
+   if(pos.index!==videoPage){
+    for(const v of videoAssets.videos.values())v.pause();
+    videoPage=pos.index;
+   }
+   if(!clip)return;
+   const movie=videoAssets.videos.get(clip.mediaId);
+   const aim=clip.inPoint+Math.min(Math.max(0,pos.local),Math.max(0,clip.duration-.06));
+   if(Math.abs(movie.currentTime-aim)>.32){
+    try{movie.currentTime=Math.min(movie.duration-.06,aim)}catch(e){}
+   }
+   if(playing&&movie.paused)movie.play().catch(()=>{});
+  }
+  alignVideo(0,false);
+  drawFrame(ctx,safe,0,images,videoAssets.videos);
   stream=canvas.captureStream(FPS);
   if(decoded){
    const output=audioContext.createMediaStreamDestination(),gain=audioContext.createGain();
@@ -134,12 +198,14 @@ async function exportWebM(project,{getMedia,onProgress=()=>{},signal}={}){
   if(!aborted){
    recorder.start(250);
    source?.start();
+   alignVideo(0,true);
    const start=root.performance.now();
    timer=root.setInterval(()=>{
     if(aborted)return;
     const t=Math.min(duration,(root.performance.now()-start)/1000);
     try{
-     drawFrame(ctx,safe,t,images);onProgress(t/duration,t,duration);
+     alignVideo(t,true);
+     drawFrame(ctx,safe,t,images,videoAssets.videos);onProgress(t/duration,t,duration);
      if(t>=duration&&recorder.state==='recording'){root.clearInterval(timer);recorder.stop()}
     }catch(e){renderFailure=e;aborted=true;root.clearInterval(timer);if(recorder.state==='recording')recorder.stop()}
    },1000/FPS);
@@ -156,7 +222,8 @@ async function exportWebM(project,{getMedia,onProgress=()=>{},signal}={}){
   try{source?.stop()}catch(e){}
   stream?.getTracks().forEach(t=>t.stop());
   await audioContext?.close().catch(()=>{});
+  videoAssets?.release();
  }
 }
-return{FPS,MAX_SECONDS,plan,mimeType,drawFrame,exportWebM};
+return{FPS,MAX_SECONDS,plan,mimeType,drawFrame,exportWebM,loadClips};
 });

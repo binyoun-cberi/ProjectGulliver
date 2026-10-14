@@ -19,9 +19,12 @@ test('native video clips persist through canvas normalization without changing o
  assert.throws(()=>Core.validate({...p,pages:[{...p.pages[0],videoClip:{...p.pages[0].videoClip,mediaId:'../bad'}}]}),/영상 클립/);
  assert.throws(()=>Core.validate({...p,pages:[{...p.pages[0],videoClip:{...p.pages[0].videoClip,mime:'application/javascript'}}]}),/영상 클립/);
 });
-test('WebM exporter fails clearly for embedded video until compositing is ready',()=>{
+test('Video compositor includes muted clips and guards unsupported original audio',()=>{
  const p=Core.starter('blank');p.pages[0].videoClip={mediaId:'u-video-1234',mime:'video/webm',name:'수업.webm',inPoint:0,duration:2,muted:true};
- assert.throws(()=>Video.plan(p),/영상 클립의 합성 출력은 아직 지원하지 않아요/);
+ assert.equal(Video.plan(p).duration,5);
+ p.pages[0].videoClip.muted=false;
+ assert.throws(()=>Video.plan(p),/원본 소리를 포함하는 출력은 아직 지원하지 않아요/);
+ p.pages[0].videoClip.muted=true;
  const html=read('통합 캔버스.html');
  assert.match(html,/studio-unified-clips\.js/);
  const widget=read('studio-unified-clips.js');

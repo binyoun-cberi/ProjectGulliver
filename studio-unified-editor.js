@@ -343,7 +343,7 @@ function bind(){
    const movie=await V.exportWebM(snapshot,{getMedia:mediaProvider,signal:controller.signal,
     onProgress:p=>{const value=Math.round(p*100);$('videoProgress').value=value;$('videoProgressText').textContent=value+'%'}});
    download(movie,(snapshot.title||'수업영상').replace(/[\\/:*?"<>|]/g,'_')+'.webm');
-   notice('장면 전환·등장 효과'+(snapshot.audio?'·배경음악이':'가')+' 포함된 WebM 영상을 저장했어요.');
+   notice('영상 클립·글씨·장면 효과'+(snapshot.audio?'·WAV 배경음악을':'을')+' 합친 WebM 영상을 저장했어요. 원본 영상 소리는 포함하지 않아요.');
   }catch(e){notice('영상 저장 실패: '+(e.message||e),true)}
   finally{videoController=null;button.disabled=false;cancel.hidden=true;panel.hidden=true}
  });
