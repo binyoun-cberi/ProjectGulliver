@@ -427,6 +427,7 @@ window.GulliverStudioAdapter={
  kind:'canvas',
  capture:()=>C.validate(model),
  getTracks:()=>model.tracks||[],
+ multitrackEnabled:()=>Array.isArray(model.tracks),
  adoptLegacyMedia:()=>edit(()=>ensureMultitrack()),
  getSceneTime:()=>timeline?.getTime?.()||0,
  addTrack:raw=>edit(()=>{
