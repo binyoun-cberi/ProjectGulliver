@@ -23,6 +23,7 @@ test('3.1 Chrome: edit timed scenes, fade objects, loop WAV, play across pages a
   await page.goto(studio,{waitUntil:'domcontentloaded'});
   await page.locator('#toolNav button[data-kind="canvas"]').click();
   const frame=page.frameLocator('#editorFrame');
+  await frame.locator('[data-design-tab="motion"]').click();
   await frame.locator('#sceneDuration').waitFor();
   await frame.locator('#sceneDuration').fill('1');
   await frame.locator('#sceneDuration').press('Tab');
