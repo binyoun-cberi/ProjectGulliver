@@ -42,7 +42,7 @@ test('3.1 rejects invalid music references, clamps settings, and preserves WAV m
  p.audio={mediaId:'wav_1',mime:'audio/wav',name:'한빛반 음악',volume:.45,loop:false};
  p.pages[0].elements=[C.element('text',{animation:'fade',delay:.5})];
  const restored=C.validate(p);
- assert.deepEqual(restored.audio,p.audio);
+ assert.deepEqual(restored.audio,{...p.audio,trimStart:0,trimDuration:60});
  assert.equal(restored.pages[0].elements[0].delay,.5);
  assert.throws(()=>C.validate({...p,audio:{...p.audio,mediaId:'../danger'}}),/배경음악/);
  assert.throws(()=>C.validate({...p,audio:{...p.audio,mime:'audio/mpeg'}}),/배경음악/);
