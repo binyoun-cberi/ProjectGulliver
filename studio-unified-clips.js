@@ -28,7 +28,7 @@ const preview=document.createElement('video');
 preview.className='canvas-video-preview';
 preview.setAttribute('playsinline','');
 preview.setAttribute('webkit-playsinline','');
-preview.preload='metadata';preview.muted=true;preview.loop=false;preview.controls=false;preview.hidden=true;
+preview.preload='auto';preview.muted=true;preview.loop=false;preview.controls=false;preview.hidden=true;
 preview.setAttribute('aria-label','장면 영상 미리보기');
 $('stage').prepend(preview);
 let currentId='',currentUrl='',lastSourceDuration=0,serial=0,ready=false;
@@ -83,6 +83,12 @@ async function mount(meta){
   if(request!==serial)return;
   lastSourceDuration=Number.isFinite(preview.duration)?preview.duration:0;
   ready=true;preview.currentTime=Math.min(Math.max(0,lastSourceDuration-.06),meta.inPoint);
+  // Import/load can finish after timeline playback has already started.
+  // Pick up the current playhead rather than leaving a stale black frame.
+  const playhead=Number($('timelineProgress')?.value)||0;
+  const position=Core.locateTime(project(),playhead);
+  sync(position.local,Adapter.isPlaying?.()||false,position.index);
+
  }catch(error){if(request===serial){release();notify('영상 미리보기: '+(error.message||error),true)}}
 }
 function refresh(){
