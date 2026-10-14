@@ -395,8 +395,8 @@ timeline=window.GulliverUnifiedTimeline?.create({
  getModel:()=>model,getSelected:()=>selected,edit,showPage:i=>{model.active=i;selected='';render();pageChange(i)},notice,stage,onPlaybackChange:playing=>playbackChange(playing)
 });
 function ensureMultitrack(){
- if(Array.isArray(model.tracks))return;
- const tracks=[],pages=model.pages;
+ if(!Array.isArray(model.tracks))model.tracks=[];
+ const tracks=model.tracks,pages=model.pages;
  let offset=0;
  for(const p of pages){
   if(p.videoClip){
@@ -427,6 +427,7 @@ window.GulliverStudioAdapter={
  kind:'canvas',
  capture:()=>C.validate(model),
  getTracks:()=>model.tracks||[],
+ adoptLegacyMedia:()=>edit(()=>ensureMultitrack()),
  getSceneTime:()=>timeline?.getTime?.()||0,
  addTrack:raw=>edit(()=>{
   ensureMultitrack();
