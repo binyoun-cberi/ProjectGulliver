@@ -25,6 +25,10 @@ test('inline canvas video: import MP4, trim, play, autosave, recover source; fai
    const adapter=document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter;
    return adapter?.capture().pages[0]?.videoClip?.name==='intro.mp4';
   });
+  await page.waitForFunction(async()=>{
+   const items=await GulliverStudioStorage.projects();
+   return items.some(p=>p.kind==='canvas'&&p.payload.pages[0]?.videoClip?.mime==='video/mp4');
+  });
   const stored=await page.evaluate(async()=>{
    const p=await GulliverStudioStorage.projects(),m=await GulliverStudioStorage.media();
    const project=p.find(x=>x.kind==='canvas'&&x.payload.pages[0]?.videoClip);
