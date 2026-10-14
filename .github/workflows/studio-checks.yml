@@ -111,6 +111,15 @@ jobs:
       - name: Exercise real Chromium local storage, file imports and exports
         run: node --test tests/studio-browser.e2e.cjs tests/studio-transfer.e2e.cjs tests/studio-library.e2e.cjs tests/studio-media.e2e.cjs tests/studio-visible-home.e2e.cjs tests/studio-v22.e2e.cjs tests/studio-cross-media.e2e.cjs tests/studio-official-library.e2e.cjs tests/studio-v24.e2e.cjs tests/studio-v30.e2e.cjs tests/studio-v31.e2e.cjs tests/studio-v32.e2e.cjs tests/studio-v33.e2e.cjs
 
+      - name: Keep canvas screenshots for visual review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canvas-visual-review
+          path: test-artifacts/*.png
+          if-no-files-found: ignore
+          retention-days: 3
+
   official-media-release:
     runs-on: ubuntu-latest
     timeout-minutes: 18

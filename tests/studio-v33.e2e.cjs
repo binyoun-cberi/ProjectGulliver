@@ -2,6 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {spawn}=require('node:child_process'),{chromium}=require('playwright-core');
 const port=8815,base='http://127.0.0.1:'+port+'/';
+fs.mkdirSync('test-artifacts',{recursive:true});
 async function ready(){for(let i=0;i<100;i++){try{if((await fetch(base+'lesson-app.js')).ok)return}catch{}await new Promise(r=>setTimeout(r,160))}throw Error('Lesson server unavailable')}
 function wav(){const b=Buffer.alloc(44+8000*2);b.write('RIFF',0);b.writeUInt32LE(b.length-8,4);b.write('WAVE',8);b.write('fmt ',12);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(8000,24);b.writeUInt32LE(16000,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(16000,40);return b}
 test('3.3 Chrome: canvas lesson edit, audio backup, playback and fresh restore',{timeout:120000},async()=>{
@@ -15,6 +16,7 @@ test('3.3 Chrome: canvas lesson edit, audio backup, playback and fresh restore',
   const frame=page.frameLocator('#stage iframe');await frame.locator('[data-add="text"]').click();
   assert.equal(await frame.locator('#elementAnimation').isEnabled(),true);
   await frame.locator('#elementAnimation').selectOption('fade');
+  await page.screenshot({path:'test-artifacts/lesson-canvas-desktop.png'});
   await frame.locator('#newPage').click();
   await frame.locator('#audioUpload').setInputFiles({name:'수업 음악.wav',mimeType:'audio/wav',buffer:wav()});
   await frame.locator('#timelineMusicName').filter({hasText:'수업 음악.wav'}).waitFor();
@@ -56,6 +58,8 @@ test('3.3 Chrome: name tags create all printable pages with distinct tool colors
   await page.locator('#nameTags').click();await page.locator('#rosterNames').fill(Array.from({length:10},(_,i)=>'학생 '+(i+1)).join('\n'));
   await page.locator('#rosterCount').selectOption('4');page.once('dialog',dialog=>dialog.accept());await page.locator('#createRoster').click();
   assert.equal(await page.locator('#pageStrip .page').count(),3);
+  await page.setViewportSize({width:1440,height:900});await page.screenshot({path:'test-artifacts/name-tags-desktop.png'});
+  await page.setViewportSize({width:390,height:844});await page.screenshot({path:'test-artifacts/name-tags-mobile.png'});
   await page.evaluate(()=>{window.print=()=>{}});
   await page.locator('#printPdf').click();assert.equal(await page.locator('#printPages .print-sheet').count(),3);
   assert.match(await page.locator('#printPages').textContent(),/학생 10/);
