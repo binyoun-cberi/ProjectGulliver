@@ -157,6 +157,7 @@ function toggle(id){
  if(active===id&&(isMobile()?document.body.classList.contains('panel-open'):!document.body.classList.contains('panel-collapsed')))closePanel();
  else activate(id);
 }
+mobileQuery.addEventListener?.('change',closePanel);
 close.addEventListener('click',closePanel);
 shade.addEventListener('click',closePanel);
 document.addEventListener('keydown',e=>{
