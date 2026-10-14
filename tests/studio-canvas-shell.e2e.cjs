@@ -23,7 +23,7 @@ test('Canva-style unified editor: PC left rail and mobile bottom-sheet editing u
   await frame.locator('[data-design-tab="text"]').click();
   await frame.locator('.design-pane[data-pane="text"] .pane-action').first().click();
   await frame.locator('#stage .item.selected[data-type="text"]').waitFor();
-  await frame.locator('[data-design-tab="properties"]').click();
+  await frame.locator('.design-pane[data-pane="properties"]').waitFor({state:'visible'});
   await frame.locator('#propertyText').fill('우리 반 이야기');
   await frame.locator('#propertyText').press('Tab');
   await frame.locator('#stage .item').filter({hasText:'우리 반 이야기'}).waitFor();
