@@ -63,6 +63,7 @@ jobs:
           node --check studio-unified-editor.js
           node --check studio-unified-timeline.js
           node --check studio-unified-clips.js
+          node --check studio-canvas-easy-media.js
           node --check studio-unified-video.js
           node --check studio-storage.js
           node --check studio-official-project-core.js
