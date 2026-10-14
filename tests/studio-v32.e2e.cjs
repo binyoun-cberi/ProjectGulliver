@@ -95,7 +95,8 @@ test('3.2 Chrome cancel interrupts capture and no-audio WebM stays supported',{t
   await f.locator('#cancelWebm').evaluate(el=>el.click());
   await f.locator('#status').filter({hasText:'영상 저장 실패'}).waitFor();
   await f.locator('#cancelWebm').waitFor({state:'hidden'});
-  await f.locator('#sceneDuration').fill('1');await f.locator('#sceneDuration').press('Tab');
+  await f.locator('[data-design-tab="motion"]').click();
+   await f.locator('#sceneDuration').fill('1');await f.locator('#sceneDuration').press('Tab');
   const download=page.waitForEvent('download',{timeout:40000});
   await f.locator('#exportWebm').evaluate(el=>el.click());
   const info=probe(await (await download).path());
