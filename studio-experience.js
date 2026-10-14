@@ -65,6 +65,9 @@ if(bar)bar.addEventListener('click',e=>{
  const button=e.target.closest('[data-studio-action]');
  if(!button)return;
  const action=button.dataset.studioAction;
+ // Keep bottom navigation interactive even with a side panel displayed.
+ if(!$('drawerShade').hidden)$('drawerShade').click();
+ if(action!=='projects'&&document.body.classList.contains('canvas-library-open'))$('canvasLibraryToggle').click();
  if(action==='home')$('navHome').click();
  if(action==='tools')openPicker();
  if(action==='edit')editPanel();
