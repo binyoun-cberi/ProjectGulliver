@@ -20,7 +20,7 @@ async function save(){capture();remember();try{await ensureCanvasMedia();const c
 function schedule(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>save(),650)}
 function button(text,fn,cls=''){const b=node('button',cls,text);b.type='button';b.onclick=fn;return b}
 function field(parent,label,tag,value,fn,type='text'){const l=node('label','',label),input=node(tag);if(tag==='input')input.type=type;input.value=value??'';input.oninput=()=>fn(input.value);input.onchange=()=>fn(input.value);if(tag==='textarea')input.rows=5;l.append(input);parent.append(l);return input}
-function cleanupStage(){clearInterval(clock);clock=null;for(const media of $('stage').querySelectorAll('audio,video'))media.pause();stageUrls.forEach(URL.revokeObjectURL);stageUrls=[];frame=null;frameStepId='';ready=false;renderToken++;$('stage').replaceChildren();$('stage').classList.remove('editor')}
+function cleanupStage(){clearInterval(clock);clock=null;frame?.contentWindow?.GulliverStudioAdapter?.pause?.();for(const media of $('stage').querySelectorAll('audio,video'))media.pause();stageUrls.forEach(URL.revokeObjectURL);stageUrls=[];frame=null;frameStepId='';ready=false;renderToken++;$('stage').replaceChildren();$('stage').classList.remove('editor')}
 function stopMusic(){const audio=$('musicHost').querySelector('audio');audio?.pause();$('musicHost').replaceChildren();$('musicHost').hidden=true;if(musicUrl)URL.revokeObjectURL(musicUrl);musicUrl=''}
 function renderList(){const root=$('stepList');root.replaceChildren();lesson.steps.forEach((s,i)=>{const b=button('',()=>choose(i),'step-button'),copy=node('span');b.setAttribute('aria-current',String(i===selected));b.dataset.kind=s.kind;copy.append(node('strong','',s.title),node('small','',labels[s.kind]));b.append(node('span','number',String(i+1)),copy);root.append(b)});if(!lesson.steps.length)root.append(node('p','muted','자료를 추가하면 여기에 순서대로 나타나요.'))}
 function renderSettings(){const root=$('settings');root.replaceChildren();const s=current();if(!s){root.append(node('p','muted','왼쪽에서 첫 자료를 추가해 주세요.'));return}
@@ -48,22 +48,25 @@ function applyMedia(media,s){media.controls=true;media.volume=s.volume;media.pre
 async function renderStage(){cleanupStage();const signature=renderToken,s=current(),stage=$('stage');document.body.classList.toggle('canvas-step',s?.kind==='canvas');stage.dataset.kind=s?.kind||'';$('previewStep').hidden=!s||!['canvas','slides','document','design'].includes(s.kind)||running;$('previewStep').textContent=previewing?'편집으로 돌아가기':'자료 미리보기';$('stepTitle').textContent=s?.title||'수업을 준비해 보세요';$('modeHint').textContent=s?.kind==='slides'&&!running&&!previewing?'슬라이드 편집 · PPTX 내보내기':'';updateRunbar();
  if(!s){const box=node('div','empty');box.append(node('h1','','만들고, 바로 수업하세요.'),node('p','','발표 자료와 문서, 영상, 음악을 한 수업에 담아 보세요. 왼쪽에서 자료를 추가하거나 제작실의 내 자료를 가져오면 시작할 수 있어요.'));stage.append(box);return}
  if(s.kind==='canvas'){
-  const f=node('iframe','editor-frame');frame=f;frameStepId=s.id;f.title='통합 캔버스 '+(running||previewing?'수업 화면':'편집기');stage.classList.add('editor');
+  const f=node('iframe','editor-frame');let play=null;frame=f;frameStepId=s.id;f.title='통합 캔버스 '+(running||previewing?'수업 화면':'편집기');stage.classList.add('editor');
   f.onload=()=>{if(signature!==renderToken||frame!==f)return;try{
    const a=f.contentWindow.GulliverStudioAdapter;if(a?.kind!=='canvas')throw Error('통합 캔버스를 연결하지 못했어요.');
    a.setMediaProvider(async id=>await S.asset(id)||GulliverStudioStorage.getMedia(id));
+   a.setMediaSink(async row=>S.putAsset({id:row.id,name:row.name,mime:row.mime,blob:row.blob}));
    a.apply(s.payload);
    if(running||previewing){
     const style=f.contentDocument.createElement('style');style.textContent='.top-tools,.shelf,.properties,#pageStrip,#status,.timeline{display:none!important}.editor-grid{display:block!important;min-height:0!important}.work{min-height:100vh;justify-content:center;padding:12px!important}#stageView{align-items:center}';f.contentDocument.head.append(style);
     a.onPageChange(i=>{if(signature===renderToken){slideIndex=i;updateRunbar()}});
+    a.onPlaybackChange(playing=>{if(play){play.textContent=playing?'⏸ 일시정지':'▶ 장면 재생';play.setAttribute('aria-pressed',String(playing))}});
     a.seekPage(slideIndex);
    }else{
     ready=true;for(const type of ['input','change','pointerup','keyup'])f.contentDocument.addEventListener(type,schedule,{passive:true});
    }
+   if(play)play.disabled=false;
    status(running?'장면을 재생하거나 이전·다음으로 이동하세요.':'통합 캔버스를 이 수업에서 편집할 수 있어요.');
   }catch(e){status(e.message,true)}};
   f.src='통합 캔버스.html?lesson=1';stage.append(f);
-  if(running||previewing){const play=button('▶ 장면 재생',()=>{f.contentWindow?.GulliverStudioAdapter?.play()},'canvas-play');stage.append(play)}
+  if(running||previewing){play=button('▶ 장면 재생',()=>{const a=f.contentWindow?.GulliverStudioAdapter;if(a?.isPlaying())a.pause();else a?.play()},'canvas-play');play.disabled=true;play.setAttribute('aria-pressed','false');stage.append(play)}
   return;
  }
  if(['slides','document','design'].includes(s.kind)){

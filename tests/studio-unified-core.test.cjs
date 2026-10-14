@@ -65,4 +65,8 @@ test('teacher name tags split into printable editable A4 pages',()=>{
  assert.deepEqual(project.pages.flatMap(page=>page.elements.filter(item=>item.type==='text'&&item.content.startsWith('학생 ')).map(item=>item.content)),names);
  assert.equal(new Set(project.pages.flatMap(page=>page.elements.map(item=>item.id))).size,30);
  assert.throws(()=>Core.nameTags(Array(321).fill('이름'),8),/최대/);
+ assert.throws(()=>Core.nameTags(['긴이름'.repeat(6)],8),/16자/);
+ const long=Core.nameTags(['가나다라마바사아자차카타파하'],8).pages[0].elements[2];
+ assert.equal(long.content.replace('\n',''),'가나다라마바사아자차카타파하');
+ assert.equal(long.content.split('\n').length,2);
 });

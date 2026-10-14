@@ -3,7 +3,7 @@
 const C=window.GulliverUnifiedCore,$=id=>document.getElementById(id);
 if(!C)throw Error('공통 캔버스 엔진을 불러오지 못했어요.');
 let model=C.starter(),selected='',undoStack=[],redoStack=[],scale=1,drag=null,editing=false,timeline=null,videoController=null;
-let mediaProvider=id=>window.GulliverStudioStorage.getMedia(id),pageChange=()=>{};
+let mediaProvider=id=>window.GulliverStudioStorage.getMedia(id),pageChange=()=>{},playbackChange=()=>{};
 const stage=$('stage'),textEditor=$('editText'),stackLimit=80;
 const clone=obj=>JSON.parse(JSON.stringify(obj)),page=()=>model.pages[model.active],
   current=()=>page().elements.find(e=>e.id===selected)||null;
@@ -377,15 +377,17 @@ function bind(){
  });
 }
 timeline=window.GulliverUnifiedTimeline?.create({
- getModel:()=>model,getSelected:()=>selected,edit,showPage:i=>{model.active=i;selected='';render();pageChange(i)},notice,stage
+ getModel:()=>model,getSelected:()=>selected,edit,showPage:i=>{model.active=i;selected='';render();pageChange(i)},notice,stage,onPlaybackChange:playing=>playbackChange(playing)
 });
 window.GulliverStudioAdapter={
  kind:'canvas',
  capture:()=>C.validate(model),
  setMediaProvider:provider=>{mediaProvider=provider;timeline?.setMediaProvider(provider)},
+ setMediaSink:sink=>timeline?.setMediaSink(sink),
  onPageChange:callback=>{pageChange=callback},
+ onPlaybackChange:callback=>{playbackChange=callback;callback(timeline?.isPlaying()||false)},
  seekPage:index=>{const i=Math.max(0,Math.min(model.pages.length-1,index));timeline?.seek(model.pages.slice(0,i).reduce((sum,p)=>sum+p.duration,0));pageChange(i)},
- play:()=>timeline?.play(),pause:()=>timeline?.pause(),
+ play:()=>timeline?.play(),pause:()=>timeline?.pause(),isPlaying:()=>timeline?.isPlaying()||false,
  apply:raw=>{timeline?.halt();closeEditor();model=C.validate(raw);selected='';undoStack=[];redoStack=[];timeline?.syncToActive();render();timeline?.refreshSoundShelf().then(()=>timeline?.prepareAudio?.()).catch(()=>{})},
  rename:title=>edit(()=>{model.title=String(title).slice(0,90)}),
  insertImage:addImageFile,
