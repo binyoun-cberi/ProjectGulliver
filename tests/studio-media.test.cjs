@@ -28,7 +28,7 @@ testFn('영상은 최대 5장면/45초, 등록 미디어 형식을 검사',()=>{
  const v=M.makeVideo(),clip={mediaId:'id1',mime:'image/png',name:'교실',start:0,duration:4};
  v.clips.push(clip);assert.equal(M.durationOf(v),4);
  assert.equal(M.fileAllowed({type:'video/mp4',size:5000}),true);
- assert.equal(M.fileAllowed({type:'video/quicktime',size:1000}),false);
+ assert.equal(M.fileAllowed({type:'video/quicktime',size:1000}),true,'iPhone MOV import is allowed when the browser can decode it');
  assert.throws(()=>M.validateVideo({...v,clips:Array(6).fill(clip)}),/최대 5/);
  assert.throws(()=>M.validateVideo({...v,clips:[{...clip,mediaId:'../../../x'}]}),/올바르지/);
 });
