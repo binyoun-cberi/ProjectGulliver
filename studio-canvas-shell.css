@@ -161,6 +161,13 @@ body{color:var(--canvas-ink);background:var(--canvas-bg)}
 .easy-import{display:flex;gap:8px}
 .easy-import label{cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;flex:1;border-radius:11px;background:#7946d9;color:#fff;padding:11px 7px;font-weight:800;font-size:13px}
 .easy-import button{font-size:12px;padding:9px;border:1px solid #e7dff1;background:#fbf8ff}
+.easy-picker-menu{flex:1;min-width:0;position:relative}
+.easy-picker-menu summary{display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;border-radius:11px;background:#7946d9;color:#fff;padding:11px 7px;font-weight:800;font-size:13px;list-style:none}
+.easy-picker-menu summary::-webkit-details-marker{display:none}
+.easy-picker-options{position:absolute;top:calc(100% + 6px);left:0;z-index:60;display:grid;gap:4px;width:min(230px,90vw);padding:7px;border:1px solid #e8ddfa;border-radius:12px;background:#fff;box-shadow:0 10px 30px #24123824}
+.easy-picker-options button{background:#fff!important;text-align:left;border:0!important;border-radius:7px;padding:11px;font-size:12px}
+.easy-picker-options button:hover{background:#f3eeff!important}
+
 .easy-drop{border:1.5px dashed #d8c8ed;border-radius:10px;padding:11px;text-align:center;color:#7f7690;font-size:12px;background:#faf7ff}
 .easy-drop small{display:block;font-size:10px}.easy-drop.dragging{background:#eee1ff;border-color:#7946d9}
 .easy-progress{padding:12px;border-radius:12px;background:#f2eeff;border:1px solid #e3d8fb}
