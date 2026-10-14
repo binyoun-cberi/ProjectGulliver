@@ -307,12 +307,23 @@ function bind(){
   document.head.append(style);window.print();
  });
  window.addEventListener('afterprint',()=>document.getElementById('print-page-size')?.remove());
- $('present').addEventListener('click',async()=>{try{await $('stageView').requestFullscreen()}catch(e){notice('전체 화면을 사용할 수 없는 브라우저예요.',true)}});
- window.addEventListener('resize',size);document.addEventListener('fullscreenchange',size);
+ $('present').addEventListener('click',async()=>{
+  try{await $('stageView').requestFullscreen();timeline?.play()}
+  catch(e){notice('전체 화면을 사용할 수 없는 브라우저예요. 아래 타임라인의 재생 버튼을 눌러 주세요.',true)}
+ });
+ window.addEventListener('resize',size);
+ document.addEventListener('fullscreenchange',()=>{size();if(!document.fullscreenElement&&timeline?.isPlaying())timeline.pause()});
  document.addEventListener('keydown',e=>{
   const inside=['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.activeElement?.isContentEditable;
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();if(e.shiftKey)redo();else undo();return}
   if(inside)return;
+  if(document.fullscreenElement&&e.code==='Space'){
+   e.preventDefault();if(timeline?.isPlaying())timeline.pause();else timeline?.play();return
+  }
+  if(document.fullscreenElement&&['ArrowLeft','ArrowRight'].includes(e.key)){
+   e.preventDefault();const jump=Math.max(0,Math.min(model.pages.length-1,model.active+(e.key==='ArrowRight'?1:-1)));
+   timeline?.seek(model.pages.slice(0,jump).reduce((t,p)=>t+p.duration,0));return
+  }
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'){e.preventDefault();duplicateSelected()}
   if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();deleteSelected()}
  });
@@ -323,7 +334,7 @@ timeline=window.GulliverUnifiedTimeline?.create({
 window.GulliverStudioAdapter={
  kind:'canvas',
  capture:()=>C.validate(model),
- apply:raw=>{timeline?.halt();closeEditor();model=C.validate(raw);selected='';undoStack=[];redoStack=[];timeline?.syncToActive();render()},
+ apply:raw=>{timeline?.halt();closeEditor();model=C.validate(raw);selected='';undoStack=[];redoStack=[];timeline?.syncToActive();render();timeline?.refreshSoundShelf().catch(()=>{})},
  rename:title=>edit(()=>{model.title=String(title).slice(0,90)}),
  insertImage:addImageFile,
  exportImage:async()=>{closeEditor();return pagePng(page())},
