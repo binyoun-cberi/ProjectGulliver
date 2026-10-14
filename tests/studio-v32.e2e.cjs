@@ -55,7 +55,7 @@ test('3.2 Chrome exports actual changing video frames AND WAV track without a se
   // Validate actual encoded video packet presentation times instead.
   const packets=spawnSync('ffprobe',['-v','error','-select_streams','v:0','-show_entries','packet=pts_time','-of','csv=p=0',output],{encoding:'utf8'});
   assert.equal(packets.status,0,'Packet probe failed: '+packets.stderr);
-  const times=packets.stdout.split('\\n').map(x=>Number.parseFloat(x)).filter(Number.isFinite);
+  const times=packets.stdout.split('\n').map(x=>Number.parseFloat(x)).filter(Number.isFinite);
   const lastFrame=Math.max(...times);
   assert.ok(lastFrame>=1.5,'Video stream ends too early: '+lastFrame);
   assert.ok(lastFrame<5,'Unexpected video stream length: '+lastFrame);
