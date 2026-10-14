@@ -282,7 +282,7 @@ function onFrameLoad(){
   if(!doc||!doc.body||!doc.location?.search?.includes('studio=1'))return;
   const style=doc.createElement('style');style.id='gulliver-studio-inset';
   style.textContent='body>header,body>section.hero,body>section.intro,body>footer,body>section.advanced,body>.advanced,body>.topbar,body>.hero{display:none!important}body{margin:0!important;background:#fff!important}body>main,body>.workspace,body>.layout,body>.panels{max-width:none!important;width:100%!important;margin:0!important;padding:14px!important;gap:12px!important}body>.workspace{grid-template-columns:190px minmax(0,1fr) 230px!important}body>.layout{grid-template-columns:1fr!important}body>.panels{grid-template-columns:1fr!important}@media(max-width:1150px){body>.workspace{display:flex!important;flex-direction:column!important}body>.workspace>*{width:100%!important}}';
-  if(expected!=='video'&&expected!=='music')doc.head.append(style);
+  if(expected!=='video'&&expected!=='music'&&expected!=='canvas')doc.head.append(style);
  }catch(e){busy=false;status('편집기 화면에 접근하지 못했어요. 새 창에서 열기를 이용해 주세요.',true);return;}
  if(openingOfficialId&&['video','music'].includes(expected)){
   busy=false;live=false;window.GulliverStudioLayout?.toolChanged(expected);
