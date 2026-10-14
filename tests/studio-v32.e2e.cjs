@@ -51,8 +51,14 @@ test('3.2 Chrome exports actual changing video frames AND WAV track without a se
   assert.ok(streamTypes.includes('audio'),'WEBM missing WAV-mixed audio stream: '+JSON.stringify(info));
   const video=info.streams.find(s=>s.codec_type==='video');
   assert.equal(video.width,960);assert.equal(video.height,540);
-  assert.ok(Number(info.format.duration)>=1.6,'Truncated scene timeline: '+JSON.stringify(info));
-  assert.ok(Number(info.format.duration)<5,'Unexpected capture duration: '+JSON.stringify(info));
+  // Chrome MediaRecorder live WebM does not always write a Duration header.
+  // Validate actual encoded video packet presentation times instead.
+  const packets=spawnSync('ffprobe',['-v','error','-select_streams','v:0','-show_entries','packet=pts_time','-of','csv=p=0',output],{encoding:'utf8'});
+  assert.equal(packets.status,0,'Packet probe failed: '+packets.stderr);
+  const times=packets.stdout.split('\\n').map(x=>Number.parseFloat(x)).filter(Number.isFinite);
+  const lastFrame=Math.max(...times);
+  assert.ok(lastFrame>=1.5,'Video stream ends too early: '+lastFrame);
+  assert.ok(lastFrame<5,'Unexpected video stream length: '+lastFrame);
   assert.ok(fs.statSync(output).size>3000,'Video export is unexpectedly tiny');
   const md5=spawnSync('ffmpeg',['-v','error','-i',output,'-vf','fps=2,scale=64:36','-f','framemd5','-'],{encoding:'utf8'});
   assert.equal(md5.status,0,'ffmpeg frame inspect: '+md5.stderr);
