@@ -84,6 +84,8 @@ test('3.0 browser: original design/slide projects are preserved on editable conv
   await frame.locator('#stage .item').filter({hasText:'감정 카드'}).waitFor();
   assert.equal(await frame.locator('#layout').inputValue(),'a4');
   await page.waitForFunction(async()=>(await GulliverStudioStorage.projects()).length===3);
+  await page.getByRole('button',{name:'내 작업·소재함'}).click();
+  await page.locator('.sidebar').waitFor({state:'visible'});
   const slide=page.locator('#projectList .project-item').filter({hasText:'원본 발표'});
   await slide.getByRole('button',{name:'통합에서 편집'}).click();
   await frame.locator('#pageStrip .page').nth(1).waitFor();
