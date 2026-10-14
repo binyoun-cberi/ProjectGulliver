@@ -89,14 +89,14 @@ track.innerHTML=[
  '<div class="easy-track-lane" id="easyVideoLane"><div class="easy-track-bar video" id="easyVideoBar"><span class="easy-handle" data-side="start"></span><strong id="easyVideoLabel"></strong><span class="easy-handle" data-side="end"></span></div></div>',
  '<div class="easy-track-label">♫ 음악 <span id="easyMusicTime"></span></div>',
  '<div class="easy-track-lane" id="easyMusicLane"><div class="easy-track-bar audio" id="easyMusicBar"><span class="easy-handle" data-side="start"></span><strong id="easyMusicLabel"></strong><span class="easy-handle" data-side="end"></span></div></div>',
- '<p class="easy-track-hint">영상은 양끝을 잡아 자르고, 음악은 아래 음량 조절과 반복 설정을 사용할 수 있어요.</p>'
+ '<p class="easy-track-hint">영상과 음악의 양끝을 움직여 재생 구간을 조절하고, 아래에서 음악 음량과 반복을 바꿀 수 있어요.</p>'
 ].join('');
 $('studioTimeline').append(track);
 function updateTrack(){
  const clip=A.getSceneVideoClip(),audio=A.capture().audio;
  $('easyVideoBar').hidden=!clip;$('easyMusicBar').hidden=!audio;
  if(clip){$('easyVideoLabel').textContent=clip.name;$('easyVideoTime').textContent=clip.inPoint.toFixed(1)+' ~ '+(clip.inPoint+clip.duration).toFixed(1)+'초';$('easyVideoBar').style.width=Math.max(16,clip.duration/20*100)+'%'}
- if(audio){$('easyMusicLabel').textContent=audio.name;$('easyMusicTime').textContent='볼륨 '+Math.round(audio.volume*100)+'%'}
+ if(audio){$('easyMusicLabel').textContent=audio.name;$('easyMusicTime').textContent=(audio.trimStart||0).toFixed(1)+' ~ '+((audio.trimStart||0)+(audio.trimDuration||60)).toFixed(1)+'초 · '+Math.round(audio.volume*100)+'%';$('easyMusicBar').style.width=Math.max(15,Math.min(100,(audio.trimDuration||60)/60*100))+'%'}
 }
 let trim=null;
 $('easyVideoBar').addEventListener('pointerdown',e=>{
@@ -120,6 +120,31 @@ $('easyVideoBar').addEventListener('pointerup',e=>{
  updateTrack();
 });
 $('easyVideoBar').addEventListener('pointercancel',()=>{trim=null;updateTrack()});
+let musicDrag=null;
+$('easyMusicBar').addEventListener('pointerdown',e=>{
+ const side=e.target.closest('[data-side]')?.dataset.side,audio=A.capture().audio;
+ if(!side||!audio)return;
+ e.preventDefault();musicDrag={side,audio,x:e.clientX,width:$('easyMusicLane').getBoundingClientRect().width||260};
+ $('easyMusicBar').setPointerCapture(e.pointerId);
+});
+$('easyMusicBar').addEventListener('pointermove',e=>{
+ if(!musicDrag)return;
+ const delta=(e.clientX-musicDrag.x)/musicDrag.width*60;
+ const length=Math.max(1,Math.min(60,(musicDrag.audio.trimDuration||60)+(musicDrag.side==='end'?delta:-delta)));
+ $('easyMusicBar').style.width=Math.max(15,length/60*100)+'%';
+});
+$('easyMusicBar').addEventListener('pointerup',e=>{
+ if(!musicDrag)return;
+ const d=musicDrag;musicDrag=null;
+ const delta=Math.round((e.clientX-d.x)/d.width*600)/10;
+ let start=d.audio.trimStart||0,duration=d.audio.trimDuration||60;
+ if(d.side==='start'){start=Math.max(0,start+delta);duration=Math.max(1,duration-(start-(d.audio.trimStart||0)))}
+ else duration=Math.max(1,Math.min(60,duration+delta));
+ A.setMusicTrim({trimStart:Math.round(start*10)/10,trimDuration:Math.round(duration*10)/10});
+ updateTrack();
+});
+$('easyMusicBar').addEventListener('pointercancel',()=>{musicDrag=null;updateTrack()});
+
 const selection=document.createElement('div');selection.className='easy-video-selection';selection.hidden=true;
 selection.innerHTML='<span>영상 이동 · 모서리에서 크기 조절</span><b class="easy-video-grip"></b>';
 stage.append(selection);let layout=false,drag=null;
