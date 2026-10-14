@@ -17,7 +17,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage,onPlaybackChang
   const entry=await getMedia(bg.mediaId);
   if(!entry||entry.mime!=='audio/wav'||!M.audioAllowed(entry.blob))throw Error('배경음악 원본을 찾지 못했어요. WAV를 다시 선택해 주세요.');
   loadedId=bg.mediaId;blobUrl=URL.createObjectURL(entry.blob);
-  audio=new Audio(blobUrl);audio.preload='auto';audio.loop=bg.loop;audio.volume=bg.volume;
+  audio=new Audio(blobUrl);audio.preload='auto';audio.loop=bg.loop&&!(bg.trimStart||bg.trimDuration<60);audio.volume=bg.volume;
   return audio;
  }
  function clearPreview(){
@@ -57,6 +57,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage,onPlaybackChang
   seconds=Math.min(total(),(now-origin)/1000);
   paint(seconds);
   if(seconds>=total()){stop(false);notice('마지막 장면까지 재생했어요.');return}
+  if(audio&&get().audio&&seconds>=get().audio.trimDuration)audio.pause();
   raf=requestAnimationFrame(tick);
  }
  function pause(){
@@ -81,7 +82,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage,onPlaybackChang
   if(wasPlaying)pause();
   seconds=Math.min(total(),Math.max(0,Number(t)||0));
   paint(seconds);
-  if(audio){try{audio.currentTime=seconds}catch(e){}}
+  if(audio){try{audio.currentTime=Math.min(audio.duration-.1,seconds+(get().audio?.trimStart||0))}catch(e){}}
   if(wasPlaying)play();
   else syncPlayback();
  }
@@ -94,7 +95,10 @@ function create({getModel,getSelected,edit,showPage,notice,stage,onPlaybackChang
   prepareAudio().then(entry=>{
    if(!entry||!playing)return;
    entry.loop=get().audio.loop;entry.volume=get().audio.volume;
-   try{entry.currentTime=seconds}catch(e){}
+   const bg=get().audio||{};
+   const offset=bg.trimStart||0;
+   try{entry.currentTime=Math.min(Math.max(0,entry.duration-.1),seconds+offset)}catch(e){}
+   if(seconds>=(bg.trimDuration||60))return;
    return entry.play().catch(()=>notice('장면은 재생 중이에요. 브라우저가 음악 자동 재생을 제한했어요. 다시 재생을 눌러 보세요.',true));
   }).catch(e=>notice('음악을 불러오지 못했어요: '+(e.message||e),true));
  }
