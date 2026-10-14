@@ -43,6 +43,7 @@ test('Media library: upload progress, video thumbnail/name, resize and layer, WA
   await frame.locator('#easyMediaPicker').setInputFiles(wav);
   await frame.locator('.easy-file').filter({hasText:'background.wav'}).waitFor();
   await page.waitForFunction(()=>document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.capture()?.audio?.name==='background.wav');
+  await frame.locator('#easyMusicBar [data-side="end"]').scrollIntoViewIfNeeded();
   const musicGrip=await frame.locator('#easyMusicBar [data-side="end"]').boundingBox();
   await page.mouse.move(musicGrip.x+musicGrip.width/2,musicGrip.y+musicGrip.height/2);
   await page.mouse.down();
