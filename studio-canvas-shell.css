@@ -135,3 +135,21 @@ body{color:var(--canvas-ink);background:var(--canvas-bg)}
  .work{display:block!important;height:auto!important;padding:0!important}
  .canvas-app{height:auto!important;overflow:visible!important}
 }
+
+/* Native video clips live inside the existing canvas timeline. */
+.video-clip-tools{display:grid;gap:11px;border:1px solid #dbd2f4;border-radius:14px;padding:14px;background:#faf8ff}
+.clip-tools-title{display:grid;gap:3px;font-size:14px;color:#593b9e}
+.clip-tools-title small{font-size:11px;color:#78718a;font-weight:500}
+.clip-buttons{display:grid;grid-template-columns:1fr auto;gap:8px}
+.clip-import,.clip-buttons button{display:flex;justify-content:center;align-items:center;min-height:40px;border-radius:11px;border:1px solid #ded5ee;background:#fff;padding:9px;font-size:12px;font-weight:800;cursor:pointer}
+.clip-import{background:#7743d6;color:#fff;border-color:#7743d6}
+.clip-buttons button:disabled{opacity:.4;cursor:default}
+.clip-adjust{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.clip-adjust label{display:grid;gap:7px;font-size:11px;color:#5d5271}
+.clip-adjust input{width:100%;min-width:0;border:1px solid #ddd4ee;border-radius:10px;padding:8px;font-size:13px}
+.clip-info{padding:10px;background:#fff;border:1px solid #e7e1f0;border-radius:10px;font-size:12px;color:#625377;overflow-wrap:anywhere}
+.clip-help{font-size:11px;line-height:1.6;color:#766c88;margin:0}
+.canvas-video-preview{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none;background:#111;user-select:none}
+.canvas-video-preview[hidden]{display:none!important}
+#stage>.item{z-index:1}
+#stage>.item.selected{z-index:3}
