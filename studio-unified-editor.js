@@ -438,6 +438,8 @@ window.GulliverStudioAdapter={
  getSceneVideoClip:()=>page().videoClip||null,
  getSelectedLayerInfo:()=>current()?{id:selected,type:current().type}:null,
  setMusicTrim:patch=>edit(()=>{if(model.audio)model.audio={...model.audio,...patch}}),
+ addMusicFile:file=>timeline?.importWav(file),
+ selectMusicFile:id=>timeline?.selectAudio(id),
  setMediaProvider:provider=>{mediaProvider=provider;timeline?.setMediaProvider(provider)},
  setMediaSink:sink=>timeline?.setMediaSink(sink),
  onPageChange:callback=>{pageChange=callback},
