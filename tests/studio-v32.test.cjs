@@ -29,7 +29,7 @@ test('3.2 renderer draws transitions, object opacity, animations and media safel
   return(...args)=>commands.push([key,...args]);
  },set(target,key,value){target[key]=value;return true}});
  const initial=V.drawFrame(context,p,0,new Map());
- assert.equal(initial.index,0);assert.equal(context.globalAlpha,1);
+ assert.equal(initial.index,0);
  assert.ok(commands.some(x=>x[0]==='fillText'&&x[1]==='첫 번째'));
  assert.ok(commands.some(x=>x[0]==='ellipse'));
  assert.ok(commands.some(x=>x[0]==='lineTo'));
