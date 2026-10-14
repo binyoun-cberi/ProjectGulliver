@@ -174,7 +174,9 @@ new MutationObserver(updateSelection).observe(stage,{childList:true,subtree:true
 stage.addEventListener('pointerup',()=>queueMicrotask(updateSelection));
 const onViewport=()=>{
  if(isMobile()){
-  if(!active){document.body.classList.remove('panel-open','panel-collapsed')}
+  // When moving from desktop to phone, begin with a clear canvas. The first
+  // bottom-toolbar tap should open the sheet, not unexpectedly close it.
+  closePanel();
  }else{
   if(active){document.body.classList.add('panel-open');document.body.classList.remove('panel-collapsed')}
   else activate('elements');
