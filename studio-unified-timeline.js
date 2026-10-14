@@ -4,6 +4,7 @@ const C=window.GulliverUnifiedCore,S=window.GulliverStudioStorage,M=window.Gulli
 if(!C||!S||!M)throw Error('타임라인 또는 로컬 오디오 저장소를 불러오지 못했어요.');
 function create({getModel,getSelected,edit,showPage,notice,stage}){
  let seconds=0,playing=false,preview=false,raf=0,origin=0,blobUrl='',audio=null,loadedId='',disposed=false;
+ let getMedia=id=>S.getMedia(id);
  const get=()=>getModel(),selectedElement=()=>get().pages[get().active]?.elements.find(e=>e.id===getSelected());
  const absoluteStart=index=>get().pages.slice(0,index).reduce((t,p)=>t+p.duration,0);
  const total=()=>C.totalDuration(get());
@@ -13,7 +14,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
   const bg=get().audio;if(!bg?.mediaId){cleanMedia();return null}
   if(loadedId===bg.mediaId&&audio)return audio;
   cleanMedia();
-  const entry=await S.getMedia(bg.mediaId);
+  const entry=await getMedia(bg.mediaId);
   if(!entry||entry.mime!=='audio/wav'||!M.audioAllowed(entry.blob))throw Error('배경음악 원본을 찾지 못했어요. WAV를 다시 선택해 주세요.');
   loadedId=bg.mediaId;blobUrl=URL.createObjectURL(entry.blob);
   audio=new Audio(blobUrl);audio.preload='auto';audio.loop=bg.loop;audio.volume=bg.volume;
@@ -180,7 +181,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
  });
  $('audioFromShelf').addEventListener('change',async event=>{
   const id=event.target.value;if(!id)return;
-  try{const entry=await S.getMedia(id);if(!entry||entry.mime!=='audio/wav')throw Error('선택한 음악을 찾지 못했어요.');updateAudio(entry)}
+  try{const entry=await getMedia(id);if(!entry||entry.mime!=='audio/wav')throw Error('선택한 음악을 찾지 못했어요.');updateAudio(entry)}
   catch(e){notice(e.message||String(e),true)}
  });
  $('removeAudio').addEventListener('click',()=>{updateAudio(null);$('audioFromShelf').value=''});
@@ -196,7 +197,8 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
  window.addEventListener('pagehide',()=>{disposed=true;cancelAnimationFrame(raf);cleanMedia()});
  refreshSoundShelf().then(()=>{if(get().audio)return prepareAudio()}).catch(()=>{});
  refresh();
- return {refresh,stop,pause,play,halt,syncToActive,isPlaying:()=>playing,seek,refreshSoundShelf,prepareAudio,dispose:()=>{stop();cleanMedia();disposed=true}};
+ return {refresh,stop,pause,play,halt,syncToActive,isPlaying:()=>playing,seek,refreshSoundShelf,prepareAudio,
+  setMediaProvider:provider=>{getMedia=provider;cleanMedia()},dispose:()=>{stop();cleanMedia();disposed=true}};
 }
 window.GulliverUnifiedTimeline={create};
 })();

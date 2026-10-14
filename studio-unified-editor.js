@@ -3,6 +3,7 @@
 const C=window.GulliverUnifiedCore,$=id=>document.getElementById(id);
 if(!C)throw Error('공통 캔버스 엔진을 불러오지 못했어요.');
 let model=C.starter(),selected='',undoStack=[],redoStack=[],scale=1,drag=null,editing=false,timeline=null,videoController=null;
+let mediaProvider=id=>window.GulliverStudioStorage.getMedia(id),pageChange=()=>{};
 const stage=$('stage'),textEditor=$('editText'),stackLimit=80;
 const clone=obj=>JSON.parse(JSON.stringify(obj)),page=()=>model.pages[model.active],
   current=()=>page().elements.find(e=>e.id===selected)||null;
@@ -154,7 +155,7 @@ function startMove(event){
   item.querySelector('.grip')?.remove();
   if(active){const grip=document.createElement('span');grip.className='grip';grip.setAttribute('aria-label','크기 조절');item.append(grip)}
  }
- properties();
+ properties();timeline?.refresh();
 }
 function moveDrag(event){
  if(!drag||event.pointerId!==drag.pointerId)return;
@@ -260,6 +261,20 @@ async function addImageFile(file){
  addElement('image',{x:145,y:105,w:320,h:240,src:data,fill:'#ffffff'});
 }
 function bind(){
+ $('nameTags').addEventListener('click',()=>$('rosterDialog').showModal());
+ $('closeRoster').addEventListener('click',()=>$('rosterDialog').close());
+ $('loadRoster').addEventListener('click',()=>{
+  const names=window.Gulliver?.getNames?.()||[];
+  if(!names.length)return notice('우리 반 명단이 비어 있어요. 이름을 직접 입력하거나 우리 반에서 학생을 추가해 주세요.',true);
+  $('rosterNames').value=names.join('\n');notice(names.length+'명의 이름을 불러왔어요.');
+ });
+ $('createRoster').addEventListener('click',()=>{
+  try{
+   const names=$('rosterNames').value.split(/\r?\n/),project=C.nameTags(names,Number($('rosterCount').value));
+   if(!confirm('현재 캔버스를 이름표로 바꿀까요? 실행 취소로 되돌릴 수 있어요.'))return;
+   edit(()=>{model=project},'');$('rosterDialog').close();notice('이름표 '+names.filter(n=>n.trim()).length+'개를 만들었어요. PDF·인쇄로 출력하세요.');
+  }catch(e){notice(e.message,true)}
+ });
  document.querySelectorAll('[data-template]').forEach(b=>b.addEventListener('click',()=>{
   if(!confirm('현재 전체 페이지를 선택한 템플릿으로 바꿀까요? 실행 취소로 되돌릴 수 있어요.'))return;
   edit(()=>{model=C.starter(b.dataset.template)},'');notice('새 템플릿을 적용했어요. 이전 작업은 실행 취소로 되돌릴 수 있어요.');
@@ -311,7 +326,7 @@ function bind(){
    button.disabled=true;cancel.hidden=false;panel.hidden=false;
    $('videoProgress').value=0;$('videoProgressText').textContent='0%';
    notice('장면을 영상으로 만드는 중이에요. 탭을 닫지 마세요.');
-   const movie=await V.exportWebM(snapshot,{getMedia:id=>S.getMedia(id),signal:controller.signal,
+   const movie=await V.exportWebM(snapshot,{getMedia:mediaProvider,signal:controller.signal,
     onProgress:p=>{const value=Math.round(p*100);$('videoProgress').value=value;$('videoProgressText').textContent=value+'%'}});
    download(movie,(snapshot.title||'수업영상').replace(/[\\/:*?"<>|]/g,'_')+'.webm');
    notice('장면 전환·등장 효과'+(snapshot.audio?'·배경음악이':'가')+' 포함된 WebM 영상을 저장했어요.');
@@ -322,11 +337,23 @@ function bind(){
  $('exportPng').addEventListener('click',async()=>{try{timeline?.halt();closeEditor();const blob=await pagePng(page());download(blob,(model.title||'수업자료').replace(/[\\/:*?"<>|]/g,'_')+'.png');notice('PNG를 저장했어요.')}catch(e){notice(e.message,true)}});
  $('printPdf').addEventListener('click',()=>{
   timeline?.halt();closeEditor();document.getElementById('print-page-size')?.remove();
+  document.getElementById('printPages')?.remove();
+  const sheets=document.createElement('div');sheets.id='printPages';
+  const dims=C.LAYOUTS[model.layout],factor=model.layout==='a4'?1.333:1.16;
+  for(const source of model.pages){
+   const sheet=document.createElement('section');sheet.className='print-sheet';sheet.style.background=source.background;
+   sheet.style.width=model.layout==='a4'?'210mm':'297mm';sheet.style.height=model.layout==='a4'?'297mm':'210mm';
+   const content=document.createElement('div');content.className='print-sheet-content';
+   Object.assign(content.style,{width:dims.w+'px',height:dims.h+'px',background:source.background,transform:'scale('+factor+')'});
+   for(const element of source.elements){const item=drawItem(element);item.classList.remove('selected');item.querySelector('.grip')?.remove();content.append(item)}
+   sheet.append(content);sheets.append(sheet);
+  }
+  document.body.append(sheets);document.body.classList.add('printing-pages');
   const style=document.createElement('style');style.id='print-page-size';
-  style.textContent='@page { size: '+(model.layout==='a4'?'A4 portrait':'landscape')+'; margin: 0 }';
+  style.textContent='@page { size: '+(model.layout==='a4'?'A4 portrait':'A4 landscape')+'; margin: 0 }';
   document.head.append(style);window.print();
  });
- window.addEventListener('afterprint',()=>document.getElementById('print-page-size')?.remove());
+ window.addEventListener('afterprint',()=>{document.body.classList.remove('printing-pages');document.getElementById('printPages')?.remove();document.getElementById('print-page-size')?.remove()});
  $('present').addEventListener('click',async()=>{
   try{await $('stageView').requestFullscreen();timeline?.play()}
   catch(e){notice('전체 화면을 사용할 수 없는 브라우저예요. 아래 타임라인의 재생 버튼을 눌러 주세요.',true)}
@@ -349,11 +376,15 @@ function bind(){
  });
 }
 timeline=window.GulliverUnifiedTimeline?.create({
- getModel:()=>model,getSelected:()=>selected,edit,showPage:i=>{model.active=i;selected='';render()},notice,stage
+ getModel:()=>model,getSelected:()=>selected,edit,showPage:i=>{model.active=i;selected='';render();pageChange(i)},notice,stage
 });
 window.GulliverStudioAdapter={
  kind:'canvas',
  capture:()=>C.validate(model),
+ setMediaProvider:provider=>{mediaProvider=provider;timeline?.setMediaProvider(provider)},
+ onPageChange:callback=>{pageChange=callback},
+ seekPage:index=>{const i=Math.max(0,Math.min(model.pages.length-1,index));timeline?.seek(model.pages.slice(0,i).reduce((sum,p)=>sum+p.duration,0));pageChange(i)},
+ play:()=>timeline?.play(),pause:()=>timeline?.pause(),
  apply:raw=>{timeline?.halt();closeEditor();model=C.validate(raw);selected='';undoStack=[];redoStack=[];timeline?.syncToActive();render();timeline?.refreshSoundShelf().then(()=>timeline?.prepareAudio?.()).catch(()=>{})},
  rename:title=>edit(()=>{model.title=String(title).slice(0,90)}),
  insertImage:addImageFile,

@@ -24,6 +24,14 @@ function download(value,name,mime){
 }
 const toolItems=Object.entries(C.TOOLS);
 function setupMenu(){
+ $('canvasLibraryToggle').addEventListener('click',()=>{
+  const open=document.body.classList.toggle('canvas-library-open');
+  $('canvasLibraryToggle').setAttribute('aria-expanded',String(open));
+ });
+ $('canvasTransferToggle').addEventListener('click',()=>{
+  const open=document.body.classList.toggle('canvas-transfer-open');
+  $('canvasTransferToggle').setAttribute('aria-expanded',String(open));
+ });
  for(const [kind,tool] of toolItems){
   const b=node('button','',tool.icon+'  '+tool.label);
   b.type='button';b.dataset.kind=kind;b.setAttribute('aria-current','false');
@@ -73,6 +81,13 @@ window.addEventListener('message',event=>{
  if(data.type==='gulliver:official-media')updateOfficialMode(data.advanced);
 });
 function updateNav(){
+ const canvas=activeKind==='canvas';
+ document.body.classList.toggle('studio-canvas',canvas);
+ if(!canvas){document.body.classList.remove('canvas-library-open','canvas-transfer-open')}
+ $('canvasLibraryToggle').hidden=!canvas;
+ $('canvasTransferToggle').hidden=!canvas;
+ $('canvasLibraryToggle').setAttribute('aria-expanded',String(canvas&&document.body.classList.contains('canvas-library-open')));
+ $('canvasTransferToggle').setAttribute('aria-expanded',String(canvas&&document.body.classList.contains('canvas-transfer-open')));
  document.querySelectorAll('#toolNav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.kind===activeKind)));
  $('navHome').setAttribute('aria-current',String(!activeKind));
  $('mobileTool').value=activeKind||'';

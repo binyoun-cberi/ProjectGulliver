@@ -16,6 +16,9 @@ button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:#6654bd
 .shelf button{display:block;text-align:left;width:100%;margin:6px 0;font-size:12px}
 .shelf .separator{border-top:1px solid #e6e9f1;margin:15px 0}
 .shelf .notice,.properties .notice{font-size:11px;color:#7d8799;line-height:1.55}
+.roster-dialog{width:min(490px,calc(100% - 24px));border:1px solid #dce2ed;border-radius:16px;padding:22px;color:#24344a;box-shadow:0 18px 60px #18253b33}.roster-dialog::backdrop{background:#18253b88}.roster-dialog label{display:grid;gap:6px;margin:12px 0}.roster-dialog textarea{width:100%;min-height:180px;resize:vertical;padding:10px;border:1px solid #d9e0ea;border-radius:8px}.roster-dialog select{padding:8px}.roster-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}.roster-dialog p{font-size:12px;line-height:1.6;color:#68758a}
+#printPages{display:none}
+@media print{body.printing-pages .canvas-app{display:none!important}body.printing-pages #printPages{display:block!important}.print-sheet{position:relative;overflow:hidden;width:210mm;height:297mm;break-after:page;page-break-after:always}.print-sheet:last-child{break-after:auto;page-break-after:auto}.print-sheet-content{position:absolute;top:0;left:0;transform-origin:top left}.print-sheet .item{outline:none!important;cursor:default}}
 .props{display:grid;gap:10px}.props label{font-size:11px;color:#58637a;display:grid;gap:4px}
 .props input,.props select,.props textarea{max-width:100%;width:100%;border:1px solid #d9e0ea;border-radius:8px;padding:7px;background:#fff;color:#293a4e}
 .props textarea{min-height:85px;resize:vertical}.two{display:grid;grid-template-columns:1fr 1fr;gap:7px}
@@ -68,6 +71,7 @@ button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:#6654bd
  <div class="editor-grid">
   <aside class="shelf"><h3>빠른 템플릿</h3>
    <button data-template="presentation">발표 표지</button><button data-template="worksheet">A4 활동지</button><button data-template="blank">빈 캔버스</button>
+   <button id="nameTags" type="button">우리 반 이름표 일괄 제작</button>
    <div class="separator"></div><h3>요소 삽입</h3>
    <button data-add="text">＋ 글씨</button><button data-add="rect">▭ 네모</button><button data-add="ellipse">◯ 동그라미</button>
    <button data-add="triangle">△ 세모</button><button data-add="star">☆ 별</button><button data-add="line">╱ 선</button>
@@ -114,11 +118,13 @@ button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:#6654bd
    <p class="notice" id="propertyHint">요소를 선택하면 글씨·색·크기를 변경할 수 있어요.</p>
   </aside>
  </div>
+ <dialog class="roster-dialog" id="rosterDialog" aria-labelledby="rosterTitle"><h2 id="rosterTitle">우리 반 이름표 일괄 제작</h2><p>학생 이름을 한 줄에 하나씩 적으면 A4 이름표를 여러 장 만들어요. 생성한 글씨와 테두리는 캔버스에서 다시 수정할 수 있어요. 현재 작업은 새 이름표로 교체되므로 필요한 경우 먼저 저장 상태를 확인하세요.</p><div class="roster-actions"><button id="loadRoster" type="button">우리 반 명단 불러오기</button></div><label>이름 목록<textarea id="rosterNames" placeholder="김하늘&#10;이바다"></textarea></label><label>한 장에 <select id="rosterCount"><option value="8">8개 (2열 × 4행)</option><option value="4">4개 (2열 × 2행)</option></select></label><div class="roster-actions"><button id="closeRoster" type="button">취소</button><button id="createRoster" class="primary" type="button">이름표 만들기</button></div></dialog>
 </main>
+<script src="gulliver-shared.js"></script>
 <script src="studio-media-core.js?v=20261014-31"></script>
 <script src="studio-storage.js?v=20261014-31"></script>
-<script src="studio-unified-core.js?v=20261014-31"></script>
-<script src="studio-unified-timeline.js?v=20261014-31"></script>
+<script src="studio-unified-core.js?v=20261014-roster1"></script>
+<script src="studio-unified-timeline.js?v=20261014-canvas1"></script>
 <script src="studio-unified-video.js?v=20261014-32"></script>
-<script src="studio-unified-editor.js?v=20261014-32"></script>
+<script src="studio-unified-editor.js?v=20261014-roster1"></script>
 </body></html>

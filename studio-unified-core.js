@@ -32,6 +32,24 @@ function starter(kind='presentation'){
   element('text',{x:130,y:160,w:700,h:90,fontSize:54,content:'우리 함께 배워요!'}),
   element('text',{x:160,y:280,w:640,h:72,fontSize:28,fill:'#725C48',content:'글씨와 그림을 직접 움직여 보세요'})],'#F5F8FF')],active:0};
 }
+function nameTags(names,perPage=8){
+ if(![4,8].includes(perPage))throw Error('한 장에 4개 또는 8개의 이름표를 배치할 수 있어요.');
+ if(!Array.isArray(names))throw Error('이름 목록을 확인해 주세요.');
+ const cleaned=names.map(name=>text(name,40).trim()).filter(Boolean);
+ if(!cleaned.length||cleaned.length>MAX_PAGES*perPage)throw Error('이름을 1개 이상, 최대 '+(MAX_PAGES*perPage)+'개 입력해 주세요.');
+ const rows=perPage/2,cellW=257,cellH=746/rows,pages=[];
+ for(let offset=0;offset<cleaned.length;offset+=perPage){
+  const elements=[];
+  cleaned.slice(offset,offset+perPage).forEach((name,i)=>{
+   const x=34+(i%2)*270,y=48+Math.floor(i/2)*cellH;
+   elements.push(element('rect',{x,y,w:cellW,h:cellH-12,fill:'#FFFFFF',stroke:'#B8C3D5'}));
+   elements.push(element('text',{x:x+12,y:y+12,w:cellW-24,h:32,fontSize:17,fill:'#66758B',content:'우리 반 이름표'}));
+   elements.push(element('text',{x:x+12,y:y+cellH/2-35,w:cellW-24,h:70,fontSize:Math.max(25,43-Math.max(0,name.length-5)*3),content:name}));
+  });
+  pages.push(makePage('이름표 '+(pages.length+1),elements));
+ }
+ return validate({format:FORMAT,title:'우리 반 이름표',layout:'a4',pages,active:0});
+}
 function cleanElement(raw,i){
  if(!raw||!TYPES.includes(raw.type))throw Error('알 수 없는 편집 요소가 있어요.');
  const type=raw.type;
@@ -119,5 +137,5 @@ function fromLegacy(kind,payload){
  if(kind==='slides')return fromSlides(payload);
  throw Error('도안·발표 작업만 편집 가능한 캔버스로 변환할 수 있어요.');
 }
-return {FORMAT,LAYOUTS,MAX_PAGES,MAX_ITEMS,TYPES,ANIMATIONS,TRANSITIONS,MIN_DURATION,MAX_DURATION,id,color,image,element,makePage,starter,validate,fromLegacy,totalDuration,locateTime,animationFrame,transitionFrame};
+return {FORMAT,LAYOUTS,MAX_PAGES,MAX_ITEMS,TYPES,ANIMATIONS,TRANSITIONS,MIN_DURATION,MAX_DURATION,id,color,image,element,makePage,starter,nameTags,validate,fromLegacy,totalDuration,locateTime,animationFrame,transitionFrame};
 });
