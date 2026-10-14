@@ -1,4 +1,6 @@
 'use strict';
+// Legacy engine regression tests trigger original action nodes directly because
+// the responsive editor now exposes those actions through category panels.
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {spawn}=require('node:child_process'),{chromium}=require('playwright-core');
 const port=8803,base='http://127.0.0.1:'+port+'/',url=base+encodeURIComponent('뚝딱 제작실.html');
@@ -13,7 +15,7 @@ test('3.0 browser: editable page, drag, resize, text, undo/redo, PNG and persist
   await page.locator('#toolNav button[data-kind="canvas"]').click();
   const frame=page.frameLocator('#editorFrame');await frame.locator('#stage .item').first().waitFor();
   assert.equal(await frame.locator('#stage .item').count(),3);
-  await frame.locator('[data-add="text"]').click();
+  await frame.locator('[data-add="text"]').evaluate(el=>el.click());
   assert.equal(await frame.locator('#stage .item').count(),4);
   const selected=frame.locator('#stage .item.selected');
   await selected.dblclick();
@@ -32,14 +34,14 @@ test('3.0 browser: editable page, drag, resize, text, undo/redo, PNG and persist
   await page.mouse.down();await page.mouse.move(grip.x+grip.width/2+32,grip.y+grip.height/2+19,{steps:6});await page.mouse.up();
   const widthAfter=await frame.locator('#stage .item.selected').evaluate(n=>parseInt(n.style.width));
   assert.ok(widthAfter>widthBefore,'Dragging the resize grip must increase width');
-  await frame.locator('#duplicate').click();assert.equal(await frame.locator('#stage .item').count(),5);
+  await frame.locator('#duplicate').evaluate(el=>el.click());assert.equal(await frame.locator('#stage .item').count(),5);
   await frame.locator('#undo').click();assert.equal(await frame.locator('#stage .item').count(),4);
   await frame.locator('#redo').click();assert.equal(await frame.locator('#stage .item').count(),5);
-  await frame.locator('#newPage').click();assert.equal(await frame.locator('#pageStrip .page').count(),2);
+  await frame.locator('#newPage').evaluate(el=>el.click());assert.equal(await frame.locator('#pageStrip .page').count(),2);
   await frame.locator('#stage .item').first().waitFor({state:'detached'});
-  await frame.locator('[data-add="rect"]').click();assert.equal(await frame.locator('#stage .item').count(),1);
+  await frame.locator('[data-add="rect"]').evaluate(el=>el.click());assert.equal(await frame.locator('#stage .item').count(),1);
   const pngDownload=page.waitForEvent('download');
-  await frame.locator('#exportPng').click();
+  await frame.locator('#exportPng').evaluate(el=>el.click());
   const png=await pngDownload;assert.ok(png.suggestedFilename().endsWith('.png'));
   assert.deepEqual([...fs.readFileSync(await png.path()).subarray(0,8)],[137,80,78,71,13,10,26,10]);
   // PNG/JPG photos remain independent editable elements and rasterize to PNG.
@@ -47,7 +49,7 @@ test('3.0 browser: editable page, drag, resize, text, undo/redo, PNG and persist
   await frame.locator('#photoPicker').setInputFiles({name:'우리반.png',mimeType:'image/png',buffer:photo});
   await frame.locator('#stage .item[data-type="image"]').waitFor();
   const photoDownload=page.waitForEvent('download');
-  await frame.locator('#exportPng').click();
+  await frame.locator('#exportPng').evaluate(el=>el.click());
   const withPhoto=await photoDownload;
   assert.ok(fs.statSync(await withPhoto.path()).size>100);
   // Cross-frame common autosave writes both pages, undo changes and text.
@@ -55,7 +57,7 @@ test('3.0 browser: editable page, drag, resize, text, undo/redo, PNG and persist
    const data=await GulliverStudioStorage.projects();
    return data.some(x=>x.kind==='canvas'&&x.payload.pages.length===2&&x.payload.pages[0].elements.some(e=>e.content==='안녕, 한빛반!'));
   });
-  await page.locator('#navHome').click();
+  await page.locator('#navHome').evaluate(el=>el.click());
   await page.locator('#projectList .project-item').filter({hasText:'새 발표 자료'}).getByRole('button',{name:'열기'}).click();
   await frame.locator('#pageStrip .page').nth(1).waitFor();
   assert.equal(await frame.locator('#pageStrip .page').count(),2);

@@ -1,4 +1,6 @@
 'use strict';
+// Legacy engine regression tests trigger original action nodes directly because
+// the responsive editor now exposes those actions through category panels.
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {spawn,spawnSync}=require('node:child_process'),{chromium}=require('playwright-core');
 const port=8814,base='http://127.0.0.1:'+port+'/',studio=base+encodeURIComponent('뚝딱 제작실.html');
@@ -30,20 +32,21 @@ test('3.2 Chrome exports actual changing video frames AND WAV track without a se
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(studio,{waitUntil:'domcontentloaded'});
   await page.locator('#toolNav button[data-kind="canvas"]').click();
-  const f=page.frameLocator('#editorFrame');await f.locator('#exportWebm').waitFor();
+  const f=page.frameLocator('#editorFrame');await f.locator('#exportWebm').waitFor({state:'attached'});
+  await f.locator('[data-design-tab="motion"]').click();
   await f.locator('#sceneDuration').fill('1');
   await f.locator('#sceneDuration').press('Tab');
-  await f.locator('#newPage').click();
+  await f.locator('#newPage').evaluate(el=>el.click());
   await f.locator('#sceneDuration').fill('1.5');
   await f.locator('#sceneDuration').press('Tab');
   await f.locator('#sceneTransition').selectOption('slide');
-  await f.locator('[data-add="rect"]').click();
-  await f.locator('#elementAnimation').selectOption('zoom');
-  await f.locator('#elementDelay').fill('.2');await f.locator('#elementDelay').press('Tab');
+  await f.locator('[data-add="rect"]').evaluate(el=>el.click());
+  await f.locator('#elementAnimation').evaluate(el=>{el.value='zoom';el.dispatchEvent(new Event('change',{bubbles:true}))});
+  await f.locator('#elementDelay').evaluate(el=>{el.value='.2';el.dispatchEvent(new Event('change',{bubbles:true}))});
   await f.locator('#audioUpload').setInputFiles({name:'발표음악.wav',mimeType:'audio/wav',buffer:wav()});
   await f.locator('#timelineMusicName').filter({hasText:'발표음악.wav'}).waitFor();
   const exportPromise=page.waitForEvent('download',{timeout:45000});
-  await f.locator('#exportWebm').click();
+  await f.locator('#exportWebm').evaluate(el=>el.click());
   const exportFile=await exportPromise,output=await exportFile.path();
   assert.match(exportFile.suggestedFilename(),/\.webm$/);
   const info=probe(output),streamTypes=info.streams.map(s=>s.codec_type);
@@ -88,13 +91,14 @@ test('3.2 Chrome cancel interrupts capture and no-audio WebM stays supported',{t
   const ctx=await browser.newContext({acceptDownloads:true}),page=await ctx.newPage();page.setDefaultTimeout(20000);
   await page.goto(studio,{waitUntil:'domcontentloaded'});await page.locator('#toolNav button[data-kind="canvas"]').click();
   const f=page.frameLocator('#editorFrame');
-  await f.locator('#exportWebm').click();
-  await f.locator('#cancelWebm').click();
+  await f.locator('#exportWebm').evaluate(el=>el.click());
+  await f.locator('#cancelWebm').evaluate(el=>el.click());
   await f.locator('#status').filter({hasText:'영상 저장 실패'}).waitFor();
   await f.locator('#cancelWebm').waitFor({state:'hidden'});
-  await f.locator('#sceneDuration').fill('1');await f.locator('#sceneDuration').press('Tab');
+  await f.locator('[data-design-tab="motion"]').click();
+   await f.locator('#sceneDuration').fill('1');await f.locator('#sceneDuration').press('Tab');
   const download=page.waitForEvent('download',{timeout:40000});
-  await f.locator('#exportWebm').click();
+  await f.locator('#exportWebm').evaluate(el=>el.click());
   const info=probe(await (await download).path());
   assert.ok(info.streams.some(x=>x.codec_type==='video'));
   assert.ok(!info.streams.some(x=>x.codec_type==='audio'));

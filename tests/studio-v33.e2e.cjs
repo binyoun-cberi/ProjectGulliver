@@ -1,4 +1,6 @@
 'use strict';
+// Legacy engine regression tests trigger original action nodes directly because
+// the responsive editor now exposes those actions through category panels.
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {spawn}=require('node:child_process'),{chromium}=require('playwright-core');
 const port=8815,base='http://127.0.0.1:'+port+'/';
@@ -13,18 +15,20 @@ test('3.3 Chrome: canvas lesson edit, audio backup, playback and fresh restore',
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto(base+'lesson.html',{waitUntil:'domcontentloaded'});
   await page.locator('[data-add="canvas"]').click();
-  const frame=page.frameLocator('#stage iframe');await frame.locator('[data-add="text"]').click();
+  const frame=page.frameLocator('#stage iframe');await frame.locator('[data-add="text"]').evaluate(el=>el.click());
   assert.equal(await frame.locator('#elementAnimation').isEnabled(),true);
   const placement=await frame.locator('#stage .item.selected').evaluate(node=>{
    const title=[...node.parentElement.querySelectorAll('.item')].find(item=>item.textContent==='우리 함께 배워요!');
    return{newY:parseFloat(node.style.top),titleBottom:parseFloat(title.style.top)+parseFloat(title.style.height)};
   });
   assert.ok(placement.newY>=placement.titleBottom,'new text should avoid the template title');
+  await frame.locator('.design-pane[data-pane="properties"]').waitFor({state:'visible'});
   await frame.locator('#propertyText').fill('오늘의 학습 목표');
   await frame.locator('#elementAnimation').selectOption('fade');
   await page.screenshot({path:'test-artifacts/lesson-canvas-desktop.png'});
-  await frame.locator('#newPage').click();
+  await frame.locator('#newPage').evaluate(el=>el.click());
   await frame.locator('#audioUpload').setInputFiles({name:'수업 음악.wav',mimeType:'audio/wav',buffer:wav()});
+  await frame.locator('[data-design-tab="motion"]').click();
   await frame.locator('#timelineMusicName').filter({hasText:'수업 음악.wav'}).waitFor();
   await page.locator('#saveLesson').click();
   await page.waitForFunction(async()=>{
@@ -61,13 +65,13 @@ test('3.3 Chrome: name tags create all printable pages with distinct tool colors
   await page.goto(printBase+encodeURIComponent('통합 캔버스.html'),{waitUntil:'domcontentloaded'});
   const backgrounds=await page.evaluate(()=>['.templates','.teacher-tools','.insert-tools','.page-tools','.timeline'].map(selector=>getComputedStyle(document.querySelector(selector)).backgroundColor));
   assert.equal(new Set(backgrounds).size,5);
-  await page.locator('#nameTags').click();await page.locator('#rosterNames').fill(Array.from({length:10},(_,i)=>'학생 '+(i+1)).join('\n'));
+  await page.locator('#nameTags').evaluate(el=>el.click());await page.locator('#rosterNames').fill(Array.from({length:10},(_,i)=>'학생 '+(i+1)).join('\n'));
   await page.locator('#rosterCount').selectOption('4');page.once('dialog',dialog=>dialog.accept());await page.locator('#createRoster').click();
   assert.equal(await page.locator('#pageStrip .page').count(),3);
   await page.setViewportSize({width:1440,height:900});await page.screenshot({path:'test-artifacts/name-tags-desktop.png'});
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:'test-artifacts/name-tags-mobile.png'});
   await page.evaluate(()=>{window.print=()=>{}});
-  await page.locator('#printPdf').click();assert.equal(await page.locator('#printPages .print-sheet').count(),3);
+  await page.locator('#printPdf').evaluate(el=>el.click());assert.equal(await page.locator('#printPages .print-sheet').count(),3);
   assert.match(await page.locator('#printPages').textContent(),/학생 10/);
   await page.evaluate(()=>window.dispatchEvent(new Event('afterprint')));
   assert.equal(await page.locator('#printPages').count(),0);

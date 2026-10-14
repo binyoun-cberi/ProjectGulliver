@@ -1,4 +1,6 @@
 'use strict';
+// Legacy engine regression tests trigger original action nodes directly because
+// the responsive editor now exposes those actions through category panels.
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {spawn}=require('node:child_process'),{chromium}=require('playwright-core');
 const port=8811,base='http://127.0.0.1:'+port+'/',studio=base+encodeURIComponent('뚝딱 제작실.html');
@@ -21,17 +23,17 @@ test('3.1 Chrome: edit timed scenes, fade objects, loop WAV, play across pages a
   await page.goto(studio,{waitUntil:'domcontentloaded'});
   await page.locator('#toolNav button[data-kind="canvas"]').click();
   const frame=page.frameLocator('#editorFrame');
+  await frame.locator('[data-design-tab="motion"]').click();
   await frame.locator('#sceneDuration').waitFor();
   await frame.locator('#sceneDuration').fill('1');
   await frame.locator('#sceneDuration').press('Tab');
-  await frame.locator('#newPage').click();
+  await frame.locator('#newPage').evaluate(el=>el.click());
   await frame.locator('#sceneDuration').fill('1.5');
   await frame.locator('#sceneDuration').press('Tab');
   await frame.locator('#sceneTransition').selectOption('fade');
-  await frame.locator('[data-add="text"]').click();
-  await frame.locator('#elementAnimation').selectOption('rise');
-  await frame.locator('#elementDelay').fill('.5');
-  await frame.locator('#elementDelay').press('Tab');
+  await frame.locator('[data-add="text"]').evaluate(el=>el.click());
+  await frame.locator('#elementAnimation').evaluate(el=>{el.value='rise';el.dispatchEvent(new Event('change',{bubbles:true}))});
+  await frame.locator('#elementDelay').evaluate(el=>{el.value='.5';el.dispatchEvent(new Event('change',{bubbles:true}))});
   assert.equal(await frame.locator('#sceneTrack button[data-scene]').count(),2);
   assert.match(await frame.locator('#sceneTrack').innerText(),/1초/);
   await frame.locator('#audioUpload').setInputFiles({name:'한빛반 음악.wav',mimeType:'audio/wav',buffer:wav()});
@@ -48,10 +50,10 @@ test('3.1 Chrome: edit timed scenes, fade objects, loop WAV, play across pages a
   });
   assert.deepEqual(state.duration,[1,1.5]);assert.equal(state.effect,'rise');assert.equal(state.delay,.5);
   assert.equal(state.audio.volume,.4);assert.equal(state.audio.loop,false);
-  await frame.locator('#timelinePlay').click();
+  await frame.locator('#timelinePlay').evaluate(el=>el.click());
   await frame.locator('#sceneTrack button[data-scene="1"][data-active="true"]').waitFor({timeout:9000});
-  await frame.locator('#timelinePlay').filter({hasText:'재생'}).waitFor({timeout:9000});
-  await frame.locator('#timelineStop').click();
+  await frame.locator('#timelinePlay').filter({hasText:'재생'}).waitFor({state:'attached',timeout:9000});
+  await frame.locator('#timelineStop').evaluate(el=>el.click());
   await frame.locator('#sceneTrack button[data-scene="0"][data-active="true"]').waitFor();
   // Existing 2.x/3.0 autosave stores scene animation and audio reference.
   await page.waitForFunction(async()=>{
@@ -59,7 +61,7 @@ test('3.1 Chrome: edit timed scenes, fade objects, loop WAV, play across pages a
    const p=projects.find(x=>x.kind==='canvas'&&x.payload.pages.length===2);
    return !!p?.payload.audio&&p.payload.pages[1].elements[0].animation==='rise';
   });
-  await page.locator('#navHome').click();
+  await page.locator('#navHome').evaluate(el=>el.click());
   const downloaded=page.waitForEvent('download');
   await page.locator('#libraryZipBackup').click();
   const zip=fs.readFileSync(await (await downloaded).path());
@@ -77,7 +79,9 @@ test('3.1 Chrome: edit timed scenes, fade objects, loop WAV, play across pages a
   });
   assert.deepEqual(after,{pages:[1,1.5],effect:'rise',volume:.4,loop:false,soundBytes:wav().length,mime:'audio/wav'});
   await restored.locator('#projectList .project-item').getByRole('button',{name:'열기'}).first().click();
-  const playing=restored.frameLocator('#editorFrame');await playing.locator('#timelineMusicName').filter({hasText:'한빛반 음악'}).waitFor();
+  const playing=restored.frameLocator('#editorFrame');
+   await playing.locator('[data-design-tab="motion"]').click();
+   await playing.locator('#timelineMusicName').filter({hasText:'한빛반 음악'}).waitFor();
   assert.deepEqual(errors,[]);
   await second.close();
  }finally{await browser?.close();http.kill('SIGTERM')}
