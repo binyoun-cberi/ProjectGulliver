@@ -8,6 +8,19 @@ const layout=window.GulliverStudioLayout;
 const tools=window.GulliverStudioCore?.TOOLS;
 if(!bridge||!tools)return;
 const bar=$('studioMobileBar'),picker=$('studioToolPicker'),shade=$('canvasMobileShade');
+const parentHeader=document.querySelector('.center .top');
+if(parentHeader){
+ const heading=parentHeader.querySelector('.heading');
+ const back=document.createElement('button');back.type='button';back.id='canvasParentBack';
+ back.textContent='⌂';back.title='제작실 홈';back.setAttribute('aria-label','제작실 홈으로');
+ back.addEventListener('click',()=>$('navHome')?.click());
+ heading?.prepend(back);
+ const switcher=document.createElement('button');switcher.type='button';switcher.id='canvasParentTools';
+ switcher.textContent='다른 도구';switcher.setAttribute('aria-label','다른 제작 도구 선택');
+ switcher.addEventListener('click',()=>openPicker());
+ parentHeader.querySelector('.actions')?.prepend(switcher);
+}
+
 const current=()=>bridge.getState().activeKind||'';
 function sync(){
  const kind=current();
@@ -22,7 +35,7 @@ function sync(){
    b.setAttribute('aria-current',String(action==='edit'&&!!kind));
   });
  }
- if(shade)shade.hidden=!(matchMedia('(max-width: 620px)').matches&&document.body.classList.contains('canvas-library-open'));
+ if(shade)shade.hidden=!document.body.classList.contains('canvas-library-open');
 }
 function openPicker(){
  if(picker?.showModal&&!picker.open)picker.showModal();
