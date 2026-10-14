@@ -70,7 +70,7 @@ function cleanElement(raw,i){
 function cleanVideoClip(raw){
  if(raw==null)return null;
  if(!raw||typeof raw!=='object'||!/^u-[\w-]{1,110}$/.test(raw.mediaId||'')||
-    !['video/mp4','video/webm'].includes(raw.mime))throw Error('영상 클립의 원본 정보가 올바르지 않아요.');
+    !['video/mp4','video/webm','video/quicktime'].includes(raw.mime))throw Error('영상 클립의 원본 정보가 올바르지 않아요.');
  return {mediaId:raw.mediaId,mime:raw.mime,
   name:text(raw.name||'영상 클립',90),inPoint:number(raw.inPoint,0,86400,0),
   duration:number(raw.duration,.5,MAX_DURATION,5),muted:raw.muted!==false};
