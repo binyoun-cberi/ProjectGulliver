@@ -196,7 +196,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
  window.addEventListener('pagehide',()=>{disposed=true;cancelAnimationFrame(raf);cleanMedia()});
  refreshSoundShelf().then(()=>{if(get().audio)return prepareAudio()}).catch(()=>{});
  refresh();
- return {refresh,stop,pause,play,halt,syncToActive,isPlaying:()=>playing,seek,refreshSoundShelf,dispose:()=>{stop();cleanMedia();disposed=true}};
+ return {refresh,stop,pause,play,halt,syncToActive,isPlaying:()=>playing,seek,refreshSoundShelf,prepareAudio,dispose:()=>{stop();cleanMedia();disposed=true}};
 }
 window.GulliverUnifiedTimeline={create};
 })();
