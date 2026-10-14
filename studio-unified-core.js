@@ -73,7 +73,10 @@ function cleanVideoClip(raw){
     !['video/mp4','video/webm','video/quicktime'].includes(raw.mime))throw Error('영상 클립의 원본 정보가 올바르지 않아요.');
  return {mediaId:raw.mediaId,mime:raw.mime,
   name:text(raw.name||'영상 클립',90),inPoint:number(raw.inPoint,0,86400,0),
-  duration:number(raw.duration,.5,MAX_DURATION,5),muted:raw.muted!==false};
+  duration:number(raw.duration,1,MAX_DURATION,5),muted:raw.muted!==false,
+  x:number(raw.x,-1500,2500,0),y:number(raw.y,-1500,2500,0),
+  w:number(raw.w,40,2000,960),h:number(raw.h,40,2000,540),
+  stack:number(raw.stack,0,MAX_ITEMS,0)|0};
 }
 function validate(raw){
  if(!raw||raw.format!==FORMAT||!LAYOUTS[raw.layout]||!Array.isArray(raw.pages)||raw.pages.length<1||raw.pages.length>MAX_PAGES)
