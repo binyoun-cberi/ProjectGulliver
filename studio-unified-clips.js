@@ -133,18 +133,24 @@ fileInput.addEventListener('change',async event=>{
 remove.addEventListener('click',()=>{
  if(!clip())return;Adapter.setSceneVideoClip(null);persist().catch(()=>{});notify('영상 배경을 제거했어요. 원본은 미디어 보관함에 남아요.');
 });
-function changeTrim(){
+function changeTrim(origin){
  const old=clip();if(!old)return;
- const start=Number(inInput.value),duration=Number(lengthInput.value);
- if(!Number.isFinite(start)||start<0||start>86400||!Number.isFinite(duration)||duration<.5||duration>20||
-    (lastSourceDuration>0&&start+duration>lastSourceDuration+.051)){
-  controlsRefresh(old);notify('시작 위치와 길이를 확인해 주세요. 파일의 실제 재생 시간을 넘길 수 없어요.',true);return;
+ const start=Number(inInput.value);let duration=Number(lengthInput.value);
+ if(!Number.isFinite(start)||start<0||start>86400||!Number.isFinite(duration)||duration<.5||duration>20){
+  controlsRefresh(old);notify('시작 위치는 0초 이상, 재생 길이는 0.5~20초여야 해요.',true);return;
+ }
+ if(lastSourceDuration>0&&start+duration>lastSourceDuration+.051){
+  // When users move the in-point, reduce the previous length automatically.
+  duration=Math.floor((lastSourceDuration-start)*10)/10;
+  if(duration<.5){controlsRefresh(old);notify('남은 영상이 0.5초보다 짧아요.',true);return}
+  lengthInput.value=String(duration);
  }
  Adapter.setSceneVideoClip({...old,inPoint:Math.round(start*10)/10,duration:Math.round(duration*10)/10});
  persist().catch(()=>{});
- notify('영상 시작 지점과 재생 길이를 변경했어요.');
+ notify(origin==='start'?'영상 시작 위치를 변경했어요.':'영상 재생 길이를 변경했어요.');
 }
-inInput.addEventListener('change',changeTrim);lengthInput.addEventListener('change',changeTrim);
+inInput.addEventListener('change',()=>changeTrim('start'));
+lengthInput.addEventListener('change',()=>changeTrim('length'));
 window.addEventListener('pagehide',release);
 window.GulliverCanvasMedia={refresh,sync,release};
 refresh();
