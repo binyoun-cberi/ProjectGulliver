@@ -65,6 +65,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage,onPlaybackChang
   if(!playing)return;
   playing=false;cancelAnimationFrame(raf);audio?.pause();
   window.GulliverCanvasMedia?.sync?.(C.locateTime(get(),seconds).local,false,get().active);
+  window.GulliverMultiTrack?.sync?.(seconds,false);
   syncPlayback();
  }
  function halt(){pause();seconds=absoluteStart(get().active);preview=false;clearPreview();window.GulliverCanvasMedia?.sync?.(0,false,get().active);syncPlayback()}
@@ -72,6 +73,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage,onPlaybackChang
  function stop(reset=true){
   pause();if(reset){seconds=0;preview=false}
   if(audio){audio.pause();try{audio.currentTime=0}catch(e){}}
+  window.GulliverMultiTrack?.sync?.(seconds,false);
   if(reset&&get().active!==0)showPage(0);
   if(preview)paint(seconds);else clearPreview();
   syncPlayback();
