@@ -24,14 +24,20 @@ function drawFrame(ctx,model,seconds,images=new Map(),videos=new Map()){
  ctx.save();ctx.clearRect(0,0,w,h);ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h);
  ctx.globalAlpha=transition.opacity;ctx.translate(transition.slide,0);
  ctx.fillStyle=p.background;ctx.fillRect(0,0,w,h);
- if(p.videoClip){
-  const movie=videos.get(p.videoClip.mediaId);
-  if(!movie||movie.readyState<2||!movie.videoWidth||!movie.videoHeight)throw Error('영상 클립의 프레임을 읽지 못했어요. 사용 가능한 코덱을 확인해 주세요.');
-  const ratio=Math.max(w/movie.videoWidth,h/movie.videoHeight);
-  const sw=w/ratio,sh=h/ratio;
-  ctx.drawImage(movie,(movie.videoWidth-sw)/2,(movie.videoHeight-sh)/2,sw,sh,0,0,w,h);
- }
- for(const item of p.elements){
+ const drawVideo=()=>{
+  if(!p.videoClip)return;
+  const clip=p.videoClip,movie=videos.get(clip.mediaId);
+  if(!movie||movie.readyState<2||!movie.videoWidth||!movie.videoHeight)throw Error('영상 프레임을 읽지 못했어요. 코덱을 확인해 주세요.');
+  const x=clip.x??0,y=clip.y??0,cw=clip.w??w,ch=clip.h??h;
+  const ratio=Math.max(cw/movie.videoWidth,ch/movie.videoHeight);
+  const sw=cw/ratio,sh=ch/ratio;
+  ctx.save();ctx.beginPath();ctx.rect(x,y,cw,ch);ctx.clip();
+  ctx.drawImage(movie,(movie.videoWidth-sw)/2,(movie.videoHeight-sh)/2,sw,sh,x,y,cw,ch);
+  ctx.restore();
+ };
+ const stack=Math.min(p.elements.length,p.videoClip?.stack??0);
+ if(p.videoClip&&stack===0)drawVideo();
+ for(const [elementIndex,item] of p.elements.entries()){
   const animation=C.animationFrame(item,position.local);
   ctx.save();
   ctx.globalAlpha*=item.opacity*animation.opacity;
@@ -65,6 +71,7 @@ function drawFrame(ctx,model,seconds,images=new Map(),videos=new Map()){
    for(let n=0;n<lines.length;n++)ctx.fillText(lines[n],x,y0+n*lineHeight,item.w);
   }
   ctx.restore();
+  if(p.videoClip&&elementIndex+1===stack)drawVideo();
  }
  ctx.restore();
  return position;
@@ -170,7 +177,11 @@ async function exportWebM(project,{getMedia,onProgress=()=>{},signal}={}){
   if(decoded){
    const output=audioContext.createMediaStreamDestination(),gain=audioContext.createGain();
    gain.gain.value=safe.audio.volume;
-   source=audioContext.createBufferSource();source.buffer=decoded;source.loop=safe.audio.loop;
+   source=audioContext.createBufferSource();source.buffer=decoded;
+   const trimStart=Math.min(Math.max(0,decoded.duration-.1),safe.audio.trimStart||0);
+   const trimDuration=Math.min(Math.max(.1,decoded.duration-trimStart),safe.audio.trimDuration||60);
+   source.loop=safe.audio.loop;
+   if(source.loop){source.loopStart=trimStart;source.loopEnd=Math.max(trimStart+.1,Math.min(decoded.duration,trimStart+trimDuration))}
    source.connect(gain);gain.connect(output);
    const track=output.stream.getAudioTracks()[0];
    if(!track)throw Error('음악 녹음 트랙을 만들지 못했어요.');
@@ -197,7 +208,9 @@ async function exportWebM(project,{getMedia,onProgress=()=>{},signal}={}){
   if(aborted)throw Error('영상 저장이 취소됐어요.');
   if(!aborted){
    recorder.start(250);
-   source?.start();
+   if(source){const offset=Math.min(source.buffer.duration-.1,safe.audio.trimStart||0);
+    if(source.loop)source.start(0,Math.max(0,offset));
+    else source.start(0,Math.max(0,offset),Math.min(safe.audio.trimDuration||60,source.buffer.duration-Math.max(0,offset)));}
    alignVideo(0,true);
    const start=root.performance.now();
    timer=root.setInterval(()=>{
