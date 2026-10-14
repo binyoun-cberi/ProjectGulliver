@@ -10,7 +10,7 @@ function rgb(file,sec){
  return Array.from(out.subarray(0,3));
 }
 function level(file,sec){
- const out=ff(['-ss',String(sec),'-i',file,'-t','.3','-ac','1','-ar','8000','-f','s16le','-']);
+ const out=ff(['-ss',String(sec),'-i',file,'-t','0.3','-ac','1','-ar','8000','-f','s16le','-']);
  let total=0,count=0;for(let i=0;i+1<out.length;i+=2){total+=Math.abs(out.readInt16LE(i));count++}
  return total/Math.max(1,count);
 }
