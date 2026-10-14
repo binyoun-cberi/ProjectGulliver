@@ -9,11 +9,16 @@ const studioCore=require('../studio-core.js');
 test('Canva-style home has real linked formats with matching studio implementations',()=>{
  const html=read('index.html'),home=read('workspace-home.js'),css=read('workspace-experience.css');
  const formats=[...home.matchAll(/\['(?:presentation|worksheet|document|custom|video|picture|pdf|music)','[^']+','([^']+)'/g)].map(x=>x[1]);
- assert.deepEqual(formats,['slides','design','document','canvas','video','picture','pdf','music']);
- formats.forEach(kind=>{
-  assert.ok(studioCore.TOOLS[kind],kind+' editor exists');
-  assert.ok(html.includes('href="뚝딱 제작실.html?new='+kind+'"'),kind+' accessible from create sheet');
- });
+ assert.deepEqual(formats,['canvas','canvas','canvas','document','video','picture','pdf','music']);
+ formats.forEach(kind=>assert.ok(studioCore.TOOLS[kind],kind+' editor exists'));
+ for(const preset of ['blank','presentation','worksheet']){
+  assert.ok(html.includes('href="뚝딱 제작실.html?new=canvas&amp;template='+preset+'"'));
+ }
+ for(const kind of ['slides','document','design','picture','pdf','video','music']){
+  assert.ok(html.includes('href="뚝딱 제작실.html?new='+kind+'"'));
+ }
+ assert.doesNotMatch(html,/href="lesson\.html"/);
+ assert.doesNotMatch(read('뚝딱 제작실.html'),/href="lesson\.html"/);
  assert.match(html,/class="home-bottom-bar"/);
  assert.match(html,/workspace-experience\.css/);
  assert.match(home,/templates\.slice\(0,3\)/);
@@ -31,7 +36,8 @@ test('Studio mobile panel and deep links use the existing editor bridge',()=>{
  }
  assert.match(html,/studio-experience\.css/);
  assert.match(html,/studio-experience\.js/);
- assert.match(js,/bridge\.start\(requested\)/);
+ assert.match(js,/bridge\.start\(requested,null,'',preset\)/);
+ assert.match(html,/data-canvas-template="worksheet"/);
  assert.match(js,/bridge\.start\(kind\)/);
  assert.match(js,/layout\?\.setRight\('projects'\)/);
  assert.match(css,/canvas-library-open \.sidebar/);

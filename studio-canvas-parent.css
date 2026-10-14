@@ -48,3 +48,11 @@ body.studio-canvas.canvas-library-open #canvasMobileShade:not([hidden]){display:
  body.studio-canvas.canvas-library-open #canvasMobileShade:not([hidden]){inset:52px 0 0}
  body.studio-canvas.canvas-transfer-open #transferBar:not([hidden]){right:8px;width:min(360px,calc(100vw - 16px))}
 }
+
+/* The top-level studio already has the canvas tool picker and library.
+   Keep no invisible white buttons in the gradient header. */
+body.studio-canvas #newProject,
+body.studio-canvas #openOriginal,
+body.studio-canvas #openPalette,
+body.studio-canvas #openInspector{display:none!important}
+body.studio-canvas .center>.top .actions{gap:5px}

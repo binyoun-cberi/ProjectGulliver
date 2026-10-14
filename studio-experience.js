@@ -38,6 +38,8 @@ function sync(){
  if(shade)shade.hidden=!document.body.classList.contains('canvas-library-open');
 }
 function openPicker(){
+ if(document.body.classList.contains('canvas-library-open'))$('canvasLibraryToggle')?.click();
+ if(document.body.classList.contains('canvas-transfer-open'))$('canvasTransferToggle')?.click();
  if(picker?.showModal&&!picker.open)picker.showModal();
 }
 function showProjects(){
@@ -90,9 +92,12 @@ if(bar)bar.addEventListener('click',e=>{
 if(picker){
  const grid=picker.querySelector('.picker-grid');
  for(const [kind,tool] of Object.entries(tools)){
+  if(kind==='canvas')continue;
   const b=document.createElement('button');b.type='button';b.dataset.kind=kind;
   const span=document.createElement('span');span.textContent=tool.icon;span.setAttribute('aria-hidden','true');
-  b.append(span,document.createTextNode(tool.label));
+  const itemText=document.createElement('span');itemText.textContent=tool.label;
+  const description=document.createElement('small');description.textContent='전문 편집 화면';itemText.append(document.createElement('br'),description);
+  b.append(span,itemText);
   b.addEventListener('click',async()=>{
    // The existing bridge asks for confirmation before discarding unsaved picture/PDF edits.
    const opened=await bridge.start(kind);
@@ -101,6 +106,12 @@ if(picker){
   });
   grid.append(b);
  }
+ picker.querySelectorAll('[data-canvas-template]').forEach(button=>button.addEventListener('click',async()=>{
+  const preset=button.dataset.canvasTemplate;
+  if(!['blank','presentation','worksheet'].includes(preset))return;
+  const ok=await bridge.start('canvas',null,'',preset);
+  if(ok){picker.close();sync()}
+ }));
  picker.querySelector('[data-close-picker]')?.addEventListener('click',()=>picker.close());
 }
 shade?.addEventListener('click',()=>{
@@ -117,9 +128,10 @@ document.addEventListener('keydown',e=>{
 const params=new URLSearchParams(location.search);
 const requested=params.get('new');
 if(requested&&Object.prototype.hasOwnProperty.call(tools,requested)){
- Promise.resolve(bridge.start(requested)).then(ok=>{
+ const preset=params.get('template');
+ Promise.resolve(bridge.start(requested,null,'',preset)).then(ok=>{
   if(ok){
-   const url=new URL(location.href);url.searchParams.delete('new');
+   const url=new URL(location.href);url.searchParams.delete('new');url.searchParams.delete('template');
    history.replaceState(null,'',url.pathname+url.search+url.hash);
   }
   sync();

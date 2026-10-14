@@ -4,17 +4,17 @@ const W=ClassroomWorkspace,tools=ClassroomTools,$=id=>document.getElementById(id
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const CATEGORIES=['전체','시간·수업 안내','뽑기·편성','퀴즈·놀이','학급 관리','자료·기록'];
 const FORMATS=[
- ['presentation','발표자료','slides','▤','#ff6c29','슬라이드·PPTX'],
- ['worksheet','학습지·도안','design','◇','#09a96a','활동지·인쇄물'],
- ['document','문서','document','≡','#367ce8','안내장·기록지'],
- ['custom','맞춤 디자인','canvas','✦','#7750dc','한 화면에서 편집'],
- ['video','동영상','video','▶','#d54fc4','장면·자막'],
- ['picture','그림·사진','picture','▧','#188cba','사진과 이미지'],
- ['pdf','PDF','pdf','▣','#df5f69','합치기·나누기'],
- ['music','음악','music','♫','#7561d7','리듬·배경음악']
+ ['presentation','발표 자료','canvas','▤','#ff6c29','통합 캔버스 · PNG/PDF','presentation'],
+ ['worksheet','학습지·도안','canvas','◇','#09a96a','통합 캔버스 · 인쇄물','worksheet'],
+ ['custom','빈 디자인','canvas','✦','#7750dc','캔바형 자유 편집','blank'],
+ ['document','문서·안내장','document','≡','#367ce8','HWPX/DOCX 전문 도구'],
+ ['video','동영상','video','▶','#d54fc4','영상 전문 도구'],
+ ['picture','그림·사진','picture','▧','#188cba','그림 전문 도구'],
+ ['pdf','PDF','pdf','▣','#df5f69','PDF 전문 도구'],
+ ['music','음악','music','♫','#7561d7','음악 전문 도구']
 ];
 function startTiles(){
- return '<div class="format-grid">'+FORMATS.map(f=>'<a class="format-tile" href="뚝딱 제작실.html?new='+f[2]+'" style="--format-accent:'+f[4]+'" aria-label="'+f[1]+' 만들기"><span class="format-symbol" aria-hidden="true">'+f[3]+'</span><strong>'+f[1]+'</strong><small>'+f[5]+'</small></a>').join('')+'</div>';
+ return '<div class="format-grid">'+FORMATS.map(f=>'<a class="format-tile" href="뚝딱 제작실.html?new='+f[2]+(f[6]?'&amp;template='+f[6]:'')+'" style="--format-accent:'+f[4]+'" aria-label="'+f[1]+' 만들기"><span class="format-symbol" aria-hidden="true">'+f[3]+'</span><strong>'+f[1]+'</strong><small>'+f[5]+'</small></a>').join('')+'</div>';
 }
 const requestedView=new URLSearchParams(location.search).get('view');
 let view=['home','tools','activities','templates','favorites','trash'].includes(requestedView)?requestedView:'home',folderId='',category='전체',editAction=null,toastTimer;
