@@ -34,6 +34,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage,onPlaybackChang
   if(m.active!==position.index)showPage(position.index);
   const page=m.pages[position.index],transition=C.transitionFrame(page,position.local);
   window.GulliverCanvasMedia?.sync?.(position.local,playing,position.index);
+  window.GulliverMultiTrack?.sync?.(t,playing);
   stage.style.opacity=String(transition.opacity);stage.style.translate=transition.slide+'px 0';
   for(const el of stage.querySelectorAll('.item')){
    const spec=page.elements.find(e=>e.id===el.dataset.id);if(!spec)continue;
@@ -205,7 +206,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage,onPlaybackChang
  window.addEventListener('pagehide',()=>{disposed=true;cancelAnimationFrame(raf);cleanMedia()});
  refreshSoundShelf().then(()=>{if(get().audio)return prepareAudio()}).catch(()=>{});
  refresh();
- return {refresh,stop,pause,play,halt,syncToActive,isPlaying:()=>playing,seek,refreshSoundShelf,prepareAudio,importWav,selectAudio:async id=>{const entry=await getMedia(id);if(!entry||entry.mime!=='audio/wav')throw Error('음악 원본을 찾지 못했어요.');await updateAudio(entry)},
+ return {refresh,stop,pause,play,halt,syncToActive,isPlaying:()=>playing,seek,refreshSoundShelf,prepareAudio,importWav,getTime:()=>seconds,selectAudio:async id=>{const entry=await getMedia(id);if(!entry||entry.mime!=='audio/wav')throw Error('음악 원본을 찾지 못했어요.');await updateAudio(entry)},
   setMediaProvider:provider=>{getMedia=provider;cleanMedia()},setMediaSink:sink=>{saveMedia=sink},dispose:()=>{stop();cleanMedia();disposed=true}};
 }
 window.GulliverUnifiedTimeline={create};
