@@ -2,7 +2,7 @@
 'use strict';
 const C=window.GulliverUnifiedCore,$=id=>document.getElementById(id);
 if(!C)throw Error('공통 캔버스 엔진을 불러오지 못했어요.');
-let model=C.starter(),selected='',undoStack=[],redoStack=[],scale=1,drag=null,editing=false,timeline=null;
+let model=C.starter(),selected='',undoStack=[],redoStack=[],scale=1,drag=null,editing=false,timeline=null,videoController=null;
 const stage=$('stage'),textEditor=$('editText'),stackLimit=80;
 const clone=obj=>JSON.parse(JSON.stringify(obj)),page=()=>model.pages[model.active],
   current=()=>page().elements.find(e=>e.id===selected)||null;
@@ -299,6 +299,26 @@ function bind(){
  stage.addEventListener('dblclick',beginText);
  textEditor.addEventListener('blur',closeEditor);
  textEditor.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();closeEditor()}});
+ $('exportWebm').addEventListener('click',async()=>{
+  if(videoController)return;
+  const V=window.GulliverUnifiedVideo,S=window.GulliverStudioStorage;
+  if(!V||!S){notice('영상 제작 기능을 불러오지 못했어요.',true);return}
+  const panel=$('videoProgressPanel'),button=$('exportWebm'),cancel=$('cancelWebm');
+  try{
+   timeline?.halt();closeEditor();const snapshot=C.validate(model);
+   V.plan(snapshot);if(!V.mimeType())throw Error('이 브라우저는 WebM 출력을 지원하지 않아요. PC Chrome이나 Edge를 이용해 주세요.');
+   const controller=new AbortController();videoController=controller;
+   button.disabled=true;cancel.hidden=false;panel.hidden=false;
+   $('videoProgress').value=0;$('videoProgressText').textContent='0%';
+   notice('장면을 영상으로 만드는 중이에요. 탭을 닫지 마세요.');
+   const movie=await V.exportWebM(snapshot,{getMedia:id=>S.getMedia(id),signal:controller.signal,
+    onProgress:p=>{const value=Math.round(p*100);$('videoProgress').value=value;$('videoProgressText').textContent=value+'%'}});
+   download(movie,(snapshot.title||'수업영상').replace(/[\\/:*?"<>|]/g,'_')+'.webm');
+   notice('장면 전환·등장 효과'+(snapshot.audio?'·배경음악이':'가')+' 포함된 WebM 영상을 저장했어요.');
+  }catch(e){notice('영상 저장 실패: '+(e.message||e),true)}
+  finally{videoController=null;button.disabled=false;cancel.hidden=true;panel.hidden=true}
+ });
+ $('cancelWebm').addEventListener('click',()=>{videoController?.abort();notice('영상 저장을 취소하는 중이에요.')});
  $('exportPng').addEventListener('click',async()=>{try{timeline?.halt();closeEditor();const blob=await pagePng(page());download(blob,(model.title||'수업자료').replace(/[\\/:*?"<>|]/g,'_')+'.png');notice('PNG를 저장했어요.')}catch(e){notice(e.message,true)}});
  $('printPdf').addEventListener('click',()=>{
   timeline?.halt();closeEditor();document.getElementById('print-page-size')?.remove();
@@ -338,6 +358,7 @@ window.GulliverStudioAdapter={
  rename:title=>edit(()=>{model.title=String(title).slice(0,90)}),
  insertImage:addImageFile,
  exportImage:async()=>{closeEditor();return pagePng(page())},
+ exportVideo:async()=>{throw Error('영상 저장은 통합 캔버스 안의 “영상 저장 (WebM)” 버튼에서 진행해 주세요.')},
  exportSlides:async()=>{
   if(model.pages.length>5)throw Error('영상으로 한 번에 보낼 수 있는 페이지는 최대 5장이에요.');
   const pages=model.pages;const files=[];
