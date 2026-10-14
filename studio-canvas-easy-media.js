@@ -38,11 +38,11 @@ async function refreshFiles(){
   button.addEventListener('click',async()=>{
    try{
     if(kind(row)==='video'){
-     if(window.GulliverMultiTrack)window.GulliverMultiTrack.addFromMedia(row);
+     if(window.GulliverMultiTrack?.isEnabled())window.GulliverMultiTrack.addFromMedia(row);
      else {await M.attachStored(row);startLayout(true)}
     }
     else if(kind(row)==='audio'){
-     if(window.GulliverMultiTrack)window.GulliverMultiTrack.addFromMedia(row);
+     if(window.GulliverMultiTrack?.isEnabled())window.GulliverMultiTrack.addFromMedia(row);
      else await A.selectMusicFile(row.id);
     }else await A.insertImage(new File([row.blob],row.name,{type:row.mime}));
     for(const child of files.querySelectorAll('.easy-file'))child.classList.remove('is-active');
