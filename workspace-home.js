@@ -62,11 +62,15 @@ function render(){
      if(templates.length)html+=section('수업 템플릿으로 시작','준비된 예시를 열어 우리 반에 맞게 수정하세요.',
        '<div class="template-grid home-template-grid">'+templates.slice(0,3).map(templateCard).join('')+'</div>',
        '<button class="text-btn" data-view="templates">모두 보기 →</button>');
-     const featured=['수업 흐름 타이머','낱말카드·퀴즈','교실 자리 배정','범퍼 룰렛 레이스','성취기준·세특 도우미','이번 수업 알리미'];
+     const featured=['수업 흐름 타이머','낱말카드·퀴즈','교실 자리 배정','범퍼 룰렛 레이스','성취기준·세특 도우미','이번 수업 알리미','영상 뚝딱','음악 뚝딱'];
      const selected=featured.map(n=>tools.find(t=>t.name===n)).filter(Boolean);
      html+=section('수업에 바로 쓰는 도구','필요한 순간에 바로 실행하는 교실 도구예요.',
        '<div class="tool-list home-tool-list">'+selected.map(toolCard).join('')+'</div>',
        '<button class="text-btn" data-view="tools">전체 도구 보기 →</button>');
+     const quickNames=['영상 뚝딱','음악 뚝딱','뚝딱 제작실','QR 코드 도구','우리 반 투표판','수업 흐름 타이머','낱말카드·퀴즈','교실 자리 배정'];
+     html+=section('기능 바로가기','자주 쓰는 편집기와 수업 도구를 바로 열어 보세요.',
+       '<nav class="quick-tools" aria-label="기능 바로가기">'+quickNames.map(name=>tools.find(t=>t.name===name)).filter(Boolean).map(t=>'<a class="quick-tool" data-tool="'+esc(t.href)+'" href="'+esc(t.href)+'" style="--tool-accent:'+esc(t.accent)+'"><span class="quick-icon">'+esc(t.icon)+'</span><span>'+esc(t.name)+'</span></a>').join('')+'</nav>');
+
    }else if(isHome&&query){
      const results=activities.length+templates.length+filteredTools.length;
      if(activities.length)html+=section('내 활동 · '+activities.length+'개','','<div class="activity-grid">'+activities.map(a=>activityCard(a)).join('')+'</div>');
