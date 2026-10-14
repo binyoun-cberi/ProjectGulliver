@@ -15,6 +15,12 @@ test('3.3 Chrome: canvas lesson edit, audio backup, playback and fresh restore',
   await page.locator('[data-add="canvas"]').click();
   const frame=page.frameLocator('#stage iframe');await frame.locator('[data-add="text"]').click();
   assert.equal(await frame.locator('#elementAnimation').isEnabled(),true);
+  const placement=await frame.locator('#stage .item.selected').evaluate(node=>{
+   const title=[...node.parentElement.querySelectorAll('.item')].find(item=>item.textContent==='우리 함께 배워요!');
+   return{newY:parseFloat(node.style.top),titleBottom:parseFloat(title.style.top)+parseFloat(title.style.height)};
+  });
+  assert.ok(placement.newY>=placement.titleBottom,'new text should avoid the template title');
+  await frame.locator('#propertyText').fill('오늘의 학습 목표');
   await frame.locator('#elementAnimation').selectOption('fade');
   await page.screenshot({path:'test-artifacts/lesson-canvas-desktop.png'});
   await frame.locator('#newPage').click();

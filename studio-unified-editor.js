@@ -106,9 +106,20 @@ function render(){
  for(const e of page().elements)stage.append(drawItem(e));
  renderPages();properties();timeline?.refresh();
 }
+function placeNewText(e){
+ const blockers=page().elements.filter(item=>item.type==='text');
+ if(e.type!=='text'||!blockers.length)return e;
+ const layout=C.LAYOUTS[model.layout],bottom=Math.max(32,Math.round(layout.h*.67)),right=Math.max(32,layout.w-e.w-40);
+ const positions=[[e.x,e.y],[e.x,bottom],[right,e.y],[right,bottom],[32,32]];
+ const overlap=([x,y])=>blockers.reduce((sum,item)=>sum+
+  Math.max(0,Math.min(x+e.w,item.x+item.w)-Math.max(x,item.x))*
+  Math.max(0,Math.min(y+e.h,item.y+item.h)-Math.max(y,item.y)),0);
+ const [x,y]=positions.reduce((best,candidate)=>overlap(candidate)<overlap(best)?candidate:best);
+ return{...e,x,y};
+}
 function addElement(type,partial){
  if(page().elements.length>=C.MAX_ITEMS){notice('페이지당 최대 150개 요소만 넣을 수 있어요.',true);return}
- const e=C.element(type,partial||{});
+ const e=partial?C.element(type,partial):placeNewText(C.element(type));
  edit(()=>page().elements.push(e),e.id);notice('요소가 추가됐어요. 화면에서 이동하거나 크기를 바꾸세요.');
 }
 function addPage(){
