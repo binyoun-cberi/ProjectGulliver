@@ -78,6 +78,23 @@ function cleanVideoClip(raw){
   w:number(raw.w,40,2000,960),h:number(raw.h,40,2000,540),
   stack:number(raw.stack,0,MAX_ITEMS,0)|0};
 }
+const TRACK_KINDS=['video','audio','caption'],MAX_TRACKS=40;
+function cleanTrack(raw,i=0){
+ if(!raw||!TRACK_KINDS.includes(raw.kind))throw Error('타임라인 클립 종류가 올바르지 않아요.');
+ const kind=raw.kind,idValue=String(raw.id||'u-track-'+i);
+ if(!/^u-[\w-]{1,110}$/.test(idValue))throw Error('타임라인 클립 번호가 올바르지 않아요.');
+ const base={id:idValue,kind,name:text(raw.name||(kind==='caption'?'새 자막':'미디어 클립'),90),
+  start:number(raw.start,0,60,0),duration:number(raw.duration,.5,60,3),trimStart:number(raw.trimStart,0,86400,0),
+  volume:number(raw.volume,0,1,.7),muted:raw.muted!==false,
+  x:number(raw.x,-1500,2500,120),y:number(raw.y,-1500,2500,120),
+  w:number(raw.w,20,2000,480),h:number(raw.h,20,2000,180),stack:number(raw.stack,0,255,1)|0};
+ if(kind==='caption')return{...base,text:text(raw.text||'여기에 자막 입력',300),
+   fontSize:number(raw.fontSize,12,160,38),color:color(raw.color,'#ffffff')};
+ if(!/^u-[\w-]{1,110}$/.test(raw.mediaId||''))throw Error('타임라인 파일 원본을 찾을 수 없어요.');
+ const valid=kind==='video'?['video/mp4','video/webm','video/quicktime']:['audio/wav'];
+ if(!valid.includes(raw.mime))throw Error('타임라인 파일 형식이 올바르지 않아요.');
+ return{...base,mediaId:raw.mediaId,mime:raw.mime};
+}
 function validate(raw){
  if(!raw||raw.format!==FORMAT||!LAYOUTS[raw.layout]||!Array.isArray(raw.pages)||raw.pages.length<1||raw.pages.length>MAX_PAGES)
   throw Error('통합 캔버스 프로젝트 형식 또는 페이지 수가 올바르지 않아요.');
@@ -100,7 +117,14 @@ function validate(raw){
    volume:number(a.volume,0,1,.7),loop:a.loop!==false,
    trimStart:number(a.trimStart,0,86400,0),trimDuration:number(a.trimDuration,1,60,60)};
  }
- return{format:FORMAT,title:text(raw.title,90)||'통합 제작물',layout:raw.layout,pages,active:number(raw.active,0,pages.length-1,0)|0,audio};
+ const tracks=raw.tracks==null?null:raw.tracks;
+ if(tracks!==null&&(!Array.isArray(tracks)||tracks.length>MAX_TRACKS))throw Error('타임라인은 최대 '+MAX_TRACKS+'개 클립까지 지원해요.');
+ const clean=tracks?.map(cleanTrack);
+ if(clean){const unique=new Set();for(const track of clean){
+   if(unique.has(track.id))throw Error('타임라인에 중복된 클립이 있어요.');unique.add(track.id);
+   if(track.start+track.duration>totalDuration({pages})+.051)throw Error('클립이 전체 수업 길이를 넘어요. 먼저 페이지 길이를 늘려 주세요.');
+ }}
+ return{format:FORMAT,title:text(raw.title,90)||'통합 제작물',layout:raw.layout,pages,active:number(raw.active,0,pages.length-1,0)|0,audio,...(clean?{tracks:clean}:{})};
 }
 function totalDuration(project){return project.pages.reduce((sum,p)=>sum+number(p.duration,MIN_DURATION,MAX_DURATION,5),0)}
 function locateTime(project,seconds){
@@ -153,5 +177,5 @@ function fromLegacy(kind,payload){
  if(kind==='slides')return fromSlides(payload);
  throw Error('도안·발표 작업만 편집 가능한 캔버스로 변환할 수 있어요.');
 }
-return {FORMAT,LAYOUTS,MAX_PAGES,MAX_ITEMS,TYPES,ANIMATIONS,TRANSITIONS,MIN_DURATION,MAX_DURATION,id,color,image,element,makePage,starter,nameTags,validate,fromLegacy,totalDuration,locateTime,animationFrame,transitionFrame,cleanVideoClip};
+return {FORMAT,LAYOUTS,MAX_PAGES,MAX_ITEMS,TYPES,ANIMATIONS,TRANSITIONS,MIN_DURATION,MAX_DURATION,id,color,image,element,makePage,starter,nameTags,validate,fromLegacy,totalDuration,locateTime,animationFrame,transitionFrame,cleanVideoClip,cleanTrack,TRACK_KINDS,MAX_TRACKS};
 });

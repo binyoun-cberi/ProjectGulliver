@@ -37,9 +37,13 @@ async function refreshFiles(){
   text.append(strong,small);button.append(thumb,text);
   button.addEventListener('click',async()=>{
    try{
-    if(kind(row)==='video'){await M.attachStored(row);startLayout(true)}
+    if(kind(row)==='video'){
+     if(window.GulliverMultiTrack?.isEnabled())window.GulliverMultiTrack.addFromMedia(row);
+     else {await M.attachStored(row);startLayout(true)}
+    }
     else if(kind(row)==='audio'){
-     await A.selectMusicFile(row.id);
+     if(window.GulliverMultiTrack?.isEnabled())window.GulliverMultiTrack.addFromMedia(row);
+     else await A.selectMusicFile(row.id);
     }else await A.insertImage(new File([row.blob],row.name,{type:row.mime}));
     for(const child of files.querySelectorAll('.easy-file'))child.classList.remove('is-active');
     button.classList.add('is-active');
@@ -61,9 +65,9 @@ async function importOne(original){
  setProgress(original.name,0,'가져오기 시작');
  if(!original.size||original.size>15*1048576)throw Error('파일 크기는 15MB 이하여야 해요.');
  const file=await readFile(original);setProgress(file.name,92,'편집기에 연결 중');
- if(file.type.startsWith('video/'))await M.importFile(file);
+ if(file.type.startsWith('video/')){await M.importFile(file);window.GulliverMultiTrack?.adoptImported?.()}
  else if(['audio/wav','audio/x-wav','audio/wave'].includes(file.type)){
-  await A.addMusicFile(file);
+  await A.addMusicFile(file);window.GulliverMultiTrack?.adoptImported?.();
  }else if(['image/png','image/jpeg'].includes(file.type)){
   await A.insertImage(file);
   if((await S.media()).length<18)await S.saveMedia({id:C.id(),name:file.name.slice(0,90),mime:file.type,blob:file,createdAt:Date.now()});
