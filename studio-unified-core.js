@@ -62,7 +62,7 @@ function validate(raw){
  let audio=null;
  if(raw.audio!==undefined&&raw.audio!==null){
   const a=raw.audio;
-  if(!a||typeof a.mediaId!=='string'||!/^[\\w-]{1,110}$/.test(a.mediaId)||a.mime!=='audio/wav')throw Error('통합 캔버스의 배경음악 원본 정보가 잘못됐어요.');
+  if(!a||typeof a.mediaId!=='string'||!/^[\w-]{1,110}$/.test(a.mediaId)||a.mime!=='audio/wav')throw Error('통합 캔버스의 배경음악 원본 정보가 잘못됐어요.');
   audio={mediaId:a.mediaId,mime:'audio/wav',name:text(a.name||'배경음악',90),
    volume:number(a.volume,0,1,.7),loop:a.loop!==false};
  }
