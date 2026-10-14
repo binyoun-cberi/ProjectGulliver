@@ -299,9 +299,9 @@ function bind(){
  stage.addEventListener('dblclick',beginText);
  textEditor.addEventListener('blur',closeEditor);
  textEditor.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();closeEditor()}});
- $('exportPng').addEventListener('click',async()=>{try{closeEditor();const blob=await pagePng(page());download(blob,(model.title||'수업자료').replace(/[\\/:*?"<>|]/g,'_')+'.png');notice('PNG를 저장했어요.')}catch(e){notice(e.message,true)}});
+ $('exportPng').addEventListener('click',async()=>{try{timeline?.halt();closeEditor();const blob=await pagePng(page());download(blob,(model.title||'수업자료').replace(/[\\/:*?"<>|]/g,'_')+'.png');notice('PNG를 저장했어요.')}catch(e){notice(e.message,true)}});
  $('printPdf').addEventListener('click',()=>{
-  closeEditor();document.getElementById('print-page-size')?.remove();
+  timeline?.halt();closeEditor();document.getElementById('print-page-size')?.remove();
   const style=document.createElement('style');style.id='print-page-size';
   style.textContent='@page { size: '+(model.layout==='a4'?'A4 portrait':'landscape')+'; margin: 0 }';
   document.head.append(style);window.print();
@@ -334,7 +334,7 @@ timeline=window.GulliverUnifiedTimeline?.create({
 window.GulliverStudioAdapter={
  kind:'canvas',
  capture:()=>C.validate(model),
- apply:raw=>{timeline?.halt();closeEditor();model=C.validate(raw);selected='';undoStack=[];redoStack=[];timeline?.syncToActive();render();timeline?.refreshSoundShelf().catch(()=>{})},
+ apply:raw=>{timeline?.halt();closeEditor();model=C.validate(raw);selected='';undoStack=[];redoStack=[];timeline?.syncToActive();render();timeline?.refreshSoundShelf().then(()=>timeline?.prepareAudio?.()).catch(()=>{})},
  rename:title=>edit(()=>{model.title=String(title).slice(0,90)}),
  insertImage:addImageFile,
  exportImage:async()=>{closeEditor();return pagePng(page())},
