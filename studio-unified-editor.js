@@ -254,6 +254,7 @@ function svg(pageValue){
  return '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="'+dim.w+'" height="'+dim.h+'" viewBox="0 0 '+dim.w+' '+dim.h+'">'+items+'</svg>';
 }
 async function pagePng(pageValue){
+ if(pageValue.videoClip)throw Error('이 장면에는 영상 클립이 있어요. 이미지로 저장하면 영상이 사라지므로 현재는 지원하지 않아요.');
  const markup=svg(pageValue),url=URL.createObjectURL(new Blob([markup],{type:'image/svg+xml'}));
  try{
   const dim=C.LAYOUTS[model.layout],img=new Image();
