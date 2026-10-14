@@ -18,9 +18,12 @@ test('inline canvas video: import MP4, trim, play, autosave, recover source; fai
   page.setDefaultTimeout(25000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(site,{waitUntil:'domcontentloaded'});
   const frame=page.frameLocator('#editorFrame');
+  await frame.locator('.canvas-video-preview').waitFor({state:'attached'});
+  assert.equal(await frame.locator('.canvas-video-preview').evaluate(v=>v.hidden),true,'Blank canvas must not be covered by a black video surface');
   await frame.locator('[data-design-tab="motion"]').click();
   await frame.locator('#canvasVideoUpload').setInputFiles(video);
   await frame.locator('#canvasVideoName').filter({hasText:'intro.mp4'}).waitFor();
+  await frame.locator('.canvas-video-preview').waitFor({state:'visible'});
   await page.waitForFunction(()=>{
    const adapter=document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter;
    return adapter?.capture().pages[0]?.videoClip?.name==='intro.mp4';
@@ -55,6 +58,7 @@ test('inline canvas video: import MP4, trim, play, autosave, recover source; fai
   assert.ok(dock.bottom>=dock.height-2);
   await frame.locator('#canvasVideoRemove').click();
   await page.waitForFunction(()=>!document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.capture().pages[0]?.videoClip);
+  assert.equal(await frame.locator('.canvas-video-preview').evaluate(v=>v.hidden),true,'Removed clip must not hide the canvas');
   const left=await page.evaluate(async()=>(await GulliverStudioStorage.media()).filter(m=>m.mime==='video/mp4').length);
   assert.equal(left,1,'Removing from page retains original in media shelf');
   assert.deepEqual(errors,[]);
