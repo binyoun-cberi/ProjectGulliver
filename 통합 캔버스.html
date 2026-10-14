@@ -33,6 +33,20 @@ button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:#6654bd
 .page{min-width:115px;max-width:160px;display:flex;flex-direction:column;align-items:flex-start;gap:5px;flex-shrink:0;text-align:left;font-size:12px}
 .page.active{border:2px solid #6956c9;background:#f3f0ff}.mini{width:100%;height:49px;border:1px solid #d1d8e5;border-radius:5px;display:grid;place-items:center;color:#506078;overflow:hidden;font-size:10px}
 #photoPicker{display:none}
+.timeline{width:100%;border:1px solid #d6dbea;border-radius:12px;background:#fff;padding:10px;display:grid;gap:8px;max-width:100%}
+.timeline h3{margin:0;font-size:13px;color:#34445f}
+.timeline-controls,.timeline-settings,.timeline-audio{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px}
+.timeline-controls button,.timeline-settings button,.timeline-audio button{padding:6px 10px;font-size:12px}
+.timeline input[type=range]{flex:1;min-width:85px;accent-color:#6654bd}
+.timeline input[type=number]{width:68px;padding:5px;border:1px solid #d2d9e5;border-radius:7px}
+.timeline select{max-width:210px;padding:6px;border:1px solid #d2d9e5;border-radius:7px;background:white}
+.timeline label{display:inline-flex;gap:5px;align-items:center}
+.scene-track{display:flex;gap:5px;width:100%;overflow-x:auto;padding-bottom:4px}
+.scene-track button.scene-part{min-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;border:1px solid #d3d9e6;background:#eef3fc;flex-basis:100px;font-size:11px}
+.scene-track button.scene-part[data-active=true]{border:2px solid #6857c5;background:#ebe7ff;color:#41348e}
+#timelineClock{font-variant-numeric:tabular-nums;min-width:78px}#timelineMusicName{color:#55667e;font-size:11px}
+#stage.playing .grip{display:none}
+@media(max-width:620px){.timeline{padding:8px}.timeline-controls,.timeline-settings,.timeline-audio{gap:6px}.timeline select{max-width:155px}}
 @media(max-width:990px){.editor-grid{grid-template-columns:155px minmax(0,1fr)}.properties{grid-column:1/-1;border-top:1px solid #dce3ef;display:block}.props{display:flex;flex-wrap:wrap;gap:8px}.props>label,.props>.two{min-width:128px;max-width:190px;flex:1}}
 @media(max-width:620px){.top-tools{padding:7px;gap:5px}.top-tools button{padding:8px;font-size:12px}
 .editor-grid{display:flex;flex-direction:column}.shelf{display:flex;overflow-x:auto;gap:7px;padding:8px;flex-wrap:nowrap}.shelf h3,.shelf .notice,.shelf .separator{display:none}
@@ -68,6 +82,20 @@ button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:#6654bd
     <textarea id="editText" hidden aria-label="선택한 글씨 직접 수정"></textarea>
    </div></div></div>
    <div id="pageStrip" aria-label="페이지 목록"></div>
+   <section class="timeline" id="studioTimeline" aria-label="장면 타임라인 및 음악">
+    <h3>장면 타임라인</h3>
+    <div id="sceneTrack" class="scene-track" aria-label="재생 장면 순서"></div>
+    <div class="timeline-controls"><button id="timelinePlay" type="button">▶ 재생</button><button id="timelineStop" type="button">■ 정지</button>
+     <input id="timelineProgress" type="range" min="0" max="5" step=".1" value="0" aria-label="전체 타임라인 재생 위치">
+     <span id="timelineClock" role="timer">00:00 / 00:05</span></div>
+    <div class="timeline-settings"><label>현재 장면 길이 <input id="sceneDuration" type="number" min="1" max="20" step=".5" value="5">초</label>
+     <label>장면 전환 <select id="sceneTransition"><option value="none">바로 바꾸기</option><option value="fade">서서히 나타나기</option><option value="slide">옆에서 들어오기</option></select></label></div>
+    <div class="timeline-audio"><label>배경음악 <select id="audioFromShelf" aria-label="보관함의 WAV 선택"><option value="">저장된 WAV 선택</option></select></label>
+     <button id="refreshAudio" type="button">새로고침</button><label class="primary" for="audioUpload" style="cursor:pointer;padding:7px;border:1px solid #d2d9e5;border-radius:8px">＋ WAV 파일<input id="audioUpload" type="file" accept=".wav,audio/wav,audio/wave,audio/x-wav" hidden></label>
+     <button id="removeAudio" type="button">음악 제거</button><span id="timelineMusicName">배경음악 없음</span></div>
+    <div class="timeline-audio"><label>음악 크기 <input id="audioVolume" type="range" min="0" max="1" step=".05" value=".7" aria-label="배경음악 크기"></label>
+     <label><input id="audioLoop" type="checkbox" checked> 음악 반복</label><small style="color:#738094">파일은 이 기기에만 저장돼요.</small></div>
+   </section>
   </section>
   <aside class="properties"><h3>선택 요소 속성</h3>
    <div class="props" id="propertyForm">
@@ -79,11 +107,16 @@ button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:#6654bd
     <label>정렬 <select id="propertyAlign"><option value="left">왼쪽</option><option value="center">가운데</option><option value="right">오른쪽</option></select></label>
     <div class="group"><button id="bringForward">앞으로</button><button id="sendBack">뒤로</button></div>
     <label>페이지 배경색<input id="background" type="color" value="#ffffff"></label>
+    <label>선택 요소 등장 <select id="elementAnimation"><option value="none">효과 없음</option><option value="fade">서서히 나타나기</option><option value="rise">아래에서 올라오기</option><option value="zoom">확대 등장</option></select></label>
+    <label>등장 지연 (초) <input id="elementDelay" type="number" min="0" max="20" step=".5" value="0"></label>
    </div>
    <p class="notice" id="propertyHint">요소를 선택하면 글씨·색·크기를 변경할 수 있어요.</p>
   </aside>
  </div>
 </main>
-<script src="studio-unified-core.js?v=20261014-30"></script>
-<script src="studio-unified-editor.js?v=20261014-30"></script>
+<script src="studio-media-core.js?v=20261014-31"></script>
+<script src="studio-storage.js?v=20261014-31"></script>
+<script src="studio-unified-core.js?v=20261014-31"></script>
+<script src="studio-unified-timeline.js?v=20261014-31"></script>
+<script src="studio-unified-editor.js?v=20261014-31"></script>
 </body></html>
