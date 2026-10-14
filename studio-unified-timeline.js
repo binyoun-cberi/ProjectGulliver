@@ -20,6 +20,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
   return audio;
  }
  function clearPreview(){
+  stage.classList.remove('playing');
   stage.style.opacity='1';stage.style.translate='0px 0px';
   for(const node of stage.querySelectorAll('.item')){
    const spec=get().pages[get().active].elements.find(e=>e.id===node.dataset.id);
@@ -83,7 +84,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
  function play(){
   if(playing)return;
   if(seconds>=total())seconds=0;
-  playing=true;preview=true;origin=performance.now()-seconds*1000;
+  playing=true;preview=true;stage.classList.add('playing');origin=performance.now()-seconds*1000;
   syncPlayback();raf=requestAnimationFrame(tick);
   // Audio is user-gesture-initiated; visual playback works when autoplay is restricted.
   prepareAudio().then(entry=>{
@@ -194,7 +195,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
  window.addEventListener('pagehide',()=>{disposed=true;cancelAnimationFrame(raf);cleanMedia()});
  refreshSoundShelf().catch(()=>{});
  refresh();
- return {refresh,stop,halt,syncToActive,isPlaying:()=>playing,seek,dispose:()=>{stop();cleanMedia();disposed=true}};
+ return {refresh,stop,pause,play,halt,syncToActive,isPlaying:()=>playing,seek,refreshSoundShelf,dispose:()=>{stop();cleanMedia();disposed=true}};
 }
 window.GulliverUnifiedTimeline={create};
 })();
