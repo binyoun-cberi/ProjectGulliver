@@ -177,7 +177,11 @@ async function exportWebM(project,{getMedia,onProgress=()=>{},signal}={}){
   if(decoded){
    const output=audioContext.createMediaStreamDestination(),gain=audioContext.createGain();
    gain.gain.value=safe.audio.volume;
-   source=audioContext.createBufferSource();source.buffer=decoded;source.loop=safe.audio.loop;
+   source=audioContext.createBufferSource();source.buffer=decoded;
+   const trimStart=Math.min(Math.max(0,decoded.duration-.1),safe.audio.trimStart||0);
+   const trimDuration=Math.min(Math.max(.1,decoded.duration-trimStart),safe.audio.trimDuration||60);
+   source.loop=safe.audio.loop;
+   if(source.loop){source.loopStart=trimStart;source.loopEnd=Math.max(trimStart+.1,Math.min(decoded.duration,trimStart+trimDuration))}
    source.connect(gain);gain.connect(output);
    const track=output.stream.getAudioTracks()[0];
    if(!track)throw Error('음악 녹음 트랙을 만들지 못했어요.');
@@ -204,7 +208,9 @@ async function exportWebM(project,{getMedia,onProgress=()=>{},signal}={}){
   if(aborted)throw Error('영상 저장이 취소됐어요.');
   if(!aborted){
    recorder.start(250);
-   source?.start();
+   if(source){const offset=Math.min(source.buffer.duration-.1,safe.audio.trimStart||0);
+    if(source.loop)source.start(0,Math.max(0,offset));
+    else source.start(0,Math.max(0,offset),Math.min(safe.audio.trimDuration||60,source.buffer.duration-Math.max(0,offset)));}
    alignVideo(0,true);
    const start=root.performance.now();
    timer=root.setInterval(()=>{
