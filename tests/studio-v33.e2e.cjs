@@ -28,6 +28,7 @@ test('3.3 Chrome: canvas lesson edit, audio backup, playback and fresh restore',
   await page.screenshot({path:'test-artifacts/lesson-canvas-desktop.png'});
   await frame.locator('#newPage').evaluate(el=>el.click());
   await frame.locator('#audioUpload').setInputFiles({name:'수업 음악.wav',mimeType:'audio/wav',buffer:wav()});
+  await frame.locator('[data-design-tab="motion"]').click();
   await frame.locator('#timelineMusicName').filter({hasText:'수업 음악.wav'}).waitFor();
   await page.locator('#saveLesson').click();
   await page.waitForFunction(async()=>{
