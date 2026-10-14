@@ -39,6 +39,15 @@ function release(){
  if(currentUrl)URL.revokeObjectURL(currentUrl);
  currentUrl='';currentId='';ready=false;lastSourceDuration=0;
 }
+async function persist(){
+ // File imports are larger than ordinary property changes: commit the latest
+ // metadata before telling users it has been saved. The studio still handles
+ // independent automatic saves, undo, and existing project storage.
+ try{
+  if(window.parent!==window&&window.parent.GulliverStudioBridge?.getState()?.activeKind==='canvas')
+   await window.parent.GulliverStudioBridge.sync(true);
+ }catch(e){notify('영상은 추가됐지만 저장이 완료되지 않았어요. 원본을 백업해 주세요. '+(e.message||e),true)}
+}
 function notify(message,error=false){
  const el=$('status');if(!el)return;el.textContent=message;el.style.color=error?'#b91c1c':'#51647a';
 }
@@ -113,6 +122,7 @@ async function importFile(file){
  await Store.saveMedia(entry);
  const meta={mediaId:entry.id,name:entry.name,mime:entry.mime,inPoint:0,duration:Math.min(20,Math.round(duration*10)/10),muted:true};
  Adapter.setSceneVideoClip(meta);
+ await persist();
  notify('영상 클립을 현재 장면에 추가했어요. 화면을 누르거나 재생해 확인하세요.');
 }
 fileInput.addEventListener('change',async event=>{
@@ -121,7 +131,7 @@ fileInput.addEventListener('change',async event=>{
  try{await importFile(file)}catch(e){notify('영상 가져오기 실패: '+(e.message||e),true)}
 });
 remove.addEventListener('click',()=>{
- if(!clip())return;Adapter.setSceneVideoClip(null);notify('영상 배경을 제거했어요. 원본은 미디어 보관함에 남아요.');
+ if(!clip())return;Adapter.setSceneVideoClip(null);persist().catch(()=>{});notify('영상 배경을 제거했어요. 원본은 미디어 보관함에 남아요.');
 });
 function changeTrim(){
  const old=clip();if(!old)return;
@@ -131,6 +141,7 @@ function changeTrim(){
   controlsRefresh(old);notify('시작 위치와 길이를 확인해 주세요. 파일의 실제 재생 시간을 넘길 수 없어요.',true);return;
  }
  Adapter.setSceneVideoClip({...old,inPoint:Math.round(start*10)/10,duration:Math.round(duration*10)/10});
+ persist().catch(()=>{});
  notify('영상 시작 지점과 재생 길이를 변경했어요.');
 }
 inInput.addEventListener('change',changeTrim);lengthInput.addEventListener('change',changeTrim);
