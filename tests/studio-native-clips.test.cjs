@@ -13,6 +13,9 @@ test('native video clips persist through canvas normalization without changing o
  const safe=Core.validate(p);
  assert.deepEqual(safe.pages[0].videoClip,p.pages[0].videoClip);
  assert.equal(Core.validate(safe).pages[0].videoClip.inPoint,1.5);
+ const ios=Core.starter('blank');ios.pages[0].videoClip={...p.pages[0].videoClip,mime:'video/quicktime'};
+ assert.equal(Core.validate(ios).pages[0].videoClip.mime,'video/quicktime');
+ assert.ok(require('../studio-media-core.js').VIDEO_MIME.includes('video/quicktime'),'MOV must survive ZIP backup validation');
  assert.throws(()=>Core.validate({...p,pages:[{...p.pages[0],videoClip:{...p.pages[0].videoClip,mediaId:'../bad'}}]}),/영상 클립/);
  assert.throws(()=>Core.validate({...p,pages:[{...p.pages[0],videoClip:{...p.pages[0].videoClip,mime:'application/javascript'}}]}),/영상 클립/);
 });
