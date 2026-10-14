@@ -178,6 +178,36 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
 .legacy-item a{font-size:12px;color:#6249bd;font-weight:750;overflow:hidden;text-overflow:ellipsis}
 .legacy-item small{font-size:10px;color:var(--muted);white-space:nowrap}
 
+/* The unified editor supplies its own insert shelf and properties. */
+body.studio-canvas .shell{grid-template-columns:76px minmax(0,1fr)}
+body.studio-canvas .nav{padding:15px 5px;gap:8px}
+body.studio-canvas .nav .brand{justify-content:center;padding:0}
+body.studio-canvas .nav .brand-word,body.studio-canvas .nav .back,body.studio-canvas .nav-heading,body.studio-canvas .nav-bottom{display:none}
+body.studio-canvas .nav .btn{font-size:10px;text-align:center;padding:6px 3px}
+body.studio-canvas .tool-buttons button,body.studio-canvas .nav-home{flex-direction:column;gap:5px;justify-content:center;text-align:center;padding:9px 1px;font-size:10px}
+body.studio-canvas .sidebar{display:none}
+body.studio-canvas.canvas-library-open .shell{grid-template-columns:76px minmax(0,1fr) 258px}
+body.studio-canvas.canvas-library-open .sidebar{display:block;grid-column:3}
+body.studio-canvas .work-area{padding:7px}
+body.studio-canvas .frame-notice{display:none}
+body.studio-canvas .frame-area{min-height:720px}
+body.studio-canvas #editorFrame{height:calc(100dvh - 106px);min-height:700px}
+body.studio-canvas #renameProject,body.studio-canvas #manualSave,body.studio-canvas #openOriginal{display:none}
+body.studio-canvas #transferBar{display:none}
+body.studio-canvas.canvas-transfer-open #transferBar:not([hidden]){display:flex}
+@media(max-width:900px){body.studio-canvas.canvas-library-open .shell{grid-template-columns:76px minmax(0,1fr)}body.studio-canvas.canvas-library-open .sidebar{grid-column:2;grid-row:2}}
+@media(max-width:620px){body.studio-canvas .shell,body.studio-canvas.canvas-library-open .shell{display:block;padding-top:55px}body.studio-canvas .nav{position:fixed;inset:0 0 auto;height:55px;padding:4px 8px;flex-direction:row;align-items:center;justify-content:space-between}body.studio-canvas #editorFrame{height:calc(100dvh - 155px);min-height:630px}body.studio-canvas .sidebar{padding:12px}}
+body.studio-canvas .nav{background:#faf9ff}
+body.studio-canvas .tool-buttons button[aria-current=true]{background:#eae2ff;color:#5237a6;box-shadow:inset 3px 0 #7450d1}
+body.studio-canvas .top{border-bottom:1px solid #dcd4f5;background:#fff}
+body.studio-canvas #canvasLibraryToggle{background:#eaf4ff;border-color:#bfdaf7;color:#195c9b}
+body.studio-canvas #canvasLibraryToggle[aria-expanded=true]{background:#d8eaff;border-color:#69a9e5;box-shadow:0 0 0 2px #cce4fa}
+body.studio-canvas #canvasTransferToggle{background:#e9f8f4;border-color:#bce2d9;color:#0a685e}
+body.studio-canvas #canvasTransferToggle[aria-expanded=true]{background:#d6f2e9;border-color:#63bca6;box-shadow:0 0 0 2px #c7e9df}
+body.studio-canvas #newProject{border-color:#d9c7fa;background:#f5efff;color:#5a3bac}
+body.studio-canvas.canvas-library-open .sidebar{border-left:3px solid #92bff0;background:#f7fbff}
+body.studio-canvas.canvas-transfer-open #transferBar{background:#f0faf7;border-color:#acd9cc}
+
 </style>
 </head>
 <body>
@@ -207,6 +237,8 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
   <header class="top">
    <div class="heading"><strong id="workspaceTitle">뚝딱 제작실</strong><span id="workspaceSubtitle">필요한 자료를 골라 만들고 다시 꺼내 보세요.</span><span id="saveStatus" role="status" aria-live="polite" hidden>저장 준비 중…</span></div>
    <div class="actions">
+    <button type="button" class="btn soft" id="canvasLibraryToggle" hidden aria-expanded="false">내 작업·소재함</button>
+    <button type="button" class="btn soft" id="canvasTransferToggle" hidden aria-expanded="false">다른 제작실로 보내기</button>
     <button type="button" class="btn soft mobile-panel-btn" id="openPalette" hidden>도구</button>
     <button type="button" class="btn soft mobile-panel-btn" id="openInspector" hidden>속성·내 작업</button>
     <div class="common-bar" id="studioQuickBar" hidden aria-label="공통 편집 및 내보내기"></div>
@@ -310,11 +342,11 @@ body.studio-managed .sidebar .project-list{grid-template-columns:1fr}
 </div>
 <script src="studio-media-core.js?v=20261013-22"></script>
 <script src="studio-core.js?v=20261014-31"></script>
-<script src="studio-unified-core.js?v=20261014-30"></script>
+<script src="studio-unified-core.js?v=20261014-audit1"></script>
 <script src="studio-storage.js?v=20261014-24"></script>
 <script src="studio-transfer-core.js?v=20261014-30"></script>
 <script src="studio-official-project-core.js?v=20261014-23"></script>
-<script src="studio-app.js?v=20261014-31"></script>
+<script src="studio-app.js?v=20261014-canvas1"></script>
 <script src="classroom-workspace.js"></script>
 <script src="studio-library-core.js?v=20261014-23"></script>
 <script src="studio-layout.js"></script>

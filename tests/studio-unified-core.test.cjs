@@ -56,3 +56,17 @@ test('3.0 unified canvas registers as a managed workspace without removing old t
  for(const expected of ['pointerdown','pointermove','exportImage','exportSlides','requestFullscreen','undoStack','pagePng'])
   assert.ok(editor.includes(expected),expected);
 });
+test('teacher name tags split into printable editable A4 pages',()=>{
+ const names=Array.from({length:10},(_,i)=>'학생 '+(i+1));
+ const project=Core.nameTags(names,4);
+ assert.equal(project.layout,'a4');assert.equal(project.pages.length,3);
+ assert.equal(project.pages[0].elements.length,12);
+ assert.equal(project.pages[2].elements.length,6);
+ assert.deepEqual(project.pages.flatMap(page=>page.elements.filter(item=>item.type==='text'&&item.content.startsWith('학생 ')).map(item=>item.content)),names);
+ assert.equal(new Set(project.pages.flatMap(page=>page.elements.map(item=>item.id))).size,30);
+ assert.throws(()=>Core.nameTags(Array(321).fill('이름'),8),/최대/);
+ assert.throws(()=>Core.nameTags(['긴이름'.repeat(6)],8),/16자/);
+ const long=Core.nameTags(['가나다라마바사아자차카타파하'],8).pages[0].elements[2];
+ assert.equal(long.content.replace('\n',''),'가나다라마바사아자차카타파하');
+ assert.equal(long.content.split('\n').length,2);
+});
