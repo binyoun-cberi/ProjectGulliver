@@ -5,7 +5,7 @@ test('Canva editor offers a desktop left rail, mobile bottom navigation and cont
  const html=read('통합 캔버스.html'),js=read('studio-canvas-shell.js'),css=read('studio-canvas-shell.css'),outer=read('studio-canvas-parent.css');
  assert.match(html,/studio-canvas-shell\.css/);
  assert.match(html,/studio-canvas-shell\.js/);
- assert.match(js,/data-design-tab/);
+ assert.match(js,/dataset\.designTab/);
  for(const name of ['templates','elements','text','uploads','pages','motion','teacher','properties','export'])
   assert.ok(js.includes("id:'"+name+"'"),'navigation '+name);
  assert.match(js,/sourceClick\(/);
