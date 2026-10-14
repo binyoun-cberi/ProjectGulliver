@@ -145,7 +145,7 @@ selection.addEventListener('pointermove',e=>{
  position(preview,b);position(selection,b);
 });
 selection.addEventListener('pointerup',e=>{
- if(!drag)return;const d=drag;drag=null,b={...d.base},dx=(e.clientX-d.x)/d.scale,dy=(e.clientY-d.y)/d.scale;
+ if(!drag)return;const d=drag;drag=null;const b={...d.base},dx=(e.clientX-d.x)/d.scale,dy=(e.clientY-d.y)/d.scale;
  if(d.resize){b.w=Math.max(60,b.w+dx);b.h=Math.max(40,b.h+dy)}else{b.x+=dx;b.y+=dy}
  A.setSceneVideoLayout(b);placeVideo();
 });
