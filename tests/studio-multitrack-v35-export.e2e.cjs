@@ -36,7 +36,8 @@ test('3.5 export encodes independently timed video colors, two WAV files and ove
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(site,{waitUntil:'domcontentloaded'});
   const frame=page.frameLocator('#editorFrame');
-  await frame.locator('#exportWebm').waitFor();
+  await frame.locator('[data-design-tab="export"]').click();
+  await frame.locator('#exportWebm').waitFor({state:'visible'});
   await page.evaluate(async ({media})=>{
    const editor=document.getElementById('editorFrame').contentWindow;
    for(const item of media){
