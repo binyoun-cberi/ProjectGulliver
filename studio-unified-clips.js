@@ -19,7 +19,7 @@ controls.innerHTML=[
  '<div class="clip-adjust">',
  '<label>영상 시작 위치 (초)<input id="canvasVideoIn" type="number" min="0" max="86400" step=".1" value="0"></label>',
  '<label>재생 길이 (초)<input id="canvasVideoLength" type="number" min="1" max="20" step=".1" value="5"></label></div>',
- '<p class="clip-help">선택한 장면에 영상을 배경으로 배치해 글씨·그림을 위에 올릴 수 있어요. 15MB 이하 MP4·WebM·iPhone MOV(지원 코덱)를 사용할 수 있어요. 현재 단계에서는 <strong>음소거 미리보기</strong>를 제공하며 영상 클립의 내보내기는 아직 지원하지 않아요.</p>'
+ '<p class="clip-help">선택한 장면에 영상을 배경으로 배치해 글씨·그림을 위에 올릴 수 있어요. 15MB 이하 MP4·WebM·iPhone MOV(지원 코덱)를 사용할 수 있어요. 영상과 글씨를 합쳐 WebM으로 저장할 수 있어요(PC Chrome·Edge). <strong>영상 원본 소리는 포함되지 않고</strong> 별도 WAV 배경음악만 출력됩니다.</p>'
 ].join('');
 $('studioTimeline').append(controls);
 const fileInput=$('canvasVideoUpload'),remove=$('canvasVideoRemove'),inInput=$('canvasVideoIn'),
