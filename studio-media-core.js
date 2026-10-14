@@ -2,7 +2,7 @@
 'use strict';
 const VIDEO_MAX=15*1024*1024,MEDIA_COUNT=18,VIDEO_CLIPS=5,VIDEO_SECONDS=45;
 const BEATS=16,TRACKS=['melody','bass','clap','hat'];
-const VIDEO_MIME=['video/mp4','video/webm','image/png','image/jpeg'];
+const VIDEO_MIME=['video/mp4','video/webm','video/quicktime','image/png','image/jpeg'];
 const AUDIO_MIME=['audio/wav','audio/wave','audio/x-wav'];
 function makeVideo(){return{title:'우리 반 활동 영상',format:'wide',caption:'우리 반의 즐거운 하루',clips:[],audio:null}}
 function makeMusic(){return{title:'우리 반 음악',bpm:110,loops:2,notes:{melody:[0,4,7,12],bass:[0,8],clap:[4,12],hat:[0,2,4,6,8,10,12,14]},melodyPitch:64}}
