@@ -105,7 +105,7 @@ function render(){
  size();stage.style.background=page().background;
  stage.querySelectorAll('.item').forEach(el=>el.remove());
  for(const e of page().elements)stage.append(drawItem(e));
- renderPages();properties();timeline?.refresh();
+ renderPages();properties();timeline?.refresh();window.GulliverCanvasMedia?.refresh?.();
 }
 function placeNewText(e){
  const blockers=page().elements.filter(item=>item.type==='text');
@@ -394,6 +394,8 @@ timeline=window.GulliverUnifiedTimeline?.create({
 window.GulliverStudioAdapter={
  kind:'canvas',
  capture:()=>C.validate(model),
+ setSceneVideoClip:clip=>edit(()=>{if(clip){page().videoClip=C.cleanVideoClip(clip);page().duration=Math.min(20,Math.max(1,Math.round(clip.duration*10)/10))}else delete page().videoClip},''),
+ getMedia:id=>mediaProvider(id),
  setMediaProvider:provider=>{mediaProvider=provider;timeline?.setMediaProvider(provider)},
  setMediaSink:sink=>timeline?.setMediaSink(sink),
  onPageChange:callback=>{pageChange=callback},
