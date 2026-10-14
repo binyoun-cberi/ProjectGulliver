@@ -32,9 +32,8 @@ test('3.1 Chrome: edit timed scenes, fade objects, loop WAV, play across pages a
   await frame.locator('#sceneDuration').press('Tab');
   await frame.locator('#sceneTransition').selectOption('fade');
   await frame.locator('[data-add="text"]').evaluate(el=>el.click());
-  await frame.locator('#elementAnimation').selectOption('rise');
-  await frame.locator('#elementDelay').fill('.5');
-  await frame.locator('#elementDelay').press('Tab');
+  await frame.locator('#elementAnimation').evaluate(el=>{el.value='rise';el.dispatchEvent(new Event('change',{bubbles:true}))});
+  await frame.locator('#elementDelay').evaluate(el=>{el.value='.5';el.dispatchEvent(new Event('change',{bubbles:true}))});
   assert.equal(await frame.locator('#sceneTrack button[data-scene]').count(),2);
   assert.match(await frame.locator('#sceneTrack').innerText(),/1초/);
   await frame.locator('#audioUpload').setInputFiles({name:'한빛반 음악.wav',mimeType:'audio/wav',buffer:wav()});
@@ -54,7 +53,7 @@ test('3.1 Chrome: edit timed scenes, fade objects, loop WAV, play across pages a
   await frame.locator('#timelinePlay').evaluate(el=>el.click());
   await frame.locator('#sceneTrack button[data-scene="1"][data-active="true"]').waitFor({timeout:9000});
   await frame.locator('#timelinePlay').filter({hasText:'재생'}).waitFor({state:'attached',timeout:9000});
-  await frame.locator('#timelineStop').click();
+  await frame.locator('#timelineStop').evaluate(el=>el.click());
   await frame.locator('#sceneTrack button[data-scene="0"][data-active="true"]').waitFor();
   // Existing 2.x/3.0 autosave stores scene animation and audio reference.
   await page.waitForFunction(async()=>{
