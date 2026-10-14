@@ -193,7 +193,7 @@ body{color:var(--canvas-ink);background:var(--canvas-bg)}
 .easy-video-selection{position:absolute;border:3px solid #9f6bee;cursor:move;z-index:9;touch-action:none;box-shadow:0 0 0 1px #fff8 inset;display:flex;align-items:flex-start}
 .easy-video-selection[hidden]{display:none!important}
 .easy-video-selection span{background:#6b39be;color:#fff;font-size:13px;padding:5px;pointer-events:none}
-.easy-video-grip{position:absolute;width:30px;height:30px;right:-12px;bottom:-12px;border:3px solid #fff;border-radius:7px;background:#7448d8;cursor:nwse-resize;touch-action:none}
+.easy-video-grip{position:absolute;width:30px;height:30px;right:6px;bottom:6px;border:3px solid #fff;border-radius:7px;background:#7448d8;cursor:nwse-resize;touch-action:none}
 .easy-layer-menu{position:fixed;z-index:200;background:#fff;border:1px solid #e4d8ee;box-shadow:0 9px 36px #1e132b33;border-radius:14px;min-width:170px;padding:8px;display:grid;gap:2px}
 .easy-layer-menu[hidden]{display:none}
 .easy-layer-menu strong{color:#68518a;font-size:12px;padding:7px}
