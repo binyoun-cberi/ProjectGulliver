@@ -67,6 +67,14 @@ function cleanElement(raw,i){
   src,align:['left','center','right'].includes(raw.align)?raw.align:'center',
   animation:ANIMATIONS.includes(raw.animation)?raw.animation:'none',delay:number(raw.delay,0,MAX_DURATION,0)};
 }
+function cleanVideoClip(raw){
+ if(raw==null)return null;
+ if(!raw||typeof raw!=='object'||!/^u-[\w-]{1,110}$/.test(raw.mediaId||'')||
+    !['video/mp4','video/webm'].includes(raw.mime))throw Error('영상 클립의 원본 정보가 올바르지 않아요.');
+ return {mediaId:raw.mediaId,mime:raw.mime,
+  name:text(raw.name||'영상 클립',90),inPoint:number(raw.inPoint,0,86400,0),
+  duration:number(raw.duration,.5,MAX_DURATION,5),muted:raw.muted!==false};
+}
 function validate(raw){
  if(!raw||raw.format!==FORMAT||!LAYOUTS[raw.layout]||!Array.isArray(raw.pages)||raw.pages.length<1||raw.pages.length>MAX_PAGES)
   throw Error('통합 캔버스 프로젝트 형식 또는 페이지 수가 올바르지 않아요.');
@@ -77,7 +85,8 @@ function validate(raw){
   for(const e of elements){if(ids.has(e.id))throw Error('중복된 요소 식별자가 있어요.');ids.add(e.id);imageBytes+=e.src.length}
   return{id:String(page.id||'p-'+i).slice(0,90),name:text(page.name,60)||'페이지 '+(i+1),
    background:color(page.background,'#ffffff'),elements,
-   duration:number(page.duration,MIN_DURATION,MAX_DURATION,5),transition:TRANSITIONS.includes(page.transition)?page.transition:'none'};
+   duration:number(page.duration,MIN_DURATION,MAX_DURATION,5),transition:TRANSITIONS.includes(page.transition)?page.transition:'none',
+   ...(page.videoClip?{videoClip:cleanVideoClip(page.videoClip)}:{})};
  });
  if(imageBytes>18*1024*1024)throw Error('프로젝트 안의 이미지가 너무 많아요. 이미지를 줄여 주세요.');
  let audio=null;
@@ -140,5 +149,5 @@ function fromLegacy(kind,payload){
  if(kind==='slides')return fromSlides(payload);
  throw Error('도안·발표 작업만 편집 가능한 캔버스로 변환할 수 있어요.');
 }
-return {FORMAT,LAYOUTS,MAX_PAGES,MAX_ITEMS,TYPES,ANIMATIONS,TRANSITIONS,MIN_DURATION,MAX_DURATION,id,color,image,element,makePage,starter,nameTags,validate,fromLegacy,totalDuration,locateTime,animationFrame,transitionFrame};
+return {FORMAT,LAYOUTS,MAX_PAGES,MAX_ITEMS,TYPES,ANIMATIONS,TRANSITIONS,MIN_DURATION,MAX_DURATION,id,color,image,element,makePage,starter,nameTags,validate,fromLegacy,totalDuration,locateTime,animationFrame,transitionFrame,cleanVideoClip};
 });
