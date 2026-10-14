@@ -127,7 +127,7 @@
    const ctx=canvas.getContext('2d',{alpha:false});
    if(!ctx||!canvas.captureStream)throw Error('이 브라우저는 화면 영상 합성을 지원하지 않아요.');
    const frame=t=>{
-    V.drawFrame(ctx,project,t,undefined,undefined,{
+    V.drawFrame(ctx,project,t,images,undefined,{
      beforeElements:()=>{
       for(const track of visuals(project,t))if(track.kind==='video')drawVideo(ctx,track,videoAssets.videos.get(track.id));
      }
@@ -144,6 +144,7 @@
      if(isPlaying&&player.paused)player.play().catch(()=>{});
     }
    }
+   const images=await V.loadImages(project);
    syncVideo(0,false);frame(0);
    stream=canvas.captureStream(V.FPS);
    if(audioContext){
