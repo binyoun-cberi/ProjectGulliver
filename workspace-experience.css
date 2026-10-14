@@ -109,3 +109,21 @@ body{background:#fff}
 @media(prefers-reduced-motion:reduce){
  .format-tile,.studio-library-link{transition:none}
 }
+/* Create a design first; display specialist file editors only on request. */
+.new-dialog{max-height:min(83dvh,760px);overflow:auto}
+.new-dialog .create-main{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:16px 0 19px}
+.new-dialog .create-main a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;min-height:109px;border-radius:15px;border:1px solid #d9cafa;background:#faf7ff;text-align:center;padding:12px 5px;color:#5b398d}
+.new-dialog .create-main a:hover{background:#efe7ff;border-color:#aa86e5}
+.new-dialog .create-main a>span{font-size:28px}
+.new-dialog .create-main strong{font-size:13px}
+.new-dialog .create-main small{font-size:10px;color:#858092;line-height:1.35}
+.create-specialists{margin:6px 0 17px;border-top:1px solid #eee9f5;padding:12px 0}
+.create-specialists summary{cursor:pointer;color:#66538d;font-size:13px;font-weight:800;padding:5px 0}
+.create-specialists summary small{display:block;margin-top:6px;color:#938aa3;font-weight:450;font-size:11px}
+.create-specialists .start-list{margin-top:14px}
+@media(max-width:800px){
+ .new-dialog{max-height:76dvh}
+ .new-dialog .create-main a{min-height:96px;padding:8px 3px}
+ .new-dialog .create-main strong{font-size:11px}
+ .new-dialog .create-main small{font-size:9px}
+}
