@@ -39,9 +39,7 @@ async function refreshFiles(){
    try{
     if(kind(row)==='video'){await M.attachStored(row);startLayout(true)}
     else if(kind(row)==='audio'){
-     const select=$('audioFromShelf');$('refreshAudio').click();
-     await new Promise(resolve=>setTimeout(resolve,200));
-     select.value=row.id;select.dispatchEvent(new Event('change',{bubbles:true}));
+     await A.selectMusicFile(row.id);
     }else await A.insertImage(new File([row.blob],row.name,{type:row.mime}));
     for(const child of files.querySelectorAll('.easy-file'))child.classList.remove('is-active');
     button.classList.add('is-active');
@@ -65,9 +63,7 @@ async function importOne(original){
  const file=await readFile(original);setProgress(file.name,92,'편집기에 연결 중');
  if(file.type.startsWith('video/'))await M.importFile(file);
  else if(['audio/wav','audio/x-wav','audio/wave'].includes(file.type)){
-  const input=$('audioUpload'),transfer=new DataTransfer();
-  transfer.items.add(file);input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
-  await new Promise(resolve=>setTimeout(resolve,350));
+  await A.addMusicFile(file);
  }else if(['image/png','image/jpeg'].includes(file.type)){
   await A.insertImage(file);
   if((await S.media()).length<18)await S.saveMedia({id:C.id(),name:file.name.slice(0,90),mime:file.type,blob:file,createdAt:Date.now()});
