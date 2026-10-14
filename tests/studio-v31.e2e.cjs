@@ -79,7 +79,9 @@ test('3.1 Chrome: edit timed scenes, fade objects, loop WAV, play across pages a
   });
   assert.deepEqual(after,{pages:[1,1.5],effect:'rise',volume:.4,loop:false,soundBytes:wav().length,mime:'audio/wav'});
   await restored.locator('#projectList .project-item').getByRole('button',{name:'열기'}).first().click();
-  const playing=restored.frameLocator('#editorFrame');await playing.locator('#timelineMusicName').filter({hasText:'한빛반 음악'}).waitFor();
+  const playing=restored.frameLocator('#editorFrame');
+   await playing.locator('[data-design-tab="motion"]').click();
+   await playing.locator('#timelineMusicName').filter({hasText:'한빛반 음악'}).waitFor();
   assert.deepEqual(errors,[]);
   await second.close();
  }finally{await browser?.close();http.kill('SIGTERM')}
