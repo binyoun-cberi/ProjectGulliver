@@ -63,7 +63,7 @@ button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:#6654bd
   </div>
   <span class="divider"></span>
   <div class="group"><label>크기 <select id="layout" aria-label="캔버스 크기"><option value="wide">16:9 발표</option><option value="a4">A4 활동지</option></select></label>
-   <button id="present" type="button">전체 화면 발표</button><button id="exportPng" class="primary" type="button">PNG 저장</button><button id="printPdf" type="button">PDF·인쇄</button></div>
+   <button id="present" type="button">전체 화면 발표</button><button id="exportPng" type="button">PNG 저장</button><button id="printPdf" type="button">PDF·인쇄</button><button id="exportWebm" class="primary" type="button">영상 저장 (WebM)</button><button id="cancelWebm" type="button" hidden>영상 저장 취소</button></div>
  </div>
  <div class="editor-grid">
   <aside class="shelf"><h3>빠른 템플릿</h3>
@@ -84,6 +84,7 @@ button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:#6654bd
    <div id="pageStrip" aria-label="페이지 목록"></div>
    <section class="timeline" id="studioTimeline" aria-label="장면 타임라인 및 음악">
     <h3>장면 타임라인</h3>
+    <div id="videoProgressPanel" hidden aria-live="polite"><label for="videoProgress">영상 제작 진행률</label> <span id="videoProgressText">0%</span><progress id="videoProgress" value="0" max="100" style="width:100%;accent-color:#6654bd"></progress><small>최대 60초 · WebM 형식 · 이 기기에서 처리합니다. 완료될 때까지 현재 탭을 유지해 주세요.</small></div>
     <div id="sceneTrack" class="scene-track" aria-label="재생 장면 순서"></div>
     <div class="timeline-controls"><button id="timelinePlay" type="button">▶ 재생</button><button id="timelineStop" type="button">■ 정지</button>
      <input id="timelineProgress" type="range" min="0" max="5" step=".1" value="0" aria-label="전체 타임라인 재생 위치">
@@ -118,5 +119,6 @@ button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:#6654bd
 <script src="studio-storage.js?v=20261014-31"></script>
 <script src="studio-unified-core.js?v=20261014-31"></script>
 <script src="studio-unified-timeline.js?v=20261014-31"></script>
-<script src="studio-unified-editor.js?v=20261014-31"></script>
+<script src="studio-unified-video.js?v=20261014-32"></script>
+<script src="studio-unified-editor.js?v=20261014-32"></script>
 </body></html>
