@@ -2,7 +2,7 @@
 'use strict';
 const C=window.GulliverUnifiedCore,$=id=>document.getElementById(id);
 if(!C)throw Error('공통 캔버스 엔진을 불러오지 못했어요.');
-let model=C.starter(),selected='',undoStack=[],redoStack=[],scale=1,drag=null,editing=false;
+let model=C.starter(),selected='',undoStack=[],redoStack=[],scale=1,drag=null,editing=false,timeline=null;
 const stage=$('stage'),textEditor=$('editText'),stackLimit=80;
 const clone=obj=>JSON.parse(JSON.stringify(obj)),page=()=>model.pages[model.active],
   current=()=>page().elements.find(e=>e.id===selected)||null;
@@ -15,23 +15,23 @@ function checkpoint(previous){
  redoStack=[];emit();return true;
 }
 function edit(fn,selectId){
- closeEditor();
+ timeline?.halt();closeEditor();
  const before=clone(model);
  const result=fn();
  if(selectId!==undefined)selected=selectId;
- checkpoint(before);render();return result;
+ checkpoint(before);timeline?.syncToActive();render();return result;
 }
 function undo(){
- closeEditor();
+ timeline?.halt();closeEditor();
  if(!undoStack.length)return;
  redoStack.push(clone(model));model=undoStack.pop();selected='';
- render();emit();notice('마지막 편집을 취소했어요.');
+ timeline?.syncToActive();render();emit();notice('마지막 편집을 취소했어요.');
 }
 function redo(){
- closeEditor();
+ timeline?.halt();closeEditor();
  if(!redoStack.length)return;
  undoStack.push(clone(model));model=redoStack.pop();selected='';
- render();emit();notice('다시 실행했어요.');
+ timeline?.syncToActive();render();emit();notice('다시 실행했어요.');
 }
 function size(){
  const base=C.LAYOUTS[model.layout],width=Math.max(240,$('stageView').clientWidth-10);
@@ -75,7 +75,7 @@ function renderPages(){
   thumb.textContent=p.elements.find(e=>e.type==='text')?.content?.slice(0,24)||'빈 페이지';
   const label=document.createElement('span');label.textContent=(i+1)+'. '+p.name.slice(0,20);
   button.append(thumb,label);button.type='button';button.title=(i+1)+'번째 페이지 열기';
-  button.addEventListener('click',()=>{closeEditor();model.active=i;selected='';render();emit()});
+  button.addEventListener('click',()=>{timeline?.halt();closeEditor();model.active=i;selected='';timeline?.syncToActive();render();emit()});
   strip.append(button);
  }
  const add=document.createElement('button');add.textContent='＋ 페이지 추가';add.type='button';add.addEventListener('click',addPage);strip.append(add);
@@ -102,7 +102,7 @@ function render(){
  size();stage.style.background=page().background;
  stage.querySelectorAll('.item').forEach(el=>el.remove());
  for(const e of page().elements)stage.append(drawItem(e));
- renderPages();properties();
+ renderPages();properties();timeline?.refresh();
 }
 function addElement(type,partial){
  if(page().elements.length>=C.MAX_ITEMS){notice('페이지당 최대 150개 요소만 넣을 수 있어요.',true);return}
@@ -138,6 +138,7 @@ function arrange(direction){
  edit(()=>{const [e]=page().elements.splice(at,1);page().elements.splice(target,0,e)});
 }
 function startMove(event){
+ timeline?.halt();
  if(event.button!==0&&event.pointerType==='mouse')return;
  if(editing)return;
  const target=event.target.closest('.item');
@@ -316,10 +317,13 @@ function bind(){
   if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();deleteSelected()}
  });
 }
+timeline=window.GulliverUnifiedTimeline?.create({
+ getModel:()=>model,getSelected:()=>selected,edit,showPage:i=>{model.active=i;selected='';render()},notice,stage
+});
 window.GulliverStudioAdapter={
  kind:'canvas',
  capture:()=>C.validate(model),
- apply:raw=>{closeEditor();model=C.validate(raw);selected='';undoStack=[];redoStack=[];render()},
+ apply:raw=>{timeline?.halt();closeEditor();model=C.validate(raw);selected='';undoStack=[];redoStack=[];timeline?.syncToActive();render()},
  rename:title=>edit(()=>{model.title=String(title).slice(0,90)}),
  insertImage:addImageFile,
  exportImage:async()=>{closeEditor();return pagePng(page())},
