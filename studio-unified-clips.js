@@ -6,20 +6,20 @@
 const Core=window.GulliverUnifiedCore,Store=window.GulliverStudioStorage,Adapter=window.GulliverStudioAdapter;
 const $=id=>document.getElementById(id);
 if(!Core||!Store||!Adapter||!$('studioTimeline'))return;
-const LIMIT=15*1024*1024,MIMES=['video/mp4','video/webm'];
+const LIMIT=15*1024*1024,MIMES=['video/mp4','video/webm','video/quicktime'];
 const controls=document.createElement('section');
 controls.className='video-clip-tools';
 controls.setAttribute('aria-label','현재 장면의 영상 클립');
 controls.innerHTML=[
  '<div class="clip-tools-title"><strong>영상 클립</strong><small>같은 캔버스에서 불러오고 잘라 보기</small></div>',
  '<div class="clip-buttons"><label for="canvasVideoUpload" class="clip-import">＋ 영상 가져오기</label>',
- '<input id="canvasVideoUpload" type="file" accept=".mp4,.webm,video/mp4,video/webm" hidden>',
+ '<input id="canvasVideoUpload" type="file" accept=".mp4,.webm,.mov,video/mp4,video/webm,video/quicktime" hidden>',
  '<button type="button" id="canvasVideoRemove">영상 빼기</button></div>',
  '<div class="clip-info" id="canvasVideoName">이 장면에 연결한 영상이 없어요.</div>',
  '<div class="clip-adjust">',
  '<label>영상 시작 위치 (초)<input id="canvasVideoIn" type="number" min="0" max="86400" step=".1" value="0"></label>',
- '<label>재생 길이 (초)<input id="canvasVideoLength" type="number" min=".5" max="20" step=".1" value="5"></label></div>',
- '<p class="clip-help">선택한 장면에 영상을 배경으로 배치해 글씨·그림을 위에 올릴 수 있어요. 15MB 이하 MP4/WebM을 지원합니다. 현재 단계에서는 <strong>음소거 미리보기</strong>를 제공하며 영상 클립의 내보내기는 아직 지원하지 않아요.</p>'
+ '<label>재생 길이 (초)<input id="canvasVideoLength" type="number" min="1" max="20" step=".1" value="5"></label></div>',
+ '<p class="clip-help">선택한 장면에 영상을 배경으로 배치해 글씨·그림을 위에 올릴 수 있어요. 15MB 이하 MP4·WebM·iPhone MOV(지원 코덱)를 사용할 수 있어요. 현재 단계에서는 <strong>음소거 미리보기</strong>를 제공하며 영상 클립의 내보내기는 아직 지원하지 않아요.</p>'
 ].join('');
 $('studioTimeline').append(controls);
 const fileInput=$('canvasVideoUpload'),remove=$('canvasVideoRemove'),inInput=$('canvasVideoIn'),
@@ -113,17 +113,17 @@ async function metadata(file){
  }finally{el.removeAttribute('src');el.load();URL.revokeObjectURL(url)}
 }
 async function importFile(file){
- if(!file||!MIMES.includes(file.type)||file.size<1||file.size>LIMIT)throw Error('15MB 이하 MP4 또는 WebM 파일만 가져올 수 있어요.');
+ if(!file||!MIMES.includes(file.type)||file.size<1||file.size>LIMIT)throw Error('15MB 이하 MP4·WebM·MOV 파일만 가져올 수 있어요.');
  if((await Store.media()).length>=18)throw Error('미디어 보관함의 18개 제한을 초과했어요. 사용하지 않는 원본을 정리해 주세요.');
  const duration=await metadata(file);
- if(!Number.isFinite(duration)||duration<.5||duration>86400)throw Error('재생 길이가 올바르지 않은 영상이에요.');
+ if(!Number.isFinite(duration)||duration<1||duration>86400)throw Error('재생 길이가 올바르지 않은 영상이에요.');
  const entry={id:Core.id(),name:String(file.name||'장면 영상').slice(0,90),mime:file.type,
   blob:new Blob([file],{type:file.type}),createdAt:Date.now()};
  await Store.saveMedia(entry);
- const meta={mediaId:entry.id,name:entry.name,mime:entry.mime,inPoint:0,duration:Math.min(20,Math.round(duration*10)/10),muted:true};
+ const meta={mediaId:entry.id,name:entry.name,mime:entry.mime,inPoint:0,duration:Math.max(1,Math.min(20,Math.floor(duration*10)/10)),muted:true};
  Adapter.setSceneVideoClip(meta);
  await persist();
- notify('영상 클립을 현재 장면에 추가했어요. 화면을 누르거나 재생해 확인하세요.');
+ notify('영상 클립을 현재 장면에 연결했어요. 재생해 확인하세요.');
 }
 fileInput.addEventListener('change',async event=>{
  const file=event.target.files?.[0];event.target.value='';
@@ -136,13 +136,13 @@ remove.addEventListener('click',()=>{
 function changeTrim(origin){
  const old=clip();if(!old)return;
  const start=Number(inInput.value);let duration=Number(lengthInput.value);
- if(!Number.isFinite(start)||start<0||start>86400||!Number.isFinite(duration)||duration<.5||duration>20){
-  controlsRefresh(old);notify('시작 위치는 0초 이상, 재생 길이는 0.5~20초여야 해요.',true);return;
+ if(!Number.isFinite(start)||start<0||start>86400||!Number.isFinite(duration)||duration<1||duration>20){
+  controlsRefresh(old);notify('시작 위치는 0초 이상, 재생 길이는 1~20초여야 해요.',true);return;
  }
  if(lastSourceDuration>0&&start+duration>lastSourceDuration+.051){
   // When users move the in-point, reduce the previous length automatically.
   duration=Math.floor((lastSourceDuration-start)*10)/10;
-  if(duration<.5){controlsRefresh(old);notify('남은 영상이 0.5초보다 짧아요.',true);return}
+  if(duration<1){controlsRefresh(old);notify('남은 영상이 1초보다 짧아요.',true);return}
   lengthInput.value=String(duration);
  }
  Adapter.setSceneVideoClip({...old,inPoint:Math.round(start*10)/10,duration:Math.round(duration*10)/10});
