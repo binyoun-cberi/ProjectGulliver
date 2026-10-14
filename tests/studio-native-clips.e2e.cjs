@@ -32,8 +32,9 @@ test('inline canvas video: import MP4, trim, play, autosave, recover source; fai
   const stored=await page.evaluate(async()=>{
    const p=await GulliverStudioStorage.projects(),m=await GulliverStudioStorage.media();
    const project=p.find(x=>x.kind==='canvas'&&x.payload.pages[0]?.videoClip);
-   return{mime:project?.payload.pages[0].videoClip?.mime,videoBytes:m.find(x=>x.mime==='video/mp4')?.blob?.size||0};
+   return{mime:project?.payload.pages[0].videoClip?.mime,videoBytes:m.find(x=>x.mime==='video/mp4')?.blob?.size||0,projects:p.map(x=>({kind:x.kind,id:x.id,video:x.payload?.pages?.[0]?.videoClip||null})),media:m.map(x=>({mime:x.mime,id:x.id,size:x.blob?.size}))};
   });
+  console.log('Saved video debug:',JSON.stringify(stored));
   assert.equal(stored.mime,'video/mp4');assert.ok(stored.videoBytes>500);
   await frame.locator('#canvasVideoIn').fill('1');
   await frame.locator('#canvasVideoIn').press('Tab');
