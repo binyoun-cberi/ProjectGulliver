@@ -52,7 +52,7 @@ test('3.5 export encodes independently timed video colors, two WAV files and ove
    ];
    editor.GulliverStudioAdapter.apply(p);
   },{media});
-  await frame.locator('.multi-clip.video').first().waitFor();
+  await frame.locator('.multi-clip.video').first().waitFor({state:'attached'});
   const capture=await frame.locator('body').evaluate(()=>GulliverStudioAdapter.capture());
   assert.equal(capture.tracks.length,8);
   const waitDownload=page.waitForEvent('download',{timeout:45000});
