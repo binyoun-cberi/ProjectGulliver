@@ -40,7 +40,7 @@ function nativeAsset(t){
    node.className='multi-stage-video';node.dataset.trackId=t.id;node.hidden=true;node.setAttribute('aria-label',t.name);stage.append(node);
   }
   node.addEventListener('loadedmetadata',()=>sync(lastT,playing));
-  entry.node=node;entry.loading=false;sync(lastT,playing);
+  entry.node=node;entry.loading=false;positionVideos();sync(lastT,playing);
  }).catch(showError);
  return entry;
 }

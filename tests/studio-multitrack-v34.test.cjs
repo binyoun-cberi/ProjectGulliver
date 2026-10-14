@@ -31,5 +31,6 @@ test('legacy one-clip canvases retain data and advanced export safely rejects un
  const original=C.starter('blank'),legacy=C.validate(original);
  assert.ok(!Object.hasOwn(legacy,'tracks'));
  const multitrack=C.validate(model());
- assert.throws(()=>V.plan(multitrack),/다중 트랙은 현재 편집/);
+ assert.equal(V.plan(multitrack).duration,20);
+ assert.equal(V.plan(multitrack).project.tracks.length,8);
 });

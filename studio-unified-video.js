@@ -10,7 +10,7 @@ const FORMATS=['video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/
 function plan(project){
  const C=root.GulliverUnifiedCore||require('./studio-unified-core.js');
  const safe=C.validate(project),seconds=C.totalDuration(safe);
- if(safe.tracks?.length)throw Error('다중 트랙은 현재 편집·미리보기·저장까지 지원해요. 여러 영상과 음악이 합쳐진 WebM 출력은 다음 단계에서 제공해요.');
+
  if(safe.pages.some(page=>page.videoClip&&!page.videoClip.muted))throw Error('영상 원본 소리를 포함하는 출력은 아직 지원하지 않아요. 영상 클립을 음소거로 설정하거나 WAV 배경음악을 사용해 주세요.');
  if(seconds>MAX_SECONDS)throw Error('영상으로 저장할 수 있는 길이는 60초까지예요. 장면 시간을 줄여 주세요.');
  return{project:safe,duration:seconds,width:C.LAYOUTS[safe.layout].w,height:C.LAYOUTS[safe.layout].h};
@@ -19,12 +19,13 @@ function mimeType(){
  if(typeof root.MediaRecorder==='undefined')return '';
  return FORMATS.find(value=>root.MediaRecorder.isTypeSupported(value))||'';
 }
-function drawFrame(ctx,model,seconds,images=new Map(),videos=new Map()){
+function drawFrame(ctx,model,seconds,images=new Map(),videos=new Map(),opts={}){
  const C=root.GulliverUnifiedCore||require('./studio-unified-core.js');
  const {w,h}=C.LAYOUTS[model.layout],position=C.locateTime(model,seconds),p=model.pages[position.index],transition=C.transitionFrame(p,position.local);
  ctx.save();ctx.clearRect(0,0,w,h);ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h);
  ctx.globalAlpha=transition.opacity;ctx.translate(transition.slide,0);
  ctx.fillStyle=p.background;ctx.fillRect(0,0,w,h);
+ opts.beforeElements?.(ctx,p,seconds);
  const drawVideo=()=>{
   if(!p.videoClip)return;
   const clip=p.videoClip,movie=videos.get(clip.mediaId);
@@ -129,6 +130,11 @@ async function loadClips(project,getMedia,signal){
 }
 
 async function exportWebM(project,{getMedia,onProgress=()=>{},signal}={}){
+ if(project?.tracks?.length){
+  const exportMulti=root.GulliverMultitrackExport?.exportWebM;
+  if(!exportMulti)throw Error('다중 트랙 영상 합성 모듈을 불러오지 못했어요. 다시 열어 주세요.');
+  return exportMulti(project,{getMedia,onProgress,signal});
+ }
  const {project:safe,duration,width,height}=plan(project),mime=mimeType();
  if(!mime)throw Error('이 브라우저에서 WebM 영상 출력을 지원하지 않아요. PC Chrome 또는 Edge에서 이용해 주세요.');
  if(typeof root.document==='undefined')throw Error('브라우저에서만 영상을 만들 수 있어요.');
@@ -239,5 +245,5 @@ async function exportWebM(project,{getMedia,onProgress=()=>{},signal}={}){
   videoAssets?.release();
  }
 }
-return{FPS,MAX_SECONDS,plan,mimeType,drawFrame,exportWebM,loadClips};
+return{FPS,MAX_SECONDS,plan,mimeType,drawFrame,exportWebM,loadClips,loadImages};
 });
