@@ -22,7 +22,7 @@ test('3.3 Chrome: canvas lesson edit, audio backup, playback and fresh restore',
    return{newY:parseFloat(node.style.top),titleBottom:parseFloat(title.style.top)+parseFloat(title.style.height)};
   });
   assert.ok(placement.newY>=placement.titleBottom,'new text should avoid the template title');
-  await frame.locator('[data-design-tab="properties"]').click();
+  await frame.locator('.design-pane[data-pane="properties"]').waitFor({state:'visible'});
   await frame.locator('#propertyText').fill('오늘의 학습 목표');
   await frame.locator('#elementAnimation').selectOption('fade');
   await page.screenshot({path:'test-artifacts/lesson-canvas-desktop.png'});
