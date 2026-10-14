@@ -33,7 +33,7 @@ preview.setAttribute('aria-label','장면 영상 미리보기');
 $('stage').prepend(preview);
 let currentId='',currentUrl='',lastSourceDuration=0,serial=0,ready=false;
 function project(){return Adapter.capture()}
-function clip(){const data=project();return data.pages[data.active].videoClip||null}
+function clip(){return Adapter.getSceneVideoClip?.()||null}
 function release(){
  serial++;preview.pause();preview.removeAttribute('src');preview.load();preview.hidden=true;
  if(currentUrl)URL.revokeObjectURL(currentUrl);
@@ -81,8 +81,8 @@ function refresh(){
  else if(currentId)release();
 }
 function sync(local,playing,pageIndex){
- const data=project();if(data.active!==pageIndex)return;
- const meta=data.pages[pageIndex]?.videoClip;
+ const meta=clip();
+ if(project().active!==pageIndex)return;
  if(!meta||!ready||meta.mediaId!==currentId)return;
  const desired=meta.inPoint+Math.max(0,Math.min(local,meta.duration-.06));
  if(Math.abs(preview.currentTime-desired)>(playing ? .45 : .075)){
