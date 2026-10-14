@@ -8,7 +8,7 @@ const stage=$('stage'),assets=new Map();
 let selected='',disposed=false,lastT=0,playing=false,serial=0;
 const container=document.createElement('section');container.className='multi-editor';container.id='multiEditor';
 container.innerHTML=[
- '<header class="multi-head"><div><strong>다중 트랙</strong><small>영상·음악·자막을 원하는 시간에 놓으세요</small></div><button type="button" id="multiAddCaption">＋ 자막</button></header>',
+ '<header class="multi-head"><div><strong>다중 트랙</strong><small>영상·음악·자막을 원하는 시간에 놓으세요</small></div><button type="button" id="multiEnable">다중 트랙 시작</button><button type="button" id="multiAddCaption" hidden>＋ 자막</button></header>',
  '<p class="multi-description">파일 목록에서 영상·음악을 누르면 트랙에 추가돼요. 막대 가운데는 이동, 양 끝은 자르기예요.</p>',
  '<div class="multi-ruler" id="multiRuler"><span>0초</span><span>중간</span><span>끝</span></div>',
  '<div id="multiRows" class="multi-rows" aria-label="영상 음악 자막 트랙"></div>',
@@ -20,6 +20,7 @@ const rows=$('multiRows'),inspector=$('multiInspector');
 const kindText={video:'영상',audio:'음악',caption:'자막'};
 const limit=()=>Math.min(60,C.totalDuration(A.capture()));
 const tracks=()=>A.getTracks?.()||[];
+const enabled=()=>A.multitrackEnabled?.()||false;
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const round=n=>Math.round(n*10)/10;
 const isActive=(t,time)=>time>=t.start&&time<t.start+t.duration;
@@ -92,6 +93,10 @@ function sync(time,isPlaying){
 }
 function refresh(){
  if(disposed)return;
+ const active=enabled();
+ $('multiEnable').hidden=active;$('multiAddCaption').hidden=!active;
+ container.classList.toggle('is-disabled',!active);
+ if(!active){rows.replaceChildren();inspector.hidden=true;clear();stage.querySelectorAll('.multi-stage-caption').forEach(n=>n.remove());return}
  const tMax=limit();
  $('multiRuler').lastElementChild.textContent=tMax+'초';
  $('multiRuler').children[1].textContent=Math.round(tMax/2)+'초';
@@ -178,7 +183,9 @@ function calculateDrag(t,handle,delta,total){
  }
  return{duration:round(clamp(t.duration+delta,.5,total-t.start))};
 }
+function enable(){A.expandTimeline();A.adoptLegacyMedia();refresh()}
 function addFromMedia(row){
+ if(!enabled())enable();
  if(!['video/mp4','video/webm','video/quicktime','audio/wav'].includes(row?.mime))throw Error('영상 또는 WAV 음악을 선택해 주세요.');
  A.expandTimeline();
  const total=limit(),kind=row.mime==='audio/wav'?'audio':'video';
@@ -193,8 +200,10 @@ function addFromMedia(row){
  selected=id;refresh();return id;
 }
 function adoptImported(){
+ if(!enabled())return;
  A.adoptLegacyMedia();A.expandTimeline();selected=tracks().at(-1)?.id||'';refresh();
 }
+$('multiEnable').addEventListener('click',enable);
 $('multiAddCaption').addEventListener('click',()=>{
  try{
   A.expandTimeline();
@@ -205,6 +214,6 @@ $('multiAddCaption').addEventListener('click',()=>{
  }catch(e){showError(e)}
 });
 window.addEventListener('pagehide',()=>{disposed=true;clear()});
-window.GulliverMultiTrack={refresh,sync,addFromMedia,adoptImported,calculateDrag};
+window.GulliverMultiTrack={refresh,sync,addFromMedia,adoptImported,calculateDrag,isEnabled:enabled,enable};
 refresh();
 })();
