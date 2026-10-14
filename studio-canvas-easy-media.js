@@ -7,7 +7,7 @@ const stage=$('stage'),preview=stage.querySelector('.canvas-video-preview');
 const panel=document.createElement('section');panel.className='easy-media';panel.setAttribute('aria-label','미디어 파일과 업로드');
 panel.innerHTML=[
  '<header><strong>내 미디어</strong><small>썸네일과 파일명을 눌러 선택하세요</small></header>',
- '<div class="easy-import"><label for="easyMediaPicker">＋ 파일 가져오기 <span>⌄</span></label><input id="easyMediaPicker" type="file" accept=".mp4,.webm,.mov,.wav,.png,.jpg,.jpeg,video/*,audio/wav,image/png,image/jpeg" hidden multiple><button type="button" id="easyRefresh">새로고침</button></div>',
+ '<div class="easy-import"><details class="easy-picker-menu"><summary>＋ 파일 가져오기 <span>⌄</span></summary><div class="easy-picker-options"><button type="button" data-pick="video">🎬 영상 파일</button><button type="button" data-pick="audio">♫ 음악 파일</button><button type="button" data-pick="image">▧ 사진 파일</button><button type="button" data-pick="all">모든 지원 파일</button></div></details><input id="easyMediaPicker" type="file" accept=".mp4,.webm,.mov,.wav,.png,.jpg,.jpeg,video/*,audio/wav,image/png,image/jpeg" hidden multiple><button type="button" id="easyRefresh">새로고침</button></div>',
  '<div class="easy-drop" id="easyDrop">파일을 여기로 끌어놓아도 돼요 <small>영상 · 음악 · 사진</small></div>',
  '<div class="easy-progress" id="easyProgress" hidden role="status"><div><strong id="easyProgressName"></strong><span id="easyPercent">0%</span></div><progress id="easyProgressBar" max="100" value="0"></progress><small id="easyStep">파일 읽는 중</small></div>',
  '<div id="easyFiles" class="easy-files" aria-label="올린 미디어 목록"></div>',
@@ -73,6 +73,12 @@ async function importOne(original){
 async function importMany(list){
  for(const f of [...list])try{await importOne(f)}catch(e){setProgress(f.name,0,'오류: '+(e.message||e));M.notify(e.message||String(e),true);return}
 }
+panel.querySelectorAll('[data-pick]').forEach(button=>button.addEventListener('click',()=>{
+ const formats={video:'.mp4,.webm,.mov,video/*',audio:'.wav,audio/wav,audio/x-wav',image:'.png,.jpg,.jpeg,image/*',all:'.mp4,.webm,.mov,.wav,.png,.jpg,.jpeg,video/*,audio/wav,image/png,image/jpeg'};
+ picker.accept=formats[button.dataset.pick]||formats.all;
+ panel.querySelector('.easy-picker-menu').open=false;
+ picker.click();
+}));
 picker.addEventListener('change',e=>{const chosen=[...(e.target.files||[])];e.target.value='';importMany(chosen)});
 $('easyRefresh').addEventListener('click',refreshFiles);
 drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('dragging')});
