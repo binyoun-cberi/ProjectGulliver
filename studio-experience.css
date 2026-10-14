@@ -17,7 +17,7 @@ body:not(.studio-managed):not(.studio-canvas) .intro .start-grid{grid-template-c
 .studio-bottom-shade{display:none}
 @media(max-width:620px){
  .shell,body.studio-managed .shell,body.studio-canvas .shell{padding-bottom:calc(81px + env(safe-area-inset-bottom))!important}
- .studio-mobile-bar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;inset:auto 0 0;z-index:37;background:#ffffffef;backdrop-filter:blur(15px);padding:5px 7px calc(7px + env(safe-area-inset-bottom));border-top:1px solid #e6dff1;box-shadow:0 -7px 28px #27204412}
+ .studio-mobile-bar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;inset:auto 0 0;z-index:48;background:#ffffffef;backdrop-filter:blur(15px);padding:5px 7px calc(7px + env(safe-area-inset-bottom));border-top:1px solid #e6dff1;box-shadow:0 -7px 28px #27204412}
  .studio-mobile-bar button{display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;border:0;border-radius:12px;background:transparent;color:#706483;font-size:10px;font-weight:800;padding:7px 2px;min-height:48px}
  .studio-mobile-bar button:focus-visible{outline:2px solid #8c5de6}
  .studio-mobile-bar button .studio-bottom-icon{font-size:22px;line-height:1.2}
