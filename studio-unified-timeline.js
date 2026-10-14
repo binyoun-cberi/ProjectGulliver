@@ -139,7 +139,8 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
  function updateAudio(entry){
   halt();cleanMedia();
   edit(()=>{get().audio=entry?{mediaId:entry.id,mime:'audio/wav',name:entry.name,volume:.7,loop:true}:null});
-  refresh();notice(entry?'배경음악을 연결했어요. 재생을 눌러 확인해 주세요.':'배경음악을 제거했어요.');
+  refresh();if(entry)prepareAudio().catch(e=>notice('음악을 미리 불러오지 못했어요: '+(e.message||e),true));
+  notice(entry?'배경음악을 연결했어요. 재생을 눌러 확인해 주세요.':'배경음악을 제거했어요.');
  }
  async function importWav(file){
   if(!file)return;
@@ -193,7 +194,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
   edit(()=>{get().audio.loop=event.target.checked});if(audio)audio.loop=event.target.checked;refresh();
  });
  window.addEventListener('pagehide',()=>{disposed=true;cancelAnimationFrame(raf);cleanMedia()});
- refreshSoundShelf().catch(()=>{});
+ refreshSoundShelf().then(()=>{if(get().audio)return prepareAudio()}).catch(()=>{});
  refresh();
  return {refresh,stop,pause,play,halt,syncToActive,isPlaying:()=>playing,seek,refreshSoundShelf,dispose:()=>{stop();cleanMedia();disposed=true}};
 }
