@@ -107,6 +107,7 @@ function render(){
  for(const e of page().elements)stage.append(drawItem(e));
  window.GulliverCanvasMedia?.placeVideo?.();
  renderPages();properties();timeline?.refresh();window.GulliverCanvasMedia?.refresh?.();
+ window.GulliverMultiTrack?.refresh?.();
 }
 function placeNewText(e){
  const blockers=page().elements.filter(item=>item.type==='text');
@@ -349,9 +350,9 @@ function bind(){
   finally{videoController=null;button.disabled=false;cancel.hidden=true;panel.hidden=true}
  });
  $('cancelWebm').addEventListener('click',()=>{videoController?.abort();notice('영상 저장을 취소하는 중이에요.')});
- $('exportPng').addEventListener('click',async()=>{try{timeline?.halt();closeEditor();if(page().videoClip)throw Error('동영상이 있는 장면의 PNG 추출은 아직 지원하지 않아요. 영상 클립을 제거하거나 일반 페이지를 선택해 주세요.');const blob=await pagePng(page());download(blob,(model.title||'수업자료').replace(/[\\/:*?"<>|]/g,'_')+'.png');notice('PNG를 저장했어요.')}catch(e){notice(e.message,true)}});
+ $('exportPng').addEventListener('click',async()=>{try{timeline?.halt();closeEditor();if(model.tracks?.length)throw Error('다중 트랙이 있는 자료는 PNG 이미지로 저장할 수 없어요. 완성본 영상 출력은 후속 단계에서 지원해요.');if(page().videoClip)throw Error('동영상이 있는 장면의 PNG 추출은 아직 지원하지 않아요. 영상 클립을 제거하거나 일반 페이지를 선택해 주세요.');const blob=await pagePng(page());download(blob,(model.title||'수업자료').replace(/[\\/:*?"<>|]/g,'_')+'.png');notice('PNG를 저장했어요.')}catch(e){notice(e.message,true)}});
  $('printPdf').addEventListener('click',()=>{
-  timeline?.halt();closeEditor();if(model.pages.some(p=>p.videoClip)){notice('영상이 포함된 자료는 PDF에 움직임을 담을 수 없어요. 영상 없는 페이지에서 인쇄해 주세요.',true);return}document.getElementById('print-page-size')?.remove();
+  timeline?.halt();closeEditor();if(model.tracks?.length){notice('다중 트랙이 있는 자료는 PDF로 출력할 수 없어요. 일반 디자인으로 저장해 주세요.',true);return}if(model.pages.some(p=>p.videoClip)){notice('영상이 포함된 자료는 PDF에 움직임을 담을 수 없어요. 영상 없는 페이지에서 인쇄해 주세요.',true);return}document.getElementById('print-page-size')?.remove();
   document.getElementById('printPages')?.remove();
   const sheets=document.createElement('div');sheets.id='printPages';
   const dims=C.LAYOUTS[model.layout],factor=model.layout==='a4'?1.333:1.16;
@@ -393,9 +394,54 @@ function bind(){
 timeline=window.GulliverUnifiedTimeline?.create({
  getModel:()=>model,getSelected:()=>selected,edit,showPage:i=>{model.active=i;selected='';render();pageChange(i)},notice,stage,onPlaybackChange:playing=>playbackChange(playing)
 });
+function ensureMultitrack(){
+ if(Array.isArray(model.tracks))return;
+ const tracks=[],pages=model.pages;
+ let offset=0;
+ for(const p of pages){
+  if(p.videoClip){
+   const clip=p.videoClip;
+   tracks.push(C.cleanTrack({id:C.id(),kind:'video',mediaId:clip.mediaId,mime:clip.mime,
+    name:clip.name,start:offset,duration:Math.min(clip.duration,p.duration),trimStart:clip.inPoint,
+    x:clip.x,y:clip.y,w:clip.w,h:clip.h,stack:clip.stack,muted:true}));
+   delete p.videoClip;
+  }
+  offset+=p.duration;
+ }
+ if(model.audio){
+  const music=model.audio;
+  tracks.push(C.cleanTrack({id:C.id(),kind:'audio',mediaId:music.mediaId,mime:'audio/wav',
+    name:music.name,start:0,duration:Math.min(offset,music.trimDuration||60),
+    trimStart:music.trimStart||0,volume:music.volume}));
+  model.audio=null;
+ }
+ model.tracks=tracks;
+}
+function changeTrack(id,patch){
+ const track=model.tracks?.find(x=>x.id===id);if(!track)throw Error('수정할 클립이 없어요.');
+ const normalized=C.cleanTrack({...track,...patch});
+ if(normalized.start+normalized.duration>C.totalDuration(model)+.05)throw Error('클립이 수업 전체 길이를 넘어요. 페이지를 추가하거나 길이를 줄여 주세요.');
+ Object.assign(track,normalized);
+}
 window.GulliverStudioAdapter={
  kind:'canvas',
  capture:()=>C.validate(model),
+ getTracks:()=>model.tracks||[],
+ getSceneTime:()=>timeline?.getTime?.()||0,
+ addTrack:raw=>edit(()=>{
+  ensureMultitrack();
+  if(model.tracks.length>=C.MAX_TRACKS)throw Error('최대 '+C.MAX_TRACKS+'개 클립까지 추가할 수 있어요.');
+  const next=C.cleanTrack({...raw,id:C.id()});
+  if(next.start+next.duration>C.totalDuration(model)+.05)throw Error('타임라인의 끝을 넘어요. 페이지 길이를 늘려 주세요.');
+  model.tracks.push(next);
+  return next.id;
+ }),
+ updateTrack:(id,patch)=>edit(()=>{ensureMultitrack();changeTrack(id,patch)}),
+ removeTrack:id=>edit(()=>{ensureMultitrack();model.tracks=model.tracks.filter(x=>x.id!==id)}),
+ expandTimeline:()=>edit(()=>{
+  if(C.totalDuration(model)<12){const p=model.pages[0];p.duration=Math.min(20,p.duration+(12-C.totalDuration(model)))}
+ }),
+
  setSceneVideoClip:clip=>edit(()=>{
   if(clip){
    const original=page().videoClip||{},base=C.LAYOUTS[model.layout];
