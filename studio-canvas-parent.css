@@ -1,3 +1,4 @@
+#canvasParentBack,#canvasParentTools{display:none}
 /* One navigation system per device. The unified canvas owns editing menus. */
 body.studio-canvas .shell{display:block!important;padding:0!important;min-height:100dvh}
 body.studio-canvas .shell>.nav{display:none!important}
