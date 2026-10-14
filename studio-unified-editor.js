@@ -347,9 +347,9 @@ function bind(){
   finally{videoController=null;button.disabled=false;cancel.hidden=true;panel.hidden=true}
  });
  $('cancelWebm').addEventListener('click',()=>{videoController?.abort();notice('영상 저장을 취소하는 중이에요.')});
- $('exportPng').addEventListener('click',async()=>{try{timeline?.halt();closeEditor();const blob=await pagePng(page());download(blob,(model.title||'수업자료').replace(/[\\/:*?"<>|]/g,'_')+'.png');notice('PNG를 저장했어요.')}catch(e){notice(e.message,true)}});
+ $('exportPng').addEventListener('click',async()=>{try{timeline?.halt();closeEditor();if(page().videoClip)throw Error('동영상이 있는 장면의 PNG 추출은 아직 지원하지 않아요. 영상 클립을 제거하거나 일반 페이지를 선택해 주세요.');const blob=await pagePng(page());download(blob,(model.title||'수업자료').replace(/[\\/:*?"<>|]/g,'_')+'.png');notice('PNG를 저장했어요.')}catch(e){notice(e.message,true)}});
  $('printPdf').addEventListener('click',()=>{
-  timeline?.halt();closeEditor();document.getElementById('print-page-size')?.remove();
+  timeline?.halt();closeEditor();if(model.pages.some(p=>p.videoClip)){notice('영상이 포함된 자료는 PDF에 움직임을 담을 수 없어요. 영상 없는 페이지에서 인쇄해 주세요.',true);return}document.getElementById('print-page-size')?.remove();
   document.getElementById('printPages')?.remove();
   const sheets=document.createElement('div');sheets.id='printPages';
   const dims=C.LAYOUTS[model.layout],factor=model.layout==='a4'?1.333:1.16;
@@ -396,6 +396,7 @@ window.GulliverStudioAdapter={
  capture:()=>C.validate(model),
  setSceneVideoClip:clip=>edit(()=>{if(clip){page().videoClip=C.cleanVideoClip(clip);page().duration=Math.min(20,Math.max(1,Math.round(clip.duration*10)/10))}else delete page().videoClip},''),
  getMedia:id=>mediaProvider(id),
+ getSceneVideoClip:()=>page().videoClip||null,
  setMediaProvider:provider=>{mediaProvider=provider;timeline?.setMediaProvider(provider)},
  setMediaSink:sink=>timeline?.setMediaSink(sink),
  onPageChange:callback=>{pageChange=callback},
@@ -409,6 +410,7 @@ window.GulliverStudioAdapter={
  exportVideo:async()=>{throw Error('영상 저장은 통합 캔버스 안의 “영상 저장 (WebM)” 버튼에서 진행해 주세요.')},
  exportSlides:async()=>{
   if(model.pages.length>5)throw Error('영상으로 한 번에 보낼 수 있는 페이지는 최대 5장이에요.');
+   if(model.pages.some(p=>p.videoClip))throw Error('영상 클립이 들어 있는 페이지를 이미지 슬라이드로 전달하는 것은 아직 지원하지 않아요.');
   const pages=model.pages;const files=[];
   for(let i=0;i<pages.length;i++)files.push({name:(i+1)+'_페이지.png',blob:await pagePng(pages[i])});
   return files;
