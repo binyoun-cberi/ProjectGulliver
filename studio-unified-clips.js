@@ -28,7 +28,7 @@ const preview=document.createElement('video');
 preview.className='canvas-video-preview';
 preview.setAttribute('playsinline','');
 preview.setAttribute('webkit-playsinline','');
-preview.preload='metadata';preview.muted=true;preview.loop=false;preview.controls=false;
+preview.preload='metadata';preview.muted=true;preview.loop=false;preview.controls=false;preview.hidden=true;
 preview.setAttribute('aria-label','장면 영상 미리보기');
 $('stage').prepend(preview);
 let currentId='',currentUrl='',lastSourceDuration=0,serial=0,ready=false;
@@ -40,13 +40,14 @@ function release(){
  currentUrl='';currentId='';ready=false;lastSourceDuration=0;
 }
 async function persist(){
- // File imports are larger than ordinary property changes: commit the latest
- // metadata before telling users it has been saved. The studio still handles
- // independent automatic saves, undo, and existing project storage.
+ // Clip changes contain file references: verify the managed project is committed.
  try{
-  if(window.parent!==window&&window.parent.GulliverStudioBridge?.getState()?.activeKind==='canvas')
+  if(window.parent!==window&&window.parent.GulliverStudioBridge?.getState()?.activeKind==='canvas'){
    await window.parent.GulliverStudioBridge.sync(true);
- }catch(e){notify('영상은 추가됐지만 저장이 완료되지 않았어요. 원본을 백업해 주세요. '+(e.message||e),true)}
+   return true;
+  }
+  return false;
+ }catch(e){notify('변경한 영상은 화면에 있지만 저장하지 못했어요. '+(e.message||e),true);return false}
 }
 function notify(message,error=false){
  const el=$('status');if(!el)return;el.textContent=message;el.style.color=error?'#b91c1c':'#51647a';
@@ -122,8 +123,8 @@ async function importFile(file){
  await Store.saveMedia(entry);
  const meta={mediaId:entry.id,name:entry.name,mime:entry.mime,inPoint:0,duration:Math.max(1,Math.min(20,Math.floor(duration*10)/10)),muted:true};
  Adapter.setSceneVideoClip(meta);
- await persist();
- notify('영상 클립을 현재 장면에 연결했어요. 재생해 확인하세요.');
+ const saved=await persist();
+ notify(saved?'영상 클립을 장면에 연결하고 저장했어요. 재생해 확인하세요.':'영상 클립을 화면에 연결했어요. 저장 상태를 확인해 주세요.',!saved);
 }
 fileInput.addEventListener('change',async event=>{
  const file=event.target.files?.[0];event.target.value='';
@@ -131,7 +132,9 @@ fileInput.addEventListener('change',async event=>{
  try{await importFile(file)}catch(e){notify('영상 가져오기 실패: '+(e.message||e),true)}
 });
 remove.addEventListener('click',()=>{
- if(!clip())return;Adapter.setSceneVideoClip(null);persist().catch(()=>{});notify('영상 배경을 제거했어요. 원본은 미디어 보관함에 남아요.');
+ if(!clip())return;Adapter.setSceneVideoClip(null);persist().then(saved=>{
+  notify(saved?'영상 배경을 제거하고 저장했어요. 원본은 미디어 보관함에 남아요.':'영상 배경을 제거했지만 자동 저장 상태를 확인해 주세요.',!saved);
+ });
 });
 function changeTrim(origin){
  const old=clip();if(!old)return;
@@ -146,8 +149,9 @@ function changeTrim(origin){
   lengthInput.value=String(duration);
  }
  Adapter.setSceneVideoClip({...old,inPoint:Math.round(start*10)/10,duration:Math.round(duration*10)/10});
- persist().catch(()=>{});
- notify(origin==='start'?'영상 시작 위치를 변경했어요.':'영상 재생 길이를 변경했어요.');
+ persist().then(saved=>notify(saved?
+   (origin==='start'?'시작 위치를 변경하고 저장했어요.':'재생 길이를 변경하고 저장했어요.'):
+   '클립은 변경됐지만 자동 저장 상태를 확인해 주세요.',!saved));
 }
 inInput.addEventListener('change',()=>changeTrim('start'));
 lengthInput.addEventListener('change',()=>changeTrim('length'));
