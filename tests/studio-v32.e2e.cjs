@@ -64,7 +64,7 @@ test('3.2 Chrome exports actual changing video frames AND WAV track without a se
   // samples reach the encoded Opus track (the fixture contains a 440Hz tone).
   const sound=spawnSync('ffmpeg',['-hide_banner','-i',output,'-vn','-af','volumedetect','-f','null','-'],{encoding:'utf8'});
   assert.equal(sound.status,0,'ffmpeg audio decode failed: '+sound.stderr);
-  const loudness=sound.stderr.match(/mean_volume:\\s*(-?[0-9.]+) dB/);
+  const loudness=sound.stderr.match(/mean_volume:\s*(-?[0-9.]+) dB/);
   assert.ok(loudness,'No measurable Opus audio in exported WebM: '+sound.stderr.slice(-1200));
   assert.ok(Number(loudness[1])>-65,'Opus soundtrack appears silent: '+loudness[1]);
   const md5=spawnSync('ffmpeg',['-v','error','-i',output,'-vf','fps=2,scale=64:36','-f','framemd5','-'],{encoding:'utf8'});
