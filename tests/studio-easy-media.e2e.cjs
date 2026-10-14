@@ -28,10 +28,10 @@ test('Media library: upload progress, video thumbnail/name, resize and layer, WA
   const grip=await frame.locator('.easy-video-grip').boundingBox();
   await page.mouse.move(grip.x+grip.width/2,grip.y+grip.height/2);
   await page.mouse.down();
-  await page.mouse.move(grip.x+grip.width/2+50,grip.y+grip.height/2+36,{steps:6});
+  await page.mouse.move(grip.x+grip.width/2-60,grip.y+grip.height/2-45,{steps:8});
   await page.mouse.up();
   const after=await frame.locator('body').evaluate(()=>GulliverStudioAdapter.capture().pages[0].videoClip);
-  assert.ok(after.w>before.w&&after.h>before.h,'Corner grip must change native saved video geometry');
+  assert.ok(after.w<before.w&&after.h<before.h,'Dragging video corner inward must shrink the saved canvas geometry');
   const img={name:'one.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/UoQAAAAASUVORK5CYII=','base64')};
   await frame.locator('#easyMediaPicker').setInputFiles(img);
   await frame.locator('.easy-file').filter({hasText:'one.png'}).waitFor();
