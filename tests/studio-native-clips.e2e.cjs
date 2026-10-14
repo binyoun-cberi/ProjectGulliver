@@ -50,8 +50,20 @@ test('inline canvas video: import MP4, trim, play, autosave, recover source; fai
    if(el.readyState>=2){resolve()}else{el.addEventListener('loadeddata',resolve,{once:true});setTimeout(()=>reject(Error('video frame not decoded')),12000)}
   }));
   await frame.locator('#timelineStop').evaluate(el=>el.click());
+  const download=page.waitForEvent('download',{timeout:45000});
   await frame.locator('#exportWebm').evaluate(el=>el.click());
-  await frame.locator('#status').filter({hasText:'영상 클립의 합성 출력은 아직 지원하지 않아요'}).waitFor();
+  const exported=await download,output=await exported.path();
+  assert.match(exported.suggestedFilename(),/\.webm$/);
+  const probe=spawnSync('ffprobe',['-v','error','-select_streams','v:0','-show_entries','stream=codec_name,width,height','-of','json',output],{encoding:'utf8'});
+  assert.equal(probe.status,0,'exported clip ffprobe: '+probe.stderr);
+  const streams=JSON.parse(probe.stdout).streams;
+  assert.equal(streams[0].width,960);assert.equal(streams[0].height,540);
+  const digest=spawnSync('ffmpeg',['-v','error','-i',output,'-vf','fps=2,scale=64:36','-f','framemd5','-'],{encoding:'utf8'});
+  assert.equal(digest.status,0,'exported clip decode: '+digest.stderr);
+  const frames=digest.stdout.split('\n').filter(x=>x&&!x.startsWith('#')).map(x=>x.split(',').at(-1).trim());
+  assert.ok(frames.length>=3,'Export must contain real video frames');
+  assert.ok(new Set(frames).size>=2,'Imported moving MP4 video must be present in final WebM');
+  await frame.locator('#status').filter({hasText:'합친 WebM 영상을 저장했어요'}).waitFor();
   await page.setViewportSize({width:390,height:844});
   await frame.locator('[data-design-tab="motion"]').click();
   const dock=await frame.locator('.design-nav').evaluate(el=>({bottom:el.getBoundingClientRect().bottom,height:innerHeight}));
