@@ -1,8 +1,8 @@
 (() => {
 'use strict';
 const C=window.GulliverStudioCore,S=window.GulliverStudioStorage,L=window.GulliverStudioLibraryCore,
- B=window.GulliverStudioBridge,W=window.ClassroomWorkspace,M=window.GulliverMediaCore,O=window.GulliverOfficialProjectCore,$=id=>document.getElementById(id);
-if(!C||!S||!L||!B||!W||!M||!O)throw Error('작업 보관함을 불러오지 못했어요.');
+ B=window.GulliverStudioBridge,W=window.ClassroomWorkspace,M=window.GulliverMediaCore,O=window.GulliverOfficialProjectCore,U=window.GulliverUnifiedCore,$=id=>document.getElementById(id);
+if(!C||!S||!L||!B||!W||!M||!O||!U)throw Error('작업 보관함을 불러오지 못했어요.');
 let folders=[],moving=null,working=false;
 const uid=()=>window.crypto?.randomUUID?.()||'lib_'+Date.now().toString(36)+Math.random().toString(36).slice(2);
 const el=(tag,cls,body)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(body!==undefined)n.textContent=String(body);return n};
@@ -282,6 +282,13 @@ async function restoreArchive(event){
     }
     if(project.payload.audio){
      if(!mediaIdMap.has(project.payload.audio.mediaId))throw Error('영상 배경음악 원본이 백업에 빠져 있어요.');
+     project.payload.audio.mediaId=mediaIdMap.get(project.payload.audio.mediaId);
+    }
+   }
+   if(project.kind==='canvas'){
+    project.payload=U.validate(project.payload);
+    if(project.payload.audio){
+     if(!mediaIdMap.has(project.payload.audio.mediaId))throw Error('통합 캔버스의 배경음악 WAV가 백업에 포함되지 않았어요.');
      project.payload.audio.mediaId=mediaIdMap.get(project.payload.audio.mediaId);
     }
    }

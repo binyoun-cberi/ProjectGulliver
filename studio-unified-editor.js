@@ -2,7 +2,7 @@
 'use strict';
 const C=window.GulliverUnifiedCore,$=id=>document.getElementById(id);
 if(!C)throw Error('공통 캔버스 엔진을 불러오지 못했어요.');
-let model=C.starter(),selected='',undoStack=[],redoStack=[],scale=1,drag=null,editing=false;
+let model=C.starter(),selected='',undoStack=[],redoStack=[],scale=1,drag=null,editing=false,timeline=null;
 const stage=$('stage'),textEditor=$('editText'),stackLimit=80;
 const clone=obj=>JSON.parse(JSON.stringify(obj)),page=()=>model.pages[model.active],
   current=()=>page().elements.find(e=>e.id===selected)||null;
@@ -15,23 +15,23 @@ function checkpoint(previous){
  redoStack=[];emit();return true;
 }
 function edit(fn,selectId){
- closeEditor();
+ timeline?.halt();closeEditor();
  const before=clone(model);
  const result=fn();
  if(selectId!==undefined)selected=selectId;
- checkpoint(before);render();return result;
+ checkpoint(before);timeline?.syncToActive();render();return result;
 }
 function undo(){
- closeEditor();
+ timeline?.halt();closeEditor();
  if(!undoStack.length)return;
  redoStack.push(clone(model));model=undoStack.pop();selected='';
- render();emit();notice('마지막 편집을 취소했어요.');
+ timeline?.syncToActive();render();emit();notice('마지막 편집을 취소했어요.');
 }
 function redo(){
- closeEditor();
+ timeline?.halt();closeEditor();
  if(!redoStack.length)return;
  undoStack.push(clone(model));model=redoStack.pop();selected='';
- render();emit();notice('다시 실행했어요.');
+ timeline?.syncToActive();render();emit();notice('다시 실행했어요.');
 }
 function size(){
  const base=C.LAYOUTS[model.layout],width=Math.max(240,$('stageView').clientWidth-10);
@@ -75,7 +75,7 @@ function renderPages(){
   thumb.textContent=p.elements.find(e=>e.type==='text')?.content?.slice(0,24)||'빈 페이지';
   const label=document.createElement('span');label.textContent=(i+1)+'. '+p.name.slice(0,20);
   button.append(thumb,label);button.type='button';button.title=(i+1)+'번째 페이지 열기';
-  button.addEventListener('click',()=>{closeEditor();model.active=i;selected='';render();emit()});
+  button.addEventListener('click',()=>{timeline?.halt();closeEditor();model.active=i;selected='';timeline?.syncToActive();render();emit()});
   strip.append(button);
  }
  const add=document.createElement('button');add.textContent='＋ 페이지 추가';add.type='button';add.addEventListener('click',addPage);strip.append(add);
@@ -102,7 +102,7 @@ function render(){
  size();stage.style.background=page().background;
  stage.querySelectorAll('.item').forEach(el=>el.remove());
  for(const e of page().elements)stage.append(drawItem(e));
- renderPages();properties();
+ renderPages();properties();timeline?.refresh();
 }
 function addElement(type,partial){
  if(page().elements.length>=C.MAX_ITEMS){notice('페이지당 최대 150개 요소만 넣을 수 있어요.',true);return}
@@ -138,6 +138,7 @@ function arrange(direction){
  edit(()=>{const [e]=page().elements.splice(at,1);page().elements.splice(target,0,e)});
 }
 function startMove(event){
+ timeline?.halt();
  if(event.button!==0&&event.pointerType==='mouse')return;
  if(editing)return;
  const target=event.target.closest('.item');
@@ -298,28 +299,42 @@ function bind(){
  stage.addEventListener('dblclick',beginText);
  textEditor.addEventListener('blur',closeEditor);
  textEditor.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();closeEditor()}});
- $('exportPng').addEventListener('click',async()=>{try{closeEditor();const blob=await pagePng(page());download(blob,(model.title||'수업자료').replace(/[\\/:*?"<>|]/g,'_')+'.png');notice('PNG를 저장했어요.')}catch(e){notice(e.message,true)}});
+ $('exportPng').addEventListener('click',async()=>{try{timeline?.halt();closeEditor();const blob=await pagePng(page());download(blob,(model.title||'수업자료').replace(/[\\/:*?"<>|]/g,'_')+'.png');notice('PNG를 저장했어요.')}catch(e){notice(e.message,true)}});
  $('printPdf').addEventListener('click',()=>{
-  closeEditor();document.getElementById('print-page-size')?.remove();
+  timeline?.halt();closeEditor();document.getElementById('print-page-size')?.remove();
   const style=document.createElement('style');style.id='print-page-size';
   style.textContent='@page { size: '+(model.layout==='a4'?'A4 portrait':'landscape')+'; margin: 0 }';
   document.head.append(style);window.print();
  });
  window.addEventListener('afterprint',()=>document.getElementById('print-page-size')?.remove());
- $('present').addEventListener('click',async()=>{try{await $('stageView').requestFullscreen()}catch(e){notice('전체 화면을 사용할 수 없는 브라우저예요.',true)}});
- window.addEventListener('resize',size);document.addEventListener('fullscreenchange',size);
+ $('present').addEventListener('click',async()=>{
+  try{await $('stageView').requestFullscreen();timeline?.play()}
+  catch(e){notice('전체 화면을 사용할 수 없는 브라우저예요. 아래 타임라인의 재생 버튼을 눌러 주세요.',true)}
+ });
+ window.addEventListener('resize',size);
+ document.addEventListener('fullscreenchange',()=>{size();if(!document.fullscreenElement&&timeline?.isPlaying())timeline.pause()});
  document.addEventListener('keydown',e=>{
   const inside=['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.activeElement?.isContentEditable;
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();if(e.shiftKey)redo();else undo();return}
   if(inside)return;
+  if(document.fullscreenElement&&e.code==='Space'){
+   e.preventDefault();if(timeline?.isPlaying())timeline.pause();else timeline?.play();return
+  }
+  if(document.fullscreenElement&&['ArrowLeft','ArrowRight'].includes(e.key)){
+   e.preventDefault();const jump=Math.max(0,Math.min(model.pages.length-1,model.active+(e.key==='ArrowRight'?1:-1)));
+   timeline?.seek(model.pages.slice(0,jump).reduce((t,p)=>t+p.duration,0));return
+  }
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'){e.preventDefault();duplicateSelected()}
   if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();deleteSelected()}
  });
 }
+timeline=window.GulliverUnifiedTimeline?.create({
+ getModel:()=>model,getSelected:()=>selected,edit,showPage:i=>{model.active=i;selected='';render()},notice,stage
+});
 window.GulliverStudioAdapter={
  kind:'canvas',
  capture:()=>C.validate(model),
- apply:raw=>{closeEditor();model=C.validate(raw);selected='';undoStack=[];redoStack=[];render()},
+ apply:raw=>{timeline?.halt();closeEditor();model=C.validate(raw);selected='';undoStack=[];redoStack=[];timeline?.syncToActive();render();timeline?.refreshSoundShelf().then(()=>timeline?.prepareAudio?.()).catch(()=>{})},
  rename:title=>edit(()=>{model.title=String(title).slice(0,90)}),
  insertImage:addImageFile,
  exportImage:async()=>{closeEditor();return pagePng(page())},
