@@ -82,6 +82,13 @@ shortcut(templateButtons,'A4 학습지로 시작','▧','[data-template="workshe
 shortcut(templateButtons,'빈 디자인으로 시작','＋','[data-template="blank"]');
 note('templates','템플릿을 변경하면 현재 페이지 구성이 바뀌어요. 실행 취소로 되돌릴 수 있어요.');
 panes.get('elements').append(shelf);
+shelf.addEventListener('click',event=>{
+ if(!event.target.closest('[data-add]'))return;
+ // On phones, inserting an object returns to the canvas instead of trapping
+ // users behind the tool sheet.
+ if(isMobile())queueMicrotask(closePanel);
+});
+
 const textButtons=actionsPane('text');
 shortcut(textButtons,'텍스트 상자 추가','T','[data-add="text"]',{thenProps:true});
 const textEdit=make('button','pane-action');
