@@ -122,13 +122,14 @@ async function exportWebM(project,{getMedia,onProgress=()=>{},signal}={}){
     else resolve(blob);
    };
   });
-  let aborted=false;
+  let aborted=false,renderFailure=null;
   const abort=()=>{aborted=true;if(recorder?.state==='recording')recorder.stop()};
   signal?.addEventListener('abort',abort,{once:true});
   visibilityListener=()=>{if(root.document.visibilityState==='hidden')abort()};
   root.document.addEventListener('visibilitychange',visibilityListener);
   await audioContext?.resume();
   if(signal?.aborted)abort();
+  if(aborted)throw Error('영상 저장이 취소됐어요.');
   if(!aborted){
    recorder.start(250);
    source?.start();
@@ -139,10 +140,11 @@ async function exportWebM(project,{getMedia,onProgress=()=>{},signal}={}){
     try{
      drawFrame(ctx,safe,t,images);onProgress(t/duration,t,duration);
      if(t>=duration&&recorder.state==='recording'){root.clearInterval(timer);recorder.stop()}
-    }catch(e){aborted=true;root.clearInterval(timer);if(recorder.state==='recording')recorder.stop()}
+    }catch(e){renderFailure=e;aborted=true;root.clearInterval(timer);if(recorder.state==='recording')recorder.stop()}
    },1000/FPS);
   }
-  const blob=aborted&&!stopPromise?null:await stopPromise;
+  const blob=await stopPromise;
+  if(renderFailure)throw Error('영상 장면 그리기 실패: '+(renderFailure.message||renderFailure));
   if(aborted||signal?.aborted)throw Error('영상 저장이 중단됐어요. 창을 닫지 않고 다시 실행해 주세요.');
   onProgress(1,duration,duration);
   return blob;
