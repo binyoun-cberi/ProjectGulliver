@@ -83,6 +83,7 @@ function renderPages(){
 }
 function properties(){
  const e=current(),onlyText=!!e&&e.type==='text';
+ document.querySelector('.properties').classList.toggle('has-selection',!!e);
  $('propertyHint').textContent=e?'선택한 '+({text:'글씨',rect:'네모',ellipse:'동그라미',triangle:'세모',star:'별',line:'선',image:'사진'}[e.type]||'요소')+'의 속성이에요.':'글씨·도형을 직접 클릭하면 속성이 나타나요.';
  const mapping={propertyText:e?.content||'',propertyFill:e?.fill||'#253650',propertyStroke:e?.stroke||'#334155',
   propertyFont:e?.fontSize??38,propertyOpacity:e?.opacity??1,propertyX:e?.x??0,

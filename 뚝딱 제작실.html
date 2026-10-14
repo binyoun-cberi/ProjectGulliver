@@ -197,6 +197,16 @@ body.studio-canvas #transferBar{display:none}
 body.studio-canvas.canvas-transfer-open #transferBar:not([hidden]){display:flex}
 @media(max-width:900px){body.studio-canvas.canvas-library-open .shell{grid-template-columns:76px minmax(0,1fr)}body.studio-canvas.canvas-library-open .sidebar{grid-column:2;grid-row:2}}
 @media(max-width:620px){body.studio-canvas .shell,body.studio-canvas.canvas-library-open .shell{display:block;padding-top:55px}body.studio-canvas .nav{position:fixed;inset:0 0 auto;height:55px;padding:4px 8px;flex-direction:row;align-items:center;justify-content:space-between}body.studio-canvas #editorFrame{height:calc(100dvh - 155px);min-height:630px}body.studio-canvas .sidebar{padding:12px}}
+body.studio-canvas .nav{background:#faf9ff}
+body.studio-canvas .tool-buttons button[aria-current=true]{background:#eae2ff;color:#5237a6;box-shadow:inset 3px 0 #7450d1}
+body.studio-canvas .top{border-bottom:1px solid #dcd4f5;background:#fff}
+body.studio-canvas #canvasLibraryToggle{background:#eaf4ff;border-color:#bfdaf7;color:#195c9b}
+body.studio-canvas #canvasLibraryToggle[aria-expanded=true]{background:#d8eaff;border-color:#69a9e5;box-shadow:0 0 0 2px #cce4fa}
+body.studio-canvas #canvasTransferToggle{background:#e9f8f4;border-color:#bce2d9;color:#0a685e}
+body.studio-canvas #canvasTransferToggle[aria-expanded=true]{background:#d6f2e9;border-color:#63bca6;box-shadow:0 0 0 2px #c7e9df}
+body.studio-canvas #newProject{border-color:#d9c7fa;background:#f5efff;color:#5a3bac}
+body.studio-canvas.canvas-library-open .sidebar{border-left:3px solid #92bff0;background:#f7fbff}
+body.studio-canvas.canvas-transfer-open #transferBar{background:#f0faf7;border-color:#acd9cc}
 
 </style>
 </head>
