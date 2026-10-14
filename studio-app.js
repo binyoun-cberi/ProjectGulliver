@@ -257,7 +257,7 @@ async function home(){
  if(activeKind&& !C.managed(activeKind) && !confirm('그림·PDF 도구는 자동 저장되지 않아요. 편집한 원본을 먼저 저장했나요?'))return;
  if(await moveAway())status('제작실 홈으로 돌아왔어요.');
 }
-async function start(kind,existing=null,officialId=''){
+async function start(kind,existing=null,officialId='',preset=''){
  if(!C.TOOLS[kind])return;
  if(activeKind&& !C.managed(activeKind) && !(activeKind==='picture'&&pendingTransfer?.target===kind) && !confirm('그림·PDF 작업은 자동 저장되지 않아요. 작업 결과를 저장하고 이동하시겠어요?'))return;
  if(!(await moveAway()))return false;
@@ -269,7 +269,7 @@ async function start(kind,existing=null,officialId=''){
  // Saved quick-edit projects must reopen in the editor that created them.
  // A separate official FilmCraft/SoundCraft session is never this saved payload.
  const quickProject=(!!existing&&(kind==='video'||kind==='music'))||(pendingTransfer?.target===kind&&kind==='video');
- frame.src=path+'?studio=1'+(officialId?'&officialId='+encodeURIComponent(officialId):(quickProject?'&editor=simple':''));
+ frame.src=path+'?studio=1'+(officialId?'&officialId='+encodeURIComponent(officialId):(quickProject?'&editor=simple':''))+(kind==='canvas'&&!existing&&['blank','presentation','worksheet'].includes(preset)?'&preset='+preset:'');
  status(C.managed(kind)?'작업을 여는 중이에요. 변경 사항은 자동으로 저장돼요.':'편집기를 불러오고 있어요. 파일은 해당 도구 안에서 저장해 주세요.');
  return true;
 }
