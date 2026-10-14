@@ -23,7 +23,7 @@ test('One canvas for blank, slides, worksheets; specialist editors stay explicit
   await page.locator('#canvasParentTools').click();
   assert.equal(await page.locator('body.canvas-library-open').count(),0,'Picker closes background library');
   await page.locator('#studioToolPicker [data-canvas-template="blank"]').click();
-  await page.frameLocator('#editorFrame').locator('#stage .item').first().waitFor({state:'detached'});
+  await page.waitForFunction(()=>document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.capture?.().pages?.[0]?.elements?.length===0);
   assert.equal(await page.frameLocator('#editorFrame').locator('#stage .item').count(),0);
   await page.locator('#canvasParentTools').click();
   assert.equal(await page.locator('#studioToolPicker .picker-specialists[open]').count(),0);
