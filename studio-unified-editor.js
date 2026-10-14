@@ -105,6 +105,7 @@ function render(){
  size();stage.style.background=page().background;
  stage.querySelectorAll('.item').forEach(el=>el.remove());
  for(const e of page().elements)stage.append(drawItem(e));
+ window.GulliverCanvasMedia?.placeVideo?.();
  renderPages();properties();timeline?.refresh();window.GulliverCanvasMedia?.refresh?.();
 }
 function placeNewText(e){
@@ -395,9 +396,50 @@ timeline=window.GulliverUnifiedTimeline?.create({
 window.GulliverStudioAdapter={
  kind:'canvas',
  capture:()=>C.validate(model),
- setSceneVideoClip:clip=>edit(()=>{if(clip){page().videoClip=C.cleanVideoClip(clip);page().duration=Math.min(20,Math.max(1,Math.round(clip.duration*10)/10))}else delete page().videoClip},''),
+ setSceneVideoClip:clip=>edit(()=>{
+  if(clip){
+   const original=page().videoClip||{},base=C.LAYOUTS[model.layout];
+   page().videoClip=C.cleanVideoClip({...{x:0,y:0,w:base.w,h:base.h,stack:0},...original,...clip});
+   page().duration=Math.min(20,Math.max(1,Math.round(clip.duration*10)/10));
+  }else delete page().videoClip
+ },''),
+ setSceneVideoLayout:patch=>edit(()=>{
+  if(!page().videoClip)return;
+  const dims=C.LAYOUTS[model.layout],item=page().videoClip;
+  const proposed={...item,...patch};
+  proposed.w=Math.min(dims.w*2,Math.max(60,Number(proposed.w)||dims.w));
+  proposed.h=Math.min(dims.h*2,Math.max(40,Number(proposed.h)||dims.h));
+  proposed.x=Math.max(-dims.w,Math.min(dims.w,Number(proposed.x)||0));
+  proposed.y=Math.max(-dims.h,Math.min(dims.h,Number(proposed.y)||0));
+  page().videoClip=C.cleanVideoClip(proposed);
+ }),
+ arrangeMediaLayer:(id,action)=>edit(()=>{
+  const p=page(),videoId='__video__',hasVideo=!!p.videoClip;
+  const ids=p.elements.map(e=>e.id);
+  if(hasVideo)ids.splice(Math.min(ids.length,p.videoClip.stack||0),0,videoId);
+  const from=ids.indexOf(id);if(from<0)return;
+  let to=from;
+  if(action==='front')to=ids.length-1;
+  if(action==='back')to=0;
+  if(action==='up')to=Math.min(ids.length-1,from+1);
+  if(action==='down')to=Math.max(0,from-1);
+  ids.splice(from,1);ids.splice(to,0,id);
+  if(hasVideo)p.videoClip.stack=ids.indexOf(videoId);
+  p.elements=ids.filter(x=>x!==videoId).map(x=>p.elements.find(item=>item.id===x));
+ }),
+ setImageAsBackground:id=>edit(()=>{
+  const p=page(),index=p.elements.findIndex(e=>e.id===id);
+  if(index<0||p.elements[index].type!=='image')return;
+  const [image]=p.elements.splice(index,1),dim=C.LAYOUTS[model.layout];
+  Object.assign(image,{x:0,y:0,w:dim.w,h:dim.h});
+  p.elements.unshift(image);if(p.videoClip)p.videoClip.stack=Math.max(1,p.videoClip.stack);
+ }),
  getMedia:id=>mediaProvider(id),
  getSceneVideoClip:()=>page().videoClip||null,
+ getSelectedLayerInfo:()=>current()?{id:selected,type:current().type}:null,
+ setMusicTrim:patch=>edit(()=>{if(model.audio)model.audio={...model.audio,...patch}}),
+ addMusicFile:file=>timeline?.importWav(file),
+ selectMusicFile:id=>timeline?.selectAudio(id),
  setMediaProvider:provider=>{mediaProvider=provider;timeline?.setMediaProvider(provider)},
  setMediaSink:sink=>timeline?.setMediaSink(sink),
  onPageChange:callback=>{pageChange=callback},
