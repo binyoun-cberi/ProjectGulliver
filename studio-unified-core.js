@@ -97,7 +97,8 @@ function validate(raw){
   const a=raw.audio;
   if(!a||typeof a.mediaId!=='string'||!/^[\w-]{1,110}$/.test(a.mediaId)||a.mime!=='audio/wav')throw Error('통합 캔버스의 배경음악 원본 정보가 잘못됐어요.');
   audio={mediaId:a.mediaId,mime:'audio/wav',name:text(a.name||'배경음악',90),
-   volume:number(a.volume,0,1,.7),loop:a.loop!==false};
+   volume:number(a.volume,0,1,.7),loop:a.loop!==false,
+   trimStart:number(a.trimStart,0,86400,0),trimDuration:number(a.trimDuration,1,60,60)};
  }
  return{format:FORMAT,title:text(raw.title,90)||'통합 제작물',layout:raw.layout,pages,active:number(raw.active,0,pages.length-1,0)|0,audio};
 }
