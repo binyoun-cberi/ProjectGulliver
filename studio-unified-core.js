@@ -5,6 +5,8 @@
 const FORMAT='gulliver.unified.canvas.v1',MAX_PAGES=40,MAX_ITEMS=150,MAX_IMAGE=3000000;
 const TYPES=['text','rect','ellipse','triangle','star','line','image'];
 const LAYOUTS={wide:{w:960,h:540,label:'16:9 발표'},a4:{w:595,h:842,label:'A4 도안'}};
+const ANIMATIONS=['none','fade','rise','zoom'],TRANSITIONS=['none','fade','slide'];
+const MIN_DURATION=1,MAX_DURATION=20,ANIMATION_SECONDS=.65;
 function id(){return 'u-'+(globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2))}
 function color(value,fallback='#253650'){return typeof value==='string'&&/^#[0-9a-fA-F]{6}$/.test(value)?value:fallback}
 function number(value,min,max,backup){const n=Number(value);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):backup}
@@ -14,10 +16,10 @@ function element(type,partial={}){
  if(!TYPES.includes(type))throw Error('지원하지 않는 편집 요소예요.');
  return{id:partial.id||id(),type,x:120,y:110,w:360,h:type==='text'?75:210,
   fill:type==='text'?'#253650':'#F1D98D',stroke:'#334155',fontSize:38,opacity:1,
-  content:type==='text'?'글씨를 두 번 눌러 수정하세요':'',src:'',align:'center',...partial};
+  content:type==='text'?'글씨를 두 번 눌러 수정하세요':'',src:'',align:'center',animation:'none',delay:0,...partial};
 }
 function makePage(name='새 페이지',elements=[],background='#ffffff'){
- return{id:id(),name,background,elements};
+ return{id:id(),name,background,elements,duration:5,transition:'none'};
 }
 function starter(kind='presentation'){
  if(kind==='worksheet')return{format:FORMAT,title:'나만의 활동지',layout:'a4',pages:[
@@ -41,7 +43,8 @@ function cleanElement(raw,i){
   fill:color(raw.fill,type==='text'?'#253650':'#F1D98D'),
   stroke:color(raw.stroke,'#334155'),fontSize:number(raw.fontSize,10,160,32),
   opacity:number(raw.opacity,0,1,1),content:text(raw.content),
-  src,align:['left','center','right'].includes(raw.align)?raw.align:'center'};
+  src,align:['left','center','right'].includes(raw.align)?raw.align:'center',
+  animation:ANIMATIONS.includes(raw.animation)?raw.animation:'none',delay:number(raw.delay,0,MAX_DURATION,0)};
 }
 function validate(raw){
  if(!raw||raw.format!==FORMAT||!LAYOUTS[raw.layout]||!Array.isArray(raw.pages)||raw.pages.length<1||raw.pages.length>MAX_PAGES)
@@ -52,10 +55,44 @@ function validate(raw){
   const elements=page.elements.map(cleanElement);
   for(const e of elements){if(ids.has(e.id))throw Error('중복된 요소 식별자가 있어요.');ids.add(e.id);imageBytes+=e.src.length}
   return{id:String(page.id||'p-'+i).slice(0,90),name:text(page.name,60)||'페이지 '+(i+1),
-   background:color(page.background,'#ffffff'),elements};
+   background:color(page.background,'#ffffff'),elements,
+   duration:number(page.duration,MIN_DURATION,MAX_DURATION,5),transition:TRANSITIONS.includes(page.transition)?page.transition:'none'};
  });
  if(imageBytes>18*1024*1024)throw Error('프로젝트 안의 이미지가 너무 많아요. 이미지를 줄여 주세요.');
- return{format:FORMAT,title:text(raw.title,90)||'통합 제작물',layout:raw.layout,pages,active:number(raw.active,0,pages.length-1,0)|0};
+ let audio=null;
+ if(raw.audio!==undefined&&raw.audio!==null){
+  const a=raw.audio;
+  if(!a||typeof a.mediaId!=='string'||!/^[\\w-]{1,110}$/.test(a.mediaId)||a.mime!=='audio/wav')throw Error('통합 캔버스의 배경음악 원본 정보가 잘못됐어요.');
+  audio={mediaId:a.mediaId,mime:'audio/wav',name:text(a.name||'배경음악',90),
+   volume:number(a.volume,0,1,.7),loop:a.loop!==false};
+ }
+ return{format:FORMAT,title:text(raw.title,90)||'통합 제작물',layout:raw.layout,pages,active:number(raw.active,0,pages.length-1,0)|0,audio};
+}
+function totalDuration(project){return project.pages.reduce((sum,p)=>sum+number(p.duration,MIN_DURATION,MAX_DURATION,5),0)}
+function locateTime(project,seconds){
+ const total=totalDuration(project),t=number(seconds,0,total,0);let at=0;
+ for(let i=0;i<project.pages.length;i++){
+  const d=number(project.pages[i].duration,MIN_DURATION,MAX_DURATION,5);
+  if(t<at+d||i===project.pages.length-1)return{index:i,local:Math.min(d,Math.max(0,t-at)),start:at,total};
+  at+=d;
+ }
+ return{index:0,local:0,start:0,total};
+}
+function animationFrame(element,local){
+ const type=ANIMATIONS.includes(element.animation)?element.animation:'none',delay=number(element.delay,0,MAX_DURATION,0);
+ const progress=Math.max(0,Math.min(1,(local-delay)/ANIMATION_SECONDS));
+ const eased=1-Math.pow(1-progress,3);
+ if(type==='fade')return{opacity:eased,x:0,y:0,scale:1};
+ if(type==='rise')return{opacity:eased,x:0,y:(1-eased)*36,scale:1};
+ if(type==='zoom')return{opacity:eased,x:0,y:0,scale:.8+.2*eased};
+ return{opacity:1,x:0,y:0,scale:1};
+}
+function transitionFrame(page,local){
+ const d=number(page.duration,MIN_DURATION,MAX_DURATION,5),mode=page.transition;
+ const phase=Math.min(.5,d/3),progress=Math.max(0,Math.min(1,local/phase));
+ if(mode==='fade')return{opacity:progress,slide:0};
+ if(mode==='slide')return{opacity:1,slide:(1-progress)*55};
+ return{opacity:1,slide:0};
 }
 function fromDesign(raw){
  if(!raw||!Array.isArray(raw.objects))throw Error('도안 프로젝트를 확인해 주세요.');
@@ -82,5 +119,5 @@ function fromLegacy(kind,payload){
  if(kind==='slides')return fromSlides(payload);
  throw Error('도안·발표 작업만 편집 가능한 캔버스로 변환할 수 있어요.');
 }
-return {FORMAT,LAYOUTS,MAX_PAGES,MAX_ITEMS,TYPES,id,color,image,element,makePage,starter,validate,fromLegacy};
+return {FORMAT,LAYOUTS,MAX_PAGES,MAX_ITEMS,TYPES,ANIMATIONS,TRANSITIONS,MIN_DURATION,MAX_DURATION,id,color,image,element,makePage,starter,validate,fromLegacy,totalDuration,locateTime,animationFrame,transitionFrame};
 });
