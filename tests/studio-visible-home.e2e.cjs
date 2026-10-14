@@ -26,6 +26,7 @@ test('Homepage and new-activity modal expose video/music editor links in Chrome'
   await page.locator('.tool-row').filter({hasText:'음악 뚝딱'}).first().waitFor();
   await page.locator('#menuButton').click();
   await page.locator('#createButton').click();
+  await page.locator('#createDialog .create-specialists summary').click();
   await page.locator('#createDialog a[href="영상 뚝딱.html"]').waitFor();
   await page.locator('#createDialog a[href="음악 뚝딱.html"]').waitFor();
   for(const kind of ['영상','음악']){
@@ -37,7 +38,7 @@ test('Homepage and new-activity modal expose video/music editor links in Chrome'
   // New Canva-style start flow stays usable from a narrow phone viewport.
   await page.locator('#createDialog [data-close]').click();
   await page.keyboard.press('Escape'); // Dismiss the mobile sidebar opened earlier.
-  await page.locator('.format-tile[href="뚝딱 제작실.html?new=canvas"]').waitFor();
+  await page.locator('.format-tile[href="뚝딱 제작실.html?new=canvas&template=blank"]').waitFor();
   await page.locator('.home-bottom-bar [data-view="templates"]').click();
   assert.equal(await page.locator('.home-bottom-bar [data-view="templates"]').getAttribute('aria-current'),'page');
   await page.locator('.home-bottom-bar [data-view="home"]').click();
@@ -47,6 +48,8 @@ test('Homepage and new-activity modal expose video/music editor links in Chrome'
   await page.locator('.studio-mobile-bar [data-studio-action="projects"]').click();
   await page.locator('.sidebar.is-open').waitFor();
   await page.locator('.studio-mobile-bar [data-studio-action="tools"]').click();
+  await page.locator('#studioToolPicker[open] [data-canvas-template="worksheet"]').waitFor();
+  await page.locator('#studioToolPicker .picker-specialists summary').click();
   await page.locator('#studioToolPicker[open] [data-kind="document"]').waitFor();
   assert.deepEqual(errors,[]);
  }finally{if(browser)await browser.close();server.kill('SIGTERM')}
