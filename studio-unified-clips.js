@@ -162,6 +162,14 @@ function changeTrim(origin){
 inInput.addEventListener('change',()=>changeTrim('start'));
 lengthInput.addEventListener('change',()=>changeTrim('length'));
 window.addEventListener('pagehide',release);
-window.GulliverCanvasMedia={refresh,sync,release};
+async function attachStored(entry){
+ if(!entry?.blob||!MIMES.includes(entry.mime))throw Error('보관함에 있는 영상 파일을 찾지 못했어요.');
+ const duration=await metadata(entry.blob);
+ const safe=Math.max(1,Math.min(20,Math.floor(duration*10)/10));
+ Adapter.setSceneVideoClip({mediaId:entry.id,mime:entry.mime,name:entry.name,inPoint:0,duration:safe,muted:true});
+ await persist();
+ refresh();
+}
+window.GulliverCanvasMedia={refresh,sync,release,attachStored,importFile,getCurrent:clip,notify};
 refresh();
 })();
