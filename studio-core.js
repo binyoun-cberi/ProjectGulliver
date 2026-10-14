@@ -6,7 +6,7 @@ root.GulliverStudioCore=lib;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
 const TOOLS=Object.freeze({
- canvas:{name:'통합',label:'통합 캔버스',icon:'🧩',href:'통합 캔버스.html',export:'글씨·도형·사진·여러 페이지 직접 편집 · PNG·PDF',managed:true},
+ canvas:{name:'통합',label:'통합 캔버스',icon:'🧩',href:'통합 캔버스.html',export:'글씨·사진·장면 타임라인·애니메이션·WAV 음악 · PNG·PDF',managed:true},
  picture:{name:'그림',label:'그림 뚝딱',icon:'🎨',href:'그림 뚝딱.html',export:'이미지 편집·내보내기',managed:false},
  pdf:{name:'PDF',label:'PDF 뚝딱',icon:'📄',href:'PDF 뚝딱.html',export:'PDF 합치기·나누기',managed:false},
  design:{name:'도안',label:'도안 뚝딱',icon:'✂️',href:'도안 뚝딱.html',export:'SVG · PNG · PDF',managed:true},
