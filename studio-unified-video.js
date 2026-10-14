@@ -10,6 +10,7 @@ const FORMATS=['video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/
 function plan(project){
  const C=root.GulliverUnifiedCore||require('./studio-unified-core.js');
  const safe=C.validate(project),seconds=C.totalDuration(safe);
+ if(safe.pages.some(page=>page.videoClip))throw Error('가져온 영상 클립의 합성 출력은 아직 지원하지 않아요. 원본 클립은 보관되며 미리보기·자르기는 가능합니다.');
  if(seconds>MAX_SECONDS)throw Error('영상으로 저장할 수 있는 길이는 60초까지예요. 장면 시간을 줄여 주세요.');
  return{project:safe,duration:seconds,width:C.LAYOUTS[safe.layout].w,height:C.LAYOUTS[safe.layout].h};
 }

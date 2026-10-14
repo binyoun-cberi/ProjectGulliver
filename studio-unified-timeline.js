@@ -33,6 +33,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage,onPlaybackChang
   const m=get(),position=C.locateTime(m,t);
   if(m.active!==position.index)showPage(position.index);
   const page=m.pages[position.index],transition=C.transitionFrame(page,position.local);
+  window.GulliverCanvasMedia?.sync?.(position.local,playing,position.index);
   stage.style.opacity=String(transition.opacity);stage.style.translate=transition.slide+'px 0';
   for(const el of stage.querySelectorAll('.item')){
    const spec=page.elements.find(e=>e.id===el.dataset.id);if(!spec)continue;
@@ -61,9 +62,10 @@ function create({getModel,getSelected,edit,showPage,notice,stage,onPlaybackChang
  function pause(){
   if(!playing)return;
   playing=false;cancelAnimationFrame(raf);audio?.pause();
+  window.GulliverCanvasMedia?.sync?.(C.locateTime(get(),seconds).local,false,get().active);
   syncPlayback();
  }
- function halt(){pause();seconds=absoluteStart(get().active);preview=false;clearPreview();syncPlayback()}
+ function halt(){pause();seconds=absoluteStart(get().active);preview=false;clearPreview();window.GulliverCanvasMedia?.sync?.(0,false,get().active);syncPlayback()}
  function syncToActive(){seconds=absoluteStart(get().active);preview=false;clearPreview()}
  function stop(reset=true){
   pause();if(reset){seconds=0;preview=false}
