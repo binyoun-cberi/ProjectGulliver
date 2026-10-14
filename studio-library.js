@@ -291,6 +291,11 @@ async function restoreArchive(event){
      if(!mediaIdMap.has(project.payload.audio.mediaId))throw Error('통합 캔버스의 배경음악 WAV가 백업에 포함되지 않았어요.');
      project.payload.audio.mediaId=mediaIdMap.get(project.payload.audio.mediaId);
     }
+    for(const page of project.payload.pages){
+     if(!page.videoClip)continue;
+     if(!mediaIdMap.has(page.videoClip.mediaId))throw Error('통합 캔버스 영상 클립 원본이 백업에 빠져 있어요.');
+     page.videoClip.mediaId=mediaIdMap.get(page.videoClip.mediaId);
+    }
    }
    if(project.kind==='music')project.payload=M.validateMusic(project.payload);
    newProjects.push({...project,id:uid(),folderId:map.get(project.folderId)||'',updatedAt:Date.now()});
