@@ -33,6 +33,7 @@ test('3.2 Chrome exports actual changing video frames AND WAV track without a se
   await page.goto(studio,{waitUntil:'domcontentloaded'});
   await page.locator('#toolNav button[data-kind="canvas"]').click();
   const f=page.frameLocator('#editorFrame');await f.locator('#exportWebm').waitFor({state:'attached'});
+  await f.locator('[data-design-tab="motion"]').click();
   await f.locator('#sceneDuration').fill('1');
   await f.locator('#sceneDuration').press('Tab');
   await f.locator('#newPage').evaluate(el=>el.click());
@@ -40,8 +41,8 @@ test('3.2 Chrome exports actual changing video frames AND WAV track without a se
   await f.locator('#sceneDuration').press('Tab');
   await f.locator('#sceneTransition').selectOption('slide');
   await f.locator('[data-add="rect"]').evaluate(el=>el.click());
-  await f.locator('#elementAnimation').selectOption('zoom');
-  await f.locator('#elementDelay').fill('.2');await f.locator('#elementDelay').press('Tab');
+  await f.locator('#elementAnimation').evaluate(el=>{el.value='zoom';el.dispatchEvent(new Event('change',{bubbles:true}))});
+  await f.locator('#elementDelay').evaluate(el=>{el.value='.2';el.dispatchEvent(new Event('change',{bubbles:true}))});
   await f.locator('#audioUpload').setInputFiles({name:'발표음악.wav',mimeType:'audio/wav',buffer:wav()});
   await f.locator('#timelineMusicName').filter({hasText:'발표음악.wav'}).waitFor();
   const exportPromise=page.waitForEvent('download',{timeout:45000});
@@ -91,7 +92,7 @@ test('3.2 Chrome cancel interrupts capture and no-audio WebM stays supported',{t
   await page.goto(studio,{waitUntil:'domcontentloaded'});await page.locator('#toolNav button[data-kind="canvas"]').click();
   const f=page.frameLocator('#editorFrame');
   await f.locator('#exportWebm').evaluate(el=>el.click());
-  await f.locator('#cancelWebm').click();
+  await f.locator('#cancelWebm').evaluate(el=>el.click());
   await f.locator('#status').filter({hasText:'영상 저장 실패'}).waitFor();
   await f.locator('#cancelWebm').waitFor({state:'hidden'});
   await f.locator('#sceneDuration').fill('1');await f.locator('#sceneDuration').press('Tab');
