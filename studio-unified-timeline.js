@@ -52,6 +52,8 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
   playing=false;cancelAnimationFrame(raf);audio?.pause();
   syncPlayback();
  }
+ function halt(){pause();seconds=absoluteStart(get().active);syncPlayback()}
+ function syncToActive(){seconds=absoluteStart(get().active)}
  function stop(reset=true){
   pause();if(reset)seconds=0;
   if(audio){audio.pause();try{audio.currentTime=0}catch(e){}}
@@ -115,7 +117,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
   else if(get().audio&&files.some(item=>item.id===get().audio.mediaId))select.value=get().audio.mediaId;
  }
  function updateAudio(entry){
-  stop();cleanMedia();
+  halt();cleanMedia();
   edit(()=>{get().audio=entry?{mediaId:entry.id,mime:'audio/wav',name:entry.name,volume:.7,loop:true}:null});
   refresh();notice(entry?'배경음악을 연결했어요. 재생을 눌러 확인해 주세요.':'배경음악을 제거했어요.');
  }
@@ -133,7 +135,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
   updateAudio(row);await refreshSoundShelf();
  }
  function changed(target,fn){
-  $(target).addEventListener('change',event=>{stop();fn(event);refresh()});
+  $(target).addEventListener('change',event=>{halt();fn(event);refresh()});
  }
  function onSceneDuration(){
   const duration=Number($('sceneDuration').value);
@@ -173,7 +175,7 @@ function create({getModel,getSelected,edit,showPage,notice,stage}){
  window.addEventListener('pagehide',()=>{disposed=true;cancelAnimationFrame(raf);cleanMedia()});
  refreshSoundShelf().catch(()=>{});
  refresh();
- return {refresh,stop,isPlaying:()=>playing,seek,dispose:()=>{stop();cleanMedia();disposed=true}};
+ return {refresh,stop,halt,syncToActive,isPlaying:()=>playing,seek,dispose:()=>{stop();cleanMedia();disposed=true}};
 }
 window.GulliverUnifiedTimeline={create};
 })();
