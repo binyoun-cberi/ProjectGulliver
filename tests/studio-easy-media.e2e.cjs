@@ -25,13 +25,11 @@ test('Media library: upload progress, video thumbnail/name, resize and layer, WA
   await frame.locator('#easyEditVideo').click();
   await frame.locator('.easy-video-selection').waitFor({state:'visible'});
   const before=await frame.locator('body').evaluate(()=>GulliverStudioAdapter.capture().pages[0].videoClip);
-  await frame.locator('.easy-video-grip').evaluate(el=>{
-    const rect=el.getBoundingClientRect();
-    const id=811;el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:id,clientX:rect.x+5,clientY:rect.y+5}));
-    const overlay=el.closest('.easy-video-selection');
-    overlay.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerId:id,clientX:rect.x+60,clientY:rect.y+35}));
-    overlay.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:id,clientX:rect.x+60,clientY:rect.y+35}));
-  });
+  const grip=await frame.locator('.easy-video-grip').boundingBox();
+  await page.mouse.move(grip.x+grip.width/2,grip.y+grip.height/2);
+  await page.mouse.down();
+  await page.mouse.move(grip.x+grip.width/2+50,grip.y+grip.height/2+36,{steps:6});
+  await page.mouse.up();
   const after=await frame.locator('body').evaluate(()=>GulliverStudioAdapter.capture().pages[0].videoClip);
   assert.ok(after.w>before.w&&after.h>before.h,'Corner grip must change native saved video geometry');
   const img={name:'one.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/UoQAAAAASUVORK5CYII=','base64')};
@@ -45,12 +43,11 @@ test('Media library: upload progress, video thumbnail/name, resize and layer, WA
   await frame.locator('#easyMediaPicker').setInputFiles(wav);
   await frame.locator('.easy-file').filter({hasText:'background.wav'}).waitFor();
   await page.waitForFunction(()=>document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.capture()?.audio?.name==='background.wav');
-  await frame.locator('#easyMusicBar [data-side="end"]').evaluate(el=>{
-    const rect=el.getBoundingClientRect(),overlay=el.parentElement,id=830;
-    el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:id,clientX:rect.x+8,clientY:rect.y+8}));
-    overlay.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerId:id,clientX:rect.x-80,clientY:rect.y+8}));
-    overlay.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:id,clientX:rect.x-80,clientY:rect.y+8}));
-  });
+  const musicGrip=await frame.locator('#easyMusicBar [data-side="end"]').boundingBox();
+  await page.mouse.move(musicGrip.x+musicGrip.width/2,musicGrip.y+musicGrip.height/2);
+  await page.mouse.down();
+  await page.mouse.move(musicGrip.x-100,musicGrip.y+musicGrip.height/2,{steps:6});
+  await page.mouse.up();
   assert.ok((await frame.locator('body').evaluate(()=>GulliverStudioAdapter.capture().audio.trimDuration))<60);
   await page.setViewportSize({width:390,height:844});
   await frame.locator('[data-design-tab="motion"]').click();
