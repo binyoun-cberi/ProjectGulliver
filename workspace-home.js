@@ -3,6 +3,19 @@
 const W=ClassroomWorkspace,tools=ClassroomTools,$=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const CATEGORIES=['전체','시간·수업 안내','뽑기·편성','퀴즈·놀이','학급 관리','자료·기록'];
+const FORMATS=[
+ ['presentation','발표자료','slides','▤','#ff6c29','슬라이드·PPTX'],
+ ['worksheet','학습지·도안','design','◇','#09a96a','활동지·인쇄물'],
+ ['document','문서','document','≡','#367ce8','안내장·기록지'],
+ ['custom','맞춤 디자인','canvas','✦','#7750dc','한 화면에서 편집'],
+ ['video','동영상','video','▶','#d54fc4','장면·자막'],
+ ['picture','그림·사진','picture','▧','#188cba','사진과 이미지'],
+ ['pdf','PDF','pdf','▣','#df5f69','합치기·나누기'],
+ ['music','음악','music','♫','#7561d7','리듬·배경음악']
+];
+function startTiles(){
+ return '<div class="format-grid">'+FORMATS.map(f=>'<a class="format-tile" href="뚝딱 제작실.html?new='+f[2]+'" style="--format-accent:'+f[4]+'" aria-label="'+f[1]+' 만들기"><span class="format-symbol" aria-hidden="true">'+f[3]+'</span><strong>'+f[1]+'</strong><small>'+f[5]+'</small></a>').join('')+'</div>';
+}
 const requestedView=new URLSearchParams(location.search).get('view');
 let view=['home','tools','activities','templates','favorites','trash'].includes(requestedView)?requestedView:'home',folderId='',category='전체',editAction=null,toastTimer;
 const descriptions={home:['오늘은 무엇을 할까요?','수업을 시작하고, 자료를 만들고, 준비한 활동을 이어가세요.'],favorites:['즐겨찾기','자주 쓰는 도구를 모아 빠르게 꺼내 보세요.'],activities:['내 활동','이름을 붙여 저장한 수업 시간표, 낱말카드, 자리표를 모았어요.'],templates:['예시 활동','준비된 활동을 열고 우리 반에 맞게 바꿔 보세요.'],tools:['도구 찾기','필요한 도구를 한눈에 살펴보고 바로 실행하세요.'],trash:['보관함','보관한 활동은 다시 내 활동으로 복원할 수 있어요.']};
@@ -24,31 +37,54 @@ function render(){
  document.body.classList.toggle('home-view',view==='home');
  const data=W.read(),currentFolder=data.folders.find(f=>f.id===folderId),titles=descriptions[view];$('pageTitle').textContent=currentFolder?currentFolder.name:titles[0];$('pageDescription').textContent=titles[1];
  document.querySelectorAll('.nav [data-view]').forEach(b=>b.setAttribute('aria-current',!folderId&&b.dataset.view===view?'page':'false'));
+ document.querySelectorAll('.home-bottom-bar [data-view]').forEach(b=>b.setAttribute('aria-current',!folderId&&b.dataset.view===view?'page':'false'));
  $('folders').innerHTML=data.folders.length?data.folders.map(f=>'<button class="folder-link '+(f.id===folderId?'active':'')+'" data-folder="'+esc(f.id)+'">▱ '+esc(f.name)+'</button>').join(''):'<p style="font-size:11px;color:#a1a9b8;padding:0 13px;line-height:1.6">수업별로 활동을 모아 보세요.</p>';
  const room=Gulliver.getClassroom();$('classSummary').replaceChildren();$('classSummary').append(document.createTextNode('♧ '+room.className));const span=document.createElement('span');span.textContent=room.students.length?room.students.length+'명 · 명단 관리 →':'명단 등록하기 →';$('classSummary').append(span);
  document.querySelectorAll('.workspace-switch [data-view]').forEach(button=>button.setAttribute('aria-current',button.dataset.view===view?'page':'false'));
  $('search').placeholder=view==='home'?'무엇이 필요하세요? 도구와 내 활동을 검색해 보세요':view==='tools'||view==='favorites'?'도구 이름이나 필요한 일로 검색':view==='templates'?'예시 활동 검색':'내 활동 이름으로 검색';
  let html='';const activities=W.list({trash:view==='trash',folder:folderId}).filter(a=>matches(a.title+' '+W.kinds[a.kind].name));const filteredTools=tools.filter(t=>(view==='favorites'||!t.studioLegacy)&&(category==='전체'||t.category===category)&&matches(t.name+' '+t.situation+' '+t.tags.join(' ')));
- if(view==='activities'||view==='trash'){html='<div class="activity-grid">'+activities.map(a=>activityCard(a,view==='trash')).join('')+'</div>';if(!activities.length)html='<div class="empty"><strong>'+($('search').value?'검색 결과가 없어요.':view==='trash'?'보관한 활동이 없어요.':'아직 저장한 활동이 없어요.')+'</strong>'+(view==='trash'?'보관한 활동은 여기에서 다시 복원할 수 있어요.':'타이머·퀴즈·자리표에서 이름을 붙여 저장해 보세요.')+'</div>';
+ if(view==='activities'||view==='trash'){html=(view==='activities'?'<a class="studio-library-link activities-studio" href="뚝딱 제작실.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>도안·발표·문서 등 내 작업 찾기</strong><small>제작실에서 만든 자료는 제작실의 내 작업에 보관돼요.</small></span><span aria-hidden="true">→</span></a>':'')+'<div class="activity-grid">'+activities.map(a=>activityCard(a,view==='trash')).join('')+'</div>';if(!activities.length)html=(view==='activities'?'<a class="studio-library-link activities-studio" href="뚝딱 제작실.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>제작실에서 만든 자료 찾기</strong><small>도안·발표·문서 등은 제작실의 내 작업에 있어요.</small></span><span aria-hidden="true">→</span></a>':'')+'<div class="empty"><strong>'+($('search').value?'검색 결과가 없어요.':view==='trash'?'보관한 활동이 없어요.':'아직 저장한 활동이 없어요.')+'</strong>'+(view==='trash'?'보관한 활동은 여기에서 다시 복원할 수 있어요.':'타이머·퀴즈·자리표에서 이름을 붙여 저장해 보세요.')+'</div>';
  }else if(view==='templates'){const ts=W.templates.filter(t=>matches(t.title+' '+t.desc));html=ts.length?'<div class="template-grid">'+ts.map(templateCard).join('')+'</div>':'<div class="empty">검색 결과가 없어요.</div>';
  }else if(view==='home'||view==='tools'||view==='favorites'){
    const isHome=view==='home',query=$('search').value.trim();
+   const templates=W.templates.filter(t=>matches(t.title+' '+t.desc));
+   const favoriteItems=filteredTools.filter(t=>Gulliver.isFavorite(t.href));
+   if(view==='favorites'){
+     html=favoriteItems.length?'<div class="tool-list">'+favoriteItems.map(toolCard).join('')+'</div>':'<div class="empty"><strong>즐겨찾는 도구를 모아 보세요.</strong>도구 옆의 ☆을 누르면 여기에 표시됩니다.</div>';
+     $('content').innerHTML=html;document.querySelector('.storage-note').hidden=true;return;
+   }
    if(isHome&&!query){
-     const quickNames=['뚝딱 제작실','영상 뚝딱','음악 뚝딱','수업 흐름 타이머','교실 자리 배정','범퍼 룰렛 레이스','낱말카드·퀴즈','QR 코드 도구','성취기준·세특 도우미','우리 반 투표판'];
-     html+='<nav class="quick-tools" aria-label="바로 쓰는 도구">'+quickNames.map(name=>tools.find(t=>t.name===name)).filter(Boolean).map(t=>'<a class="quick-tool" data-tool="'+esc(t.href)+'" href="'+esc(t.href)+'" style="--tool-accent:'+esc(t.accent)+'"><span class="quick-icon">'+esc(t.icon)+'</span><span>'+esc(t.name)+'</span></a>').join('')+'</nav>';
-     if(activities.length)html+=section('이어서 작업하기','최근 저장한 활동을 다시 열어 보세요.','<div class="activity-grid">'+activities.slice(0,4).map(a=>activityCard(a)).join('')+'</div>','<button class="text-btn" data-view="activities">모두 보기 →</button>');
+     html+='<section class="home-block home-design"><div class="section-head"><div><h2>무엇을 만들까요?</h2><p>자료 종류를 고르면 바로 편집을 시작할 수 있어요.</p></div><a class="text-btn" href="뚝딱 제작실.html">제작실 보기 →</a></div>'+startTiles()+'</section>';
+     html+=section('이어서 작업하기','이 기기에 저장한 활동과 제작물을 다시 열어 보세요.',
+       (activities.length?'<div class="activity-grid recent-rail">'+activities.slice(0,3).map(a=>activityCard(a)).join('')+'</div>':'')+
+       '<a class="studio-library-link" href="뚝딱 제작실.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>제작실의 내 작업</strong><small>도안·발표·문서·영상·음악 작업을 확인해 보세요.</small></span><span aria-hidden="true">→</span></a>',
+       '<button class="text-btn" data-view="activities">내 활동 보기 →</button>');
+     if(templates.length)html+=section('수업 템플릿으로 시작','준비된 예시를 열어 우리 반에 맞게 수정하세요.',
+       '<div class="template-grid home-template-grid">'+templates.slice(0,3).map(templateCard).join('')+'</div>',
+       '<button class="text-btn" data-view="templates">모두 보기 →</button>');
+     const featured=['수업 흐름 타이머','낱말카드·퀴즈','교실 자리 배정','범퍼 룰렛 레이스','성취기준·세특 도우미','이번 수업 알리미','영상 뚝딱','음악 뚝딱'];
+     const selected=featured.map(n=>tools.find(t=>t.name===n)).filter(Boolean);
+     html+=section('수업에 바로 쓰는 도구','필요한 순간에 바로 실행하는 교실 도구예요.',
+       '<div class="tool-list home-tool-list">'+selected.map(toolCard).join('')+'</div>',
+       '<button class="text-btn" data-view="tools">전체 도구 보기 →</button>');
+     const quickNames=['영상 뚝딱','음악 뚝딱','뚝딱 제작실','QR 코드 도구','우리 반 투표판','수업 흐름 타이머','낱말카드·퀴즈','교실 자리 배정'];
+     html+=section('기능 바로가기','자주 쓰는 편집기와 수업 도구를 바로 열어 보세요.',
+       '<nav class="quick-tools" aria-label="기능 바로가기">'+quickNames.map(name=>tools.find(t=>t.name===name)).filter(Boolean).map(t=>'<a class="quick-tool" data-tool="'+esc(t.href)+'" href="'+esc(t.href)+'" style="--tool-accent:'+esc(t.accent)+'"><span class="quick-icon">'+esc(t.icon)+'</span><span>'+esc(t.name)+'</span></a>').join('')+'</nav>');
+
+   }else if(isHome&&query){
+     const results=activities.length+templates.length+filteredTools.length;
+     if(activities.length)html+=section('내 활동 · '+activities.length+'개','','<div class="activity-grid">'+activities.map(a=>activityCard(a)).join('')+'</div>');
+     if(templates.length)html+=section('수업 템플릿 · '+templates.length+'개','','<div class="template-grid home-template-grid">'+templates.map(templateCard).join('')+'</div>');
+     if(filteredTools.length)html+=section('사용할 수 있는 도구 · '+filteredTools.length+'개','','<div class="tool-list">'+filteredTools.map(toolCard).join('')+'</div>');
+     if(!results)html='<div class="empty"><strong>검색 결과가 없어요.</strong>다른 단어나 수업 자료 종류로 검색해 보세요.</div>';
+   }else{
+     const favorites=Gulliver.getFavorites().map(f=>tools.find(t=>t.href===f.href)).filter(Boolean);
+     if(favorites.length&&!query&&category==='전체')html+='<div class="favorite-strip"><span>★ 즐겨찾기</span>'+favorites.map(t=>'<a data-tool="'+esc(t.href)+'" href="'+esc(t.href)+'">'+esc(t.icon)+' '+esc(t.name)+'</a>').join('')+'</div>';
+     html+='<div class="browse-controls"><div class="chips">'+CATEGORIES.map(c=>'<button class="chip '+(c===category?'active':'')+'" data-category="'+esc(c)+'" aria-pressed="'+(c===category)+'">'+esc(c)+'</button>').join('')+'</div><span class="tool-count">'+filteredTools.length+'개 도구</span></div>';
+     const groups=category==='전체'?CATEGORIES.slice(1):[category];
+     groups.forEach(group=>{const items=filteredTools.filter(t=>t.category===group);if(items.length)html+='<section class="tool-group"><h2>'+esc(group)+'<small>'+items.length+'</small></h2><div class="tool-list">'+items.map(toolCard).join('')+'</div></section>'});
+     if(!filteredTools.length)html+='<div class="empty"><strong>검색 결과가 없어요.</strong>다른 검색어나 분류로 찾아보세요.</div>';
    }
-   if(isHome&&query){
-     if(activities.length)html+=section('내 활동 검색 결과','','<div class="activity-grid">'+activities.map(a=>activityCard(a)).join('')+'</div>');
-   }
-   if(isHome)html+='<div class="section-head" style="margin-top:25px"><h2>'+(query?'도구 검색 결과':'모든 도구')+'</h2><button class="text-btn" data-view="tools">도구 찾기 →</button></div>';
-   if(view==='favorites'){const favoriteItems=filteredTools.filter(t=>Gulliver.isFavorite(t.href));html=favoriteItems.length?'<div class="tool-list">'+favoriteItems.map(toolCard).join('')+'</div>':'<div class="empty"><strong>즐겨찾는 도구를 모아 보세요.</strong>도구 옆의 ☆을 누르면 여기에 표시됩니다.</div>';$('content').innerHTML=html;document.querySelector('.storage-note').hidden=true;return;}
-   const favorites=Gulliver.getFavorites().map(f=>tools.find(t=>t.href===f.href)).filter(Boolean);
-   if(favorites.length&&!$('search').value&&category==='전체')html+='<div class="favorite-strip"><span>★ 즐겨찾기</span>'+favorites.map(t=>'<a data-tool="'+esc(t.href)+'" href="'+esc(t.href)+'">'+esc(t.icon)+' '+esc(t.name)+'</a>').join('')+'</div>';
-   html+='<div class="browse-controls"><div class="chips">'+CATEGORIES.map(c=>'<button class="chip '+(c===category?'active':'')+'" data-category="'+esc(c)+'" aria-pressed="'+(c===category)+'">'+esc(c)+'</button>').join('')+'</div><span class="tool-count">'+filteredTools.length+'개 도구</span></div>';
-   const groups=category==='전체'?CATEGORIES.slice(1):[category];
-   groups.forEach(group=>{const items=filteredTools.filter(t=>t.category===group);if(items.length)html+='<section class="tool-group"><h2>'+esc(group)+'<small>'+items.length+'</small></h2><div class="tool-list">'+items.map(toolCard).join('')+'</div></section>'});
-   if(!filteredTools.length)html+='<div class="empty"><strong>검색 결과가 없어요.</strong>다른 검색어나 분류로 찾아보세요.</div>';
  }
  document.querySelectorAll('.workspace-switch [data-view]').forEach(button=>button.setAttribute('aria-current',button.dataset.view===view?'page':'false'));
  $('search').placeholder=view==='home'?'무엇이 필요하세요? 도구와 내 활동을 검색해 보세요':view==='tools'||view==='favorites'?'도구 이름이나 필요한 일로 검색':view==='templates'?'예시 활동 검색':'내 활동 이름으로 검색';
