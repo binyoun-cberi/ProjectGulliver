@@ -436,6 +436,7 @@ window.GulliverStudioAdapter={
  }),
  getMedia:id=>mediaProvider(id),
  getSceneVideoClip:()=>page().videoClip||null,
+ getSelectedLayerInfo:()=>current()?{id:selected,type:current().type}:null,
  setMusicTrim:patch=>edit(()=>{if(model.audio)model.audio={...model.audio,...patch}}),
  setMediaProvider:provider=>{mediaProvider=provider;timeline?.setMediaProvider(provider)},
  setMediaSink:sink=>timeline?.setMediaSink(sink),
