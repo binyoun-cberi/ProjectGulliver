@@ -61,20 +61,39 @@ function drawItem(e){
  node.className='item'+(selectedIds.has(e.id)?' selected':'');
  node.dataset.id=e.id;node.dataset.type=e.type;node.dataset.locked=e.locked?'true':'false';node.title=e.type==='text'?'두 번 눌러 글씨 수정':'끌어서 이동 · 모서리에서 크기 조절';
  Object.assign(node.style,{left:e.x+'px',top:e.y+'px',width:e.w+'px',height:e.h+'px',opacity:e.opacity,
-  color:e.fill,textAlign:e.align,fontSize:e.fontSize+'px',fontWeight:e.type==='text'?'650':'400',
+  color:e.fill,textAlign:e.align,fontSize:e.fontSize+'px',fontWeight:e.type==='text'?(e.fontWeight||600):'400',
   transform:'rotate('+(e.rotation||0)+'deg)'});
  if(e.locked)node.classList.add('locked');
- if(e.type==='text'){node.textContent=e.content;node.style.justifyContent=e.align==='left'?'flex-start':e.align==='right'?'flex-end':'center'}
+ if(e.shadow){const sh=e.shadow;node.style.filter='drop-shadow('+sh.x+'px '+sh.y+'px '+(sh.blur/2)+'px '+sh.color+')'}
+ if(e.type==='text'){
+  node.textContent=e.content;node.style.justifyContent=e.align==='left'?'flex-start':e.align==='right'?'flex-end':'center';
+  Object.assign(node.style,{fontFamily:C.fontStack(e.fontFamily),fontStyle:e.italic?'italic':'normal',
+   textDecoration:e.underline?'underline':'none',lineHeight:String(e.lineHeight||1.22),
+   letterSpacing:(e.letterSpacing||0)+'px',whiteSpace:'pre',wordBreak:'normal',
+   WebkitTextStroke:C.strokeWidth(e)?C.strokeWidth(e)+'px '+e.stroke:'0px transparent'});
+ }
  else if(e.type==='image'){
-  const img=document.createElement('img');img.src=e.src;img.alt='업로드한 사진';img.className='item-photo';img.draggable=false;node.append(img);
+  const crop=C.cropSettings(e),frame=document.createElement('div'),img=document.createElement('img');
+  frame.className='image-crop-frame';if(e.mask==='circle')frame.style.borderRadius='50%';
+  else if(e.mask==='rounded')frame.style.borderRadius='16px';
+  img.src=e.src;img.alt='업로드한 사진';img.className='item-photo';img.draggable=false;
+  img.style.objectFit=crop.fit;img.style.transform='scale('+crop.zoom+')';
+  img.style.transformOrigin=(crop.focusX*100)+'% '+(crop.focusY*100)+'%';
+  frame.append(img);node.append(frame);
+  const bw=C.strokeWidth(e);
+  if(bw){const border=document.createElement('div');border.className='image-border';
+   border.style.border=bw+'px solid '+e.stroke;
+   border.style.borderRadius=e.mask==='circle'?'50%':e.mask==='rounded'?'16px':'0';
+   node.append(border)}
+
  }else if(e.type==='line'){
   const line=document.createElementNS('http://www.w3.org/2000/svg','svg');
   line.setAttribute('viewBox','0 0 '+e.w+' '+e.h);line.setAttribute('preserveAspectRatio','none');line.classList.add('item-line');
   const stroke=document.createElementNS('http://www.w3.org/2000/svg','line');
-  for(const [key,value] of Object.entries({x1:'0',y1:'0',x2:String(e.w),y2:String(e.h),stroke:e.stroke,'stroke-width':'3'}))stroke.setAttribute(key,value);
+  for(const [key,value] of Object.entries({x1:'0',y1:'0',x2:String(e.w),y2:String(e.h),stroke:e.stroke,'stroke-width':String(C.strokeWidth(e))}))stroke.setAttribute(key,value);
   line.append(stroke);node.append(line);
  }else{
-  node.style.background=e.fill;node.style.border=e.type==='ellipse'?'2px solid '+e.stroke:'2px solid '+e.stroke;
+  node.style.background=e.fill;node.style.border=C.strokeWidth(e)+'px solid '+e.stroke;
   if(e.type==='ellipse')node.style.borderRadius='50%';
   if(e.type==='triangle'||e.type==='star')node.style.clipPath=shapePoints(e.type);
  }
@@ -445,7 +464,9 @@ function beginText(event){
  if(!e||e.type!=='text'||!selectable(e))return;
  closeEditor();choose([e.id]);editing=true;
  Object.assign(textEditor.style,{left:e.x+'px',top:e.y+'px',width:e.w+'px',height:e.h+'px',
-  fontSize:e.fontSize+'px',color:e.fill,textAlign:e.align,transform:'rotate('+(e.rotation||0)+'deg)',transformOrigin:'center center'});
+  fontSize:e.fontSize+'px',color:e.fill,textAlign:e.align,transform:'rotate('+(e.rotation||0)+'deg)',transformOrigin:'center center',
+  fontFamily:C.fontStack(e.fontFamily),fontWeight:String(e.fontWeight||600),fontStyle:e.italic?'italic':'normal',
+  letterSpacing:(e.letterSpacing||0)+'px',lineHeight:String(e.lineHeight||1.22)});
  textEditor.hidden=false;textEditor.value=e.content;textEditor.focus();textEditor.select();
 }
 function changeSelected(key,value){
