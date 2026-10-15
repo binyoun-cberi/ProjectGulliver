@@ -337,3 +337,69 @@ body{color:var(--canvas-ink);background:var(--canvas-bg)}
  #teacherLiveFrame{height:calc(100% - 116px)}
  .teacher-live-grid{gap:7px}
 }
+
+
+/* Presentation-only dock: original canvas is the full screen. Editing remains intact outside it. */
+#stageView:fullscreen,#stageView.lesson-fallback{
+ background:#131424!important;color:#fff;
+ width:100vw!important;height:100dvh!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ padding:10px 12px 110px!important;overflow:hidden!important;
+ position:relative;touch-action:manipulation;
+}
+#stageView.lesson-fallback{position:fixed!important;inset:0;z-index:1500}
+#stageView:fullscreen #stage,#stageView.lesson-fallback #stage{
+ pointer-events:none;box-shadow:0 20px 80px #0008;
+}
+#stageView:fullscreen #stageSpace,#stageView.lesson-fallback #stageSpace{
+ flex:none;position:relative;
+}
+.lesson-presenter-dock{
+ display:none;position:absolute;z-index:80;bottom:calc(15px + env(safe-area-inset-bottom));
+ left:50%;transform:translateX(-50%);max-width:calc(100% - 16px);width:max-content;
+ padding:6px;background:#201b37ed;backdrop-filter:blur(16px);
+ border:1px solid #ffffff29;border-radius:19px;box-shadow:0 12px 35px #0005;
+ color:#fff;font-size:13px;pointer-events:auto;
+}
+#stageView:fullscreen .lesson-presenter-dock,#stageView.lesson-fallback .lesson-presenter-dock{display:block}
+.lesson-presenter-main{display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}
+.lesson-presenter-main button{
+ flex:none;min-height:44px;min-width:44px;border-radius:12px;padding:8px 12px;
+ border:1px solid transparent;background:#ffffff14;color:#fff;
+ font-weight:850;font-size:14px;
+}
+.lesson-presenter-main button:hover{background:#ffffff2d}
+.lesson-presenter-main button:focus-visible{outline:3px solid #e1d4ff;outline-offset:2px}
+.lesson-presenter-main button:disabled{opacity:.32}
+.lesson-presenter-main .lesson-open-tools{background:#7550d2;min-width:126px}
+.lesson-presenter-main .lesson-open-tools[aria-expanded=true]{background:#9674ea}
+.lesson-presenter-main #lessonExit{background:#63374e}
+.lesson-slide-count{display:block;text-align:center;min-width:54px;font-size:12px;font-weight:850;color:#f5edff;font-variant-numeric:tabular-nums}
+.lesson-tool-picker{
+ position:absolute;bottom:calc(100% + 9px);right:0;left:auto;
+ width:min(510px,calc(100vw - 22px));max-height:min(66dvh,530px);overflow:auto;
+ padding:14px;background:#faf8ff;color:#29233a;border:1px solid #d9cff2;border-radius:17px;
+ box-shadow:0 16px 65px #08031d7a;white-space:normal;overscroll-behavior:contain;
+}
+.lesson-tool-picker[hidden]{display:none!important}
+.lesson-tool-picker-head{display:grid;gap:4px;margin-bottom:11px}
+.lesson-tool-picker-head strong{font-size:15px;color:#483278}
+.lesson-tool-picker-head span{font-size:11px;color:#756b86}
+.lesson-tool-picker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.lesson-presenter-tool{min-width:0;min-height:75px;display:flex;flex-direction:column;gap:5px;padding:11px;
+ text-align:left;border:1px solid #e0d4ef;border-radius:11px;background:#fff;color:#322c46;white-space:normal}
+.lesson-presenter-tool:hover{background:#efe9fe;border-color:#af90e5}
+.lesson-presenter-tool strong{font-size:12px}
+.lesson-presenter-tool span{font-size:10px;line-height:1.4;color:#756d86}
+@media(max-width:700px){
+ #stageView:fullscreen,#stageView.lesson-fallback{padding:7px 5px calc(104px + env(safe-area-inset-bottom))!important}
+ .lesson-presenter-dock{bottom:calc(8px + env(safe-area-inset-bottom));padding:5px;border-radius:14px;max-width:calc(100% - 8px)}
+ .lesson-presenter-main{gap:3px}
+ .lesson-presenter-main button{min-width:37px;min-height:43px;padding:7px 8px;font-size:12px;border-radius:9px}
+ .lesson-presenter-main .lesson-open-tools{min-width:99px}
+ .lesson-slide-count{min-width:40px;font-size:11px}
+ .lesson-tool-picker{right:50%;transform:translateX(50%);width:calc(100vw - 16px);max-height:65dvh;padding:11px}
+ .lesson-presenter-tool{min-height:73px;padding:9px}
+}
+@media(max-width:360px){.lesson-presenter-main button{min-width:33px;padding:7px 6px}.lesson-presenter-main .lesson-open-tools{min-width:84px}.lesson-slide-count{min-width:34px}}
+@media print{.lesson-presenter-dock{display:none!important}}

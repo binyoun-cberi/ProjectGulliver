@@ -36,8 +36,10 @@ function redo(){
  timeline?.syncToActive();render();emit();notice('다시 실행했어요.');
 }
 function size(){
- const base=C.LAYOUTS[model.layout],width=Math.max(240,$('stageView').clientWidth-10);
- scale=Math.min(1,width/base.w,580/base.h);
+ const base=C.LAYOUTS[model.layout],view=$('stageView'),width=Math.max(240,view.clientWidth-20);
+ const immersive=document.fullscreenElement===view||view.classList.contains('lesson-fallback');
+ const availH=immersive?Math.max(170,view.clientHeight-115):580;
+ scale=immersive?Math.min(width/base.w,availH/base.h):Math.min(1,width/base.w,580/base.h);
  if(!Number.isFinite(scale)||scale<=0)scale=.5;
  $('stageSpace').style.width=Math.round(base.w*scale)+'px';
  $('stageSpace').style.height=Math.round(base.h*scale)+'px';
@@ -372,14 +374,20 @@ function bind(){
  window.addEventListener('afterprint',()=>{document.body.classList.remove('printing-pages');document.getElementById('printPages')?.remove();document.getElementById('print-page-size')?.remove()});
  $('present').addEventListener('click',async()=>{
   try{await $('stageView').requestFullscreen();timeline?.play()}
-  catch(e){notice('전체 화면을 사용할 수 없는 브라우저예요. 아래 타임라인의 재생 버튼을 눌러 주세요.',true)}
+  catch(e){
+   if(window.GulliverPresentationTools?.enterFallback?.()){timeline?.play();return}
+   notice('발표 화면을 열지 못했어요. 타임라인의 재생 버튼을 이용해 주세요.',true)
+  }
  });
  window.addEventListener('resize',size);
- document.addEventListener('fullscreenchange',()=>{size();if(!document.fullscreenElement&&timeline?.isPlaying())timeline.pause()});
+ document.addEventListener('fullscreenchange',()=>{
+  size();
+  if(!document.fullscreenElement&&!$('stageView').classList.contains('lesson-fallback')&&timeline?.isPlaying())timeline.pause();
+ });
  document.addEventListener('keydown',e=>{
   const inside=['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.activeElement?.isContentEditable;
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();if(e.shiftKey)redo();else undo();return}
-  if(inside)return;
+  if(inside||document.getElementById('teacherLiveDialog')?.open||document.getElementById('lessonToolPicker')?.hidden===false)return;
   if(document.fullscreenElement&&e.code==='Space'){
    e.preventDefault();if(timeline?.isPlaying())timeline.pause();else timeline?.play();return
   }
@@ -442,6 +450,9 @@ window.GulliverStudioAdapter={
  multitrackEnabled:()=>Array.isArray(model.tracks),
  adoptLegacyMedia:()=>edit(()=>ensureMultitrack()),
  getSceneTime:()=>timeline?.getTime?.()||0,
+ seekPresentationTime:seconds=>timeline?.seek?.(seconds),
+ isPresentationActive:()=>document.fullscreenElement===$('stageView')||$('stageView').classList.contains('lesson-fallback'),
+ resizePresentation:size,
  addTrack:raw=>edit(()=>{
   ensureMultitrack();
   if(model.tracks.length>=C.MAX_TRACKS)throw Error('최대 '+C.MAX_TRACKS+'개 클립까지 추가할 수 있어요.');

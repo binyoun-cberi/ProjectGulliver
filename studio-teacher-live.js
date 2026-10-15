@@ -51,11 +51,14 @@ function open(id){
  const path=new URL(item.url,location.href);
  if(path.origin!==location.origin)throw Error('외부 도구는 이 창에 열 수 없어요.');
  frame.src=path.href;
+ window.dispatchEvent(new CustomEvent('gulliver:teacher-live-open',{detail:{id:item.id}}));
 }
-function close(){
+function close(reason='close'){
+ const previous=current;
  frame.removeAttribute('src');
  if(dlg.open)dlg.close();
  current=null;
+ window.dispatchEvent(new CustomEvent('gulliver:teacher-live-close',{detail:{id:previous?.id||null,reason}}));
 }
 function snapshot(){
  const layout=A.capture().layout;
@@ -101,17 +104,17 @@ dlg.querySelector('#teacherCopyResult').addEventListener('click',()=>{
    const msg=pane.querySelector('#teacherConvertStatus');
    if(msg?.classList.contains('error'))throw Error(msg.textContent);
    info('현재 작업의 뒤에 편집 가능한 페이지로 추가했어요. 편집 화면에서 확인하세요.');
-   close();
+   close('import');
    return;
   }
   const result=snapshot();
   const count=A.appendTeacherPages(result);
   info(result.description+' · '+count+'장 추가했어요.');
-  close();
+  close('import');
  }catch(e){info(e.message||String(e),true)}
 });
-dlg.querySelector('#teacherLiveClose').addEventListener('click',close);
-dlg.addEventListener('cancel',()=>{frame.removeAttribute('src');current=null});
+dlg.querySelector('#teacherLiveClose').addEventListener('click',()=>close('close'));
+dlg.addEventListener('cancel',event=>{event.preventDefault();close('cancel')});
 frame.addEventListener('load',()=>{if(dlg.open&&current)info('도구를 사용한 뒤 “＋ 결과를 캔버스로”를 눌러 주세요.')});
-window.GulliverTeacherLive={open,close};
+window.GulliverTeacherLive={open,close,isOpen:()=>dlg.open,listTools:()=>tools.map(({id,name,summary})=>({id,name,summary}))};
 })();
