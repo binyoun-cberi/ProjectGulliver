@@ -39,7 +39,7 @@ test('live teaching tools import real saved results without losing project or so
   assert.ok(JSON.stringify(roulette.pages[3]).includes('학생 A'));
   // QR bridge: exercise a generated canvas artifact inside the real same-origin QR frame.
   await f.locator('.teacher-live-tile').filter({hasText:'QR 코드 만들기'}).click();
-  await f.locator('#teacherLiveFrame').waitFor({state:'attached'});
+  await f.frameLocator('#teacherLiveFrame').locator('#qrCanvas').waitFor({state:'attached'});
   await f.locator('#teacherLiveFrame').evaluate(iframe=>{
    const qr=iframe.contentDocument?.getElementById('qrCanvas');
    if(!qr)throw Error('QR creator document not ready');
