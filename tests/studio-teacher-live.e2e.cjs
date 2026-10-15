@@ -13,7 +13,7 @@ test('live teaching tools import real saved results without losing project or so
   await f.locator('[data-design-tab="teacher"]').click();
   await f.locator('#teacherLiveTools').waitFor({state:'visible'});
   await f.locator('[data-design-tab="teacher"]').evaluate(()=>{
-    localStorage.setItem('classDashboardStateV2',JSON.stringify({currentTemp:24,goalTemp:60,records:[{reason:'함께 협력',amount:5,type:'up'}]}));
+    localStorage.setItem('classDashboardStateV2',JSON.stringify({currentTemp:24,goalTemp:60,records:[{reason:'함께 협력',amount:5,type:'up',student:'민',date:'10월 15일'}],plusReasons:[{id:1,text:'함께 협력',amount:5}],minusReasons:[{id:2,text:'약속 확인',amount:1}]}));
     localStorage.setItem('vote_board_v2',JSON.stringify({title:'과일 투표',options:[{id:1,name:'사과'},{id:2,name:'바나나'}]}));
     localStorage.setItem('vote_board_v2_votes',JSON.stringify({0:1,1:1,2:2}));
     localStorage.setItem('gulliver.roulette.lastResults.v1',JSON.stringify({completed:true,results:[{name:'학생 A',result:'발표'},{name:'학생 B',result:'정리'}]}));
