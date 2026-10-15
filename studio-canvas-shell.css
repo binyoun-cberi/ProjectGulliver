@@ -415,3 +415,11 @@ body{color:var(--canvas-ink);background:var(--canvas-bg)}
 .selection-controls button:disabled{opacity:.42;cursor:not-allowed}
 @media(max-width:620px){.selection-controls{padding:9px;gap:5px}.selection-controls button{min-height:44px;flex:1 1 25%}}
 @media print{#stage>.selection-frame,#stage>.selection-marquee,.selection-controls{display:none!important}}
+
+@media(max-width:620px){
+ .canvas-selection-bar{max-width:calc(100vw - 16px);overflow-x:auto;scrollbar-width:thin}
+ .canvas-selection-bar button{flex:0 0 auto;padding:7px 9px}
+ .canvas-selection-bar button[aria-pressed=true]{background:#6b50bb;color:#fff}
+ .canvas-selection-bar button:disabled{opacity:.4}
+}
+#stage.playing>.selection-frame{display:none!important}
