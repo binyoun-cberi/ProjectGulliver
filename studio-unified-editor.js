@@ -429,7 +429,7 @@ function finishDrag(event){
     for(const member of membersOf(e))ids.add(member.id);
   choose([...ids]);render();return;
  }
- checkpoint(entry.before);render();
+ if(checkpoint(entry.before))render();else properties();
 }
 function closeEditor(){
  if(!editing)return;
