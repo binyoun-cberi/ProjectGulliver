@@ -53,6 +53,20 @@ function nameTags(names,perPage=8){
  }
  return validate({format:FORMAT,title:'우리 반 이름표',layout:'a4',pages,active:0});
 }
+function groupId(){return 'g-'+id().slice(2)}
+function selectionBounds(items){
+ if(!Array.isArray(items)||!items.length)return null;
+ const left=Math.min(...items.map(e=>e.x)),top=Math.min(...items.map(e=>e.y));
+ const right=Math.max(...items.map(e=>e.x+e.w)),bottom=Math.max(...items.map(e=>e.y+e.h));
+ return{x:left,y:top,w:right-left,h:bottom-top};
+}
+function transformSelection(items,original,next){
+ if(!original||!next||!Array.isArray(items))return [];
+ const sx=original.w>0?next.w/original.w:1,sy=original.h>0?next.h/original.h:1;
+ return items.map(e=>({...e,x:Math.round(next.x+(e.x-original.x)*sx),y:Math.round(next.y+(e.y-original.y)*sy),
+  w:Math.max(10,Math.round(e.w*sx)),h:Math.max(10,Math.round(e.h*sy)),
+  ...(e.type==='text'?{fontSize:number(Math.round(e.fontSize*Math.min(sx,sy)),10,160,e.fontSize)}:{})}));
+}
 function cleanElement(raw,i){
  if(!raw||!TYPES.includes(raw.type))throw Error('알 수 없는 편집 요소가 있어요.');
  const type=raw.type;
@@ -65,7 +79,10 @@ function cleanElement(raw,i){
   stroke:color(raw.stroke,'#334155'),fontSize:number(raw.fontSize,10,160,32),
   opacity:number(raw.opacity,0,1,1),content:text(raw.content),
   src,align:['left','center','right'].includes(raw.align)?raw.align:'center',
-  animation:ANIMATIONS.includes(raw.animation)?raw.animation:'none',delay:number(raw.delay,0,MAX_DURATION,0)};
+  animation:ANIMATIONS.includes(raw.animation)?raw.animation:'none',delay:number(raw.delay,0,MAX_DURATION,0),
+  ...(typeof raw.groupId==='string'&&/^g-[\w-]{1,70}$/.test(raw.groupId)?{groupId:raw.groupId}:{}),
+  ...(raw.rotation!==undefined?{rotation:number(raw.rotation,-180,180,0)}:{}),
+  ...(raw.locked===true?{locked:true}:{}),...(raw.hidden===true?{hidden:true}:{})};
 }
 function cleanVideoClip(raw){
  if(raw==null)return null;
@@ -101,11 +118,16 @@ function cleanTrack(raw,i=0){
 function validate(raw){
  if(!raw||raw.format!==FORMAT||!LAYOUTS[raw.layout]||!Array.isArray(raw.pages)||raw.pages.length<1||raw.pages.length>MAX_PAGES)
   throw Error('통합 캔버스 프로젝트 형식 또는 페이지 수가 올바르지 않아요.');
- let imageBytes=0,ids=new Set();
+ let imageBytes=0,ids=new Set(),seenGroups=new Set(),groupSerial=0;
  const pages=raw.pages.map((page,i)=>{
   if(!page||!Array.isArray(page.elements)||page.elements.length>MAX_ITEMS)throw Error((i+1)+'번째 페이지의 요소가 너무 많아요.');
   const elements=page.elements.map(cleanElement);
   for(const e of elements){if(ids.has(e.id))throw Error('중복된 요소 식별자가 있어요.');ids.add(e.id);imageBytes+=e.src.length}
+  const groups=new Map();for(const e of elements)if(e.groupId){if(!groups.has(e.groupId))groups.set(e.groupId,[]);groups.get(e.groupId).push(e)}
+  for(const [key,members] of groups){if(members.length<2){delete members[0].groupId;continue}
+   if(seenGroups.has(key)){const fresh='g-recovered-'+i+'-'+groupSerial++;for(const member of members)member.groupId=fresh;seenGroups.add(fresh)}
+   else seenGroups.add(key);
+  }
   return{id:String(page.id||'p-'+i).slice(0,90),name:text(page.name,60)||'페이지 '+(i+1),
    background:color(page.background,'#ffffff'),elements,
    duration:number(page.duration,MIN_DURATION,MAX_DURATION,5),transition:TRANSITIONS.includes(page.transition)?page.transition:'none',
@@ -180,5 +202,5 @@ function fromLegacy(kind,payload){
  if(kind==='slides')return fromSlides(payload);
  throw Error('도안·발표 작업만 편집 가능한 캔버스로 변환할 수 있어요.');
 }
-return {FORMAT,LAYOUTS,MAX_PAGES,MAX_ITEMS,TYPES,ANIMATIONS,TRANSITIONS,MIN_DURATION,MAX_DURATION,id,color,image,element,makePage,starter,nameTags,validate,fromLegacy,totalDuration,locateTime,animationFrame,transitionFrame,cleanVideoClip,cleanTrack,TRACK_KINDS,MAX_TRACKS};
+return {FORMAT,LAYOUTS,MAX_PAGES,MAX_ITEMS,TYPES,ANIMATIONS,TRANSITIONS,MIN_DURATION,MAX_DURATION,id,groupId,selectionBounds,transformSelection,color,image,element,makePage,starter,nameTags,validate,fromLegacy,totalDuration,locateTime,animationFrame,transitionFrame,cleanVideoClip,cleanTrack,TRACK_KINDS,MAX_TRACKS};
 });
