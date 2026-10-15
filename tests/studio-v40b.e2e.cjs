@@ -54,6 +54,20 @@ test('4.0-B browser: group rotate, alignment, snap UI, layers and saved output',
   const downloadEvent=page.waitForEvent('download');
   await page.locator('#exportPng').evaluate(el=>el.click());
   const image=await downloadEvent;assert.ok(image.suggestedFilename().endsWith('.png'));
-  assert.deepEqual(errors,[],'Unexpected page errors: '+errors.join('|'));
+  // A synthetic touch drag uses the same pointer handlers as real touch hardware.
+  await page.locator('#stage .item[data-id="back"]').click();
+  const angleBefore=(await page.evaluate(()=>GulliverStudioAdapter.capture())).pages[0].elements[0].rotation;
+  await page.evaluate(()=>{
+   const grip=document.querySelector('#stage .selection-frame .rotate-grip');
+   if(!grip)throw Error('Group rotate handle missing');
+   const b=grip.getBoundingClientRect(),x=b.x+b.width/2,y=b.y+b.height/2;
+   grip.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:501,pointerType:'touch',button:0,clientX:x,clientY:y}));
+   window.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerId:501,pointerType:'touch',clientX:x+80,clientY:y+60,shiftKey:true}));
+   window.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:501,pointerType:'touch',clientX:x+80,clientY:y+60}));
+  });
+  const angleAfter=(await page.evaluate(()=>GulliverStudioAdapter.capture())).pages[0].elements[0].rotation;
+  assert.notEqual(angleAfter,angleBefore,'touch rotation handle must rotate the group');
+  assert.equal((angleAfter-angleBefore)%15,0,'Shift drag snaps to 15° steps');
+  assert.deepEqual(errors,[],"'Unexpected page errors: '+errors.join('|'));
  }finally{await browser?.close();server.kill('SIGTERM')}
 });
