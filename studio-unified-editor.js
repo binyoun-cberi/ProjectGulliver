@@ -235,7 +235,8 @@ function renderPages(){
  const add=document.createElement('button');add.textContent='＋ 페이지 추가';add.type='button';add.addEventListener('click',addPage);strip.append(add);
 }
 function properties(){
- const e=current(),items=selectedItems(),onlyText=!!e&&e.type==='text';
+ const e=current(),items=selectedItems(),onlyText=!!e&&e.type==='text',onlyImage=!!e&&e.type==='image';
+ $('textStylePanel').hidden=!onlyText;$('photoStylePanel').hidden=!onlyImage;$('effectsPanel').hidden=!e;
  document.querySelector('.properties').classList.toggle('has-selection',items.length>0);
  $('selectionCount').textContent=items.length?items.length+'개 선택됨':'요소를 선택하세요';
  $('groupSelection').disabled=items.length<2;$('ungroupSelection').disabled=!items.some(x=>x.groupId);
@@ -245,10 +246,27 @@ function properties(){
  const mapping={propertyText:e?.content||'',propertyFill:e?.fill||'#253650',propertyStroke:e?.stroke||'#334155',
   propertyFont:e?.fontSize??38,propertyOpacity:e?.opacity??1,propertyX:e?.x??0,
   propertyY:e?.y??0,propertyW:e?.w??100,propertyH:e?.h??70,propertyAlign:e?.align||'center',
-  background:page().background};
+  background:page().background,
+  propertyFontFamily:e?.fontFamily||'sans',propertyFontWeight:e?.fontWeight??600,
+  propertyLineHeight:e?.lineHeight??1.22,propertyLetterSpacing:e?.letterSpacing??0,
+  propertyMask:e?.mask||'none',propertyBorderWidth:e?C.strokeWidth(e):0,
+  propertyShadowColor:e?.shadow?.color||'#334155',propertyShadowBlur:e?.shadow?.blur??6,
+  propertyShadowX:e?.shadow?.x??3,propertyShadowY:e?.shadow?.y??4};
  for(const [key,value] of Object.entries(mapping)){
   const control=$(key);if(document.activeElement!==control)control.value=value;
  }
+ $('propertyItalic').checked=!!e?.italic;$('propertyUnderline').checked=!!e?.underline;
+ $('propertyShadowEnabled').checked=!!e?.shadow;
+ const crop=e&&onlyImage?C.cropSettings(e):{zoom:1,focusX:.5,focusY:.5};
+ for(const [id,value] of [['propertyCropZoom',crop.zoom],['propertyCropX',crop.focusX*100],['propertyCropY',crop.focusY*100]])
+  if(document.activeElement!==$(id))$(id).value=String(value);
+ $('propertyImageRatio').value='free';
+ for(const id of ['propertyFontFamily','propertyFontWeight','propertyLineHeight','propertyLetterSpacing','propertyItalic','propertyUnderline'])
+  $(id).disabled=!onlyText;
+ for(const id of ['propertyMask','propertyImageRatio','propertyCropZoom','propertyCropX','propertyCropY','resetImageCrop'])
+  $(id).disabled=!onlyImage;
+ for(const id of ['propertyBorderWidth','propertyShadowEnabled','propertyShadowColor','propertyShadowBlur','propertyShadowX','propertyShadowY'])
+  $(id).disabled=!e;
  $('propertyText').disabled=!onlyText;
  $('propertyFont').disabled=!onlyText;$('propertyAlign').disabled=!onlyText;
  for(const key of ['propertyFill','propertyStroke','propertyOpacity','propertyX','propertyY','propertyW','propertyH'])$(key).disabled=!e;
@@ -605,6 +623,44 @@ function bind(){
  for(const [input,field] of [['propertyX','x'],['propertyY','y'],['propertyW','w'],['propertyH','h']])
   control(input,field,v=>numeric(v,field==='w'||field==='h'?10:-1500,2000));
  control('propertyAlign','align',v=>['left','center','right'].includes(v)?v:'center');
+ control('propertyFontFamily','fontFamily',v=>Object.hasOwn(C.FONTS,v)?v:'sans');
+ control('propertyFontWeight','fontWeight',v=>[400,500,600,700,800,900].includes(Number(v))?Number(v):600);
+ control('propertyLineHeight','lineHeight',v=>Math.max(1,Math.min(2.4,Number(v)||1.22)));
+ control('propertyLetterSpacing','letterSpacing',v=>Math.max(-2,Math.min(8,Number(v)||0)));
+ for(const [id,key] of [['propertyItalic','italic'],['propertyUnderline','underline']])
+  $(id).addEventListener('change',ev=>{if(current()?.type==='text')edit(()=>{current()[key]=ev.target.checked})});
+ $('propertyMask').addEventListener('change',ev=>{
+  if(current()?.type!=='image')return;
+  edit(()=>{const e=current();if(ev.target.value==='none')delete e.mask;else e.mask=ev.target.value});
+ });
+ $('propertyImageRatio').addEventListener('change',ev=>{
+  const ratio=Number(ev.target.value),e=current();if(e?.type!=='image'||!ratio)return;
+  edit(()=>{const image=current(),w=Math.min(2000,Math.max(20,Math.round(image.h*ratio)));
+   image.x+=Math.round((image.w-w)/2);image.w=w});
+ });
+ function cropFromControls(){
+  if(current()?.type!=='image')return;
+  const zoom=Math.max(1,Math.min(4,Number($('propertyCropZoom').value)||1)),side=1/zoom;
+  const x=(1-side)*Number($('propertyCropX').value)/100,y=(1-side)*Number($('propertyCropY').value)/100;
+  edit(()=>{if(zoom<=1)delete current().cropRect;else current().cropRect={x,y,w:side,h:side}});
+ }
+ for(const id of ['propertyCropZoom','propertyCropX','propertyCropY'])$(id).addEventListener('change',cropFromControls);
+ $('resetImageCrop').addEventListener('click',()=>{
+  if(current()?.type!=='image')return;
+  edit(()=>{delete current().cropRect});
+  notice('사진의 자르기만 초기화했어요. 원본은 그대로예요.');
+ });
+ control('propertyBorderWidth','borderWidth',v=>Math.max(0,Math.min(12,Math.round(Number(v)||0))));
+ function patchShadow(){
+  if(!current())return;
+  const active=$('propertyShadowEnabled').checked;
+  edit(()=>{const e=current();if(!active){delete e.shadow;return}
+   e.shadow=C.cleanShadow({color:$('propertyShadowColor').value,blur:Number($('propertyShadowBlur').value),
+    x:Number($('propertyShadowX').value),y:Number($('propertyShadowY').value)})||{color:'#334155',blur:6,x:3,y:4};
+  });
+ }
+ for(const id of ['propertyShadowEnabled','propertyShadowColor','propertyShadowBlur','propertyShadowX','propertyShadowY'])
+  $(id).addEventListener('change',patchShadow);
  stage.addEventListener('pointerdown',startMove);
  window.addEventListener('pointermove',moveDrag);
  window.addEventListener('pointerup',finishDrag);
