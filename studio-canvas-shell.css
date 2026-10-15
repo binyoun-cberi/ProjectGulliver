@@ -301,3 +301,39 @@ body{color:var(--canvas-ink);background:var(--canvas-bg)}
  .teacher-linked-group select{min-height:44px}
  .teacher-original-links a{min-height:44px}
 }
+
+
+/* Connected live teaching tools: contained runtime over existing canvas, no route change */
+.teacher-live-tools{display:grid;gap:11px;padding:13px 2px 18px;border-top:1px solid #e8dfec}
+.teacher-live-heading{display:grid;gap:5px}
+.teacher-live-heading strong{font-size:14px;color:#463376}
+.teacher-live-heading small,.teacher-live-note{font-size:11px;line-height:1.55;color:#807794}
+.teacher-live-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.teacher-live-tile{display:flex;flex-direction:column;gap:6px;padding:13px 9px;border-radius:12px;background:#f7f3ff;border:1px solid #e5dafa;min-height:91px;text-align:left;white-space:normal}
+.teacher-live-tile:hover{background:#ebe1ff}
+.teacher-live-tile strong{font-size:12px;color:#4d3a84}
+.teacher-live-tile span{font-size:10px;line-height:1.45;color:#7a6e91}
+.teacher-live-note{margin:0}
+.teacher-live-dialog{padding:0;border:1px solid #ded2ee;border-radius:15px;width:min(1450px,calc(100vw - 32px));height:min(94dvh,1020px);max-width:none;max-height:none;overflow:hidden;background:#fff;box-shadow:0 18px 70px #180d3555}
+.teacher-live-dialog::backdrop{background:#130f29bb;backdrop-filter:blur(3px)}
+.teacher-run-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #eae6f0}
+.teacher-run-head>div:first-child{display:grid;gap:3px}
+.teacher-run-head strong{font-size:15px;color:#332546}
+.teacher-run-head small{color:#786c86;font-size:11px}
+.teacher-run-actions{display:flex;gap:7px}
+.teacher-run-actions button{font-weight:800;font-size:12px;border-radius:9px;min-height:38px;padding:8px 10px}
+#teacherCopyResult{background:#7048c7;color:#fff;border-color:#7048c7}
+#teacherLiveClose{color:#684864}
+.teacher-live-status{margin:0;padding:6px 13px;min-height:28px;font-size:11px;color:#4c6d60;background:#f3faf6;line-height:1.4}
+.teacher-live-status.error{color:#a82f50;background:#fff0f2}
+#teacherLiveFrame{display:block;width:100%;height:calc(100% - 110px);border:0;background:#fff}
+@media(max-width:700px){
+ .teacher-live-dialog{width:100vw;height:100dvh;border-radius:0;border:0;margin:0;max-width:none;max-height:none}
+ .teacher-run-head{padding:9px;align-items:flex-start}
+ .teacher-run-head>div:first-child{padding-top:6px}
+ .teacher-run-head small{max-width:115px;line-height:1.3}
+ .teacher-run-actions{gap:5px;max-width:65%}
+ .teacher-run-actions button{padding:8px 7px;font-size:11px;min-height:42px}
+ #teacherLiveFrame{height:calc(100% - 116px)}
+ .teacher-live-grid{gap:7px}
+}

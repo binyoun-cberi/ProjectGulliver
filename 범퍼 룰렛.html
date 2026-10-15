@@ -2923,6 +2923,14 @@
                 resultList.appendChild(item);
             });
             
+            // Preserve only actual outcomes, never configuration guesses or unfinished students.
+            try {
+                localStorage.setItem('gulliver.roulette.lastResults.v1',JSON.stringify({
+                    version:1,completed:results.length===marbles.length,purpose:gamePurpose,
+                    results:results.slice(0,80).map(res=>({name:String(res.marble.name).slice(0,42),result:String(res.text).slice(0,65)})),
+                    createdAt:Date.now()
+                }));
+            } catch (e) { console.warn('룰렛 결과 저장 실패',e); }
             const unfinished = marbles.filter(m => !m.finished);
             unfinished.forEach(m => {
                 const item = document.createElement('div');

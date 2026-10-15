@@ -820,6 +820,7 @@
           [els.downloadBtn, els.copyImageBtn, els.testScanBtn].forEach(btn => btn.disabled = false);
           state.generated = true;
           state.generatedText = text;
+          els.qrCanvas.dataset.generatedContent=text;
           return true;
         } catch (error) {
           console.error(error);
