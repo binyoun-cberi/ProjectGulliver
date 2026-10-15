@@ -264,6 +264,18 @@
             renderLeft();
             renderRight();
             renderOnlinePanel();
+            // Publish aggregate-only counts for the editable teaching slide (no identities or tokens).
+            try {
+                const counts={};
+                config.options.forEach(o=>{counts[String(o.id)]=0});
+                Object.values(votes).forEach(id=>{if(Object.hasOwn(counts,String(id)))counts[String(id)]++});
+                localStorage.setItem('gulliver.vote.onlineSummary.v1',JSON.stringify({
+                    version:1,roomCode:String(onlineRoom?.code||'').slice(0,40),
+                    title:String(config.title).slice(0,90),
+                    options:config.options.slice(0,12).map(o=>({name:String(o.name).slice(0,80),count:counts[String(o.id)]||0})),
+                    createdAt:Date.now()
+                }));
+            } catch (e) { console.warn('투표 집계 보관 실패',e); }
         }
 
         function connectTeacherSocket() {
