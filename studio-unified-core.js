@@ -86,8 +86,11 @@ function cleanTrack(raw,i=0){
  const base={id:idValue,kind,name:text(raw.name||(kind==='caption'?'새 자막':'미디어 클립'),90),
   start:number(raw.start,0,60,0),duration:number(raw.duration,.5,60,3),trimStart:number(raw.trimStart,0,86400,0),
   volume:number(raw.volume,0,1,.7),muted:raw.muted!==false,
+  fadeIn:number(raw.fadeIn,0,60,0),fadeOut:number(raw.fadeOut,0,60,0),
   x:number(raw.x,-1500,2500,120),y:number(raw.y,-1500,2500,120),
   w:number(raw.w,20,2000,480),h:number(raw.h,20,2000,180),stack:number(raw.stack,0,255,1)|0};
+ base.fadeIn=Math.min(base.duration,base.fadeIn);
+ base.fadeOut=Math.min(base.duration-base.fadeIn,base.fadeOut);
  if(kind==='caption')return{...base,text:text(raw.text||'여기에 자막 입력',300),
    fontSize:number(raw.fontSize,12,160,38),color:color(raw.color,'#ffffff')};
  if(!/^u-[\w-]{1,110}$/.test(raw.mediaId||''))throw Error('타임라인 파일 원본을 찾을 수 없어요.');

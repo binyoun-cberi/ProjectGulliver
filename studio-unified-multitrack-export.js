@@ -10,9 +10,26 @@
  const Core=root.GulliverUnifiedCore||(typeof require==='function'?require('./studio-unified-core.js'):null);
  const active=(track,t)=>t>=track.start&&t<track.start+track.duration;
  const visuals=(model,t)=>((model.tracks||[]).filter(x=>(x.kind==='video'||x.kind==='caption')&&active(x,t))).sort((a,b)=>a.stack-b.stack);
- const audible=(model,t)=>((model.tracks||[]).filter(x=>x.kind==='audio'&&active(x,t)));
+ const audible=(model,t)=>((model.tracks||[]).filter(x=>(x.kind==='audio'||(x.kind==='video'&&!x.muted))&&active(x,t)));
+ function gainAt(track,elapsed){
+  if(elapsed<0||elapsed>=track.duration||track.muted&&track.kind==='video')return 0;
+  const attack=track.fadeIn>0?Math.min(1,elapsed/track.fadeIn):1;
+  const release=track.fadeOut>0?Math.min(1,(track.duration-elapsed)/track.fadeOut):1;
+  return Math.max(0,(track.volume??.7)*Math.min(attack,release));
+ }
+ function applyFadeAutomation(gain,track,startAt){
+  const fadeIn=Math.min(track.duration,track.fadeIn||0);
+  const fadeOut=Math.min(track.duration-fadeIn,track.fadeOut||0);
+  const base=track.volume??.7;
+  gain.setValueAtTime(fadeIn?0:base,startAt);
+  if(fadeIn)gain.linearRampToValueAtTime(base,startAt+fadeIn);
+  if(fadeOut){
+   gain.setValueAtTime(base,startAt+track.duration-fadeOut);
+   gain.linearRampToValueAtTime(0,startAt+track.duration);
+  }
+ }
  const soundSchedule=(model)=>((model.tracks||[]).filter(t=>t.kind==='audio').map(t=>({
-  id:t.id,mediaId:t.mediaId,start:t.start,duration:t.duration,trimStart:t.trimStart,volume:t.volume
+  id:t.id,mediaId:t.mediaId,start:t.start,duration:t.duration,trimStart:t.trimStart,volume:t.volume,fadeIn:t.fadeIn,fadeOut:t.fadeOut
  })));
  function waitFor(el,event,label,timeout=16000){
   return new Promise((resolve,reject)=>{
@@ -109,15 +126,16 @@
   if(!mime)throw Error('이 기기는 WebM 합성 출력을 지원하지 않아요. PC Chrome 또는 Edge에서 사용해 주세요.');
   if(signal?.aborted)throw Error('영상 저장이 취소됐어요.');
   let videoAssets=null,audioContext=null,stream=null,recorder=null,timer=null,visibilityListener=null;
-  const soundSources=[],chunks=[];
+  const soundSources=[],videoGains=new Map(),chunks=[];
   let cancelled=false,renderError=null;
   const abort=()=>{cancelled=true;if(recorder?.state==='recording')recorder.stop()};
   try{
    videoAssets=await prepareVideo(project,getMedia,signal);
    const Audio=root.AudioContext||root.webkitAudioContext;
-   if(project.tracks.some(t=>t.kind==='audio')&&!Audio)throw Error('이 브라우저에서 여러 음악을 합칠 수 없어요.');
+   const needAudio=project.tracks.some(t=>t.kind==='audio'||(t.kind==='video'&&!t.muted));
+   if(needAudio&&!Audio)throw Error('영상 원본 소리와 배경음악을 이 브라우저에서 합칠 수 없어요.');
    let sound=[];
-   if(project.tracks.some(t=>t.kind==='audio')){
+   if(needAudio){
     audioContext=new Audio();
     sound=await prepareAudio(project,getMedia,audioContext);
    }
@@ -152,7 +170,15 @@
     for(const {track,buffer} of sound){
      const node=audioContext.createBufferSource(),gain=audioContext.createGain();
      node.buffer=buffer;gain.gain.value=track.volume;
-     node.connect(gain);gain.connect(out);soundSources.push({node,track});
+     node.connect(gain);gain.connect(out);soundSources.push({node,track,gain});
+    }
+    for(const track of project.tracks.filter(t=>t.kind==='video'&&!t.muted)){
+     const movie=videoAssets.videos.get(track.id);
+     // A source belongs to a single decoded video instance so overlapping clips mix independently.
+     movie.muted=false;
+     const sourceNode=audioContext.createMediaElementSource(movie),gain=audioContext.createGain();
+     gain.gain.value=0;sourceNode.connect(gain);gain.connect(out);
+     videoGains.set(track.id,gain);
     }
     const audioTrack=out.stream.getAudioTracks()[0];
     if(!audioTrack)throw Error('음악 트랙을 합성하지 못했어요.');
@@ -174,14 +200,22 @@
    if(signal?.aborted)abort();
    if(cancelled)throw Error('영상 저장이 취소됐어요.');
    recorder.start(250);
-   const start=root.performance.now();
-   for(const {node,track} of soundSources)node.start(audioContext.currentTime+track.start,track.trimStart,track.duration);
+   const start=root.performance.now(),audioStart=audioContext?.currentTime||0;
+   for(const {node,track,gain} of soundSources){
+    applyFadeAutomation(gain.gain,track,audioStart+track.start);
+    node.start(audioStart+track.start,track.trimStart,track.duration);
+   }
    syncVideo(0,true);
    timer=root.setInterval(()=>{
     if(cancelled)return;
     const t=Math.min(duration,(root.performance.now()-start)/1000);
     try{
-     syncVideo(t,true);frame(t);onProgress(t/duration,t,duration);
+     syncVideo(t,true);
+     for(const track of project.tracks.filter(t=>t.kind==='video'&&!t.muted)){
+      const node=videoGains.get(track.id);
+      if(node)node.gain.setValueAtTime(gainAt(track,t-track.start),audioContext.currentTime);
+     }
+     frame(t);onProgress(t/duration,t,duration);
      if(t>=duration&&recorder.state==='recording'){root.clearInterval(timer);recorder.stop()}
     }catch(e){
      renderError=e;cancelled=true;root.clearInterval(timer);
@@ -204,5 +238,5 @@
    videoAssets?.release();
   }
  }
- return{active,visuals,audible,soundSchedule,drawOverlays,exportWebM};
+ return{active,visuals,audible,soundSchedule,drawOverlays,exportWebM,gainAt,applyFadeAutomation};
 });
