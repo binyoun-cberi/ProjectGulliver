@@ -111,7 +111,17 @@ function snapSelection(moving,others,layout,threshold=7){
   const extent=axis==='x'?moving.w:moving.h,base=moving[axis];
   const sources=[base,base+extent/2,base+extent];
   const targets=[...edges({x:0,y:0,w:layout.w,h:layout.h},axis)];
-  for(const e of others)targets.push(...edges(rotatedBounds(e),axis));
+  const boxes=others.map(rotatedBounds);
+  for(const e of boxes)targets.push(...edges(e,axis));
+  // Extend established neighboring gaps so a third object can keep the same spacing.
+  const extentKey=axis==='x'?'w':'h';
+  const sorted=boxes.slice().sort((a,b)=>a[axis]-b[axis]);
+  for(let i=0;i<sorted.length-1;i++){
+   const left=sorted[i],right=sorted[i+1],gap=right[axis]-(left[axis]+left[extentKey]);
+   if(gap<0||gap>layout[extentKey]/2)continue;
+   targets.push(right[axis]+right[extentKey]+gap);
+   targets.push(left[axis]-gap);
+  }
   let best=null;
   for(const source of sources)for(const target of targets){
    const dist=target-source;
