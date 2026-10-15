@@ -19,6 +19,35 @@ function mimeType(){
  if(typeof root.MediaRecorder==='undefined')return '';
  return FORMATS.find(value=>root.MediaRecorder.isTypeSupported(value))||'';
 }
+function imageMaskPath(ctx,item){
+ ctx.beginPath();
+ if(item.mask==='circle')ctx.ellipse(item.w/2,item.h/2,item.w/2,item.h/2,0,0,Math.PI*2);
+ else if(item.mask==='rounded'&&typeof ctx.roundRect==='function')ctx.roundRect(0,0,item.w,item.h,16);
+ else ctx.rect(0,0,item.w,item.h);
+}
+function renderTextLine(ctx,line,item,y,bw){
+ const spacing=item.letterSpacing||0,glyphs=Array.from(line);
+ ctx.textBaseline='middle';
+ if(!spacing){
+  const x=item.align==='left'?0:item.align==='right'?item.w:item.w/2;
+  ctx.textAlign=item.align==='left'?'left':item.align==='right'?'right':'center';
+  if(bw)ctx.strokeText(line,x,y,item.w);
+  ctx.fillText(line,x,y,item.w);
+  if(item.underline){const width=ctx.measureText(line).width;
+   const start=item.align==='left'?0:item.align==='right'?item.w-width:(item.w-width)/2;
+   ctx.beginPath();ctx.moveTo(start,y+item.fontSize*.45);ctx.lineTo(start+width,y+item.fontSize*.45);
+   ctx.lineWidth=Math.max(1,item.fontSize/18);ctx.strokeStyle=item.fill;ctx.stroke()}
+  return;
+ }
+ ctx.textAlign='left';
+ const widths=glyphs.map(g=>ctx.measureText(g).width);
+ const total=widths.reduce((a,b)=>a+b,0)+Math.max(0,glyphs.length-1)*spacing;
+ let x=item.align==='left'?0:item.align==='right'?item.w-total:(item.w-total)/2,start=x;
+ for(let i=0;i<glyphs.length;i++){if(bw)ctx.strokeText(glyphs[i],x,y);
+  ctx.fillText(glyphs[i],x,y);x+=widths[i]+spacing}
+ if(item.underline){ctx.beginPath();ctx.moveTo(start,y+item.fontSize*.45);ctx.lineTo(start+total,y+item.fontSize*.45);
+  ctx.lineWidth=Math.max(1,item.fontSize/18);ctx.strokeStyle=item.fill;ctx.stroke()}
+}
 function drawFrame(ctx,model,seconds,images=new Map(),videos=new Map(),opts={}){
  const C=root.GulliverUnifiedCore||require('./studio-unified-core.js');
  const {w,h}=C.LAYOUTS[model.layout],position=C.locateTime(model,seconds),p=model.pages[position.index],transition=C.transitionFrame(p,position.local);
@@ -48,31 +77,37 @@ function drawFrame(ctx,model,seconds,images=new Map(),videos=new Map(),opts={}){
   ctx.rotate((item.rotation||0)*Math.PI/180);
   ctx.scale(animation.scale,animation.scale);
   ctx.translate(-item.w/2,-item.h/2);
-  ctx.fillStyle=item.fill;ctx.strokeStyle=item.stroke;ctx.lineWidth=2;
-  if(item.type==='rect'){ctx.fillRect(0,0,item.w,item.h);ctx.strokeRect(0,0,item.w,item.h)}
-  else if(item.type==='ellipse'){ctx.beginPath();ctx.ellipse(item.w/2,item.h/2,item.w/2,item.h/2,0,0,Math.PI*2);ctx.fill();ctx.stroke()}
-  else if(item.type==='triangle'){ctx.beginPath();ctx.moveTo(item.w/2,0);ctx.lineTo(item.w,item.h);ctx.lineTo(0,item.h);ctx.closePath();ctx.fill();ctx.stroke()}
+  const border=C.strokeWidth(item);
+  ctx.fillStyle=item.fill;ctx.strokeStyle=item.stroke;ctx.lineWidth=border;
+  if(item.shadow){ctx.shadowColor=item.shadow.color;ctx.shadowBlur=item.shadow.blur;
+   ctx.shadowOffsetX=item.shadow.x;ctx.shadowOffsetY=item.shadow.y}
+  if(item.type==='rect'){ctx.fillRect(0,0,item.w,item.h);if(border)ctx.strokeRect(0,0,item.w,item.h)}
+  else if(item.type==='ellipse'){ctx.beginPath();ctx.ellipse(item.w/2,item.h/2,item.w/2,item.h/2,0,0,Math.PI*2);ctx.fill();if(border)ctx.stroke()}
+  else if(item.type==='triangle'){ctx.beginPath();ctx.moveTo(item.w/2,0);ctx.lineTo(item.w,item.h);ctx.lineTo(0,item.h);ctx.closePath();ctx.fill();if(border)ctx.stroke()}
   else if(item.type==='star'){
    ctx.beginPath();
    for(let n=0;n<10;n++){const a=-Math.PI/2+n*Math.PI/5,r=n%2?.43:1;
     const x=item.w/2+Math.cos(a)*item.w*r/2,y=item.h/2+Math.sin(a)*item.h*r/2;
     if(n===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
-   }ctx.closePath();ctx.fill();ctx.stroke();
-  }else if(item.type==='line'){ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(item.w,item.h);ctx.lineWidth=3;ctx.stroke()}
+   }ctx.closePath();ctx.fill();if(border)ctx.stroke();
+  }else if(item.type==='line'){ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(item.w,item.h);ctx.lineWidth=border;ctx.stroke()}
   else if(item.type==='image'){
    const image=images.get(item.src);
    if(!image)throw Error('영상 장면에 포함된 사진을 읽지 못했어요.');
-   const ratio=Math.min(item.w/image.width,item.h/image.height);
-   const width=image.width*ratio,height=image.height*ratio;
-   ctx.drawImage(image,(item.w-width)/2,(item.h-height)/2,width,height);
+   const frame=C.imageFrame(item,image.width,image.height);
+   if(item.shadow){ctx.save();imageMaskPath(ctx,item);ctx.fillStyle='#ffffff';ctx.fill();ctx.restore()}
+   ctx.save();imageMaskPath(ctx,item);ctx.clip();
+   ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;
+   ctx.drawImage(image,frame.x,frame.y,frame.w,frame.h);
+   ctx.restore();
+   if(border){ctx.save();imageMaskPath(ctx,item);ctx.strokeStyle=item.stroke;
+    ctx.lineWidth=border;ctx.shadowColor='transparent';ctx.stroke();ctx.restore()}
   }else if(item.type==='text'){
-   ctx.fillStyle=item.fill;ctx.font='650 '+item.fontSize+'px sans-serif';
-   ctx.textAlign=item.align==='left'?'left':item.align==='right'?'right':'center';
-   ctx.textBaseline='middle';
+   ctx.fillStyle=item.fill;
+   ctx.font=(item.italic?'italic ':'')+(item.fontWeight||600)+' '+item.fontSize+'px '+C.fontStack(item.fontFamily);
    const lines=item.content.split('\n').slice(0,16);
-   const lineHeight=item.fontSize*1.22,y0=item.h/2-(lines.length-1)*lineHeight/2;
-   const x=item.align==='left'?0:item.align==='right'?item.w:item.w/2;
-   for(let n=0;n<lines.length;n++)ctx.fillText(lines[n],x,y0+n*lineHeight,item.w);
+   const lineHeight=item.fontSize*(item.lineHeight||1.22),y0=item.h/2-(lines.length-1)*lineHeight/2;
+   for(let n=0;n<lines.length;n++)renderTextLine(ctx,lines[n],item,y0+n*lineHeight,border);
   }
   ctx.restore();
   if(p.videoClip&&elementIndex+1===stack)drawVideo();
@@ -158,6 +193,7 @@ async function exportWebM(project,{getMedia,onProgress=()=>{},signal}={}){
    catch(e){throw Error('WAV 배경음악을 디코딩하지 못했어요. PCM WAV를 사용해 주세요.')}
    if(!decoded.duration||!decoded.length)throw Error('내용이 없는 WAV 음악은 사용할 수 없어요.');
   }
+  if(root.document?.fonts?.ready)await root.document.fonts.ready;
   const images=await loadImages(safe);
   videoAssets=await loadClips(safe,getMedia,signal);
   if(signal?.aborted)throw Error('영상 저장이 취소됐어요.');
