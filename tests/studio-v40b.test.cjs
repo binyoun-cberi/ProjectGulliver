@@ -34,11 +34,12 @@ test('4.0-B layer order retains all IDs; locked and hidden survive serialization
  assert.deepEqual(C.reorderLayers([a,b,c,d],['b','c'],'up').map(x=>x.id),['a','d','b','c']);
  assert.deepEqual(C.reorderLayers([a,b,c,d],['b','c'],'down').map(x=>x.id),['b','c','a','d']);
  assert.deepEqual(C.reorderLayers([a,b,c,d],['b','c'],'front').map(x=>x.id),['a','d','b','c']);
- const project=C.starter('blank');project.pages[0].elements=[{...a,locked:true,hidden:true,rotation:35},b];
+ const project=C.starter('blank');project.pages[0].elements=[{...a,locked:true,hidden:true,rotation:65},{...b,rotation:35}];
  const safe=C.validate(project);
  assert.equal(safe.pages[0].elements[0].locked,true);assert.equal(safe.pages[0].elements[0].hidden,true);
- assert.equal(safe.pages[0].elements[0].rotation,35);
+ assert.equal(safe.pages[0].elements[0].rotation,65);
  const turns=[];const context=new Proxy({},{get(_,key){if(key==='canvas')return {};return (...args)=>{turns.push([key,...args])}}});
  V.drawFrame(context,safe,0,new Map());
- assert.ok(turns.some(x=>x[0]==='rotate'&&Math.abs(x[1]-0)<1e-9)===false);
+ assert.equal(turns.filter(x=>x[0]==='rotate').length,1);
+ assert.ok(Math.abs(turns.find(x=>x[0]==='rotate')[1]-35*Math.PI/180)<1e-9);
 });
