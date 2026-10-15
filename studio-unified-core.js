@@ -67,6 +67,78 @@ function transformSelection(items,original,next){
   w:Math.max(10,Math.round(e.w*sx)),h:Math.max(10,Math.round(e.h*sy)),
   ...(e.type==='text'?{fontSize:number(Math.round(e.fontSize*Math.min(sx,sy)),10,160,e.fontSize)}:{})}));
 }
+// Object transforms operate on editor coordinates and can be tested without a browser.
+function normalizeAngle(angle){const n=Number(angle)||0;return ((n+180)%360+360)%360-180}
+function rotatedBounds(e){
+ const angle=(Number(e.rotation)||0)*Math.PI/180,c=Math.abs(Math.cos(angle)),t=Math.abs(Math.sin(angle));
+ const w=e.w*c+e.h*t,h=e.w*t+e.h*c;
+ return{x:e.x+(e.w-w)/2,y:e.y+(e.h-h)/2,w,h};
+}
+function rotateSelection(items,angle){
+ if(!items.length)return [];
+ const bounds=selectionBounds(items),cx=bounds.x+bounds.w/2,cy=bounds.y+bounds.h/2;
+ const radians=angle*Math.PI/180,c=Math.cos(radians),s=Math.sin(radians);
+ return items.map(e=>{
+  const ex=e.x+e.w/2-cx,ey=e.y+e.h/2-cy;
+  return {...e,x:Math.round((cx+ex*c-ey*s-e.w/2)*100)/100,
+   y:Math.round((cy+ex*s+ey*c-e.h/2)*100)/100,
+   rotation:normalizeAngle((e.rotation||0)+angle)};
+ });
+}
+function alignSelection(items,mode,layout){
+ if(!items.length)return [];
+ const bounds=selectionBounds(items),target=layout?{x:0,y:0,w:layout.w,h:layout.h}:bounds;
+ const horizontal={left:target.x,center:target.x+target.w/2,right:target.x+target.w};
+ const vertical={top:target.y,middle:target.y+target.h/2,bottom:target.y+target.h};
+ if(Object.hasOwn(horizontal,mode))return items.map(e=>({...e,x:Math.round((horizontal[mode]-(mode==='center'?e.w/2:mode==='right'?e.w:0))*100)/100}));
+ if(Object.hasOwn(vertical,mode))return items.map(e=>({...e,y:Math.round((vertical[mode]-(mode==='middle'?e.h/2:mode==='bottom'?e.h:0))*100)/100}));
+ return items.map(e=>({...e}));
+}
+function distributeSelection(items,axis){
+ if(items.length<3)return items.map(e=>({...e}));
+ const key=axis==='vertical'?'y':'x',length=axis==='vertical'?'h':'w';
+ const sorted=items.slice().sort((a,b)=>a[key]-b[key]),first=sorted[0],last=sorted[sorted.length-1];
+ const total=sorted.reduce((t,e)=>t+e[length],0);
+ const extent=last[key]+last[length]-first[key],gap=(extent-total)/(sorted.length-1);
+ let pos=first[key];const values=new Map();
+ for(const e of sorted){values.set(e.id,Math.round(pos*100)/100);pos+=e[length]+gap}
+ return items.map(e=>({...e,[key]:values.get(e.id)}));
+}
+function snapSelection(moving,others,layout,threshold=7){
+ const result={x:moving.x,y:moving.y,guides:[]};
+ const edges=(b,axis)=>axis==='x'?[b.x,b.x+b.w/2,b.x+b.w]:[b.y,b.y+b.h/2,b.y+b.h];
+ for(const axis of ['x','y']){
+  const extent=axis==='x'?moving.w:moving.h,base=moving[axis];
+  const sources=[base,base+extent/2,base+extent];
+  const targets=[...edges({x:0,y:0,w:layout.w,h:layout.h},axis)];
+  const boxes=others.map(rotatedBounds);
+  for(const e of boxes)targets.push(...edges(e,axis));
+  // Extend established neighboring gaps so a third object can keep the same spacing.
+  const extentKey=axis==='x'?'w':'h';
+  const sorted=boxes.slice().sort((a,b)=>a[axis]-b[axis]);
+  for(let i=0;i<sorted.length-1;i++){
+   const left=sorted[i],right=sorted[i+1],gap=right[axis]-(left[axis]+left[extentKey]);
+   if(gap<0||gap>layout[extentKey]/2)continue;
+   targets.push(right[axis]+right[extentKey]+gap);
+   targets.push(left[axis]-gap);
+  }
+  let best=null;
+  for(const source of sources)for(const target of targets){
+   const dist=target-source;
+   if(Math.abs(dist)<=threshold&&(!best||Math.abs(dist)<Math.abs(best.offset)))best={offset:dist,target};
+  }
+  if(best){result[axis]+=best.offset;result.guides.push({axis,position:best.target})}
+ }
+ return result;
+}
+function reorderLayers(elements,ids,direction){
+ const move=new Set(ids),picked=elements.filter(e=>move.has(e.id));
+ if(!picked.length)return elements.slice();
+ const rest=elements.filter(e=>!move.has(e.id));
+ const first=elements.findIndex(e=>move.has(e.id)),last=elements.length-1-[...elements].reverse().findIndex(e=>move.has(e.id));
+ const start=direction==='front'?rest.length:direction==='back'?0:Math.min(rest.length,Math.max(0, direction==='up'?last-picked.length+2:first-1));
+ rest.splice(start,0,...picked);return rest;
+}
 function cleanElement(raw,i){
  if(!raw||!TYPES.includes(raw.type))throw Error('알 수 없는 편집 요소가 있어요.');
  const type=raw.type;
@@ -202,5 +274,5 @@ function fromLegacy(kind,payload){
  if(kind==='slides')return fromSlides(payload);
  throw Error('도안·발표 작업만 편집 가능한 캔버스로 변환할 수 있어요.');
 }
-return {FORMAT,LAYOUTS,MAX_PAGES,MAX_ITEMS,TYPES,ANIMATIONS,TRANSITIONS,MIN_DURATION,MAX_DURATION,id,groupId,selectionBounds,transformSelection,color,image,element,makePage,starter,nameTags,validate,fromLegacy,totalDuration,locateTime,animationFrame,transitionFrame,cleanVideoClip,cleanTrack,TRACK_KINDS,MAX_TRACKS};
+return {FORMAT,LAYOUTS,MAX_PAGES,MAX_ITEMS,TYPES,ANIMATIONS,TRANSITIONS,MIN_DURATION,MAX_DURATION,id,groupId,selectionBounds,transformSelection,normalizeAngle,rotatedBounds,rotateSelection,alignSelection,distributeSelection,snapSelection,reorderLayers,color,image,element,makePage,starter,nameTags,validate,fromLegacy,totalDuration,locateTime,animationFrame,transitionFrame,cleanVideoClip,cleanTrack,TRACK_KINDS,MAX_TRACKS};
 });
