@@ -45,6 +45,7 @@ function drawFrame(ctx,model,seconds,images=new Map(),videos=new Map(),opts={}){
   ctx.save();
   ctx.globalAlpha*=item.opacity*animation.opacity;
   ctx.translate(item.x+item.w/2+animation.x,item.y+item.h/2+animation.y);
+  ctx.rotate((item.rotation||0)*Math.PI/180);
   ctx.scale(animation.scale,animation.scale);
   ctx.translate(-item.w/2,-item.h/2);
   ctx.fillStyle=item.fill;ctx.strokeStyle=item.stroke;ctx.lineWidth=2;
