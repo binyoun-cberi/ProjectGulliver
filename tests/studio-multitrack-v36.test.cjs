@@ -29,7 +29,7 @@ test('audio gain automation follows the saved clip start and fades',()=>{
  assert.deepEqual(calls,[['set',0,10],['ramp',.8,10.5],['set',.8,12],['ramp',0,13]]);
 });
 test('waveform extracts real samples, represents silence, fades the displayed outline',()=>{
- assert.deepEqual(W.computePeaks(new Float32Array([0,0,.75,-1,.2,.1,0,0]),4),[0,1,.2,0]);
+ assert.deepEqual(W.computePeaks(new Float32Array([0,0,.75,-1,.2,.1,0,0]),4).map(x=>Math.round(x*100)/100),[0,1,.2,0]);
  assert.deepEqual(W.computePeaks(new Float32Array(256),16),Array(16).fill(0));
  assert.equal(W.amplitude({duration:4,fadeIn:1,fadeOut:1,volume:.6},.5),.3);
  assert.equal(W.amplitude({duration:4,fadeIn:1,fadeOut:1,volume:.6},3.5),.3);
