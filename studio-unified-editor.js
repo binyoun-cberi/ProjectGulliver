@@ -331,13 +331,30 @@ function canvasPoint(event){const r=stage.getBoundingClientRect();return{x:(even
 function showSelectionWithoutReplacingTextNode(){
  const items=selectedItems();
  for(const node of stage.querySelectorAll('.item')){
-  const active=selectedIds.has(node.dataset.id);node.classList.toggle('selected',active);node.querySelector('.grip')?.remove();
-  node.querySelector('.rotate-grip')?.remove();
-  if(active&&items.length===1)addHandles(node);
+  const active=selectedIds.has(node.dataset.id);node.classList.toggle('selected',active);
+  const grip=node.querySelector('.grip'),rotation=node.querySelector('.rotate-grip');
+  if(active&&items.length===1){if(!grip||!rotation){grip?.remove();rotation?.remove();addHandles(node)}}
+  else{grip?.remove();rotation?.remove()}
  }
- stage.querySelector('.selection-frame')?.remove();
- if(items.length>1)drawSelectionFrame();
+ const frame=stage.querySelector('.selection-frame');
+ if(items.length>1){if(!frame)drawSelectionFrame()}
+ else frame?.remove();
  properties();timeline?.refresh();
+}
+function previewDrag(){
+ const byId=new Map(page().elements.map(e=>[e.id,e]));
+ for(const node of stage.querySelectorAll('.item')){
+  const e=byId.get(node.dataset.id);if(!e||!selectedIds.has(e.id))continue;
+  Object.assign(node.style,{left:e.x+'px',top:e.y+'px',width:e.w+'px',height:e.h+'px',
+   transform:'rotate('+(e.rotation||0)+'deg)',fontSize:e.fontSize+'px'});
+  if(e.type==='line'){const svg=node.querySelector('svg'),line=svg?.querySelector('line');
+   svg?.setAttribute('viewBox','0 0 '+e.w+' '+e.h);
+   line?.setAttribute('x2',String(e.w));line?.setAttribute('y2',String(e.h));
+  }
+ }
+ const frame=stage.querySelector('.selection-frame'),b=C.selectionBounds(selectedItems());
+ if(frame&&b)Object.assign(frame.style,{left:b.x+'px',top:b.y+'px',width:b.w+'px',height:b.h+'px'});
+ stage.querySelectorAll('.snap-guide').forEach(el=>el.remove());drawSnapGuides();
 }
 function startMove(event){
  if(event.button!==0&&event.pointerType==='mouse')return;
@@ -382,7 +399,7 @@ function moveDrag(event){
   for(const changed of C.rotateSelection(drag.items,delta)){
    const original=page().elements.find(e=>e.id===changed.id);if(original)Object.assign(original,changed);
   }
-  snapGuides=[];render();return;
+  snapGuides=[];previewDrag();return;
  }
  const limit=C.LAYOUTS[model.layout],initial=drag.bounds;
  let next=drag.resizing?
@@ -398,7 +415,7 @@ function moveDrag(event){
  for(const changed of C.transformSelection(drag.items,initial,next)){
   const item=page().elements.find(x=>x.id===changed.id);if(item)Object.assign(item,changed);
  }
- render();
+ previewDrag();
 }
 function finishDrag(event){
  if(!drag||event.pointerId!==drag.pointerId)return;
