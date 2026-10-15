@@ -40,6 +40,7 @@ function drawFrame(ctx,model,seconds,images=new Map(),videos=new Map(),opts={}){
  const stack=Math.min(p.elements.length,p.videoClip?.stack??0);
  if(p.videoClip&&stack===0)drawVideo();
  for(const [elementIndex,item] of p.elements.entries()){
+  if(item.hidden){if(p.videoClip&&elementIndex+1===stack)drawVideo();continue}
   const animation=C.animationFrame(item,position.local);
   ctx.save();
   ctx.globalAlpha*=item.opacity*animation.opacity;
@@ -80,7 +81,7 @@ function drawFrame(ctx,model,seconds,images=new Map(),videos=new Map(),opts={}){
 }
 async function loadImages(project){
  const urls=new Set();
- for(const p of project.pages)for(const item of p.elements)if(item.type==='image')urls.add(item.src);
+ for(const p of project.pages)for(const item of p.elements)if(item.type==='image'&&!item.hidden)urls.add(item.src);
  const images=new Map();
  for(const src of urls){
   const img=new Image();
