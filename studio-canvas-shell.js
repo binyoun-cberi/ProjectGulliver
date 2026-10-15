@@ -131,7 +131,10 @@ const propertyButton=make('button','','✎ 편집');
 propertyButton.type='button';propertyButton.addEventListener('click',()=>activate('properties'));
 const duplicateButton=make('button','','복제');duplicateButton.type='button';duplicateButton.addEventListener('click',()=>sourceClick('#duplicate'));
 const deleteButton=make('button','','삭제');deleteButton.type='button';deleteButton.addEventListener('click',()=>sourceClick('#delete'));
-selection.append(propertyButton,duplicateButton,deleteButton);document.querySelector('.canvas-app').append(selection);
+const multiButton=make('button','','＋ 선택');multiButton.type='button';multiButton.title='여러 개 선택 켜기/끄기';multiButton.addEventListener('click',()=>sourceClick('#multiSelectMode'));
+const groupButton=make('button','','묶기');groupButton.type='button';groupButton.addEventListener('click',()=>sourceClick('#groupSelection'));
+const ungroupButton=make('button','','풀기');ungroupButton.type='button';ungroupButton.addEventListener('click',()=>sourceClick('#ungroupSelection'));
+selection.append(propertyButton,multiButton,groupButton,ungroupButton,duplicateButton,deleteButton);document.querySelector('.canvas-app').append(selection);
 const labels=new Map(categories.map(c=>[c.id,c.label]));
 function activate(id){
  if(!panes.has(id))return;
@@ -165,7 +168,11 @@ document.addEventListener('keydown',e=>{
 });
 const updateSelection=()=>{
  const chosen=stage.querySelector('.item.selected');
- selection.hidden=!chosen||stage.classList.contains('playing');
+ const multiActive=$('multiSelectMode')?.getAttribute('aria-pressed')==='true';
+ selection.hidden=(!chosen&&!multiActive)||stage.classList.contains('playing');
+ multiButton.setAttribute('aria-pressed',String(multiActive));
+ groupButton.disabled=stage.querySelectorAll('.item.selected').length<2;
+ ungroupButton.disabled=$('ungroupSelection')?.disabled!==false;
  if(chosen&&!isMobile()&&!document.body.classList.contains('panel-collapsed')&&active==='elements'){
   // Selecting an element reveals editing controls on desktop, without covering the canvas.
   activate('properties');
