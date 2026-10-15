@@ -4,7 +4,8 @@
 'use strict';
 const C=window.GulliverUnifiedCore,A=window.GulliverStudioAdapter,S=window.GulliverStudioStorage,$=id=>document.getElementById(id);
 if(!C||!A||!S||!$('studioTimeline'))return;
-const stage=$('stage'),assets=new Map();
+const stage=$('stage'),assets=new Map(),waveCache=new Map();
+const W=window.GulliverAudioWaveform;
 let selected='',disposed=false,lastT=0,playing=false,serial=0;
 const container=document.createElement('section');container.className='multi-editor';container.id='multiEditor';
 container.innerHTML=[
@@ -35,7 +36,7 @@ function nativeAsset(t){
   if(!row?.blob||row.mime!==t.mime)throw Error(t.name+' 원본을 찾지 못했어요. ZIP 백업을 복원해 주세요.');
   entry.url=URL.createObjectURL(row.blob);
   const node=document.createElement(t.kind==='video'?'video':'audio');
-  node.src=entry.url;node.preload='auto';node.muted=t.kind==='video';node.playsInline=true;node.loop=false;
+  node.src=entry.url;node.preload='auto';node.muted=t.kind==='video'?t.muted:false;node.playsInline=true;node.loop=false;
   if(t.kind==='video'){
    node.className='multi-stage-video';node.dataset.trackId=t.id;node.hidden=true;node.setAttribute('aria-label',t.name);stage.append(node);
   }
@@ -82,7 +83,8 @@ function sync(time,isPlaying){
   const active=isActive(track,lastT);
   if(track.kind==='video')node.hidden=!active;
   if(!active){node.pause();continue}
-  node.volume=track.volume;
+  node.muted=track.kind==='video'?track.muted:false;
+  node.volume=Math.max(0,Math.min(1,W?.amplitude?.(track,lastT-track.start)??track.volume));
   const wanted=track.trimStart+(lastT-track.start);
   if(node.readyState>=1&&Math.abs(node.currentTime-wanted)>(playing?.4:.08)){
    try{node.currentTime=clamp(wanted,0,Math.max(.01,node.duration-.05))}catch(e){}
@@ -118,11 +120,30 @@ function refresh(){
    const label=document.createElement('span');label.className='multi-clip-name';label.textContent=track.kind==='caption'?track.text:track.name;
    const right=document.createElement('span');right.dataset.handle='right';right.className='multi-handle';right.setAttribute('aria-hidden','true');
    clip.append(left,label,right);
+   if(kind==='audio'||kind==='video'&&!track.muted)attachWaveform(clip,track);
    installDrag(clip,lane,track);lane.append(clip);group.append(lane);
   }
   rows.append(group);
  }
  positionVideos();captionOverlay();drawInspector();sync(lastT,playing);
+}
+function attachWaveform(clip,track){
+ if(!W||!track.mediaId)return;
+ const canvas=document.createElement('canvas');canvas.className='multi-waveform';canvas.setAttribute('aria-hidden','true');
+ clip.insertBefore(canvas,clip.querySelector('.multi-clip-name'));
+ let entry=waveCache.get(track.mediaId);
+ if(!entry){
+  entry=S.getMedia(track.mediaId).then(row=>{
+   if(!row?.blob)throw Error('업로드한 오디오 원본이 없어요.');
+   return W.decodeMedia(row);
+  }).catch(()=>null);
+  waveCache.set(track.mediaId,entry);
+ }
+ entry.then(wave=>{
+  if(!clip.isConnected)return;
+  if(wave)W.draw(canvas,wave,track);
+  else canvas.title='이 파일의 파형은 현재 브라우저에서 분석할 수 없어요.';
+ });
 }
 function drawInspector(){
  inspector.replaceChildren();
@@ -142,7 +163,29 @@ function drawInspector(){
   field('글씨 크기',track.fontSize,v=>A.updateTrack(track.id,{fontSize:v}));
  }else{
   field('원본 시작 (초)',track.trimStart,v=>A.updateTrack(track.id,{trimStart:Math.max(0,v)}));
-  if(track.kind==='audio')field('음량(0~1)',track.volume,v=>A.updateTrack(track.id,{volume:clamp(v,0,1)}));
+  const controls=document.createElement('div');controls.className='multi-audio-controls';
+  if(track.kind==='video'){
+   const toggle=document.createElement('label');toggle.className='multi-sound-toggle';
+   const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=!track.muted;
+   checkbox.addEventListener('change',()=>A.updateTrack(track.id,{muted:!checkbox.checked}));
+   toggle.append(checkbox,document.createTextNode('영상 원본 소리 사용'));
+   controls.append(toggle);
+  }
+  const slider=document.createElement('label');slider.className='multi-volume-label';
+  const volumeText=document.createElement('span');volumeText.textContent='음량 '+Math.round(track.volume*100)+'%';
+  const volume=document.createElement('input');volume.type='range';volume.min='0';volume.max='100';volume.step='1';
+  volume.value=String(Math.round(track.volume*100));
+  volume.addEventListener('input',()=>{volumeText.textContent='음량 '+volume.value+'%'});
+  volume.addEventListener('change',()=>A.updateTrack(track.id,{volume:Number(volume.value)/100}));
+  slider.append(volumeText,volume);controls.append(slider);
+  const fadeRow=document.createElement('div');fadeRow.className='multi-fades';
+  for(const [fieldName,label] of [['fadeIn','페이드인'],['fadeOut','페이드아웃']]){
+   const box=document.createElement('label');box.textContent=label+' (초)';
+   const input=document.createElement('input');input.type='number';input.step='0.1';input.min='0';input.max=String(track.duration);input.value=String(track[fieldName]||0);
+   input.addEventListener('change',()=>A.updateTrack(track.id,{[fieldName]:clamp(Number(input.value),0,track.duration)}));
+   box.append(input);fadeRow.append(box);
+  }
+  controls.append(fadeRow);inspector.append(controls);
  }
  field('시작 위치 (초)',track.start,v=>A.updateTrack(track.id,{start:clamp(v,0,limit()-track.duration)}));
  field('클립 길이 (초)',track.duration,v=>A.updateTrack(track.id,{duration:clamp(v,.5,limit()-track.start)}));
