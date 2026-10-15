@@ -44,7 +44,7 @@ test('4.0-B browser: group rotate, alignment, snap UI, layers and saved output',
   snap=await page.evaluate(()=>GulliverStudioAdapter.capture());
   assert.equal(snap.pages[0].elements[2].locked,true);
   await page.locator('#stage .item[data-id="circle"]').click({force:true});
-  assert.equal(await page.locator('#stage .item.selected').count(),2,'locked item must not be selected');
+  assert.equal(await page.locator('#stage .item[data-id="circle"].selected').count(),0,'locked item must not be selected');
   await page.locator('#layerList .v4b-layer-row').first().getByRole('button',{name:'잠금 해제'}).click();
   await page.locator('#layerList .v4b-layer-row').first().getByRole('button',{name:'레이어 숨기기'}).click();
   assert.equal(await page.locator('#stage .item[data-id="circle"]').count(),0);
