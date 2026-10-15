@@ -33,6 +33,7 @@ test('teacher apps import into editable canvas and preserve originals, undo, aut
   const element=frame.locator('#stage .item[data-type="text"]').filter({hasText:'삼각형'});
   await element.waitFor({state:'visible'});
   await element.click();
+  await frame.locator('[data-design-tab="properties"]').click();
   await frame.locator('#propertyText').fill('세모');
   await frame.locator('#propertyText').dispatchEvent('change');
   const edited=await frame.locator('body').evaluate(()=>GulliverStudioAdapter.capture());
