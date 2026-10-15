@@ -520,31 +520,49 @@ function pathFor(e){
  return '';
 }
 function svg(pageValue){
- const dim=C.LAYOUTS[model.layout];
+ const dim=C.LAYOUTS[model.layout],defs=[];
  let items='<rect width="100%" height="100%" fill="'+pageValue.background+'"/>';
- for(const e of pageValue.elements){
+ for(const [index,e] of pageValue.elements.entries()){
   if(e.hidden)continue;
-  const rotation=e.rotation||0;
-  if(rotation)items+='<g transform="rotate('+rotation+' '+(e.x+e.w/2)+' '+(e.y+e.h/2)+')">';
-  const basic=' fill="'+e.fill+'" stroke="'+e.stroke+'" stroke-width="2" opacity="'+e.opacity+'"';
+  const bw=C.strokeWidth(e),rotation=e.rotation||0,shadow=e.shadow;
+  const id='v4c-'+index;
+  if(shadow)defs.push('<filter id="'+id+'-shadow" x="-40%" y="-40%" width="180%" height="180%">'+
+   '<feDropShadow dx="'+shadow.x+'" dy="'+shadow.y+'" stdDeviation="'+(shadow.blur/2)+'" flood-color="'+shadow.color+'" flood-opacity="0.8"/></filter>');
+  items+='<g opacity="'+e.opacity+'"'+(rotation?' transform="rotate('+rotation+' '+(e.x+e.w/2)+' '+(e.y+e.h/2)+')"':'')+
+   (shadow?' filter="url(#'+id+'-shadow)"':'')+'>';
+  const basic=' fill="'+e.fill+'" stroke="'+(bw?e.stroke:'none')+'" stroke-width="'+bw+'"';
   if(e.type==='rect')items+='<rect x="'+e.x+'" y="'+e.y+'" width="'+e.w+'" height="'+e.h+'"'+basic+'/>';
   else if(e.type==='ellipse')items+='<ellipse cx="'+(e.x+e.w/2)+'" cy="'+(e.y+e.h/2)+'" rx="'+e.w/2+'" ry="'+e.h/2+'"'+basic+'/>';
   else if(e.type==='triangle'||e.type==='star')items+='<g'+basic+'>'+pathFor(e)+'</g>';
-  else if(e.type==='line')items+='<line x1="'+e.x+'" y1="'+e.y+'" x2="'+(e.x+e.w)+'" y2="'+(e.y+e.h)+'" stroke="'+e.stroke+'" stroke-width="3" opacity="'+e.opacity+'"/>';
-  else if(e.type==='image')items+='<image x="'+e.x+'" y="'+e.y+'" width="'+e.w+'" height="'+e.h+'" href="'+xml(e.src)+'" preserveAspectRatio="xMidYMid meet" opacity="'+e.opacity+'"/>';
-  else if(e.type==='text'){
+  else if(e.type==='line')items+='<line x1="'+e.x+'" y1="'+e.y+'" x2="'+(e.x+e.w)+'" y2="'+(e.y+e.h)+'" stroke="'+e.stroke+'" stroke-width="'+bw+'"/>';
+  else if(e.type==='image'){
+   const crop=C.cropSettings(e),fx=e.x+crop.focusX*e.w,fy=e.y+crop.focusY*e.h;
+   const clip=e.mask==='circle'?'<ellipse cx="'+(e.x+e.w/2)+'" cy="'+(e.y+e.h/2)+'" rx="'+e.w/2+'" ry="'+e.h/2+'"/>':
+    '<rect x="'+e.x+'" y="'+e.y+'" width="'+e.w+'" height="'+e.h+'"'+(e.mask==='rounded'?' rx="16" ry="16"':'')+'/>';
+   defs.push('<clipPath id="'+id+'-clip">'+clip+'</clipPath>');
+   items+='<g clip-path="url(#'+id+'-clip)"><g transform="translate('+fx+' '+fy+') scale('+crop.zoom+') translate('+(-fx)+' '+(-fy)+')">'+
+    '<image x="'+e.x+'" y="'+e.y+'" width="'+e.w+'" height="'+e.h+'" href="'+xml(e.src)+'" preserveAspectRatio="'+(crop.fit==='contain'?'xMidYMid meet':'xMidYMid slice')+'"/></g></g>';
+   if(bw){
+    if(e.mask==='circle')items+='<ellipse cx="'+(e.x+e.w/2)+'" cy="'+(e.y+e.h/2)+'" rx="'+e.w/2+'" ry="'+e.h/2+'" fill="none" stroke="'+e.stroke+'" stroke-width="'+bw+'"/>';
+    else items+='<rect x="'+e.x+'" y="'+e.y+'" width="'+e.w+'" height="'+e.h+'" fill="none" stroke="'+e.stroke+'" stroke-width="'+bw+'"'+(e.mask==='rounded'?' rx="16" ry="16"':'')+'/>';
+   }
+  }else if(e.type==='text'){
    const lines=e.content.split('\n').slice(0,16),anchor=e.align==='left'?'start':e.align==='right'?'end':'middle',
-    x=e.align==='left'?e.x:e.align==='right'?e.x+e.w:e.x+e.w/2,step=e.fontSize*1.22;
-   let y=e.y+e.h/2-(lines.length-1)*step/2;
-   items+='<text fill="'+e.fill+'" font-family="sans-serif" font-weight="650" font-size="'+e.fontSize+'" text-anchor="'+anchor+'" dominant-baseline="middle" opacity="'+e.opacity+'">'+
+    x=e.align==='left'?e.x:e.align==='right'?e.x+e.w:e.x+e.w/2,step=e.fontSize*(e.lineHeight||1.22);
+   const y=e.y+e.h/2-(lines.length-1)*step/2;
+   items+='<text fill="'+e.fill+'" font-family="'+xml(C.fontStack(e.fontFamily))+'" font-weight="'+(e.fontWeight||600)+'"'+
+    ' font-style="'+(e.italic?'italic':'normal')+'" text-decoration="'+(e.underline?'underline':'none')+'"'+
+    ' font-size="'+e.fontSize+'" letter-spacing="'+(e.letterSpacing||0)+'" text-anchor="'+anchor+'" dominant-baseline="middle"'+
+    (bw?' stroke="'+e.stroke+'" stroke-width="'+bw+'" paint-order="stroke fill"':'')+'>'+
     lines.map((line,i)=>'<tspan x="'+x+'" y="'+(y+i*step)+'">'+xml(line)+'</tspan>').join('')+'</text>';
   }
-  if(rotation)items+='</g>';
+  items+='</g>';
  }
- return '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="'+dim.w+'" height="'+dim.h+'" viewBox="0 0 '+dim.w+' '+dim.h+'">'+items+'</svg>';
+ return '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="'+dim.w+'" height="'+dim.h+'" viewBox="0 0 '+dim.w+' '+dim.h+'"><defs>'+defs.join('')+'</defs>'+items+'</svg>';
 }
 async function pagePng(pageValue){
  if(pageValue.videoClip)throw Error('이 장면에는 영상 클립이 있어요. 이미지로 저장하면 영상이 사라지므로 현재는 지원하지 않아요.');
+ await document.fonts?.ready;
  const markup=svg(pageValue),url=URL.createObjectURL(new Blob([markup],{type:'image/svg+xml'}));
  try{
   const dim=C.LAYOUTS[model.layout],img=new Image();
