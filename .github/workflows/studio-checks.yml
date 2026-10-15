@@ -61,6 +61,7 @@ jobs:
           node --check studio-core.js
           node --check studio-unified-core.js
           node --check studio-unified-editor.js
+          node --check tests/studio-v40b.e2e.cjs
           node --check studio-unified-timeline.js
           node --check studio-unified-clips.js
           node --check studio-canvas-easy-media.js
