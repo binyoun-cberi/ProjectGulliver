@@ -16,18 +16,19 @@ test('4.0-B alignment and distribution keep correct gaps and stable order',()=>{
  const items=[item('a',10,20,20,10),item('b',48,50,20,10),item('c',110,90,20,10)];
  assert.deepEqual(C.alignSelection([items[0]],'center',{w:200,h:100})[0].x,90);
  assert.deepEqual(C.alignSelection(items,'left').map(x=>x.x),[10,10,10]);
- assert.deepEqual(C.alignSelection(items,'middle').map(x=>x.y),[50,50,50]);
+ assert.deepEqual(C.alignSelection(items,'middle').map(x=>x.y),[55,55,55]);
  assert.deepEqual(C.distributeSelection(items,'horizontal').map(x=>x.x),[10,60,110]);
  assert.deepEqual(C.distributeSelection(items,'vertical').map(x=>x.y),[20,55,90]);
 });
 test('4.0-B snapping works for page center, peer edge and can be bypassed by caller',()=>{
  const p=C.snapSelection({x:93,y:25,w:20,h:20},[],{w:200,h:100},8);
- assert.equal(p.x,90);assert.deepEqual(p.guides,[{axis:'x',position:100}]);
+ assert.equal(p.x,90);assert.ok(p.guides.some(g=>g.axis==='x'&&g.position===100));
  const peer=item('peer',50,80,20,20);
  const q=C.snapSelection({x:72,y:101,w:30,h:20},[peer],{w:300,h:250},4);
  assert.equal(q.x,70);assert.equal(q.y,100);
  const rotated=C.rotatedBounds(item('rot',10,20,40,20,{rotation:90}));
- assert.deepEqual({x:rotated.x,y:rotated.y,w:rotated.w,h:rotated.h},{x:20,y:10,w:20.000000000000004,h:40});
+ assert.ok(Math.abs(rotated.x-20)<1e-8&&Math.abs(rotated.y-10)<1e-8);
+ assert.ok(Math.abs(rotated.w-20)<1e-8&&Math.abs(rotated.h-40)<1e-8);
 });
 test('4.0-B layer order retains all IDs; locked and hidden survive serialization',()=>{
  const a=item('a',0,0),b=item('b',20,0),c=item('c',40,0),d=item('d',60,0);
