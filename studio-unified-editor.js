@@ -426,6 +426,18 @@ function changeTrack(id,patch){
 window.GulliverStudioAdapter={
  kind:'canvas',
  capture:()=>C.validate(model),
+ appendTeacherPages:result=>{
+  if(!result||!Array.isArray(result.pages)||!result.pages.length)throw Error('캔버스에 추가할 자료가 없어요.');
+  if(result.layout!==model.layout)throw Error('캔버스 크기가 일치하지 않아요. 자료를 다시 만들어 주세요.');
+  if(model.pages.length+result.pages.length>C.MAX_PAGES)throw Error('이 작업에 남은 페이지가 부족해요. 최대 40장까지 사용할 수 있어요.');
+  const pages=result.pages.map(p=>C.makePage(p.name,p.elements,p.background));
+  const trial=C.validate({...model,pages:[...model.pages,...pages],active:model.pages.length});
+  const before=clone(model);
+  timeline?.halt();closeEditor();
+  model=trial;selected='';checkpoint(before);timeline?.syncToActive();render();
+  notice(pages.length+'장 추가했어요. 글씨·도형은 자유롭게 편집할 수 있어요.');
+  return pages.length;
+ },
  getTracks:()=>model.tracks||[],
  multitrackEnabled:()=>Array.isArray(model.tracks),
  adoptLegacyMedia:()=>edit(()=>ensureMultitrack()),
