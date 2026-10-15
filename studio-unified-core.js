@@ -139,6 +139,42 @@ function reorderLayers(elements,ids,direction){
  const start=direction==='front'?rest.length:direction==='back'?0:Math.min(rest.length,Math.max(0, direction==='up'?last-picked.length+2:first-1));
  rest.splice(start,0,...picked);return rest;
 }
+const FONTS={
+ sans:"'Noto Sans CJK KR','Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif",
+ serif:"'Noto Serif CJK KR','Noto Serif KR','Batang','AppleMyungjo',serif",
+ rounded:"'Nanum Gothic','Noto Sans CJK KR','Malgun Gothic',sans-serif",
+ mono:"'D2Coding','Nanum Gothic Coding','Noto Sans Mono CJK KR',monospace"
+};
+function fontStack(value){return FONTS[value]||FONTS.sans}
+function strokeWidth(e){
+ if(e.borderWidth!==undefined)return number(e.borderWidth,0,12,0);
+ return e.type==='line'?3:['rect','ellipse','triangle','star'].includes(e.type)?2:0;
+}
+function cleanCropRect(raw){
+ if(!raw||typeof raw!=='object')return null;
+ const w=number(raw.w,.25,1,1),h=number(raw.h,.25,1,w);
+ const side=Math.min(w,h);
+ return{x:number(raw.x,0,1-side,0),y:number(raw.y,0,1-side,0),w:side,h:side};
+}
+function cropSettings(e){
+ const crop=cleanCropRect(e.cropRect)||{x:0,y:0,w:1,h:1};
+ const zoom=1/crop.w;
+ return{zoom,focusX:crop.w>=1?0.5:crop.x/(1-crop.w),focusY:crop.h>=1?0.5:crop.y/(1-crop.h),
+  fit:!e.cropRect&&(!e.mask||e.mask==='none')?'contain':'cover'};
+}
+function imageFrame(e,iw,ih){
+ const settings=cropSettings(e),ratio=(settings.fit==='contain'?Math.min:Math.max)(e.w/iw,e.h/ih);
+ const width=iw*ratio,height=ih*ratio;
+ const fx=e.w*settings.focusX,fy=e.h*settings.focusY;
+ return{x:fx+((e.w-width)/2-fx)*settings.zoom,y:fy+((e.h-height)/2-fy)*settings.zoom,
+  w:width*settings.zoom,h:height*settings.zoom};
+}
+function cleanShadow(raw){
+ if(!raw||typeof raw!=='object'||raw.enabled===false)return null;
+ const blur=number(raw.blur,0,25,0),x=number(raw.x,-20,20,0),y=number(raw.y,-20,20,0);
+ if(!blur&&!x&&!y)return null;
+ return{color:color(raw.color,'#334155'),blur,x,y};
+}
 function cleanElement(raw,i){
  if(!raw||!TYPES.includes(raw.type))throw Error('알 수 없는 편집 요소가 있어요.');
  const type=raw.type;
@@ -154,7 +190,16 @@ function cleanElement(raw,i){
   animation:ANIMATIONS.includes(raw.animation)?raw.animation:'none',delay:number(raw.delay,0,MAX_DURATION,0),
   ...(typeof raw.groupId==='string'&&/^g-[\w-]{1,70}$/.test(raw.groupId)?{groupId:raw.groupId}:{}),
   ...(raw.rotation!==undefined?{rotation:number(raw.rotation,-180,180,0)}:{}),
-  ...(raw.locked===true?{locked:true}:{}),...(raw.hidden===true?{hidden:true}:{})};
+  ...(raw.locked===true?{locked:true}:{}),...(raw.hidden===true?{hidden:true}:{}),
+  ...(type==='text'?{
+   fontFamily:Object.hasOwn(FONTS,raw.fontFamily)?raw.fontFamily:'sans',
+   fontWeight:[400,500,600,700,800,900].includes(Number(raw.fontWeight))?Number(raw.fontWeight):600,
+   italic:raw.italic===true,underline:raw.underline===true,
+   lineHeight:number(raw.lineHeight,1,2.4,1.22),letterSpacing:number(raw.letterSpacing,-2,8,0)}:{}),
+  ...(type==='image'&&cleanCropRect(raw.cropRect)?{cropRect:cleanCropRect(raw.cropRect)}:{}),
+  ...(type==='image'&&['circle','rounded'].includes(raw.mask)?{mask:raw.mask}:{}),
+  ...(raw.borderWidth!==undefined?{borderWidth:number(raw.borderWidth,0,12,strokeWidth({type}))}:{}),
+  ...(cleanShadow(raw.shadow)?{shadow:cleanShadow(raw.shadow)}:{})};
 }
 function cleanVideoClip(raw){
  if(raw==null)return null;
@@ -274,5 +319,5 @@ function fromLegacy(kind,payload){
  if(kind==='slides')return fromSlides(payload);
  throw Error('도안·발표 작업만 편집 가능한 캔버스로 변환할 수 있어요.');
 }
-return {FORMAT,LAYOUTS,MAX_PAGES,MAX_ITEMS,TYPES,ANIMATIONS,TRANSITIONS,MIN_DURATION,MAX_DURATION,id,groupId,selectionBounds,transformSelection,normalizeAngle,rotatedBounds,rotateSelection,alignSelection,distributeSelection,snapSelection,reorderLayers,color,image,element,makePage,starter,nameTags,validate,fromLegacy,totalDuration,locateTime,animationFrame,transitionFrame,cleanVideoClip,cleanTrack,TRACK_KINDS,MAX_TRACKS};
+return {FORMAT,LAYOUTS,MAX_PAGES,MAX_ITEMS,TYPES,ANIMATIONS,TRANSITIONS,MIN_DURATION,MAX_DURATION,id,groupId,selectionBounds,transformSelection,normalizeAngle,rotatedBounds,rotateSelection,alignSelection,distributeSelection,snapSelection,reorderLayers,color,image,element,makePage,starter,nameTags,validate,fromLegacy,totalDuration,locateTime,animationFrame,transitionFrame,cleanVideoClip,cleanTrack,TRACK_KINDS,MAX_TRACKS,FONTS,fontStack,strokeWidth,cleanCropRect,cropSettings,imageFrame,cleanShadow};
 });
