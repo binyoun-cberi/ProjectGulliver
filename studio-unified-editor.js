@@ -111,9 +111,18 @@ function setLayerFlag(e,key,value){
  const ids=new Set(layerUnit(e).map(x=>x.id));
  edit(()=>{for(const item of page().elements)if(ids.has(item.id)){if(value)item[key]=true;else delete item[key]}});
 }
+function reorderCanvasLayers(ids,direction){
+ const p=page(),video=p.videoClip;
+ if(!video){p.elements=C.reorderLayers(p.elements,ids,direction);return}
+ const all=p.elements.slice(),index=Math.max(0,Math.min(all.length,video.stack||0));
+ all.splice(index,0,{id:'__canvas_video_layer__'});
+ const ordered=C.reorderLayers(all,ids,direction);
+ video.stack=ordered.findIndex(e=>e.id==='__canvas_video_layer__');
+ p.elements=ordered.filter(e=>e.id!=='__canvas_video_layer__');
+}
 function moveLayer(e,direction){
  const ids=layerUnit(e).map(x=>x.id);
- edit(()=>{page().elements=C.reorderLayers(page().elements,ids,direction)});
+ edit(()=>reorderCanvasLayers(ids,direction));
 }
 function renderLayers(){
  const root=$('layerList');if(!root)return;
@@ -316,7 +325,7 @@ function ungroupSelected(){
 function arrange(direction){
  const chosen=selectedItems();if(!chosen.length)return;
  const ids=chosen.map(e=>e.id);
- edit(()=>{page().elements=C.reorderLayers(page().elements,ids,direction>0?'up':'down')});
+ edit(()=>reorderCanvasLayers(ids,direction>0?'up':'down'));
 }
 function canvasPoint(event){const r=stage.getBoundingClientRect();return{x:(event.clientX-r.left)/scale,y:(event.clientY-r.top)/scale}}
 function showSelectionWithoutReplacingTextNode(){
@@ -528,8 +537,8 @@ function bind(){
  $('multiSelectMode').addEventListener('click',()=>{multiSelectMode=!multiSelectMode;properties();notice(multiSelectMode?'여러 개 선택: 요소를 하나씩 눌러 추가하세요.':'일반 선택으로 돌아왔어요.')});
  $('undo').addEventListener('click',undo);$('redo').addEventListener('click',redo);
  $('bringForward').addEventListener('click',()=>arrange(1));$('sendBack').addEventListener('click',()=>arrange(-1));
- $('layerFront').addEventListener('click',()=>{const ids=selectedItems().map(e=>e.id);if(ids.length)edit(()=>{page().elements=C.reorderLayers(page().elements,ids,'front')})});
- $('layerBack').addEventListener('click',()=>{const ids=selectedItems().map(e=>e.id);if(ids.length)edit(()=>{page().elements=C.reorderLayers(page().elements,ids,'back')})});
+ $('layerFront').addEventListener('click',()=>{const ids=selectedItems().map(e=>e.id);if(ids.length)edit(()=>reorderCanvasLayers(ids,'front'))});
+ $('layerBack').addEventListener('click',()=>{const ids=selectedItems().map(e=>e.id);if(ids.length)edit(()=>reorderCanvasLayers(ids,'back'))});
  for(const button of document.querySelectorAll('[data-align]'))button.addEventListener('click',()=>alignSelected(button.dataset.align));
  for(const button of document.querySelectorAll('[data-distribute]'))button.addEventListener('click',()=>distributeSelected(button.dataset.distribute));
  $('propertyRotation').addEventListener('change',ev=>{
