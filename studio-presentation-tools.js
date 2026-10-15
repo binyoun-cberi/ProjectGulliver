@@ -26,13 +26,17 @@ dock.innerHTML=[
 stageView.append(dock);
 const by=id=>document.getElementById(id);
 const picker=by('lessonToolPicker'),toolsButton=by('lessonOpenTools');
-let suspended=null;let lastActive=false;
+let suspended=null;let lastActive=false,lastClock='',lastPageText='',lastPlaying=null;
 const present=()=>A.isPresentationActive?.()||false;
-function sync(){
+function sync(force=false){
  const active=present();
  dock.classList.toggle('lesson-is-active',active);
- if(!active){setPicker(false);lastActive=false;return}
- if(!lastActive){lastActive=true;setPicker(false)}
+ if(!active){setPicker(false);lastActive=false;lastClock='';lastPageText='';lastPlaying=null;return}
+ if(!lastActive){lastActive=true;setPicker(false);force=true}
+ const clock=by('timelineClock')?.textContent||'',pageText=by('pageStrip')?.querySelector('.page.active')?.textContent||'';
+ const playing=A.isPlaying();
+ if(!force&&clock===lastClock&&pageText===lastPageText&&playing===lastPlaying)return;
+ lastClock=clock;lastPageText=pageText;lastPlaying=playing;
  const model=A.capture(),current=model.active;
  by('lessonSlideCount').textContent=(current+1)+' / '+model.pages.length;
  by('lessonPrev').disabled=current<=0;
