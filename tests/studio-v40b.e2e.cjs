@@ -68,6 +68,6 @@ test('4.0-B browser: group rotate, alignment, snap UI, layers and saved output',
   const angleAfter=(await page.evaluate(()=>GulliverStudioAdapter.capture())).pages[0].elements[0].rotation;
   assert.notEqual(angleAfter,angleBefore,'touch rotation handle must rotate the group');
   assert.equal((angleAfter-angleBefore)%15,0,'Shift drag snaps to 15° steps');
-  assert.deepEqual(errors,[],"'Unexpected page errors: '+errors.join('|'));
+  assert.deepEqual(errors,[],'Unexpected page errors: '+errors.join('|'));
  }finally{await browser?.close();server.kill('SIGTERM')}
 });
