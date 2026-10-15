@@ -403,3 +403,23 @@ body{color:var(--canvas-ink);background:var(--canvas-bg)}
 }
 @media(max-width:360px){.lesson-presenter-main button{min-width:33px;padding:7px 6px}.lesson-presenter-main .lesson-open-tools{min-width:84px}.lesson-slide-count{min-width:34px}}
 @media print{.lesson-presenter-dock{display:none!important}}
+
+/* Canvas 4.0-A: group editing remains in the existing unified workspace. */
+#stage>.selection-frame{position:absolute;box-sizing:border-box;outline:2px dashed #6d4dd5;outline-offset:2px;pointer-events:none;z-index:7}
+#stage>.selection-frame>.grip{pointer-events:auto;width:22px;height:22px;right:-11px;bottom:-11px;border-radius:6px}
+#stage>.selection-marquee{position:absolute;box-sizing:border-box;border:1.5px solid #7955c8;background:#7955c826;pointer-events:none;z-index:8}
+.selection-controls{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:0 0 12px;border-radius:12px;border:1px solid #e7dcfa;padding:10px;background:#f9f5ff}
+.selection-controls #selectionCount{font-size:12px;font-weight:750;color:#584687;flex:1 0 100%;margin:0 0 2px}
+.selection-controls button{border:1px solid #d7c8f0;border-radius:8px;background:white;color:#53427f;padding:8px 9px;min-height:38px;cursor:pointer}
+.selection-controls button.active,.selection-controls button[aria-pressed=true]{background:#6b50bb;color:white}
+.selection-controls button:disabled{opacity:.42;cursor:not-allowed}
+@media(max-width:620px){.selection-controls{padding:9px;gap:5px}.selection-controls button{min-height:44px;flex:1 1 25%}}
+@media print{#stage>.selection-frame,#stage>.selection-marquee,.selection-controls{display:none!important}}
+
+@media(max-width:620px){
+ .canvas-selection-bar{max-width:calc(100vw - 16px);overflow-x:auto;scrollbar-width:thin}
+ .canvas-selection-bar button{flex:0 0 auto;padding:7px 9px}
+ .canvas-selection-bar button[aria-pressed=true]{background:#6b50bb;color:#fff}
+ .canvas-selection-bar button:disabled{opacity:.4}
+}
+#stage.playing>.selection-frame{display:none!important}
