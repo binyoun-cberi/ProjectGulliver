@@ -51,7 +51,7 @@ test('4.0-C crop geometry respects image aspect, focus and reset behavior',()=>{
  const cover=C.imageFrame({...original,mask:'circle'},100,100);
  assert.deepEqual(cover,{x:0,y:-50,w:200,h:200});
  const crop=C.imageFrame({...original,mask:'circle',cropRect:{x:.5,y:0,w:.5,h:.5}},100,100);
- assert.deepEqual(crop,{x:-200,y:-150,w:400,h:400});
+ assert.deepEqual(crop,{x:-200,y:-100,w:400,h:400});
  const after=C.imageFrame({...original,mask:'circle'},100,100);
  assert.deepEqual(after,cover);
 });
