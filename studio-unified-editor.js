@@ -94,6 +94,105 @@ function drawSelectionFrame(){
  frame.append(grip);stage.append(frame);
  const rotation=document.createElement('span');rotation.className='rotate-grip';rotation.title='그룹 회전 · Shift는 15° 단위';rotation.setAttribute('aria-label','그룹 회전');frame.append(rotation);
 }
+function drawSnapGuides(){
+ for(const guide of snapGuides){
+  const node=document.createElement('div');node.className='snap-guide '+(guide.axis==='x'?'vertical':'horizontal');
+  node.style[guide.axis==='x'?'left':'top']=guide.position+'px';stage.append(node);
+ }
+}
+function layerName(e){return e.type==='text'?(e.content||'빈 글씨').slice(0,22):({image:'사진',rect:'네모',ellipse:'원',triangle:'세모',star:'별',line:'선'}[e.type]||'요소')}
+function layerUnit(e){return page().elements.filter(x=>e.groupId&&x.groupId===e.groupId||!e.groupId&&x.id===e.id)}
+function layerSelect(e){
+ const items=layerUnit(e);
+ if(items.some(x=>x.locked||x.hidden))return notice('잠긴 요소나 숨긴 요소는 편집할 수 없어요. 먼저 풀어 주세요.',true);
+ choose(items.map(x=>x.id));render();
+}
+function setLayerFlag(e,key,value){
+ const ids=new Set(layerUnit(e).map(x=>x.id));
+ edit(()=>{for(const item of page().elements)if(ids.has(item.id)){if(value)item[key]=true;else delete item[key]}});
+}
+function moveLayer(e,direction){
+ const ids=layerUnit(e).map(x=>x.id);
+ edit(()=>{page().elements=C.reorderLayers(page().elements,ids,direction)});
+}
+function renderLayers(){
+ const root=$('layerList');if(!root)return;
+ const entries=[],listedGroups=new Set();
+ for(const e of [...page().elements].reverse()){
+  if(e.groupId){
+   if(listedGroups.has(e.groupId))continue;
+   listedGroups.add(e.groupId);entries.push({item:e,group:true,members:layerUnit(e)});
+  }else entries.push({item:e,group:false,members:[e]});
+ }
+ const fragment=document.createDocumentFragment();
+ for(const entry of entries){
+  const {item,members,group}=entry,locked=members.some(x=>x.locked),hidden=members.every(x=>x.hidden);
+  const container=document.createElement('div');container.className='v4b-layer-entry';
+  const row=document.createElement('div');row.className='v4b-layer-row';row.setAttribute('role','listitem');
+  if(members.some(x=>selectedIds.has(x.id)))row.classList.add('active');
+  const main=document.createElement('button');main.type='button';main.className='v4b-layer-title';
+  main.textContent=(group?'▣ '+members.length+'개 묶음':'▤ '+layerName(item));main.title=group?'그룹 선택':layerName(item);
+  main.addEventListener('click',()=>layerSelect(item));row.append(main);
+  if(group){
+   const fold=document.createElement('button');fold.type='button';fold.className='v4b-layer-icon';fold.title='그룹 접기·펼치기';
+   fold.textContent=collapsedGroups.has(item.groupId)?'▸':'▾';
+   fold.addEventListener('click',()=>{if(collapsedGroups.has(item.groupId))collapsedGroups.delete(item.groupId);else collapsedGroups.add(item.groupId);renderLayers()});
+   row.insertBefore(fold,main);
+  }
+  const action=(caption,title,callback,active=false)=>{
+   const button=document.createElement('button');button.type='button';button.textContent=caption;button.title=title;
+   button.className='v4b-layer-icon'+(active?' toggled':'');button.setAttribute('aria-label',title);
+   button.addEventListener('click',callback);row.append(button);
+  };
+  action('↑','위 레이어로',()=>moveLayer(item,'up'));
+  action('↓','아래 레이어로',()=>moveLayer(item,'down'));
+  action(hidden?'◌':'◉',hidden?'레이어 보이기':'레이어 숨기기',()=>setLayerFlag(item,'hidden',!hidden),hidden);
+  action(locked?'▣':'▢',locked?'잠금 해제':'레이어 잠금',()=>setLayerFlag(item,'locked',!locked),locked);
+  container.append(row);
+  if(group&&!collapsedGroups.has(item.groupId)){
+   const children=document.createElement('div');children.className='v4b-layer-children';
+   for(const member of [...members].reverse()){
+    const label=document.createElement('div');label.className='v4b-layer-child';label.textContent=layerName(member);
+    if(member.locked)label.textContent+=' · 잠김';if(member.hidden)label.textContent+=' · 숨김';
+    children.append(label);
+   }
+   container.append(children);
+  }
+  fragment.append(container);
+ }
+ root.replaceChildren(fragment);
+}
+function selectionUnits(){
+ const units=[],seen=new Set();
+ for(const item of selectedItems()){
+  const key=item.groupId||item.id;if(seen.has(key))continue;seen.add(key);
+  const members=selectedItems().filter(x=>(x.groupId||x.id)===key);
+  units.push({id:key,members,...C.selectionBounds(members)});
+ }
+ return units;
+}
+function alignSelected(mode){
+ const units=selectionUnits();if(!units.length)return;
+ const dim=units.length===1?C.LAYOUTS[model.layout]:null;
+ const changed=C.alignSelection(units,mode,dim);
+ edit(()=>{for(let i=0;i<units.length;i++){
+  const dx=changed[i].x-units[i].x,dy=changed[i].y-units[i].y;
+  for(const member of units[i].members){const e=page().elements.find(x=>x.id===member.id);e.x+=dx;e.y+=dy}
+ }});
+}
+function distributeSelected(axis){
+ const units=selectionUnits();if(units.length<3)return notice('간격 맞춤은 독립된 요소나 그룹 3개 이상을 선택해 주세요.',true);
+ const changed=C.distributeSelection(units,axis);
+ edit(()=>{for(let i=0;i<units.length;i++){
+  const dx=changed[i].x-units[i].x,dy=changed[i].y-units[i].y;
+  for(const member of units[i].members){const e=page().elements.find(x=>x.id===member.id);e.x+=dx;e.y+=dy}
+ }});
+}
+function rotateSelected(delta){
+ const items=selectedItems();if(!items.length)return;
+ const updates=C.rotateSelection(items,delta);
+ edit(()=>{for(const change of updates)Object.assign(page().elements.find(e=>e.id===change.id),change)});
+}
 function renderPages(){
  const strip=$('pageStrip');strip.replaceChildren();
  for(const [i,p] of model.pages.entries()){
