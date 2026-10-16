@@ -61,8 +61,9 @@ jobs:
           node --check studio-core.js
           node --check studio-unified-core.js
           node --check studio-unified-editor.js
-          node --check tests/studio-v40b.e2e.cjs tests/studio-v40c.e2e.cjs
+          node --check tests/studio-v40b.e2e.cjs
           node --check tests/studio-v40c.e2e.cjs
+          node --check tests/studio-mixed-workflows.e2e.cjs
           node --check studio-unified-timeline.js
           node --check studio-unified-clips.js
           node --check studio-canvas-easy-media.js
@@ -123,7 +124,7 @@ jobs:
           fc-match :lang=ko
 
       - name: Exercise real Chromium local storage, file imports and exports
-        run: node --test tests/studio-browser.e2e.cjs tests/studio-transfer.e2e.cjs tests/studio-library.e2e.cjs tests/studio-media.e2e.cjs tests/studio-visible-home.e2e.cjs tests/studio-v22.e2e.cjs tests/studio-cross-media.e2e.cjs tests/studio-official-library.e2e.cjs tests/studio-v24.e2e.cjs tests/studio-v30.e2e.cjs tests/studio-v31.e2e.cjs tests/studio-v32.e2e.cjs tests/studio-v33.e2e.cjs tests/studio-canvas-shell.e2e.cjs tests/studio-unified-entry.e2e.cjs tests/studio-native-clips.e2e.cjs tests/studio-easy-media.e2e.cjs tests/studio-multitrack-v34.e2e.cjs tests/studio-multitrack-v35-export.e2e.cjs tests/studio-multitrack-v35-touch.e2e.cjs tests/studio-multitrack-v36-export.e2e.cjs tests/studio-teacher-tools.e2e.cjs tests/studio-teacher-live.e2e.cjs tests/studio-presentation-tools.e2e.cjs tests/studio-v40a.e2e.cjs tests/studio-v40b.e2e.cjs
+        run: node --test tests/studio-browser.e2e.cjs tests/studio-transfer.e2e.cjs tests/studio-library.e2e.cjs tests/studio-media.e2e.cjs tests/studio-visible-home.e2e.cjs tests/studio-v22.e2e.cjs tests/studio-cross-media.e2e.cjs tests/studio-official-library.e2e.cjs tests/studio-v24.e2e.cjs tests/studio-v30.e2e.cjs tests/studio-v31.e2e.cjs tests/studio-v32.e2e.cjs tests/studio-v33.e2e.cjs tests/studio-canvas-shell.e2e.cjs tests/studio-unified-entry.e2e.cjs tests/studio-native-clips.e2e.cjs tests/studio-easy-media.e2e.cjs tests/studio-multitrack-v34.e2e.cjs tests/studio-multitrack-v35-export.e2e.cjs tests/studio-multitrack-v35-touch.e2e.cjs tests/studio-multitrack-v36-export.e2e.cjs tests/studio-teacher-tools.e2e.cjs tests/studio-teacher-live.e2e.cjs tests/studio-presentation-tools.e2e.cjs tests/studio-v40a.e2e.cjs tests/studio-v40b.e2e.cjs tests/studio-v40c.e2e.cjs tests/studio-mixed-workflows.e2e.cjs
 
       - name: Keep canvas screenshots for visual review
         if: always()
