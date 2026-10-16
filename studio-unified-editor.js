@@ -121,10 +121,16 @@ function drawSnapGuides(){
 }
 function layerName(e){return e.type==='text'?(e.content||'빈 글씨').slice(0,22):({image:'사진',rect:'네모',ellipse:'원',triangle:'세모',star:'별',line:'선'}[e.type]||'요소')}
 function layerUnit(e){return page().elements.filter(x=>e.groupId&&x.groupId===e.groupId||!e.groupId&&x.id===e.id)}
-function layerSelect(e){
+function layerSelect(e,additive=false){
  const items=layerUnit(e);
  if(items.some(x=>x.locked||x.hidden))return notice('잠긴 요소나 숨긴 요소는 편집할 수 없어요. 먼저 풀어 주세요.',true);
- choose(items.map(x=>x.id));render();
+ const ids=items.map(x=>x.id);
+ if(additive||multiSelectMode){
+  const chosen=new Set(selectedIds),all=ids.every(id=>chosen.has(id));
+  for(const id of ids){if(all)chosen.delete(id);else chosen.add(id)}
+  choose([...chosen]);
+ }else choose(ids);
+ render();
 }
 function setLayerFlag(e,key,value){
  const ids=new Set(layerUnit(e).map(x=>x.id));
@@ -160,7 +166,7 @@ function renderLayers(){
   if(members.some(x=>selectedIds.has(x.id)))row.classList.add('active');
   const main=document.createElement('button');main.type='button';main.className='v4b-layer-title';
   main.textContent=(group?'▣ '+members.length+'개 묶음':'▤ '+layerName(item));main.title=group?'그룹 선택':layerName(item);
-  main.addEventListener('click',()=>layerSelect(item));row.append(main);
+  main.addEventListener('click',event=>layerSelect(item,event.shiftKey));row.append(main);
   if(group){
    const fold=document.createElement('button');fold.type='button';fold.className='v4b-layer-icon';fold.title='그룹 접기·펼치기';
    fold.textContent=collapsedGroups.has(item.groupId)?'▸':'▾';
