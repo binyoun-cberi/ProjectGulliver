@@ -40,8 +40,8 @@ test('UX inspection: home to new canvas to panels on desktop/tablet/phone',{time
    await page.locator('#editorFrame').waitFor({state:'attached'});
    const frame=page.frameLocator('#editorFrame');await frame.locator('#stage').waitFor();
    await audit(page,'studio',device);
-   await audit(frame.locator('body'),'canvas',device).catch(async()=>{
-    // FrameLocator is not a Page. Snapshot the iframe inside its own realm.
+   {
+    // Measure the embedded canvas independently from the outer studio shell.
     const obj=await frame.locator('body').evaluate(()=>{
      const stage=document.getElementById('stage').getBoundingClientRect();
      const rail=document.querySelector('.design-nav').getBoundingClientRect();
@@ -50,7 +50,7 @@ test('UX inspection: home to new canvas to panels on desktop/tablet/phone',{time
       categories:navButtons.map(b=>b.textContent.trim()),bodyClass:document.body.className};
     });
     console.log('UX_CANVAS '+JSON.stringify({device,...obj}));
-   });
+   }
    await frame.locator('[data-design-tab="text"]').click();
    await frame.locator('.design-panel').waitFor();
    await frame.locator('[data-add="text"]').evaluate(el=>el.click());
