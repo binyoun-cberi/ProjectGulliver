@@ -101,7 +101,11 @@ test('mixed desk: teacher flashcards + type edits + group/rotation + photo mask 
    await frame.locator('#sceneDuration').evaluate(el=>{el.value='1';el.dispatchEvent(new Event('change',{bubbles:true}))});
   }
   await frame.locator('#audioUpload').setInputFiles({name:'활동 배경음악.wav',mimeType:'audio/wav',buffer:wav()});
-  await frame.locator('#timelineMusicName').filter({hasText:'활동 배경음악.wav'}).waitFor();
+  await page.waitForFunction(()=>{
+   const doc=document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.capture?.();
+   return !!doc?.audio?.mediaId;
+  });
+  assert.match(await frame.locator('#timelineMusicName').textContent(),/활동 배경음악\.wav/);
   doc=await capture(frame);
   assert.equal(doc.pages.length,4);assert.ok(doc.audio?.mediaId);
   const pngEvent=page.waitForEvent('download',{timeout:30000});await button(frame,'#exportPng');
