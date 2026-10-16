@@ -57,7 +57,8 @@ function render(){
      html+='<section class="home-block home-design"><div class="section-head"><div><h2>무엇을 만들까요?</h2><p>자료 종류를 고르면 바로 편집을 시작할 수 있어요.</p></div><a class="text-btn" href="뚝딱 제작실.html">제작실 보기 →</a></div>'+startTiles()+'</section>';
      html+=section('이어서 작업하기','타이머·퀴즈·자리표는 ‘내 활동’, 학습지·발표·영상은 제작실 ‘내 작업’에서 열어요.',
        (activities.length?'<div class="activity-grid recent-rail">'+activities.slice(0,3).map(a=>activityCard(a)).join('')+'</div>':'')+
-       '<a class="studio-library-link" href="뚝딱 제작실.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>제작실의 내 작업</strong><small>도안·발표·문서·영상·음악 작업을 확인해 보세요.</small></span><span aria-hidden="true">→</span></a>',
+       '<a class="studio-library-link" href="뚝딱 제작실.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>제작실의 내 작업</strong><small>도안·발표·문서·영상·음악 작업을 확인해 보세요.</small></span><span aria-hidden="true">→</span></a>'+ 
+       '<p class="home-work-location-note">자료는 이 기기에만 저장돼요. 기기를 바꾸기 전에는 교실 활동은 ‘활동 백업’, 제작 자료는 제작실 ‘ZIP 전체 백업’으로 보관하세요.</p>',
        '<button class="text-btn" data-view="activities">내 활동 보기 →</button>');
      if(templates.length)html+=section('수업 템플릿으로 시작','준비된 예시를 열어 우리 반에 맞게 수정하세요.',
        '<div class="template-grid home-template-grid">'+templates.slice(0,3).map(templateCard).join('')+'</div>',
