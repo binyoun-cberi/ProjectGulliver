@@ -48,10 +48,12 @@ test('mixed desk: teacher flashcards + type edits + group/rotation + photo mask 
   await button(frame,'[data-add="rect"]');
   await button(frame,'[data-add="star"]');
   doc=await capture(frame);
-  const shapes=doc.pages[doc.active].elements.filter(e=>e.type==='rect'||e.type==='star');
-  assert.ok(shapes.length>=2);
+  const shapes=doc.pages[doc.active].elements.slice(-2);
+  assert.deepEqual(shapes.map(x=>x.type),['rect','star']);
+  // A teacher-made heading covers the new shapes. Select them from the layer panel.
+  // Shift-click there must add to selection, rather than replacing it.
   for(let i=0;i<2;i++){
-   await frame.locator('#stage .item[data-id="'+shapes[i].id+'"]').click(i?{modifiers:['Shift']}:{});
+   await frame.locator('#layerList .v4b-layer-title[data-id="'+shapes[i].id+'"]').click(i?{modifiers:['Shift']}:{});
   }
   await button(frame,'#groupSelection');
   doc=await capture(frame);
@@ -73,6 +75,7 @@ test('mixed desk: teacher flashcards + type edits + group/rotation + photo mask 
   await frame.locator('#propertyMask').selectOption('circle');
   await frame.locator('#propertyCropZoom').evaluate(el=>{el.value='2';el.dispatchEvent(new Event('change',{bubbles:true}))});
   await frame.locator('#propertyCropX').evaluate(el=>{el.value='65';el.dispatchEvent(new Event('change',{bubbles:true}))});
+  await frame.locator('#effectsPanel summary').click();
   await frame.locator('#propertyShadowEnabled').check();
   doc=await capture(frame);
   const photo=doc.pages[doc.active].elements.find(e=>e.type==='image');
@@ -152,6 +155,7 @@ test('mixed mobile: worksheet + imported photo + typing + multi-select/group + l
   const doc=await capture(page),shapeIds=doc.pages[0].elements.filter(e=>['star','ellipse'].includes(e.type)).map(e=>e.id);
   assert.equal(shapeIds.length,2);
   await button(page,'#multiSelectMode');
+  await page.locator('body').evaluate(()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
   // On mobile, taps build selection without drag, then group and rotate.
   await page.evaluate(ids=>{
    ids.forEach((id,i)=>{const node=document.querySelector('#stage .item[data-id="'+id+'"]'),b=node.getBoundingClientRect();
