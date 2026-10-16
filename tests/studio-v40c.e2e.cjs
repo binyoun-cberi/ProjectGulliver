@@ -45,6 +45,7 @@ test('4.0-C browser: Korean font, crop, mask, shadow, undo, print path and PNG/W
   await page.locator('#propertyMask').selectOption('circle');
   await page.locator('#propertyCropZoom').evaluate(el=>{el.value='2';el.dispatchEvent(new Event('change',{bubbles:true}))});
   await page.locator('#propertyCropX').evaluate(el=>{el.value='70';el.dispatchEvent(new Event('change',{bubbles:true}))});
+  await page.locator('#effectsPanel summary').click();
   await page.locator('#propertyShadowEnabled').check();
   await page.locator('#propertyBorderWidth').evaluate(el=>{el.value='3';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))});
   payload=await page.evaluate(()=>GulliverStudioAdapter.capture());
