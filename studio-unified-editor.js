@@ -164,7 +164,7 @@ function renderLayers(){
   const container=document.createElement('div');container.className='v4b-layer-entry';
   const row=document.createElement('div');row.className='v4b-layer-row';row.setAttribute('role','listitem');
   if(members.some(x=>selectedIds.has(x.id)))row.classList.add('active');
-  const main=document.createElement('button');main.type='button';main.className='v4b-layer-title';
+  const main=document.createElement('button');main.type='button';main.className='v4b-layer-title';main.dataset.id=item.id;
   main.textContent=(group?'▣ '+members.length+'개 묶음':'▤ '+layerName(item));main.title=group?'그룹 선택':layerName(item);
   main.addEventListener('click',event=>layerSelect(item,event.shiftKey));row.append(main);
   if(group){
