@@ -11,13 +11,13 @@ const mobileQuery=matchMedia('(max-width:700px)');
 const isMobile=()=>mobileQuery.matches;
 const categories=[
  {id:'templates',label:'템플릿',icon:'▤',detail:'출발점을 고르고 자유롭게 바꿔 보세요.'},
- {id:'elements',label:'요소',icon:'◇',detail:'도형과 그림 요소를 눌러 추가하세요.'},
- {id:'text',label:'텍스트',icon:'T',detail:'글씨를 추가하거나, 선택한 글씨를 수정할 수 있어요.'},
- {id:'uploads',label:'업로드',icon:'⇧',detail:'기기에 저장된 사진을 자료에 추가하세요.'},
+ {id:'elements',label:'도형·사진',icon:'◇',detail:'도형이나 사진을 눌러 현재 페이지에 추가하세요.'},
+ {id:'text',label:'글씨',icon:'T',detail:'글씨 상자를 넣거나, 선택한 글씨를 수정하세요.'},
+ {id:'uploads',label:'사진 넣기',icon:'⇧',detail:'기기에 저장된 사진을 현재 페이지에 추가하세요.'},
  {id:'pages',label:'페이지',icon:'▦',detail:'페이지를 추가하거나 크기를 변경하세요.'},
  {id:'motion',label:'영상·음악',icon:'▶',detail:'페이지 순서와 재생 시간, 음악을 설정해요.'},
  {id:'teacher',label:'교사 도구',icon:'☷',detail:'우리 반 명단으로 수업자료를 한 번에 만들어요.'},
- {id:'properties',label:'편집',icon:'✎',detail:'선택한 글씨와 도형의 모양을 바꿔 보세요.'},
+ {id:'properties',label:'선택 편집',icon:'✎',detail:'선택한 글씨·사진·도형의 크기와 모양을 바꾸세요.'},
  {id:'export',label:'내보내기',icon:'↥',detail:'완성한 자료를 파일로 저장하거나 발표하세요.'}
 ];
 function make(tag,cls,text){
@@ -28,7 +28,7 @@ rail.setAttribute('aria-label','편집 도구');
 const panel=make('aside','design-panel');
 panel.id='designPanel';panel.setAttribute('aria-label','선택한 편집 도구');
 const handle=make('span','canvas-pane-handle');handle.setAttribute('aria-hidden','true');
-const head=make('header','design-panel-head'),heading=make('h2','', '요소');
+const head=make('header','design-panel-head'),heading=make('h2','', '도형·사진');
 heading.id='designPanelTitle';
 const close=make('button','design-panel-close','×');close.type='button';close.setAttribute('aria-label','도구 패널 닫기');
 head.append(heading,close);panel.append(handle,head);
@@ -94,7 +94,7 @@ shortcut(textButtons,'텍스트 상자 추가','T','[data-add="text"]',{thenProp
 const textEdit=make('button','pane-action');
 textEdit.type='button';textEdit.innerHTML='<span class="pane-icon" aria-hidden="true">✎</span><span>선택한 글씨 편집</span>';
 textEdit.addEventListener('click',()=>activate('properties'));textButtons.append(textEdit);
-note('text','캔버스의 글씨를 두 번 누르면 화면에서 바로 수정할 수 있어요.');
+note('text','글씨를 두 번 누르면 그 자리에서 수정해요. 한 번 누른 뒤 ‘선택 편집’에서 모양을 바꿀 수 있어요.');
 const uploadButtons=actionsPane('uploads');
 shortcut(uploadButtons,'기기에서 사진 선택','⇧','#addPhoto',{closeAfter:false});
 note('uploads','PNG·JPG 파일만 지원하며 사진당 최대 2MB예요. 선택한 사진은 현재 페이지에 추가돼요.');
