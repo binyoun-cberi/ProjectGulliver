@@ -117,16 +117,18 @@ test('bus and tournament native creation, confirmation, edit, refresh, undo and 
   // Mobile touch check: same two-tap swap works after reopening a saved project.
   const mobileContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   const phone=await mobileContext.newPage();
-  // Browser contexts do not share IndexedDB. Import the validated saved
-  // canvas as a portable project instead of pretending devices auto-sync.
+  // Run the real native bus seating workflow in an isolated touch browser:
+  // devices never implicitly share the main desktop project's IndexedDB.
   await phone.goto(studio,{waitUntil:'domcontentloaded'});
   const mobileEditor=phone.frameLocator('#editorFrame');
-  await mobileEditor.locator('body').evaluate(project=>GulliverStudioAdapter.apply(project),reloaded);
-  const mobileBusIndex=await mobileEditor.locator('body').evaluate(()=>{
-   const A=GulliverStudioAdapter,p=A.capture(),index=p.pages.findIndex(x=>x.teacherSource?.kind==='bus');
-   A.apply({...p,active:index});return index;
-  });
-  assert.ok(mobileBusIndex>=0);
+  await mobileEditor.locator('[data-design-tab="teacher"]').click();
+  await mobileEditor.locator('.teacher-live-tile').filter({hasText:'버스 좌석 배치'}).click();
+  const mobileNative=mobileEditor.frameLocator('#teacherLiveFrame');
+  await mobileNative.locator('#namesInput').fill('봄\\n여름\\n가을\\n겨울'.replaceAll('\\n','\n'));
+  await mobileNative.locator('#generateBtn').click();
+  await mobileNative.locator('#confirmBtn').click();
+  await mobileEditor.locator('#teacherCopyResult').click();
+  await mobileEditor.locator('#teacherLiveDialog').waitFor({state:'hidden'});
   const mBefore=await mobileEditor.locator('body').evaluate(()=>GulliverStudioAdapter.capture());
   const mSeats=mBefore.pages[mBefore.active].elements.filter(x=>Number.isInteger(x.busSeat));
   assert.ok(mSeats.length>=2);
