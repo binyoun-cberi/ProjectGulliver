@@ -81,3 +81,8 @@ body:not(.studio-managed):not(.studio-canvas) .intro .start-grid{grid-template-c
  .picker-specialists .picker-grid{max-height:30dvh}
  .studio-picker .picker-close{position:sticky;bottom:-13px;margin:10px 0 0 auto;background:#efebf4;min-width:70px}
 }
+/* Deep-linked library and backup are accessible on a narrow phone screen too. */
+@media(max-width:620px){
+ body.studio-library-open .shell>.sidebar{display:block!important;position:fixed;inset:55px 0 calc(64px + env(safe-area-inset-bottom)) auto;width:min(370px,94vw);max-height:none;overflow-y:auto;z-index:44;background:#fff;padding:17px!important;box-shadow:-14px 0 45px #25203a33;border-left:1px solid #d7c5f5}
+ body.studio-library-open .shell>.sidebar .right-tabs{position:sticky;top:-17px;padding:14px 0;background:#fff;z-index:2}
+}
