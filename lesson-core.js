@@ -18,7 +18,7 @@ function normalizeCards(raw){
  });
 }
 function parseCards(raw){
- const lines=String(raw??'').split(/\\r?\\n/).map(x=>x.trim()).filter(Boolean);
+ const lines=String(raw??'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
  if(lines.length>QUIZ_MAX)throw Error('퀴즈 카드는 최대 60개까지 만들 수 있어요.');
  return normalizeCards(lines.map(line=>{
   const mark=line.indexOf('|');
