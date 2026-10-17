@@ -126,6 +126,23 @@ body.flipped .seat.selected{transform:rotate(180deg) translateY(3px)}
 @media(max-width:920px){.layout{grid-template-columns:1fr}.settings{position:static;max-height:none}.field-row{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){body{padding:72px 10px 30px}.topline{align-items:flex-start;flex-direction:column}.view-actions{justify-content:flex-start}.workspace{padding:12px}.settings{padding:12px}.scorebox{grid-template-columns:1fr 1fr}.seat{width:78px;height:64px}.mini-form{grid-template-columns:1fr 78px auto}.rule-form{grid-template-columns:1fr 1fr}.rule-form .btn{grid-column:1/-1}}
 @media print{body{padding:0;background:white}.topline,.settings,.board-actions,.scorebox,.notice,.gulliver-shell,.seat .pin,.seat .gender-pin{display:none!important}.layout{display:block}.panel,.workspace,.board-wrap{box-shadow:none;border:0;background:white}.board-wrap{overflow:visible}.seat{break-inside:avoid}.seat.fixed,.seat.conflict,.seat.gender-seat-m,.seat.gender-seat-f{box-shadow:none!important;border-color:#d8dee7!important;background:#fff!important}}
+
+/* Phone and canvas runtime: fit controls, keep large desk maps scrolled inside board. */
+@media(max-width:920px){
+ .layout{grid-template-columns:minmax(0,1fr)}
+ .layout>.panel,.settings,.workspace,.block,.board-wrap{min-width:0;max-width:100%}
+ .mini-form,.rule-form,.custom-grid-row,.preset-row,.field-row{max-width:100%;min-width:0}
+ .mini-form>*,.rule-form>*,.custom-grid-row>*,.preset-row>*,.field-row>*{min-width:0;max-width:100%}
+ .board-inner{max-width:none}
+}
+@media(max-width:600px){
+ .mini-form{grid-template-columns:minmax(0,1fr) minmax(0,78px) auto}
+ .rule-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .custom-grid-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .custom-grid-row .btn{grid-column:1/-1}
+ .settings .btn.small,.workspace .btn.small{min-height:42px}
+ .switch{min-height:24px;width:24px}
+}
 </style>
 <script src="gulliver-shared.js?v=20261013-workspace1"></script>
 <script src="classroom-workspace.js?v=20261013-workspace1"></script>

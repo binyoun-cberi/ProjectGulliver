@@ -30,6 +30,7 @@ test('mixed desk: teacher flashcards + type edits + group/rotation + photo mask 
    ]}));
   });
   await button(frame,'[data-design-tab="teacher"]');
+  await frame.locator('#teacherSavedOptions > summary').click();
   await button(frame,'#teacherRefreshActivities');
   await frame.locator('#teacherSavedActivity').selectOption('quiz-mixed');
   await button(frame,'#teacherImportActivity');

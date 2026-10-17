@@ -254,6 +254,14 @@
       body.gulliver-tool.student-view{padding-top:0!important}
       body.gulliver-tool.presentation .gulliver-shell{display:none}
       @media print{.gulliver-shell{display:none!important}body.gulliver-tool{padding-top:0!important}}
+      /* A canvas-hosted tool is the working area, not a second website. */
+      body.gulliver-studio-embed{padding-top:0!important;min-height:100dvh}
+      body.gulliver-studio-embed>.gulliver-shell{display:none!important}
+      body.gulliver-studio-embed>header.topbar{top:0!important}
+      body.gulliver-studio-embed.with-gulliver-shell{padding-top:0!important}
+      body.gulliver-studio-embed .gulliver-toast{max-width:min(94vw,480px)}
+      @media(max-width:900px){body.gulliver-studio-embed .settings{top:8px}}
+
       .gulliver-shell{position:fixed;z-index:99999;top:8px;left:50%;transform:translateX(-50%);width:min(1180px,calc(100% - 24px));font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
       .gulliver-shell-inner{min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px 8px 14px;border:1px solid rgba(148,163,184,.22);border-radius:16px;background:rgba(255,255,255,.94);box-shadow:0 8px 24px rgba(15,23,42,.07);backdrop-filter:blur(12px)}
       .gulliver-shell-left,.gulliver-shell-actions{display:flex;align-items:center;gap:8px;min-width:0}
@@ -287,7 +295,20 @@
   }
   window.addEventListener('gulliver:classroom-change',connectStudentNames);
   window.addEventListener('storage',event=>{if(event.key===KEYS.classroom)connectStudentNames()});
+  function isStudioEmbedded(){
+    if(window.parent===window||new URLSearchParams(location.search).get('studioEmbed')!=='1')return false;
+    try{return window.parent.location.origin===location.origin&&Boolean(window.parent.GulliverTeacherLive)}
+    catch{return false}
+  }
   function mountShell(options={}){
+    if(isStudioEmbedded()){
+      // Only the authenticated same-origin canvas embedding gets compact navigation.
+      // Direct visits retain their complete standalone toolbar and classroom links.
+      injectStyles();
+      document.body.classList.add('gulliver-studio-embed');
+      connectStudentNames();
+      return;
+    }
     if(document.querySelector('.gulliver-shell')) return;
     injectStyles();
     document.body.style.setProperty('--gulliver-original-top',getComputedStyle(document.body).paddingTop);

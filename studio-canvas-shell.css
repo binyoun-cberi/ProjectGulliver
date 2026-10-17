@@ -510,3 +510,32 @@ body{color:var(--canvas-ink);background:var(--canvas-bg)}
 .v4c-panel>summary small,.v4c-panel-content small,
 .teacher-live-tile span,.teacher-live-heading small,.teacher-live-note{color:#5b526b}
 @media(max-width:700px){.design-nav button{font-size:11px}}
+
+/* Teacher tools inside the canvas: actions first, saved imports tucked away. */
+.teacher-live-grid{grid-template-columns:minmax(0,1fr);gap:7px}
+.teacher-live-tile{display:grid;grid-template-columns:40px minmax(0,1fr);align-items:center;gap:11px;min-height:70px;padding:11px 12px;background:#fff;border-color:#e6e0ef}
+.teacher-live-tile .teacher-live-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;background:#f1eafd;color:#6f49c2;font-size:22px;line-height:1}
+.teacher-live-copy{display:grid;gap:4px;min-width:0;line-height:1.35}
+.teacher-live-copy strong{font-size:13px;color:#463376}
+.teacher-live-tile .teacher-live-copy>span{font-size:11px;line-height:1.4;color:#625875}
+.teacher-live-tile:focus-visible,.teacher-saved-options>summary:focus-visible{outline:3px solid #7951cf;outline-offset:2px}
+.teacher-saved-options{border:1px solid #e5e0ee;border-radius:13px;background:#fff;overflow:clip}
+.teacher-saved-options>summary{list-style:none;display:grid;gap:5px;cursor:pointer;padding:15px 13px;position:relative}
+.teacher-saved-options>summary::-webkit-details-marker{display:none}
+.teacher-saved-options>summary:after{content:'⌄';position:absolute;right:13px;top:15px;color:#7c64a5}
+.teacher-saved-options[open]>summary:after{content:'⌃'}
+.teacher-saved-options>summary strong{font-size:13px;color:#4d3c75}
+.teacher-saved-options>summary small{font-size:11px;color:#665d79;padding-right:15px;line-height:1.45}
+.teacher-saved-content{display:grid;gap:12px;padding:0 10px 13px}
+.teacher-saved-content .teacher-intro{background:#f8f6fd;border-color:#e9e1f4}
+.teacher-saved-content .teacher-intro strong{color:#534079}
+.teacher-live-dialog[open]{display:flex;flex-direction:column}
+.teacher-run-head,.teacher-live-status{flex:0 0 auto}
+.teacher-live-dialog #teacherLiveFrame{flex:1 1 auto;height:auto;min-height:0}
+.teacher-run-actions button:disabled{opacity:.47;cursor:wait}
+@media(max-width:700px){
+ .teacher-live-tile{min-height:68px}
+ .teacher-saved-options>summary{min-height:60px}
+ .teacher-live-dialog #teacherLiveFrame{height:auto}
+ .teacher-run-actions button{font-size:12px}
+}
