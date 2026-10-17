@@ -108,7 +108,67 @@ async function renderStage(){cleanupStage();const signature=renderToken,s=curren
 function add(kind,payload){if(lesson.steps.length>=C.MAX_STEPS)return status('한 수업에는 활동 60개까지 넣을 수 있어요.',true);capture();const s=C.step(kind,payload||({canvas:()=>GulliverUnifiedCore.starter('presentation'),slides:()=>BalpyoCore.starter('lesson'),document:()=>MunseoCore.template('blank'),design:()=>DoanCore.makeTemplate('blank'),quiz:()=>({cards:[{front:'첫 번째 문제',back:'정답을 입력해 주세요'}]})}[kind]?.()));if(s.payload?.title)s.title=s.payload.title;lesson.steps.push(s);selected=lesson.steps.length-1;previewing=false;save();render();if(['audio','video','pdf'].includes(kind))pickMedia(s)}
 function pickMedia(s){fileTarget=s.id;const input=$('mediaFile');input.accept={video:'video/mp4,video/webm,video/ogg',audio:'audio/mpeg,audio/mp4,audio/wav,audio/ogg,audio/webm',pdf:'application/pdf'}[s.kind];input.click()}
 $('mediaFile').onchange=async e=>{const file=e.target.files[0],id=fileTarget,lessonId=lesson.id;e.target.value='';const s=lesson.steps.find(s=>s.id===id);if(!file||!s)return;if(!C.accepts(file,s.kind))return status('지원하는 '+labels[s.kind]+' 파일을 선택해 주세요. 파일당 최대 100MB예요.',true);try{const asset={id:C.id(),name:file.name,mime:file.type,blob:file};await S.putAsset(asset);if(lesson.id!==lessonId)return;s.assetId=asset.id;s.title=file.name.slice(0,120);await save();render();status('파일을 수업에 넣었어요. 재생 버튼을 눌러 확인해 주세요.')}catch(e){status('파일을 넣지 못했어요. '+e.message,true)}};
-async function library(mode){if(!await save())return;$('libraryTitle').textContent=mode==='lessons'?'내 수업':'제작실에서 가져오기';const root=$('libraryList');root.replaceChildren(node('p','muted','불러오는 중…'));$('libraryDialog').showModal();try{const items=mode==='lessons'?await S.list():(await GulliverStudioStorage.projects()).filter(p=>['canvas','slides','document','design'].includes(p.kind));root.replaceChildren();if(!items.length)root.append(node('p','muted',mode==='lessons'?'저장한 수업이 없어요.':'제작실에서 저장한 통합 캔버스·발표·문서·도안이 아직 없어요.'));items.forEach(p=>root.append(button((mode==='lessons'?'수업':labels[p.kind])+' · '+p.title,async()=>{try{if(mode==='lessons'){capture();lesson=C.normalize(p,validators);selected=lesson.position;previewing=false;history.replaceState(null,'',location.pathname+'?lesson='+encodeURIComponent(lesson.id));render()}else add(p.kind,validators[p.kind](structuredClone(p.payload)));$('libraryDialog').close()}catch(e){status(e.message,true)}})))}catch(e){root.replaceChildren(node('p','muted',e.message))}}
+function importActivity(p){
+ if(!p||!['quiz','timer'].includes(p.kind))throw Error('지금은 저장한 퀴즈와 타이머를 수업으로 가져올 수 있어요.');
+ const added=p.kind==='quiz'?(()=>{
+  const cards=C.normalizeCards(p.payload?.cards||[]);
+  if(!cards.length)throw Error('퀴즈에 문제 카드가 없어요. 원본 활동을 먼저 작성해 주세요.');
+  const s=C.step('quiz',{cards});s.title=String(p.title||'퀴즈').slice(0,120);return[s];
+ })():C.timerFromEvents(p.payload?.events);
+ if(lesson.steps.length+added.length>C.MAX_STEPS)throw Error('한 수업에는 활동 60개까지 넣을 수 있어요.');
+ capture();
+ lesson.steps.splice(selected+1,0,...added);
+ selected+=1;slideIndex=0;quizRevealed=false;previewing=false;
+ save();render();status('저장한 '+(p.kind==='quiz'?'퀴즈 '+added[0].payload.cards.length+'장':'타이머 '+added.length+'단계')+'을 수업에 복사했어요. 원본은 그대로 유지돼요.');
+}
+async function library(mode){
+ if(!await save())return;
+ $('libraryTitle').textContent=mode==='lessons'?'내 수업':'내 보관함에서 수업 자료 가져오기';
+ const root=$('libraryList');root.replaceChildren(node('p','muted','불러오는 중…'));
+ $('libraryDialog').showModal();
+ try{
+  if(mode==='lessons'){
+   const items=await S.list();root.replaceChildren();
+   if(!items.length)root.append(node('p','muted','저장한 수업이 없어요.'));
+   for(const p of items){
+    const b=button('',()=>{try{capture();lesson=C.normalize(p,validators);selected=lesson.position;slideIndex=0;quizRevealed=false;previewing=false;remember();render();$('libraryDialog').close()}catch(e){status(e.message,true)}},'import-source');
+    b.append(node('strong','',p.title),node('small','',String(p.steps?.length||0)+'개 활동 · 기기 저장'));root.append(b);
+   }
+   return;
+  }
+  const [projects,activities]=await Promise.all([
+   GulliverStudioStorage.projects(),
+   Promise.resolve(typeof ClassroomWorkspace==='undefined'?[]:ClassroomWorkspace.list())
+  ]);
+  root.replaceChildren();
+  const own=projects.filter(p=>['canvas','slides','document','design'].includes(p.kind));
+  if(own.length){
+   root.append(node('div','import-group','내가 만든 편집 자료'));
+   for(const p of own){
+    const b=button('',()=>{try{add(p.kind,validators[p.kind](structuredClone(p.payload)));$('libraryDialog').close();status('제작실 자료를 수업에 복사했어요. 원본은 그대로 유지돼요.')}catch(e){status(e.message,true)}},'import-source');
+    b.append(node('strong','',p.title),node('small','',labels[p.kind]+' · 수업 안에서 이어서 편집'));root.append(b);
+   }
+  }
+  const supports=activities.filter(a=>['timer','quiz'].includes(a.kind));
+  if(supports.length){
+   root.append(node('div','import-group','저장한 교사 활동'));
+   for(const p of supports){
+    const b=button('',()=>{try{importActivity(p);$('libraryDialog').close()}catch(e){status(e.message,true)}},'import-source');
+    b.append(node('strong','',p.title),node('small','',p.kind==='quiz'?'낱말카드·퀴즈 · 문제와 정답 복사':'수업 타이머 · 각 활동 시간을 순서대로 복사'));root.append(b);
+   }
+  }
+  const seating=activities.filter(a=>a.kind==='seating');
+  if(seating.length){
+   root.append(node('div','import-group','자리표 · 원본 도구에서 열기'));
+   for(const p of seating){
+    const link=node('a','external-tool','↗ '+p.title+' (별도 창)');
+    link.href=ClassroomWorkspace.openUrl(p);link.target='_blank';link.rel='noopener noreferrer';
+    root.append(link);
+   }
+  }
+  if(!own.length&&!supports.length&&!seating.length)root.append(node('p','muted','저장한 자료가 아직 없어요. 제작실 또는 교사 도구에서 먼저 저장하면 여기에서 선택할 수 있어요.'));
+ }catch(e){root.replaceChildren(node('p','muted',e.message))}
+}
 function download(data,name){const blob=new Blob([JSON.stringify(data)],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download=name.replace(/[\\/:*?"<>|]/g,'_')+'.lesson.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),15000)}
 function base64(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result.split(',')[1]);r.onerror=()=>reject(r.error);r.readAsDataURL(blob)})}
 $('backupLesson').onclick=async()=>{try{capture();await ensureCanvasMedia();const clean=C.normalize(lesson,validators),assets=[];let bytes=0;for(const id of new Set(clean.steps.flatMap(s=>[s.assetId,s.kind==='canvas'?s.payload.audio?.mediaId:'']).filter(Boolean))){const a=await S.asset(id);if(!a)throw Error('수업에 연결한 파일을 찾지 못했어요. 파일을 다시 넣어 주세요.');bytes+=a.blob.size;if(bytes>200*1024*1024)throw Error('백업할 영상·음악의 합계가 200MB를 넘어요. 파일을 줄여 주세요.');assets.push({id,name:a.name,mime:a.mime,data:await base64(a.blob)})}download({format:'gulliver-lesson',version:1,lesson:clean,assets},clean.title);status('영상·음악을 포함한 수업 원본을 내려받았어요.')}catch(e){status(e.message,true)}};
