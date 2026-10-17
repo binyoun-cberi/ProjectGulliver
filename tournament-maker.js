@@ -194,7 +194,7 @@ function createBracket(){
     r++;
   }
 
-  state.bracket={participants,size:participants.length,rounds,championId:null,createdAt:Date.now(),format:'minimal-bye-v2'};
+  state.bracket={participants,size:participants.length,rounds,championId:null,createdAt:Date.now(),format:'minimal-bye-v2',title:ui.title.value.trim().slice(0,40)||'우리 반 토너먼트',mode:state.mode};
   state.history=[];
   recalculate();saveState();renderAll();
 
@@ -402,5 +402,19 @@ window.addEventListener('beforeunload',saveState);
 loadState();
 ui.title.value=state.title||defaults.title;ui.entries.value=state.entries||'';ui.seedCount.value=String(state.seedCount||0);ui.shuffle.checked=state.shuffle!==false;
 recalculate();renderAll();
+window.GulliverTeacherLiveSnapshot=()=>{
+ const b=state.bracket;
+ if(!b||!Array.isArray(b.participants)||!Array.isArray(b.rounds))
+  return{kind:'tournament',participants:[],rounds:[]};
+ recalculate();
+ return{kind:'tournament',title:b.title||state.title,mode:b.mode||state.mode,
+  participants:b.participants.map(participant=>({id:participant.id,name:participant.name})),
+  rounds:b.rounds.map((round,index)=>({
+   name:displayRoundName(b,index),matches:round.matches.map(match=>({
+    aId:match.currentA||null,bId:match.currentB||null,
+    winnerId:match.winnerId||null,resolved:Boolean(match.resolved)
+   }))
+  })),championId:b.championId||null};
+};
 Gulliver.mountShell({title:'토너먼트 메이커',icon:'🏆'});
 })();
