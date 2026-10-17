@@ -7,7 +7,8 @@ if(!pane||!T||!S||!A)return;
 const root=document.createElement('section');
 root.className='canvas-teacher-integrations';
 root.innerHTML=[
- '<div class="teacher-intro"><strong>교사 도구 실행 · 결과 가져오기</strong><p>아래 도구를 직접 실행한 뒤, 실제 결과를 지금 만들던 자료에 추가할 수 있어요. 원본은 바뀌지 않아요.</p></div>',
+ '<details class="teacher-saved-options" id="teacherSavedOptions"><summary><strong>저장한 자료 가져오기</strong><small>지난 활동이나 도구의 마지막 저장 결과</small></summary><div class="teacher-saved-content">',
+ '<div class="teacher-intro"><strong>기존 기록으로 자료 만들기</strong><p>이미 저장된 내용으로 편집 가능한 페이지를 추가해요. 원본 도구의 내용은 바뀌지 않아요.</p></div>',
  '<div class="teacher-linked-group"><label for="teacherSavedActivity">기존에 저장한 활동 가져오기</label><select id="teacherSavedActivity"><option value="">저장한 활동 선택</option></select>',
  '<div class="teacher-actions"><button type="button" id="teacherRefreshActivities">↻ 새로고침</button><button type="button" class="teacher-primary" id="teacherImportActivity">＋ 페이지로 추가</button></div></div>',
  '<div class="teacher-tool-grid">',
@@ -16,8 +17,8 @@ root.innerHTML=[
  '<button type="button" data-teacher-convert="seating"><strong>▦ 확정 자리표 가져오기</strong><span>배정한 학생과 사용하지 않는 자리까지</span></button>',
  '<button type="button" data-teacher-convert="check"><strong>☑ 학급 체크판 가져오기</strong><span>학생별 실제 완료 상태를 복사</span></button></div>',
  '<div class="teacher-convert-status" id="teacherConvertStatus" role="status">가져온 결과는 새 페이지로 추가돼요. 저장된 기록이 없으면 예시를 대신 넣지 않아요.</div>',
- '<details class="teacher-original-tools"><summary>실시간 수업 도구 열기 ↗</summary>',
- '<p>게임·룰렛·타이머는 원래 도구에서 실행할 수 있어요. 편집 가능한 페이지와는 별개입니다.</p>',
+ '<details class="teacher-original-tools"><summary>독립 화면으로 열기 ↗</summary>',
+ '<p>캔버스가 아닌 별도 화면에서 도구를 실행합니다. 이곳에서의 결과는 자동으로 현재 자료에 들어가지 않아요.</p>',
  '<div class="teacher-original-links">',
  '<a href="지도안식 원형 타이머.html" target="_blank" rel="noopener noreferrer">수업 타이머</a>',
  '<a href="플래시퀴즈메이커.html" target="_blank" rel="noopener noreferrer">퀴즈 메이커</a>',
@@ -25,7 +26,8 @@ root.innerHTML=[
  '<a href="학급췍.html" target="_blank" rel="noopener noreferrer">학급췍</a>',
  '<a href="칭찬 온도계.html" target="_blank" rel="noopener noreferrer">칭찬 온도계</a>',
  '<a href="범퍼 룰렛.html" target="_blank" rel="noopener noreferrer">범퍼 룰렛</a>',
- '<a href="QR코드.html" target="_blank" rel="noopener noreferrer">QR 코드</a></div></details>'
+ '<a href="QR코드.html" target="_blank" rel="noopener noreferrer">QR 코드</a></div></details>',
+ '</div></details>'
 ].join('');
 pane.append(root);
 const select=root.querySelector('#teacherSavedActivity'),status=root.querySelector('#teacherConvertStatus');
@@ -43,7 +45,7 @@ function refresh(){
  select.replaceChildren(new Option('저장한 활동 선택',''));
  for(const item of activities())select.append(new Option(kind[item.kind]+' · '+String(item.title||'제목 없는 활동').slice(0,60),item.id));
  if([...select.options].some(o=>o.value===old))select.value=old;
- inform(select.options.length>1?'내 활동 '+(select.options.length-1)+'개를 불러왔어요.':'내 활동이 없다면 아래 도구에서 새 자료를 만들 수 있어요.');
+ inform(select.options.length>1?'내 활동 '+(select.options.length-1)+'개를 불러왔어요.':'저장한 활동이 없다면 위쪽 수업 도구를 실행해서 만들어 주세요.');
 }
 function add(builder){
  try{
