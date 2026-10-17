@@ -408,6 +408,20 @@ $("generateBtn").onclick=generate;$("confirmBtn").onclick=confirmResult;$("clear
 $("resetSeatsBtn").onclick=resetSeats;$("cancelSelectBtn").onclick=()=>{selectedStudentId=null;renderAll()};$("presentationBtn").onclick=enterPresentation;$("exitPresentationBtn").onclick=exitPresentation;$("printBtn").onclick=()=>window.print();
 
 load();applyBackRowSetting();$("namesInput").value=state.students.map(s=>s.name+(s.gender==="M"?"(남)":s.gender==="F"?"(여)":"")).join("\n");parseStudents();refreshShared();save();renderAll();
+window.GulliverTeacherLiveSnapshot=()=>{
+ const last=getHistory()[0],seats=state.assignment.map(id=>id?String(id):null),
+  ids=new Set(state.students.map(student=>String(student.id))),
+  occupied=seats.filter(Boolean),
+  same=Boolean(last)&&Array.isArray(last.seats)&&last.seats.length===40
+   &&seats.every((id,i)=>String(id||'')===String(last.seats[i]||''));
+ const confirmed=same&&occupied.length===state.students.length
+  &&new Set(occupied).size===ids.size
+  &&occupied.every(id=>ids.has(id))
+  &&seats.every((id,i)=>!id||!state.disabled[i]);
+ return{kind:'bus',confirmed,
+  students:state.students.map(student=>({id:String(student.id),name:student.name})),
+  seats,disabled:state.disabled.map(Boolean)};
+};
 Gulliver.mountShell({title:"버스 좌석 배치",icon:"🚌"});
 })();
 </script>
