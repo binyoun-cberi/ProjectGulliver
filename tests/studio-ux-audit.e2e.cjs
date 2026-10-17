@@ -27,7 +27,7 @@ test('UX inspection: home to new canvas to panels on desktop/tablet/phone',{time
  try{
   await ready();fs.mkdirSync('test-artifacts',{recursive:true});
   browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox']});
-  for(const [device,width,height] of [['desktop',1440,900],['tablet',768,1024],['phone',390,844]]){
+  for(const [device,width,height] of [['desktop',1440,900],['laptop',1024,768],['tablet',768,1024],['phone',390,844],['small-phone',320,720]]){
    const context=await browser.newContext({viewport:{width,height},hasTouch:device==='phone',isMobile:device==='phone',deviceScaleFactor:1});
    const page=await context.newPage();const errs=[];page.on('pageerror',e=>errs.push(e.message));page.setDefaultTimeout(20000);
    await page.goto(base+'index.html',{waitUntil:'domcontentloaded'});
@@ -35,6 +35,11 @@ test('UX inspection: home to new canvas to panels on desktop/tablet/phone',{time
    await audit(page,'home',device);
    const headline=await page.locator('#pageTitle').textContent();
    assert.ok(headline.includes('오늘'),headline);
+   const openDialog=device==='desktop'||device==='laptop'?'#createButton':'.home-bottom-bar [data-create]';
+   await page.locator(openDialog).click();
+   assert.ok(await page.locator('#createDialog[open]').count(),'New-project dialog opens at '+device);
+   assert.equal(await page.locator('#createDialog .create-main a').count(),3);
+   await page.locator('#createDialog [data-close]').click();
    // The primary home start flow should not require discovering legacy tools.
    await page.locator('.format-tile[href*="template=blank"]').click();
    await page.locator('#editorFrame').waitFor({state:'attached'});
