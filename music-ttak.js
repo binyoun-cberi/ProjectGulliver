@@ -9,6 +9,7 @@ function stepAt(value){const beat=.25*60/model.bpm;return Math.max(0,Math.min(15
 function syncPlayhead(){
  const audio=$('audioPreview'),range=$('musicScrub');
  const time=Math.max(0,Number(audio.currentTime)||0),total=seconds();
+ range.disabled=!Boolean(audio.getAttribute('src'));
  range.max=String(total);range.value=String(Math.min(time,total));
  $('musicCurrentTime').textContent=stamp(time);$('musicTotalTime').textContent=stamp(total);
  const active=audio.paused?seekStep:stepAt(time);
@@ -28,7 +29,7 @@ function renderRuler(){
   button.onclick=()=>{
    seekStep=step;
    const audio=$('audioPreview'),time=step*.25*60/model.bpm;
-   if(audio.src){audio.currentTime=time;syncPlayhead()}
+   if(audio.getAttribute('src')){audio.currentTime=time;syncPlayhead()}
    root.querySelectorAll('button').forEach(b=>b.classList.toggle('active',Number(b.dataset.step)===step));
    notify((step+1)+'번째 박자를 선택했어요. 악기 칸을 눌러 소리를 조절하세요.');
   };
@@ -84,7 +85,7 @@ for(const b of document.querySelectorAll('[data-template]'))b.onclick=()=>{
 $('musicScrub').addEventListener('input',e=>{
  const audio=$('audioPreview'),time=Math.min(seconds(),Math.max(0,Number(e.target.value)||0));
  seekStep=stepAt(time);
- if(audio.src)audio.currentTime=time;
+ if(audio.getAttribute('src'))audio.currentTime=time;
  $('musicCurrentTime').textContent=stamp(time);
  document.querySelectorAll('#musicRuler [data-step]').forEach(b=>b.classList.toggle('active',Number(b.dataset.step)===seekStep));
  syncPlayhead();
