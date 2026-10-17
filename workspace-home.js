@@ -4,14 +4,14 @@ const W=ClassroomWorkspace,tools=ClassroomTools,$=id=>document.getElementById(id
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const CATEGORIES=['전체','시간·수업 안내','뽑기·편성','퀴즈·놀이','학급 관리','자료·기록'];
 const FORMATS=[
- ['presentation','발표 자료','canvas','▤','#ff6c29','통합 캔버스 · PNG/PDF','presentation'],
+ ['presentation','발표 자료','canvas','▤','#ff6c29','한 화면 편집 · PDF로 인쇄','presentation'],
  ['worksheet','학습지·도안','canvas','◇','#09a96a','통합 캔버스 · 인쇄물','worksheet'],
- ['custom','빈 디자인','canvas','✦','#7750dc','캔바형 자유 편집','blank'],
- ['document','문서·안내장','document','≡','#367ce8','HWPX/DOCX 전문 도구'],
- ['video','동영상','video','▶','#d54fc4','영상 전문 도구'],
- ['picture','그림·사진','picture','▧','#188cba','그림 전문 도구'],
- ['pdf','PDF','pdf','▣','#df5f69','PDF 전문 도구'],
- ['music','음악','music','♫','#7561d7','음악 전문 도구']
+ ['custom','빈 디자인','canvas','✦','#7750dc','글씨·사진·도형 자유롭게 편집','blank'],
+ ['document','문서·안내장','document','≡','#367ce8','한글·워드 문서 만들기'],
+ ['video','동영상','video','▶','#d54fc4','영상 만들고 편집하기'],
+ ['picture','그림·사진','picture','▧','#188cba','사진과 그림 편집하기'],
+ ['pdf','PDF','pdf','▣','#df5f69','PDF 합치기·나누기'],
+ ['music','음악','music','♫','#7561d7','배경음악 만들고 편집하기']
 ];
 function startTiles(){
  return '<div class="format-grid">'+FORMATS.map(f=>'<a class="format-tile" href="뚝딱 제작실.html?new='+f[2]+(f[6]?'&amp;template='+f[6]:'')+'" style="--format-accent:'+f[4]+'" aria-label="'+f[1]+' 만들기"><span class="format-symbol" aria-hidden="true">'+f[3]+'</span><strong>'+f[1]+'</strong><small>'+f[5]+'</small></a>').join('')+'</div>';
@@ -55,9 +55,10 @@ function render(){
    }
    if(isHome&&!query){
      html+='<section class="home-block home-design"><div class="section-head"><div><h2>무엇을 만들까요?</h2><p>자료 종류를 고르면 바로 편집을 시작할 수 있어요.</p></div><a class="text-btn" href="뚝딱 제작실.html">제작실 보기 →</a></div>'+startTiles()+'</section>';
-     html+=section('이어서 작업하기','이 기기에 저장한 활동과 제작물을 다시 열어 보세요.',
+     html+=section('이어서 작업하기','타이머·퀴즈·자리표는 ‘내 활동’, 학습지·발표·영상은 제작실 ‘내 작업’에서 열어요.',
        (activities.length?'<div class="activity-grid recent-rail">'+activities.slice(0,3).map(a=>activityCard(a)).join('')+'</div>':'')+
-       '<a class="studio-library-link" href="뚝딱 제작실.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>제작실의 내 작업</strong><small>도안·발표·문서·영상·음악 작업을 확인해 보세요.</small></span><span aria-hidden="true">→</span></a>',
+       '<a class="studio-library-link" href="뚝딱 제작실.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>제작실의 내 작업</strong><small>도안·발표·문서·영상·음악 작업을 확인해 보세요.</small></span><span aria-hidden="true">→</span></a>'+ 
+       '<p class="home-work-location-note">자료는 이 기기에만 저장돼요. 기기를 바꾸기 전에는 교실 활동은 ‘활동 백업’, 제작 자료는 제작실 ‘ZIP 전체 백업’으로 보관하세요.</p>',
        '<button class="text-btn" data-view="activities">내 활동 보기 →</button>');
      if(templates.length)html+=section('수업 템플릿으로 시작','준비된 예시를 열어 우리 반에 맞게 수정하세요.',
        '<div class="template-grid home-template-grid">'+templates.slice(0,3).map(templateCard).join('')+'</div>',
