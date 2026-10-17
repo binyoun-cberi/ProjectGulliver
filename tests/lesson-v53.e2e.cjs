@@ -35,6 +35,7 @@ test('5.3 Chrome: plan a lesson, import saved teacher activities, teach a quiz, 
   await page.waitForFunction(()=>document.querySelectorAll('#stepList .step-button').length===4);
   const id=await page.evaluate(()=>new URL(location.href).searchParams.get('lesson'));
   assert.ok(id);
+  await page.waitForFunction(async id=>(await LessonStorage.get(id))?.steps?.length===4,id);
   const record=await page.evaluate(async id=>await LessonStorage.get(id),id);
   assert.equal(record.goal,'친구와 함께 인사말 알아보기');assert.equal(record.audience,'열매 1반');
   assert.deepEqual(record.steps.map(x=>x.kind),['quiz','quiz','timer','timer']);
@@ -65,6 +66,7 @@ test('5.3 Chrome: guided intro/activity/closing creates three editable steps',{t
   await page.locator('#createLessonFlow').click();
   await page.waitForFunction(()=>document.querySelectorAll('#stepList .step-button').length===3);
   assert.deepEqual(await page.locator('#stepList .step-button strong').allTextContents(),['도입 · 오늘의 배움','활동 · 함께 해 보기','마무리 · 돌아보기']);
+  await page.waitForFunction(async()=>{const id=new URL(location.href).searchParams.get('lesson');return (await LessonStorage.get(id))?.steps?.length===3});
   const steps=await page.evaluate(async()=>{
    const id=new URL(location.href).searchParams.get('lesson');const row=await LessonStorage.get(id);return row.steps;
   });
