@@ -389,6 +389,16 @@ $("clearConditionsBtn").onclick=clearConditions;$("clearHistoryBtn").onclick=cle
 load();refreshSharedProfiles();renderAll();
 })();
 </script>
-<script>Gulliver.mountShell({title:"학급 역할 배정 도우미",icon:"🧹"});</script>
+<script>window.GulliverTeacherLiveSnapshot=()=>{
+ const list=getHistory(),last=list[0],assign=state.assignment;
+ const confirmed=!!last&&state.students.length>0
+  &&Object.keys(assign).length===state.students.length
+  &&state.students.every(s=>String(last.assignments?.[s.id]||'')===String(assign[s.id]||'')&&Boolean(assign[s.id]));
+ return{kind:'roles',confirmed,
+  students:state.students.map(s=>({id:s.id,name:s.name})),
+  roles:state.roles.map(r=>({id:r.id,name:r.name})),
+  assignment:{...assign}};
+};
+Gulliver.mountShell({title:"학급 역할 배정 도우미",icon:"🧹"});</script>
 </body>
 </html>
