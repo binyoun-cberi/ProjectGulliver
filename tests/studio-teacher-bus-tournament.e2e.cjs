@@ -35,6 +35,30 @@ test('bus and tournament native creation, confirmation, edit, refresh, undo and 
   assert.ok(busPage.elements.length>=80);
   const seatNames=JSON.stringify(busPage.elements);
   for(const name of ['민','진','솔','한','사용 안 함','버스 앞'])assert.ok(seatNames.includes(name),name+' absent');
+  const labeled=busPage.elements.filter(e=>Number.isInteger(e.busSeat));
+  assert.equal(labeled.length,4,'only four real students have clickable seat metadata');
+  const [one,two]=labeled.slice(0,2),originalBus=JSON.stringify(await page.evaluate(()=>{
+   return JSON.parse(localStorage.getItem('gulliver.busSeating.v3')).assignment;
+  }));
+  await editor.locator('#busSwapBar').waitFor({state:'visible'});
+  await editor.locator('#busSwapButton').click();
+  assert.equal(await editor.locator('#busSwapButton').getAttribute('aria-pressed'),'true');
+  await editor.locator('#stage .item[data-bus-seat="'+one.busSeat+'"]').click();
+  assert.match(await editor.locator('#busSwapHint').textContent(),/두 번째 학생/);
+  await editor.locator('#stage .item[data-bus-seat="'+two.busSeat+'"]').click();
+  let afterSwap=await model(),edited=afterSwap.pages.find(x=>x.teacherSource?.kind==='bus').elements;
+  assert.equal(edited.find(e=>e.busSeat===one.busSeat).content,two.content);
+  assert.equal(edited.find(e=>e.busSeat===two.busSeat).content,one.content);
+  assert.equal(JSON.stringify(await page.evaluate(()=>JSON.parse(localStorage.getItem('gulliver.busSeating.v3')).assignment)),originalBus,'canvas seat swap changed original native bus assignment');
+  await editor.locator('#undo').click();
+  afterSwap=await model();edited=afterSwap.pages.find(x=>x.teacherSource?.kind==='bus').elements;
+  assert.equal(edited.find(e=>e.busSeat===one.busSeat).content,one.content);
+  assert.equal(edited.find(e=>e.busSeat===two.busSeat).content,two.content);
+  await editor.locator('#redo').click();
+  edited=(await model()).pages.find(x=>x.teacherSource?.kind==='bus').elements;
+  assert.equal(edited.find(e=>e.busSeat===one.busSeat).content,two.content);
+  await editor.locator('#undo').click();
+  await editor.locator('#busSwapButton').click();
   const busCount=p.pages.length;
   // A fresh confirmed assignment can replace the old bus diagram in-place.
   await open('버스 좌석 배치');
@@ -59,6 +83,10 @@ test('bus and tournament native creation, confirmation, edit, refresh, undo and 
   p=await importResult('tournament');
   const tournamentCount=p.pages.length,raw=JSON.stringify(p.pages);
   assert.ok(raw.includes('사계절 퀴즈'));assert.ok(raw.includes('결과 미정'));
+  assert.ok(p.pages.some(x=>x.name.startsWith('진출 흐름')),'expected visual next-round connections');
+  const connections=p.pages.find(x=>x.name.startsWith('진출 흐름'));
+  assert.ok(connections.elements.some(x=>x.type==='rect'&&x.fill==='#8D79C9'),'no flow connector segments');
+
   assert.ok(!raw.includes('우승 봄')&&!raw.includes('우승 가을'));
   // Real winner selection in the original bracket, not a test-injected outcome.
   await open('토너먼트 메이커');
@@ -75,6 +103,8 @@ test('bus and tournament native creation, confirmation, edit, refresh, undo and 
   await editor.locator('#teacherLiveDialog').waitFor({state:'hidden'});
   p=await model();assert.equal(p.pages.length,tournamentCount,'refresh should not add pages');
   assert.ok(JSON.stringify(p.pages).includes('우승 '+victor),'confirmed champion must appear in refreshed page');
+  assert.ok(p.pages.some(x=>x.name.startsWith('진출 흐름')),'round connectors vanished on refresh');
+
   await page.evaluate(()=>GulliverStudioBridge.sync(true));
   const saved=await page.evaluate(async()=>{const list=await GulliverStudioStorage.projects();return list.find(x=>x.kind==='canvas'&&x.payload?.pages?.some(p=>p.teacherSource?.kind==='tournament'))?.id});
   assert.ok(saved,'new content was not persisted');
