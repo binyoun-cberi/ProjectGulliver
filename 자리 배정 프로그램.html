@@ -1050,6 +1050,7 @@ ClassroomWorkspace.mount({kind:'seating',title:()=> (Gulliver.getClassroom().cla
     setNotice(hasAssignment()?'저장한 자리표를 불러왔습니다. 수정하거나 그대로 사용할 수 있어요.':'명단과 교실 구조를 확인한 뒤 자리를 배정하세요.','');
   }
 });
+window.GulliverTeacherLiveSnapshot=()=>({kind:'seating',cols:state.cols,rows:state.rows,students:state.students.map(({id,name})=>({id,name})),activeSeats:[...state.activeSeats],assignment:[...state.assignment]});
 </script>
 </body>
 </html>
