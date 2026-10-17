@@ -249,7 +249,7 @@ function validate(raw){
    background:color(page.background,'#ffffff'),elements,
    duration:number(page.duration,MIN_DURATION,MAX_DURATION,5),transition:TRANSITIONS.includes(page.transition)?page.transition:'none',
    ...(page.videoClip?{videoClip:cleanVideoClip(page.videoClip)}:{}),
-   ...(page.teacherSource&&['lesson','roles','groups'].includes(page.teacherSource.kind)
+   ...(page.teacherSource&&['lesson','roles','groups','bus','tournament'].includes(page.teacherSource.kind)
       &&typeof page.teacherSource.instance==='string'&&/^[a-zA-Z0-9_-]{1,90}$/.test(page.teacherSource.instance)
       ?{teacherSource:{kind:page.teacherSource.kind,instance:page.teacherSource.instance,
         snapshotAt:number(page.teacherSource.snapshotAt,0,4102444800000,0)}}:{})};
