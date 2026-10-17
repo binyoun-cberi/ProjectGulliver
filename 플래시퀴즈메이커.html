@@ -182,7 +182,7 @@ const sampleCards=[
  {front:'Education',back:'교육'},{front:'Innovation',back:'혁신'},{front:'Curiosity',back:'호기심'},
  {front:'Environment',back:'환경'},{front:'Responsibility',back:'책임'},{front:'Cooperation',back:'협력'}
 ];
-const state={cards:[],known:new Set(),sound:true,currentTab:'manage',studyMode:'all',studyOrder:[],studyIndex:0,flipped:false,quiz:null,match:null};
+const state={cards:[],known:new Set(),sound:true,currentTab:'manage',studyMode:'all',studyOrder:[],studyIndex:0,flipped:false,quiz:null,match:null,seededSample:false};
 let saveTimer=0,audioCtx=null,toastTimer=0,modalAction=null;
 
 function uid(){return (window.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2));}
@@ -190,15 +190,15 @@ function cleanText(v,max=1000){return String(v??'').replace(/\r/g,'').trim().sli
 function sanitizeCard(c){const front=cleanText(c?.front??c?.word,500),back=cleanText(c?.back??c?.meaning,1000);return front&&back?{id:cleanText(c.id,120)||uid(),front,back}:null}
 function load(){
  try{
-   const raw=localStorage.getItem(STORAGE); if(raw){const d=JSON.parse(raw);state.cards=(Array.isArray(d.cards)?d.cards:[]).map(sanitizeCard).filter(Boolean);state.known=new Set((Array.isArray(d.known)?d.known:[]).filter(id=>state.cards.some(c=>c.id===id)));state.sound=d.sound!==false;return}
+   const raw=localStorage.getItem(STORAGE); if(raw){const d=JSON.parse(raw);state.cards=(Array.isArray(d.cards)?d.cards:[]).map(sanitizeCard).filter(Boolean);state.seededSample=d.seededSample===true;state.known=new Set((Array.isArray(d.known)?d.known:[]).filter(id=>state.cards.some(c=>c.id===id)));state.sound=d.sound!==false;return}
  }catch(e){console.warn('저장 데이터 복구 실패',e)}
  try{
    const old=JSON.parse(localStorage.getItem(OLD_STORAGE)||'null');
    if(Array.isArray(old)){state.cards=old.map(sanitizeCard).filter(Boolean);save();return}
  }catch(e){}
- state.cards=sampleCards.map(c=>({...c,id:uid()}));save();
+ state.cards=sampleCards.map(c=>({...c,id:uid()}));state.seededSample=true;save();
 }
-function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(STORAGE,JSON.stringify({cards:state.cards,known:[...state.known],sound:state.sound}))}catch(e){toast('브라우저 저장 공간이 부족합니다. JSON으로 백업해 주세요.')}},80)}
+function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(STORAGE,JSON.stringify({cards:state.cards,known:[...state.known],sound:state.sound,seededSample:state.seededSample}))}catch(e){toast('브라우저 저장 공간이 부족합니다. JSON으로 백업해 주세요.')}},80)}
 function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),1900)}
 function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
 function formatTime(sec,tenths=false){sec=Math.max(0,sec);const m=Math.floor(sec/60),s=Math.floor(sec%60);return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}${tenths?'.'+Math.floor((sec%1)*10):''}`}
@@ -219,7 +219,7 @@ function splitLine(line){
  return null;
 }
 function parseText(text){const out=[],bad=[];String(text).split(/\n/).forEach((raw,i)=>{const line=raw.trim();if(!line)return;const p=splitLine(line);if(!p){bad.push(i+1);return}const front=cleanText(p[0],500),back=cleanText(p[1],1000);if(front&&back)out.push({front,back});else bad.push(i+1)});return {out,bad}}
-function addCards(items){const existing=new Set(state.cards.map(c=>normalize(c.front)+'\0'+normalize(c.back)));let added=0,dupes=0;items.forEach(c=>{const key=normalize(c.front)+'\0'+normalize(c.back);if(existing.has(key)){dupes++;return}state.cards.push({id:uid(),front:c.front,back:c.back});existing.add(key);added++});save();renderCards();return {added,dupes}}
+function addCards(items){const existing=new Set(state.cards.map(c=>normalize(c.front)+'\0'+normalize(c.back)));let added=0,dupes=0;items.forEach(c=>{const key=normalize(c.front)+'\0'+normalize(c.back);if(existing.has(key)){dupes++;return}state.cards.push({id:uid(),front:c.front,back:c.back});existing.add(key);added++});if(added)state.seededSample=false;save();renderCards();return {added,dupes}}
 
 function renderCards(){
  const q=normalize($('#searchInput').value);const rows=q?state.cards.filter(c=>normalize(c.front+' '+c.back).includes(q)):state.cards;
@@ -321,11 +321,12 @@ ClassroomWorkspace.mount({kind:'quiz',title:()=> '나의 낱말카드',
   apply(data){
     if(!Array.isArray(data.cards))throw Error('낱말카드 형식을 확인해 주세요.');
     const cards=data.cards.slice(0,2000).map(sanitizeCard).filter(Boolean);
-    stopMatch();state.cards=cards;state.known=new Set((Array.isArray(data.known)?data.known:[]).filter(id=>cards.some(c=>c.id===id)));state.sound=data.sound!==false;
+    stopMatch();state.cards=cards;state.seededSample=false;state.known=new Set((Array.isArray(data.known)?data.known:[]).filter(id=>cards.some(c=>c.id===id)));state.sound=data.sound!==false;
     state.studyOrder=[];state.studyIndex=0;state.flipped=false;state.quiz=null;state.match=null;
     $('#soundBtn').textContent=state.sound?'♪':'×';save();renderCards();switchTab(['manage','flash','quiz','match'].includes(data.currentTab)?data.currentTab:'manage');
   }
 });
+window.GulliverTeacherLiveSnapshot=()=>({kind:'quiz',cards:state.cards.map(({front,back})=>({front,back})),sampleOnly:state.seededSample});
 })();
 </script>
 <script>Gulliver.mountShell({title:"낱말카드·퀴즈",icon:"🗂️"});</script>

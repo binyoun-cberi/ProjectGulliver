@@ -1,21 +1,21 @@
 /* Native teacher tools: import existing activities as editable canvas pages, not screenshots. */
 (()=>{
 'use strict';
-const T=window.GulliverTeacherCanvas,A=window.GulliverStudioAdapter,G=window.Gulliver;
+const T=window.GulliverTeacherCanvas,S=window.GulliverTeacherSource,A=window.GulliverStudioAdapter,G=window.Gulliver;
 const pane=document.querySelector('.design-pane[data-pane="teacher"]');
-if(!pane||!T||!A)return;
+if(!pane||!T||!S||!A)return;
 const root=document.createElement('section');
 root.className='canvas-teacher-integrations';
 root.innerHTML=[
- '<div class="teacher-intro"><strong>수업 도구를 캔버스로 가져오기</strong><p>저장한 활동을 편집 가능한 페이지로 복사해요. 원본 활동은 그대로 유지됩니다.</p></div>',
- '<div class="teacher-linked-group"><label for="teacherSavedActivity">내 활동</label><select id="teacherSavedActivity"><option value="">저장한 활동 선택</option></select>',
+ '<div class="teacher-intro"><strong>교사 도구 실행 · 결과 가져오기</strong><p>아래 도구를 직접 실행한 뒤, 실제 결과를 지금 만들던 자료에 추가할 수 있어요. 원본은 바뀌지 않아요.</p></div>',
+ '<div class="teacher-linked-group"><label for="teacherSavedActivity">기존에 저장한 활동 가져오기</label><select id="teacherSavedActivity"><option value="">저장한 활동 선택</option></select>',
  '<div class="teacher-actions"><button type="button" id="teacherRefreshActivities">↻ 새로고침</button><button type="button" class="teacher-primary" id="teacherImportActivity">＋ 페이지로 추가</button></div></div>',
  '<div class="teacher-tool-grid">',
- '<button type="button" data-teacher-convert="flash"><strong>▤ 낱말카드</strong><span>문제와 정답을 각각 편집하는 슬라이드</span></button>',
- '<button type="button" data-teacher-convert="timer"><strong>◷ 수업 흐름표</strong><span>수업 타이머를 한 장짜리 안내판으로</span></button>',
- '<button type="button" data-teacher-convert="seating"><strong>▦ 교실 자리표</strong><span>저장된 배정 결과 또는 빈 자리표</span></button>',
- '<button type="button" data-teacher-convert="check"><strong>☑ 학급 체크판</strong><span>학급췍 기록을 편집 가능한 체크판으로</span></button></div>',
- '<div class="teacher-convert-status" id="teacherConvertStatus" role="status">새 페이지가 현재 작업의 뒤에 추가돼요.</div>',
+ '<button type="button" data-teacher-convert="flash"><strong>▤ 낱말카드 가져오기</strong><span>마지막으로 저장한 문제·정답 카드</span></button>',
+ '<button type="button" data-teacher-convert="timer"><strong>◷ 수업 시간표 가져오기</strong><span>수업 타이머에서 실제 설정한 단계</span></button>',
+ '<button type="button" data-teacher-convert="seating"><strong>▦ 확정 자리표 가져오기</strong><span>배정한 학생과 사용하지 않는 자리까지</span></button>',
+ '<button type="button" data-teacher-convert="check"><strong>☑ 학급 체크판 가져오기</strong><span>학생별 실제 완료 상태를 복사</span></button></div>',
+ '<div class="teacher-convert-status" id="teacherConvertStatus" role="status">가져온 결과는 새 페이지로 추가돼요. 저장된 기록이 없으면 예시를 대신 넣지 않아요.</div>',
  '<details class="teacher-original-tools"><summary>실시간 수업 도구 열기 ↗</summary>',
  '<p>게임·룰렛·타이머는 원래 도구에서 실행할 수 있어요. 편집 가능한 페이지와는 별개입니다.</p>',
  '<div class="teacher-original-links">',
@@ -59,45 +59,16 @@ root.querySelector('#teacherImportActivity').addEventListener('click',()=>{
  if(!item){inform('가져올 활동을 먼저 선택해 주세요.',true);return}
  add(layout=>T.convertActivity(item,{layout,students:room().students}));
 });
-const sampleTimer=[
- {name:'도입 · 이야기 나누기',durationSec:300,color:'#6654BD'},
- {name:'함께 활동하기',durationSec:900,color:'#16847C'},
- {name:'정리하고 나누기',durationSec:300,color:'#E6A04F'}
-];
+const kinds={flash:'quiz',timer:'timer',seating:'seating',check:'check'};
+function recent(kind,live=null){
+ const classroom=room();
+ return S.prepare(kind,{layout:A.capture().layout,read:key=>safe(key,null),room:classroom,live});
+}
 root.querySelectorAll('[data-teacher-convert]').forEach(button=>button.addEventListener('click',()=>{
- add(layout=>{
-  const current=room(),key=button.dataset.teacherConvert;
-  if(key==='flash'){
-   const db=safe('flashQuizMakerPlusV3',{});
-   if(!Array.isArray(db.cards)||!db.cards.length)throw Error('퀴즈 메이커에서 낱말카드를 저장한 뒤 사용해 주세요.');
-   return T.quizCards(db.cards,{layout,title:'우리 반 낱말카드'});
-  }
-  if(key==='timer'){
-   const previous=activities().find(a=>a.kind==='timer');
-   return T.timerPlan(previous?.payload?.events||sampleTimer,{layout,title:previous?.title||'우리 반 수업 흐름표'});
-  }
-  if(key==='seating'){
-   const settings=safe('gulliver.seating.v3',{});
-   const config={cols:settings?.cols||5,rows:settings?.rows||4};
-   const hist=safe('gulliver.seating.history.v1',[]);
-   const latest=Array.isArray(hist)?hist[0]:null;
-   const matching=latest?.cols===config.cols&&latest?.rows===config.rows&&Array.isArray(latest?.seats);
-   const lookup=new Map((Array.isArray(settings?.students)?settings.students:current.students).map(s=>[String(s.id),s.name]));
-   const seatNames=matching?latest.seats.map(id=>id?lookup.get(String(id))||'':''):[];
-   return T.seatingPlan(config,{layout,title:matching?'최근 교실 자리표':'우리 반 자리표',students:current.students,seatNames});
-  }
-  if(key==='check'){
-   const check=safe('classChecklistState',{});
-   const stored=Array.isArray(check.studentNames)?check.studentNames.filter(Boolean):[];
-   const students=stored.length?stored:current.students.map(s=>s.name);
-   if(!students.length)throw Error('학급췍 또는 우리 반에서 학생 이름을 먼저 저장해 주세요.');
-   const theme=String(check.currentTheme||'우리 반 체크판');
-   const data=check.data?.[theme]||{};
-   return T.checklist({theme,students,checks:students.map((_,i)=>Boolean(data[i+1]))},{layout,title:theme});
-  }
-  throw Error('연결하지 않은 도구예요.');
- });
+ const kind=kinds[button.dataset.teacherConvert];
+ add(()=>recent(kind));
 }));
+window.GulliverTeacherImport={recent};
 window.addEventListener('storage',e=>{if(!e.key||e.key==='gulliver.activities.v1')refresh()});
 window.addEventListener('gulliver:activities-change',refresh);
 refresh();

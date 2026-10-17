@@ -42,3 +42,21 @@ test('QR canvas receives actual image data separately from editable explanatory 
  assert.ok(p.elements.some(e=>e.type==='image'&&e.src===png));
  assert.ok(p.elements.some(e=>e.type==='text'&&e.content==='https://example.org'));
 });
+
+test('praise above goal is not silently capped; the history tells teachers when some records are omitted',()=>{
+ const r=S.thermometer({currentTemp:115,goalTemp:100,records:Array.from({length:7},(_,i)=>({reason:'기록 '+i,type:'up',amount:5}))});
+ const data=JSON.stringify(r.pages);
+ assert.match(data,/115 \/ 100점/);assert.match(data,/115%/);assert.match(data,/최근 4건 \/ 전체 7건/);
+});
+test('vote includes every valid choice and Wi-Fi QR does not write a plaintext password on canvas',()=>{
+ const opts=Array.from({length:14},(_,i)=>({id:i+1,name:'선택 '+(i+1)}));
+ const counts=Object.fromEntries(opts.map((_,i)=>[i,i+1]));
+ const out=S.vote({title:'여러 선택지',options:opts},counts);
+ assert.equal(out.pages.length,2);
+ assert.match(JSON.stringify(out.pages),/선택 14/);
+ const png='data:image/png;base64,'+Buffer.from('test').toString('base64');
+ const wifi=S.qr(png,'WIFI:T:WPA;S:classroom;P:SECRET_1234;;');
+ const page=JSON.stringify(wifi.pages);
+ assert.doesNotMatch(page,/SECRET_1234/);
+ assert.match(page,/Wi-Fi 연결용 QR/);
+});

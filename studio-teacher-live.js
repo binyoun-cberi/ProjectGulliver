@@ -18,11 +18,11 @@ const tools=[
 const read=(key)=>{try{return JSON.parse(localStorage.getItem(key)||'null')}catch{return null}};
 const bar=document.createElement('section');bar.className='teacher-live-tools';bar.id='teacherLiveTools';
 bar.innerHTML=[
- '<div class="teacher-live-heading"><strong>수업 중 바로 사용하기</strong><small>여기서 도구를 실행하고, 결과를 지금 만들던 캔버스로 가져오세요.</small></div>',
+ '<div class="teacher-live-heading"><strong>교사 도구 실행하기</strong><small>도구를 실제로 사용한 뒤 결과를 현재 캔버스에 가져올 수 있어요.</small></div>',
  '<div class="teacher-live-grid" id="teacherLiveGrid"></div>',
  '<p class="teacher-live-note">실행 도구는 현재 편집기를 떠나지 않는 창에서 열려요. 수업자료로 추가되는 것은 실행 결과의 복사본이에요.</p>'
 ].join('');
-pane.append(bar);
+pane.prepend(bar);
 const dlg=document.createElement('dialog');dlg.id='teacherLiveDialog';dlg.className='teacher-live-dialog';dlg.setAttribute('aria-label','교사 도구 실행 창');
 dlg.innerHTML=[
  '<div class="teacher-run-head"><div><strong id="teacherLiveTitle">교사 도구</strong><small id="teacherLiveDesc">원본 도구를 실행합니다</small></div>',
@@ -34,6 +34,8 @@ document.body.append(dlg);
 const grid=bar.querySelector('#teacherLiveGrid'),frame=dlg.querySelector('#teacherLiveFrame'),
  status=dlg.querySelector('#teacherLiveStatus');
 let current=null;
+const copyButton=dlg.querySelector('#teacherCopyResult');
+const directKinds=['timer','quiz','seating','check'];
 function info(msg,error=false){status.textContent=msg;status.classList.toggle('error',error)}
 for(const item of tools){
  const b=document.createElement('button');b.type='button';b.className='teacher-live-tile';
@@ -44,9 +46,10 @@ for(const item of tools){
 function open(id){
  const item=tools.find(x=>x.id===id);if(!item)return;
  current=item;
+ copyButton.disabled=true;
  dlg.querySelector('#teacherLiveTitle').textContent=item.name;
  dlg.querySelector('#teacherLiveDesc').textContent=item.summary;
- info('도구를 여는 중이에요. 사용을 마친 뒤 “결과를 캔버스로”를 누르세요.');
+ info('도구를 불러오는 중이에요. 도구 안에서 실제로 작업한 결과만 가져옵니다.');
  dlg.showModal();
  const path=new URL(item.url,location.href);
  if(path.origin!==location.origin)throw Error('외부 도구는 이 창에 열 수 없어요.');
@@ -92,18 +95,18 @@ function snapshot(){
  }
  return null;
 }
-dlg.querySelector('#teacherCopyResult').addEventListener('click',()=>{
+copyButton.addEventListener('click',()=>{
  if(!current)return;
  try{
-  if(['timer','quiz','seating','check'].includes(current.id)){
-   const selector={'timer':'timer','quiz':'flash','seating':'seating','check':'check'}[current.id];
-   const button=pane.querySelector('[data-teacher-convert="'+selector+'"]');
-   if(!button)throw Error('자료 변환 기능을 불러오지 못했어요.');
-   // Reuse one tested editable-data converter and its existing validation.
-   button.click();
-   const msg=pane.querySelector('#teacherConvertStatus');
-   if(msg?.classList.contains('error'))throw Error(msg.textContent);
-   info('현재 작업의 뒤에 편집 가능한 페이지로 추가했어요. 편집 화면에서 확인하세요.');
+  if(directKinds.includes(current.id)){
+   const get=frame.contentWindow?.GulliverTeacherLiveSnapshot;
+   if(typeof get!=='function')throw Error('도구가 아직 준비되지 않았어요. 잠시 후 도구 안에서 결과를 확인해 주세요.');
+   const live=get();
+   const importer=window.GulliverTeacherImport;
+   if(!importer?.recent)throw Error('수업자료 가져오기 기능을 찾지 못했어요.');
+   const result=importer.recent(current.id,live);
+   const count=A.appendTeacherPages(result);
+   info(result.description+' · '+count+'장 추가했어요.');
    close('import');
    return;
   }
@@ -115,6 +118,6 @@ dlg.querySelector('#teacherCopyResult').addEventListener('click',()=>{
 });
 dlg.querySelector('#teacherLiveClose').addEventListener('click',()=>close('close'));
 dlg.addEventListener('cancel',event=>{event.preventDefault();close('cancel')});
-frame.addEventListener('load',()=>{if(dlg.open&&current)info('도구를 사용한 뒤 “＋ 결과를 캔버스로”를 눌러 주세요.')});
+frame.addEventListener('load',()=>{if(dlg.open&&current){copyButton.disabled=false;info('도구에서 작업한 뒤 “＋ 결과를 캔버스로”를 눌러 주세요. 예시나 과거 기록으로 자동 대체하지 않아요.')}});
 window.GulliverTeacherLive={open,close,isOpen:()=>dlg.open,listTools:()=>tools.map(({id,name,summary})=>({id,name,summary}))};
 })();
