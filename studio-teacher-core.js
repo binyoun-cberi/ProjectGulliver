@@ -36,7 +36,8 @@
  }
  function quizCards(cards,{layout='wide',title='우리 반 낱말카드'}={}){
   if(!Array.isArray(cards))throw Error('낱말카드 데이터가 없어요.');
-  const cleaned=cards.slice(0,16).map(card=>({
+  if(cards.length>19)throw Error('낱말카드가 19장을 넘어요. 캔버스에서는 한 번에 최대 19장(문제·정답 38페이지)을 가져올 수 있어요. 카드를 나누어 저장해 주세요.');
+  const cleaned=cards.map(card=>({
    front:limit(card?.front,180),back:limit(card?.back,300)
   })).filter(card=>card.front&&card.back);
   if(!cleaned.length)throw Error('앞면과 뒷면이 들어 있는 낱말카드가 필요해요.');
@@ -60,7 +61,8 @@
  }
  function timerPlan(events,{layout='wide',title='우리 반 수업 흐름표'}={}){
   if(!Array.isArray(events))throw Error('저장한 타이머 활동이 없어요.');
-  const valid=events.slice(0,18).map(item=>({
+  if(events.length>30)throw Error('수업 단계는 한 번에 30개까지 가져올 수 있어요.');
+  const valid=events.map(item=>({
    name:limit(item?.name||item?.title,62),
    note:limit(item?.note,110),
    durationSec:clamp(item?.durationSec??item?.duration,1,7200),
@@ -88,27 +90,33 @@
   return{title:limit(title,90)||'우리 반 수업 흐름표',pages,layout,description:valid.length+'개 수업 단계의 인쇄·발표용 흐름표'};
  }
  function seatingPlan(config,{layout='wide',title='우리 반 자리표',students=[],seatNames=[]}={}){
-  const cols=clamp(config?.cols,1,8)|0,rows=clamp(config?.rows,1,8)|0;
-  if(cols*rows>48)throw Error('자리표는 최대 48개 자리까지 만들 수 있어요.');
-  const d=drawing(layout),els=header(d,title,'앞쪽(칠판)에서 바라본 자리표 · 글씨와 칸을 자유롭게 옮기세요','#EEF6FF');
-  els.push(d.rect(d.w*.32,d.h*.182,d.w*.36,d.h*.055,'#E5EDF9','#C7D5E9'));
-  els.push(d.text('칠판',d.w*.35,d.h*.187,d.w*.3,d.h*.04,17,'#4C6589'));
-  const x0=d.w*.06,y0=d.h*.255,totalW=d.w*.88,totalH=d.h*.56;
-  const cellW=totalW/cols,cellH=totalH/rows,gap=Math.min(9,cellW*.065,cellH*.1);
-  for(let i=0;i<cols*rows;i++){
-   const x=x0+(i%cols)*cellW+gap/2,y=y0+Math.floor(i/cols)*cellH+gap/2;
-   els.push(d.rect(x,y,cellW-gap,cellH-gap,'#FFFFFF','#BFD1E9'));
-   const name=limit(seatNames[i],25)||('자리 '+(i+1));
-   els.push(d.text(name,x+4,y+5,cellW-gap-8,cellH-gap-10,
-    name.length>8?14:Math.min(24,Math.max(12,cellW*.23)), '#27446D'));
-  }
+  const cols=clamp(config?.cols,1,10)|0,rows=clamp(config?.rows,1,8)|0;
+  if(cols*rows>80)throw Error('자리표는 최대 80개 자리까지 만들 수 있어요.');
   const names=(Array.isArray(students)?students:[]).map(item=>limit(typeof item==='string'?item:item?.name,24)).filter(Boolean);
-  if(names.length){
-   els.push(d.text('우리 반: '+names.slice(0,24).join(' · '),d.w*.07,d.h*.852,d.w*.86,d.h*.085,
-    12,'#667890','left'));
+  const active=Array.isArray(config?.activeSeats)&&config.activeSeats.length===cols*rows?config.activeSeats.map(Boolean):Array(cols*rows).fill(true);
+  const pages=[],rowsPerPage=Math.min(rows,Math.max(1,Math.floor((140-5)/(cols*2))));
+  for(let firstRow=0;firstRow<rows;firstRow+=rowsPerPage){
+   const lastRow=Math.min(rows,firstRow+rowsPerPage),shownRows=lastRow-firstRow;
+   const d=drawing(layout),els=header(d,title,rows>rowsPerPage?
+    '칠판 쪽부터 '+(firstRow+1)+'~'+lastRow+'번째 줄 · '+rows+'줄 중 일부':'앞쪽(칠판)에서 바라본 자리표',
+    '#EEF6FF');
+   els.push(d.rect(d.w*.32,d.h*.18,d.w*.36,d.h*.052,'#E5EDF9','#C7D5E9'));
+   els.push(d.text('칠판',d.w*.35,d.h*.186,d.w*.3,d.h*.038,17,'#4C6589'));
+   const x0=d.w*.06,y0=d.h*.255,totalW=d.w*.88,totalH=d.h*.56;
+   const cellW=totalW/cols,cellH=totalH/shownRows,gap=Math.min(9,cellW*.065,cellH*.1);
+   for(let row=firstRow;row<lastRow;row++)for(let col=0;col<cols;col++){
+    const i=row*cols+col,x=x0+col*cellW+gap/2,y=y0+(row-firstRow)*cellH+gap/2;
+    const disabled=!active[i];
+    els.push(d.rect(x,y,cellW-gap,cellH-gap,disabled?'#E9EBF0':'#FFFFFF',disabled?'#CFD2D8':'#BFD1E9'));
+    const name=disabled?'사용 안 함':limit(seatNames[i],25)||('자리 '+(i+1));
+    els.push(d.text(name,x+4,y+5,cellW-gap-8,cellH-gap-10,
+     name.length>8?12:Math.min(24,Math.max(11,cellW*.22)),disabled?'#828894':'#27446D'));
+   }
+   if(names.length)els.push(d.text('우리 반: '+names.slice(0,24).join(' · '),d.w*.07,d.h*.85,d.w*.86,d.h*.09,12,'#667890','left'));
+   pages.push(d.page(rows>rowsPerPage?'자리표 '+(pages.length+1):'자리표',els));
   }
-  return{title:limit(title,90)||'우리 반 자리표',pages:[d.page('자리표',els)],layout,
-   description:seatNames.some(Boolean)?'저장된 자리 배정 결과를 옮긴 자리표':'자리 배정을 임의로 만들지 않은 편집용 빈 자리표'};
+  return{title:limit(title,90)||'우리 반 자리표',pages,layout,
+   description:seatNames.some(Boolean)?'실제 확정된 '+cols+'열 × '+rows+'줄 자리 배정 결과':'학생을 임의 배정하지 않은 편집용 빈 자리표'};
  }
  function checklist({theme='우리 반 체크판',students=[],checks=[]},{layout='wide',title}={}){
   const names=(Array.isArray(students)?students:[]).slice(0,60).map(name=>limit(name,28)).filter(Boolean);
