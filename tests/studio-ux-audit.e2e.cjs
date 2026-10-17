@@ -57,7 +57,8 @@ test('UX inspection: home to new canvas to panels on desktop/tablet/phone',{time
     console.log('UX_CANVAS '+JSON.stringify({device,...obj}));
    }
    await frame.locator('body').evaluate(()=>GulliverCanvasShell.activate('elements'));
-   assert.equal(await frame.locator('[data-pane="elements"] .shelf .insert-tools').isVisible(),true);
+   // Mobile bottom sheets animate into view. Wait for the first actionable control.
+   await frame.locator('[data-pane="elements"] .shelf .insert-tools').waitFor({state:'visible'});
    for(const section of ['templates','teacher-tools','page-tools'])
     assert.equal(await frame.locator('[data-pane="elements"] .shelf .'+section).isVisible(),false,'duplicate '+section+' must not distract from insertion');
    await frame.locator('[data-design-tab="text"]').click();
