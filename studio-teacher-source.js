@@ -14,7 +14,9 @@
  function prepare(kind,{layout='wide',read=()=>null,room={},live=null}={}){
   const snapshot=live?.kind===kind?live:null;
   if(kind==='quiz'){
-   const cards=snapshot?.cards||parse(read,'flashQuizMakerPlusV3')?.cards;
+   const quiz=snapshot||parse(read,'flashQuizMakerPlusV3')||{};
+   if(quiz.sampleOnly||quiz.seededSample)throw Error('현재 낱말카드는 기본 예시예요. 낱말카드 도구에서 우리 반 문제를 추가하거나 직접 수정해 주세요.');
+   const cards=quiz.cards;
    if(!Array.isArray(cards)||!cards.length)throw Error('낱말카드 도구에서 문제와 정답을 먼저 만들어 주세요.');
    return T.quizCards(cards,{layout,title:'우리 반 낱말카드'});
   }
