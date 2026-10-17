@@ -326,6 +326,7 @@ ClassroomWorkspace.mount({kind:'quiz',title:()=> '나의 낱말카드',
     $('#soundBtn').textContent=state.sound?'♪':'×';save();renderCards();switchTab(['manage','flash','quiz','match'].includes(data.currentTab)?data.currentTab:'manage');
   }
 });
+window.GulliverTeacherLiveSnapshot=()=>({kind:'quiz',cards:state.cards.map(({front,back})=>({front,back}))});
 })();
 </script>
 <script>Gulliver.mountShell({title:"낱말카드·퀴즈",icon:"🗂️"});</script>
