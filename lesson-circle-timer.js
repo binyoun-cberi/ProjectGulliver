@@ -762,6 +762,7 @@ ClassroomWorkspace.mount({kind:'timer',title:()=>mainTitle.value,
     app.classList.toggle('panel-collapsed',state.panelCollapsed);updateSoundButton();resetNow();saveSettings();requestAnimationFrame(fitTimerSize);
   }
 });
+window.GulliverTeacherLiveSnapshot=()=>({kind:'timer',title:mainTitle.value,events:state.events.map(({name,note,durationSec,color})=>({name,note,durationSec,color}))});
 if(!new URLSearchParams(location.search).has('activity')&&!new URLSearchParams(location.search).has('template')&&!new URLSearchParams(location.search).has('new'))checkRuntimeRecovery();
 })();
 
