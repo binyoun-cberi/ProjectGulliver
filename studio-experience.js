@@ -154,9 +154,12 @@ if(requested&&Object.prototype.hasOwnProperty.call(tools,requested)){
 }else if(requestedLibrary==='backup'||requestedLibrary==='assets'){
  layout?.setRight(requestedLibrary==='assets'?'assets':'projects');
  const pane=$(requestedLibrary==='assets'?'inspectorAssets':'inspectorProjects');
- if(window.matchMedia('(max-width: 1100px)').matches){
-  document.querySelector('.shell>.sidebar')?.classList.add('is-open');
-  if($('drawerShade'))$('drawerShade').hidden=false;
+ if(window.matchMedia('(max-width: 620px)').matches){
+  document.body.classList.add('studio-library-open');
+  if(shade){
+   shade.hidden=false;
+   shade.addEventListener('click',()=>{document.body.classList.remove('studio-library-open');shade.hidden=true},{once:true});
+  }
  }
  requestAnimationFrame(()=>{
   if(requestedLibrary==='backup')$('libraryZipBackup')?.scrollIntoView({block:'center'});
