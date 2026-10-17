@@ -50,12 +50,13 @@ label input{border:1px solid #d4dbea;border-radius:9px;padding:10px;width:100%;m
  .official-edit-note .native-import input[hidden]{display:none}
 #officialStatus[data-state="loading"]{color:#6e599a}
 #officialStatus[data-state="ready"]{color:#26764d}
-</style></head><body data-official-kind="music">
+</style><link rel="stylesheet" href="media-editors-v52.css?v=20261017-v52"></head><body data-official-kind="music">
 <header class="top"><div><h1>음악 뚝딱</h1><p style="font-size:12px;margin:5px 0 0">박자를 누르고 멜로디를 만들어요. 파일을 업로드하지 않아도 돼요.</p></div><div class="actions"><button id="playMusic" class="primary">▶ 들어보기</button><button id="stopMusic">■ 멈춤</button><button id="exportWav" class="primary">WAV 저장</button></div></header>
+<div class="workflow-save" role="note"><strong>저장 위치</strong><span>제작실에서 열면 간편 작업은 브라우저에 자동 저장돼요. 단독으로 열면 내보내기 파일을 직접 보관해야 해요. 고급 프로젝트는 별도 사본으로 저장하며 자동으로 서로 변환되지 않아요.</span><a href="내 보관함.html">내 보관함 ↗</a></div>
 <section class="media-mode-switch" aria-label="제작 모드 선택"><div class="media-mode-tabs" role="tablist"><button id="simpleMode" type="button" role="tab" aria-selected="true">간편 편집</button><button id="officialMode" type="button" role="tab" aria-selected="false" disabled>고급 편집 · SoundCraft</button></div><p id="officialDescription" class="media-mode-description"></p><p id="officialStatus" role="status" aria-live="polite"></p></section>
 <div id="simpleEditor"><main class="workspace">
 <aside class="panel">
-<h2>음악 설정</h2>
+<div class="media-step">1 · 빠르기와 분위기 고르기</div><h2>음악 설정</h2>
 <label for="titleInput">음악 이름<input id="titleInput" maxlength="90"></label>
 <label for="bpmInput">빠르기 (BPM 60~180)<input id="bpmInput" type="number" min="60" max="180" step="1"></label>
 <label for="loopsInput">반복 마디 (1~8)<input id="loopsInput" type="number" min="1" max="8"></label>
@@ -63,9 +64,10 @@ label input{border:1px solid #d4dbea;border-radius:9px;padding:10px;width:100%;m
 <h3>바로 시작할 음악</h3><div class="templates" id="templates"><button data-template="welcome">환영 인사</button><button data-template="dance">신나는 놀이</button><button data-template="calm">조용한 정리</button></div>
 </aside>
 <section class="editor">
-<h2>16칸 리듬·멜로디 제작판</h2>
+<div class="media-step">2 · 16칸 리듬 편집과 재생</div><h2>16칸 리듬·멜로디 제작판</h2>
 <p style="font-size:13px">보라색 칸은 소리가 나는 박자야. 칸을 눌러 켜거나 끄고, 빠르기와 반복 횟수를 바꿔 봐.</p>
-<div class="grid-scroll"><div id="beatGrid" class="beat-grid" aria-label="음악 박자 편집"></div></div>
+<p class="timeline-help">아래 16칸에서 박자를 누르거나, 재생 중인 칸을 확인할 수 있어요. 전체 반복 구간은 아래 재생 막대로 옮길 수 있어요.</p><div class="grid-scroll"><div id="musicRuler" class="music-ruler" role="group" aria-label="음악 박자 탐색"></div></div><div class="grid-scroll"><div id="beatGrid" class="beat-grid" aria-label="음악 박자 편집"></div></div>
+<div class="music-scrub"><time id="musicCurrentTime">0:00</time><input type="range" id="musicScrub" min="0" max="1" step=".01" value="0" aria-label="재생 위치 이동"><time id="musicTotalTime">0:00</time></div>
 <div class="preview"><strong style="font-size:12px">들어보기</strong><audio id="audioPreview" controls aria-label="미리 듣기"></audio></div>
 <div class="help">멜로디와 베이스, 손뼉, 작은 심벌즈를 조합할 수 있어. WAV 파일은 다른 발표·영상 프로그램에서도 쓸 수 있는 일반 오디오 파일이야. 아직 MP3 변환과 녹음·실제 악기 샘플 편집은 지원하지 않아.</div>
 <p id="msg" role="status" aria-live="polite"></p>
@@ -75,7 +77,7 @@ label input{border:1px solid #d4dbea;border-radius:9px;padding:10px;width:100%;m
   <strong id="officialVersion">ArtCraft 공식 SoundCraft</strong>
   <span id="officialHelp">고급 편집 결과를 내 작업에 보관하려면 아래 전용 버튼을 사용해 주세요. 보관된 사본은 이후 편집 내용과 자동 동기화되지 않아요.</span>
   <a id="officialExternal" href="assets/artcraft/soundcraft/index.html" target="_blank" rel="noopener noreferrer">새 창으로 편집기 열기 ↗</a>
-  <button id="officialSaveNow" type="button" hidden>현재 FilmCraft 프로젝트 → 내 작업 보관</button>
+  <button id="officialSaveNow" type="button" hidden>현재 SoundCraft 프로젝트 → 내 작업 보관</button>
    <label class="native-import">공식 프로젝트 파일 보관<input id="officialProjectUpload" type="file" accept=".scraftz" hidden></label>
    <button id="officialRetry" type="button" hidden>편집기 다시 시작</button>
   <button id="officialWebgl" type="button" hidden>WebGL 호환 모드</button>
@@ -84,6 +86,6 @@ label input{border:1px solid #d4dbea;border-radius:9px;padding:10px;width:100%;m
  </div>
  <pre id="officialDiagnosticReport" class="official-diagnostic-report" role="status" aria-live="polite" hidden></pre>
  <iframe id="officialEditorFrame" title="SoundCraft 공식 ArtCraft 고급 편집기" allow="fullscreen; autoplay; microphone; clipboard-read; clipboard-write"></iframe>
- <p class="media-disclaimer">이 화면의 SoundCraft는 ArtCraft 팀이 배포한 공식 웹 프로그램입니다. 기존 간편 제작기와 작업 파일이 자동으로 합쳐지지는 않습니다. 공식 프로젝트를 보관할 수 있지만 자동 저장되지는 않습니다. FilmCraft 프로젝트에 연결된 영상·사진 원본은 따로 보관하세요.</p>
+ <p class="media-disclaimer">이 화면의 SoundCraft는 ArtCraft 팀이 배포한 공식 웹 프로그램입니다. 기존 간편 제작기와 작업 파일이 자동으로 합쳐지지는 않습니다. 공식 프로젝트를 보관할 수 있지만 자동 저장되지는 않습니다. SoundCraft 프로젝트에 연결된 음원 원본은 따로 보관하세요.</p>
 </section>
-<script src="studio-media-core.js?v=20261013-22"></script><script src="studio-storage.js?v=20261014-24"></script><script src="music-core.js"></script><script src="music-ttak.js?v=20261013-22"></script><script src="studio-official-project-core.js?v=20261014-23"></script><script src="studio-official-media.js?v=20261014-23"></script></body></html>
+<script src="studio-media-core.js?v=20261013-22"></script><script src="studio-storage.js?v=20261014-24"></script><script src="music-core.js"></script><script src="music-ttak.js?v=20261017-v52"></script><script src="studio-official-project-core.js?v=20261014-23"></script><script src="studio-official-media.js?v=20261014-23"></script></body></html>
