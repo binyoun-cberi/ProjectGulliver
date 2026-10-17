@@ -145,3 +145,8 @@ body{background:#fff}
  .folder-head button{min-width:44px;min-height:44px}
  .home-view .section-head .text-btn{min-height:44px;white-space:normal;text-align:right}
 }
+
+/* Small descriptive labels need readable contrast on white cards (UX audit). */
+.tool-row-copy>span,.card-info p,.activity-card .card-info p{color:#5d6677}
+.format-tile small,.storage-note{color:#5d6575}
+.home-view .section-head p{color:#5e6675}
