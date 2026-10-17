@@ -504,3 +504,9 @@ body{color:var(--canvas-ink);background:var(--canvas-bg)}
  .v4c-panel-content input,.v4c-panel-content select{min-height:35px}
 }
 @media print{#stage>.item .grip,#stage>.item .rotate-grip{display:none!important}}
+
+/* Readable fine print inside the canvas inspector; maintain existing hierarchy. */
+.v4b-hint,.v4b-layer-panel h4 small,.v4b-layer-child,
+.v4c-panel>summary small,.v4c-panel-content small,
+.teacher-live-tile span,.teacher-live-heading small,.teacher-live-note{color:#5b526b}
+@media(max-width:700px){.design-nav button{font-size:11px}}
