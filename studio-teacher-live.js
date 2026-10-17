@@ -18,9 +18,9 @@ const tools=[
 const read=(key)=>{try{return JSON.parse(localStorage.getItem(key)||'null')}catch{return null}};
 const bar=document.createElement('section');bar.className='teacher-live-tools';bar.id='teacherLiveTools';
 bar.innerHTML=[
- '<div class="teacher-live-heading"><strong>교사 도구 실행하기</strong><small>도구를 실제로 사용한 뒤 결과를 현재 캔버스에 가져올 수 있어요.</small></div>',
+ '<div class="teacher-live-heading"><strong>수업 도구</strong><small>실행 중인 도구에서 바로 수정하고, 원하는 결과를 자료에 추가하세요.</small></div>',
  '<div class="teacher-live-grid" id="teacherLiveGrid"></div>',
- '<p class="teacher-live-note">실행 도구는 현재 편집기를 떠나지 않는 창에서 열려요. 수업자료로 추가되는 것은 실행 결과의 복사본이에요.</p>'
+ '<p class="teacher-live-note">수업 도구를 닫아도 지금 만들던 자료는 그대로 남아요. ‘결과를 캔버스로’를 누르면 편집 가능한 복사본이 추가돼요.</p>'
 ].join('');
 pane.prepend(bar);
 const dlg=document.createElement('dialog');dlg.id='teacherLiveDialog';dlg.className='teacher-live-dialog';dlg.setAttribute('aria-label','교사 도구 실행 창');
@@ -53,6 +53,8 @@ function open(id){
  dlg.showModal();
  const path=new URL(item.url,location.href);
  if(path.origin!==location.origin)throw Error('외부 도구는 이 창에 열 수 없어요.');
+ // The original app chooses compact navigation only when embedded by this canvas.
+ path.searchParams.set('studioEmbed','1');
  frame.src=path.href;
  window.dispatchEvent(new CustomEvent('gulliver:teacher-live-open',{detail:{id:item.id}}));
 }
