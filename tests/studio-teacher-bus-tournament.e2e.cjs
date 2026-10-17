@@ -117,9 +117,11 @@ test('bus and tournament native creation, confirmation, edit, refresh, undo and 
   // Mobile touch check: same two-tap swap works after reopening a saved project.
   const mobileContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   const phone=await mobileContext.newPage();
-  await phone.goto(base+encodeURIComponent('뚝딱 제작실.html'),{waitUntil:'domcontentloaded'});
-  await phone.evaluate(async id=>{const saved=await GulliverStudioStorage.getProject(id);await GulliverStudioBridge.start('canvas',saved)},saved);
+  // Browser contexts do not share IndexedDB. Import the validated saved
+  // canvas as a portable project instead of pretending devices auto-sync.
+  await phone.goto(studio,{waitUntil:'domcontentloaded'});
   const mobileEditor=phone.frameLocator('#editorFrame');
+  await mobileEditor.locator('body').evaluate(project=>GulliverStudioAdapter.apply(project),reloaded);
   const mobileBusIndex=await mobileEditor.locator('body').evaluate(()=>{
    const A=GulliverStudioAdapter,p=A.capture(),index=p.pages.findIndex(x=>x.teacherSource?.kind==='bus');
    A.apply({...p,active:index});return index;
