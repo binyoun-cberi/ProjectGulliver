@@ -114,6 +114,30 @@ test('bus and tournament native creation, confirmation, edit, refresh, undo and 
   assert.equal(reloaded.pages.length,p.pages.length);
   assert.ok(reloaded.pages.some(x=>x.teacherSource?.kind==='bus'));
   assert.ok(reloaded.pages.some(x=>x.teacherSource?.kind==='tournament'));
+  // Mobile touch check: same two-tap swap works after reopening a saved project.
+  const mobileContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  const phone=await mobileContext.newPage();
+  await phone.goto(base+encodeURIComponent('뚝딱 제작실.html'),{waitUntil:'domcontentloaded'});
+  await phone.evaluate(async id=>{const saved=await GulliverStudioStorage.getProject(id);await GulliverStudioBridge.start('canvas',saved)},saved);
+  const mobileEditor=phone.frameLocator('#editorFrame');
+  const mobileBusIndex=await mobileEditor.locator('body').evaluate(()=>{
+   const A=GulliverStudioAdapter,p=A.capture(),index=p.pages.findIndex(x=>x.teacherSource?.kind==='bus');
+   A.apply({...p,active:index});return index;
+  });
+  assert.ok(mobileBusIndex>=0);
+  const mBefore=await mobileEditor.locator('body').evaluate(()=>GulliverStudioAdapter.capture());
+  const mSeats=mBefore.pages[mBefore.active].elements.filter(x=>Number.isInteger(x.busSeat));
+  assert.ok(mSeats.length>=2);
+  await mobileEditor.locator('#busSwapButton').tap();
+  await mobileEditor.locator('#stage .item[data-bus-seat="'+mSeats[0].busSeat+'"]').tap();
+  await mobileEditor.locator('#stage .item[data-bus-seat="'+mSeats[1].busSeat+'"]').tap();
+  const mAfter=await mobileEditor.locator('body').evaluate(()=>GulliverStudioAdapter.capture());
+  assert.equal(mAfter.pages[mAfter.active].elements.find(x=>x.busSeat===mSeats[0].busSeat).content,mSeats[1].content);
+  await mobileEditor.locator('#undo').tap();
+  const undone=await mobileEditor.locator('body').evaluate(()=>GulliverStudioAdapter.capture());
+  assert.equal(undone.pages[undone.active].elements.find(x=>x.busSeat===mSeats[0].busSeat).content,mSeats[0].content);
+  console.log('CANVAS_BUS_MOBILE_SWAP '+JSON.stringify({width:390,seats:mSeats.length,undoWorks:true}));
+  await mobileContext.close();
   console.log('BUS_TOURNAMENT_LINKED '+JSON.stringify({pages:reloaded.pages.length,tools:2,confirmedOnly:true,generatedAndRefreshed:true,saveReopen:true,champion:victor}));
  }finally{await browser?.close();server.kill('SIGTERM')}
 });
