@@ -216,11 +216,11 @@ body.studio-canvas.canvas-transfer-open #transferBar{background:#f0faf7;border-c
 <div class="shell">
  <nav class="nav" aria-label="제작실 공통 메뉴">
   <a class="brand" href="index.html"><img src="logo.png" alt=""><span class="brand-word">뚝딱 제작실<small>뚝딱교실의 수업자료 작업 공간</small></span></a>
-  <a class="back" href="index.html">← 뚝딱교실 홈으로</a>
+  <a class="back" href="index.html">← 뚝딱교실 홈으로</a><a class="back" href="내 보관함.html">▦ 내 보관함 · 모든 자료</a>
   <button type="button" id="navHome" class="nav-home" aria-current="true"><span class="glyph">⌂</span>제작실 홈</button>
   <div class="nav-heading">제작 도구</div>
   <div id="toolNav" class="tool-buttons"></div>
-  <div class="nav-bottom"><p>도안·발표·문서의 작업 내용은 이 기기의 브라우저에 보관돼요. 그림·PDF의 원본은 별도 저장해야 해요.</p><a class="light-link" href="index.html?view=activities">기존 내 활동 보관함 ↗</a></div>
+  <div class="nav-bottom"><p>도안·발표·문서의 작업 내용은 이 기기의 브라우저에 보관돼요. 그림·PDF의 원본은 별도 저장해야 해요.</p><a class="light-link" href="내 보관함.html">모든 자료를 내 보관함에서 찾기 ↗</a></div>
   <select id="mobileTool" class="mobiletools btn" aria-label="제작 도구 선택"><option value="">제작실 홈</option></select>
  </nav>
  <section class="studio-palette" id="studioPalette" aria-label="공통 삽입 및 템플릿 도구" hidden>
@@ -264,7 +264,7 @@ body.studio-canvas.canvas-transfer-open #transferBar{background:#f0faf7;border-c
   <section class="work-area">
    <div class="intro" id="studioHome">
     <div><span class="eyebrow">모든 수업자료를 한곳에서</span><h1>오늘 필요한 자료, 여기에서 뚝딱.</h1><p>자료를 만들고, 이름을 붙여 보관하고, 다시 수정할 수 있어요. 자주 쓰는 사진도 소재함에 넣어 두고 여러 문서에서 꺼내 쓰세요.</p></div>
-    <div class="start-grid" id="startCards"></div>
+    <a href="내 보관함.html" class="btn soft" style="display:inline-flex;align-items:center;align-self:start;justify-self:start;margin-bottom:6px">▦ 이어서 작업하기 · 전체 보관함 →</a><div class="start-grid" id="startCards"></div>
     <section class="start-latest"><h2>최근에 작업한 자료</h2><p class="note" style="font-size:12px;color:var(--muted)">이 기기에 저장된 도안·발표·문서·영상·음악을 다시 열 수 있어요.</p><div id="recentProjects"></div></section>
    </div>
    <div class="frame-wrap" id="editorArea" hidden>
@@ -287,7 +287,7 @@ body.studio-canvas.canvas-transfer-open #transferBar{background:#f0faf7;border-c
    <div id="inspectorActions" class="inspector-actions"></div>
   </div>
   <section id="inspectorProjects" class="right-pane">
-  <header><h2>내 작업</h2><button id="exportProject" type="button" class="tiny" hidden>원본 백업</button></header>
+  <header><h2>제작실 내 작업</h2><button id="exportProject" type="button" class="tiny" hidden>원본 백업</button></header>
   <p class="note">도안·발표·문서·영상·음악은 자동 저장돼요. 아래에서 검색하거나 폴더별로 정리할 수 있어요.</p>
   <div class="library-controls" aria-label="내 작업 검색 및 정렬">
    <input id="librarySearch" type="search" placeholder="작업 이름 검색" aria-label="작업 이름 검색">
@@ -371,6 +371,6 @@ body.studio-canvas.canvas-transfer-open #transferBar{background:#f0faf7;border-c
 <script src="studio-library.js?v=20261014-31"></script>
 <script src="studio-zip-backup.js?v=20261014-24"></script>
 <script src="studio-storage-ui.js?v=20261014-24"></script>
-<script src="studio-experience.js?v=20261014-unified1"></script>
+<script src="studio-experience.js?v=20261017-library1"></script>
 </body>
 </html>
