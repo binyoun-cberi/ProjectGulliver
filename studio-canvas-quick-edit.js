@@ -107,6 +107,9 @@ function schedule(){if(frame)return;frame=requestAnimationFrame(update)}
 function setControl(id,value,checkbox=false){
  const el=$(id);if(!el)return;
  if(checkbox)el.checked=Boolean(value);else el.value=value;
+ // Native number/select/color properties persist on 'input'; 'change' only
+ // creates the undo checkpoint. Keep exactly the existing editor semantics.
+ if(!checkbox)el.dispatchEvent(new Event('input',{bubbles:true}));
  el.dispatchEvent(new Event('change',{bubbles:true}));
  schedule();
 }
