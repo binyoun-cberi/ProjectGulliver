@@ -6,6 +6,8 @@ const A=window.GulliverStudioAdapter,S=window.GulliverTeacherSnapshots,N=window.
 const pane=document.querySelector('.design-pane[data-pane="teacher"]');
 if(!A||!S||!N||!pane)return;
 const tools=[
+ {id:'bus',icon:'▥',name:'버스 좌석 배치',url:'버스 좌석 배치 프로그램.html',summary:'확정한 10열×4석 자리표·통로를 편집 가능한 도안으로'},
+ {id:'tournament',icon:'♜',name:'토너먼트 메이커',url:'토너먼트 메이커.html',summary:'실제 경기 대진과 승패를 편집 가능한 대진표로'},
  {id:'lesson',icon:'▣',name:'이번 수업 알리미',url:'이번 수업 알리미.html',summary:'학습 목표·활동을 편집 가능한 안내판으로'},
  {id:'groups',icon:'▦',name:'모둠 만들기',url:'행운의 모둠 메이커.html',summary:'확정된 모둠별 이름표·모둠표 만들기'},
  {id:'roles',icon:'◇',name:'학급 역할 배정',url:'학급 배정 도우미.html',summary:'확정된 역할·담당자 표 만들기'},
@@ -38,7 +40,7 @@ const grid=bar.querySelector('#teacherLiveGrid'),frame=dlg.querySelector('#teach
  status=dlg.querySelector('#teacherLiveStatus');
 let current=null;
 const copyButton=dlg.querySelector('#teacherCopyResult'),refreshButton=dlg.querySelector('#teacherRefreshResult');
-const nextKinds=['lesson','groups','roles'];
+const nextKinds=['lesson','groups','roles','bus','tournament'];
 function linked(){return current&&nextKinds.includes(current.id)?A.linkedTeacherSource?.(current.id):null}
 function updateRefreshButton(){refreshButton.hidden=!linked();}
 const directKinds=['timer','quiz','seating','check'];
