@@ -39,5 +39,6 @@ test('oversized, malformed or empty activity inputs are rejected explicitly',()=
  assert.throws(()=>T.quizCards([],{}),/낱말카드/);
  assert.throws(()=>T.convertActivity({kind:'roulette',payload:{}},{layout:'wide'}),/변환/);
  assert.throws(()=>T.checklist({students:[]}),/학생/);
- assert.throws(()=>T.seatingPlan({cols:8,rows:8}),/48개/);
+ assert.equal(T.seatingPlan({cols:8,rows:8}).pages.length,1);
+ assert.ok(T.seatingPlan({cols:10,rows:8}).pages.every(p=>p.elements.length<=150));
 });
