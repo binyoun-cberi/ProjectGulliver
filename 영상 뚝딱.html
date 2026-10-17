@@ -54,16 +54,17 @@ label input,label select{width:100%;min-width:0;border:1px solid #cdd6e3;border-
  .official-edit-note .native-import input[hidden]{display:none}
 #officialStatus[data-state="loading"]{color:#6e599a}
 #officialStatus[data-state="ready"]{color:#26764d}
-</style></head><body data-official-kind="video">
+</style><link rel="stylesheet" href="media-editors-v52.css?v=20261017-v52"></head><body data-official-kind="video">
 <header class="top"><div><h1>영상 뚝딱</h1><p style="margin:5px 0 0">사진·짧은 영상 클립을 이어 붙여 우리 반 기록 영상을 만들어요.</p></div><div class="actions"><button id="previewPlay">▶ 미리보기</button><button id="stopPreview">■ 멈춤</button><button id="exportVideo" class="primary">영상 내보내기</button></div></header>
+<div class="workflow-save" role="note"><strong>저장 위치</strong><span>제작실에서 열면 간편 작업은 브라우저에 자동 저장돼요. 단독으로 열면 내보내기 파일을 직접 보관해야 해요. 고급 프로젝트는 별도 사본으로 저장하며 자동으로 서로 변환되지 않아요.</span><a href="내 보관함.html">내 보관함 ↗</a></div>
 <section class="media-mode-switch" aria-label="제작 모드 선택"><div class="media-mode-tabs" role="tablist"><button id="simpleMode" type="button" role="tab" aria-selected="true">간편 편집</button><button id="officialMode" type="button" role="tab" aria-selected="false" disabled>고급 편집 · FilmCraft</button></div><p id="officialDescription" class="media-mode-description"></p><p id="officialStatus" role="status" aria-live="polite"></p></section>
 <div id="simpleEditor"><main class="workspace">
-<aside class="panel"><h2>영상 기본 설정</h2>
+<aside class="panel"><div class="media-step">1 · 소재와 작업 설정</div><h2>영상 기본 설정</h2>
 <label for="titleInput">작업 이름<input id="titleInput" maxlength="90"></label>
 <label for="captionInput">화면 아래 제목<input id="captionInput" maxlength="90"></label>
 <label for="formatInput">화면 크기<select id="formatInput"><option value="wide">가로형 16:9</option><option value="square">정사각형 1:1</option></select></label>
-<label for="clipFiles" class="button" style="cursor:pointer;text-align:center;display:block">+ 사진·영상 추가<input id="clipFiles" type="file" accept="image/png,image/jpeg,video/mp4,video/webm" multiple hidden></label>
-<label for="audioFile" class="button" style="cursor:pointer;text-align:center;display:block">+ 배경음악 WAV 넣기<input id="audioFile" type="file" accept=".wav,audio/wav,audio/x-wav,audio/wave" hidden></label>
+<label for="clipFiles" class="button" style="cursor:pointer;text-align:center;display:block">+ 사진·영상 추가<input id="clipFiles" type="file" accept="image/png,image/jpeg,video/mp4,video/webm,video/quicktime,.mov" multiple hidden></label>
+<div id="fileProgress" class="file-progress" hidden><strong id="fileProgressText">파일 확인 중…</strong><progress id="fileProgressBar" max="100" value="0"></progress><span>원본을 이 브라우저의 저장 공간에 추가하고 있어요.</span></div><hr class="media-separator"><h3 style="margin-bottom:8px">이 기기의 사진·영상·음악 소재</h3><p style="margin:3px 0 9px">썸네일을 눌러 장면이나 배경음악에 다시 사용하세요. 이미 저장한 원본을 복사하지 않아요.</p><div id="mediaShelf" class="media-shelf" aria-label="저장된 사진 영상과 음악 소재"></div><button id="refreshMediaShelf" type="button" style="width:100%;margin:10px 0">소재 목록 새로고침</button><label for="audioFile" class="button" style="cursor:pointer;text-align:center;display:block">+ 배경음악 WAV 넣기<input id="audioFile" type="file" accept=".wav,audio/wav,audio/x-wav,audio/wave" hidden></label>
 <div class="soundtrack-settings">
  <p><strong id="soundtrackName">배경음악 없음</strong></p>
  <label for="audioVolume">배경음악 음량 <input id="audioVolume" type="range" min="0" max="1" step="0.05" value="0.7"></label>
@@ -75,10 +76,14 @@ label input,label select{width:100%;min-width:0;border:1px solid #cdd6e3;border-
 <p class="note"><strong>출력:</strong> Chrome 등 지원 브라우저에서는 WebM 영상으로 저장해요. WAV 배경음악을 넣으면 영상과 함께 WebM에 저장해요. 원본 영상 클립의 소리는 아직 합치지 않아요. 일부 iPhone Safari 환경에서는 영상 내보내기가 지원되지 않을 수 있어요.</p>
 </aside>
 <section class="editor">
-<h2>영상 미리보기</h2>
+<div class="media-step">2 · 장면을 보고 길이 조절</div><h2>영상 미리보기</h2>
 <div id="stage" class="stage"><div id="placeholder" class="placeholder">왼쪽에서 사진이나 짧은 영상을 넣어 주세요.</div><video id="previewVideo" preload="metadata" muted playsinline hidden></video><img id="previewImage" alt="현재 영상의 이미지 장면" hidden><div id="previewCaption" class="overlay"></div></div>
 <p id="previewStatus" aria-live="polite">장면을 추가하면 여기에서 확인할 수 있어요.</p>
 <h3>장면 순서 · 재생 구간 <span id="durationTotal"></span></h3>
+<p class="timeline-help">장면을 누르면 미리 볼 수 있어요. 오른쪽 진한 손잡이를 드래그해서 길이를 줄이거나 늘려 보세요. 아래 조절 막대나 숫자로도 바꿀 수 있어요.</p>
+<div class="timeline-ruler" aria-hidden="true"><span>0초</span><span>15초</span><span>30초</span><span>45초</span></div>
+<div id="timelineOverview" class="timeline-overview" role="group" aria-label="45초 영상 장면 타임라인"></div>
+<div id="timelineSelected" class="timeline-selected" hidden><strong id="selectedClipName">선택한 장면</strong><label for="selectedClipLength">장면 길이</label><input type="range" id="selectedClipLength" min=".5" max="20" step=".1" value="4"><output id="selectedClipTime">4.0초</output></div>
 <div id="clipList" class="timeline"></div>
 <p id="msg" role="status" aria-live="polite"></p>
 </section></main></div>
@@ -98,4 +103,4 @@ label input,label select{width:100%;min-width:0;border:1px solid #cdd6e3;border-
  <iframe id="officialEditorFrame" title="FilmCraft 공식 ArtCraft 고급 편집기" allow="fullscreen; autoplay; microphone; clipboard-read; clipboard-write"></iframe>
  <p class="media-disclaimer">이 화면의 FilmCraft는 ArtCraft 팀이 배포한 공식 웹 프로그램입니다. 기존 간편 제작기와 작업 파일이 자동으로 합쳐지지는 않습니다. 공식 프로젝트를 보관할 수 있지만 자동 저장되지는 않습니다. FilmCraft 프로젝트에 연결된 영상·사진 원본은 따로 보관하세요.</p>
 </section>
-<script src="studio-media-core.js"></script><script src="studio-storage.js?v=20261014-24"></script><script src="video-ttak.js?v=20261013-22"></script><script src="studio-official-project-core.js?v=20261014-23"></script><script src="studio-official-media.js?v=20261014-23"></script></body></html>
+<script src="studio-media-core.js"></script><script src="studio-storage.js?v=20261014-24"></script><script src="media-timeline.js?v=20261017-v52"></script><script src="video-ttak.js?v=20261017-v52"></script><script src="studio-official-project-core.js?v=20261014-23"></script><script src="studio-official-media.js?v=20261014-23"></script></body></html>

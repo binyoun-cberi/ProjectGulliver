@@ -1,7 +1,8 @@
 (()=>{
 'use strict';
-const C=window.GulliverMediaCore,S=window.GulliverStudioStorage,$=id=>document.getElementById(id);
-let model=C.makeVideo(),current=-1,urls=[],generation=0,playing=false,exporting=false,stopRequested=false;
+const C=window.GulliverMediaCore,S=window.GulliverStudioStorage,P=window.GulliverMediaTimeline,$=id=>document.getElementById(id);
+let model=C.makeVideo(),current=-1,urls=[],generation=0,playing=false,exporting=false,stopRequested=false,shelfTicket=0;
+const thumbCache=new Map();
 const status=(s,bad=false)=>{$('msg').textContent=s;$('msg').style.color=bad?'#b3374f':'#277a56'};
 const uuid=()=>crypto.randomUUID?.()||'media_'+Date.now().toString(36)+Math.random().toString(36).slice(2);
 function freeUrls(){for(const u of urls)URL.revokeObjectURL(u);urls=[];}
@@ -28,7 +29,146 @@ async function showClip(i){
  $('previewStatus').textContent=(i+1)+'번째 장면 · '+clip.name+' · '+clip.duration.toFixed(1)+'초';
  $('previewCaption').textContent=model.caption;
  for(const x of document.querySelectorAll('#clipList .clip'))x.classList.toggle('active',Number(x.dataset.index)===i);
+ renderTimeline();
 }
+async function thumbnail(mediaId,mime,start=0){
+ const key=mediaId+'@'+Math.round(start*10);
+ if(thumbCache.has(key))return thumbCache.get(key);
+ const entry=await S.getMedia(mediaId);if(!entry?.blob)return '';
+ const u=URL.createObjectURL(entry.blob),canvas=document.createElement('canvas');
+ canvas.width=168;canvas.height=95;const ctx=canvas.getContext('2d');
+ if(!ctx){URL.revokeObjectURL(u);return ''}
+ let media;
+ try{
+  if(mime.startsWith('image/')){
+   media=new Image();
+   await Promise.race([
+    new Promise((ok,bad)=>{media.onload=ok;media.onerror=()=>bad(Error('사진을 읽지 못함'));media.src=u}),
+    new Promise((_,bad)=>setTimeout(()=>bad(Error('사진 시간 초과')),4500))
+   ]);
+  }else if(mime.startsWith('video/')){
+   media=document.createElement('video');media.muted=true;media.playsInline=true;media.preload='auto';media.src=u;
+   await Promise.race([
+    new Promise((ok,bad)=>{
+     media.onerror=()=>bad(Error('영상 정보를 읽지 못함'));
+     media.onloadeddata=()=>{if(start>0&&Number.isFinite(media.duration)){media.onseeked=ok;media.currentTime=Math.min(start,Math.max(0,media.duration-.05))}else ok()};
+    }),
+    new Promise((_,bad)=>setTimeout(()=>bad(Error('영상 썸네일 시간 초과')),3500))
+   ]);
+  }else return '';
+  const w=media.videoWidth||media.naturalWidth,h=media.videoHeight||media.naturalHeight;
+  if(!w||!h)return '';
+  const ratio=Math.min(canvas.width/w,canvas.height/h);
+  ctx.fillStyle='#27334e';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(media,(canvas.width-w*ratio)/2,(canvas.height-h*ratio)/2,w*ratio,h*ratio);
+  const data=canvas.toDataURL('image/jpeg',.67);
+  if(thumbCache.size>32)thumbCache.clear();
+  thumbCache.set(key,data);return data;
+ }catch{return ''}finally{
+  if(media?.tagName==='VIDEO'){media.pause();media.removeAttribute('src');media.load()}
+  URL.revokeObjectURL(u);
+ }
+}
+function attachThumb(container,id,mime,start){
+ if(!mime.startsWith('video/')&&!mime.startsWith('image/'))return;
+ thumbnail(id,mime,start).then(data=>{
+  if(!data||!container.isConnected)return;
+  const img=document.createElement('img');img.src=data;img.alt='';container.replaceChildren(img);
+ }).catch(()=>{});
+}
+function renderTimeline(){
+ const root=$('timelineOverview'),selected=$('timelineSelected'),slider=$('selectedClipLength');
+ root.replaceChildren();
+ for(const part of P.segments(model.clips)){
+  const clip=model.clips[part.index],piece=document.createElement('div');
+  piece.className='timeline-segment';piece.style.width=part.width+'%';
+  piece.setAttribute('aria-current',String(part.index===current));
+  const choose=document.createElement('button');
+  choose.type='button';choose.className='segment-select';
+  choose.setAttribute('aria-label',(part.index+1)+'번 '+clip.name+', '+clip.duration.toFixed(1)+'초 보기');
+  choose.style.cssText='display:block;width:100%;height:100%;min-width:0;padding:4px 1px;border:0;background:transparent;text-align:left;color:inherit;border-radius:0';
+  const name=document.createElement('span');name.className='segment-name';name.textContent=(part.index+1)+'. '+clip.name;
+  const time=document.createElement('span');time.className='segment-time';time.textContent=clip.duration.toFixed(1)+'초';
+  choose.append(name,time);
+  choose.onclick=()=>showClip(part.index).then(renderTimeline).catch(e=>status(e.message,true));
+  const grip=document.createElement('span');grip.className='segment-grip';grip.textContent='⋮';
+  grip.tabIndex=0;grip.setAttribute('role','slider');grip.setAttribute('aria-label',clip.name+' 장면 끝 지점');
+  const bounds=P.bounds(model.clips,part.index);
+  grip.setAttribute('aria-valuemin',bounds.min);grip.setAttribute('aria-valuemax',bounds.max);
+  grip.setAttribute('aria-valuenow',clip.duration);grip.setAttribute('aria-valuetext',clip.duration.toFixed(1)+'초');
+  grip.onkeydown=e=>{
+   if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+   e.preventDefault();
+   model.clips=P.resize(model.clips,part.index,clip.duration+(e.key==='ArrowRight'?.5:-.5));
+   current=part.index;rerender();showClip(current).catch(err=>status(err.message,true));
+  };
+  grip.onpointerdown=e=>{
+   if(e.button!==0)return;e.preventDefault();e.stopPropagation();
+   const startX=e.clientX,original=clip.duration,source=model.clips.map(x=>({...x})),trackWidth=root.getBoundingClientRect().width;
+   let pending=source;
+   grip.setPointerCapture(e.pointerId);
+   grip.onpointermove=event=>{
+    if(!grip.hasPointerCapture(event.pointerId))return;
+    pending=P.dragDuration(source,part.index,original,event.clientX-startX,trackWidth);
+    piece.style.width=(pending[part.index].duration/P.MAX_SECONDS*100)+'%';
+    time.textContent=pending[part.index].duration.toFixed(1)+'초';
+    grip.setAttribute('aria-valuenow',pending[part.index].duration);
+    grip.setAttribute('aria-valuetext',pending[part.index].duration.toFixed(1)+'초');
+    $('durationTotal').textContent='('+P.total(pending).toFixed(1)+' / 45초)';
+   };
+   grip.onpointerup=event=>{
+    if(grip.hasPointerCapture(event.pointerId))grip.releasePointerCapture(event.pointerId);
+    grip.onpointermove=null;grip.onpointerup=null;grip.onpointercancel=null;
+    model.clips=pending;current=part.index;rerender();showClip(current).catch(err=>status(err.message,true));
+   };
+   grip.onpointercancel=()=>{
+    grip.onpointermove=null;grip.onpointerup=null;grip.onpointercancel=null;rerender();
+   };
+  };
+  piece.append(choose,grip);root.append(piece);
+ }
+ const clip=model.clips[current];
+ selected.hidden=!clip;
+ if(clip){
+  $('selectedClipName').textContent=(current+1)+'번 · '+clip.name;
+  const bounds=P.bounds(model.clips,current);
+  slider.max=bounds.max;slider.min=bounds.min;slider.value=clip.duration;
+  $('selectedClipTime').textContent=clip.duration.toFixed(1)+'초';
+ }
+}
+async function addStoredClip(media){
+ if(!media?.blob||!C.fileAllowed({type:media.mime,size:media.blob.size}))throw Error('지원하지 않는 원본이에요.');
+ if(model.clips.length>=C.VIDEO_CLIPS)throw Error('장면은 최대 5개까지예요.');
+ let seconds=media.mime.startsWith('video/')?await durationFromVideo(media.blob):4;
+ seconds=Math.min(seconds,C.VIDEO_SECONDS-duration());
+ if(seconds<.5)throw Error('영상 총 길이는 45초를 넘을 수 없어요.');
+ model.clips.push({mediaId:media.id,name:String(media.name||'소재').slice(0,75),mime:media.mime,start:0,duration:seconds});
+ current=model.clips.length-1;rerender();await showClip(current);
+ status('저장된 소재를 새 장면에 연결했어요. 원본은 중복 저장하지 않았어요.');
+}
+async function renderShelf(){
+ const ticket=++shelfTicket,root=$('mediaShelf');
+ root.replaceChildren();
+ try{
+  const media=(await S.media()).filter(x=>x?.blob&&(C.fileAllowed({type:x.mime,size:x.blob.size})||C.audioAllowed({type:x.mime,size:x.blob.size})));
+  if(ticket!==shelfTicket)return;
+  if(!media.length){const p=document.createElement('p');p.className='media-shelf-empty';p.textContent='저장한 사진이나 영상이 아직 없어요. 위의 추가 버튼으로 파일을 골라 주세요.';root.append(p);return}
+  for(const entry of media){
+   const button=document.createElement('button');button.type='button';
+   const image=document.createElement('span');image.className='thumb';image.textContent=entry.mime.startsWith('audio/')?'♫':entry.mime.startsWith('video/')?'▶':'▧';
+   const name=document.createElement('span');name.className='filename';name.textContent=entry.name;
+   const meta=document.createElement('small');meta.textContent=entry.mime.startsWith('audio/')?'배경음악으로 사용':'장면에 사용';
+   button.title=entry.name+' · '+meta.textContent;
+   button.append(image,name,meta);root.append(button);
+   attachThumb(image,entry.id,entry.mime,0);
+   button.onclick=async()=>{button.disabled=true;
+    try{if(entry.mime.startsWith('audio/'))await attachStoredAudio(entry);else await addStoredClip(entry)}
+    catch(e){status(e.message,true)}finally{button.disabled=false}
+   };
+  }
+ }catch(e){const p=document.createElement('p');p.className='media-shelf-empty';p.textContent='소재를 읽지 못했어요: '+e.message;root.append(p)}
+}
+
 function rerender(){
  model=C.validateVideo(model);
  $('titleInput').value=model.title;$('captionInput').value=model.caption;$('formatInput').value=model.format;
@@ -42,8 +182,10 @@ function rerender(){
  $('durationTotal').textContent='('+duration().toFixed(1)+' / 45초)';
  model.clips.forEach((clip,i)=>{
   const card=document.createElement('article');card.className='clip'+(i===current?' active':'');card.dataset.index=String(i);
+  const thumbnailHost=document.createElement('span');thumbnailHost.className='clip-thumb';thumbnailHost.textContent=clip.mime.startsWith('video/')?'▶':'▧';
+  const body=document.createElement('div');body.className='clip-content';
   const header=document.createElement('header'),name=document.createElement('strong');name.textContent=(i+1)+'. '+clip.name;
-  const meta=document.createElement('small');meta.textContent=(clip.mime.startsWith('video/')?'영상':'사진')+' · '+clip.duration.toFixed(1)+'초';header.append(name,meta);card.append(header);
+  const meta=document.createElement('small');meta.textContent=(clip.mime.startsWith('video/')?'영상':'사진')+' · '+clip.duration.toFixed(1)+'초';header.append(name,meta);body.append(header);
   const controls=document.createElement('div');controls.className='clip-controls';
   for(const [label,action] of [['보기',()=>showClip(i)],['↑',()=>move(i,-1)],['↓',()=>move(i,1)],['삭제',()=>removeClip(i)]]){
    const b=document.createElement('button');b.type='button';b.textContent=label;b.disabled=(label==='↑'&&i===0)||(label==='↓'&&i===model.clips.length-1);
@@ -57,9 +199,11 @@ function rerender(){
   const time=document.createElement('label');time.textContent='길이(초)';
   const number=document.createElement('input');number.type='number';number.min='.5';number.max='20';number.step='.5';number.value=clip.duration;
   number.addEventListener('change',()=>{const old=clip.duration;clip.duration=Number(number.value);validateEdit(()=>clip.duration=old)});
-  time.append(number);controls.append(time);card.append(controls);root.append(card);
+  time.append(number);controls.append(time);body.append(controls);card.append(thumbnailHost,body);root.append(card);
+  attachThumb(thumbnailHost,clip.mediaId,clip.mime,clip.start);
  });
  if(!model.clips.length){const p=document.createElement('p');p.textContent='아직 장면이 없어요. 사진·영상을 추가하면 순서를 바꿀 수 있어요.';root.append(p)}
+ renderTimeline();
 }
 function validateEdit(undo){
  try{model=C.validateVideo(model);if(duration()>45)throw Error('영상은 45초까지 만들 수 있어요.');rerender();status('장면을 수정했어요.');}
@@ -87,7 +231,7 @@ async function addAudio(file){
  const id=uuid(),name=String(file.name||'배경음악.wav').slice(0,90);
  await S.saveMedia({id,name,mime:'audio/wav',blob:new Blob([file],{type:'audio/wav'}),createdAt:Date.now()});
  model.audio={mediaId:id,name,mime:'audio/wav',volume:0.7,loop:true};
- rerender();status('배경음악을 연결했어요. WebM 저장 시 음악이 합쳐져요.');
+ rerender();renderShelf();status('배경음악을 연결했어요. WebM 저장 시 음악이 합쳐져요.');
 }
 async function attachStoredAudio(media){
  const stored=media?.id&&await S.getMedia(media.id);
@@ -105,15 +249,26 @@ async function addClip(file){
  const id=uuid();
  await S.saveMedia({id,name:String(file.name||'공유 이미지.png').slice(0,90),mime:file.type,blob:file,createdAt:Date.now()});
  model.clips.push({mediaId:id,name:String(file.name||'공유 이미지.png').slice(0,75),mime:file.type,start:0,duration:seconds});
- current=model.clips.length-1;rerender();await showClip(current);status('장면을 기기 보관함에 추가했어요.');
+ current=model.clips.length-1;rerender();await showClip(current);renderShelf();status('장면을 기기 보관함에 추가했어요.');
 }
 $('cleanupMedia').addEventListener('click',async()=>{
  try{
   const projects=await S.projects(),used=new Set(model.clips.map(c=>c.mediaId));
   if(model.audio)used.add(model.audio.mediaId);
-  for(const p of projects)if(p.kind==='video'){
-   for(const c of p.payload?.clips||[])used.add(c.mediaId);
-   if(p.payload?.audio?.mediaId)used.add(p.payload.audio.mediaId);
+  for(const p of projects){
+   const payload=p.payload||{};
+   if(p.kind==='video'){
+    for(const c of payload.clips||[])if(c.mediaId)used.add(c.mediaId);
+    if(payload.audio?.mediaId)used.add(payload.audio.mediaId);
+   }
+   // Canvas pages and music tracks use the same IndexedDB media store.
+   // Never classify their sources as unused merely because this video editor
+   // does not render those projects.
+   if(p.kind==='canvas'){
+    if(payload.audio?.mediaId)used.add(payload.audio.mediaId);
+    for(const c of payload.tracks||[])if(c.mediaId)used.add(c.mediaId);
+    for(const page of payload.pages||[])if(page.videoClip?.mediaId)used.add(page.videoClip.mediaId);
+   }
   }
   const orphans=(await S.media()).filter(m=>!used.has(m.id));
   if(!orphans.length){status('지울 수 있는 미사용 영상 원본이 없어요.');return}
@@ -130,8 +285,17 @@ $('audioVolume').addEventListener('input',e=>{if(model.audio){model.audio.volume
 $('audioLoop').addEventListener('change',e=>{if(model.audio)model.audio.loop=e.target.checked});
 $('removeAudio').addEventListener('click',()=>{model.audio=null;rerender();status('영상에서 배경음악을 제외했어요.')});
 $('clipFiles').addEventListener('change',async e=>{
- const files=[...e.target.files||[]];e.target.value='';
- for(const f of files){try{await addClip(f)}catch(err){status(err.message,true);break}}
+ const files=[...e.target.files||[]];e.target.value='';if(!files.length)return;
+ const host=$('fileProgress'),bar=$('fileProgressBar'),label=$('fileProgressText');
+ host.hidden=false;bar.value=0;let done=0;
+ for(const file of files){
+  label.textContent=(done+1)+' / '+files.length+' · '+file.name+' 확인 중';
+  try{await addClip(file);done++;bar.value=Math.round(done/files.length*100)}
+  catch(err){status(err.message,true);break}
+ }
+ label.textContent=done===files.length?'추가 완료: '+done+'개':'확인 완료: '+done+'개 / '+files.length+'개';
+ if(done)renderShelf();
+ setTimeout(()=>{host.hidden=true},1400);
 });
 for(const [field,key] of [['titleInput','title'],['captionInput','caption'],['formatInput','format']]){
  $(field).addEventListener('input',e=>{model[key]=e.target.value;$('previewCaption').textContent=model.caption;$('stage').classList.toggle('square',model.format==='square')});
@@ -220,9 +384,17 @@ async function sequence(record=false){
 }
 $('previewPlay').onclick=()=>{if(!model.clips.length)return status('먼저 장면을 추가해 주세요.',true);sequence(false).catch(e=>status(e.message,true))};
 $('exportVideo').onclick=()=>{if(!model.clips.length)return status('먼저 장면을 추가해 주세요.',true);sequence(true).catch(e=>status(e.message,true))};
+$('refreshMediaShelf').addEventListener('click',renderShelf);
+$('selectedClipLength').addEventListener('input',e=>{$('selectedClipTime').textContent=Number(e.target.value).toFixed(1)+'초'});
+$('selectedClipLength').addEventListener('change',e=>{
+ if(current<0)return;
+ model.clips=P.resize(model.clips,current,Number(e.target.value));
+ rerender();showClip(current).catch(err=>status(err.message,true));
+ status('선택한 장면 길이를 바꿨어요.');
+});
 window.GulliverStudioAdapter={kind:'video',capture:()=>JSON.parse(JSON.stringify(C.validateVideo(model))),
  apply:raw=>{stop();model=C.validateVideo(raw);current=model.clips.length?0:-1;rerender();showClip(current).catch(e=>status(e.message,true))},
  rename:label=>{model.title=String(label).slice(0,90);rerender()},
  insertImage:async file=>addClip(file),insertAudio:addAudio,attachStoredAudio};
 window.addEventListener('pagehide',()=>{stop();freeUrls()});
-rerender();})();
+rerender();renderShelf();})();

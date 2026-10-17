@@ -1,8 +1,42 @@
 (()=>{
 'use strict';
 const C=window.GulliverMediaCore,M=window.GulliverMusicCore,$=id=>document.getElementById(id);
-let model=C.makeMusic(),url='';
+let model=C.makeMusic(),url='',seekStep=0;
 function notify(s,bad=false){$('msg').textContent=s;$('msg').style.color=bad?'#ac3b50':'#2d7b57';}
+function seconds(){return model.loops*16*.25*60/model.bpm+.5}
+function stamp(value){const n=Math.max(0,Math.floor(value)||0);return Math.floor(n/60)+':'+String(n%60).padStart(2,'0')}
+function stepAt(value){const beat=.25*60/model.bpm;return Math.max(0,Math.min(15,Math.floor(Math.max(0,value)/beat)%16))}
+function syncPlayhead(){
+ const audio=$('audioPreview'),range=$('musicScrub');
+ const time=Math.max(0,Number(audio.currentTime)||0),total=seconds();
+ range.disabled=!Boolean(audio.getAttribute('src'));
+ range.max=String(total);range.value=String(Math.min(time,total));
+ $('musicCurrentTime').textContent=stamp(time);$('musicTotalTime').textContent=stamp(total);
+ const active=audio.paused?seekStep:stepAt(time);
+ document.querySelectorAll('#musicRuler [data-step]').forEach(b=>b.classList.toggle('playing',Number(b.dataset.step)===active&&!audio.paused));
+ document.querySelectorAll('#beatGrid .beat-button').forEach(b=>b.classList.toggle('playing',Number(b.dataset.step)===active&&!audio.paused));
+}
+function renderRuler(){
+ const root=$('musicRuler');root.replaceChildren();
+ for(let step=0;step<16;step++){
+  const button=document.createElement('button');
+  button.type='button';button.dataset.step=String(step);
+  const count=C.TRACKS.filter(t=>model.notes[t].includes(step)).length;
+  button.textContent=String(step+1);
+  const label=document.createElement('small');label.textContent=count?count+'개 소리':'쉼';button.append(label);
+  button.classList.toggle('active',step===seekStep);
+  button.setAttribute('aria-label',(step+1)+'번째 박자 · '+count+'개 소리 · 재생 위치 이동');
+  button.onclick=()=>{
+   seekStep=step;
+   const audio=$('audioPreview'),time=step*.25*60/model.bpm;
+   if(audio.getAttribute('src')){audio.currentTime=time;syncPlayhead()}
+   root.querySelectorAll('button').forEach(b=>b.classList.toggle('active',Number(b.dataset.step)===step));
+   notify((step+1)+'번째 박자를 선택했어요. 악기 칸을 눌러 소리를 조절하세요.');
+  };
+  root.append(button);
+ }
+ syncPlayhead();
+}
 function rebuild(){
  model=C.validateMusic(model);
  for(const key of ['title','bpm','loops','melodyPitch'])$(key==='title'?'titleInput':key+'Input')?.setAttribute?.('data-connected','true');
@@ -15,16 +49,17 @@ function rebuild(){
   for(let i=0;i<C.BEATS;i++){
    const b=document.createElement('button');b.type='button';b.className='beat-button';b.dataset.track=track;b.dataset.step=String(i);
    b.setAttribute('aria-label',name+' '+(i+1)+'번째 박자');b.setAttribute('aria-pressed',String(model.notes[track].includes(i)));
-   b.onclick=()=>{const steps=new Set(model.notes[track]);if(steps.has(i))steps.delete(i);else steps.add(i);model.notes[track]=[...steps].sort((a,b)=>a-b);b.setAttribute('aria-pressed',String(steps.has(i)));notify('박자를 변경했어요. WAV로 저장하거나 들어보세요.');};
+   b.onclick=()=>{const steps=new Set(model.notes[track]);if(steps.has(i))steps.delete(i);else steps.add(i);model.notes[track]=[...steps].sort((a,b)=>a-b);b.setAttribute('aria-pressed',String(steps.has(i)));notify('박자를 변경했어요. WAV로 저장하거나 들어보세요.');renderRuler();};
    grid.append(b);
   }
  }
+ renderRuler();
 }
 for(const [id,key] of [['titleInput','title'],['bpmInput','bpm'],['loopsInput','loops'],['melodyPitch','melodyPitch']]){
  $(id).addEventListener('input',e=>{const val=key==='title'?e.target.value:Number(e.target.value);model[key]=val;notify('설정을 변경했어요.');});
  $(id).addEventListener('change',()=>{model=C.validateMusic(model);rebuild()});
 }
-function stop(){const a=$('audioPreview');a.pause();a.currentTime=0;}
+function stop(){const a=$('audioPreview');a.pause();a.currentTime=0;syncPlayhead();}
 function renderAudio(){
  const bytes=M.waveform(C.validateMusic(model));
  return new Blob([bytes],{type:'audio/wav'});
@@ -32,7 +67,7 @@ function renderAudio(){
 $('playMusic').onclick=()=>{
  try{
   stop();if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(renderAudio());
-  const a=$('audioPreview');a.src=url;a.play().catch(()=>notify('재생이 차단되었어요. 재생 버튼을 다시 눌러 주세요.',true));
+  const a=$('audioPreview');a.src=url;seekStep=0;a.play().then(syncPlayhead).catch(()=>notify('재생이 차단되었어요. 재생 버튼을 다시 눌러 주세요.',true));
   notify('현재 음악을 미리 듣고 있어요.');
  }catch(e){notify('음악 생성 오류: '+e.message,true)}
 };
@@ -47,6 +82,15 @@ $('exportWav').onclick=()=>{
 for(const b of document.querySelectorAll('[data-template]'))b.onclick=()=>{
  model=C.validateMusic(M.presets()[b.dataset.template]);stop();rebuild();notify('선택한 음악으로 바꿨어요.');
 };
+$('musicScrub').addEventListener('input',e=>{
+ const audio=$('audioPreview'),time=Math.min(seconds(),Math.max(0,Number(e.target.value)||0));
+ seekStep=stepAt(time);
+ if(audio.getAttribute('src'))audio.currentTime=time;
+ $('musicCurrentTime').textContent=stamp(time);
+ document.querySelectorAll('#musicRuler [data-step]').forEach(b=>b.classList.toggle('active',Number(b.dataset.step)===seekStep));
+ syncPlayhead();
+});
+for(const name of ['timeupdate','seeking','seeked','play','pause','ended','loadedmetadata'])$('audioPreview').addEventListener(name,syncPlayhead);
 window.GulliverStudioAdapter={kind:'music',capture:()=>JSON.parse(JSON.stringify(C.validateMusic(model))),
  apply:p=>{model=C.validateMusic(p);stop();rebuild()},rename:title=>{model.title=String(title).slice(0,90);rebuild()},exportAudio:renderAudio};
 window.addEventListener('pagehide',()=>{stop();if(url)URL.revokeObjectURL(url)});
