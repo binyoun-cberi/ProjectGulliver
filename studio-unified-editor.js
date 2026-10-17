@@ -16,6 +16,7 @@ const busSwapHint=document.createElement('span');busSwapHint.id='busSwapHint';
 busSwapHint.textContent='두 학생을 차례로 누르면 서로 자리를 바꿔요. 원본 배정표는 바뀌지 않아요.';
 busSwapBar.append(busSwapButton,busSwapHint);
 $('stageView').before(busSwapBar);
+let elementClipboard=null,clipboardPasteCount=0;
 const clone=obj=>JSON.parse(JSON.stringify(obj)),page=()=>model.pages[model.active],
   current=()=>selectedIds.size===1?page().elements.find(e=>e.id===selected&&!e.locked&&!e.hidden)||null:null;
 function selectable(e){return !!e&&!e.locked&&!e.hidden}
@@ -372,11 +373,59 @@ function duplicateSelected(){
  if(page().elements.length+items.length>C.MAX_ITEMS)return notice('요소를 더 추가할 수 없어요.',true);
  const groups=new Map(),copies=items.map(e=>{
   const copy={...clone(e),id:C.id(),x:e.x+18,y:e.y+18};
+  delete copy.busSeat;
   if(e.groupId){if(!groups.has(e.groupId))groups.set(e.groupId,C.groupId());copy.groupId=groups.get(e.groupId)}
   return copy;
  });
  edit(()=>page().elements.push(...copies),'');
  choose(copies.map(e=>e.id));render();
+}
+function quickElementAction(action,targetId){
+ if(action==='paste'){
+  if(!elementClipboard?.length)return notice('먼저 요소를 복사해 주세요.',true);
+  if(page().elements.length+elementClipboard.length>C.MAX_ITEMS)return notice('이 페이지에 요소를 더 추가할 수 없어요.',true);
+  const groups=new Map(),offset=24*(++clipboardPasteCount);
+  const pasted=elementClipboard.map(raw=>{
+   const e={...clone(raw),id:C.id(),x:raw.x+offset,y:raw.y+offset};
+   delete e.busSeat;
+   if(e.groupId){if(!groups.has(e.groupId))groups.set(e.groupId,C.groupId());e.groupId=groups.get(e.groupId)}
+   return e;
+  });
+  edit(()=>page().elements.push(...pasted),'');choose(pasted.map(e=>e.id));render();
+  notice(pasted.length+'개 요소를 붙여넣었어요.');return;
+ }
+ const target=targetId?page().elements.find(e=>e.id===targetId):null;
+ if(target&&!selectedIds.has(target.id)){
+  if(!selectable(target))return notice('잠긴 요소는 레이어 목록에서 잠금을 풀어 주세요.',true);
+  choose(membersOf(target).map(e=>e.id));render();
+ }
+ const items=selectedItems();if(!items.length)return notice('먼저 편집할 요소를 선택해 주세요.',true);
+ if(action==='copy'){
+  elementClipboard=items.map(e=>clone(e));clipboardPasteCount=0;
+  notice(items.length+'개 요소를 복사했어요. 우클릭 메뉴에서 붙여넣을 수 있어요.');return;
+ }
+ if(action==='duplicate')return duplicateSelected();
+ if(action==='delete')return deleteSelected();
+ if(action==='group')return groupSelected();
+ if(action==='ungroup')return ungroupSelected();
+ if(action==='lock'){
+  const ids=new Set(items.map(e=>e.id));
+  edit(()=>{for(const e of page().elements)if(ids.has(e.id))e.locked=true},'');
+  notice(items.length+'개 요소를 잠갔어요. 레이어 목록에서 잠금을 풀 수 있어요.');return;
+ }
+ if(['front','back','up','down'].includes(action)){
+  edit(()=>reorderCanvasLayers(items.map(e=>e.id),action));
+  notice((action==='front'?'맨 앞으로':action==='back'?'맨 뒤로':action==='up'?'한 칸 앞으로':'한 칸 뒤로')+' 이동했어요.');return;
+ }
+ if(action==='background'&&items.length===1&&items[0].type==='image'){
+  const id=items[0].id;
+  edit(()=>{
+   const p=page(),at=p.elements.findIndex(e=>e.id===id),[photo]=p.elements.splice(at,1);
+   const d=C.LAYOUTS[model.layout];Object.assign(photo,{x:0,y:0,w:d.w,h:d.h});
+   p.elements.unshift(photo);if(p.videoClip)p.videoClip.stack=Math.max(1,p.videoClip.stack);
+  },'');
+  notice('사진을 맨 뒤에 깔았어요.');return;
+ }
 }
 function groupSelected(){
  const items=selectedItems();if(items.length<2)return;
@@ -954,6 +1003,8 @@ window.GulliverStudioAdapter={
  getMedia:id=>mediaProvider(id),
  getSceneVideoClip:()=>page().videoClip||null,
  getSelectedLayerInfo:()=>current()?{id:selected,type:current().type}:null,
+ quickElementAction,
+ quickClipboardAvailable:()=>!!elementClipboard?.length,
  setMusicTrim:patch=>edit(()=>{if(model.audio)model.audio={...model.audio,...patch}}),
  addMusicFile:file=>timeline?.importWav(file),
  selectMusicFile:id=>timeline?.selectAudio(id),
