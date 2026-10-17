@@ -48,6 +48,8 @@ test('5.2 editing UI links reusable media, two timelines and explicit save notic
  assert.match(video,/media-timeline\.js/);
  assert.match(vjs,/P\.dragDuration/);
  assert.match(vjs,/S\.getMedia/);
+ assert.match(vjs,/for\(const page of payload\.pages\|\|\[\]\)/);
+ assert.match(vjs,/for\(const c of payload\.tracks\|\|\[\]\)/);
  assert.match(music,/id="musicRuler"/);
  assert.match(music,/id="musicScrub"/);
  assert.match(mjs,/audioPreview.*addEventListener/);
