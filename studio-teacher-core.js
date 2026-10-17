@@ -141,7 +141,15 @@
   const title=limit(activity.title,90),layout=options.layout||'wide';
   if(activity.kind==='quiz')return quizCards(activity.payload.cards,{layout,title});
   if(activity.kind==='timer')return timerPlan(activity.payload.events,{layout,title});
-  if(activity.kind==='seating')return seatingPlan(activity.payload,{...options,layout,title});
+  if(activity.kind==='seating'){
+   const payload=activity.payload,students=Array.isArray(payload.students)&&payload.students.length?payload.students:options.students||[];
+   const names=new Map(students.filter(s=>s&&typeof s==='object').map(s=>[String(s.id),String(s.name||'')]));
+   const assignment=Array.isArray(payload.assignment)?payload.assignment:null;
+   const unknown=assignment?.find(id=>id&&!names.has(String(id)));
+   if(unknown)throw Error('저장한 자리표의 학생 명단을 찾지 못했어요. 자리표의 학생 정보를 확인해 주세요.');
+   const seatNames=assignment?assignment.map(id=>id?names.get(String(id))||'':''):[];
+   return seatingPlan(payload,{...options,layout,title,students,seatNames});
+  }
   throw Error('이 활동은 아직 캔버스 자료로 변환할 수 없어요.');
  }
  return{quizCards,timerPlan,seatingPlan,checklist,convertActivity};
