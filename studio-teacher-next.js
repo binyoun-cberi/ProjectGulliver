@@ -136,13 +136,58 @@
     const fill=unusable?'#E9EAF0':id?'#EEF7FF':'#FFFFFF',color=unusable?'#818699':id?'#203F66':'#7B899B';
     const x=xs[col];
     els.push(rect(x,y,cellW,cellH,fill,unusable?'#D0D5DF':'#B5C9DD'));
-    els.push(text(name,x+4,y+2,cellW-8,cellH-3,
-     name.length>9?layout==='a4'?12:11:name.length>5?layout==='a4'?15:13:layout==='a4'?19:16,color,'center'));
+    const label=text(name,x+4,y+2,cellW-8,cellH-3,
+     name.length>9?layout==='a4'?12:11:name.length>5?layout==='a4'?15:13:layout==='a4'?19:16,color,'center');
+    // Only a real occupied seat can participate in the in-canvas two-person swap.
+    if(id&&!unusable)label.busSeat=idx;
+    els.push(label);
    }
    if(row===3||row===5)els.push(text(row===3?'통':'로',w*.481,y,w*.038,cellH,layout==='a4'?15:12,'#64748B','center'));
   }
   els.push(text('좌석 수 '+(40-disabled.filter(Boolean).length)+'석 · 배정 '+taken.size+'명',w*.14,h*.918,w*.72,h*.038,layout==='a4'?13:16,'#52677F','center'));
   return{title:'버스 좌석 배치도',layout,pages:[d.page('버스 자리표',els)],description:'학생 '+taken.size+'명의 확정된 10열×4석 버스 자리표 · 통로와 사용 불가 좌석 보존'};
+ }
+ function tournamentFlow(valid,fromRound,layout,title,champion){
+  const sources=valid[fromRound],destinations=valid[fromRound+1],pages=[];
+  if(!destinations?.length)return pages;
+  for(let start=0;start<destinations.length;start+=2){
+   const d=board(layout,title,
+    sources[0].label+' → '+destinations[0].label+' · 경기의 승자가 어느 경기로 올라가는지 보여줘요.','#F3EDFF');
+   const {w,h,rect,text}=d,els=[...d.base],lineWidth=Math.max(10,w*.006);
+   for(let j=start;j<Math.min(start+2,destinations.length);j++){
+    const slot=j-start,top=h*(.245+slot*.328);
+    const feeders=[sources[j*2],sources[j*2+1]];
+    const midX=w*.505,endX=w*.632,sourceRight=w*.386;
+    const rightY=top+h*.116,rightH=h*.154,rightCenter=rightY+rightH/2;
+    const centerYs=[];
+    for(let side=0;side<2;side++){
+     const match=feeders[side];if(!match)continue;
+     const x=w*.065,y=top+h*(side===0?0:.172),width=w*.32,height=h*.127;
+     const cy=y+height/2;centerYs.push(cy);
+     const color=match.winner?'#2A9875':'#AAB9CE';
+     els.push(rect(sourceRight,cy-5,midX-sourceRight+4,10,color,color));
+     els.push(rect(x,y,width,height,'#FFFFFF','#D9DAEE'));
+     els.push(text(match.index+'경기  '+(match.a||'대기')+' / '+(match.b||'대기'),
+       x+8,y+h*.012,width-16,height*.38,layout==='a4'?12:15,'#293A59'));
+     els.push(text(match.winner?'진출 '+match.winner:'결과 미정',
+       x+8,y+height*.56,width-16,height*.30,layout==='a4'?12:14,match.winner?'#137A55':'#79869A'));
+    }
+    if(centerYs.length>1){
+     els.push(rect(midX-5,Math.min(...centerYs),10,Math.max(10,Math.max(...centerYs)-Math.min(...centerYs)),'#B3B5D7','#B3B5D7'));
+    }
+    if(centerYs.length)els.push(rect(midX,rightCenter-5,endX-midX+8,10,'#8D79C9','#8D79C9'));
+    const to=destinations[j];
+    els.push(rect(endX,rightY,w*.30,rightH,'#EDF2FF','#C0C8E6'));
+    els.push(text(to.label+' '+to.index+'경기',endX+10,rightY+h*.015,w*.28,h*.04,layout==='a4'?13:16,'#58458E'));
+    els.push(text(to.a&&to.b?to.a+' / '+to.b:to.a||to.b||'진출자 대기',
+     endX+10,rightY+h*.067,w*.28,h*.05,layout==='a4'?12:15,'#293954'));
+    els.push(text('➜',midX+w*.09,rightCenter-h*.03,w*.07,h*.06,layout==='a4'?18:23,'#6554AB','center'));
+   }
+   els.push(text('선은 원본 대진의 진출 방향을 나타냅니다. 캔버스에서 글씨와 선을 각각 수정할 수 있어요.',
+    w*.06,h*.924,w*.88,h*.05,layout==='a4'?11:13,'#5D6680','center'));
+   pages.push(d.page('진출 흐름 '+(fromRound+1)+'→'+(fromRound+2)+' · '+(Math.floor(start/2)+1),els));
+  }
+  return pages;
  }
  function tournament(snapshot,{layout='wide'}={}){
   if(snapshot?.kind!=='tournament')throw Error('토너먼트 메이커에서 대진표를 먼저 만들어 주세요.');
@@ -194,9 +239,10 @@
     }
     pages.push(d.page(section+' '+(start/perPage+1),els));
    }
+   if(ri<valid.length-1)pages.push(...tournamentFlow(valid,ri,layout,title,champion));
   }
   if(pages.length>40)throw Error('대진표가 캔버스 40페이지 제한을 넘어요.');
-  return{title,layout,pages,description:count+'경기 · '+pages.length+'장 대진표'+(champion?' · 우승 '+champion:' · 미완료 경기는 대기로 표시')};
+  return{title,layout,pages,description:count+'경기 · '+pages.length+'장 대진표 및 라운드 진출 연결도'+(champion?' · 우승 '+champion:' · 미완료 경기는 대기로 표시')};
  }
  function convert(snapshot,options){
   if(snapshot?.kind==='lesson')return lesson(snapshot,options);

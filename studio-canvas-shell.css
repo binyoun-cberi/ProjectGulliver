@@ -555,3 +555,15 @@ body{color:var(--canvas-ink);background:var(--canvas-bg)}
  .teacher-live-dialog:has(#teacherRefreshResult[hidden]) .teacher-run-actions{grid-template-columns:minmax(0,1fr) auto}
  .teacher-live-dialog #teacherLiveFrame{min-height:0}
 }
+
+/* Bus seat edits are an opt-in classroom activity, never a global canvas gesture. */
+.bus-swap-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;max-width:100%;margin:0 auto 10px;padding:9px 12px;border:1px solid #bedbd1;border-radius:13px;background:#f2faf6;color:#285448;font-size:12px;line-height:1.5}
+.bus-swap-bar[hidden]{display:none!important}
+.bus-swap-bar button{border:1px solid #9fd2bd;border-radius:9px;background:#fff;padding:9px 13px;color:#16634d;font-size:12px;font-weight:850;min-height:42px;flex:none}
+.bus-swap-bar button[aria-pressed="true"]{background:#11755b;color:#fff}
+.bus-swap-bar span{flex:1;min-width:180px}
+#stage>.item.bus-swap-seat{cursor:pointer!important;outline:2px dashed #21886d;outline-offset:-1px}
+#stage>.item.bus-swap-seat.bus-swap-first{outline:5px solid #d85b20!important;z-index:6!important;background:rgba(255,230,198,.4)}
+#stage>.item.bus-swap-seat:hover{background:rgba(150,225,195,.35)}
+@media(max-width:620px){.bus-swap-bar{gap:7px;padding:7px 9px}.bus-swap-bar span{min-width:100%;font-size:11px}.bus-swap-bar button{width:100%}}
+@media print{.bus-swap-bar{display:none!important}}

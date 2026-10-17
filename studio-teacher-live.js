@@ -74,6 +74,10 @@ function close(reason='close'){
  frame.removeAttribute('src');
  if(dlg.open)dlg.close();
  current=null;
+ // On a phone, return directly to the imported canvas instead of leaving the
+ // teacher-tools bottom sheet over the student's seat chart.
+ if((reason==='import'||reason==='refresh')&&matchMedia('(max-width:700px)').matches)
+  window.GulliverCanvasShell?.closePanel?.();
  window.dispatchEvent(new CustomEvent('gulliver:teacher-live-close',{detail:{id:previous?.id||null,reason}}));
 }
 function currentNext(){

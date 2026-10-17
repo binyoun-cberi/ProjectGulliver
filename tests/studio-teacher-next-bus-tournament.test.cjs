@@ -15,6 +15,11 @@ test('bus only imports fully confirmed 40 physical seats, aisle and unused seats
   const out=JSON.stringify(data.pages);
   for(const t of [...names,'버스 앞','통로','사용 안 함','빈자리'])assert.ok(out.includes(t),t);
   for(const t of ['비공개','needsFrontSeat','avoidPairs','fixedSeats'])assert.ok(!out.includes(t),t);
+  const occupied=data.pages[0].elements.filter(e=>Number.isInteger(e.busSeat));
+  assert.equal(occupied.length,4);
+  assert.deepEqual(occupied.map(e=>e.busSeat).sort((a,b)=>a-b),[0,1,2,3]);
+  assert.ok(occupied.every(e=>e.type==='text'&&names.includes(e.content)));
+  assert.ok(!data.pages[0].elements.some(e=>e.content==='빈자리'&&'busSeat' in e));
   const rects=data.pages[0].elements.filter(e=>e.type==='rect');
   assert.ok(rects.length>=40);
   const model=C.validate({...C.starter('blank'),layout,pages:data.pages});
@@ -35,6 +40,10 @@ test('tournament uses actual winners, unfinished matches stay unfinished; no gue
   assert.ok(contents.includes('결과 미정'));
   assert.ok(contents.includes('진출자 대기'));
   assert.ok(contents.includes('결승'));
+  assert.ok(data.pages.some(p=>p.name.startsWith('진출 흐름')));
+  const flow=data.pages.find(p=>p.name.startsWith('진출 흐름'));
+  assert.ok(flow.elements.filter(e=>e.type==='rect'&&['#B3B5D7','#8D79C9','#2A9875','#AAB9CE'].includes(e.fill)).length>=3,'actual advancing branch connector shapes');
+  assert.match(JSON.stringify(flow.elements),/진출 민/);
   assert.ok(!contents.includes('우승 민'));
   assert.ok(data.pages.every(p=>p.elements.length<=150));
   C.validate({...C.starter('blank'),layout,pages:data.pages});
@@ -58,6 +67,7 @@ test('64 entrants produce paginated printable editable bracket below 40-page and
  const payload={kind:'tournament',title:'교실 리그',participants:names,rounds,championId:current[0]};
  const data=N.tournament(payload,{layout:'wide'});
  assert.ok(data.pages.length>6&&data.pages.length<40);
+ assert.ok(data.pages.filter(p=>p.name.startsWith('진출 흐름')).length>=10);
  const verified=C.validate({...C.starter('blank'),pages:data.pages});
  assert.equal(verified.pages.length,data.pages.length);
 });

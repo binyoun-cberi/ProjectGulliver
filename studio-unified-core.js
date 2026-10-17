@@ -192,6 +192,7 @@ function cleanElement(raw,i){
   ...(raw.rotation!==undefined?{rotation:number(raw.rotation,-180,180,0)}:{}),
   ...(raw.locked===true?{locked:true}:{}),...(raw.hidden===true?{hidden:true}:{}),
   ...(type==='text'?{
+   ...(Number.isInteger(raw.busSeat)&&raw.busSeat>=0&&raw.busSeat<40?{busSeat:raw.busSeat}:{}),
    fontFamily:Object.hasOwn(FONTS,raw.fontFamily)?raw.fontFamily:'sans',
    fontWeight:[400,500,600,700,800,900].includes(Number(raw.fontWeight))?Number(raw.fontWeight):600,
    italic:raw.italic===true,underline:raw.underline===true,
