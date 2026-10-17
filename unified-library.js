@@ -121,6 +121,8 @@
     document.querySelectorAll('[data-library-category]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));update();
    });
   }
+  const initialQuery=new URLSearchParams(location.search).get('q');
+  if(initialQuery)$('unifiedSearch').value=initialQuery.slice(0,160);
   $('unifiedSearch').addEventListener('input',update);
   $('unifiedSort').addEventListener('change',update);
   $('unifiedRefresh').addEventListener('click',refresh);
