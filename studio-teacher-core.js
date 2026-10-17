@@ -119,7 +119,8 @@
    description:seatNames.some(Boolean)?'실제 확정된 '+cols+'열 × '+rows+'줄 자리 배정 결과':'학생을 임의 배정하지 않은 편집용 빈 자리표'};
  }
  function checklist({theme='우리 반 체크판',students=[],checks=[]},{layout='wide',title}={}){
-  const names=(Array.isArray(students)?students:[]).slice(0,60).map(name=>limit(name,28)).filter(Boolean);
+  if(Array.isArray(students)&&students.length>100)throw Error('체크판 학생은 한 번에 100명까지 가져올 수 있어요. 목록을 나누어 주세요.');
+  const names=(Array.isArray(students)?students:[]).map(name=>limit(name,28)).filter(Boolean);
   if(!names.length)throw Error('체크판을 만들려면 학생 이름이 필요해요.');
   const d=drawing(layout),pages=[],perPage=layout==='a4'?14:10;
   for(let start=0;start<names.length;start+=perPage){
