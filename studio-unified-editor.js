@@ -6,6 +6,16 @@ const preset=new URLSearchParams(location.search).get('preset');
 let model=C.starter(['blank','presentation','worksheet'].includes(preset)?preset:'presentation'),selected='',selectedIds=new Set(),multiSelectMode=false,snapGuides=[],collapsedGroups=new Set(),undoStack=[],redoStack=[],scale=1,drag=null,editing=false,timeline=null,videoController=null;
 let mediaProvider=id=>window.GulliverStudioStorage.getMedia(id),pageChange=()=>{},playbackChange=()=>{};
 const stage=$('stage'),textEditor=$('editText'),stackLimit=80;
+let busSwapMode=false,busFirstSeat=null;
+const busSwapBar=document.createElement('div');
+busSwapBar.id='busSwapBar';busSwapBar.className='bus-swap-bar';busSwapBar.hidden=true;
+const busSwapButton=document.createElement('button');
+busSwapButton.type='button';busSwapButton.id='busSwapButton';busSwapButton.textContent='자리 교환 시작';
+busSwapButton.setAttribute('aria-pressed','false');
+const busSwapHint=document.createElement('span');busSwapHint.id='busSwapHint';
+busSwapHint.textContent='두 학생을 차례로 누르면 서로 자리를 바꿔요. 원본 배정표는 바뀌지 않아요.';
+busSwapBar.append(busSwapButton,busSwapHint);
+$('stageView').before(busSwapBar);
 const clone=obj=>JSON.parse(JSON.stringify(obj)),page=()=>model.pages[model.active],
   current=()=>selectedIds.size===1?page().elements.find(e=>e.id===selected&&!e.locked&&!e.hidden)||null:null;
 function selectable(e){return !!e&&!e.locked&&!e.hidden}
@@ -60,6 +70,14 @@ function drawItem(e){
  const node=document.createElement('div');
  node.className='item'+(selectedIds.has(e.id)?' selected':'');
  node.dataset.id=e.id;node.dataset.type=e.type;node.dataset.locked=e.locked?'true':'false';node.title=e.type==='text'?'두 번 눌러 글씨 수정':'끌어서 이동 · 모서리에서 크기 조절';
+ if(e.type==='text'&&Number.isInteger(e.busSeat)&&e.busSeat>=0&&e.busSeat<40){
+  node.dataset.busSeat=String(e.busSeat);
+  if(busSwapMode&&page().teacherSource?.kind==='bus'){
+   node.classList.add('bus-swap-seat');
+   if(busFirstSeat===e.busSeat)node.classList.add('bus-swap-first');
+   node.title='이 학생을 눌러 자리 교환';
+  }
+ }
  Object.assign(node.style,{left:e.x+'px',top:e.y+'px',width:e.w+'px',height:e.h+'px',opacity:e.opacity,
   color:e.fill,textAlign:e.align,fontSize:e.fontSize+'px',fontWeight:e.type==='text'?(e.fontWeight||600):'400',
   transform:'rotate('+(e.rotation||0)+'deg)'});
@@ -288,6 +306,16 @@ function properties(){
  $('designTitle').value=model.title;
 }
 function render(){
+ if(page().teacherSource?.kind!=='bus'||!page().elements.some(e=>Number.isInteger(e.busSeat))){
+  busSwapMode=false;busFirstSeat=null;
+ }
+ if(busFirstSeat!==null&&!page().elements.some(e=>e.type==='text'&&e.busSeat===busFirstSeat))busFirstSeat=null;
+ busSwapBar.hidden=page().teacherSource?.kind!=='bus'||!page().elements.some(e=>Number.isInteger(e.busSeat));
+ busSwapButton.textContent=busSwapMode?'자리 교환 끝내기':'자리 교환 시작';
+ busSwapButton.setAttribute('aria-pressed',String(busSwapMode));
+ busSwapHint.textContent=busSwapMode
+  ?busFirstSeat===null?'첫 번째 학생 이름을 눌러 주세요.':'두 번째 학생 이름을 눌러 주세요. 같은 이름을 다시 누르면 선택이 취소돼요.'
+  :'두 학생을 차례로 누르면 서로 자리를 바꿔요. 원본 배정표는 바뀌지 않아요.';
  size();stage.style.background=page().background;
  if(!selected)selectedIds.clear();
  else{const available=new Set(page().elements.filter(selectable).map(e=>e.id));
@@ -402,6 +430,24 @@ function previewDrag(){
 function startMove(event){
  if(event.button!==0&&event.pointerType==='mouse')return;
  if(editing||stage.classList.contains('playing'))return;
+ if(busSwapMode&&page().teacherSource?.kind==='bus'){
+  const node=event.target.closest('.item[data-bus-seat]');
+  if(!node){notice('자리 교환 중에는 학생 이름을 눌러 주세요.',true);event.preventDefault();return}
+  const first=page().elements.find(e=>e.id===node.dataset.id);
+  if(!first||first.type!=='text'||!Number.isInteger(first.busSeat)){
+   notice('이 좌석은 자리를 바꿀 수 없어요.',true);event.preventDefault();return;
+  }
+  event.preventDefault();event.stopPropagation();
+  if(busFirstSeat===null){busFirstSeat=first.busSeat;clearSelection();render();notice(first.content+' 학생을 선택했어요. 바꿀 학생을 눌러 주세요.');return}
+  if(busFirstSeat===first.busSeat){busFirstSeat=null;render();notice('첫 번째 학생 선택을 취소했어요.');return}
+  const old=page().elements.find(e=>e.type==='text'&&e.busSeat===busFirstSeat);
+  if(!old){busFirstSeat=null;render();notice('이전에 선택한 좌석을 찾지 못했어요.',true);return}
+  const beforeName=old.content,afterName=first.content;
+  busFirstSeat=null;
+  edit(()=>{[old.content,first.content]=[first.content,old.content]},'');
+  notice(beforeName+' · '+afterName+' 학생의 자리를 바꿨어요. 실행 취소가 가능해요.');
+  return;
+ }
  const rotating=!!event.target.closest('.rotate-grip'),frameGrip=event.target.closest('.selection-frame .grip'),target=event.target.closest('.item');
  if(!target&&!frameGrip&&!rotating){
   if(event.target!==stage)return;
@@ -685,6 +731,10 @@ function bind(){
  }
  for(const id of ['propertyShadowEnabled','propertyShadowColor','propertyShadowBlur','propertyShadowX','propertyShadowY'])
   $(id).addEventListener('change',patchShadow);
+ busSwapButton.addEventListener('click',()=>{
+  busSwapMode=!busSwapMode;busFirstSeat=null;clearSelection();render();
+  notice(busSwapMode?'첫 번째 학생 이름을 눌러 교환을 시작하세요. 원본 자리 배정에는 반영되지 않아요.':'자리 교환 모드를 끝냈어요.');
+ });
  stage.addEventListener('pointerdown',startMove);
  window.addEventListener('pointermove',moveDrag);
  window.addEventListener('pointerup',finishDrag);
