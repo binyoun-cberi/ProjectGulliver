@@ -6,14 +6,14 @@ const A=window.GulliverStudioAdapter,S=window.GulliverTeacherSnapshots;
 const pane=document.querySelector('.design-pane[data-pane="teacher"]');
 if(!A||!S||!pane)return;
 const tools=[
- {id:'praise',name:'칭찬 온도계',url:'칭찬 온도계.html',summary:'현재 온도·목표·최근 칭찬 기록'},
- {id:'qr',name:'QR 코드 만들기',url:'QR코드.html',summary:'생성한 실제 QR 그림과 내용'},
- {id:'roulette',name:'범퍼 룰렛',url:'범퍼 룰렛.html',summary:'실제로 진행된 레이스 결과'},
- {id:'vote',name:'우리 반 투표판',url:'우리반 선관위.html',summary:'선택지별 집계만, 개인 응답 제외'},
- {id:'timer',name:'수업 흐름 타이머',url:'지도안식 원형 타이머.html',summary:'저장한 수업 단계와 시간'},
- {id:'quiz',name:'낱말카드·퀴즈',url:'플래시퀴즈메이커.html',summary:'문제·정답 카드'},
- {id:'seating',name:'교실 자리 배정',url:'자리 배정 프로그램.html',summary:'저장한 자리표'},
- {id:'check',name:'학급췍',url:'학급췍.html',summary:'저장한 체크 상태'}
+ {id:'timer',icon:'◷',name:'수업 흐름 타이머',url:'지도안식 원형 타이머.html',summary:'단계를 운영하고 시간표로 추가'},
+ {id:'quiz',icon:'▤',name:'낱말카드·퀴즈',url:'플래시퀴즈메이커.html',summary:'문제·정답 카드를 만들어 추가'},
+ {id:'seating',icon:'▦',name:'교실 자리 배정',url:'자리 배정 프로그램.html',summary:'학생 자리를 배정하고 자리표 추가'},
+ {id:'check',icon:'☑',name:'학급췍',url:'학급췍.html',summary:'준비물·과제를 확인하고 체크판 추가'},
+ {id:'praise',icon:'☆',name:'칭찬 온도계',url:'칭찬 온도계.html',summary:'칭찬을 기록하고 현재 점수표 추가'},
+ {id:'vote',icon:'▥',name:'우리 반 투표판',url:'우리반 선관위.html',summary:'투표를 진행하고 집계 결과 추가'},
+ {id:'roulette',icon:'◎',name:'범퍼 룰렛',url:'범퍼 룰렛.html',summary:'레이스를 실행하고 실제 결과 추가'},
+ {id:'qr',icon:'▧',name:'QR 코드 만들기',url:'QR코드.html',summary:'QR을 만들어 이미지로 추가'}
 ];
 const read=(key)=>{try{return JSON.parse(localStorage.getItem(key)||'null')}catch{return null}};
 const bar=document.createElement('section');bar.className='teacher-live-tools';bar.id='teacherLiveTools';
@@ -39,9 +39,11 @@ const directKinds=['timer','quiz','seating','check'];
 function info(msg,error=false){status.textContent=msg;status.classList.toggle('error',error)}
 for(const item of tools){
  const b=document.createElement('button');b.type='button';b.className='teacher-live-tile';
+ const glyph=document.createElement('span');glyph.className='teacher-live-icon';glyph.textContent=item.icon;glyph.setAttribute('aria-hidden','true');
+ const copy=document.createElement('span');copy.className='teacher-live-copy';
  const title=document.createElement('strong');title.textContent=item.name;
  const desc=document.createElement('span');desc.textContent=item.summary;
- b.append(title,desc);b.addEventListener('click',()=>open(item.id));grid.append(b);
+ copy.append(title,desc);b.append(glyph,copy);b.addEventListener('click',()=>open(item.id));grid.append(b);
 }
 function open(id){
  const item=tools.find(x=>x.id===id);if(!item)return;
