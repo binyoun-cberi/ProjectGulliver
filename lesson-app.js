@@ -78,6 +78,25 @@ async function renderStage(){cleanupStage();const signature=renderToken,s=curren
   if(running||previewing){if(s.kind==='slides')stage.append(slidePage(s));else if(s.kind==='document')stage.append(documentPage(s));else{const page=node('div','design-page');page.innerHTML=DoanCore.svg(DoanCore.validateProject(s.payload));stage.append(page)}return}
   const f=node('iframe','editor-frame');frame=f;frameStepId=s.id;f.title=labels[s.kind]+' 편집기';stage.classList.add('editor');f.onload=()=>{if(signature!==renderToken||frame!==f)return;try{const a=f.contentWindow.GulliverStudioAdapter;if(!a||a.kind!==s.kind)throw Error('편집기를 연결하지 못했어요.');a.apply(s.payload);const doc=f.contentDocument,style=doc.createElement('style');style.textContent='body>header,body>section.hero,body>section.intro,body>footer,body>section.advanced,body>.advanced{display:none!important}body{margin:0!important}body>.workspace{margin:0!important;max-width:none!important;padding:12px!important;grid-template-columns:170px minmax(0,1fr) 200px!important}@media(max-width:1100px){body>.workspace{display:flex!important;flex-direction:column!important}}';doc.head.append(style);ready=true;for(const type of ['input','change','pointerup','keyup'])doc.addEventListener(type,schedule,{passive:true});status('자료를 편집할 수 있어요. 변경 내용은 수업에 자동 저장돼요.')}catch(e){status(e.message,true)}};f.src=GulliverStudioCore.TOOLS[s.kind].href+'?studio=1';stage.append(f);return;
  }
+ if(s.kind==='quiz'){
+  const cards=s.payload?.cards||[],view=node('section','quiz-view');
+  view.append(node('span','quiz-counter',cards.length?'카드 '+(slideIndex+1)+' / '+cards.length:'카드를 준비해 주세요'));
+  if(cards.length){
+   const card=cards[Math.min(slideIndex,cards.length-1)];
+   view.append(node('div','quiz-question',card.front));
+   const answer=node('div','quiz-answer',card.back);answer.hidden=!quizRevealed;view.append(answer);
+   view.append(button(quizRevealed?'정답 가리기':'정답 보기',()=>{quizRevealed=!quizRevealed;renderStage()},'quiz-reveal'));
+   view.append(node('span','quiz-hint','정답을 확인하고 이전·다음 버튼으로 카드를 넘겨 보세요.'));
+   if(!running&&!previewing){
+    const nav=node('div','quiz-navigation');
+    const before=button('← 이전 카드',()=>{slideIndex=Math.max(0,slideIndex-1);quizRevealed=false;renderStage()});
+    const after=button('다음 카드 →',()=>{slideIndex=Math.min(cards.length-1,slideIndex+1);quizRevealed=false;renderStage()});
+    before.disabled=slideIndex<=0;after.disabled=slideIndex>=cards.length-1;
+    nav.append(before,after);view.append(nav);
+   }
+  }else view.append(node('p','muted','오른쪽 활동 설정에서 문제와 정답을 먼저 입력해 주세요.'));
+  stage.append(view);updateRunbar();return;
+ }
  if(s.kind==='timer'){remaining=s.seconds;const box=node('div'),timer=node('div','timer-view'),title=node('p','',s.title);function tick(){timer.textContent=Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0');if(!remaining){clearInterval(clock);clock=null;title.textContent='활동 시간이 끝났어요.'}}tick();const controls=node('div','timer-actions');controls.append(button('시작 / 멈춤',()=>{if(clock){clearInterval(clock);clock=null}else{if(remaining<=0)remaining=s.seconds;clock=setInterval(()=>{remaining=Math.max(0,remaining-1);tick()},1000)}}),button('다시 시작',()=>{clearInterval(clock);clock=null;remaining=s.seconds;title.textContent=s.title;tick()}));box.append(title,timer,controls);stage.append(box);return}
  if(!s.assetId){stage.append(node('p','muted','활동 설정에서 '+labels[s.kind]+' 파일을 넣어 주세요.'));return}
  stage.append(node('p','loading','파일을 불러오고 있어요…'));try{const asset=await S.asset(s.assetId);if(signature!==renderToken)return;if(!asset)throw Error('파일을 찾지 못했어요. 원본 백업을 불러오거나 파일을 다시 넣어 주세요.');stage.replaceChildren();const url=URL.createObjectURL(asset.blob);stageUrls.push(url);
@@ -100,6 +119,11 @@ $('startLesson').onclick=async()=>{if(!lesson.steps.length)return;if(!await save
 $('exitRun').onclick=()=>{running=false;stopMusic();document.body.classList.remove('running');$('runTitle').hidden=true;$('startLesson').hidden=false;$('exitRun').hidden=true;$('fullScreen').hidden=true;save();render();if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})};$('fullScreen').onclick=()=>{(document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()).catch(()=>status('전체 화면을 사용할 수 없어요.',true))};
 function advance(delta){const s=current(),pages=s?.kind==='slides'?s.payload.slides:s?.kind==='canvas'?s.payload.pages:s?.kind==='quiz'?s.payload?.cards:null;if(pages&&slideIndex+delta>=0&&slideIndex+delta<pages.length){slideIndex+=delta;quizRevealed=false;renderStage();return}const target=selected+delta;if(target<0||target>=lesson.steps.length)return;selected=target;quizRevealed=false;const next=current();slideIndex=delta<0?(next.kind==='slides'?next.payload.slides.length-1:next.kind==='canvas'?next.payload.pages.length-1:next.kind==='quiz'?(next.payload?.cards?.length||1)-1:0):0;save();renderStage()}
 $('previous').onclick=()=>advance(-1);$('next').onclick=()=>advance(1);document.addEventListener('keydown',e=>{if(!(running||previewing)||['INPUT','TEXTAREA','SELECT','AUDIO','VIDEO'].includes(e.target.tagName)||e.target.closest('button'))return;if(e.key==='ArrowRight'){e.preventDefault();advance(1)}if(e.key==='ArrowLeft'){e.preventDefault();advance(-1)}if(e.key==='Escape'&&running)$('exitRun').click()});
+$('toggleLessonNotes').onclick=()=>{
+ const text=$('lessonPresenterNotes'),button=$('toggleLessonNotes');
+ text.hidden=!text.hidden;button.setAttribute('aria-expanded',String(!text.hidden));
+ button.textContent=text.hidden?'진행 메모 보기':'진행 메모 닫기';
+};
 window.addEventListener('pagehide',()=>{capture();remember();S.save(C.normalize(lesson,validators)).catch(()=>{})});
 (async()=>{try{const id=new URLSearchParams(location.search).get('lesson');if(id){const stored=await S.get(id);if(!stored)throw Error('이 브라우저에 저장된 수업을 찾지 못했어요. 원본 파일을 불러와 주세요.');lesson=C.normalize(stored,validators);selected=lesson.position}render()}catch(e){render();status(e.message,true)}})();
 })();
