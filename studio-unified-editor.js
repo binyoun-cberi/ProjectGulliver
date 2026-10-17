@@ -1005,6 +1005,7 @@ window.GulliverStudioAdapter={
  getSelectedLayerInfo:()=>current()?{id:selected,type:current().type}:null,
  quickElementAction,
  quickClipboardAvailable:()=>!!elementClipboard?.length,
+ getQuickSelection:()=>selectedItems().map(e=>({...e})),
  selectQuickTarget:id=>{const e=page().elements.find(x=>x.id===id);if(!selectable(e))return false;choose(membersOf(e).map(x=>x.id));render();return true},
  setMusicTrim:patch=>edit(()=>{if(model.audio)model.audio={...model.audio,...patch}}),
  addMusicFile:file=>timeline?.importWav(file),
