@@ -36,7 +36,8 @@ test('Media library: upload progress, video thumbnail/name, resize and layer, WA
   await frame.locator('#easyMediaPicker').setInputFiles(img);
   await frame.locator('.easy-file').filter({hasText:'one.png'}).waitFor();
   await frame.locator('#stage .item[data-type="image"]').last().evaluate(el=>el.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,clientX:60,clientY:60})));
-  await frame.locator('.easy-layer-menu [data-action="background"]').click();
+  // 4.1 unified context menu replaces the separate photo layer menu.
+  await frame.locator('#canvasUnifiedMenu [data-canvas-action="background"]').click();
   const state=await frame.locator('body').evaluate(()=>GulliverStudioAdapter.capture());
   assert.equal(state.pages[0].elements[0].type,'image');
   assert.equal(state.pages[0].elements[0].w,960);
