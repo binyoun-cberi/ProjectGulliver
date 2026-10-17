@@ -64,9 +64,7 @@ for(let i=0;i<groups.length;i++){
 document.body.append(menu);
 let menuTarget=null,lastId='',frame=0;
 function activeElements(){
- const m=A.getModel?.(),p=m?.pages?.[m.active];if(!p)return[];
- const ids=new Set([...stage.querySelectorAll('.item.selected')].map(el=>el.dataset.id));
- return p.elements.filter(e=>ids.has(e.id)&&!e.locked&&!e.hidden);
+ return A.getQuickSelection?.()||[];
 }
 function current(){
  const items=activeElements();return items.length===1?items[0]:null;
