@@ -255,9 +255,20 @@ $('cleanupMedia').addEventListener('click',async()=>{
  try{
   const projects=await S.projects(),used=new Set(model.clips.map(c=>c.mediaId));
   if(model.audio)used.add(model.audio.mediaId);
-  for(const p of projects)if(p.kind==='video'){
-   for(const c of p.payload?.clips||[])used.add(c.mediaId);
-   if(p.payload?.audio?.mediaId)used.add(p.payload.audio.mediaId);
+  for(const p of projects){
+   const payload=p.payload||{};
+   if(p.kind==='video'){
+    for(const c of payload.clips||[])if(c.mediaId)used.add(c.mediaId);
+    if(payload.audio?.mediaId)used.add(payload.audio.mediaId);
+   }
+   // Canvas pages and music tracks use the same IndexedDB media store.
+   // Never classify their sources as unused merely because this video editor
+   // does not render those projects.
+   if(p.kind==='canvas'){
+    if(payload.audio?.mediaId)used.add(payload.audio.mediaId);
+    for(const c of payload.tracks||[])if(c.mediaId)used.add(c.mediaId);
+    for(const page of payload.pages||[])if(page.videoClip?.mediaId)used.add(page.videoClip.mediaId);
+   }
   }
   const orphans=(await S.media()).filter(m=>!used.has(m.id));
   if(!orphans.length){status('지울 수 있는 미사용 영상 원본이 없어요.');return}
