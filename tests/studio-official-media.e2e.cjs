@@ -25,6 +25,9 @@ test('Chrome: original FilmCraft and SoundCraft distributions open from local st
    await page.waitForFunction(()=>document.getElementById('officialMode').disabled===false);
    const title=await page.locator('#officialMode').textContent();
    assert.ok(title.includes(name),title);
+   await page.locator('#simpleMode[aria-selected="true"]').waitFor();
+   assert.equal(await page.locator('#simpleEditor').isVisible(),true);
+   await page.locator('#officialMode').click();
    await page.locator('#officialMode[aria-selected="true"]').waitFor();
    assert.equal(await page.locator('#simpleEditor').isHidden(),true);
    assert.equal(await page.locator('#officialEditorPanel').isVisible(),true);
