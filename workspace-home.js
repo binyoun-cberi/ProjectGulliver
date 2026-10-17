@@ -72,6 +72,7 @@ function render(){
      if(templates.length)html+=section('수업 템플릿 · '+templates.length+'개','','<div class="template-grid home-template-grid">'+templates.map(templateCard).join('')+'</div>');
      if(filteredTools.length)html+=section('사용할 수 있는 도구 · '+filteredTools.length+'개','','<div class="tool-list">'+filteredTools.map(toolCard).join('')+'</div>');
      if(!results)html='<div class="empty"><strong>검색 결과가 없어요.</strong>다른 단어나 수업 자료 종류로 검색해 보세요.</div>';
+     html+='<p class="home-work-location-note"><a href="내 보관함.html?q='+encodeURIComponent(query)+'">저장한 학습지·수업·영상에서도 검색하기 →</a></p>';
    }else{
      const favorites=Gulliver.getFavorites().map(f=>tools.find(t=>t.href===f.href)).filter(Boolean);
      if(favorites.length&&!query&&category==='전체')html+='<div class="favorite-strip"><span>★ 즐겨찾기</span>'+favorites.map(t=>'<a data-tool="'+esc(t.href)+'" href="'+esc(t.href)+'">'+esc(t.icon)+' '+esc(t.name)+'</a>').join('')+'</div>';
@@ -86,6 +87,7 @@ function render(){
  document.querySelector('.storage-note').hidden=['home','tools','favorites'].includes(view);
 
  $('content').innerHTML=html;
+ if(view==='home'&&!$('search').value.trim())window.GulliverUnifiedLibraryUI?.renderHome();
 }
 function edit(title,label,value,action,move=false){editAction=action;$('editTitle').textContent=title;$('editLabel').textContent=label;$('editValue').hidden=move;$('editValue').required=!move;$('editFolder').hidden=!move;$('editValue').value=value||'';if(move){$('editFolder').innerHTML='<option value="">미분류</option>'+W.read().folders.map(f=>'<option value="'+esc(f.id)+'">'+esc(f.name)+'</option>').join('');$('editFolder').value=value||''}$('editDialog').showModal();(move?$('editFolder'):$('editValue')).focus()}
 function create(){$('createDialog').showModal()}
