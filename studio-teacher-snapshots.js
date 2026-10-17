@@ -88,7 +88,7 @@
  }
  function qr(image,encodedText,{layout='wide'}={}){
   if(!C.image(image))throw Error('생성된 QR 이미지가 없거나 이미지 크기가 커요. QR 도구에서 먼저 코드를 만들어 주세요.');
-  const label=clean(encodedText,500);
+  const label=/^WIFI:/i.test(String(encodedText).trim())?'Wi-Fi 연결용 QR · 비밀번호는 글씨로 표시하지 않아요':clean(encodedText,500);
   if(!label)throw Error('QR에 담긴 내용이 없어요. QR을 다시 생성해 주세요.');
   const d=basic(layout,'수업 QR 코드','QR 그림은 이동·크기 조절 가능 · 내용을 바꾸려면 QR을 다시 생성하세요','#EDF4FE');
   const size=Math.min(d.w*.59,d.h*.60,440);
