@@ -14,6 +14,7 @@ test('teacher apps import into editable canvas and preserve originals, undo, aut
   await page.goto(url,{waitUntil:'domcontentloaded'});
   const frame=page.frameLocator('#editorFrame');
   await frame.locator('[data-design-tab="teacher"]').click();
+  await frame.locator('#teacherSavedOptions > summary').click();
   await frame.locator('#teacherImportActivity').waitFor({state:'visible'});
   await frame.locator('body').evaluate(()=>{
    localStorage.setItem('gulliver.activities.v1',JSON.stringify({version:1,folders:[],activities:[
