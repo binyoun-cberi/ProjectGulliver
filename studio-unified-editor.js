@@ -800,7 +800,7 @@ window.GulliverStudioAdapter={
   if(!result||!Array.isArray(result.pages)||!result.pages.length)throw Error('캔버스에 추가할 자료가 없어요.');
   if(result.layout!==model.layout)throw Error('캔버스 크기가 일치하지 않아요. 자료를 다시 만들어 주세요.');
   if(model.pages.length+result.pages.length>C.MAX_PAGES)throw Error('이 작업에 남은 페이지가 부족해요. 최대 40장까지 사용할 수 있어요.');
-  const kind=['lesson','roles','groups'].includes(options.sourceKind)?options.sourceKind:null;
+  const kind=['lesson','roles','groups','bus','tournament'].includes(options.sourceKind)?options.sourceKind:null;
   const teacherSource=kind?{kind,instance:C.id(),snapshotAt:Date.now()}:null;
   const pages=result.pages.map(p=>({...C.makePage(p.name,p.elements,p.background),...(teacherSource?{teacherSource}:{})}));
   const trial=C.validate({...model,pages:[...model.pages,...pages],active:model.pages.length});
@@ -811,7 +811,7 @@ window.GulliverStudioAdapter={
   return pages.length;
  },
  linkedTeacherSource:kind=>{
-  if(!['lesson','roles','groups'].includes(kind))return null;
+  if(!['lesson','roles','groups','bus','tournament'].includes(kind))return null;
   const found=model.pages.map((p,i)=>({p,i})).filter(({p})=>p.teacherSource?.kind===kind);
   if(!found.length)return null;
   found.sort((a,b)=>b.p.teacherSource.snapshotAt-a.p.teacherSource.snapshotAt||b.i-a.i);
@@ -820,7 +820,7 @@ window.GulliverStudioAdapter={
    pageCount:found.filter(x=>x.p.teacherSource.instance===last.instance).length};
  },
  refreshTeacherPages:(kind,result)=>{
-  if(!['lesson','roles','groups'].includes(kind))throw Error('갱신을 지원하지 않는 자료예요.');
+  if(!['lesson','roles','groups','bus','tournament'].includes(kind))throw Error('갱신을 지원하지 않는 자료예요.');
   if(!result?.pages?.length||result.layout!==model.layout)throw Error('수업자료의 크기 또는 원본 결과를 확인해 주세요.');
   const matches=model.pages.map((p,i)=>({p,i})).filter(({p})=>p.teacherSource?.kind===kind);
   if(!matches.length)throw Error('이 도구에서 가져온 자료가 없어요. 먼저 페이지로 추가해 주세요.');
