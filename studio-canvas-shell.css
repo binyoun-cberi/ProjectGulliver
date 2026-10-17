@@ -539,3 +539,19 @@ body{color:var(--canvas-ink);background:var(--canvas-bg)}
  .teacher-live-dialog #teacherLiveFrame{height:auto}
  .teacher-run-actions button{font-size:12px}
 }
+
+/* Linked classroom handouts: visible choice between adding and refreshing. */
+#teacherRefreshResult{background:#EEF7F3;color:#17634C;border-color:#CDE7D9}
+#teacherRefreshResult[hidden]{display:none!important}
+.teacher-run-actions{flex-wrap:wrap;justify-content:flex-end}
+.teacher-run-head>div:first-child{min-width:0}
+@media(max-width:700px){
+ .teacher-run-head{flex-direction:column;align-items:stretch;gap:7px}
+ .teacher-run-head>div:first-child{display:flex;align-items:baseline;gap:9px}
+ .teacher-run-head small{max-width:none}
+ .teacher-run-actions{max-width:none;width:100%;display:grid;grid-template-columns:1fr 1fr auto}
+ .teacher-run-actions button{min-height:44px;white-space:normal;font-size:11px;line-height:1.3}
+ .teacher-live-dialog:has(#teacherRefreshResult:not([hidden])) .teacher-run-actions{grid-template-columns:1fr 1fr auto}
+ .teacher-live-dialog:has(#teacherRefreshResult[hidden]) .teacher-run-actions{grid-template-columns:minmax(0,1fr) auto}
+ .teacher-live-dialog #teacherLiveFrame{min-height:0}
+}
