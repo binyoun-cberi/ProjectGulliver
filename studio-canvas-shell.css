@@ -567,3 +567,40 @@ body{color:var(--canvas-ink);background:var(--canvas-bg)}
 #stage>.item.bus-swap-seat:hover{background:rgba(150,225,195,.35)}
 @media(max-width:620px){.bus-swap-bar{gap:7px;padding:7px 9px}.bus-swap-bar span{min-width:100%;font-size:11px}.bus-swap-bar button{width:100%}}
 @media print{.bus-swap-bar{display:none!important}}
+
+/* 4.1 direct selection editing: one accessible strip for text, shapes, and photos. */
+.canvas-quick-edit{position:fixed;z-index:24;display:flex;align-items:center;gap:5px;max-width:calc(100vw - 16px);padding:7px 9px;background:#fff;border:1px solid #e3ddeb;border-radius:15px;box-shadow:0 9px 34px #2417352c;white-space:nowrap;overflow-x:auto;overflow-y:visible;scrollbar-width:thin}
+.canvas-quick-edit[hidden],.canvas-quick-border[hidden],.canvas-unified-menu[hidden]{display:none!important}
+.canvas-quick-edit .quick-edit-title{font-size:12px;font-weight:850;color:#6144a0;padding:0 7px 0 4px;flex:none}
+.canvas-quick-edit .quick-edit-divider{flex:none;width:1px;height:24px;background:#e6e0f0;margin:0 3px}
+.canvas-quick-edit .quick-edit-button{border:0;background:transparent;color:#322847;border-radius:9px;font-size:12px;font-weight:800;min-height:37px;padding:6px 9px;flex:none}
+.canvas-quick-edit .quick-edit-button:hover,.canvas-quick-edit .quick-edit-button[aria-pressed=true]{background:#eee5ff;color:#623bb5}
+.canvas-quick-edit .quick-edit-field{display:flex;align-items:center;flex:none}
+.canvas-quick-edit .quick-edit-field input[type=color]{border:1px solid #e7ddec;background:#fff;border-radius:8px;width:34px;height:34px;padding:4px;cursor:pointer}
+.canvas-quick-edit .quick-edit-field input[type=number]{border:1px solid #e7ddec;border-radius:8px;width:58px;height:36px;padding:5px;text-align:center;font-size:13px}
+.canvas-quick-edit .quick-edit-field select{border:1px solid #e7ddec;border-radius:8px;max-width:126px;height:36px;background:#fff;padding:5px 7px;font-size:12px;color:#343147}
+.canvas-quick-edit[data-kind=multi] [data-quick-input],.canvas-quick-edit[data-kind=multi] [data-quick-action=bold],.canvas-quick-edit[data-kind=multi] [data-quick-action=italic],.canvas-quick-edit[data-kind=multi] [data-quick-action=underline],.canvas-quick-edit[data-kind=multi] [data-quick-action=align],.canvas-quick-edit[data-kind=multi] [data-quick-action=border],.canvas-quick-edit[data-kind=multi] [data-quick-action=crop]{display:none}
+.canvas-quick-edit:not([data-kind=text]) [data-quick-input=fontFamily],.canvas-quick-edit:not([data-kind=text]) [data-quick-input=fontSize],.canvas-quick-edit:not([data-kind=text]) [data-quick-action=bold],.canvas-quick-edit:not([data-kind=text]) [data-quick-action=italic],.canvas-quick-edit:not([data-kind=text]) [data-quick-action=underline],.canvas-quick-edit:not([data-kind=text]) [data-quick-action=align]{display:none}
+.canvas-quick-edit:not([data-kind=image]) [data-quick-input=mask],.canvas-quick-edit:not([data-kind=image]) [data-quick-action=crop]{display:none}
+.canvas-quick-edit[data-kind=text] [data-quick-input=stroke],.canvas-quick-edit[data-kind=text] [data-quick-action=border]{display:none}
+.canvas-quick-edit[data-kind=image] [data-quick-input=fill]{display:none}
+.canvas-quick-edit .quick-edit-field:has([data-quick-input]:not(:is([data-kind=text] [data-quick-input],[data-kind=image] [data-quick-input]))){min-width:0}
+.canvas-quick-border{position:sticky;right:0;flex:none;display:flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid #d7c3ed;background:#faf5ff;border-radius:10px}
+.canvas-quick-border label{display:flex;align-items:center;gap:7px;color:#584271;font-size:12px;font-weight:700}
+.canvas-quick-border input{width:95px;accent-color:#7546d9}
+.canvas-quick-border output{font-size:14px;min-width:19px;font-variant-numeric:tabular-nums}
+.canvas-unified-menu{position:fixed;z-index:210;display:grid;gap:2px;min-width:204px;max-height:min(82dvh,500px);overflow-y:auto;padding:8px;background:#fff;border:1px solid #e5ddeb;border-radius:14px;box-shadow:0 12px 36px #1a143a43}
+.canvas-unified-menu button{width:100%;padding:10px 14px;text-align:left;color:#372e49;border:0;background:transparent;border-radius:9px;font-size:13px;min-height:38px;font-weight:650}
+.canvas-unified-menu button:hover:not(:disabled),.canvas-unified-menu button:focus-visible{background:#f3ebff;color:#6d3bcb}
+.canvas-unified-menu button:disabled{opacity:.36}
+.canvas-unified-menu button[data-canvas-action=delete]{color:#b72c4c}
+.canvas-menu-divider{height:1px;background:#eee8f5;margin:5px 3px}
+@media(max-width:700px){
+ .canvas-quick-edit{border-radius:12px;padding:5px 7px;box-shadow:0 4px 18px #24173530;z-index:23;min-height:46px}
+ .canvas-quick-edit .quick-edit-title{font-size:11px;padding:0 5px}
+ .canvas-quick-edit .quick-edit-button{min-height:37px;padding:5px 7px}
+ .canvas-quick-edit .quick-edit-field select{max-width:100px}
+ .canvas-unified-menu{max-height:60dvh}
+ .panel-open .canvas-quick-edit{visibility:hidden;pointer-events:none}
+}
+@media print{.canvas-quick-edit,.canvas-unified-menu{display:none!important}}
