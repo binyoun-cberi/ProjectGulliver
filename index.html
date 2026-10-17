@@ -18,6 +18,20 @@
 @media(min-width:1500px){.home-view .tool-list{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:1000px){.quick-tools{grid-template-columns:repeat(4,minmax(0,1fr))}.home-view .welcome h1{font-size:28px}}@media(max-width:800px){.sidebar{width:236px;padding:18px;gap:20px}.sidebar .brand>div,.sidebar>.class-mini,.sidebar>div:not(.sidebar-bottom){display:block}.sidebar .nav button,.sidebar .nav a{flex-direction:row;padding:12px;font-size:14px}.sidebar-bottom p{display:block}.backup-actions{display:flex}.rail-toggle{display:none}.sidebar .create{display:flex;justify-content:center;align-items:center;gap:8px}.sidebar .create-label{font-size:13px}.main,.rail-expanded .main{margin-left:0;padding:20px}.home-view .main{padding-top:30px}.home-view .top-links{display:none}.home-view .topbar{gap:10px}.home-view .welcome h1{font-size:25px}.home-view .search{padding:15px}.home-view .welcome{margin-bottom:20px}.quick-tools{gap:5px;padding-bottom:5px}.quick-tool{font-size:11px;gap:8px}.quick-tool .quick-icon{width:43px;height:43px;font-size:22px}.home-view .activity-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-view .preview{height:135px}.home-view .card-info h3{font-size:13px}}@media(max-width:460px){.home-view .main{padding:25px 16px}.home-view .welcome h1{font-size:22px}.home-view .welcome p{font-size:12px}.home-view .activity-grid{grid-template-columns:1fr}.home-view .preview{height:160px}}
 
  .workspace-switch .workspace-library-tab{font-size:13px;font-weight:800;padding:9px 8px;color:var(--brand);text-decoration:none}.home-bottom-bar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:inherit;font-size:inherit;font-weight:inherit;padding:8px 4px}.home-bottom-bar a:focus-visible{outline:3px solid #a895ed} .new-dialog .create-main{grid-template-columns:repeat(3,minmax(0,1fr))} @media(max-width:700px){.new-dialog .create-main{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Unified recent materials from all existing storage sources */
+.unified-home-recent{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.unified-home-recent .unified-item{min-width:0;border:1px solid var(--line);border-radius:14px;background:white;overflow:hidden}
+.unified-home-recent .unified-open{display:flex;align-items:center;gap:11px;padding:12px;text-decoration:none;color:inherit}
+.unified-home-recent .unified-open:hover{background:#fbf9ff}
+.unified-home-recent .unified-preview{width:49px;height:49px;border-radius:11px;flex:none;background:#eee9ff;color:#6a4cbb;display:grid;place-items:center;font-size:23px;font-weight:900}
+.unified-home-recent .unified-preview.lesson,.unified-home-recent .unified-preview.timer,.unified-home-recent .unified-preview.quiz,.unified-home-recent .unified-preview.seating{background:#e7f7f4;color:#08776c}
+.unified-home-recent .unified-preview.video,.unified-home-recent .unified-preview.music{background:#e8f3ff;color:#236e9b}
+.unified-home-recent .unified-info{display:grid;gap:3px;min-width:0}
+.unified-home-recent .unified-info strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+.unified-home-recent .unified-info small{color:var(--muted);font-size:11px}
+.unified-home-recent .unified-arrow{margin-left:auto;color:var(--brand);font-size:18px}
+.unified-home-recent .unified-empty{grid-column:1/-1;padding:19px;color:var(--muted);font-size:13px}
+@media(max-width:700px){.unified-home-recent{grid-template-columns:1fr}}
 </style>
 <link rel="stylesheet" href="workspace-experience.css?v=20261014-unified1">
 </head>
