@@ -13,7 +13,9 @@ const frame=q('officialEditorFrame'),panel=q('officialEditorPanel'),simple=q('si
 const status=q('officialStatus'),help=q('officialHelp'),link=q('officialExternal');
 const tabs=[q('simpleMode'),q('officialMode')];
 let available=null,loaded=false,selected='simple',ready=false,loadingSince=0,checker=null,loadError='',relPath='index.html';
-const restoreQuick=new URLSearchParams(location.search).get('editor')==='simple';
+const editorPreference=new URLSearchParams(location.search).get('editor');
+const restoreQuick=editorPreference==='simple';
+const requestedAdvanced=Boolean(requestedOfficialId)||editorPreference==='advanced';
 let userSelectedMode=false;
 const TIMEOUT_MS=90000;
 function announce(message,state='ok'){
@@ -188,7 +190,9 @@ async function check(){
   q('officialVersion').textContent='ArtCraft 공식 '+title+' '+manifest.version;
   // Do not replace an explicitly chosen mode, or hide a saved quick project
   // behind the separately stored official WASM editor after async verification.
-  if((requestedOfficialId||!restoreQuick)&&!userSelectedMode)show('official');
+  // New quick projects must never switch to an advanced WASM editor automatically.
+  // Existing native projects explicitly request the official editor.
+  if(requestedAdvanced&&!userSelectedMode)show('official');
  }catch(e){
   available=false;announce('간편 편집은 정상 사용 가능해요. 고급 프로그램 확인 실패: '+e.message,'error');
  }
@@ -204,7 +208,11 @@ q('officialSaveNow').addEventListener('click',async()=>{
  finally{btn.disabled=false}
 });
 q('simpleMode').addEventListener('click',()=>{userSelectedMode=true;show('simple')});
-q('officialMode').addEventListener('click',()=>{userSelectedMode=true;show('official')});
+q('officialMode').addEventListener('click',()=>{
+ userSelectedMode=true;
+ show('official');
+ announce('고급 편집은 별도 프로젝트 형식이에요. 간편 작업이 자동으로 전환되지 않으며, 편집 후 원본 프로젝트를 따로 보관해야 해요.','ready');
+});
 q('officialRetry').addEventListener('click',()=>start());
 q('officialWebgl').addEventListener('click',()=>start('webgl'));
 q('officialCpu').addEventListener('click',()=>{if(isVideo)start('cpu')});
