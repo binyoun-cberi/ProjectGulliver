@@ -1,0 +1,112 @@
+/* Convert genuine classroom notice and confirmed roster assignments to editable pages. */
+(function(root,factory){
+ const api=factory(root.GulliverUnifiedCore||(typeof require==='function'?require('./studio-unified-core.js'):null));
+ if(typeof module==='object'&&module.exports)module.exports=api;
+ root.GulliverTeacherNext=api;
+})(typeof globalThis!=='undefined'?globalThis:this,function(C){
+ 'use strict';
+ if(!C)throw Error('편집 가능한 캔버스 엔진이 필요해요.');
+ const clean=(s,max=100)=>String(s??'').trim().slice(0,max);
+ const cap=(v,min,max)=>Math.min(max,Math.max(min,Number(v)||min));
+ const hex=(value,fallback)=>/^#[0-9a-fA-F]{6}$/.test(value||'')?value:fallback;
+ function board(layout,title,subtitle,color){
+  const bounds=C.LAYOUTS[layout];if(!bounds)throw Error('지원하지 않는 캔버스 크기예요.');
+  const w=bounds.w,h=bounds.h;
+  const text=(value,x,y,wi,he,size=22,tint='#24344F',align='left')=>C.element('text',{
+   x:Math.round(x),y:Math.round(y),w:Math.max(10,Math.round(wi)),h:Math.max(10,Math.round(he)),
+   content:clean(value,800),fontSize:cap(size,10,105),fill:hex(tint,'#24344F'),align});
+  const rect=(x,y,wi,he,fill='#FFFFFF',stroke=fill)=>C.element('rect',{
+   x:Math.round(x),y:Math.round(y),w:Math.max(10,Math.round(wi)),h:Math.max(10,Math.round(he)),fill:hex(fill,'#FFFFFF'),stroke:hex(stroke,fill)});
+  const base=[rect(0,0,w,h*.17,color),text(title,w*.06,h*.035,w*.88,h*.085,Math.min(51,w*.055)),text(subtitle,w*.06,h*.12,w*.88,h*.04,16,'#53647C')];
+  return{w,h,text,rect,base,page:(name,els,bg='#FFFFFF')=>C.makePage(name,els,bg)};
+ }
+ function lesson(snapshot,{layout='wide'}={}){
+  if(snapshot?.kind!=='lesson')throw Error('수업 알리미를 먼저 실행해 주세요.');
+  const subject=clean(snapshot.subject,28),unit=clean(snapshot.unit,120),book=clean(snapshot.page,75),
+    topic=clean(snapshot.topic,160),objective=clean(snapshot.objective,420),wrapup=clean(snapshot.wrapup,180);
+  const activities=[snapshot.act1,snapshot.act2,snapshot.act3].map(x=>clean(x,200)).filter(Boolean);
+  if(snapshot.sampleOnly)throw Error('지금은 예시 수업이에요. 원본 알리미에서 수업 내용 중 하나 이상을 수정해 주세요.');
+  if(!topic||!objective)throw Error('수업 주제와 학습 목표를 입력해 주세요.');
+  const tint={'국어':'#F2EAFF','수학':'#E8F4FF','사회':'#E9F9EE','과학':'#ECEBFF','체육':'#FFF0EB','음악':'#FFF0F7','미술':'#FFF3F6','영어':'#E8F9FA'}[subject]||'#ECF3FF';
+  const d=board(layout,topic,(subject||'우리 수업')+'  ·  '+(unit||'수업 안내'),tint),{w,h,rect,text}=d,els=[...d.base];
+  if(book)els.push(text(book,w*.65,h*.13,w*.29,h*.035,14,'#53647C','right'));
+  const top=h*.22;
+  els.push(rect(w*.065,top,w*.87,h*.185,'#F0F6FE','#CFE0F4'));
+  els.push(text('오늘의 학습 목표',w*.09,top+h*.025,w*.8,h*.047,18,'#315A82'));
+  els.push(text(objective,w*.095,top+h*.08,w*.81,h*.09,objective.length>90?19:26,'#223A59'));
+  const activitiesTop=h*.447,blockGap=w*.018,blockW=(w*.87-blockGap*2)/3,blockH=h*.265;
+  for(let i=0;i<3;i++){
+   const x=w*.065+i*(blockW+blockGap),name=activities[i]||'';
+   els.push(rect(x,activitiesTop,blockW,blockH,'#FFFFFF','#DEE6F1'));
+   els.push(text('활동 '+(i+1),x+13,activitiesTop+h*.023,blockW-26,h*.05,17,'#62759C'));
+   if(name)els.push(text(name,x+13,activitiesTop+h*.085,blockW-26,h*.145,name.length>40?18:22,'#263954'));
+  }
+  els.push(rect(w*.065,h*.755,w*.87,h*.12,'#FFF6E8','#F1DEC1'));
+  els.push(text('마무리',w*.09,h*.768,w*.2,h*.043,16,'#886142'));
+  els.push(text(wrapup||'오늘 배운 내용 나누기',w*.26,h*.773,w*.66,h*.074,21,'#674A35'));
+  return{title:topic,layout,pages:[d.page('이번 수업 알리미',els)],description:'학습 주제·목표·활동이 각각 수정 가능한 안내판 1장'};
+ }
+ function roles(snapshot,{layout='wide'}={}){
+  if(snapshot?.kind!=='roles')throw Error('학급 역할 배정 도구를 먼저 실행해 주세요.');
+  if(!snapshot.confirmed)throw Error('학급 역할 배정 도구에서 결과를 만든 뒤 ‘이번 역할 확정’을 눌러 주세요.');
+  const students=Array.isArray(snapshot.students)?snapshot.students:[];
+  const roleDefs=Array.isArray(snapshot.roles)?snapshot.roles:[];
+  if(!students.length||!roleDefs.length||students.length>120||roleDefs.length>60)throw Error('학생 또는 역할 목록을 확인해 주세요. 최대 학생 120명·역할 60개예요.');
+  const ids=new Set(students.map(s=>String(s.id)));
+  if(ids.size!==students.length||students.some(s=>!clean(s.name,40)))throw Error('학생 이름과 중복 여부를 확인해 주세요.');
+  const assignments=snapshot.assignment||{},defs=new Map(roleDefs.map(r=>[String(r.id),clean(r.name,40)]));
+  if(Object.keys(assignments).length!==students.length||students.some(s=>!defs.has(String(assignments[s.id]))))throw Error('확정한 배정에서 일부 학생·역할을 찾지 못했어요.');
+  const groups=roleDefs.map(r=>({name:clean(r.name,40),names:students.filter(s=>String(assignments[s.id])===String(r.id)).map(s=>clean(s.name,40))})).filter(r=>r.names.length);
+  const perPage=layout==='a4'?7:5,pages=[],d=board(layout,'우리 반 역할표','확정된 역할 배정 · 학생 희망·제외 조건은 넣지 않아요','#F1F0FF');
+  const {w,h,rect,text}=d;
+  for(let off=0;off<groups.length;off+=perPage){
+   const chunk=groups.slice(off,off+perPage),els=[...d.base],step=h*.67/perPage;
+   for(const [j,entry]of chunk.entries()){
+    const y=h*.215+j*step;
+    els.push(rect(w*.065,y,w*.87,step*.86,j%2?'#F7F9FD':'#FFFFFF','#DBE2EF'));
+    els.push(text(entry.name,w*.09,y+step*.1,w*.25,step*.6,entry.name.length>15?16:21,'#4B3C89'));
+    const names=entry.names.join('  ·  ');
+    els.push(text(names,w*.35,y+step*.12,w*.56,step*.6,names.length>68?14:names.length>40?17:21,'#26364F'));
+   }
+   pages.push(d.page('역할표 '+(pages.length+1),els));
+  }
+  return{title:'우리 반 역할표',layout,pages,description:students.length+'명의 확정된 역할표 '+pages.length+'장'};
+ }
+ function groups(snapshot,{layout='wide'}={}){
+  if(snapshot?.kind!=='groups')throw Error('모둠 만들기 도구를 먼저 실행해 주세요.');
+  if(!snapshot.confirmed)throw Error('모둠을 모두 공개한 뒤 ‘이번 모둠 확정’을 눌러 주세요.');
+  const list=Array.isArray(snapshot.groups)?snapshot.groups:[];
+  if(!list.length||list.length>40)throw Error('확정된 모둠 목록을 확인해 주세요. 최대 40개 모둠이에요.');
+  const used=new Set(),cleaned=list.map((members,i)=>{
+   if(!Array.isArray(members)||!members.length||members.length>20)throw Error((i+1)+'모둠의 인원 정보를 확인해 주세요.');
+   return members.map(student=>{
+    const id=String(student?.id||''),name=clean(student?.name,36);
+    if(!id||!name||used.has(id))throw Error('모둠에서 학생이 빠졌거나 중복됐어요.');
+    used.add(id);return name;
+   });
+  });
+  const perPage=layout==='a4'?5:4,pages=[],d=board(layout,'우리 반 모둠표','확정된 학생 명단 · 각 모둠을 자유롭게 편집할 수 있어요','#E6F8F2');
+  const {w,h,text,rect}=d;
+  for(let off=0;off<cleaned.length;off+=perPage){
+   const slice=cleaned.slice(off,off+perPage),els=[...d.base],rows=Math.ceil(slice.length/2);
+   const gap=w*.025,x0=w*.065,y0=h*.225,cardW=(w*.87-gap)/2,cardH=(h*.655-(rows-1)*gap)/rows;
+   for(let i=0;i<slice.length;i++){
+    const x=x0+(i%2)*(cardW+gap),y=y0+Math.floor(i/2)*(cardH+gap),members=slice[i],number=off+i+1;
+    els.push(rect(x,y,cardW,cardH,'#FFFFFF','#CDE5D9'));
+    els.push(rect(x,y,cardW,cardH*.235,'#EAF8F0','#EAF8F0'));
+    els.push(text(number+'모둠',x+15,y+cardH*.035,cardW-30,cardH*.16,22,'#12654A'));
+    const names=members.join('  ·  ');
+    els.push(text(names,x+18,y+cardH*.3,cardW-36,cardH*.61,names.length>48?16:names.length>26?20:24,'#30445B'));
+   }
+   pages.push(d.page('모둠표 '+(pages.length+1),els));
+  }
+  return{title:'우리 반 모둠표',layout,pages,description:used.size+'명의 확정된 모둠표 '+pages.length+'장'};
+ }
+ function convert(snapshot,options){
+  if(snapshot?.kind==='lesson')return lesson(snapshot,options);
+  if(snapshot?.kind==='roles')return roles(snapshot,options);
+  if(snapshot?.kind==='groups')return groups(snapshot,options);
+  throw Error('지원하지 않는 교사 도구 결과예요.');
+ }
+ return{lesson,roles,groups,convert};
+});
