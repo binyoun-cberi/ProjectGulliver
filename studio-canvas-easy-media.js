@@ -186,12 +186,13 @@ menu.innerHTML='<strong>레이어 순서</strong><button data-action="front">맨
 document.body.append(menu);let layerTarget='';
 function openMenu(id,x,y,isImage){layerTarget=id;menu.querySelector('[data-action="background"]').hidden=!isImage;menu.hidden=false;menu.style.left=Math.max(8,Math.min(innerWidth-190,x))+'px';menu.style.top=Math.max(8,Math.min(innerHeight-250,y))+'px'}
 selection.addEventListener('contextmenu',e=>{e.preventDefault();openMenu('__video__',e.clientX,e.clientY,false)});
-stage.addEventListener('contextmenu',e=>{const el=e.target.closest('.item');if(!el)return;e.preventDefault();openMenu(el.dataset.id,e.clientX,e.clientY,el.dataset.type==='image')});
+stage.addEventListener('contextmenu',e=>{const el=e.target.closest('.item');if(!el||window.GulliverCanvasQuick)return;e.preventDefault();openMenu(el.dataset.id,e.clientX,e.clientY,el.dataset.type==='image')});
 const layerButton=document.createElement('button');layerButton.type='button';layerButton.textContent='겹치기';
 layerButton.setAttribute('aria-label','선택한 요소 레이어 순서 조절');
 layerButton.addEventListener('click',()=>{
  const picked=A.getSelectedLayerInfo?.(),target=picked|| (layout&&A.getSceneVideoClip()?{id:'__video__',type:'video'}:null);
  if(!target)return M.notify('먼저 글씨나 사진, 영상을 선택해 주세요.');
+ if(window.GulliverCanvasQuick&&target.type!=='video'){window.GulliverCanvasQuick.openMenu(target.id,innerWidth/2,innerHeight/2);return}
  openMenu(target.id,innerWidth/2,innerHeight/2,target.type==='image');
 });
 document.querySelector('.canvas-selection-bar')?.append(layerButton);
