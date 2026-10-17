@@ -50,7 +50,7 @@
    counts=options.map(x=>({name:clean(x.name,80),count:safeNumber(x.count,0,100000)}));
   }else{
    const selections=votes&&typeof votes==='object'?Object.values(votes):[];
-   counts=options.slice(0,12).map(item=>({name:clean(item?.name,80),count:selections.filter(v=>String(v)===String(item.id)).length}));
+   counts=options.map(item=>({name:clean(item?.name,80),count:selections.filter(v=>String(v)===String(item.id)).length}));
   }
   const total=counts.reduce((s,x)=>s+x.count,0);
   if(!total)throw Error('집계된 투표가 없어요. 먼저 투표판에서 투표를 진행해 주세요.');
