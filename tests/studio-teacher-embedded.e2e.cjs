@@ -9,6 +9,7 @@ test('all 8 original teaching apps use compact in-canvas mode while standalone k
  try{
   await ready();fs.mkdirSync('test-artifacts',{recursive:true});
   browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox']});
+  const overflows=[];
   for(const [name,width,height]of [['desktop',1280,870],['mobile',390,844]]){
    const ctx=await browser.newContext({viewport:{width,height},hasTouch:name==='mobile',isMobile:name==='mobile'});
    const page=await ctx.newPage();page.setDefaultTimeout(18000);
@@ -42,7 +43,7 @@ test('all 8 original teaching apps use compact in-canvas mode while standalone k
     });
     console.log('TEACHER_NATIVE_SCREEN '+JSON.stringify({tool:id,device:name,...metrics}));
     assert.equal(metrics.duplicateShells,0,id+' should not show extra Gulliver header');
-    assert.ok(metrics.docWidth-metrics.width<=16,id+' horizontal document overflow on '+name+' of '+(metrics.docWidth-metrics.width)+'px');
+    if(metrics.docWidth-metrics.width>16)overflows.push({device:name,tool:id,pixels:metrics.docWidth-metrics.width});
     assert.ok(metrics.buttons>1,id+' native tool controls inaccessible');
     await page.screenshot({path:'test-artifacts/teacher-'+name+'-'+id+'.png',animations:'disabled',timeout:12000});
     await frame.locator('#teacherLiveClose').click();
@@ -57,5 +58,7 @@ test('all 8 original teaching apps use compact in-canvas mode while standalone k
   await standalone.locator('.gulliver-shell').waitFor({state:'visible'});
   assert.equal(await standalone.locator('body.gulliver-studio-embed').count(),0,'normal tool page keeps its own navigation');
   await context.close();
+  console.log('TEACHER_OVERFLOWS '+JSON.stringify(overflows));
+  assert.deepEqual(overflows,[],'Original tools must not overflow mobile or desktop');
  }finally{await browser?.close();server.kill('SIGTERM')}
 });
