@@ -2,10 +2,13 @@
  * The embedded tools are same-origin; editor/project storage is never overwritten. */
 (()=>{
 'use strict';
-const A=window.GulliverStudioAdapter,S=window.GulliverTeacherSnapshots;
+const A=window.GulliverStudioAdapter,S=window.GulliverTeacherSnapshots,N=window.GulliverTeacherNext;
 const pane=document.querySelector('.design-pane[data-pane="teacher"]');
-if(!A||!S||!pane)return;
+if(!A||!S||!N||!pane)return;
 const tools=[
+ {id:'lesson',icon:'▣',name:'이번 수업 알리미',url:'이번 수업 알리미.html',summary:'학습 목표·활동을 편집 가능한 안내판으로'},
+ {id:'groups',icon:'▦',name:'모둠 만들기',url:'행운의 모둠 메이커.html',summary:'확정된 모둠별 이름표·모둠표 만들기'},
+ {id:'roles',icon:'◇',name:'학급 역할 배정',url:'학급 배정 도우미.html',summary:'확정된 역할·담당자 표 만들기'},
  {id:'timer',icon:'◷',name:'수업 흐름 타이머',url:'지도안식 원형 타이머.html',summary:'단계를 운영하고 시간표로 추가'},
  {id:'quiz',icon:'▤',name:'낱말카드·퀴즈',url:'플래시퀴즈메이커.html',summary:'문제·정답 카드를 만들어 추가'},
  {id:'seating',icon:'▦',name:'교실 자리 배정',url:'자리 배정 프로그램.html',summary:'학생 자리를 배정하고 자리표 추가'},
@@ -26,7 +29,7 @@ pane.prepend(bar);
 const dlg=document.createElement('dialog');dlg.id='teacherLiveDialog';dlg.className='teacher-live-dialog';dlg.setAttribute('aria-label','교사 도구 실행 창');
 dlg.innerHTML=[
  '<div class="teacher-run-head"><div><strong id="teacherLiveTitle">교사 도구</strong><small id="teacherLiveDesc">원본 도구를 실행합니다</small></div>',
- '<div class="teacher-run-actions"><button type="button" id="teacherCopyResult">＋ 결과를 캔버스로</button><button type="button" id="teacherLiveClose">× 닫기</button></div></div>',
+ '<div class="teacher-run-actions"><button type="button" id="teacherCopyResult">＋ 새 페이지로 추가</button><button type="button" id="teacherRefreshResult" hidden>↻ 기존 자료 갱신</button><button type="button" id="teacherLiveClose">× 닫기</button></div></div>',
  '<p id="teacherLiveStatus" class="teacher-live-status" role="status">수업 도구를 준비하고 있어요.</p>',
  '<iframe id="teacherLiveFrame" title="실행 중인 교사 도구" referrerpolicy="same-origin" allow="camera; microphone; fullscreen" loading="eager"></iframe>'
 ].join('');
@@ -34,7 +37,10 @@ document.body.append(dlg);
 const grid=bar.querySelector('#teacherLiveGrid'),frame=dlg.querySelector('#teacherLiveFrame'),
  status=dlg.querySelector('#teacherLiveStatus');
 let current=null;
-const copyButton=dlg.querySelector('#teacherCopyResult');
+const copyButton=dlg.querySelector('#teacherCopyResult'),refreshButton=dlg.querySelector('#teacherRefreshResult');
+const nextKinds=['lesson','groups','roles'];
+function linked(){return current&&nextKinds.includes(current.id)?A.linkedTeacherSource?.(current.id):null}
+function updateRefreshButton(){refreshButton.hidden=!linked();}
 const directKinds=['timer','quiz','seating','check'];
 function info(msg,error=false){status.textContent=msg;status.classList.toggle('error',error)}
 for(const item of tools){
@@ -49,6 +55,7 @@ function open(id){
  const item=tools.find(x=>x.id===id);if(!item)return;
  current=item;
  copyButton.disabled=true;
+ refreshButton.hidden=true;
  dlg.querySelector('#teacherLiveTitle').textContent=item.name;
  dlg.querySelector('#teacherLiveDesc').textContent=item.summary;
  info('도구를 불러오는 중이에요. 도구 안에서 실제로 작업한 결과만 가져옵니다.');
@@ -66,6 +73,14 @@ function close(reason='close'){
  if(dlg.open)dlg.close();
  current=null;
  window.dispatchEvent(new CustomEvent('gulliver:teacher-live-close',{detail:{id:previous?.id||null,reason}}));
+}
+function currentNext(){
+ if(!current||!nextKinds.includes(current.id))throw Error('현재 열려 있는 수업 도구를 확인해 주세요.');
+ const get=frame.contentWindow?.GulliverTeacherLiveSnapshot;
+ if(typeof get!=='function')throw Error('도구가 아직 준비되지 않았어요.');
+ const live=get();
+ if(live?.kind!==current.id)throw Error('실행 중인 도구의 종류가 일치하지 않아요.');
+ return N.convert(live,{layout:A.capture().layout});
 }
 function snapshot(){
  const layout=A.capture().layout;
@@ -102,6 +117,12 @@ function snapshot(){
 copyButton.addEventListener('click',()=>{
  if(!current)return;
  try{
+  if(nextKinds.includes(current.id)){
+   const result=currentNext();
+   const count=A.appendTeacherPages(result,{sourceKind:current.id});
+   info(result.description+' · '+count+'장 추가했어요. 다음 실행 때 최신 결과로 교체할 수 있어요.');
+   close('import');return;
+  }
   if(directKinds.includes(current.id)){
    const get=frame.contentWindow?.GulliverTeacherLiveSnapshot;
    if(typeof get!=='function')throw Error('도구가 아직 준비되지 않았어요. 잠시 후 도구 안에서 결과를 확인해 주세요.');
@@ -120,8 +141,18 @@ copyButton.addEventListener('click',()=>{
   close('import');
  }catch(e){info(e.message||String(e),true)}
 });
+refreshButton.addEventListener('click',()=>{
+ if(!current||!nextKinds.includes(current.id)||!linked())return;
+ try{
+  const result=currentNext(); // Validate real, confirmed content before destructive confirmation.
+  if(!confirm('이 도구에서 마지막으로 가져온 페이지를 최신 결과로 바꿀까요? 캔버스에서 따로 수정한 글씨도 교체됩니다. 실행 취소할 수 있어요.'))return;
+  const count=A.refreshTeacherPages(current.id,result);
+  info(count+'장의 연결된 자료를 최신 결과로 바꿨어요.');
+  close('refresh');
+ }catch(e){info(e.message||String(e),true)}
+});
 dlg.querySelector('#teacherLiveClose').addEventListener('click',()=>close('close'));
 dlg.addEventListener('cancel',event=>{event.preventDefault();close('cancel')});
-frame.addEventListener('load',()=>{if(dlg.open&&current){copyButton.disabled=false;info('도구에서 작업한 뒤 “＋ 결과를 캔버스로”를 눌러 주세요. 예시나 과거 기록으로 자동 대체하지 않아요.')}});
+frame.addEventListener('load',()=>{if(dlg.open&&current){copyButton.disabled=false;updateRefreshButton();info(linked()?'수정한 결과를 새 페이지로 추가하거나, 이전에 가져온 페이지를 최신 결과로 바꿀 수 있어요.':'도구에서 작업한 뒤 “새 페이지로 추가”를 눌러 주세요. 예시·미확정 자료는 가져오지 않아요.')}});
 window.GulliverTeacherLive={open,close,isOpen:()=>dlg.open,listTools:()=>tools.map(({id,name,summary})=>({id,name,summary}))};
 })();
