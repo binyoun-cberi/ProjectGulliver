@@ -510,10 +510,3 @@ body{color:var(--canvas-ink);background:var(--canvas-bg)}
 .v4c-panel>summary small,.v4c-panel-content small,
 .teacher-live-tile span,.teacher-live-heading small,.teacher-live-note{color:#5b526b}
 @media(max-width:700px){.design-nav button{font-size:11px}}
-
-/* Show only insertion controls in the insert pane.
-   Templates, page management and teacher actions already have dedicated tabs;
-   their original DOM controls remain available for scripted adapters. */
-.design-pane[data-pane="elements"] .shelf .templates,
-.design-pane[data-pane="elements"] .shelf .teacher-tools,
-.design-pane[data-pane="elements"] .shelf .page-tools{display:none}
