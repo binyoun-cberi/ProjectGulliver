@@ -56,6 +56,10 @@ test('UX inspection: home to new canvas to panels on desktop/tablet/phone',{time
     });
     console.log('UX_CANVAS '+JSON.stringify({device,...obj}));
    }
+   await frame.locator('body').evaluate(()=>GulliverCanvasShell.activate('elements'));
+   assert.equal(await frame.locator('[data-pane="elements"] .shelf .insert-tools').isVisible(),true);
+   for(const section of ['templates','teacher-tools','page-tools'])
+    assert.equal(await frame.locator('[data-pane="elements"] .shelf .'+section).isVisible(),false,'duplicate '+section+' must not distract from insertion');
    await frame.locator('[data-design-tab="text"]').click();
    await frame.locator('.design-panel').waitFor();
    await frame.locator('[data-add="text"]').evaluate(el=>el.click());
