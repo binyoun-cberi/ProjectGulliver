@@ -28,24 +28,26 @@
  }
  function thermometer(raw,{layout='wide'}={}){
   if(!raw||typeof raw!=='object')throw Error('칭찬 온도계에 저장한 기록이 없어요.');
-  const goal=safeNumber(raw.goalTemp,1,10000)||100,current=Math.min(goal,safeNumber(raw.currentTemp,0,goal));
+  const goal=safeNumber(raw.goalTemp,1,10000)||100,current=safeNumber(raw.currentTemp,0,10000);
   const d=basic(layout,'우리 반 칭찬 온도계','실제 저장된 온도 · 수업자료로 복사','#E7F8EF');
   d.rect(d.w*.08,d.h*.27,d.w*.84,d.h*.14,'#EFF7F4','#CFE7D8');
-  if(current>0)d.rect(d.w*.08,d.h*.27,d.w*.84*(current/goal),d.h*.14,'#35AC84','#35AC84');
+  if(current>0)d.rect(d.w*.08,d.h*.27,d.w*.84*Math.min(1,current/goal),d.h*.14,'#35AC84','#35AC84');
   d.text(current+' / '+goal+'점',d.w*.17,d.h*.275,d.w*.66,d.h*.12,Math.min(47,d.w*.06),'#234D47');
   const percentage=Math.round(current/goal*100);
   d.text('목표 달성 '+percentage+'%',d.w*.18,d.h*.45,d.w*.64,d.h*.13,Math.min(32,d.w*.04),'#215F4D');
   const records=Array.isArray(raw.records)?raw.records:[];
   const list=records.slice(0,4).map(item=>clean(item.reason||'칭찬',48)+(item.type==='up'?' +':' −')+safeNumber(item.amount,0,200)+'점');
+  if(records.length>4)d.text('최근 4건 / 전체 '+records.length+'건',d.w*.09,d.h*.59,d.w*.82,d.h*.037,15,'#50667A','left');
   list.forEach((entry,i)=>d.text(entry,d.w*.09,d.h*(.63+i*.069),d.w*.82,d.h*.064,Math.min(18,d.w*.026),'#50667A','left'));
   return{layout,title:'칭찬 온도계',pages:[d.page('칭찬 온도계')],description:'기록된 온도 '+current+'/'+goal+'점'};
  }
  function vote(config,votes,{layout='wide',onlineSummary=null}={}){
   const options=onlineSummary?onlineSummary.options:config?.options;
+  if(Array.isArray(options)&&options.length>80)throw Error('선택지가 80개를 넘어요. 결과를 나누어 가져와 주세요.');
   if(!Array.isArray(options)||!options.length)throw Error('투표 선택지가 저장되지 않았어요.');
   let counts=[];
   if(onlineSummary){
-   counts=options.slice(0,12).map(x=>({name:clean(x.name,80),count:safeNumber(x.count,0,100000)}));
+   counts=options.map(x=>({name:clean(x.name,80),count:safeNumber(x.count,0,100000)}));
   }else{
    const selections=votes&&typeof votes==='object'?Object.values(votes):[];
    counts=options.slice(0,12).map(item=>({name:clean(item?.name,80),count:selections.filter(v=>String(v)===String(item.id)).length}));
@@ -70,7 +72,8 @@
   return{layout,title,pages,description:'개별 응답을 포함하지 않은 집계 결과 '+total+'표'};
  }
  function roulette(record,{layout='wide'}={}){
-  const outcomes=Array.isArray(record?.results)?record.results.slice(0,80):[];
+  if(Array.isArray(record?.results)&&record.results.length>80)throw Error('레이스 결과가 80명을 넘어요. 결과를 나누어 가져와 주세요.');
+  const outcomes=Array.isArray(record?.results)?record.results:[];
   if(!outcomes.length)throw Error('범퍼 룰렛의 저장된 레이스 결과가 없어요. 먼저 레이스를 완료해 주세요.');
   const pages=[],per=layout==='a4'?10:7;
   for(let offset=0;offset<outcomes.length;offset+=per){
