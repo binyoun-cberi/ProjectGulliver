@@ -796,16 +796,50 @@ function changeTrack(id,patch){
 window.GulliverStudioAdapter={
  kind:'canvas',
  capture:()=>C.validate(model),
- appendTeacherPages:result=>{
+ appendTeacherPages:(result,options={})=>{
   if(!result||!Array.isArray(result.pages)||!result.pages.length)throw Error('캔버스에 추가할 자료가 없어요.');
   if(result.layout!==model.layout)throw Error('캔버스 크기가 일치하지 않아요. 자료를 다시 만들어 주세요.');
   if(model.pages.length+result.pages.length>C.MAX_PAGES)throw Error('이 작업에 남은 페이지가 부족해요. 최대 40장까지 사용할 수 있어요.');
-  const pages=result.pages.map(p=>C.makePage(p.name,p.elements,p.background));
+  const kind=['lesson','roles','groups'].includes(options.sourceKind)?options.sourceKind:null;
+  const teacherSource=kind?{kind,instance:C.id(),snapshotAt:Date.now()}:null;
+  const pages=result.pages.map(p=>({...C.makePage(p.name,p.elements,p.background),...(teacherSource?{teacherSource}:{})}));
   const trial=C.validate({...model,pages:[...model.pages,...pages],active:model.pages.length});
   const before=clone(model);
   timeline?.halt();closeEditor();
   model=trial;clearSelection();checkpoint(before);timeline?.syncToActive();render();
   notice(pages.length+'장 추가했어요. 글씨·도형은 자유롭게 편집할 수 있어요.');
+  return pages.length;
+ },
+ linkedTeacherSource:kind=>{
+  if(!['lesson','roles','groups'].includes(kind))return null;
+  const found=model.pages.map((p,i)=>({p,i})).filter(({p})=>p.teacherSource?.kind===kind);
+  if(!found.length)return null;
+  found.sort((a,b)=>b.p.teacherSource.snapshotAt-a.p.teacherSource.snapshotAt||b.i-a.i);
+  const last=found[0].p.teacherSource;
+  return{kind,lastPage:found[0].i,instance:last.instance,updatedAt:last.snapshotAt,
+   pageCount:found.filter(x=>x.p.teacherSource.instance===last.instance).length};
+ },
+ refreshTeacherPages:(kind,result)=>{
+  if(!['lesson','roles','groups'].includes(kind))throw Error('갱신을 지원하지 않는 자료예요.');
+  if(!result?.pages?.length||result.layout!==model.layout)throw Error('수업자료의 크기 또는 원본 결과를 확인해 주세요.');
+  const matches=model.pages.map((p,i)=>({p,i})).filter(({p})=>p.teacherSource?.kind===kind);
+  if(!matches.length)throw Error('이 도구에서 가져온 자료가 없어요. 먼저 페이지로 추가해 주세요.');
+  matches.sort((a,b)=>b.p.teacherSource.snapshotAt-a.p.teacherSource.snapshotAt||b.i-a.i);
+  const instance=matches[0].p.teacherSource.instance;
+  const positions=model.pages.map((p,i)=>p.teacherSource?.instance===instance?i:-1).filter(i=>i>=0);
+  if(!positions.every((x,i)=>i===0||x===positions[i-1]+1))
+   throw Error('연결된 자료의 페이지 순서가 떨어져 있어요. 한곳에 모으거나 새 페이지로 추가해 주세요.');
+  if(model.pages.length-positions.length+result.pages.length>C.MAX_PAGES)
+   throw Error('갱신할 페이지가 너무 많아요. 다른 페이지를 정리한 뒤 다시 시도해 주세요.');
+  const newSource={kind,instance,snapshotAt:Date.now()};
+  const pages=result.pages.map(p=>({...C.makePage(p.name,p.elements,p.background),teacherSource:newSource}));
+  const start=positions[0],rest=model.pages.slice();
+  rest.splice(start,positions.length,...pages);
+  // Validate before mutating; keep undo, save and timeline behavior atomic.
+  const trial=C.validate({...model,pages:rest,active:start});
+  const before=clone(model);
+  timeline?.halt();closeEditor();model=trial;clearSelection();checkpoint(before);timeline?.syncToActive();render();
+  notice('이전에 가져온 '+positions.length+'장을 최신 결과 '+pages.length+'장으로 바꿨어요. 실행 취소할 수 있어요.');
   return pages.length;
  },
  getTracks:()=>model.tracks||[],

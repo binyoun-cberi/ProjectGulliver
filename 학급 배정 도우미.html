@@ -387,8 +387,18 @@ $("addRoleBtn").onclick=addRole;$("roleName").addEventListener("keydown",e=>{if(
 $("addStudentsBtn").onclick=addStudents;$("studentNames").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();addStudents()}});$("loadClassroomBtn").onclick=loadClassroom;$("clearStudentsBtn").onclick=()=>{if(confirm("학생 명단과 학생별 조건을 모두 비울까요?")){state.students=[];state.fixed={};state.excluded={};state.assignment={};save();renderAll()}};
 $("clearConditionsBtn").onclick=clearConditions;$("clearHistoryBtn").onclick=clearHistory;$("runBtn").onclick=runAssignment;$("copyBtn").onclick=copyResults;$("confirmBtn").onclick=confirmAssignment;$("moveBtn").onclick=moveSelected;$("cancelSelectBtn").onclick=()=>{selectedStudentId=null;renderResults()};
 load();refreshSharedProfiles();renderAll();
+window.GulliverTeacherLiveSnapshot=()=>{
+ const list=getHistory(),last=list[0],assign=state.assignment;
+ const confirmed=!!last&&state.students.length>0
+  &&Object.keys(assign).length===state.students.length
+  &&state.students.every(s=>String(last.assignments?.[s.id]||'')===String(assign[s.id]||'')&&Boolean(assign[s.id]));
+ return{kind:'roles',confirmed,
+  students:state.students.map(s=>({id:s.id,name:s.name})),
+  roles:state.roles.map(r=>({id:r.id,name:r.name})),
+  assignment:{...assign}};
+};
+Gulliver.mountShell({title:"학급 역할 배정 도우미",icon:"🧹"});
 })();
 </script>
-<script>Gulliver.mountShell({title:"학급 역할 배정 도우미",icon:"🧹"});</script>
 </body>
 </html>

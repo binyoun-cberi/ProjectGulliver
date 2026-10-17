@@ -310,6 +310,26 @@
             elements[`in_${id}`].addEventListener('input', updateBoard);
         });
 
+        // Preserve only the teacher's actual edits, not the preloaded example lesson.
+        const lessonStorageKey='gulliver.lessonNotice.v1';
+        let lessonCustomized=false;
+        try{
+            const saved=JSON.parse(localStorage.getItem(lessonStorageKey)||'null');
+            if(saved&&saved.customized===true&&saved.fields&&typeof saved.fields==='object'){
+                inputs.forEach(id=>{if(typeof saved.fields[id]==='string')elements['in_'+id].value=saved.fields[id].slice(0,500)});
+                lessonCustomized=true;
+            }
+        }catch{}
+        function lessonCapture(){
+            const fields=Object.fromEntries(inputs.map(id=>[id,elements['in_'+id].value]));
+            return{kind:'lesson',...fields,sampleOnly:!lessonCustomized};
+        }
+        inputs.forEach(id=>elements['in_'+id].addEventListener('input',()=>{
+            lessonCustomized=true;
+            try{localStorage.setItem(lessonStorageKey,JSON.stringify({version:1,customized:true,fields:Object.fromEntries(inputs.map(key=>[key,elements['in_'+key].value]))}))}catch{}
+        }));
+        window.GulliverTeacherLiveSnapshot=lessonCapture;
+
         // 전체화면 및 프레젠테이션 모드 전환
         let isFullscreen = false;
         function toggleFullscreen() {

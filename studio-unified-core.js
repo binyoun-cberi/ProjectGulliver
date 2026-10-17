@@ -248,7 +248,11 @@ function validate(raw){
   return{id:String(page.id||'p-'+i).slice(0,90),name:text(page.name,60)||'페이지 '+(i+1),
    background:color(page.background,'#ffffff'),elements,
    duration:number(page.duration,MIN_DURATION,MAX_DURATION,5),transition:TRANSITIONS.includes(page.transition)?page.transition:'none',
-   ...(page.videoClip?{videoClip:cleanVideoClip(page.videoClip)}:{})};
+   ...(page.videoClip?{videoClip:cleanVideoClip(page.videoClip)}:{}),
+   ...(page.teacherSource&&['lesson','roles','groups'].includes(page.teacherSource.kind)
+      &&typeof page.teacherSource.instance==='string'&&/^[a-zA-Z0-9_-]{1,90}$/.test(page.teacherSource.instance)
+      ?{teacherSource:{kind:page.teacherSource.kind,instance:page.teacherSource.instance,
+        snapshotAt:number(page.teacherSource.snapshotAt,0,4102444800000,0)}}:{})};
  });
  if(imageBytes>18*1024*1024)throw Error('프로젝트 안의 이미지가 너무 많아요. 이미지를 줄여 주세요.');
  let audio=null;

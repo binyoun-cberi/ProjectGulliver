@@ -20,7 +20,7 @@ test('all 8 original teaching apps use compact in-canvas mode while standalone k
    await frame.locator('#teacherLiveTools').waitFor({state:'visible'});
    const drawer=frame.locator('#teacherSavedOptions');
    assert.equal(await drawer.getAttribute('open'),null,'duplicate saved sources are collapsed by default');
-   assert.equal(await frame.locator('.teacher-live-tile').count(),8);
+   assert.equal(await frame.locator('.teacher-live-tile').count(),11,'8 original tools plus 3 new integrations');
    for(const id of ids){
     const button=frame.locator('.teacher-live-tile').filter({hasText:({
      timer:'수업 흐름 타이머',quiz:'낱말카드·퀴즈',seating:'교실 자리 배정',check:'학급췍',
