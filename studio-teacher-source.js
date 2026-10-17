@@ -29,8 +29,9 @@
    const students=Array.isArray(state.students)&&state.students.length?state.students:studentsOf(room);
    const last=(parse(read,'gulliver.seating.history.v1')||[])[0];
    // Only the same grid and the same named students may be used.
-   const recorded=snapshot&&Array.isArray(snapshot.assignment)&&snapshot.assignment.some(Boolean)
-    ?{cols,rows,seats:snapshot.assignment}:last;
+   const recorded=snapshot
+    ?(Array.isArray(snapshot.assignment)&&snapshot.assignment.some(Boolean)?{cols,rows,seats:snapshot.assignment}:null)
+    :last;
    const matches=recorded?.cols===cols&&recorded?.rows===rows
      &&Array.isArray(recorded.seats)&&recorded.seats.length===cols*rows;
    const lookup=new Map(students.map(s=>[String(s.id),String(s.name||'')]));
