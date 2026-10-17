@@ -127,6 +127,12 @@ document.addEventListener('keydown',e=>{
 });
 const params=new URLSearchParams(location.search);
 const requested=params.get('new');
+const requestedProject=params.get('project');
+const requestedOfficial=params.get('official');
+const requestedLibrary=params.get('library');
+function afterOpen(result){
+ if(result)sync();
+}
 if(requested&&Object.prototype.hasOwnProperty.call(tools,requested)){
  const preset=params.get('template');
  Promise.resolve(bridge.start(requested,null,'',preset)).then(ok=>{
@@ -136,6 +142,30 @@ if(requested&&Object.prototype.hasOwnProperty.call(tools,requested)){
   }
   sync();
  }).catch(error=>bridge.status('편집기를 열지 못했어요: '+(error.message||error),true));
+}else if(requestedProject){
+ Promise.resolve(window.GulliverStudioStorage.getProject(requestedProject)).then(item=>{
+  if(!item||!tools[item.kind])throw Error('이 기기의 보관함에서 작업을 찾지 못했어요.');
+  return bridge.start(item.kind,item);
+ }).then(afterOpen).catch(error=>bridge.status('저장한 자료를 열지 못했어요: '+(error.message||error),true));
+}else if(requestedOfficial){
+ const separator=requestedOfficial.indexOf(':'),kind=requestedOfficial.slice(0,separator),id=requestedOfficial.slice(separator+1);
+ if(separator<1||!['video','music'].includes(kind)||!id)bridge.status('고급 프로젝트 연결이 올바르지 않아요.',true);
+ else Promise.resolve(bridge.openOfficial(kind,id)).then(afterOpen).catch(error=>bridge.status('고급 프로젝트를 열지 못했어요: '+(error.message||error),true));
+}else if(requestedLibrary==='backup'||requestedLibrary==='assets'){
+ layout?.setRight(requestedLibrary==='assets'?'assets':'projects');
+ const pane=$(requestedLibrary==='assets'?'inspectorAssets':'inspectorProjects');
+ if(window.matchMedia('(max-width: 620px)').matches){
+  document.body.classList.add('studio-library-open');
+  if(shade){
+   shade.hidden=false;
+   shade.addEventListener('click',()=>{document.body.classList.remove('studio-library-open');shade.hidden=true},{once:true});
+  }
+ }
+ requestAnimationFrame(()=>{
+  if(requestedLibrary==='backup')$('libraryZipBackup')?.scrollIntoView({block:'center'});
+  else $('assetList')?.scrollIntoView({block:'nearest'});
+  pane?.setAttribute('data-library-request','true');
+ });
 }
 sync();
 })();

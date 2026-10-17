@@ -8,8 +8,8 @@ const studioCore=require('../studio-core.js');
 
 test('Canva-style home has real linked formats with matching studio implementations',()=>{
  const html=read('index.html'),home=read('workspace-home.js'),css=read('workspace-experience.css');
- const formats=[...home.matchAll(/\['(?:presentation|worksheet|document|custom|video|picture|pdf|music)','[^']+','([^']+)'/g)].map(x=>x[1]);
- assert.deepEqual(formats,['canvas','canvas','canvas','document','video','picture','pdf','music']);
+ const formats=[...home.matchAll(/\['(?:presentation|worksheet|document|video|music)','[^']+','([^']+)'/g)].map(x=>x[1]);
+ assert.deepEqual(formats,['canvas','canvas','document','video','music']);
  formats.forEach(kind=>assert.ok(studioCore.TOOLS[kind],kind+' editor exists'));
  for(const preset of ['blank','presentation','worksheet']){
   assert.ok(html.includes('href="뚝딱 제작실.html?new=canvas&amp;template='+preset+'"'));
@@ -17,11 +17,11 @@ test('Canva-style home has real linked formats with matching studio implementati
  for(const kind of ['slides','document','design','picture','pdf','video','music']){
   assert.ok(html.includes('href="뚝딱 제작실.html?new='+kind+'"'));
  }
- assert.doesNotMatch(html,/href="lesson\.html"/);
+ assert.match(html,/href="lesson\.html"/);
  assert.doesNotMatch(read('뚝딱 제작실.html'),/href="lesson\.html"/);
  assert.match(html,/class="home-bottom-bar"/);
  assert.match(html,/workspace-experience\.css/);
- assert.match(home,/templates\.slice\(0,3\)/);
+ assert.match(home,/templates\.slice\(0,2\)/);
  assert.match(home,/studio-library-link/);
  assert.match(css,/@media\(max-width:460px\)/);
 });
@@ -47,7 +47,7 @@ test('Studio mobile panel and deep links use the existing editor bridge',()=>{
 test('Separate video/audio native editors remain reachable',()=>{
  const html=read('index.html'),home=read('workspace-home.js');
  for(const name of ['영상 뚝딱','음악 뚝딱']){
-  assert.ok(home.includes("'"+name+"'"));
+  assert.ok(home.includes(name==='영상 뚝딱'?"'video','영상'":"'music','음악'"));
   assert.ok(html.includes('href="'+name+'.html"'));
  }
 });

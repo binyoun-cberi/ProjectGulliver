@@ -15,8 +15,9 @@ test('New video and music editors are visible as independent homepage tools',()=
   assert.ok(fs.existsSync(name+'.html'),'actual editor exists: '+name);
  }
  const home=fs.readFileSync('workspace-home.js','utf8');
- assert.ok(home.includes("'영상 뚝딱'"));
- assert.ok(home.includes("'음악 뚝딱'"));
+ assert.ok(home.includes("'video','영상'"));
+ assert.ok(home.includes("'music','음악'"));
+ assert.ok(home.includes('오늘 무엇을 준비할까요?'));
  const html=fs.readFileSync('index.html','utf8');
  assert.ok(html.includes('href="영상 뚝딱.html"'));
  assert.ok(html.includes('href="음악 뚝딱.html"'));
