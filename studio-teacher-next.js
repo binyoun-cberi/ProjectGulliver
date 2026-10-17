@@ -136,8 +136,11 @@
     const fill=unusable?'#E9EAF0':id?'#EEF7FF':'#FFFFFF',color=unusable?'#818699':id?'#203F66':'#7B899B';
     const x=xs[col];
     els.push(rect(x,y,cellW,cellH,fill,unusable?'#D0D5DF':'#B5C9DD'));
-    els.push(text(name,x+4,y+2,cellW-8,cellH-3,
-     name.length>9?layout==='a4'?12:11:name.length>5?layout==='a4'?15:13:layout==='a4'?19:16,color,'center'));
+    const label=text(name,x+4,y+2,cellW-8,cellH-3,
+     name.length>9?layout==='a4'?12:11:name.length>5?layout==='a4'?15:13:layout==='a4'?19:16,color,'center');
+    // Only a real occupied seat can participate in the in-canvas two-person swap.
+    if(id&&!unusable)label.busSeat=idx;
+    els.push(label);
    }
    if(row===3||row===5)els.push(text(row===3?'통':'로',w*.481,y,w*.038,cellH,layout==='a4'?15:12,'#64748B','center'));
   }
