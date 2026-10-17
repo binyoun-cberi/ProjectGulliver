@@ -497,6 +497,14 @@ $("soundBtn").onclick=()=>{state.sound=!state.sound;renderSound();saveConfig();i
 $("startBtn").onclick=start;$("backBtn").onclick=back;$("spinBtn").onclick=spin;$("revealAllBtn").onclick=revealAll;$("rerollBtn").onclick=reroll;$("confirmBtn").onclick=confirmGroups;$("cancelSelectBtn").onclick=()=>{selectedStudentId=null;renderResults()};
 
 loadConfig();refreshStudentUI();refreshSharedContext();renderHistory();
+window.GulliverTeacherLiveSnapshot=()=>{
+ const last=getHistory()[0],assignment={};
+ state.groups.forEach((g,i)=>g.forEach(student=>{assignment[student.id]=i+1}));
+ const confirmed=!!last&&state.groups.length>0&&state.revealed===state.groups.length
+  &&state.students.length===Object.keys(assignment).length
+  &&state.students.every(s=>Number(last.assignments?.[s.id])===Number(assignment[s.id])&&Boolean(assignment[s.id]));
+ return{kind:'groups',confirmed,groups:state.groups.map(g=>g.map(s=>({id:s.id,name:s.name})))};
+};
 Gulliver.mountShell({title:"모둠 만들기",icon:"🎰"});
 })();
 </script>
