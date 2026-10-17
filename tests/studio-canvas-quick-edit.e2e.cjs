@@ -52,7 +52,8 @@ test('PC contextual toolbar and unified menu: edit text/shape/photo, undo, clipb
   await page.locator('[data-canvas-action=paste]').click();
   assert.equal((await model()).pages[0].elements.length,4);
   let copied=(await model()).pages[0].elements[3];assert.equal(copied.fill,'#3388cc');
-  await page.locator('#stage .item[data-id="shape"]').click({button:'right'});
+  // The pasted copy overlaps the original; select its uncovered corner.
+  await page.locator('#stage .item[data-id="shape"]').click({button:'right',position:{x:6,y:6}});
   await page.locator('[data-canvas-action=front]').click();
   assert.equal((await model()).pages[0].elements.at(-1).id,'shape');
   await page.locator('#stage .item[data-id="photo"]').click();
