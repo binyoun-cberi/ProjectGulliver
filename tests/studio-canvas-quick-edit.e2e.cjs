@@ -33,6 +33,7 @@ test('PC contextual toolbar and unified menu: edit text/shape/photo, undo, clipb
   let t=(await model()).pages[0].elements.find(e=>e.id==='words');
   assert.equal(t.fontFamily,'serif');assert.equal(t.fontSize,54);assert.equal(t.fontWeight,700);
   await page.locator('#stage .item[data-id="shape"]').click();
+  await page.waitForFunction(()=>document.querySelector('#canvasQuickEdit')?.dataset.kind==='rect');
   assert.equal(await page.locator('#canvasQuickEdit').getAttribute('data-kind'),'rect');
   await page.locator('[data-quick-input=fill]').fill('#3388cc');
   await page.locator('[data-quick-action=border]').click();
@@ -57,6 +58,7 @@ test('PC contextual toolbar and unified menu: edit text/shape/photo, undo, clipb
   await page.locator('[data-canvas-action=front]').click();
   assert.equal((await model()).pages[0].elements.at(-1).id,'shape');
   await page.locator('#stage .item[data-id="photo"]').click();
+  await page.waitForFunction(()=>document.querySelector('#canvasQuickEdit')?.dataset.kind==='image');
   assert.equal(await page.locator('#canvasQuickEdit').getAttribute('data-kind'),'image');
   await page.locator('[data-quick-input=mask]').selectOption('circle');
   assert.equal((await model()).pages[0].elements.find(e=>e.id==='photo').mask,'circle');
