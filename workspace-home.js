@@ -16,7 +16,7 @@ function startTiles(){
 }
 const requestedView=new URLSearchParams(location.search).get('view');
 let view=['home','tools','activities','templates','favorites','trash'].includes(requestedView)?requestedView:'home',folderId='',category='전체',editAction=null,toastTimer;
-const descriptions={home:['오늘은 무엇을 할까요?','수업을 시작하고, 자료를 만들고, 준비한 활동을 이어가세요.'],favorites:['즐겨찾기','자주 쓰는 도구를 모아 빠르게 꺼내 보세요.'],activities:['교실 활동','타이머·퀴즈·자리표를 관리해요. 다른 자료도 내 보관함에서 찾을 수 있어요.'],templates:['예시 활동','준비된 활동을 열고 우리 반에 맞게 바꿔 보세요.'],tools:['도구 찾기','필요한 도구를 한눈에 살펴보고 바로 실행하세요.'],trash:['보관함','보관한 활동은 다시 내 활동으로 복원할 수 있어요.']};
+const descriptions={home:['오늘은 무엇을 할까요?','수업을 시작하고, 자료를 만들고, 준비한 활동을 이어가세요.'],favorites:['즐겨찾기','자주 쓰는 도구를 모아 빠르게 꺼내 보세요.'],activities:['교실 활동','타이머·퀴즈·자리표를 관리해요. 다른 자료도 내 보관함에서 찾을 수 있어요.'],templates:['예시 활동','준비된 활동을 열고 우리 반에 맞게 바꿔 보세요.'],tools:['도구 찾기','필요한 도구를 한눈에 살펴보고 바로 실행하세요.'],trash:['보관한 활동','보관한 활동은 교사 도구 활동 목록으로 복원할 수 있어요.']};
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,2500)}
 function matches(text){const q=$('search').value.toLowerCase().replace(/\s+/g,'');return !q||String(text).toLowerCase().replace(/\s+/g,'').includes(q)}
 function switchView(next,folder=''){view=next;folderId=folder;category='전체';$('search').value='';document.body.classList.remove('menu-open');$('menuButton').setAttribute('aria-expanded','false');history.replaceState(null,'',location.pathname+(view==='activities'?'?view=activities':view==='home'?'':'?view='+encodeURIComponent(view)));render();window.scrollTo({top:0,behavior:'smooth'})}
@@ -39,9 +39,9 @@ function render(){
  $('folders').innerHTML=data.folders.length?data.folders.map(f=>'<button class="folder-link '+(f.id===folderId?'active':'')+'" data-folder="'+esc(f.id)+'">▱ '+esc(f.name)+'</button>').join(''):'<p style="font-size:11px;color:#a1a9b8;padding:0 13px;line-height:1.6">수업별로 활동을 모아 보세요.</p>';
  const room=Gulliver.getClassroom();$('classSummary').replaceChildren();$('classSummary').append(document.createTextNode('♧ '+room.className));const span=document.createElement('span');span.textContent=room.students.length?room.students.length+'명 · 명단 관리 →':'명단 등록하기 →';$('classSummary').append(span);
  document.querySelectorAll('.workspace-switch [data-view]').forEach(button=>button.setAttribute('aria-current',button.dataset.view===view?'page':'false'));
- $('search').placeholder=view==='home'?'도구·예시를 찾으세요. 저장 자료는 내 보관함에서 검색할 수 있어요':view==='tools'||view==='favorites'?'도구 이름이나 필요한 일로 검색':view==='templates'?'예시 활동 검색':'내 활동 이름으로 검색';
+ $('search').placeholder=view==='home'?'도구·예시를 찾으세요. 저장 자료는 내 보관함에서 검색할 수 있어요':view==='tools'||view==='favorites'?'도구 이름이나 필요한 일로 검색':view==='templates'?'예시 활동 검색':'교사 도구 활동 이름으로 검색';
  let html='';const activities=W.list({trash:view==='trash',folder:folderId}).filter(a=>matches(a.title+' '+W.kinds[a.kind].name));const filteredTools=tools.filter(t=>(view==='favorites'||!t.studioLegacy)&&(category==='전체'||t.category===category)&&matches(t.name+' '+t.situation+' '+t.tags.join(' ')));
- if(view==='activities'||view==='trash'){html=(view==='activities'?'<a class="studio-library-link activities-studio" href="내 보관함.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>도안·발표·문서 등 내 작업 찾기</strong><small>다른 작업도 내 보관함에서 함께 찾을 수 있어요.</small></span><span aria-hidden="true">→</span></a>':'')+'<div class="activity-grid">'+activities.map(a=>activityCard(a,view==='trash')).join('')+'</div>';if(!activities.length)html=(view==='activities'?'<a class="studio-library-link activities-studio" href="내 보관함.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>제작실에서 만든 자료 찾기</strong><small>학습지·발표·수업자료도 내 보관함에서 찾을 수 있어요.</small></span><span aria-hidden="true">→</span></a>':'')+'<div class="empty"><strong>'+($('search').value?'검색 결과가 없어요.':view==='trash'?'보관한 활동이 없어요.':'아직 저장한 활동이 없어요.')+'</strong>'+(view==='trash'?'보관한 활동은 여기에서 다시 복원할 수 있어요.':'타이머·퀴즈·자리표에서 이름을 붙여 저장해 보세요.')+'</div>';
+ if(view==='activities'||view==='trash'){html=(view==='activities'?'<a class="studio-library-link activities-studio" href="내 보관함.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>제작실 자료 찾기</strong><small>저장한 제작실 자료도 내 보관함에서 찾을 수 있어요.</small></span><span aria-hidden="true">→</span></a>':'')+'<div class="activity-grid">'+activities.map(a=>activityCard(a,view==='trash')).join('')+'</div>';if(!activities.length)html=(view==='activities'?'<a class="studio-library-link activities-studio" href="내 보관함.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>제작실에서 만든 자료 찾기</strong><small>학습지·발표·수업자료도 내 보관함에서 찾을 수 있어요.</small></span><span aria-hidden="true">→</span></a>':'')+'<div class="empty"><strong>'+($('search').value?'검색 결과가 없어요.':view==='trash'?'보관한 활동이 없어요.':'아직 저장한 활동이 없어요.')+'</strong>'+(view==='trash'?'보관한 활동은 여기에서 다시 복원할 수 있어요.':'타이머·퀴즈·자리표에서 이름을 붙여 저장해 보세요.')+'</div>';
  }else if(view==='templates'){const ts=W.templates.filter(t=>matches(t.title+' '+t.desc));html=ts.length?'<div class="template-grid">'+ts.map(templateCard).join('')+'</div>':'<div class="empty">검색 결과가 없어요.</div>';
  }else if(view==='home'||view==='tools'||view==='favorites'){
    const isHome=view==='home',query=$('search').value.trim();
@@ -63,7 +63,7 @@ function render(){
         '<div class="unified-home-recent" id="unifiedHomeRecent"><p>저장한 자료를 불러오는 중이에요.</p></div>'+
         '<a class="studio-library-link" href="내 보관함.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>내 보관함에서 모두 찾기</strong><small>수업·자료·영상·사진을 검색하고 다시 열어요.</small></span><span aria-hidden="true">→</span></a>'+
         '<p class="home-work-location-note">자료는 현재 브라우저에 저장돼요. 다른 기기로 옮기려면 내 보관함에서 백업해 주세요.</p>',
-        '<a class="text-btn" href="내 보관함.html">전체 보관함 →</a>');
+        '<a class="text-btn" href="내 보관함.html">내 보관함 →</a>');
       html+='</div>';
       const featured=['수업 흐름 타이머','낱말카드·퀴즈','교실 자리 배정','우리 반 투표판'];
       const selected=featured.map(n=>tools.find(t=>t.name===n)).filter(Boolean);
@@ -72,7 +72,7 @@ function render(){
         '<button class="text-btn" data-view="tools">도구 전체 보기 →</button>');
    }else if(isHome&&query){
      const results=activities.length+templates.length+filteredTools.length;
-     if(activities.length)html+=section('내 활동 · '+activities.length+'개','','<div class="activity-grid">'+activities.map(a=>activityCard(a)).join('')+'</div>');
+     if(activities.length)html+=section('교사 도구 활동 · '+activities.length+'개','','<div class="activity-grid">'+activities.map(a=>activityCard(a)).join('')+'</div>');
      if(templates.length)html+=section('수업 템플릿 · '+templates.length+'개','','<div class="template-grid home-template-grid">'+templates.map(templateCard).join('')+'</div>');
      if(filteredTools.length)html+=section('사용할 수 있는 도구 · '+filteredTools.length+'개','','<div class="tool-list">'+filteredTools.map(toolCard).join('')+'</div>');
      if(!results)html='<div class="empty"><strong>검색 결과가 없어요.</strong>다른 단어나 수업 자료 종류로 검색해 보세요.</div>';
@@ -87,7 +87,7 @@ function render(){
    }
  }
  document.querySelectorAll('.workspace-switch [data-view]').forEach(button=>button.setAttribute('aria-current',button.dataset.view===view?'page':'false'));
- $('search').placeholder=view==='home'?'도구·예시를 찾으세요. 저장 자료는 내 보관함에서 검색할 수 있어요':view==='tools'||view==='favorites'?'도구 이름이나 필요한 일로 검색':view==='templates'?'예시 활동 검색':'내 활동 이름으로 검색';
+ $('search').placeholder=view==='home'?'도구·예시를 찾으세요. 저장 자료는 내 보관함에서 검색할 수 있어요':view==='tools'||view==='favorites'?'도구 이름이나 필요한 일로 검색':view==='templates'?'예시 활동 검색':'교사 도구 활동 이름으로 검색';
  document.querySelector('.storage-note').hidden=['home','tools','favorites'].includes(view);
 
  $('content').innerHTML=html;
