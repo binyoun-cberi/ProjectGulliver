@@ -211,16 +211,17 @@ body.studio-canvas.canvas-transfer-open #transferBar{background:#f0faf7;border-c
 </style>
 <link rel="stylesheet" href="studio-experience.css?v=20261017-library2">
 <link rel="stylesheet" href="studio-canvas-parent.css?v=20261014-canva2">
+<link rel="stylesheet" href="gulliver-ui-v56.css?v=20261018-v56">
 </head>
 <body>
 <div class="shell">
  <nav class="nav" aria-label="제작실 공통 메뉴">
-  <a class="brand" href="index.html"><img src="logo.png" alt=""><span class="brand-word">뚝딱 제작실<small>뚝딱교실의 수업자료 작업 공간</small></span></a>
-  <a class="back" href="index.html">← 뚝딱교실 홈으로</a><a class="back" href="내 보관함.html">▦ 내 보관함 · 모든 자료</a>
-  <button type="button" id="navHome" class="nav-home" aria-current="true"><span class="glyph">⌂</span>제작실 홈</button>
+  <a class="brand" href="index.html"><img src="logo.png" alt=""><span class="brand-word">뚝딱 제작실<small>학습자료 만들기·편집</small></span></a>
+  <a class="back" href="index.html">← 홈으로</a><a class="back" href="내 보관함.html">▦ 내 보관함</a>
+  <button type="button" id="navHome" class="nav-home" aria-current="true"><span class="glyph">⌂</span>제작실 시작</button>
   <div class="nav-heading">제작 도구</div>
   <div id="toolNav" class="tool-buttons"></div>
-  <div class="nav-bottom"><p>도안·발표·문서의 작업 내용은 이 기기의 브라우저에 보관돼요. 그림·PDF의 원본은 별도 저장해야 해요.</p><a class="light-link" href="내 보관함.html">모든 자료를 내 보관함에서 찾기 ↗</a></div>
+  <div class="nav-bottom"><p>도안·발표·문서의 작업 내용은 이 기기의 브라우저에 보관돼요. 그림·PDF의 원본은 별도 저장해야 해요.</p><a class="light-link" href="내 보관함.html">내 보관함에서 모든 자료 찾기 ↗</a></div>
   <select id="mobileTool" class="mobiletools btn" aria-label="제작 도구 선택"><option value="">제작실 홈</option></select>
  </nav>
  <section class="studio-palette" id="studioPalette" aria-label="공통 삽입 및 템플릿 도구" hidden>
@@ -239,10 +240,10 @@ body.studio-canvas.canvas-transfer-open #transferBar{background:#f0faf7;border-c
   <header class="top">
    <div class="heading"><strong id="workspaceTitle">뚝딱 제작실</strong><span id="workspaceSubtitle">필요한 자료를 골라 만들고 다시 꺼내 보세요.</span><span id="saveStatus" role="status" aria-live="polite" hidden>저장 준비 중…</span></div>
    <div class="actions">
-    <button type="button" class="btn soft" id="canvasLibraryToggle" hidden aria-expanded="false">내 작업·소재함</button>
+    <button type="button" class="btn soft" id="canvasLibraryToggle" hidden aria-expanded="false">제작실 작업·소재함</button>
     <button type="button" class="btn soft" id="canvasTransferToggle" hidden aria-expanded="false">다른 제작실로 보내기</button>
     <button type="button" class="btn soft mobile-panel-btn" id="openPalette" hidden>도구</button>
-    <button type="button" class="btn soft mobile-panel-btn" id="openInspector" hidden>속성·내 작업</button>
+    <button type="button" class="btn soft mobile-panel-btn" id="openInspector" hidden>설정·제작실 작업</button>
     <div class="common-bar" id="studioQuickBar" hidden aria-label="공통 편집 및 내보내기"></div>
     <div class="transfer-actions" id="transferBar" hidden aria-label="제작물 공유">
       <button id="saveImageToShelf" class="btn soft" type="button">현재 화면을 소재함에 보관</button>
@@ -261,11 +262,13 @@ body.studio-canvas.canvas-transfer-open #transferBar{background:#f0faf7;border-c
     <a id="openOriginal" class="btn" href="도안 뚝딱.html" target="_blank" rel="noopener noreferrer" hidden>새 창에서 열기 ↗</a>
    </div>
   </header>
-  <section class="work-area">
+  <nav class="gulliver-nav" aria-label="뚝딱교실 주요 공간"><a href="index.html"><span class="gulliver-nav-symbol" aria-hidden="true">⌂</span><span>홈</span></a><a href="뚝딱 제작실.html" aria-current="page"><span class="gulliver-nav-symbol" aria-hidden="true">✎</span><span>제작실</span></a><a href="내 보관함.html"><span class="gulliver-nav-symbol" aria-hidden="true">▦</span><span>내 보관함</span></a><a href="lesson.html"><span class="gulliver-nav-symbol" aria-hidden="true">▤</span><span>수업 준비</span></a></nav>
+<div class="gulliver-location-note" aria-label="현재 위치"><span><strong>제작실</strong> · 학습자료를 만들고 수정하는 곳이에요.</span><span class="gulliver-location-secondary">만들기 → 보관 → 수업 진행</span></div>
+<section class="work-area">
    <div class="intro" id="studioHome">
     <div><span class="eyebrow">모든 수업자료를 한곳에서</span><h1>오늘 필요한 자료, 여기에서 뚝딱.</h1><p>자료를 만들고, 이름을 붙여 보관하고, 다시 수정할 수 있어요. 자주 쓰는 사진도 소재함에 넣어 두고 여러 문서에서 꺼내 쓰세요.</p></div>
-    <a href="내 보관함.html" class="btn soft" style="display:inline-flex;align-items:center;align-self:start;justify-self:start;margin-bottom:6px">▦ 이어서 작업하기 · 전체 보관함 →</a><div class="start-grid" id="startCards"></div>
-    <section class="start-latest"><h2>최근에 작업한 자료</h2><p class="note" style="font-size:12px;color:var(--muted)">이 기기에 저장된 도안·발표·문서·영상·음악을 다시 열 수 있어요.</p><div id="recentProjects"></div></section>
+    <a href="내 보관함.html" class="btn soft" style="display:inline-flex;align-items:center;align-self:start;justify-self:start;margin-bottom:6px">▦ 내 보관함에서 이어서 작업 →</a><div class="start-grid" id="startCards"></div>
+    <section class="start-latest"><h2>최근 만든 자료</h2><p class="note" style="font-size:12px;color:var(--muted)">이 기기에 저장된 도안·발표·문서·영상·음악을 다시 열 수 있어요.</p><div id="recentProjects"></div></section>
    </div>
    <div class="frame-wrap" id="editorArea" hidden>
     <div class="frame-notice"><span id="frameHelp">편집기를 불러오는 중이에요.</span><button type="button" id="exitEditor">제작실 홈으로</button></div>
@@ -321,7 +324,7 @@ body.studio-canvas.canvas-transfer-open #transferBar{background:#f0faf7;border-c
    <label for="libraryRestore" class="btn" style="cursor:pointer;text-align:center">백업 복원 (.zip / .json)<input id="libraryRestore" type="file" accept=".zip,.json,application/zip,application/json" hidden></label>
    <button id="libraryBackup" type="button" class="tiny">구형 제작실 JSON 백업 (수업 제외)</button>
   </div>
-  <p class="note" style="margin:9px 0">ZIP 전체 백업에는 제작실 작업·사진·영상·WAV·고급 원본·기존 교사 활동뿐 아니라 수업 작업실의 수업과 수업에 첨부한 원본 파일까지 포함돼요. 이미지·음원은 Base64가 아닌 원본 파일로 저장하고, CRC32로 파일 손상 여부를 확인해요. 최대 512MB까지 지원하며 이전 JSON 백업도 복원할 수 있어요. 개인정보에 주의하고, 복원은 기존 자료를 삭제하지 않고 추가해요.</p>
+  <p class="note" style="margin:9px 0">ZIP 전체 백업에는 제작실 작업·사진·영상·WAV·고급 원본·교사 활동뿐 아니라 수업 준비에서 저장한 수업과 첨부 파일까지 포함돼요. 이미지·음원은 Base64가 아닌 원본 파일로 저장하고, CRC32로 파일 손상 여부를 확인해요. 최대 512MB까지 지원하며 이전 JSON 백업도 복원할 수 있어요. 개인정보에 주의하고, 복원은 기존 자료를 삭제하지 않고 추가해요.</p>
   <label for="importProject" class="btn" style="display:block;text-align:center;cursor:pointer;margin-top:10px">이전 JSON 작업 불러오기<input id="importProject" type="file" accept=".json,application/json" hidden></label>
   </section>
   <section id="inspectorAssets" class="right-pane" hidden>
