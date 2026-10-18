@@ -5,7 +5,7 @@
  if(root)root.GulliverUnifiedLibraryCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
- const labels={canvas:'통합 캔버스',design:'도안',slides:'발표',document:'문서',video:'영상',music:'음악',timer:'수업 타이머',quiz:'퀴즈·낱말카드',seating:'자리 배정',lesson:'수업 작업실',asset:'사진 소재'};
+ const labels={canvas:'통합 캔버스',design:'도안',slides:'발표',document:'문서',video:'영상',music:'음악',timer:'수업 타이머',quiz:'퀴즈·낱말카드',seating:'자리 배정',lesson:'수업',asset:'사진 소재'};
  const icons={canvas:'▧',design:'◇',slides:'▤',document:'≡',video:'▶',music:'♫',timer:'◷',quiz:'?',seating:'▦',lesson:'▣',asset:'▧'};
  const categories=['전체','학습자료','수업 도구','영상·음악','수업','사진·파일'];
  function entries(input){

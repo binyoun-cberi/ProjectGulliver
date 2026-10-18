@@ -19,11 +19,13 @@ main{max-width:1600px;margin:0 auto;padding:34px clamp(20px,2.2vw,40px) 70px}.he
 .backup h2{font-size:18px;margin:0 0 8px}.backup p{margin:0 0 15px;color:var(--muted);font-size:13px}.backup-actions{display:flex;flex-wrap:wrap;gap:9px}.backup small{display:block;color:var(--muted);margin-top:12px}
 @media(max-width:700px){main{padding:24px 13px 90px}.header{padding:10px 13px}.links{gap:11px;font-size:12px}.brand{font-size:15px}.brand img{width:27px;height:27px}.panel{padding:15px;border-radius:15px}.unified-list{grid-template-columns:1fr}.unified-preview{width:56px;height:56px}.unified-download{padding:9px}.toolbar select{flex:1}.hero .button{width:100%}}
 </style>
+<link rel="stylesheet" href="gulliver-ui-v56.css?v=20261018-v56">
 </head>
 <body>
-<header class="header"><a class="brand" href="index.html"><img src="logo.png" alt="">뚝딱교실</a><nav class="links" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="뚝딱 제작실.html">제작실</a><a href="내 보관함.html" aria-current="page">내 보관함</a><a href="lesson.html">수업 작업실</a></nav></header>
+<header class="header"><a class="brand" href="index.html"><img src="logo.png" alt="">뚝딱교실</a><nav class="gulliver-nav" aria-label="뚝딱교실 주요 공간"><a href="index.html"><span class="gulliver-nav-symbol" aria-hidden="true">⌂</span><span>홈</span></a><a href="뚝딱 제작실.html"><span class="gulliver-nav-symbol" aria-hidden="true">✎</span><span>제작실</span></a><a href="내 보관함.html" aria-current="page"><span class="gulliver-nav-symbol" aria-hidden="true">▦</span><span>내 보관함</span></a><a href="lesson.html"><span class="gulliver-nav-symbol" aria-hidden="true">▤</span><span>수업 준비</span></a></nav></header>
 <main>
- <section class="hero"><div><h1>내 보관함</h1><p>어디에서 만들었든 여기에서 찾아 다시 열어요. 원래 저장된 자료는 옮기거나 삭제하지 않아요.</p></div><a class="button primary" href="index.html">＋ 새로 만들기</a></section>
+<div class="gulliver-location-note" aria-label="현재 위치"><span><strong>내 보관함</strong> · 저장한 자료를 찾고 백업하는 곳이에요.</span><span class="gulliver-location-secondary">만들기 → 보관 → 수업 진행</span></div>
+ <section class="hero"><div><h1>내 보관함</h1><p>어디에서 만들었든 여기에서 찾아 다시 열어요. 원래 저장된 자료는 옮기거나 삭제하지 않아요.</p></div><a class="button primary gulliver-primary-action" href="뚝딱 제작실.html">＋ 제작실에서 만들기</a></section>
  <section class="panel" aria-labelledby="libraryHeading">
  <h2 id="libraryHeading" style="margin:0 0 15px;font-size:18px">저장한 자료 찾기</h2>
  <div class="filters" role="group" aria-label="자료 종류">
@@ -42,14 +44,14 @@ main{max-width:1600px;margin:0 auto;padding:34px clamp(20px,2.2vw,40px) 70px}.he
  <div id="unifiedLibraryList" class="unified-list"></div>
  </section>
  <section class="panel backup" aria-labelledby="backupHeading" id="backup">
- <h2 id="backupHeading">자료 백업·복원</h2>
- <p>ZIP 전체 백업 하나에 제작실 작업, 사진·영상·음악 원본, 교사 도구 활동, <strong>수업 작업실에 저장된 수업과 첨부 파일까지</strong> 담을 수 있어요. 다른 브라우저에서도 같은 ZIP으로 복원할 수 있습니다. 예전 ZIP과 JSON 백업도 계속 불러올 수 있어요.</p>
- <div class="backup-actions"><a class="button primary" href="뚝딱 제작실.html?library=backup">수업까지 전체 ZIP 백업·복원 →</a><a class="button" href="lesson.html">수업 하나만 따로 저장 →</a></div>
+ <h2 id="backupHeading">전체 자료 백업·복원</h2>
+ <p>ZIP 전체 백업 하나에 제작실 작업, 사진·영상·음악 원본, 교사 도구 활동, <strong>수업 준비에서 저장한 수업과 첨부 파일까지</strong> 담을 수 있어요. 다른 브라우저에서도 같은 ZIP으로 복원할 수 있습니다. 예전 ZIP과 JSON 백업도 계속 불러올 수 있어요.</p>
+ <div class="backup-actions"><a class="button primary" href="뚝딱 제작실.html?library=backup">수업까지 전체 ZIP 백업·복원 →</a><a class="button" href="lesson.html">수업 하나만 백업 →</a></div>
  <small>중요: 이 화면에는 현재 브라우저의 저장 자료만 나타나요. ZIP 파일은 내려받아 직접 보관해야 합니다. 큰 파일이 많으면 512MB 한도를 넘을 수 있어요. 자료는 현재 브라우저에 저장되어 있어요. 기기 변경·브라우저 데이터 삭제 시 사라질 수 있으며, 백업 파일에는 학생 정보가 포함될 수 있어 안전하게 보관하세요.</small>
  </section>
 </main>
 <script src="classroom-workspace.js"></script>
 <script src="studio-storage.js"></script>
 <script src="lesson-storage.js"></script>
-<script src="unified-library.js?v=20261017-1"></script>
+<script src="unified-library.js?v=20261018-v56"></script>
 </body></html>

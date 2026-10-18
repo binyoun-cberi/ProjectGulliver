@@ -8,6 +8,19 @@ const layout=window.GulliverStudioLayout;
 const tools=window.GulliverStudioCore?.TOOLS;
 if(!bridge||!tools)return;
 const bar=$('studioMobileBar'),picker=$('studioToolPicker'),shade=$('canvasMobileShade');
+// Moving between major screens must await the studio's latest IndexedDB
+// commit. Native picture/PDF editors and advanced projects warn before exit.
+document.querySelectorAll('.gulliver-nav a[href],.shell a[href="index.html"],.shell a[href="내 보관함.html"]').forEach(link=>{
+ link.addEventListener('click',async event=>{
+  if(event.defaultPrevented||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||link.target==='_blank')return;
+  event.preventDefault();
+  if(link.getAttribute('aria-current')==='page'){
+   $('navHome')?.click();
+   return;
+  }
+  if(await bridge.navigateAway())location.assign(link.href);
+ });
+});
 const parentHeader=document.querySelector('.center .top');
 if(parentHeader){
  const heading=parentHeader.querySelector('.heading');
@@ -52,7 +65,7 @@ function showProjects(){
   $('openInspector')?.click();
  }else if(kind==='picture'||kind==='pdf'){
   bridge.status('그림·PDF는 자동으로 프로젝트가 저장되지 않아요. 편집기에서 파일을 내려받아 보관해 주세요.');
-  alert('그림·PDF는 자동으로 내 작업에 저장되지 않아요. 편집기 안의 저장 기능을 사용해 주세요.');
+  alert('그림·PDF 원본은 자동으로 보관되지 않아요. 편집기 안의 저장 기능을 사용해 주세요.');
  }else{
   $('recentProjects')?.scrollIntoView({behavior:'smooth',block:'start'});
  }

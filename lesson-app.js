@@ -146,7 +146,7 @@ function importActivity(p){
 }
 async function library(mode){
  if(!await save())return;
- $('libraryTitle').textContent=mode==='lessons'?'내 수업':'내 보관함에서 수업 자료 가져오기';
+ $('libraryTitle').textContent=mode==='lessons'?'저장한 수업':'내 보관함에서 수업 자료 가져오기';
  const root=$('libraryList');root.replaceChildren(node('p','muted','불러오는 중…'));
  $('libraryDialog').showModal();
  try{
@@ -230,9 +230,10 @@ $('toggleLessonNotes').onclick=()=>{
 };
 // Navigation inside the site waits for a completed save, including any source file
 // imported by the teacher. If it fails, keep the editor open rather than lose work.
-document.querySelectorAll('header.bar a[href]').forEach(link=>link.addEventListener('click',async e=>{
+document.querySelectorAll('header.bar a[href],.gulliver-nav a[href]').forEach(link=>link.addEventListener('click',async e=>{
  if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||link.target==='_blank')return;
  e.preventDefault();
+ if(link.getAttribute('aria-current')==='page')return;
  const destination=link.href;
  if(await save())location.assign(destination);
 }));
