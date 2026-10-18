@@ -16,7 +16,10 @@ test('Classroom journey: home -> canvas create/save -> unified library -> edit -
   await page.locator('.format-tile[href*="template=presentation"]').click();
   const frame=page.frameLocator('#editorFrame');
   await frame.locator('#stage').waitFor();
+  // Wait for the outer studio to attach its adapter and finish its first autosave,
+  // not just for the iframe to define GulliverStudioAdapter.
   await page.waitForFunction(()=>document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.kind==='canvas');
+  await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor();
   await frame.locator('body').evaluate(()=>GulliverStudioAdapter.rename('종합 검수 발표 자료'));
   await page.waitForFunction(async()=>(await GulliverStudioStorage.projects()).some(x=>x.title==='종합 검수 발표 자료'));
   await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor();
