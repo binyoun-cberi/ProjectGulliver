@@ -20,7 +20,9 @@ test('Classroom journey: home -> canvas create/save -> unified library -> edit -
   // not just for the iframe to define GulliverStudioAdapter.
   await page.waitForFunction(()=>document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.kind==='canvas');
   await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor();
-  await frame.locator('body').evaluate(()=>GulliverStudioAdapter.rename('종합 검수 발표 자료'));
+  // Exercise the actual editable field: parent autosave relies on input/change events.
+  await frame.locator('#designTitle').fill('종합 검수 발표 자료');
+  await frame.locator('#designTitle').press('Tab');
   await page.waitForFunction(async()=>(await GulliverStudioStorage.projects()).some(x=>x.title==='종합 검수 발표 자료'));
   await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor();
   const state=await page.evaluate(async()=>({
