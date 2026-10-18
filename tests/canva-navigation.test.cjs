@@ -18,7 +18,12 @@ test('Canva-style home has real linked formats with matching studio implementati
   assert.ok(html.includes('href="뚝딱 제작실.html?new='+kind+'"'));
  }
  assert.match(html,/href="lesson\.html"/);
- assert.doesNotMatch(read('뚝딱 제작실.html'),/href="lesson\.html"/);
+ // The shared site navigation links to the lesson workspace. It is not an
+ // additional editor mode inside the specialist tool picker.
+ const studio=read('뚝딱 제작실.html');
+ assert.match(studio,/class="gulliver-nav"[\\s\\S]*?href="lesson\\.html"/);
+ const picker=studio.slice(studio.indexOf('<dialog class="studio-picker"'));
+ assert.doesNotMatch(picker,/data-studio-action="lesson"|data-canvas-template="lesson"/);
  assert.match(html,/class="home-bottom-bar"/);
  assert.match(html,/workspace-experience\.css/);
  assert.match(home,/templates\.slice\(0,2\)/);
