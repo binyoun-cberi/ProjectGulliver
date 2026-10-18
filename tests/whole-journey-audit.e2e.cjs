@@ -23,6 +23,12 @@ test('Classroom journey: home -> canvas create/save -> unified library -> edit -
   await frame.locator('body').evaluate(()=>GulliverStudioAdapter.rename('종합 검수 발표 자료'));
   await page.waitForFunction(async()=>(await GulliverStudioStorage.projects()).some(x=>x.title==='종합 검수 발표 자료'));
   await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor();
+  const state=await page.evaluate(async()=>({
+   stored:(await GulliverStudioStorage.projects()).map(x=>({id:x.id,title:x.title,kind:x.kind,pageCount:x.payload?.pages?.length,updatedAt:x.updatedAt})),
+   editor:document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.capture?.()?.title,
+   label:document.querySelector('#saveStatus')?.textContent
+  }));
+  console.log('AUDIT_CANVAS_SAVE',JSON.stringify(state));
   const source=await page.evaluate(async()=> (await GulliverStudioStorage.projects()).find(x=>x.title==='종합 검수 발표 자료'));
   assert.ok(source?.payload?.pages?.length,'saved project must contain canvas pages: '+JSON.stringify({kind:source?.kind,payloadKeys:Object.keys(source?.payload||{}),pageLength:source?.payload?.pages?.length,found:!!source}));
   await page.goto(base+encodeURIComponent('내 보관함.html'),{waitUntil:'domcontentloaded'});
