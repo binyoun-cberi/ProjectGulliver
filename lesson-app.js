@@ -1,9 +1,13 @@
 (()=>{'use strict';
 const C=LessonCore,S=LessonStorage,$=id=>document.getElementById(id),validators={canvas:GulliverUnifiedCore.validate,slides:BalpyoCore.validateDeck,document:MunseoCore.validate,design:DoanCore.validateProject};
-let lesson=C.blank(),selected=0,running=false,slideIndex=0,frame=null,frameStepId='',ready=false,renderToken=0,saveTimer,saveQueue=Promise.resolve(),stageUrls=[],clock=null,remaining=0,musicUrl='',fileTarget='',previewing=false,quizRevealed=false;
+let lesson=C.blank(),selected=0,running=false,slideIndex=0,frame=null,frameStepId='',ready=false,renderToken=0,saveTimer,saveQueue=Promise.resolve(),stageUrls=[],clock=null,remaining=0,musicUrl='',fileTarget='',previewing=false,quizRevealed=false,saveVersion=0,savedVersion=0,savingCount=0,saveFailed=false;
 const labels={canvas:'통합 캔버스',slides:'발표',document:'문서',design:'도안',video:'영상',audio:'음악',pdf:'PDF',timer:'타이머',quiz:'퀴즈'};
 function node(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e}
 function status(text,error=false){$('status').textContent=text;$('status').className=error?'error':''}
+function saveIndicator(state,label){
+ const el=$('lessonSaveState');if(!el)return;
+ el.dataset.state=state;el.textContent=label;
+}
 function current(){return lesson.steps[selected]}
 function stepReady(s){return C.readyCount([s])>0}
 function renderOverview(){const total=lesson.steps.length,ready=C.readyCount(lesson.steps);$('lessonOverview').textContent=total?total+'개 활동 · 준비됨 '+ready+'개':'수업 자료 0개';$('lessonAudience').value=lesson.audience||'';$('lessonGoal').value=lesson.goal||''}
@@ -18,8 +22,27 @@ async function ensureCanvasMedia(){
   await S.putAsset({id,name:entry.name,mime:entry.mime,blob:entry.blob});
  }
 }
-async function save(){capture();remember();try{await ensureCanvasMedia();const copy=C.normalize(lesson,validators);saveQueue=saveQueue.catch(()=>{}).then(()=>S.save(copy));await saveQueue;status('수업을 이 브라우저에 저장했어요.');return true}catch(e){status('저장하지 못했어요. 원본 백업으로 보관해 주세요. '+e.message,true);return false}}
-function schedule(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>save(),650)}
+async function save(){
+ clearTimeout(saveTimer);const revision=saveVersion;savingCount++;
+ saveIndicator('saving','저장 중…');
+ try{
+  capture();remember();await ensureCanvasMedia();
+  const copy=C.normalize(lesson,validators);
+  saveQueue=saveQueue.catch(()=>{}).then(()=>S.save(copy));
+  await saveQueue;saveFailed=false;savedVersion=Math.max(savedVersion,revision);
+  if(saveVersion===savedVersion)saveIndicator('saved','기기에 저장됨');
+  else saveIndicator('pending','변경 사항 저장 대기 중…');
+  status('수업을 이 브라우저에 저장했어요.');return true;
+ }catch(e){
+  saveFailed=true;saveIndicator('error','저장 실패 · 원본 확인');
+  status('저장하지 못했어요. 원본 백업으로 보관해 주세요. '+e.message,true);return false;
+ }finally{savingCount=Math.max(0,savingCount-1)}
+}
+function schedule(){
+ saveVersion++;clearTimeout(saveTimer);
+ saveIndicator('pending','변경 사항 저장 대기 중…');
+ saveTimer=setTimeout(()=>save(),650);
+}
 function button(text,fn,cls=''){const b=node('button',cls,text);b.type='button';b.onclick=fn;return b}
 function field(parent,label,tag,value,fn,type='text'){const l=node('label','',label),input=node(tag);if(tag==='input')input.type=type;input.value=value??'';input.oninput=()=>fn(input.value);input.onchange=()=>fn(input.value);if(tag==='textarea')input.rows=5;l.append(input);parent.append(l);return input}
 function cleanupStage(){clearInterval(clock);clock=null;frame?.contentWindow?.GulliverStudioAdapter?.pause?.();for(const media of $('stage').querySelectorAll('audio,video'))media.pause();stageUrls.forEach(URL.revokeObjectURL);stageUrls=[];frame=null;frameStepId='';ready=false;renderToken++;$('stage').replaceChildren();$('stage').classList.remove('editor')}
@@ -201,6 +224,21 @@ $('toggleLessonNotes').onclick=()=>{
  text.hidden=!text.hidden;button.setAttribute('aria-expanded',String(!text.hidden));
  button.textContent=text.hidden?'진행 메모 보기':'진행 메모 닫기';
 };
-window.addEventListener('pagehide',()=>{capture();remember();S.save(C.normalize(lesson,validators)).catch(()=>{})});
+// Navigation inside the site waits for a completed save, including any source file
+// imported by the teacher. If it fails, keep the editor open rather than lose work.
+document.querySelectorAll('header.bar a[href]').forEach(link=>link.addEventListener('click',async e=>{
+ if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||link.target==='_blank')return;
+ e.preventDefault();
+ const destination=link.href;
+ if(await save())location.assign(destination);
+}));
+window.addEventListener('beforeunload',event=>{
+ if(saveFailed||savingCount||saveVersion>savedVersion){
+  event.preventDefault();event.returnValue='';
+ }
+});
+window.addEventListener('pagehide',()=>{
+ try{capture();remember();S.save(C.normalize(lesson,validators)).catch(()=>{})}catch{}
+});
 (async()=>{try{const id=new URLSearchParams(location.search).get('lesson');if(id){const stored=await S.get(id);if(!stored)throw Error('이 브라우저에 저장된 수업을 찾지 못했어요. 원본 파일을 불러와 주세요.');lesson=C.normalize(stored,validators);selected=lesson.position}render()}catch(e){render();status(e.message,true)}})();
 })();
