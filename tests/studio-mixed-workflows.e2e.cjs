@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {spawn,spawnSync}=require('node:child_process'),{chromium}=require('playwright-core');
 const port=8912,base='http://127.0.0.1:'+port+'/',studio=base+encodeURIComponent('뚝딱 제작실.html')+'?new=canvas&template=blank';
-async function ready(){for(let i=0;i<90;i++){try{if((await fetch(base+'studio-unified-editor.js')).ok)return}catch{}await new Promise(r=>setTimeout(r,170))}throw Error('Local server not ready')}
+async function ready(){for(let i=0;i<90;i++){try{{const response=await fetch(base+'studio-unified-editor.js');await response.arrayBuffer();if(response.ok)return}}catch{}await new Promise(r=>setTimeout(r,170))}throw Error('Local server not ready')}
 function wav(){
  const rate=8000,count=rate*3,b=Buffer.alloc(44+2*count);
  b.write('RIFF',0);b.writeUInt32LE(b.length-8,4);b.write('WAVE',8);b.write('fmt ',12);b.writeUInt32LE(16,16);
