@@ -1,0 +1,39 @@
+name: 5.5 complete backup QA
+on:
+  pull_request:
+    paths:
+      - 'studio-zip-backup.js'
+      - 'studio-library.js'
+      - 'studio-lesson-archive.js'
+      - 'lesson-core.js'
+      - 'lesson-app.js'
+      - 'lesson-storage.js'
+      - 'lesson-v55.css'
+      - 'lesson.html'
+      - '뚝딱 제작실.html'
+      - '내 보관함.html'
+      - 'tests/studio-v55*'
+      - 'tests/studio-lesson-archive.test.cjs'
+      - '.github/workflows/backup-v55-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Validate scripts and non-destructive backup contract
+        run: |
+          node --check lesson-core.js
+          node --check lesson-app.js
+          node --check lesson-storage.js
+          node --check studio-zip-backup.js
+          node --check studio-library.js
+          node --check studio-lesson-archive.js
+          node --test tests/studio-lesson-archive.test.cjs tests/lesson-v53.test.cjs tests/studio-zip-core.test.cjs
+      - name: Install pinned Chrome test driver
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
+      - name: Restore studio and lesson archives into a fresh Chrome profile
+        run: node --test --test-concurrency=1 tests/studio-v55-backup.e2e.cjs tests/lesson-v53.e2e.cjs

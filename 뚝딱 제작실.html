@@ -317,11 +317,11 @@ body.studio-canvas.canvas-transfer-open #transferBar{background:#f0faf7;border-c
   </div>
   <p class="note">브라우저 데이터 삭제·기기 고장·저장 공간 부족에 대비해 아래 ZIP 파일을 별도로 보관하세요. 저장 공간 보호 요청은 브라우저가 거절할 수 있어요.</p>
   <div class="library-actions" style="margin-top:12px">
-   <button id="libraryZipBackup" type="button" class="btn primary">ZIP 전체 백업 (권장)</button>
+   <button id="libraryZipBackup" type="button" class="btn primary">수업까지 ZIP 전체 백업 (권장)</button>
    <label for="libraryRestore" class="btn" style="cursor:pointer;text-align:center">백업 복원 (.zip / .json)<input id="libraryRestore" type="file" accept=".zip,.json,application/zip,application/json" hidden></label>
-   <button id="libraryBackup" type="button" class="tiny">예전 JSON 백업 (120MB 제한)</button>
+   <button id="libraryBackup" type="button" class="tiny">구형 제작실 JSON 백업 (수업 제외)</button>
   </div>
-  <p class="note" style="margin:9px 0">ZIP 전체 백업에는 간편 작업·사진·영상·WAV·공식 FilmCraft·SoundCraft 원본·폴더·기존 내 활동이 모두 포함돼요. 이미지·음원은 Base64가 아닌 원본 파일로 저장하고, CRC32로 파일 손상 여부를 확인해요. 최대 512MB까지 지원하며 이전 JSON 백업도 복원할 수 있어요. 개인정보에 주의하고, 복원은 기존 자료를 삭제하지 않고 추가해요.</p>
+  <p class="note" style="margin:9px 0">ZIP 전체 백업에는 제작실 작업·사진·영상·WAV·고급 원본·기존 교사 활동뿐 아니라 수업 작업실의 수업과 수업에 첨부한 원본 파일까지 포함돼요. 이미지·음원은 Base64가 아닌 원본 파일로 저장하고, CRC32로 파일 손상 여부를 확인해요. 최대 512MB까지 지원하며 이전 JSON 백업도 복원할 수 있어요. 개인정보에 주의하고, 복원은 기존 자료를 삭제하지 않고 추가해요.</p>
   <label for="importProject" class="btn" style="display:block;text-align:center;cursor:pointer;margin-top:10px">이전 JSON 작업 불러오기<input id="importProject" type="file" accept=".json,application/json" hidden></label>
   </section>
   <section id="inspectorAssets" class="right-pane" hidden>
@@ -357,6 +357,8 @@ body.studio-canvas.canvas-transfer-open #transferBar{background:#f0faf7;border-c
  <details class="picker-specialists"><summary>파일 형식별 전문 도구 <small>PPTX·HWPX 등은 다른 편집 화면이 열려요.</small></summary><div class="picker-grid"></div></details>
  <button type="button" class="picker-close" data-close-picker>닫기</button>
 </dialog>
+<script src="balpyo-core.js"></script><script src="munseo-core.js"></script><script src="doan-core.js"></script>
+<script src="lesson-core.js?v=20261018-v55"></script><script src="lesson-storage.js?v=20261018-v55"></script><script src="studio-lesson-archive.js?v=20261018-v55"></script>
 <script src="studio-media-core.js?v=20261013-22"></script>
 <script src="studio-core.js?v=20261014-31"></script>
 <script src="studio-unified-core.js?v=20261014-audit1"></script>
@@ -368,8 +370,8 @@ body.studio-canvas.canvas-transfer-open #transferBar{background:#f0faf7;border-c
 <script src="studio-library-core.js?v=20261014-23"></script>
 <script src="studio-layout.js"></script>
 <script src="studio-zip-core.js?v=20261014-24"></script>
-<script src="studio-library.js?v=20261014-31"></script>
-<script src="studio-zip-backup.js?v=20261014-24"></script>
+<script src="studio-library.js?v=20261018-v55"></script>
+<script src="studio-zip-backup.js?v=20261018-v55"></script>
 <script src="studio-storage-ui.js?v=20261014-24"></script>
 <script src="studio-experience.js?v=20261017-library2"></script>
 </body>

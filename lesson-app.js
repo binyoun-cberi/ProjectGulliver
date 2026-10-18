@@ -1,25 +1,48 @@
 (()=>{'use strict';
 const C=LessonCore,S=LessonStorage,$=id=>document.getElementById(id),validators={canvas:GulliverUnifiedCore.validate,slides:BalpyoCore.validateDeck,document:MunseoCore.validate,design:DoanCore.validateProject};
-let lesson=C.blank(),selected=0,running=false,slideIndex=0,frame=null,frameStepId='',ready=false,renderToken=0,saveTimer,saveQueue=Promise.resolve(),stageUrls=[],clock=null,remaining=0,musicUrl='',fileTarget='',previewing=false,quizRevealed=false;
+let lesson=C.blank(),selected=0,running=false,slideIndex=0,frame=null,frameStepId='',ready=false,renderToken=0,saveTimer,saveQueue=Promise.resolve(),stageUrls=[],clock=null,remaining=0,musicUrl='',fileTarget='',previewing=false,quizRevealed=false,saveVersion=0,savedVersion=0,savingCount=0,saveFailed=false;
 const labels={canvas:'통합 캔버스',slides:'발표',document:'문서',design:'도안',video:'영상',audio:'음악',pdf:'PDF',timer:'타이머',quiz:'퀴즈'};
 function node(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e}
 function status(text,error=false){$('status').textContent=text;$('status').className=error?'error':''}
+function saveIndicator(state,label){
+ const el=$('lessonSaveState');if(!el)return;
+ el.dataset.state=state;el.textContent=label;
+}
 function current(){return lesson.steps[selected]}
 function stepReady(s){return C.readyCount([s])>0}
 function renderOverview(){const total=lesson.steps.length,ready=C.readyCount(lesson.steps);$('lessonOverview').textContent=total?total+'개 활동 · 준비됨 '+ready+'개':'수업 자료 0개';$('lessonAudience').value=lesson.audience||'';$('lessonGoal').value=lesson.goal||''}
 function capture(){if(frame&&ready&&frameStepId===current()?.id&&!running&&!previewing){const a=frame.contentWindow?.GulliverStudioAdapter;if(a&&a.kind===current()?.kind)current().payload=validators[a.kind](a.capture())}}
 function remember(){lesson.position=selected;lesson.updatedAt=Date.now();history.replaceState(null,'',location.pathname+'?lesson='+encodeURIComponent(lesson.id))}
 async function ensureCanvasMedia(){
- for(const s of lesson.steps){
-  const id=s.kind==='canvas'&&s.payload?.audio?.mediaId;
-  if(!id||await S.asset(id))continue;
-  const entry=await GulliverStudioStorage.getMedia(id);
-  if(!entry||entry.mime!=='audio/wav'||!entry.blob)throw Error('캔버스 배경음악 원본을 찾지 못했어요. 음악을 다시 연결해 주세요.');
-  await S.putAsset({id,name:entry.name,mime:entry.mime,blob:entry.blob});
+ for(const ref of C.requiredMedia(lesson)){
+  if(await S.asset(ref.id))continue;
+  const entry=ref.kind==='pdf'?null:await GulliverStudioStorage.getMedia(ref.id);
+  if(!entry?.blob||!C.accepts({type:entry.mime,size:entry.blob.size},ref.kind))
+   throw Error('수업에 필요한 '+(ref.kind==='video'?'영상':ref.kind==='audio'?'음악':'PDF')+' 원본을 찾지 못했어요. 자료를 다시 연결해 주세요.');
+  await S.putAsset({id:ref.id,name:entry.name,mime:entry.mime,blob:entry.blob});
  }
 }
-async function save(){capture();remember();try{await ensureCanvasMedia();const copy=C.normalize(lesson,validators);saveQueue=saveQueue.catch(()=>{}).then(()=>S.save(copy));await saveQueue;status('수업을 이 브라우저에 저장했어요.');return true}catch(e){status('저장하지 못했어요. 원본 백업으로 보관해 주세요. '+e.message,true);return false}}
-function schedule(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>save(),650)}
+async function save(){
+ clearTimeout(saveTimer);const revision=saveVersion;savingCount++;
+ saveIndicator('saving','저장 중…');
+ try{
+  capture();remember();await ensureCanvasMedia();
+  const copy=C.normalize(lesson,validators);
+  saveQueue=saveQueue.catch(()=>{}).then(()=>S.save(copy));
+  await saveQueue;saveFailed=false;savedVersion=Math.max(savedVersion,revision);
+  if(saveVersion===savedVersion)saveIndicator('saved','기기에 저장됨');
+  else saveIndicator('pending','변경 사항 저장 대기 중…');
+  status('수업을 이 브라우저에 저장했어요.');return true;
+ }catch(e){
+  saveFailed=true;saveIndicator('error','저장 실패 · 원본 확인');
+  status('저장하지 못했어요. 원본 백업으로 보관해 주세요. '+e.message,true);return false;
+ }finally{savingCount=Math.max(0,savingCount-1)}
+}
+function schedule(){
+ saveVersion++;clearTimeout(saveTimer);
+ saveIndicator('pending','변경 사항 저장 대기 중…');
+ saveTimer=setTimeout(()=>save(),650);
+}
 function button(text,fn,cls=''){const b=node('button',cls,text);b.type='button';b.onclick=fn;return b}
 function field(parent,label,tag,value,fn,type='text'){const l=node('label','',label),input=node(tag);if(tag==='input')input.type=type;input.value=value??'';input.oninput=()=>fn(input.value);input.onchange=()=>fn(input.value);if(tag==='textarea')input.rows=5;l.append(input);parent.append(l);return input}
 function cleanupStage(){clearInterval(clock);clock=null;frame?.contentWindow?.GulliverStudioAdapter?.pause?.();for(const media of $('stage').querySelectorAll('audio,video'))media.pause();stageUrls.forEach(URL.revokeObjectURL);stageUrls=[];frame=null;frameStepId='';ready=false;renderToken++;$('stage').replaceChildren();$('stage').classList.remove('editor')}
@@ -171,8 +194,12 @@ async function library(mode){
 }
 function download(data,name){const blob=new Blob([JSON.stringify(data)],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download=name.replace(/[\\/:*?"<>|]/g,'_')+'.lesson.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),15000)}
 function base64(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result.split(',')[1]);r.onerror=()=>reject(r.error);r.readAsDataURL(blob)})}
-$('backupLesson').onclick=async()=>{try{capture();await ensureCanvasMedia();const clean=C.normalize(lesson,validators),assets=[];let bytes=0;for(const id of new Set(clean.steps.flatMap(s=>[s.assetId,s.kind==='canvas'?s.payload.audio?.mediaId:'']).filter(Boolean))){const a=await S.asset(id);if(!a)throw Error('수업에 연결한 파일을 찾지 못했어요. 파일을 다시 넣어 주세요.');bytes+=a.blob.size;if(bytes>200*1024*1024)throw Error('백업할 영상·음악의 합계가 200MB를 넘어요. 파일을 줄여 주세요.');assets.push({id,name:a.name,mime:a.mime,data:await base64(a.blob)})}download({format:'gulliver-lesson',version:1,lesson:clean,assets},clean.title);status('영상·음악을 포함한 수업 원본을 내려받았어요.')}catch(e){status(e.message,true)}};
-$('restoreLesson').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;try{if(file.size>300*1024*1024)throw Error('수업 원본은 최대 300MB까지 불러올 수 있어요.');const raw=JSON.parse(await file.text());if(raw.format!=='gulliver-lesson'||raw.version!==1||!Array.isArray(raw.assets)||raw.assets.length>60)throw Error('뚝딱교실의 수업 원본을 선택해 주세요.');const copy=C.normalize(raw.lesson,validators),map=new Map(),assets=[];let total=0;for(const a of raw.assets){if(!a||typeof a.data!=='string'||a.data.length>140*1024*1024||!/^[A-Za-z0-9+/]*={0,2}$/.test(a.data)||map.has(a.id))throw Error('파일 데이터가 올바르지 않아요.');const bytes=Uint8Array.from(atob(a.data),c=>c.charCodeAt(0)),blob=new Blob([bytes],{type:a.mime});const kind=copy.steps.find(s=>s.assetId===a.id)?.kind||(copy.steps.some(s=>s.kind==='canvas'&&s.payload.audio?.mediaId===a.id)?'audio':null);if(!C.accepts({type:a.mime,size:blob.size},kind))throw Error('수업에 지원하지 않는 파일이 포함돼 있어요.');total+=blob.size;if(total>200*1024*1024)throw Error('수업의 파일 합계가 200MB를 넘어요.');const id=C.id();map.set(a.id,id);assets.push({id,name:String(a.name||'파일').slice(0,150),mime:a.mime,blob})}copy.steps.forEach(s=>{if(s.assetId){if(!map.has(s.assetId))throw Error('수업에 필요한 파일이 빠져 있어요.');s.assetId=map.get(s.assetId)}if(s.kind==='canvas'&&s.payload.audio){const old=s.payload.audio.mediaId;if(!map.has(old))throw Error('캔버스 배경음악이 백업에서 빠졌어요.');s.payload.audio.mediaId=map.get(old)}});if(!await save())return;copy.id=C.id();copy.createdAt=copy.updatedAt=Date.now();await S.bundle(copy,assets);lesson=copy;selected=copy.position;previewing=false;remember();render();status('수업 원본을 새 수업으로 불러왔어요. 기존 수업은 유지됩니다.')}catch(e){status('불러오지 못했어요. '+e.message,true)}};
+$('backupLesson').onclick=async()=>{try{capture();await ensureCanvasMedia();const clean=C.normalize(lesson,validators),assets=[];let bytes=0;for(const id of new Set(C.requiredMedia(clean).map(ref=>ref.id))){const a=await S.asset(id);if(!a)throw Error('수업에 연결한 파일을 찾지 못했어요. 파일을 다시 넣어 주세요.');bytes+=a.blob.size;if(bytes>200*1024*1024)throw Error('백업할 영상·음악의 합계가 200MB를 넘어요. 파일을 줄여 주세요.');assets.push({id,name:a.name,mime:a.mime,data:await base64(a.blob)})}download({format:'gulliver-lesson',version:1,lesson:clean,assets},clean.title);status('영상·음악을 포함한 수업 원본을 내려받았어요.')}catch(e){status(e.message,true)}};
+$('restoreLesson').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;try{if(file.size>300*1024*1024)throw Error('수업 원본은 최대 300MB까지 불러올 수 있어요.');const raw=JSON.parse(await file.text());if(raw.format!=='gulliver-lesson'||raw.version!==1||!Array.isArray(raw.assets)||raw.assets.length>60)throw Error('뚝딱교실의 수업 원본을 선택해 주세요.');const copy=C.normalize(raw.lesson,validators),map=new Map(),assets=[];let total=0;for(const a of raw.assets){if(!a||typeof a.data!=='string'||a.data.length>140*1024*1024||!/^[A-Za-z0-9+/]*={0,2}$/.test(a.data)||map.has(a.id))throw Error('파일 데이터가 올바르지 않아요.');const bytes=Uint8Array.from(atob(a.data),c=>c.charCodeAt(0)),blob=new Blob([bytes],{type:a.mime});const kind=C.requiredMedia(copy).find(ref=>ref.id===a.id)?.kind||null;if(!C.accepts({type:a.mime,size:blob.size},kind))throw Error('수업에 지원하지 않는 파일이 포함돼 있어요.');total+=blob.size;if(total>200*1024*1024)throw Error('수업의 파일 합계가 200MB를 넘어요.');const id=C.id();map.set(a.id,id);assets.push({id,name:String(a.name||'파일').slice(0,150),mime:a.mime,blob})}copy.steps.forEach(s=>{if(s.assetId){if(!map.has(s.assetId))throw Error('수업에 필요한 파일이 빠져 있어요.');s.assetId=map.get(s.assetId)}if(s.kind==='canvas'&&s.payload){
+ if(s.payload.audio?.mediaId){const old=s.payload.audio.mediaId;if(!map.has(old))throw Error('캔버스 배경음악이 백업에서 빠졌어요.');s.payload.audio.mediaId=map.get(old)}
+ for(const track of s.payload.tracks||[])if(track.kind!=='caption'&&track.mediaId){if(!map.has(track.mediaId))throw Error('캔버스 트랙 원본이 백업에 없어요.');track.mediaId=map.get(track.mediaId)}
+ for(const page of s.payload.pages||[])if(page.videoClip?.mediaId){if(!map.has(page.videoClip.mediaId))throw Error('캔버스 영상 원본이 백업에 없어요.');page.videoClip.mediaId=map.get(page.videoClip.mediaId)}
+}});if(!await save())return;copy.id=C.id();copy.createdAt=copy.updatedAt=Date.now();await S.bundle(copy,assets);lesson=copy;selected=copy.position;previewing=false;remember();render();status('수업 원본을 새 수업으로 불러왔어요. 기존 수업은 유지됩니다.')}catch(e){status('불러오지 못했어요. '+e.message,true)}};
 $('lessonAudience').oninput=e=>{lesson.audience=e.target.value.slice(0,100);schedule()};
 $('lessonGoal').oninput=e=>{lesson.goal=e.target.value.slice(0,240);schedule()};
 $('createLessonFlow').onclick=()=>{
@@ -201,6 +228,21 @@ $('toggleLessonNotes').onclick=()=>{
  text.hidden=!text.hidden;button.setAttribute('aria-expanded',String(!text.hidden));
  button.textContent=text.hidden?'진행 메모 보기':'진행 메모 닫기';
 };
-window.addEventListener('pagehide',()=>{capture();remember();S.save(C.normalize(lesson,validators)).catch(()=>{})});
+// Navigation inside the site waits for a completed save, including any source file
+// imported by the teacher. If it fails, keep the editor open rather than lose work.
+document.querySelectorAll('header.bar a[href]').forEach(link=>link.addEventListener('click',async e=>{
+ if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||link.target==='_blank')return;
+ e.preventDefault();
+ const destination=link.href;
+ if(await save())location.assign(destination);
+}));
+window.addEventListener('beforeunload',event=>{
+ if(saveFailed||savingCount||saveVersion>savedVersion){
+  event.preventDefault();event.returnValue='';
+ }
+});
+window.addEventListener('pagehide',()=>{
+ try{capture();remember();S.save(C.normalize(lesson,validators)).catch(()=>{})}catch{}
+});
 (async()=>{try{const id=new URLSearchParams(location.search).get('lesson');if(id){const stored=await S.get(id);if(!stored)throw Error('이 브라우저에 저장된 수업을 찾지 못했어요. 원본 파일을 불러와 주세요.');lesson=C.normalize(stored,validators);selected=lesson.position}render()}catch(e){render();status(e.message,true)}})();
 })();
