@@ -21,9 +21,13 @@
   }
   if(size>MAX_LESSON_BYTES)throw Error('수업 원본 파일의 합계가 200MB를 넘어요. 큰 수업은 원본을 개별 백업해 주세요.');
   for(const row of lessons)for(const step of row.steps){
-   if(step.assetId&&!mediaIds.has(step.assetId))throw Error('수업에 연결한 원본 파일이 백업에서 빠졌어요: '+row.title);
-   const wav=step.kind==='canvas'&&step.payload?.audio?.mediaId;
-   if(wav&&!mediaIds.has(wav))throw Error('수업 캔버스에 사용한 음악 원본이 백업에서 빠졌어요: '+row.title);
+   const ids=[step.assetId];
+   if(step.kind==='canvas'&&step.payload){
+    ids.push(step.payload.audio?.mediaId);
+    for(const track of step.payload.tracks||[])if(track.kind!=='caption')ids.push(track.mediaId);
+    for(const page of step.payload.pages||[])ids.push(page.videoClip?.mediaId);
+   }
+   for(const id of ids)if(id&&!mediaIds.has(id))throw Error('수업에 연결한 원본 파일이 백업에서 빠졌어요: '+row.title);
   }
   return{lessons:lessons.length,assets:assets.length,bytes:size};
  }
@@ -42,7 +46,11 @@
    next.steps.forEach(step=>{
     step.id=uid();
     if(step.assetId)step.assetId=idMap.get(step.assetId);
-    if(step.kind==='canvas'&&step.payload?.audio?.mediaId)step.payload.audio.mediaId=idMap.get(step.payload.audio.mediaId);
+    if(step.kind==='canvas'&&step.payload){
+     if(step.payload.audio?.mediaId)step.payload.audio.mediaId=idMap.get(step.payload.audio.mediaId);
+     for(const track of step.payload.tracks||[])if(track.kind!=='caption'&&track.mediaId)track.mediaId=idMap.get(track.mediaId);
+     for(const page of step.payload.pages||[])if(page.videoClip?.mediaId)page.videoClip.mediaId=idMap.get(page.videoClip.mediaId);
+    }
    });
    return next;
   });
