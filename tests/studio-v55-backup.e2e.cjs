@@ -21,6 +21,15 @@ test('5.5 Chrome ZIP: all saved studio projects, lessons and lesson PDF/WAV rest
    await LessonStorage.putAsset({id:'source-pdf',name:'활동.pdf',mime:'application/pdf',blob:new Blob(['%PDF-1.4\n'],{type:'application/pdf'})});
    await LessonStorage.putAsset({id:'source-wav',name:'음악.wav',mime:'audio/wav',blob:new Blob(['RIFF0000WAVE'],{type:'audio/wav'})});
   });
+  // ZIP archives created by 5.1 (version 2) still open with no lesson entries.
+  const legacy=await page.evaluate(async()=>{
+   const manifest={format:'gulliver.studio.zip',version:2,createdAt:new Date().toISOString(),
+    projects:[],assets:[],media:[],official:[],folders:[],activities:null};
+   const zip=await GulliverStudioZip.create([{path:'manifest.json',blob:new Blob([JSON.stringify(manifest)],{type:'application/json'})}]);
+   const imported=await GulliverStudioZipBackup.loadZip(zip);
+   return{version:imported.version,lessons:imported.lessons.length,assets:imported.lessonAssets.length};
+  });
+  assert.deepEqual(legacy,{version:2,lessons:0,assets:0});
   const promise=page.waitForEvent('download');
   await page.locator('#libraryZipBackup').evaluate(el=>el.click());
   const dl=await promise;const bytes=fs.readFileSync(await dl.path());assert.ok(bytes.length>1000);
