@@ -19,8 +19,9 @@ test('Classroom journey: home -> canvas create/save -> unified library -> edit -
   await page.waitForFunction(()=>document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.kind==='canvas');
   await frame.locator('body').evaluate(()=>GulliverStudioAdapter.rename('종합 검수 발표 자료'));
   await page.waitForFunction(async()=>(await GulliverStudioStorage.projects()).some(x=>x.title==='종합 검수 발표 자료'));
+  await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor();
   const source=await page.evaluate(async()=> (await GulliverStudioStorage.projects()).find(x=>x.title==='종합 검수 발표 자료'));
-  assert.ok(source?.payload?.pages?.length);
+  assert.ok(source?.payload?.pages?.length,'saved project must contain canvas pages: '+JSON.stringify({kind:source?.kind,payloadKeys:Object.keys(source?.payload||{}),pageLength:source?.payload?.pages?.length,found:!!source}));
   await page.goto(base+encodeURIComponent('내 보관함.html'),{waitUntil:'domcontentloaded'});
   await page.locator('#unifiedLibraryList .unified-item').filter({hasText:'종합 검수 발표 자료'}).waitFor();
   await page.locator('#unifiedLibraryList .unified-item').filter({hasText:'종합 검수 발표 자료'}).locator('a.unified-open').click();
