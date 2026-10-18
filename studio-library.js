@@ -1,8 +1,8 @@
 (() => {
 'use strict';
 const C=window.GulliverStudioCore,S=window.GulliverStudioStorage,L=window.GulliverStudioLibraryCore,
- B=window.GulliverStudioBridge,W=window.ClassroomWorkspace,M=window.GulliverMediaCore,O=window.GulliverOfficialProjectCore,U=window.GulliverUnifiedCore,$=id=>document.getElementById(id);
-if(!C||!S||!L||!B||!W||!M||!O||!U)throw Error('작업 보관함을 불러오지 못했어요.');
+ B=window.GulliverStudioBridge,W=window.ClassroomWorkspace,M=window.GulliverMediaCore,O=window.GulliverOfficialProjectCore,U=window.GulliverUnifiedCore,LS=window.LessonStorage,LA=window.GulliverLessonArchive,LC=window.LessonCore,$=id=>document.getElementById(id);
+if(!C||!S||!L||!B||!W||!M||!O||!U||!LS||!LA||!LC)throw Error('작업 보관함을 불러오지 못했어요.');
 let folders=[],moving=null,working=false;
 const uid=()=>window.crypto?.randomUUID?.()||'lib_'+Date.now().toString(36)+Math.random().toString(36).slice(2);
 const el=(tag,cls,body)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(body!==undefined)n.textContent=String(body);return n};
@@ -250,7 +250,8 @@ async function restoreArchive(event){
  try{
   const value=isZip?await window.GulliverStudioZipBackup.loadZip(file):L.checkedManifest(JSON.parse(await file.text()));
   const counts=L.summary(value);
-  if(!confirm('간편 프로젝트 '+counts.projects+'개, 고급 프로젝트 '+counts.official+'개, 사진 '+counts.assets+'개, 기존 내 활동 '+counts.activities+'개를 추가할까요? 기존 자료는 삭제되지 않아요.'))return;
+  const lessonCount=value.lessons?.length||0;
+  if(!confirm('제작실 작업 '+counts.projects+'개, 고급 원본 '+counts.official+'개, 사진 '+counts.assets+'개, 교사 활동 '+counts.activities+'개, 수업 '+lessonCount+'개를 추가할까요? 기존 자료는 삭제되지 않아요.'))return;
   const existingFolders=await S.folders(),nameToId=new Map(existingFolders.map(f=>[f.name,f.id]));
   const map=new Map(),newFolders=[];
   for(const item of value.folders){
@@ -320,9 +321,22 @@ async function restoreArchive(event){
    const now=Date.now();newOfficial.push({...source,id:uid(),folderId:map.get(entry.folderId)||'',createdAt:now,updatedAt:now});
   }
   if((await S.official()).length+newOfficial.length>O.MAX_ITEMS)throw Error('고급 프로젝트는 이 기기에 30개까지만 보관할 수 있어요.');
+  // Prepare and validate every lesson and binary reference before the first write.
+  // LessonStorage has its own IndexedDB, so cross-database atomicity is impossible.
+  // Report any partial restore explicitly rather than claiming everything succeeded.
+  const validators={canvas:U.validate,slides:window.BalpyoCore.validateDeck,document:window.MunseoCore.validate,design:window.DoanCore.validateProject};
+  const lessonRestore=LA.prepare(value.lessons||[],value.lessonAssets||[],uid,source=>LC.normalize(source,validators));
+  let studioCommitted=false;
   // All IndexedDB assets, folders, and projects are written in one transaction.
   // On failure it rolls back. Original projects and assets are never overwritten.
   await S.importBatch({projects:newProjects,assets:newAssets,folders:newFolders,media:newMedia,official:newOfficial});
+  studioCommitted=true;
+  try{
+   if(lessonRestore.lessons.length||lessonRestore.assets.length)
+    await LS.importBatch(lessonRestore.lessons,lessonRestore.assets);
+  }catch(e){
+   throw Error('제작실 자료 복원은 끝났지만 수업 저장소 복원에는 실패했어요. 이 파일을 다시 복원하면 제작실 자료는 추가로 복제될 수 있어요. '+(e.message||e));
+  }
   // Complete legacy activity restoration before refreshing the unified UI.
   // Partial cross-store states must not be presented as a finished restore.
   let legacyMessage='';
@@ -336,7 +350,7 @@ async function restoreArchive(event){
   }
   await B.refreshProjects();await B.refreshAssets();await B.refreshOfficial();await refreshFolders();
   renderActivities();
-  B.status('통합 백업 복원 완료: 프로젝트 '+newProjects.length+'개, 사진 '+newAssets.length+'개, 영상 원본 '+newMedia.length+'개, 고급 원본 '+newOfficial.length+'개를 추가했어요.'+legacyMessage);
+  B.status('전체 백업 복원 완료: 프로젝트 '+newProjects.length+'개, 사진 '+newAssets.length+'개, 미디어 원본 '+newMedia.length+'개, 고급 원본 '+newOfficial.length+'개, 수업 '+lessonRestore.lessons.length+'개와 첨부 파일 '+lessonRestore.assets.length+'개를 추가했어요.'+legacyMessage);
  }catch(e){B.status('백업 복원 실패: '+(e.message||e),true)}
  finally{working=false}
 }
