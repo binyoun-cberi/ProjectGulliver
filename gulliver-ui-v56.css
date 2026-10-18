@@ -1,6 +1,13 @@
 /* 뚝딱교실 공통 화면 기준 5.6 — main navigation and visual tokens.
    Scoped to new shared components, leaving canvas toolbars and saved documents intact. */
 :root{
+ --brand:#6949d3;
+ --ink:#28354e;
+ --muted:#6d798d;
+ --line:#e4e6ef;
+ --soft:#f1ecff;
+ --bg:#f7f8fc;
+ --back:#f7f8fc;
  --gulliver-brand:#6949d3;
  --gulliver-brand-soft:#f0ebff;
  --gulliver-ink:#28354e;
@@ -10,6 +17,7 @@
  --gulliver-radius:14px;
  --gulliver-shadow:0 6px 21px #2934520b;
 }
+body{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
 .gulliver-nav{
  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:center;
  gap:7px;padding:7px;margin:16px 0 9px;
