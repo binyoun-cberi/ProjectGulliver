@@ -146,7 +146,7 @@ function importActivity(p){
 }
 async function library(mode){
  if(!await save())return;
- $('libraryTitle').textContent=mode==='lessons'?'내 수업':'내 보관함에서 수업 자료 가져오기';
+ $('libraryTitle').textContent=mode==='lessons'?'저장한 수업':'내 보관함에서 수업 자료 가져오기';
  const root=$('libraryList');root.replaceChildren(node('p','muted','불러오는 중…'));
  $('libraryDialog').showModal();
  try{
