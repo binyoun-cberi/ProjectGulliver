@@ -23,7 +23,10 @@ test('Classroom journey: home -> canvas create/save -> unified library -> edit -
   // Exercise the actual editable field: parent autosave relies on input/change events.
   await frame.locator('#designTitle').fill('종합 검수 발표 자료');
   await frame.locator('#designTitle').press('Tab');
-  await page.waitForFunction(async()=>(await GulliverStudioStorage.projects()).some(x=>x.title==='종합 검수 발표 자료'));
+  // Use a real save-completion signal. Browser waitForFunction must not treat an
+  // unresolved async Promise as a truthy object and pass before IndexedDB writes.
+  await page.locator('#manualSave').click();
+  await page.locator('#message').filter({hasText:'현재 작업을 기기에 저장했어요'}).waitFor();
   await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor();
   const state=await page.evaluate(async()=>({
    stored:(await GulliverStudioStorage.projects()).map(x=>({id:x.id,title:x.title,kind:x.kind,pageCount:x.payload?.pages?.length,updatedAt:x.updatedAt})),
@@ -43,7 +46,7 @@ test('Classroom journey: home -> canvas create/save -> unified library -> edit -
   await page.locator('#fromStudio').click();
   const importSource=page.locator('#libraryList button.import-source').filter({hasText:'종합 검수 발표 자료'});
   await importSource.waitFor();await importSource.click();
-  await page.waitForFunction(async()=>{const id=new URL(location.href).searchParams.get('lesson');return (await LessonStorage.get(id))?.steps?.length===1});
+  await page.locator('#status').filter({hasText:'수업을 이 브라우저에 저장했어요'}).waitFor();
   const lessonId=await page.evaluate(()=>new URL(location.href).searchParams.get('lesson'));
   const lesson=await page.evaluate(async id=>LessonStorage.get(id),lessonId);
   assert.equal(lesson.steps[0].kind,'canvas');
