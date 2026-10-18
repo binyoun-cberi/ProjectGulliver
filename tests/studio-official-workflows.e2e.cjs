@@ -38,6 +38,9 @@ test('FilmCraft: verified WASM startup, real video import, new sequence, H.264 e
   const page=await context.newPage();page.setDefaultTimeout(55000);
   const failures=[];page.on('pageerror',e=>failures.push(e.message));
   await page.goto(BASE+encodeURIComponent(TARGETS[0][0]),{waitUntil:'domcontentloaded'});
+  // New quick projects stay in simple mode until the teacher explicitly opens the advanced editor.
+  await page.locator('#simpleMode[aria-selected="true"]').waitFor();
+  await page.locator('#officialMode:not([disabled])').click();
   const frame=page.frameLocator('#officialEditorFrame');
   const ready=await statusReady(page,frame);
   assert.ok(ready.filmReady,'FilmCraft startup signal absent');
@@ -172,6 +175,9 @@ test('SoundCraft: compiled WASM opens real egui, audio context resumes after ges
   const page=await context.newPage();
   const failures=[];page.on('pageerror',e=>failures.push(e.message));
   await page.goto(BASE+encodeURIComponent(TARGETS[1][0]),{waitUntil:'domcontentloaded'});
+  // New quick projects stay in simple mode until the teacher explicitly opens the advanced editor.
+  await page.locator('#simpleMode[aria-selected="true"]').waitFor();
+  await page.locator('#officialMode:not([disabled])').click();
   const frame=page.frameLocator('#officialEditorFrame');
   const ready=await statusReady(page,frame);
   assert.ok(ready.soundReady,'SoundCraft loading overlay did not clear after Rust app startup');
