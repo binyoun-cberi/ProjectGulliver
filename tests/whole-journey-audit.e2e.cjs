@@ -23,11 +23,16 @@ test('Classroom journey: home -> canvas create/save -> unified library -> edit -
   // Exercise the actual editable field: parent autosave relies on input/change events.
   await frame.locator('#designTitle').fill('종합 검수 발표 자료');
   await frame.locator('#designTitle').press('Tab');
-  // Use a real save-completion signal. Browser waitForFunction must not treat an
-  // unresolved async Promise as a truthy object and pass before IndexedDB writes.
-  await page.locator('#manualSave').click();
-  await page.locator('#message').filter({hasText:'현재 작업을 기기에 저장했어요'}).waitFor();
+  // Canvas uses autosave in this mode; the manual-save control is intentionally
+  // hidden. Poll the actual IndexedDB result from Node instead of Playwright's
+  // browser-context waitForFunction(async () => ...), which can pass on a Promise.
   await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor();
+  for(let i=0;i<50;i++){
+   const exists=await page.evaluate(async()=> (await GulliverStudioStorage.projects()).some(x=>x.title==='종합 검수 발표 자료'));
+   if(exists)break;
+   if(i===49)throw Error('Changed canvas title was not autosaved within 10s');
+   await new Promise(resolve=>setTimeout(resolve,200));
+  }
   const state=await page.evaluate(async()=>({
    stored:(await GulliverStudioStorage.projects()).map(x=>({id:x.id,title:x.title,kind:x.kind,pageCount:x.payload?.pages?.length,updatedAt:x.updatedAt})),
    editor:document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.capture?.()?.title,
