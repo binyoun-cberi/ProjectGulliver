@@ -51,7 +51,16 @@ test('Classroom journey: home -> canvas create/save -> unified library -> edit -
   await page.locator('#fromStudio').click();
   const importSource=page.locator('#libraryList button.import-source').filter({hasText:'종합 검수 발표 자료'});
   await importSource.waitFor();await importSource.click();
-  await page.locator('#status').filter({hasText:'수업을 이 브라우저에 저장했어요'}).waitFor();
+  let recorded=false;
+  for(let attempt=0;attempt<80;attempt++){
+   recorded=await page.evaluate(async()=>{
+    const id=new URL(location.href).searchParams.get('lesson');
+    return Boolean((await LessonStorage.get(id))?.steps?.length===1);
+   });
+   if(recorded)break;
+   await new Promise(resolve=>setTimeout(resolve,200));
+  }
+  assert.ok(recorded,'The lesson import must persist in IndexedDB before another tool opens it');
   const lessonId=await page.evaluate(()=>new URL(location.href).searchParams.get('lesson'));
   const lesson=await page.evaluate(async id=>LessonStorage.get(id),lessonId);
   assert.equal(lesson.steps[0].kind,'canvas');
