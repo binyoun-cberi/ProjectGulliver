@@ -1,0 +1,90 @@
+/* 뚝딱교실 공통 화면 기준 5.6 — main navigation and visual tokens.
+   Scoped to new shared components, leaving canvas toolbars and saved documents intact. */
+:root{
+ --gulliver-brand:#6949d3;
+ --gulliver-brand-soft:#f0ebff;
+ --gulliver-ink:#28354e;
+ --gulliver-muted:#6d798d;
+ --gulliver-surface:#ffffff;
+ --gulliver-border:#e4e6ef;
+ --gulliver-radius:14px;
+ --gulliver-shadow:0 6px 21px #2934520b;
+}
+.gulliver-nav{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:center;
+ gap:7px;padding:7px;margin:16px 0 9px;
+ border:1px solid var(--gulliver-border);background:var(--gulliver-surface);
+ border-radius:16px;box-shadow:var(--gulliver-shadow);
+ font:inherit;min-width:0;box-sizing:border-box
+}
+.gulliver-nav a{
+ display:flex;align-items:center;justify-content:center;gap:8px;
+ min-height:43px;padding:9px 8px;border-radius:11px;
+ font-size:13px;font-weight:800;letter-spacing:-.018em;
+ white-space:nowrap;text-decoration:none;color:var(--gulliver-muted);
+ background:transparent;border:1px solid transparent;
+ transition:background .15s ease,color .15s ease
+}
+.gulliver-nav a:hover{background:#f7f4ff;color:#5234b1}
+.gulliver-nav a[aria-current=page]{
+ color:#5834b4;background:var(--gulliver-brand-soft);
+ border-color:#dfd3fc
+}
+.gulliver-nav a:focus-visible{outline:3px solid #aa90ef;outline-offset:2px}
+.gulliver-nav .gulliver-nav-symbol{font-size:18px;font-weight:800;line-height:1}
+.gulliver-location-note{display:flex;align-items:center;justify-content:space-between;
+ gap:12px;margin:0 2px 14px;color:var(--gulliver-muted);font-size:12px;line-height:1.55}
+.gulliver-location-note strong{color:var(--gulliver-ink);font-weight:900}
+/* Home: the common navigation lives in the existing centered work area. */
+.home-view .main>.gulliver-nav,.home-view .main>.gulliver-location-note{
+ width:100%;max-width:var(--home-content-max,1720px);margin-left:auto;margin-right:auto
+}
+.home-view .main>.gulliver-nav{margin-top:14px}
+.home-view .main>.gulliver-location-note{margin-bottom:7px}
+.home-view .welcome{margin-top:9px}
+.home-view .sidebar .brand,.home-view .sidebar .nav{letter-spacing:-.018em}
+/* Studio: keep its sidebar + canvas workspace sizing; no overlays in the editor. */
+.shell>.center>.gulliver-nav,.shell>.center>.gulliver-location-note{
+ margin-left:clamp(12px,1.4vw,23px);margin-right:clamp(12px,1.4vw,23px)
+}
+.shell>.center>.gulliver-nav{margin-top:13px}
+.shell>.center>.gulliver-location-note{margin-bottom:3px}
+/* Library: brand and the same navigation fit as one responsive header. */
+.header>.gulliver-nav{width:min(720px,100%);margin:0 0 0 auto;box-shadow:none}
+.header{min-width:0}
+.header .brand{flex:none}
+main>.gulliver-location-note{margin-top:12px;margin-bottom:1px}
+/* Lesson: same navigation without disturbing the live lesson stage. */
+body>.gulliver-nav,body>.gulliver-location-note{
+ margin-left:clamp(14px,2.2vw,35px);margin-right:clamp(14px,2.2vw,35px)
+}
+body>.gulliver-nav{margin-top:14px}
+body>.gulliver-location-note{margin-bottom:4px}
+body.running>.gulliver-nav,body.running>.gulliver-location-note{display:none}
+/* Shared treatment for primary calls to action, not the canvas drawing controls. */
+.gulliver-primary-action{
+ background:var(--gulliver-brand)!important;color:white!important;
+ border:1px solid var(--gulliver-brand)!important;
+ border-radius:11px!important;font-weight:850!important;
+}
+.gulliver-primary-action:hover{filter:brightness(.96)}
+@media(max-width:960px){
+ .header{flex-wrap:wrap}
+ .header>.gulliver-nav{width:100%;margin:0}
+ .shell>.center>.gulliver-nav a{gap:4px;font-size:11px}
+ .shell>.center>.gulliver-nav .gulliver-nav-symbol{font-size:15px}
+}
+@media(max-width:640px){
+ .gulliver-nav{gap:3px;padding:5px;border-radius:13px;margin-top:9px}
+ .gulliver-nav a{min-height:39px;padding:7px 3px;font-size:11px;gap:4px}
+ .gulliver-nav .gulliver-nav-symbol{font-size:14px}
+ .gulliver-location-note{font-size:11px;line-height:1.5}
+ .gulliver-location-note .gulliver-location-secondary{display:none}
+ .home-view .main>.gulliver-nav{margin-top:7px}
+ .header>.gulliver-nav{margin-top:2px}
+}
+@media(max-width:380px){
+ .gulliver-nav a{font-size:10px;gap:3px}
+ .gulliver-nav .gulliver-nav-symbol{display:none}
+}
+@media(prefers-reduced-motion:reduce){.gulliver-nav a{transition:none}}
