@@ -58,6 +58,18 @@ function normalize(raw,validators={}){
  });
  return{version:1,id:text(raw.id,110)||id(),title:text(raw.title,100).trim()||'새 수업',goal:text(raw.goal,240),audience:text(raw.audience,100),steps,createdAt:number(raw.createdAt,1,Number.MAX_SAFE_INTEGER,Date.now()),updatedAt:number(raw.updatedAt,1,Number.MAX_SAFE_INTEGER,Date.now()),position:number(raw.position,0,Math.max(0,steps.length-1),0)};
 }
+function requiredMedia(lesson){
+ const refs=new Map();
+ const add=(id,kind)=>{if(typeof id==='string'&&id&&!refs.has(id))refs.set(id,kind)};
+ for(const step of lesson?.steps||[]){
+  if(['video','audio','pdf'].includes(step.kind))add(step.assetId,step.kind);
+  if(step.kind!=='canvas'||!step.payload)continue;
+  add(step.payload.audio?.mediaId,'audio');
+  for(const track of step.payload.tracks||[])if(track.kind!=='caption')add(track.mediaId,track.kind==='video'?'video':'audio');
+  for(const page of step.payload.pages||[])add(page.videoClip?.mediaId,'video');
+ }
+ return [...refs].map(([id,kind])=>({id,kind}));
+}
 function move(lesson,index,delta){const to=index+delta;if(to<0||to>=lesson.steps.length)return index;[lesson.steps[index],lesson.steps[to]]=[lesson.steps[to],lesson.steps[index]];return to}
 function accepts(file,kind){const types={video:['video/mp4','video/webm','video/ogg'],audio:['audio/mpeg','audio/mp4','audio/wav','audio/x-wav','audio/ogg','audio/webm'],pdf:['application/pdf']};return !!file&&file.size>0&&file.size<=MAX_FILE&&types[kind]?.includes(file.type)}
-return{TYPES,MAX_STEPS,MAX_FILE,QUIZ_MAX,id,step,blank,normalize,normalizeCards,parseCards,timerFromEvents,readyCount,move,accepts};});
+return{TYPES,MAX_STEPS,MAX_FILE,QUIZ_MAX,id,step,blank,normalize,normalizeCards,parseCards,timerFromEvents,readyCount,requiredMedia,move,accepts};});
