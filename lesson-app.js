@@ -230,9 +230,10 @@ $('toggleLessonNotes').onclick=()=>{
 };
 // Navigation inside the site waits for a completed save, including any source file
 // imported by the teacher. If it fails, keep the editor open rather than lose work.
-document.querySelectorAll('header.bar a[href]').forEach(link=>link.addEventListener('click',async e=>{
+document.querySelectorAll('header.bar a[href],.gulliver-nav a[href]').forEach(link=>link.addEventListener('click',async e=>{
  if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||link.target==='_blank')return;
  e.preventDefault();
+ if(link.getAttribute('aria-current')==='page')return;
  const destination=link.href;
  if(await save())location.assign(destination);
 }));
