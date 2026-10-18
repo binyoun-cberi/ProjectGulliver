@@ -350,7 +350,7 @@ async function restoreArchive(event){
   }
   await B.refreshProjects();await B.refreshAssets();await B.refreshOfficial();await refreshFolders();
   renderActivities();
-  B.status('전체 백업 복원 완료: 프로젝트 '+newProjects.length+'개, 사진 '+newAssets.length+'개, 미디어 원본 '+newMedia.length+'개, 고급 원본 '+newOfficial.length+'개, 수업 '+lessonRestore.lessons.length+'개와 첨부 파일 '+lessonRestore.assets.length+'개를 추가했어요.'+legacyMessage);
+  B.status('통합 백업 복원 완료: 프로젝트 '+newProjects.length+'개, 사진 '+newAssets.length+'개, 미디어 원본 '+newMedia.length+'개, 고급 원본 '+newOfficial.length+'개, 수업 '+lessonRestore.lessons.length+'개와 첨부 파일 '+lessonRestore.assets.length+'개를 추가했어요.'+legacyMessage);
  }catch(e){B.status('백업 복원 실패: '+(e.message||e),true)}
  finally{working=false}
 }
