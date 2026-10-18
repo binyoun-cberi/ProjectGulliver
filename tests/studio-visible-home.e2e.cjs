@@ -19,11 +19,9 @@ test('Homepage and new-activity modal expose video/music editor links in Chrome'
   page.setDefaultTimeout(16000);
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'index.html',{waitUntil:'domcontentloaded'});
-  // The separate cards are not studioLegacy-hidden.
-  await page.locator('.quick-tool[href="영상 뚝딱.html"]').waitFor();
-  await page.locator('.quick-tool[href="음악 뚝딱.html"]').waitFor();
-  await page.locator('.tool-row').filter({hasText:'영상 뚝딱'}).first().waitFor();
-  await page.locator('.tool-row').filter({hasText:'음악 뚝딱'}).first().waitFor();
+  // Quick creation stays prominent while standalone native editors remain explicit in the specialist menu.
+  await page.locator('.format-tile[href="뚝딱 제작실.html?new=video"]').waitFor();
+  await page.locator('.format-tile[href="뚝딱 제작실.html?new=music"]').waitFor();
   await page.locator('#menuButton').click();
   await page.locator('#createButton').click();
   await page.locator('#createDialog .create-specialists summary').click();
@@ -38,7 +36,7 @@ test('Homepage and new-activity modal expose video/music editor links in Chrome'
   // New Canva-style start flow stays usable from a narrow phone viewport.
   await page.locator('#createDialog [data-close]').click();
   await page.keyboard.press('Escape'); // Dismiss the mobile sidebar opened earlier.
-  await page.locator('.format-tile[href="뚝딱 제작실.html?new=canvas&template=blank"]').waitFor();
+  await page.locator('.format-tile[href="뚝딱 제작실.html?new=canvas&template=worksheet"]').waitFor();
   await page.locator('.home-bottom-bar [data-view="templates"]').click();
   assert.equal(await page.locator('.home-bottom-bar [data-view="templates"]').getAttribute('aria-current'),'page');
   await page.locator('.home-bottom-bar [data-view="home"]').click();
