@@ -26,3 +26,22 @@ test('5.5 a fresh restore remaps lesson, step and binary IDs but does not touch 
  assert.equal(JSON.stringify(row),original);
  assert.throws(()=>A.prepare([row],[{...assets[0],size:1},assets[1]],n,structuredClone),/크기/);
 });
+
+test('5.5 nested canvas video and audio sources are required and rewritten during lesson restore',()=>{
+ const lesson={version:1,id:'canvas-lesson',title:'움직이는 수업',steps:[{
+  id:'canvas-step',kind:'canvas',payload:{
+   audio:{mediaId:'wavA'},tracks:[{kind:'audio',mediaId:'wavB'},{kind:'caption',text:'안녕'}],
+   pages:[{videoClip:{mediaId:'movieA'}}]
+  }
+ }]};
+ const records=['wavA','wavB','movieA'].map(id=>({id,size:3,mime:id==='movieA'?'video/webm':'audio/wav',blob:new Blob(['123'],{type:id==='movieA'?'video/webm':'audio/wav'})}));
+ assert.throws(()=>A.checkList([lesson],records.slice(0,2)),/빠졌/);
+ assert.equal(A.checkList([lesson],records).assets,3);
+ let n=0;const staged=A.prepare([lesson],records,()=>String(++n),structuredClone);
+ const payload=staged.lessons[0].steps[0].payload;
+ assert.equal(payload.audio.mediaId,staged.assets[0].id);
+ assert.equal(payload.tracks[0].mediaId,staged.assets[1].id);
+ assert.equal(payload.pages[0].videoClip.mediaId,staged.assets[2].id);
+ assert.equal(payload.tracks[1].mediaId,undefined);
+ assert.equal(lesson.steps[0].payload.audio.mediaId,'wavA');
+});
