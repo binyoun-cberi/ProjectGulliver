@@ -69,8 +69,8 @@ function updateOfficialMode(mode){
  advancedOfficial=!!mode;
  updateNav();
  if(advancedOfficial){
-  $('frameHelp').textContent='고급 편집기 작업은 별도로 저장·보관한 사본만 내 작업에 남아요. 편집 내용은 자동으로 동기화되지 않습니다.';
-  status('고급 작업을 마친 뒤 프로젝트 파일을 내 작업에 보관해 주세요.');
+  $('frameHelp').textContent='고급 편집기는 별도로 저장한 사본만 제작실 작업 목록에 남아요. 편집 내용은 자동으로 동기화되지 않습니다.';
+  status('고급 작업을 마치면 프로젝트 파일을 제작실 작업 목록에 보관해 주세요.');
  }
 }
 window.addEventListener('message',event=>{
@@ -123,7 +123,7 @@ function updateNav(){
 
  $('openOriginal').hidden=!tool;
  if(tool){$('openOriginal').href=tool.href;$('editorFrame').title=tool.label+' 편집기';}
- $('frameHelp').textContent=(advancedOfficial||openingOfficialId)?'공식 프로젝트를 내 작업에 보관할 수 있어요. 이후 편집 내용은 자동 동기화되지 않아요.':tool?(activeKind==='canvas'?'한 공간에서 글씨·사진·장면 시간을 수정하고 애니메이션과 음악을 재생하세요. 변경사항은 자동 저장돼요.':tool.managed?'왼쪽 템플릿과 오른쪽 속성을 이용해 편집하세요. 변경 내용은 기기에 자동 저장돼요.':'그림·PDF의 원본은 자동 보관되지 않아요. 각 도구 안에서 직접 저장해 주세요.'):'';
+ $('frameHelp').textContent=(advancedOfficial||openingOfficialId)?'공식 프로젝트를 제작실 작업 목록에 보관할 수 있어요. 이후 편집 내용은 자동 동기화되지 않아요.':tool?(activeKind==='canvas'?'한 공간에서 글씨·사진·장면 시간을 수정하고 애니메이션과 음악을 재생하세요. 변경사항은 자동 저장돼요.':tool.managed?'왼쪽 템플릿과 오른쪽 속성을 이용해 편집하세요. 변경 내용은 기기에 자동 저장돼요.':'그림·PDF의 원본은 자동 보관되지 않아요. 각 도구 안에서 직접 저장해 주세요.'):'';
  window.GulliverStudioLayout?.toolChanged(activeKind);
 }
 async function refreshProjects(){
