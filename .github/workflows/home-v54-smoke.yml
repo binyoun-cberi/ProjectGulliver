@@ -1,0 +1,36 @@
+name: Home 5.4 responsive checks
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'workspace-home.js'
+      - 'workspace-experience.css'
+      - 'workspace-home-v54.css'
+      - 'tests/home-v54*'
+      - '.github/workflows/home-v54-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  responsive-home:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Check home script and layout contract
+        run: |
+          node --check workspace-home.js
+          node --check tests/home-v54.e2e.cjs
+          node --test tests/home-v54.test.cjs tests/canva-navigation.test.cjs
+      - name: Install pinned browser driver
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
+      - name: Verify phone, laptop and wide-monitor layouts in Chrome
+        run: node --test tests/home-v54.e2e.cjs
+      - name: Retain desktop and mobile review screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: home-v54-visual-review
+          path: test-artifacts/home-v54-*.png
+          if-no-files-found: ignore
+          retention-days: 7
