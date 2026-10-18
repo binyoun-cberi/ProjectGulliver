@@ -4,13 +4,14 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const {spawn} = require('node:child_process');
-const {chromium} = require('playwright-core');
+let chromium;
+try { ({chromium} = require('playwright-core')); } catch { /* browser smoke runs after its driver is installed */ }
 
 const catalog = {window: {}};
 vm.runInNewContext(fs.readFileSync('tools-catalog.js', 'utf8'), catalog);
 const teacherTools = catalog.window.ClassroomTools.slice(8);
 const base = 'http://127.0.0.1:8956/';
-const bundledBrowser = fs.existsSync(chromium.executablePath());
+const bundledBrowser = Boolean(chromium && fs.existsSync(chromium.executablePath()));
 const systemChrome = ['/opt/google/chrome/chrome', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable'].some(file => fs.existsSync(file));
 
 test('6.0 assets are connected to each of 21 teacher apps only once', () => {
@@ -33,7 +34,7 @@ async function ready() {
 
 test('6.0 standalone headers, student privacy, phone navigation and opt-in components', {
   timeout: 180000,
-  skip: bundledBrowser || systemChrome ? false : 'Chrome/Chromium is not installed in this environment'
+  skip: chromium && (bundledBrowser || systemChrome) ? false : 'Chrome/Chromium and its driver are not installed in this environment'
 }, async () => {
   const server = spawn('python3', ['-m', 'http.server', '8956', '--bind', '127.0.0.1'], {stdio: 'ignore'});
   let browser;
