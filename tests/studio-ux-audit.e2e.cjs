@@ -31,17 +31,17 @@ test('UX inspection: home to new canvas to panels on desktop/tablet/phone',{time
    const context=await browser.newContext({viewport:{width,height},hasTouch:device==='phone',isMobile:device==='phone',deviceScaleFactor:1});
    const page=await context.newPage();const errs=[];page.on('pageerror',e=>errs.push(e.message));page.setDefaultTimeout(20000);
    await page.goto(base+'index.html',{waitUntil:'domcontentloaded'});
-   await page.locator('.format-tile[href*="template=blank"]').waitFor();
+   await page.locator('.format-tile[href*="template=presentation"]').waitFor();
    await audit(page,'home',device);
    const headline=await page.locator('#pageTitle').textContent();
    assert.ok(headline.includes('오늘'),headline);
    const openDialog=device==='desktop'||device==='laptop'?'#createButton':'.home-bottom-bar [data-create]';
    await page.locator(openDialog).click();
    assert.ok(await page.locator('#createDialog[open]').count(),'New-project dialog opens at '+device);
-   assert.equal(await page.locator('#createDialog .create-main a').count(),3);
+   assert.equal(await page.locator('#createDialog .create-main a').count(),6,'Six primary creation choices must remain usable');
    await page.locator('#createDialog [data-close]').click();
    // The primary home start flow should not require discovering legacy tools.
-   await page.locator('.format-tile[href*="template=blank"]').click();
+   await page.locator('.format-tile[href*="template=presentation"]').click();
    await page.locator('#editorFrame').waitFor({state:'attached'});
    const frame=page.frameLocator('#editorFrame');await frame.locator('#stage').waitFor();
    await audit(page,'studio',device);
