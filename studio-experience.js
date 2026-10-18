@@ -52,7 +52,7 @@ function showProjects(){
   $('openInspector')?.click();
  }else if(kind==='picture'||kind==='pdf'){
   bridge.status('그림·PDF는 자동으로 프로젝트가 저장되지 않아요. 편집기에서 파일을 내려받아 보관해 주세요.');
-  alert('그림·PDF는 자동으로 내 작업에 저장되지 않아요. 편집기 안의 저장 기능을 사용해 주세요.');
+  alert('그림·PDF 원본은 자동으로 보관되지 않아요. 편집기 안의 저장 기능을 사용해 주세요.');
  }else{
   $('recentProjects')?.scrollIntoView({behavior:'smooth',block:'start'});
  }
