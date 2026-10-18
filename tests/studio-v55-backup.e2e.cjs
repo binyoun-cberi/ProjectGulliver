@@ -39,7 +39,7 @@ test('5.5 Chrome ZIP: all saved studio projects, lessons and lesson PDF/WAV rest
   await restored.goto(base+encodeURIComponent('뚝딱 제작실.html'),{waitUntil:'domcontentloaded'});
   restored.once('dialog',dialog=>dialog.accept());
   await restored.locator('#libraryRestore').setInputFiles({name:'모든 수업.zip',mimeType:'application/zip',buffer:bytes});
-  await restored.locator('#message').filter({hasText:'전체 백업 복원 완료'}).waitFor({timeout:60000});
+  await restored.locator('#message').filter({hasText:'통합 백업 복원 완료'}).waitFor({timeout:60000});
   const result=await restored.evaluate(async()=>{
    const lessons=await LessonStorage.list(),files=await LessonStorage.allAssets(),projects=await GulliverStudioStorage.projects();
    return{lessons:lessons.map(l=>({id:l.id,title:l.title,audience:l.audience,goal:l.goal,steps:l.steps.map(s=>({id:s.id,assetId:s.assetId}))})),
