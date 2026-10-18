@@ -591,7 +591,12 @@ window.addEventListener('beforeunload',e=>{
   }
  }catch(e){}
 });
+async function navigateAway(){
+ if(activeKind&&!C.managed(activeKind)&&!confirm('그림·PDF 원본은 자동 저장되지 않아요. 먼저 파일을 내려받았나요?'))return false;
+ return moveAway();
+}
 window.GulliverStudioBridge={
+ navigateAway,
  getState:()=>({activeKind,activeProject,latestProjects:[...latestProjects],latestAssets:[...latestAssets],latestOfficial:[...latestOfficial]}),
  sync,refreshProjects,refreshAssets,refreshOfficial,openOfficial,projectCard,download,status,uuid,start,
  updateActiveFolder:(id,folderId)=>{if(activeProject?.id===id)activeProject.folderId=folderId}
