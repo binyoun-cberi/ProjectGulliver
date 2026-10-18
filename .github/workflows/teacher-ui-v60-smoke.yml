@@ -20,7 +20,7 @@ jobs:
         run: |
           node --check gulliver-teacher-shell.js
           node --check gulliver-teacher-components.js
-          node --test tests/gulliver-teacher-ui.test.cjs
+          node --check tests/gulliver-teacher-ui.test.cjs
       - name: Install browser driver
         run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
       - name: Exercise teacher tools and privacy in Chrome
