@@ -1,0 +1,20 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const read=name=>fs.readFileSync(name,'utf8');
+test('5.4 retains six actual creation routes while preserving the original saved-work source',()=>{
+ const js=read('workspace-home.js'),html=read('index.html'),css=read('workspace-home-v54.css');
+ assert.equal((js.match(/\['(?:worksheet|presentation|document|video|music|lesson)'/g)||[]).length,6);
+ assert.match(js,/class="format-copy"/);
+ assert.match(js,/class="home-dashboard/);
+ assert.match(js,/id="unifiedHomeRecent"/);
+ assert.match(js,/window\.GulliverUnifiedLibraryUI\?\.renderHome/);
+ assert.match(js,/templates\.slice\(0,2\)/);
+ assert.match(js,/href="내 보관함\.html"/);
+ assert.match(html,/workspace-home-v54\.css/);
+ assert.match(css,/max-width:var\(--home-content-max\)/);
+ assert.match(css,/--home-content-max:1720px/);
+ assert.match(css,/repeat\(6,minmax\(0,1fr\)\)/);
+ assert.match(css,/minmax\(340px,1fr\)/);
+ assert.match(css,/@media\(max-width:1399px\)/);
+ assert.match(css,/@media\(max-width:480px\)/);
+});

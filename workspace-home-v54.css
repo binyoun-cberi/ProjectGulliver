@@ -1,0 +1,127 @@
+/* 5.4: a genuinely fluid home. Keep the hero centered, allow the work area to grow. */
+:root{--home-content-max:1720px}
+.main{max-width:none;min-width:0}
+.main>.welcome,.main>.topbar,.main>.workspace-switch,.main>#content,.main>.storage-note{
+  width:100%;max-width:var(--home-content-max);margin-left:auto;margin-right:auto
+}
+.home-view .main{max-width:none;padding-inline:clamp(22px,2.4vw,52px)}
+.home-view .main::before{
+  width:100%;inset:0 0 auto;
+  background:linear-gradient(110deg,#bdf1ee 0%,#e6efff 48%,#f0dafa 100%);
+  mask-image:linear-gradient(#000 0%,transparent 100%)
+}
+.home-view #content{width:100%;max-width:var(--home-content-max);min-width:0}
+.home-view .welcome{max-width:900px}
+.home-view .topbar{max-width:900px}
+.home-view .section,.home-view .home-block{max-width:none;min-width:0}
+.home-view .home-block{margin-top:36px}
+.home-view .home-design{width:100%}
+/* Six actual creation actions are six columns, not eight empty slots. */
+.home-view .format-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:14px}
+.home-view .format-tile{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:18px 10px;min-height:152px;
+  border:1px solid #ede8f5;background:#fff;border-radius:18px;
+  box-shadow:0 5px 18px #39275d08;text-decoration:none
+}
+.home-view .format-symbol{
+  width:65px;height:65px;flex:none;border-radius:20px;font-size:32px;
+  box-shadow:0 5px 15px #1b16331b
+}
+.home-view .format-copy{display:grid;gap:5px;min-width:0;align-content:center;text-align:center}
+.home-view .format-copy strong{font-size:14px;letter-spacing:-.03em}
+.home-view .format-copy small{font-size:11px;line-height:1.45;max-width:100%;overflow-wrap:anywhere}
+/* Two distinct jobs side by side: visual templates (larger) and recent work (smaller). */
+.home-view .home-dashboard{
+  display:grid;grid-template-columns:minmax(0,1.7fr) minmax(340px,1fr);
+  gap:clamp(18px,2vw,32px);align-items:start;margin-top:34px
+}
+.home-view .home-dashboard.no-templates{grid-template-columns:minmax(0,1fr)}
+.home-view .home-dashboard>.section{
+  min-width:0;width:100%;max-width:none;margin:0;
+  border:1px solid #eeebf4;border-radius:21px;padding:clamp(16px,1.5vw,25px);
+  background:#fff;box-shadow:0 8px 25px #32234908
+}
+.home-view .home-dashboard .section-head{gap:12px;min-width:0}
+.home-view .home-dashboard .section-head h2{font-size:19px}
+.home-view .home-dashboard .section-head p{font-size:12px}
+.home-view .home-dashboard .home-template-grid{
+  display:grid;grid-auto-flow:row;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;overflow:visible;margin:0;padding:0
+}
+.home-view .home-dashboard .template-card{min-width:0;overflow:hidden}
+.home-view .home-dashboard .template-card .preview{height:clamp(165px,13vw,230px)}
+.home-view .home-dashboard .template-card .card-info{padding:13px 16px 16px}
+.home-view .home-dashboard .unified-home-recent{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:9px;margin:0 0 10px
+}
+.home-view .home-dashboard .unified-open{min-width:0;min-height:67px}
+.home-view .home-dashboard .unified-info{min-width:0}
+.home-view .home-dashboard .unified-empty{
+  margin:0;border:1px dashed #ddd5eb;border-radius:12px;
+  background:#faf8ff;padding:23px 16px;line-height:1.7
+}
+.home-view .home-dashboard .studio-library-link{
+  padding:13px 14px;margin-top:10px;border-radius:14px;gap:10px
+}
+.home-view .home-dashboard .studio-library-icon{
+  width:42px;height:42px;border-radius:11px;font-size:21px
+}
+.home-view .home-dashboard .studio-library-link strong{font-size:12px;margin-bottom:2px}
+.home-view .home-dashboard .studio-library-link small{font-size:11px}
+.home-view .home-dashboard .home-work-location-note{
+  margin-top:11px;padding:9px 11px;font-size:11px;line-height:1.6
+}
+/* The four classroom tools should use the available row, too. */
+.home-view .home-tool-list{grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.home-view .home-tool-list .tool-row{min-width:0}
+@media(min-width:1750px){
+ .home-view .format-tile{
+   flex-direction:row;justify-content:flex-start;min-height:111px;
+   gap:13px;padding:16px;text-align:left
+ }
+ .home-view .format-symbol{width:60px;height:60px;font-size:29px;border-radius:18px}
+ .home-view .format-copy{text-align:left;gap:5px}
+ .home-view .format-copy strong{font-size:14px}
+}
+/* Stop the two-column dashboard before it squeezes either panel. */
+@media(max-width:1399px){
+ .home-view .home-dashboard{grid-template-columns:1fr;gap:22px}
+ .home-view .home-dashboard .unified-home-recent{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .home-view .home-dashboard.no-templates{grid-template-columns:1fr}
+ .home-view .format-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+ .home-view .format-tile{min-height:142px}
+ .home-view .home-tool-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:800px){
+ .home-view .main{padding-inline:20px}
+ .home-view .home-dashboard{margin-top:26px;gap:17px}
+ .home-view .home-dashboard>.section{padding:15px;border-radius:16px}
+ .home-view .home-dashboard .home-template-grid{
+   display:grid;grid-auto-flow:row;grid-template-columns:repeat(2,minmax(0,1fr));
+   gap:10px;overflow:visible;margin:0;padding:0
+ }
+ .home-view .home-dashboard .template-card .preview{height:140px}
+ .home-view .home-dashboard .unified-home-recent{grid-template-columns:1fr}
+ .home-view .format-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+ .home-view .format-tile{min-height:125px;padding:11px 7px;gap:8px}
+ .home-view .format-symbol{width:53px;height:53px;border-radius:16px;font-size:27px}
+ .home-view .format-copy strong{font-size:12px}
+ .home-view .format-copy small{font-size:10px}
+}
+@media(max-width:480px){
+ .home-view .main{padding-inline:16px}
+ .home-view .format-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .home-view .format-tile{padding:11px 4px;min-height:104px;gap:7px;border-radius:14px}
+ .home-view .format-symbol{width:47px;height:47px;border-radius:14px;font-size:24px}
+ .home-view .format-copy strong{font-size:11px;line-height:1.35}
+ .home-view .format-copy small{display:none}
+ .home-view .home-dashboard>.section{padding:12px}
+ .home-view .home-dashboard .home-template-grid{grid-template-columns:1fr;gap:10px}
+ .home-view .home-dashboard .template-card .preview{height:155px}
+ .home-view .home-dashboard .section-head h2{font-size:17px}
+ .home-view .home-tool-list{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+ .home-view .format-tile{transition:none}
+}

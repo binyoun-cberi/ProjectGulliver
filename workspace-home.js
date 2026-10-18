@@ -12,7 +12,7 @@ const FORMATS=[
  ['lesson','수업 준비','lesson','▣','#168c89','자료와 활동을 한 수업으로']
 ];
 function startTiles(){
- return '<div class="format-grid">'+FORMATS.map(f=>'<a class="format-tile" href="'+(f[2]==='lesson'?'lesson.html':'뚝딱 제작실.html?new='+f[2]+(f[6]?'&amp;template='+f[6]:''))+'" style="--format-accent:'+f[4]+'" aria-label="'+f[1]+' 만들기"><span class="format-symbol" aria-hidden="true">'+f[3]+'</span><strong>'+f[1]+'</strong><small>'+f[5]+'</small></a>').join('')+'</div>';
+ return '<div class="format-grid">'+FORMATS.map(f=>'<a class="format-tile" href="'+(f[2]==='lesson'?'lesson.html':'뚝딱 제작실.html?new='+f[2]+(f[6]?'&amp;template='+f[6]:''))+'" style="--format-accent:'+f[4]+'" aria-label="'+f[1]+' 만들기"><span class="format-symbol" aria-hidden="true">'+f[3]+'</span><span class="format-copy"><strong>'+f[1]+'</strong><small>'+f[5]+'</small></span></a>').join('')+'</div>';
 }
 const requestedView=new URLSearchParams(location.search).get('view');
 let view=['home','tools','activities','templates','favorites','trash'].includes(requestedView)?requestedView:'home',folderId='',category='전체',editAction=null,toastTimer;
@@ -53,14 +53,18 @@ function render(){
    }
    if(isHome&&!query){
       html+='<section class="home-block home-design"><div class="section-head"><div><h2>오늘 무엇을 준비할까요?</h2><p>만들 자료를 고르면 적합한 편집 화면이 열려요.</p></div><button class="text-btn" data-create>모두 보기 →</button></div>'+startTiles()+'</section>';
-      html+=section('이어서 작업하기','최근 만든 학습자료, 교실 활동, 수업을 한곳에서 찾아요.',
-        '<div class="unified-home-recent" id="unifiedHomeRecent"><p>저장한 자료를 불러오는 중이에요.</p></div>'+
-        '<a class="studio-library-link" href="내 보관함.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>내 보관함에서 모두 찾기</strong><small>학습지·수업·타이머·영상·사진을 한곳에서 검색하고 다시 열어요.</small></span><span aria-hidden="true">→</span></a>'+
-        '<p class="home-work-location-note">자료는 현재 브라우저에 저장돼요. 기기를 바꾸기 전에는 내 보관함에서 백업 범위를 확인해 주세요.</p>',
-        '<a class="text-btn" href="내 보관함.html">전체 보관함 →</a>');
+      // The same saved work and templates, paired on wide screens rather than
+      // leaving unused columns at the right edge.
+      html+='<div class="home-dashboard'+(templates.length?'':' no-templates')+'">';
       if(templates.length)html+=section('예시 자료로 시작','예시를 선택하고 우리 반에 맞게 수정하세요.',
         '<div class="template-grid home-template-grid">'+templates.slice(0,2).map(templateCard).join('')+'</div>',
         '<button class="text-btn" data-view="templates">예시 더 보기 →</button>');
+      html+=section('이어서 작업하기','최근 만든 학습자료와 수업을 다시 열어요.',
+        '<div class="unified-home-recent" id="unifiedHomeRecent"><p>저장한 자료를 불러오는 중이에요.</p></div>'+
+        '<a class="studio-library-link" href="내 보관함.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>내 보관함에서 모두 찾기</strong><small>수업·자료·영상·사진을 검색하고 다시 열어요.</small></span><span aria-hidden="true">→</span></a>'+
+        '<p class="home-work-location-note">자료는 현재 브라우저에 저장돼요. 다른 기기로 옮기려면 내 보관함에서 백업해 주세요.</p>',
+        '<a class="text-btn" href="내 보관함.html">전체 보관함 →</a>');
+      html+='</div>';
       const featured=['수업 흐름 타이머','낱말카드·퀴즈','교실 자리 배정','우리 반 투표판'];
       const selected=featured.map(n=>tools.find(t=>t.name===n)).filter(Boolean);
       html+=section('수업 중 바로 사용','수업을 준비하거나 진행할 때 쓰는 도구예요.',
