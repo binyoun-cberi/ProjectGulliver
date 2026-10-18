@@ -1,0 +1,41 @@
+# 뚝딱교실 6.0 — 교사 도구 공통 기반
+
+## 적용 범위
+
+- `tools-catalog.js`의 제작 관련 8종을 제외한 교사·학급·업무 도구 21종에 같은 내비게이션을 적용한다.
+- `gulliver-teacher-ui.css`: **gt-** 접두사의 토큰·구성 요소 스타일 및 반응형 메뉴. 도구 내부의 `.btn`, `.card`, `.topbar` 등을 광역으로 덮어쓰지 않는다.
+- `gulliver-teacher-shell.js`: 도구명/유형, 홈·제작실·내 보관함·수업 준비·우리 반 이동, 저장 안내, 전체화면. 기존 `Gulliver.mountShell()`이 만든 화면이 있으면 **하나만 교체**한다.
+- `gulliver-teacher-components.js`: 명단을 명시적으로 불러오는 선택기, `idle/saving/saved/error` 저장 상태, 알림, 확인 창, 인쇄·이미지·캔버스 결과 동작용 버튼 생성기.
+
+## 안전 기준
+
+1. **저장 로직 유지.** 6.0은 기존 로컬 저장 키, 게임 엔진, 백업 형식, 캔버스 결과 변환기를 수정하지 않는다. 실제 저장 성공 이벤트가 연결되기 전에는 상단에 '저장됨'이라고 말하지 않는다.
+2. **학생용 화면 보호.** `student-view`, `presentation` 상태에서는 공통 상단 메뉴를 숨기며, 자리 배정·버스 좌석·토너먼트의 전용 발표 여백은 별도로 유지한다.
+3. **캔버스 중복 방지.** `?studioEmbed=1`이고 같은 출처의 실제 `GulliverTeacherLive` 호스트인 경우에만 공통 메뉴를 감춘다. URL 매개변수만으로 임의의 타사 임베드를 허용하지 않는다.
+4. **개인정보 보호.** 공통 명단 선택기는 화면에 개인 이름을 자동 표시하지 않고, 도구가 실제로 선택을 요청할 때만 명단을 복사해서 전달한다. `createResultActions({privateResult:true})`는 캔버스로 추가 버튼을 만들지 않는다.
+5. **오프라인 견딤.** 공통 UI는 외부 폰트·CSS·아이콘 CDN을 요구하지 않는다. Tailwind나 QR 생성 엔진처럼 도구 자체가 쓰는 외부 의존성은 후속 개편에서 다룬다.
+
+## 6.1 이후 도구 내부의 연결 예
+
+```js
+const ui = window.GulliverTeacherComponents;
+const status = ui.createSaveStatus();
+document.querySelector('#saveToolbar').append(status);
+ui.setSaveStatus(status, 'saving');
+try {
+  await saveExistingToolData(); // 실제로 성공한 뒤에만
+  ui.setSaveStatus(status, 'saved');
+  window.GulliverTeacherShell?.updateSaveState('saved');
+} catch (error) {
+  ui.setSaveStatus(status, 'error');
+  window.GulliverTeacherShell?.updateSaveState('error');
+}
+```
+
+학생 명단과 결과 버튼은 필요한 도구에서만 연결한다. `onCanvas`는 원본 편집기/캔버스 호스트의 실제 가져오기 함수를 전달하고, 호스트가 없는 독립 페이지에 동작하지 않는 버튼을 만들지 않는다. 마니또·마피아·비공개 설정을 원칙적으로 공통 캔버스 결과 액션에 연결하지 않는다.
+
+## 검수
+
+- `node --test tests/gulliver-teacher-ui.test.cjs`: 21개 파일 연결 검사 및 Chrome이 설치된 환경에서 실제 21개 도구 진입·중복 메뉴·모바일 메뉴·학생 모드 검사.
+- `teacher-ui-v60-smoke.yml`: PR에서 같은 검사를 수행하도록 등록.
+- 6.1~6.5에서는 각 도구의 자체 준비/실행/결과 화면, 저장/재열기, 인쇄, 모바일 실조작을 개별 검수해야 한다. 6.0 자체는 그 단계의 완료를 의미하지 않는다.
