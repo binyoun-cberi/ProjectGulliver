@@ -11,6 +11,8 @@
     <!-- 축하 폭죽 효과 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
+        /* 비밀 배정 결과의 숨김은 Tailwind CDN이 끊겨도 유지되어야 합니다. */
+        .hidden { display: none !important; }
         body {
             font-family: 'Jua', sans-serif;
             background-color: #fdf2f8; /* 연한 핑크 배경 */
@@ -38,9 +40,10 @@
         }
     </style>
   <script src="gulliver-shared.js?v=20261012-organized2"></script>
-<link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261018-v60">
+<link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
+<script src="gulliver-teacher-display.js?v=20261019-dual1"></script>
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
-<script defer src="gulliver-teacher-shell.js?v=20261018-v60"></script>
+<script defer src="gulliver-teacher-shell.js?v=20261019-dual1"></script>
 </head>
 <body class="min-h-screen text-gray-800">
 
@@ -78,6 +81,7 @@
     <div id="draw-view" class="hidden max-w-5xl mx-auto mt-8 p-6">
         <h1 class="text-4xl text-center text-pink-600 mb-2">🎁 내 마니또는 누구일까? 🎁</h1>
         <p class="text-center text-gray-500 mb-8">자신의 이름을 클릭해서 마니또를 확인하세요! (확인 후엔 되돌릴 수 없습니다)</p>
+        <p class="text-center text-pink-800 bg-pink-100 rounded-xl p-3 mb-6">이 화면은 교사용이에요. 학생에게는 위쪽의 ‘📺 학생창 열기’를 눌러 별도 창을 보여주세요. 비밀 결과는 학생 창에 나타나지 않아요.</p>
         
         <div id="student-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
             <!-- 학생 버튼들이 여기에 동적으로 생성됩니다. -->
@@ -207,11 +211,16 @@
                     <span class="text-gray-300">누가:</span>
                 `;
                 div.appendChild(drawerSelect);
-                div.innerHTML += `<span class="text-gray-300">누구를:</span>`;
+                const receiverLabel = document.createElement('span');
+                receiverLabel.className = 'text-gray-300';
+                receiverLabel.textContent = '누구를:';
+                div.appendChild(receiverLabel);
                 div.appendChild(receiverSelect);
-                div.innerHTML += `
-                    <button onclick="removeRule(${index})" class="ml-auto text-red-400 hover:text-red-300 font-bold px-2">X</button>
-                `;
+                const remove = document.createElement('button');
+                remove.className = 'ml-auto text-red-400 hover:text-red-300 font-bold px-2';
+                remove.textContent = 'X';
+                remove.onclick = () => removeRule(index);
+                div.appendChild(remove);
                 container.appendChild(div);
             });
         }
@@ -219,11 +228,10 @@
         function createSelect(type, selectedValue, ruleIndex) {
             const select = document.createElement('select');
             select.className = "text-black p-1 rounded";
-            select.innerHTML = `<option value="">--선택--</option>`;
-            
+            select.appendChild(new Option('--선택--', ''));
             participants.forEach(name => {
-                const isSelected = name === selectedValue ? 'selected' : '';
-                select.innerHTML += `<option value="${name}" ${isSelected}>${name}</option>`;
+                const option = new Option(name, name, false, name === selectedValue);
+                select.appendChild(option);
             });
 
             select.onchange = (e) => {
@@ -285,6 +293,7 @@
             }
 
             finalMatches = result;
+            checkedStudents.clear();
             console.log("마니또 배정 완료 (비밀입니다!)");
 
             // 화면 전환
@@ -373,7 +382,7 @@
             document.getElementById('close-result-btn').classList.remove('hidden');
 
             // 폭죽 효과
-            confetti({
+            if (typeof confetti === 'function') confetti({
                 particleCount: 100,
                 spread: 70,
                 origin: { y: 0.6 },
@@ -398,17 +407,18 @@
                 const receiver = finalMatches[drawer];
                 const isChecked = checkedStudents.has(drawer);
                 
-                const statusHtml = isChecked 
-                    ? '<span class="text-blue-500 font-bold bg-blue-50 px-2 py-1 rounded">확인완료</span>' 
-                    : '<span class="text-gray-400">미확인</span>';
-                
                 const tr = document.createElement('tr');
                 tr.className = "border-b border-gray-200 hover:bg-gray-50 transition-colors";
-                tr.innerHTML = `
-                    <td class="py-3 px-4 text-center font-bold">${drawer}</td>
-                    <td class="py-3 px-4 text-center">${statusHtml}</td>
-                    <td class="py-3 px-4 text-center text-pink-600 font-bold text-xl">${receiver}</td>
-                `;
+                const drawerCell = document.createElement('td');
+                drawerCell.className = 'py-3 px-4 text-center font-bold';
+                drawerCell.textContent = drawer;
+                const statusCell = document.createElement('td');
+                statusCell.className = 'py-3 px-4 text-center ' + (isChecked ? 'text-blue-500 font-bold' : 'text-gray-400');
+                statusCell.textContent = isChecked ? '확인완료' : '미확인';
+                const receiverCell = document.createElement('td');
+                receiverCell.className = 'py-3 px-4 text-center text-pink-600 font-bold text-xl';
+                receiverCell.textContent = receiver;
+                tr.append(drawerCell, statusCell, receiverCell);
                 tbody.appendChild(tr);
             });
 
@@ -443,6 +453,23 @@
             }
             document.body.removeChild(textArea);
         }
+
+        window.GulliverTeacherDisplay?.register({
+            kind: 'manitto',
+            getSnapshot() {
+                return {
+                    kind: 'manitto',
+                    started: Boolean(Object.keys(finalMatches).length),
+                    students: [...participants].sort().map(name => ({name, checked: checkedStudents.has(name)}))
+                };
+            },
+            onAction(request) {
+                if (request?.action !== 'request' || typeof request.name !== 'string') return;
+                if (!Object.prototype.hasOwnProperty.call(finalMatches, request.name) || checkedStudents.has(request.name)) return;
+                openModal(request.name);
+                window.GulliverTeacherComponents?.notice(request.name + ' 학생의 비밀 배정을 교사용 창에서 확인해 주세요.');
+            }
+        });
 
     </script>
 

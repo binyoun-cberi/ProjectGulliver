@@ -81,7 +81,8 @@
     saveStatus.setAttribute('role', 'status');
     panel.append(panelTitle, saveStatus); help.append(summary, panel);
     const full = document.createElement('button'); full.type = 'button'; full.className = 'gt-action';
-    full.dataset.gtFullscreen = '1'; full.textContent = '⛶ 전체화면';
+    full.dataset.gtFullscreen = '1'; full.textContent = '⛶ 교사창 확대';
+    full.title = '설정과 명단이 있는 현재 교사 화면만 확대합니다. 학생용 화면은 별도 창으로 열어 주세요.';
     full.addEventListener('click', async () => {
       try {
         if (document.fullscreenElement) await document.exitFullscreen();
@@ -90,7 +91,7 @@
       } catch { window.GulliverTeacherComponents?.notice('이 브라우저에서는 전체화면을 사용할 수 없어요.'); }
     });
     document.addEventListener('fullscreenchange', () => {
-      full.textContent = document.fullscreenElement ? '⛶ 전체화면 닫기' : '⛶ 전체화면';
+      full.textContent = document.fullscreenElement ? '⛶ 확대 종료' : '⛶ 교사창 확대';
     });
     const mobile = document.createElement('details'); mobile.className = 'gt-mobile-links';
     const mobileToggle = document.createElement('summary'); mobileToggle.className = 'gt-action'; mobileToggle.textContent = '이동 ▾';
@@ -100,6 +101,24 @@
     actions.append(help, full, mobile);
     inner.append(brand, identity, nav, actions);
     shell.append(inner);
+    let displayButton = null;
+    function syncStudentDisplayButton() {
+      const display = window.GulliverTeacherDisplay;
+      if (!display?.supported?.()) return;
+      if (!displayButton) {
+        displayButton = document.createElement('button');
+        displayButton.type = 'button';
+        displayButton.className = 'gt-action gt-open-display';
+        displayButton.title = '두 번째 모니터에 학생용 창을 엽니다. 교사용 설정은 보이지 않아요.';
+        displayButton.addEventListener('click', () => display.open());
+        actions.insertBefore(displayButton, full);
+        shell.classList.add('gt-display-ready');
+      }
+      displayButton.dataset.open = String(display.connected());
+      displayButton.textContent = display.connected() ? '📺 학생창 보기 ↗' : '📺 학생창 열기 ↗';
+    }
+    window.addEventListener('gulliver:student-display-change', syncStudentDisplayButton);
+    syncStudentDisplayButton();
     if (!existing) {
       document.body.insertAdjacentElement('afterbegin', shell);
       window.Gulliver?.trackTool?.({name: current[1], href: pathname, icon: current[3]});

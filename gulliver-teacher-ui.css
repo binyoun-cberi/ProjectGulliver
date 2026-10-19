@@ -69,6 +69,8 @@ body.gt-teacher-tool:not(.gulliver-studio-embed):not(.student-view):not(.present
 .gt-shell .gt-action {border: 1px solid var(--gt-line); background: #fff; min-height: 36px}
 .gt-shell .gt-action:focus-visible, .gt-shell a:focus-visible, .gt-shell summary:focus-visible {outline: 3px solid #a5b4fc; outline-offset: 2px}
 .gt-shell .gt-help {position: relative; font-size: 12px}
+.gt-shell .gt-open-display {background: var(--gt-soft); color: #5644b9; border-color: #d8d0ff}
+.gt-shell .gt-open-display[data-open="true"] {background: #e7f7ef; border-color: #bbebd1; color: #056844}
 .gt-shell .gt-help summary {list-style: none}
 .gt-shell .gt-help summary::-webkit-details-marker {display: none}
 .gt-shell .gt-help[open] summary {border-color: #bcb2ff; color: #5545bf}
@@ -135,5 +137,8 @@ body.gt-teacher-tool.presentation[data-gt-tool="토너먼트 메이커.html"] {p
   .gt-shell .gt-action {padding: 9px 8px; font-size: 11px; min-height: 40px}
   .gt-shell .gt-action[data-gt-fullscreen] {display: none}
   .gt-shell .gt-help-panel {right: -55px}
+  .gt-shell.gt-display-ready .gt-identity strong {max-width: 26vw}
+  .gt-shell.gt-display-ready .gt-open-display {font-size: 10px; padding: 9px 7px}
 }
+@media (max-width: 430px) {.gt-shell.gt-display-ready .gt-help {display:none}}
 @media print {.gt-shell, .gt-toast, .gt-dialog {display: none !important} body.gt-teacher-tool {padding-top: 0 !important}}
