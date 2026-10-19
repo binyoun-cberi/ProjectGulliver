@@ -51,6 +51,9 @@
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
 <script defer src="gulliver-teacher-shell.js?v=20261019-dual1"></script>
+<link rel="stylesheet" href="gulliver-teacher-v62.css?v=20261019-v62">
+<script src="gulliver-teacher-display.js?v=20261019-v62"></script>
+<script src="gulliver-teacher-v62.js?v=20261019-v62"></script>
 </head>
 <body class="flex h-screen w-screen overflow-hidden text-slate-800 p-4 md:p-6 gap-6">
 
@@ -133,7 +136,7 @@
         </div>
 
         <!-- 하단 컨트롤 (선택지 추가 및 초기화) -->
-        <div class="mt-4 pt-4 border-t-2 border-slate-100 flex justify-between items-center">
+        <div class="mt-4 pt-4 border-t-2 border-slate-100 flex justify-between items-center gt-v62-vote-edit">
             <button onclick="addOption()" class="flex items-center gap-1 text-indigo-400 hover:text-indigo-600 font-sans font-bold transition-colors px-2 py-1">
                 <i class="ph-bold ph-plus-circle text-lg"></i> 선택지 추가
             </button>
@@ -743,6 +746,15 @@
         renderRight();
         renderOnlinePanel();
         restoreOnlineRoom();
+        window.GulliverTeacherDisplay?.register({kind:'vote',getSnapshot(){
+            const counts=new Map(config.options.map(option=>[String(option.id),0]));
+            Object.values(votes).forEach(id=>{const key=String(id);if(counts.has(key))counts.set(key,counts.get(key)+1)});
+            const total=[...counts.values()].reduce((sum,count)=>sum+count,0);
+            return{kind:'vote',title:String(config.title||''),total,closed:Boolean(onlineState?.closed),
+                options:config.options.map(option=>({name:String(option.name||''),count:counts.get(String(option.id))||0}))};
+        }});
+        document.body.classList.add('gt-v62-vote');
+        GulliverTeacherClassroomFlow.mount({container:document.body,title:'우리 반 투표',description:'참여 코드·학생별 선택·편집 도구를 제외한 집계 결과를 두 번째 화면에 띄워요.'});
     </script>
 <script>Gulliver.mountShell({title:"우리 반 투표판",icon:"🗳️"});</script>
 </body>

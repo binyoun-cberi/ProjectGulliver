@@ -37,7 +37,7 @@ test('6.1 pages keep their existing storage formats and use explicit preparation
   assert.match(fs.readFileSync('lesson-circle-timer.js', 'utf8'), /const STORAGE_KEY = 'lessonCircleTimerV3'/);
   assert.match(fs.readFileSync(files[4], 'utf8'), /flashQuizMakerPlusV3/);
   assert.match(fs.readFileSync(files[1], 'utf8'), /lessonStorageKey/);
-  assert.match(fs.readFileSync('gulliver-teacher-display.html', 'utf8'), /display-view\.js\?v=20261019-v61/);
+  assert.match(fs.readFileSync('gulliver-teacher-display.html', 'utf8'), /display-view\.js\?v=20261019-v6[12]/);
 });
 
 test('teacher controller only broadcasts an explicit public snapshot and accepts student action requests', () => {

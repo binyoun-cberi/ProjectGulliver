@@ -1,7 +1,7 @@
 /* Teacher tools 6.0.1: send only opt-in, student-safe state to a second window. */
 (() => {
   'use strict';
-  const KINDS = new Set(['timer', 'lesson', 'seating', 'manitto', 'flashquiz']);
+  const KINDS = new Set(['timer', 'lesson', 'seating', 'manitto', 'flashquiz', 'bus', 'groups', 'roles', 'check', 'vote', 'praise']);
   const CHANNEL_PREFIX = 'gulliver.student-display.v1.';
   let adapter = null;
   let channel = null;

@@ -5,7 +5,7 @@
   const query = new URLSearchParams(location.search);
   const kind = query.get('kind') || '';
   const token = query.get('session') || '';
-  const allowed = new Set(['timer', 'lesson', 'seating', 'manitto', 'flashquiz']);
+  const allowed = new Set(['timer', 'lesson', 'seating', 'manitto', 'flashquiz', 'bus', 'groups', 'roles', 'check', 'vote', 'praise']);
   const stage = document.getElementById('displayStage');
   const connection = document.getElementById('displayConnection');
   const full = document.getElementById('displayFullscreen');
@@ -213,6 +213,104 @@
     stage.replaceChildren(card);
   }
 
+  function classroomCard(title, subtitle) {
+    const card = element('section', 'display-card classroom-card');
+    card.append(element('div', 'display-eyebrow', '뚝딱교실 · 학급 운영'), element('h1', 'display-title', title));
+    if (subtitle) card.append(element('p', 'classroom-subtitle', subtitle));
+    return card;
+  }
+
+  function renderBus(data) {
+    if (!data.ready) {
+      waiting('버스 자리표를 준비하고 있어요', '선생님이 자리를 배정하면 이 화면에 자리표가 나타나요.');
+      return;
+    }
+    const card = classroomCard('🚌 우리 반 버스 자리표', '▲ 운전석 · 앞쪽');
+    const board = element('div', 'classroom-bus-grid');
+    (Array.isArray(data.seats) ? data.seats : []).slice(0, 40).forEach((name, index) => {
+      if (index % 4 === 0) board.append(element('div', 'classroom-row-no', `${Math.floor(index / 4) + 1}열`));
+      board.append(element('div', 'classroom-bus-seat' + (name === null ? ' disabled' : ''), name === null ? '—' : safeText(name, '빈자리') || '빈자리'));
+      if (index % 4 === 1) board.append(element('div', 'classroom-bus-aisle', '통로'));
+    });
+    card.append(board); stage.replaceChildren(card);
+  }
+
+  function renderGroups(data) {
+    if (!data.started) {
+      waiting('모둠을 준비하고 있어요', '선생님이 모둠을 만들고 공개하면 이 화면에도 하나씩 나타나요.');
+      return;
+    }
+    const total = numeric(data.total, 0, 100), revealed = numeric(data.revealed, 0, total);
+    const card = classroomCard('🎰 우리 반 모둠', `${revealed} / ${total} 모둠 공개`);
+    const grid = element('div', 'classroom-group-grid');
+    (Array.isArray(data.groups) ? data.groups : []).slice(0, revealed).forEach(group => {
+      const block = element('section', 'classroom-group');
+      block.append(element('h2', '', safeText(group.title)), element('div', 'classroom-group-members'));
+      const members = block.lastChild;
+      (Array.isArray(group.members) ? group.members : []).slice(0, 20).forEach(name => members.append(element('span', 'classroom-member', safeText(name))));
+      grid.append(block);
+    });
+    if (revealed < total) grid.append(element('div', 'classroom-group unpublished', `🔒 남은 ${total - revealed}모둠은 아직 공개 전이에요`));
+    card.append(grid); stage.replaceChildren(card);
+  }
+
+  function renderRoles(data) {
+    if (!data.ready) {
+      waiting('역할 배정 결과를 준비하고 있어요', '선생님이 모든 학생의 역할을 배정하면 이 화면에 공개돼요.');
+      return;
+    }
+    const card = classroomCard('🧹 우리 반 1인 1역', '우리 반의 새로운 역할을 확인해요.');
+    const grid = element('div', 'classroom-group-grid');
+    (Array.isArray(data.roles) ? data.roles : []).slice(0, 40).forEach(role => {
+      const block = element('section', 'classroom-group');
+      block.append(element('h2', '', safeText(role.name)));
+      const names = element('div', 'classroom-group-members');
+      (Array.isArray(role.members) ? role.members : []).slice(0, 45).forEach(name => names.append(element('span', 'classroom-member', safeText(name))));
+      if (!names.childElementCount) names.append(element('span', 'classroom-empty', '아직 배정 없음'));
+      block.append(names); grid.append(block);
+    });
+    card.append(grid); stage.replaceChildren(card);
+  }
+
+  function renderCheck(data) {
+    const total = numeric(data.total, 0, 100), checked = Math.min(total, numeric(data.checked, 0, 100));
+    const percent = total ? Math.round(checked / total * 100) : 0;
+    const card = classroomCard(`✅ ${safeText(data.theme, '제출·준비물 확인')}`, '학생별 상태는 선생님만 확인해요.');
+    const score = element('div', 'classroom-score');
+    score.append(element('strong', '', `${checked} / ${total}명`), element('span', '', `${percent}% 완료`));
+    const track = element('div', 'classroom-progress-track');
+    const fill = element('div', 'classroom-progress-fill'); fill.style.width = `${percent}%`; track.append(fill);
+    card.append(score, track); stage.replaceChildren(card);
+  }
+
+  function renderVote(data) {
+    const card = classroomCard(`🗳️ ${safeText(data.title, '우리 반 투표')}`, `${numeric(data.total, 0, 1000)}표 집계`);
+    const options = element('div', 'classroom-vote-options');
+    const max = Math.max(1, ...(Array.isArray(data.options) ? data.options : []).map(option => numeric(option.count, 0, 1000)));
+    (Array.isArray(data.options) ? data.options : []).slice(0, 10).forEach(option => {
+      const row = element('div', 'classroom-vote-row');
+      const head = element('div', 'classroom-vote-head');
+      head.append(element('strong', '', safeText(option.name)), element('span', '', `${numeric(option.count, 0, 1000)}표`));
+      const track = element('div', 'classroom-progress-track');
+      const fill = element('div', 'classroom-progress-fill vote-fill');
+      fill.style.width = `${numeric(option.count, 0, 1000) / max * 100}%`;
+      track.append(fill); row.append(head, track); options.append(row);
+    });
+    card.append(options); stage.replaceChildren(card);
+  }
+
+  function renderPraise(data) {
+    const value = numeric(data.value, 0, 99999), goal = Math.max(1, numeric(data.goal, 1, 99999));
+    const percent = Math.min(100, Math.round(value / goal * 100));
+    const card = classroomCard('🌡️ 우리 반 칭찬 온도계', '함께 모은 우리 반 온도를 확인해요.');
+    const score = element('div', 'classroom-score praise-score');
+    score.append(element('strong', '', `${value}°`), element('span', '', `목표 ${goal}° · ${percent}% 달성`));
+    const track = element('div', 'classroom-progress-track praise-track');
+    const fill = element('div', 'classroom-progress-fill praise-fill'); fill.style.width = `${percent}%`; track.append(fill);
+    card.append(score, track, element('p', 'classroom-cheer', value >= goal ? '🎉 목표 달성! 우리 반 최고!' : '조금씩 함께 올려봐요!'));
+    stage.replaceChildren(card);
+  }
+
   function render(data) {
     if (!data || data.kind !== kind) return;
     if (kind === 'timer') renderTimer(data);
@@ -220,6 +318,12 @@
     else if (kind === 'seating') renderSeating(data);
     else if (kind === 'manitto') renderManitto(data);
     else if (kind === 'flashquiz') renderFlashQuiz(data);
+    else if (kind === 'bus') renderBus(data);
+    else if (kind === 'groups') renderGroups(data);
+    else if (kind === 'roles') renderRoles(data);
+    else if (kind === 'check') renderCheck(data);
+    else if (kind === 'vote') renderVote(data);
+    else if (kind === 'praise') renderPraise(data);
   }
   full.addEventListener('click', async () => {
     try {
