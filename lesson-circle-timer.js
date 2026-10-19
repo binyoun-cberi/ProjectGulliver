@@ -763,6 +763,25 @@ ClassroomWorkspace.mount({kind:'timer',title:()=>mainTitle.value,
   }
 });
 window.GulliverTeacherLiveSnapshot=()=>({kind:'timer',title:mainTitle.value,events:state.events.map(({name,note,durationSec,color})=>({name,note,durationSec,color}))});
+window.GulliverTeacherDisplay?.register({
+  kind:'timer',
+  getSnapshot(){
+    const total=totalSeconds(),elapsed=clamp(getElapsed(),0,total),phase=phaseAt(elapsed);
+    const active=phase?.kind==='activity'?phase.event:null;
+    const next=phase?.nextEvent||state.events[(phase?.index??-1)+1];
+    return{
+      kind:'timer',title:mainTitle.value||'오늘의 수업',
+      phase:elapsed>=total&&total?'수업 종료':phase?.kind==='transition'?'전환 시간':active?.name||'수업 준비',
+      note:phase?.kind==='transition'?(next?.name||'다음 활동')+' 준비':active?.note||'',
+      phaseRemaining:phase?.remaining||0,totalRemaining:Math.max(0,total-elapsed),total,
+      progress:total?elapsed/total*100:0,color:active?.color||'#6958dc',
+      currentIndex:phase?.index??-1,
+      next:next?'다음: '+next.name:'다음: 수업 마무리',
+      status:elapsed>=total&&total?'종료':state.running?'진행 중':elapsed?'일시정지':'준비',
+      events:state.events.map(({name,durationSec})=>({name,durationSec}))
+    };
+  }
+});
 if(!new URLSearchParams(location.search).has('activity')&&!new URLSearchParams(location.search).has('template')&&!new URLSearchParams(location.search).has('new'))checkRuntimeRecovery();
 })();
 

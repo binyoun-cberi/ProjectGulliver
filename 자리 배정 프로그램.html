@@ -146,9 +146,10 @@ body.flipped .seat.selected{transform:rotate(180deg) translateY(3px)}
 </style>
 <script src="gulliver-shared.js?v=20261013-workspace1"></script>
 <script src="classroom-workspace.js?v=20261013-workspace1"></script>
-<link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261018-v60">
+<link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
+<script src="gulliver-teacher-display.js?v=20261019-dual1"></script>
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
-<script defer src="gulliver-teacher-shell.js?v=20261018-v60"></script>
+<script defer src="gulliver-teacher-shell.js?v=20261019-dual1"></script>
 </head>
 <body>
 <button class="btn exit-presentation floating-exit" id="exitPresentationBtn">설정으로 돌아가기</button>
@@ -1071,6 +1072,17 @@ ClassroomWorkspace.mount({kind:'seating',title:()=> (Gulliver.getClassroom().cla
   }
 });
 window.GulliverTeacherLiveSnapshot=()=>({kind:'seating',cols:state.cols,rows:state.rows,students:state.students.map(({id,name})=>({id,name})),activeSeats:[...state.activeSeats],assignment:[...state.assignment]});
+window.GulliverTeacherDisplay?.register({
+  kind:'seating',
+  getSnapshot(){
+    const names=new Map(state.students.map(student=>[String(student.id),String(student.name||'')]));
+    return{
+      kind:'seating',cols:state.cols,rows:state.rows,ready:hasAssignment(),
+      flipped:document.body.classList.contains('flipped'),
+      seats:state.activeSeats.map((active,index)=>active?(names.get(String(state.assignment[index]))||''):null)
+    };
+  }
+});
 </script>
 </body>
 </html>

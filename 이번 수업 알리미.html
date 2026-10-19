@@ -24,9 +24,10 @@
         .theme-transition { transition: all 0.5s ease-in-out; }
     </style>
   <script src="gulliver-shared.js?v=20261012-organized2"></script>
-<link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261018-v60">
+<link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
+<script src="gulliver-teacher-display.js?v=20261019-dual1"></script>
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
-<script defer src="gulliver-teacher-shell.js?v=20261018-v60"></script>
+<script defer src="gulliver-teacher-shell.js?v=20261019-dual1"></script>
 </head>
 <body class="flex h-screen w-screen overflow-hidden text-gray-800">
 
@@ -332,6 +333,13 @@
             try{localStorage.setItem(lessonStorageKey,JSON.stringify({version:1,customized:true,fields:Object.fromEntries(inputs.map(key=>[key,elements['in_'+key].value]))}))}catch{}
         }));
         window.GulliverTeacherLiveSnapshot=lessonCapture;
+        window.GulliverTeacherDisplay?.register({
+            kind: 'lesson',
+            getSnapshot() {
+                const {subject, unit, page, topic, objective, act1, act2, act3, wrapup} = lessonCapture();
+                return {kind: 'lesson', subject, unit, page, topic, objective, act1, act2, act3, wrapup};
+            }
+        });
 
         // 전체화면 및 프레젠테이션 모드 전환
         let isFullscreen = false;
