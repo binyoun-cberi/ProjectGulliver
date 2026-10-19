@@ -55,10 +55,32 @@ textarea,input[type=text],input[type=number],select{width:100%;border:1px solid 
   #tableWrap .cell-input{width:100%;min-height:43px;padding:10px!important;border:1px solid #e2e6f0!important;border-radius:9px}
   #tableWrap td:last-child button{min-height:43px}
 }
+/* 6.1: game content and teacher navigation never share the presentation canvas. */
+body.v61-running .topbar{display:none!important}
+body.v61-running main{max-width:1490px;padding-top:clamp(16px,2.5vw,32px)}
+body.v61-running #view-flash .flash-wrap{max-width:1050px}
+body.v61-running .flash-card{height:min(61vh,620px);min-height:310px}
+body.v61-running #view-quiz .quiz-shell{max-width:1100px}
+body.v61-running .quiz-card{padding:clamp(24px,3vw,44px)}
+body.v61-running .question{font-size:clamp(30px,5.3vw,70px)}
+body.v61-running .choice{min-height:clamp(76px,10vh,118px);font-size:clamp(19px,2vw,27px)}
+body.v61-running #view-match .match-shell{max-width:1330px}
+body.v61-running .match-item{font-size:clamp(17px,1.8vw,25px);min-height:68px}
+body.v61-running .gt-v61-runbar{position:sticky;top:0;z-index:21}
+body.v61-running.student-view .gt-v61-runbar{display:none!important}
+body.v61-running.student-view main{padding-top:clamp(10px,1.5vw,22px)}
+body.v61-running.student-view .study-toolbar,body.v61-running.student-view .game-toolbar,body.v61-running.student-view .study-actions,body.v61-running.student-view .stat-pills{display:none!important}
+body.v61-running.student-view .modal-actions{display:none!important}
+#v61SoloExit{display:none;position:fixed;z-index:99;right:16px;bottom:16px;opacity:.4;box-shadow:0 9px 28px #26324730}
+#v61SoloExit:hover,#v61SoloExit:focus-visible{opacity:1}
+body.v61-running.student-view #v61SoloExit{display:inline-flex}
+@media(max-width:520px){body.v61-running .choice{font-size:18px;min-height:70px}body.v61-running .match-item{font-size:13px;min-height:54px}}
 </style>
   <script src="gulliver-shared.js?v=20261013-workspace1"></script>
 <script src="classroom-workspace.js?v=20261013-workspace1"></script>
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
+<link rel="stylesheet" href="gulliver-teacher-v61.css?v=20261019-v61">
+<script src="gulliver-teacher-display.js?v=20261019-v61"></script>
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
 <script defer src="gulliver-teacher-shell.js?v=20261019-dual1"></script>
 </head>
@@ -79,8 +101,29 @@ textarea,input[type=text],input[type=number],select{width:100%;border:1px solid 
   </div>
 </header>
 
+<div id="v61Runbar" class="gt-v61-runbar hidden" aria-label="교사용 실행 도구">
+  <div><div class="gt-v61-run-title" id="v61RunTitle">낱말카드</div><div class="gt-v61-run-desc">교사용 진행 버튼입니다. 학생용 창에는 나타나지 않아요.</div></div>
+  <div class="gt-v61-flow-actions">
+    <button id="v61ToPrep" type="button" class="gt-v61-button">← 카드 준비로</button>
+    <button id="v61OpenStudent" type="button" class="gt-v61-button">📺 학생창 열기</button>
+    <button id="v61PresentSolo" type="button" class="gt-v61-button gt-v61-button--primary">⛶ 이 창으로 보여주기</button>
+  </div>
+</div>
+
 <main>
 <section id="view-manage" class="view">
+  <div class="gt-v61-flow" style="margin-bottom:18px" id="v61Prepare">
+    <div>
+      <span class="gt-v61-eyebrow">① 준비하기</span>
+      <h2>오늘의 낱말카드를 준비해요</h2>
+      <p id="v61DeckSummary">카드를 만들거나 불러온 뒤 실행할 활동을 선택하세요.</p>
+    </div>
+    <div class="gt-v61-flow-actions">
+      <button type="button" class="gt-v61-button gt-v61-button--primary" data-v61-start="flash">② 낱말카드 시작</button>
+      <button type="button" class="gt-v61-button" data-v61-start="quiz">4지선다 퀴즈</button>
+      <button type="button" class="gt-v61-button" data-v61-start="match">짝 맞추기</button>
+    </div>
+  </div>
   <div class="grid">
     <div class="panel">
       <h2>카드 만들기</h2>
@@ -192,6 +235,8 @@ textarea,input[type=text],input[type=number],select{width:100%;border:1px solid 
 </section>
 </main>
 
+<button id="v61SoloExit" type="button" class="gt-v61-button">← 준비 화면으로</button>
+
 <div id="modalBack" class="modal-back hidden" role="dialog" aria-modal="true">
   <div class="modal"><div id="modalIcon" class="modal-icon">🏆</div><h3 id="modalTitle">완료!</h3><p id="modalText"></p><div class="modal-actions"><button id="modalSecondary" class="btn btn-neutral">닫기</button><button id="modalPrimary" class="btn btn-primary">다시 하기</button></div></div>
 </div>
@@ -234,8 +279,18 @@ function beep(type){if(!state.sound)return;initAudio();if(!audioCtx)return;const
 
 function switchTab(name){
  if(state.currentTab==='match'&&name!=='match')stopMatch();
+ if(!['manage','flash','quiz','match'].includes(name))name='manage';
+ if(name==='manage')setSoloPresentation(false);
  state.currentTab=name;$$('.view').forEach(v=>v.classList.add('hidden'));$(`#view-${name}`).classList.remove('hidden');$$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+ const running=name!=='manage';document.body.classList.toggle('v61-running',running);document.body.classList.toggle('presentation',running);
+ $('#v61Runbar').classList.toggle('hidden',!running);
+ $('#v61RunTitle').textContent={flash:'낱말카드 학습',quiz:'4지선다 퀴즈',match:'짝 맞추기'}[name]||'낱말카드';
  if(name==='manage')renderCards(); if(name==='flash')initStudy(false); if(name==='quiz')initQuiz(); if(name==='match')initMatch();
+}
+function setSoloPresentation(on){
+ document.body.classList.toggle('student-view',Boolean(on));
+ if(on){document.documentElement.requestFullscreen?.().catch(()=>toast('전체화면이 차단됐어요. F11 키를 이용할 수 있어요.'));}
+ else if(document.fullscreenElement){document.exitFullscreen?.().catch(()=>{});}
 }
 
 function splitLine(line){
@@ -249,6 +304,8 @@ function addCards(items){const existing=new Set(state.cards.map(c=>normalize(c.f
 function renderCards(){
  const q=normalize($('#searchInput').value);const rows=q?state.cards.filter(c=>normalize(c.front+' '+c.back).includes(q)):state.cards;
  $('#cardCount').textContent=`${state.cards.length}개${q?` · 검색 ${rows.length}개`:''}`;const body=$('#cardBody');body.textContent='';$('#manageEmpty').classList.toggle('hidden',rows.length>0);$('table').classList.toggle('hidden',rows.length===0);
+ $('#v61DeckSummary').textContent=`준비된 카드 ${state.cards.length}장 · 카드가 없으면 아래에서 새로 만들거나 파일을 불러오세요.`;
+ $$('#v61Prepare [data-v61-start]').forEach(button=>{const minimum=button.dataset.v61Start==='quiz'?4:button.dataset.v61Start==='match'?2:1;button.disabled=state.cards.length<minimum;button.title=button.disabled?`카드가 ${minimum}장 이상 필요해요.`:'';});
  rows.forEach((card,idx)=>{
   const tr=document.createElement('tr'),num=document.createElement('td');num.textContent=String(idx+1);
   const ftd=document.createElement('td'),btd=document.createElement('td'),atd=document.createElement('td');
@@ -292,11 +349,11 @@ function initQuiz(){
  const enough=state.cards.length>=4&&distinct>=4;
  $('#quizEmpty').textContent=state.cards.length<4?'4지선다 퀴즈에는 카드가 최소 4장 필요합니다.':'서로 다른 정답이 4개 이상 있어야 퀴즈를 만들 수 있습니다.';
  $('#quizEmpty').classList.toggle('hidden',enough);$('#quizContent').classList.toggle('hidden',!enough);if(!enough){state.quiz=null;return}
- const order=shuffle(state.cards.map(c=>c.id));state.quiz={order,index:0,score:0,streak:0,answered:false};renderQuiz()
+ const order=shuffle(state.cards.map(c=>c.id));state.quiz={order,index:0,score:0,streak:0,answered:false,done:false};renderQuiz()
 }
 function renderQuiz(){const q=state.quiz;if(!q)return;const dir=$('#quizDirection').value,c=state.cards.find(x=>x.id===q.order[q.index]);if(!c){initQuiz();return}q.answered=false;const answer=dir==='front'?c.back:c.front,question=dir==='front'?c.front:c.back;const seen=new Set(),others=shuffle(state.cards.filter(x=>x.id!==c.id).map(x=>dir==='front'?x.back:x.front).filter(v=>{const key=normalize(v);if(key===normalize(answer)||seen.has(key))return false;seen.add(key);return true})).slice(0,3);if(others.length<3){initQuiz();return}const choices=shuffle([answer,...others]);$('#quizQuestion').textContent=question;$('#questionNum').textContent=`문제 ${q.index+1}`;$('#quizProgressText').textContent=`${q.index+1} / ${q.order.length}`;$('#quizScore').textContent=`점수 ${q.score}`;$('#quizStreak').textContent=`연속 ${q.streak}`;$('#quizFeedback').textContent='';$('#nextQuizBtn').classList.add('hidden');const list=$('#choiceList');list.textContent='';choices.forEach((text,i)=>{const b=document.createElement('button');b.className='choice';b.textContent=`${i+1}. ${text}`;b.dataset.value=text;b.addEventListener('click',()=>answerQuiz(b,answer));list.append(b)})}
 function answerQuiz(btn,answer){const q=state.quiz;if(!q||q.answered)return;q.answered=true;const correct=btn.dataset.value===answer;$$('.choice').forEach(b=>{b.disabled=true;if(b.dataset.value===answer)b.classList.add('correct')});if(correct){q.streak++;q.score+=100+Math.min(q.streak,10)*10;$('#quizFeedback').textContent='정답입니다!';$('#quizFeedback').style.color='var(--good)';beep('good')}else{q.streak=0;btn.classList.add('wrong');$('#quizFeedback').textContent=`정답: ${answer}`;$('#quizFeedback').style.color='var(--bad)';beep('bad')}$('#quizScore').textContent=`점수 ${q.score}`;$('#quizStreak').textContent=`연속 ${q.streak}`;$('#nextQuizBtn').classList.remove('hidden')}
-function nextQuiz(){const q=state.quiz;if(!q)return;q.index++;if(q.index>=q.order.length){beep('done');showModal('🎉','퀴즈 완료!',`${q.order.length}문제 중 최종 점수는 ${q.score.toLocaleString()}점입니다.`,'다시 하기',initQuiz);return}renderQuiz()}
+function nextQuiz(){const q=state.quiz;if(!q)return;q.index++;if(q.index>=q.order.length){q.done=true;beep('done');showModal('🎉','퀴즈 완료!',`${q.order.length}문제 중 최종 점수는 ${q.score.toLocaleString()}점입니다.`,'다시 하기',initQuiz);return}renderQuiz()}
 
 function stopMatch(){const m=state.match;if(!m)return;if(m.raf)cancelAnimationFrame(m.raf);m.raf=0;m.running=false;document.removeEventListener('pointermove',matchPointerMove);document.removeEventListener('pointerup',matchPointerUp)}
 function initMatch(){
@@ -323,6 +380,12 @@ function showConfirm(icon,title,text,primary,action){showModal(icon,title,text,p
 function closeModal(){modalAction=null;$('#modalBack').classList.add('hidden')}
 
 $$('.tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+$$('#v61Prepare [data-v61-start]').forEach(button=>button.addEventListener('click',()=>switchTab(button.dataset.v61Start)));
+$('#v61ToPrep').addEventListener('click',()=>switchTab('manage'));
+$('#v61OpenStudent').addEventListener('click',()=>window.GulliverTeacherDisplay?.open());
+$('#v61PresentSolo').addEventListener('click',()=>setSoloPresentation(true));
+$('#v61SoloExit').addEventListener('click',()=>switchTab('manage'));
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('student-view'))setSoloPresentation(false)});
 $('#soundBtn').addEventListener('click',()=>{state.sound=!state.sound;$('#soundBtn').textContent=state.sound?'♪':'×';save();toast(state.sound?'효과음을 켰습니다.':'효과음을 껐습니다.')});
 $('#fullBtn').addEventListener('click',()=>{document.fullscreenElement?document.exitFullscreen?.():document.documentElement.requestFullscreen?.()});
 $('#addBulkBtn').addEventListener('click',()=>{const p=parseText($('#bulkInput').value);if(!p.out.length){toast('구분자를 확인해 주세요.');return}const r=addCards(p.out);$('#bulkInput').value='';toast(`${r.added}장 추가${r.dupes?` · 중복 ${r.dupes}장 제외`:''}${p.bad.length?` · ${p.bad.length}줄 미인식`:''}`)});
@@ -331,12 +394,12 @@ $('#singleAddBtn').addEventListener('click',()=>{const front=cleanText($('#singl
 $('#cardBody').addEventListener('change',e=>{if(e.target.matches('.cell-input'))updateCard(e.target.dataset.id,e.target.dataset.field,e.target.value)});$('#cardBody').addEventListener('click',e=>{const b=e.target.closest('[data-delete]');if(b)deleteCard(b.dataset.delete)});
 $('#searchInput').addEventListener('input',renderCards);$('#clearAllBtn').addEventListener('click',clearAll);$('#sampleBtn').addEventListener('click',()=>{const r=addCards(sampleCards);toast(`${r.added}장의 예시 카드를 추가했습니다.`)});$('#sortBtn').addEventListener('click',()=>{state.cards.sort((a,b)=>a.front.localeCompare(b.front,'ko'));save();renderCards()});$('#shuffleListBtn').addEventListener('click',()=>{shuffle(state.cards);save();renderCards()});
 $('#exportJsonBtn').addEventListener('click',exportJson);$('#exportCsvBtn').addEventListener('click',exportCsv);$('#importBtn').addEventListener('click',()=>$('#importFile').click());$('#importFile').addEventListener('change',e=>{if(e.target.files[0])importFile(e.target.files[0])});$('#printBtn').addEventListener('click',preparePrint);
-$('#flashCard').addEventListener('click',e=>{if(!e.target.closest('.speak'))toggleFlip()});$('#flashCard').addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='Enter'){e.preventDefault();toggleFlip()}});$('#speakFront').addEventListener('click',e=>{e.stopPropagation();speak('front')});$('#speakBack').addEventListener('click',e=>{e.stopPropagation();speak('back')});$('#prevBtn').addEventListener('click',()=>moveStudy(-1));$('#nextBtn').addEventListener('click',()=>moveStudy(1));$('#knownBtn').addEventListener('click',()=>markKnown(true));$('#againBtn').addEventListener('click',()=>markKnown(false));
+$('#flashCard').addEventListener('click',e=>{if(!e.target.closest('.speak'))toggleFlip()});$('#flashCard').addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='Enter'){e.preventDefault();e.stopPropagation();toggleFlip()}});$('#speakFront').addEventListener('click',e=>{e.stopPropagation();speak('front')});$('#speakBack').addEventListener('click',e=>{e.stopPropagation();speak('back')});$('#prevBtn').addEventListener('click',()=>moveStudy(-1));$('#nextBtn').addEventListener('click',()=>moveStudy(1));$('#knownBtn').addEventListener('click',()=>markKnown(true));$('#againBtn').addEventListener('click',()=>markKnown(false));
 $('#studyModeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.studyMode=b.dataset.mode;$$('#studyModeSeg button').forEach(x=>x.classList.toggle('active',x===b));state.studyOrder=[];state.studyIndex=0;renderStudy()});$('#shuffleStudyBtn').addEventListener('click',()=>{state.studyOrder=shuffle(getStudyDeck().map(c=>c.id));state.studyIndex=0;state.flipped=false;renderStudy();toast('카드 순서를 섞었습니다.')});$('#resetKnownBtn').addEventListener('click',()=>{state.known.clear();save();renderStudy();toast('학습 표시를 초기화했습니다.')});
 $('#quizRestartBtn').addEventListener('click',initQuiz);$('#quizDirection').addEventListener('change',initQuiz);$('#nextQuizBtn').addEventListener('click',nextQuiz);$('#matchRestartBtn').addEventListener('click',initMatch);$('#pairCount').addEventListener('change',initMatch);
 $('#modalSecondary').addEventListener('click',closeModal);$('#modalPrimary').addEventListener('click',()=>{const fn=modalAction;closeModal();fn?.()});$('#modalBack').addEventListener('click',e=>{if(e.target===$('#modalBack'))closeModal()});
 window.addEventListener('resize',()=>{if(state.currentTab==='match')resizeMatchCanvas()});document.addEventListener('visibilitychange',()=>{const m=state.match;if(state.currentTab!=='match'||!m)return;if(document.hidden&&m.running){m.elapsed=(performance.now()-m.start)/1000;if(m.raf)cancelAnimationFrame(m.raf);m.raf=0;m.running=false;m.pausedHidden=true;document.removeEventListener('pointermove',matchPointerMove);document.removeEventListener('pointerup',matchPointerUp)}else if(!document.hidden&&m.pausedHidden){m.pausedHidden=false;m.start=performance.now()-m.elapsed*1000;m.running=true;document.addEventListener('pointermove',matchPointerMove,{passive:false});document.addEventListener('pointerup',matchPointerUp);tickMatch()}});
-document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;if(state.currentTab==='flash'){if(e.code==='Space'){e.preventDefault();toggleFlip()}else if(e.code==='ArrowRight')moveStudy(1);else if(e.code==='ArrowLeft')moveStudy(-1)}else if(state.currentTab==='quiz'&&!state.quiz?.answered&&/^[1-4]$/.test(e.key)){const b=$$('.choice')[Number(e.key)-1];b?.click()}else if(state.currentTab==='quiz'&&state.quiz?.answered&&(e.code==='Space'||e.code==='Enter')){e.preventDefault();nextQuiz()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('student-view')){setSoloPresentation(false);return}if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;if(state.currentTab==='flash'){if(e.code==='Space'){e.preventDefault();toggleFlip()}else if(e.code==='ArrowRight')moveStudy(1);else if(e.code==='ArrowLeft')moveStudy(-1)}else if(state.currentTab==='quiz'&&!state.quiz?.answered&&/^[1-4]$/.test(e.key)){const b=$$('.choice')[Number(e.key)-1];b?.click()}else if(state.currentTab==='quiz'&&state.quiz?.answered&&(e.code==='Space'||e.code==='Enter')){e.preventDefault();nextQuiz()}});
 
 load();$('#soundBtn').textContent=state.sound?'♪':'×';renderCards();switchTab('manage');
 Gulliver.mountShell({title:'낱말카드·퀴즈',icon:'🗂️'});
@@ -352,6 +415,31 @@ ClassroomWorkspace.mount({kind:'quiz',title:()=> '나의 낱말카드',
   }
 });
 window.GulliverTeacherLiveSnapshot=()=>({kind:'quiz',cards:state.cards.map(({front,back})=>({front,back})),sampleOnly:state.seededSample});
+window.GulliverTeacherDisplay?.register({
+ kind:'flashquiz',
+ getSnapshot(){
+  const base={kind:'flashquiz',mode:state.currentTab,count:state.cards.length};
+  if(state.currentTab==='flash'){
+   const deck=getStudyDeck(),card=deck[state.studyIndex];
+   return {...base,index:deck.length?state.studyIndex+1:0,total:deck.length,front:card?.front||'',...(state.flipped?{back:card?.back||''}:{}),flipped:state.flipped};
+  }
+  if(state.currentTab==='quiz'){
+   const q=state.quiz;if(!q)return {...base,empty:true};
+   if(q.done)return {...base,done:true,total:q.order.length,score:q.score};
+   return {...base,question:$('#quizQuestion').textContent,index:q.index+1,total:q.order.length,score:q.score,streak:q.streak,
+    answered:q.answered,feedback:q.answered?$('#quizFeedback').textContent:'',
+    choices:$$('#choiceList .choice').map(button=>({text:button.textContent,correct:q.answered&&button.classList.contains('correct'),wrong:q.answered&&button.classList.contains('wrong')}))};
+  }
+  if(state.currentTab==='match'){
+   const m=state.match;if(!m)return {...base,empty:true};
+   return {...base,time:formatTime(m.running?(performance.now()-m.start)/1000:m.elapsed,true),mistakes:m.mistakes,remaining:m.left.length-m.matched.size,
+    left:m.left.map(card=>({text:card.text,matched:m.matched.has(card.id)})),
+    right:m.right.map(card=>({text:card.text,matched:m.matched.has(card.id)})),
+    links:m.lines.map(line=>{const id=line.a?.dataset.id;return {left:m.left.findIndex(card=>card.id===id),right:m.right.findIndex(card=>card.id===id)};}).filter(link=>link.left>=0&&link.right>=0)};
+  }
+  return base;
+ }
+});
 })();
 </script>
 <script>Gulliver.mountShell({title:"낱말카드·퀴즈",icon:"🗂️"});</script>
