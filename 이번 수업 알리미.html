@@ -30,6 +30,7 @@
         .v61-lesson #control-panel{flex:0 0 400px;width:400px;max-height:100%;background:#fff;display:flex;flex-direction:column;overflow:hidden;border-left:1px solid #e2e8f0}
         .v61-lesson #control-panel>div:last-child{flex:1;overflow:auto}
         .v61-lesson #control-panel.hidden{display:none!important}
+        .v61-lesson #btn-fullscreen{position:absolute;right:20px;bottom:18px;border:0;border-radius:999px;padding:12px 18px;background:#263247;color:#fff;font-size:14px;font-weight:850;cursor:pointer;z-index:5}
         .v61-lesson #v61LessonExit{display:none;position:fixed;right:16px;top:15px;z-index:90;opacity:.2}
         .v61-lesson.student-view #btn-fullscreen{display:none!important}
         .v61-lesson.student-view #v61LessonExit{display:inline-flex}
@@ -38,15 +39,27 @@
         .v61-lesson.student-view #board{max-width:1600px;max-height:96vh}
         .v61-lesson #board > div:last-child > div:first-child{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
         .v61-lesson #badge-subject,.v61-lesson #border-page{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:30px;font-weight:900}
+        .v61-lesson #badge-subject{background-color:#6553d4;color:#fff}
+        .v61-lesson #badge-subject.bg-orange-500{background-color:#f97316}
+        .v61-lesson #badge-subject.bg-blue-500{background-color:#3b82f6}
+        .v61-lesson #badge-subject.bg-emerald-600{background-color:#059669}
+        .v61-lesson #badge-subject.bg-purple-600{background-color:#9333ea}
+        .v61-lesson #badge-subject.bg-amber-500{background-color:#f59e0b}
+        .v61-lesson #badge-subject.bg-rose-500{background-color:#f43f5e}
+        .v61-lesson #badge-subject.bg-cyan-600{background-color:#0891b2}
+        .v61-lesson #badge-subject.bg-fuchsia-500{background-color:#d946ef}
+        .v61-lesson #badge-subject.bg-violet-500{background-color:#8b5cf6}
         .v61-lesson #board > div:last-child > div:nth-child(2){text-align:center;margin-bottom:12px}
         .v61-lesson #display-unit{font-size:clamp(13px,1.8vw,24px);font-weight:750}
         .v61-lesson #display-topic{font-size:clamp(21px,3vw,45px);font-weight:900;line-height:1.2;overflow-wrap:anywhere}
-        .v61-lesson #bg-objective{padding:clamp(8px,1.5vw,20px);border-radius:18px;text-align:center;margin-bottom:12px}
+        .v61-lesson #bg-objective{padding:clamp(8px,1.5vw,20px);border-radius:18px;text-align:center;margin-bottom:12px;background-color:#ffffffb8}
         .v61-lesson #display-objective{font-size:clamp(14px,2vw,28px);overflow-wrap:anywhere}
         .v61-lesson #board > div:last-child > div:nth-child(4){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;flex:1;min-height:0;margin-bottom:12px}
         .v61-lesson #bg-act1,.v61-lesson #bg-act2,.v61-lesson #bg-act3{border-radius:18px;border:1px solid #e2e8f0;padding:clamp(8px,1.5vw,20px);overflow:hidden}
         .v61-lesson #bg-wrapup{display:flex;align-items:center;gap:12px;padding:clamp(8px,1.3vw,16px);border-radius:16px}
         .v61-lesson #control-panel .gt-v61-flow h2{font-size:18px}
+        .v61-lesson #control-panel input,.v61-lesson #control-panel select,.v61-lesson #control-panel textarea{max-width:100%;border:1px solid #cbd5e1;border-radius:9px;background:#f8fafc;padding:10px;color:#334155;font:inherit}
+        .v61-lesson #control-panel label{font-size:13px;font-weight:850;color:#475569}
         @media(max-width:790px){
           body.v61-lesson:not(.student-view){flex-direction:column}
           .v61-lesson:not(.student-view) #presentation-area{flex:0 0 42%;padding:12px}
