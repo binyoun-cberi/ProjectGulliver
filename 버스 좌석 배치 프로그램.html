@@ -36,6 +36,9 @@ body.presentation .settings,body.presentation .head,body.presentation .bus-toolb
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
 <script defer src="gulliver-teacher-shell.js?v=20261019-dual1"></script>
+<link rel="stylesheet" href="gulliver-teacher-v62.css?v=20261019-v62">
+<script src="gulliver-teacher-display.js?v=20261019-v62"></script>
+<script src="gulliver-teacher-v62.js?v=20261019-v62"></script>
 </head>
 <body>
 <div class="app">
@@ -425,6 +428,15 @@ window.GulliverTeacherLiveSnapshot=()=>{
   students:state.students.map(student=>({id:String(student.id),name:student.name})),
   seats,disabled:state.disabled.map(Boolean)};
 };
+window.GulliverTeacherDisplay?.register({kind:'bus',getSnapshot(){
+ const names=new Map(state.students.map(s=>[String(s.id),String(s.name||'')]));
+ return{kind:'bus',ready:state.assignment.some(Boolean),rows:ROWS,
+  seats:state.assignment.map((id,index)=>state.disabled[index]?null:(id?names.get(String(id))||'':''))};
+}});
+document.body.classList.add('gt-v62-bus');
+GulliverTeacherClassroomFlow.mount({container:document.querySelector('.app'),title:'버스 자리 배정',description:'분리·동석·앞자리 조건은 교사 화면에 남겨요.',onResult(){
+ if(!state.assignment.some(Boolean)){Gulliver.toast('먼저 버스 자리를 배치해 주세요.');return false;}
+}});
 Gulliver.mountShell({title:"버스 좌석 배치",icon:"🚌"});
 })();
 </script>

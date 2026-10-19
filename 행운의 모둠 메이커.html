@@ -76,6 +76,9 @@ details.conditions>summary::after{content:"＋";color:#9aa4b4}details.conditions
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
 <script defer src="gulliver-teacher-shell.js?v=20261019-dual1"></script>
+<link rel="stylesheet" href="gulliver-teacher-v62.css?v=20261019-v62">
+<script src="gulliver-teacher-display.js?v=20261019-v62"></script>
+<script src="gulliver-teacher-v62.js?v=20261019-v62"></script>
 </head>
 <body>
 <div class="app">
@@ -411,6 +414,7 @@ function start(){
   if(state.genderMode==="same"&&solved.ev.mixed)msg+=" 인원 구성상 혼합 모둠 "+solved.ev.mixed+"개가 불가피합니다.";
   if(solved.ev.leaderClash)msg+=" 모둠장 후보 일부가 같은 모둠에 배치되었습니다.";
   setNotice("resultNotice",msg,"good")
+  classroomFlow?.setStep('result');
 }
 function slotMembersFor(index){
   const real=state.groups[index]||[],arr=[...real];while(arr.length<state.groupSize)arr.push({id:"bomb_"+arr.length,name:"💣 빈 자리",gender:"",isBomb:true});return arr
@@ -480,7 +484,7 @@ function confirmGroups(){
   if(Gulliver.recordOperation)Gulliver.recordOperation("groups",{studentCount:state.students.length,groupCount:state.groups.length,assignments});
   renderHistory();setNotice("resultNotice","이번 모둠을 확정했습니다. 다음 편성에서는 최근 같은 모둠이 반복되지 않도록 반영합니다.","good");Gulliver.toast("이번 모둠을 기록했습니다.")
 }
-function back(){clearRevealTimers();$("slotScreen").classList.remove("active");$("setupScreen").style.display="block";refreshStudentUI()}
+function back(){clearRevealTimers();$("slotScreen").classList.remove("active");$("setupScreen").style.display="block";refreshStudentUI();classroomFlow?.setStep('prepare')}
 function reroll(){state.revealed=0;start()}
 function loadClassroom(){
   const room=Gulliver.getClassroom();if(!room.students.length){Gulliver.toast("먼저 우리 반에서 학생 명단을 저장해 주세요.");return}
@@ -508,6 +512,17 @@ window.GulliverTeacherLiveSnapshot=()=>{
   &&state.students.every(s=>Number(last.assignments?.[s.id])===Number(assignment[s.id])&&Boolean(assignment[s.id]));
  return{kind:'groups',confirmed,groups:state.groups.map(g=>g.map(s=>({id:s.id,name:s.name})))};
 };
+window.GulliverTeacherDisplay?.register({kind:'groups',getSnapshot(){
+ return{kind:'groups',started:$('slotScreen').classList.contains('active'),total:state.groups.length,
+  revealed:state.revealed,groups:state.groups.slice(0,state.revealed).map((group,index)=>({
+   title:(index+1)+'모둠',members:group.map(student=>String(student.name||''))
+  }))};
+}});
+document.body.classList.add('gt-v62-groups');
+let classroomFlow=null;
+classroomFlow=GulliverTeacherClassroomFlow.mount({container:document.querySelector('.app'),title:'모둠 만들기',description:'교사 조건은 숨기고 슬롯 공개와 완성된 모둠을 보여줘요.',resultLabel:'② 모둠 공개',onResult(){
+ if(!$('slotScreen').classList.contains('active')){$('startBtn').click();return false;}
+}});
 Gulliver.mountShell({title:"모둠 만들기",icon:"🎰"});
 })();
 </script>

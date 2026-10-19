@@ -5,6 +5,7 @@ on:
       - 'gulliver-teacher-*'
       - 'tests/gulliver-teacher-ui.test.cjs'
       - 'tests/gulliver-teacher-display.test.cjs'
+      - 'tests/gulliver-teacher-classroom-v62.test.cjs'
       - '.github/workflows/teacher-ui-v60-smoke.yml'
       - 'tools-catalog.js'
       - '*.html'
@@ -23,9 +24,11 @@ jobs:
           node --check gulliver-teacher-components.js
           node --check gulliver-teacher-display.js
           node --check gulliver-teacher-display-view.js
+          node --check gulliver-teacher-v62.js
           node --check tests/gulliver-teacher-ui.test.cjs
           node --check tests/gulliver-teacher-display.test.cjs
+          node --check tests/gulliver-teacher-classroom-v62.test.cjs
       - name: Install browser driver
         run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
       - name: Exercise teacher tools and privacy in Chrome
-        run: node --test tests/gulliver-teacher-ui.test.cjs tests/gulliver-teacher-display.test.cjs
+        run: node --test tests/gulliver-teacher-ui.test.cjs tests/gulliver-teacher-display.test.cjs tests/gulliver-teacher-classroom-v62.test.cjs

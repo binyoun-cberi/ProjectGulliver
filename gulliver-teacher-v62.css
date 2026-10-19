@@ -1,0 +1,60 @@
+/* 6.2 opt-in classroom flow. Never overrides the tool's buttons or game logic. */
+.gt-v62-flow{display:flex;align-items:center;justify-content:space-between;gap:18px;min-width:0;margin:0 0 17px;padding:15px 20px;border:1px solid #dcdcf2;border-radius:19px;background:linear-gradient(120deg,#fff,#f3f2ff);box-shadow:0 7px 22px #29275c0c;color:#293349;font-family:'Pretendard','Apple SD Gothic Neo',system-ui,sans-serif}
+.gt-v62-info{min-width:0;flex:1}.gt-v62-eyebrow{display:block;margin-bottom:3px;font-size:11px;font-weight:900;letter-spacing:.02em;color:#6455ba}.gt-v62-info strong{display:block;font-size:clamp(17px,1.7vw,22px);font-weight:950;line-height:1.35}.gt-v62-info p{margin:4px 0 0;font-size:12px;color:#68778e;line-height:1.5;font-weight:700}
+.gt-v62-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px}.gt-v62-button{min-height:44px;padding:10px 14px;border:1px solid #dcdcf0;border-radius:12px;background:#fff;color:#4e4977;font-size:13px;font-weight:900;font-family:inherit;white-space:nowrap;cursor:pointer}.gt-v62-button[aria-pressed='true']{background:#5e50c9;color:#fff;border-color:#5e50c9}.gt-v62-student{color:#047857;background:#edfdf5;border-color:#c2eed8}.gt-v62-button[hidden]{display:none!important}.gt-v62-button:focus-visible{outline:3px solid #a5b4fc;outline-offset:2px}
+body.gulliver-studio-embed .gt-v62-flow,body.presentation .gt-v62-flow{display:none!important}
+/* Keep private relationships, scores and editing controls in the teacher workspace. */
+body.gt-v62-result.gt-v62-seating .settings,body.gt-v62-result.gt-v62-bus .settings{display:none!important}
+body.gt-v62-result.gt-v62-seating .layout,body.gt-v62-result.gt-v62-bus .layout{display:block!important}
+body.gt-v62-result.gt-v62-seating .workspace,body.gt-v62-result.gt-v62-bus .bus-panel{width:100%;max-width:none}
+body.gt-v62-result.gt-v62-seating .topline,body.gt-v62-result.gt-v62-bus .head{display:none!important}
+body.gt-v62-result.gt-v62-seating .scorebox,body.gt-v62-result.gt-v62-seating .notice,body.gt-v62-result.gt-v62-seating .edit-only,body.gt-v62-result.gt-v62-bus .metrics,body.gt-v62-result.gt-v62-bus .result-tools{display:none!important}
+body.gt-v62-result.gt-v62-roles .tabs,body.gt-v62-result.gt-v62-roles .panel:not(#panel-results){display:none!important}
+body.gt-v62-result.gt-v62-roles #panel-results{display:block!important}
+body.gt-v62-result.gt-v62-roles .stats,body.gt-v62-result.gt-v62-roles #manualBox{display:none!important}
+body.gt-v62-result.gt-v62-check .gt-v62-check-edit{display:none!important}
+body.gt-v62-result.gt-v62-check #desk-grid .desk{cursor:default}
+body.gt-v62-result.gt-v62-vote{flex-wrap:wrap;height:auto!important;min-height:100vh!important;overflow:auto!important;align-content:flex-start}
+body.gt-v62-result.gt-v62-vote > main{display:none!important}
+body.gt-v62-result.gt-v62-vote > aside{max-width:1100px!important;flex:1 1 100%!important;margin:auto}
+body.gt-v62-result.gt-v62-vote > aside > section,body.gt-v62-result.gt-v62-vote .gt-v62-vote-edit{display:none!important}
+body.gt-v62-result.gt-v62-vote #options-list{overflow:visible!important}
+body.gt-v62-result.gt-v62-praise .top-section>.card:not(.center-panel),body.gt-v62-result.gt-v62-praise .history-panel{display:none!important}
+body.gt-v62-result.gt-v62-praise .top-section{display:flex!important;justify-content:center!important}
+body.gt-v62-result.gt-v62-praise .center-panel{width:min(100%,780px)!important;flex:1 1 auto!important}
+body.gt-v62-result.gt-v62-praise .target-student-input,body.gt-v62-result.gt-v62-praise .util-row{display:none!important}
+/* The vote tool uses a horizontal flex body, so its flow bar spans both panels. */
+body.gt-v62-vote{flex-wrap:wrap;height:auto!important;min-height:100vh;align-content:flex-start;overflow:auto!important;padding-top:76px!important}
+body.gt-v62-vote>.gt-v62-flow{flex:1 1 100%;width:100%;margin:0;min-height:88px}
+body.gt-v62-vote>main,body.gt-v62-vote>aside{height:calc(100vh - 180px);min-height:520px}
+body.gt-v62-praise .dashboard-container>.gt-v62-flow{width:100%}
+/* Essential, local offline fallbacks for the two legacy Tailwind-CDN tools. */
+body.gt-v62-check{display:block;min-height:100vh;padding:76px 16px 36px;background:#f8fafc;color:#293349;font-family:'Pretendard',system-ui,sans-serif}
+body.gt-v62-check>div.w-full{width:min(100%,1160px);margin:0 auto}
+body.gt-v62-check header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;margin:0 0 22px}
+body.gt-v62-check header h1{font-size:clamp(24px,3vw,35px);font-weight:900;margin:0 0 6px}
+body.gt-v62-check header button,body.gt-v62-check #theme-tabs button{min-height:42px;border:1px solid #dce2ed;border-radius:12px;background:#fff;padding:8px 13px;color:#374151;font:850 13px 'Pretendard',system-ui,sans-serif;cursor:pointer}
+body.gt-v62-check header .gt-v62-check-edit{display:flex;flex-wrap:wrap;gap:7px}
+body.gt-v62-check #theme-tabs{display:flex;gap:8px;overflow-x:auto;max-width:100%;padding:0 0 12px}
+body.gt-v62-check #desk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px}
+body.gt-v62-check #desk-grid .desk{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:7px;text-align:center;border-radius:16px;min-height:115px;border:2px solid #dce2ed;background:#fff;color:#475569;font-weight:850;cursor:pointer;padding:15px;overflow-wrap:anywhere}
+body.gt-v62-check #desk-grid .desk.bg-emerald-500{background:#10b981;color:#fff;border-color:#059669}
+body.gt-v62-check .hidden{display:none!important}
+body.gt-v62-check #modal-overlay:not(.hidden){position:fixed;inset:0;background:#1e293b80;z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px}
+body.gt-v62-check #modal-overlay>div{background:white;border-radius:18px;padding:24px;max-width:400px;width:100%}
+body.gt-v62-check #modal-overlay input{display:block;width:100%;margin:14px 0;padding:12px;border:1px solid #dce2ed;border-radius:10px}
+body.gt-v62-check #modal-overlay button{margin:8px 4px 0;padding:10px 15px;border:1px solid #dce2ed;border-radius:9px;cursor:pointer}
+body.gt-v62-vote{display:flex;gap:16px;background:#fff9eb;color:#293349;font-family:'Jua','Pretendard',system-ui,sans-serif}
+body.gt-v62-vote>main{display:flex;flex:1.2;min-width:0;flex-direction:column;padding:20px;background:#fff;border:2px solid #ffefd4;border-radius:24px}
+body.gt-v62-vote>aside{display:flex;flex:.8;min-width:0;flex-direction:column;padding:20px;background:#fff;border:2px solid #ffefd4;border-radius:24px}
+body.gt-v62-vote>main #seating-grid{display:grid;gap:10px}
+body.gt-v62-vote>main #seating-grid>div{min-height:64px}
+body.gt-v62-vote #options-list{display:flex;flex-direction:column;gap:10px;overflow:auto}
+body.gt-v62-vote #options-list>div{display:flex;align-items:center;gap:12px;border:2px solid #e5e7eb;border-radius:18px;padding:13px}
+body.gt-v62-vote #options-list>div>div:nth-child(2){flex:1;min-width:0;font-size:clamp(20px,2.4vw,30px)}
+body.gt-v62-vote #options-list>div>div:last-child{display:flex;align-items:center;gap:8px}
+body.gt-v62-vote #vote-title{font-size:clamp(26px,3vw,38px);font-weight:900;margin:14px 0}
+body.gt-v62-vote button{cursor:pointer}
+body.gt-v62-vote>aside>section{margin-bottom:14px}
+@media(max-width:850px){.gt-v62-flow{align-items:stretch;flex-direction:column;padding:14px}.gt-v62-actions{justify-content:stretch}.gt-v62-button{flex:1 1 auto}body.gt-v62-vote>main,body.gt-v62-vote>aside{height:auto;min-height:420px}}
+@media print{.gt-v62-flow{display:none!important}body.gt-v62-result.gt-v62-bus .bus{transform:none!important}}

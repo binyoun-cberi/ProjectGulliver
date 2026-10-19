@@ -50,6 +50,9 @@
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
 <script defer src="gulliver-teacher-shell.js?v=20261019-dual1"></script>
+<link rel="stylesheet" href="gulliver-teacher-v62.css?v=20261019-v62">
+<script src="gulliver-teacher-display.js?v=20261019-v62"></script>
+<script src="gulliver-teacher-v62.js?v=20261019-v62"></script>
 </head>
 <body class="min-h-screen text-slate-800 flex flex-col items-center py-10 px-4 sm:px-8">
 
@@ -62,7 +65,7 @@
                 <p class="text-slate-500 font-medium" id="progress-text">현재 0명 제출 완료 (0%)</p>
             </div>
             
-            <div class="flex gap-2">
+            <div class="flex gap-2 gt-v62-check-edit">
                 <button onclick="resetCurrentTheme()" class="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm font-medium text-sm flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                     전체 초기화
@@ -425,6 +428,12 @@
         renderTabs();
         renderGrid();
         window.GulliverTeacherLiveSnapshot=()=>({kind:'check',currentTheme:state.currentTheme,studentCount:state.studentCount,studentNames:[...state.studentNames],data:JSON.parse(JSON.stringify(state.data))});
+        window.GulliverTeacherDisplay?.register({kind:'check',getSnapshot(){
+            const checked=Object.values(state.data[state.currentTheme]||{}).filter(Boolean).length;
+            return{kind:'check',theme:state.currentTheme,total:state.studentCount,checked:Math.min(checked,state.studentCount)};
+        }});
+        document.body.classList.add('gt-v62-check');
+        GulliverTeacherClassroomFlow.mount({container:document.querySelector('body > div.w-full'),title:'제출·준비물 확인',description:'학생별 미제출 여부와 명단은 교사 화면에만 남기고, 전체 진행률만 학생 화면에 표시해요.'});
 
     </script>
 </body>

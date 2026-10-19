@@ -23,6 +23,9 @@ input,select{width:100%;border:1px solid #dce2eb;background:#fff;color:#334155;b
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
 <script defer src="gulliver-teacher-shell.js?v=20261019-dual1"></script>
+<link rel="stylesheet" href="gulliver-teacher-v62.css?v=20261019-v62">
+<script src="gulliver-teacher-display.js?v=20261019-v62"></script>
+<script src="gulliver-teacher-v62.js?v=20261019-v62"></script>
 </head>
 <body>
 <div class="app">
@@ -400,6 +403,15 @@ window.GulliverTeacherLiveSnapshot=()=>{
   roles:state.roles.map(r=>({id:r.id,name:r.name})),
   assignment:{...assign}};
 };
+window.GulliverTeacherDisplay?.register({kind:'roles',getSnapshot(){
+ const names=new Map(state.roles.map(role=>[String(role.id),String(role.name||'')]));
+ return{kind:'roles',ready:Object.keys(state.assignment).length===state.students.length&&state.students.length>0,
+  roles:state.roles.map(role=>({name:role.name,members:state.students.filter(student=>state.assignment[student.id]===role.id).map(student=>student.name)}))};
+}});
+document.body.classList.add('gt-v62-roles');
+GulliverTeacherClassroomFlow.mount({container:document.querySelector('.app'),title:'1인 1역 배정',description:'학생 지망·배제 조건은 교사만 확인하고, 배정된 역할과 이름만 공개해요.',onResult(){
+ switchTab('results');
+},onPrepare(){if(document.body.classList.contains('gt-v62-result'))switchTab('roles')}});
 Gulliver.mountShell({title:"학급 역할 배정 도우미",icon:"🧹"});
 })();
 </script>
