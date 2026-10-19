@@ -506,6 +506,7 @@ function phaseBanner(phase){
 function startTimer(playStartSound=true){
   const total=totalSeconds();
   if(!total||getElapsed()>=total)return;
+  setTeacherPhase(true);
   ensureAudio();
   state.elapsedAtStart=state.elapsed;state.runStartedAt=performance.now();state.running=true;state.finishShown=false;
   const phase=phaseAt(state.elapsed);state.lastPhaseId=phase?.key||null;state.warnedSegmentKey=null;
@@ -688,7 +689,26 @@ function setStudentView(on){
   setTimeout(fitTimerSize,80);
   if(on)showToast('학생 화면입니다. Esc 또는 오른쪽 위 버튼으로 돌아올 수 있어요.');
 }
+function setTeacherPhase(running){
+  const executing=Boolean(running);
+  app.classList.toggle('v61-executing',executing);
+  document.body.classList.toggle('presentation',executing);
+  $('#v61TimerStep').textContent=executing?'② 실행하기':'① 준비하기';
+  $('#v61TimerHeading').textContent=executing?'수업이 진행 중이에요':'오늘의 수업 시간표';
+  $('#v61TimerPrepare').classList.toggle('hidden',!executing);
+  $('#v61TimerStart').classList.toggle('hidden',executing);
+  mainTitle.readOnly=executing;
+  if(!executing){state.panelCollapsed=false;app.classList.remove('panel-collapsed');}
+  requestAnimationFrame(fitTimerSize);
+}
 document.querySelector('.presets').addEventListener('click',(event)=>{const button=event.target.closest('[data-preset]');if(button)applyPreset(button.dataset.preset);});
+$('#v61TimerStart').addEventListener('click',()=>{
+  if(!totalSeconds()){showToast('시간표에 활동을 하나 이상 넣어 주세요.');return;}
+  if(getElapsed()>=totalSeconds())resetNow();
+  startTimer();
+});
+$('#v61TimerPrepare').addEventListener('click',()=>{pauseTimer(false);setTeacherPhase(false);});
+$('#v61TimerStudent').addEventListener('click',()=>window.GulliverTeacherDisplay?.open());
 $('#btnStudentView').addEventListener('click',()=>setStudentView(true));
 $('#btnExitStudentView').addEventListener('click',()=>setStudentView(false));
 btnSound.addEventListener('click',()=>{state.soundOn=!state.soundOn;updateSoundButton();if(state.soundOn){ensureAudio();soundStart();}saveSettings();});
@@ -743,7 +763,7 @@ document.addEventListener('keydown',(event)=>{
   else if(key==='n'){skipPhase();}
   else if(key==='r'){requestReset();}
   else if(key==='f'){$('#btnFullscreen').click();}
-  else if(key==='s'){$('#btnTogglePanel').click();}
+  else if(key==='s'){if(app.classList.contains('v61-executing'))$('#v61TimerPrepare').click();else $('#btnTogglePanel').click();}
 });
 
 loadSettings();

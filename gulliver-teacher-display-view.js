@@ -5,7 +5,7 @@
   const query = new URLSearchParams(location.search);
   const kind = query.get('kind') || '';
   const token = query.get('session') || '';
-  const allowed = new Set(['timer', 'lesson', 'seating', 'manitto']);
+  const allowed = new Set(['timer', 'lesson', 'seating', 'manitto', 'flashquiz']);
   const stage = document.getElementById('displayStage');
   const connection = document.getElementById('displayConnection');
   const full = document.getElementById('displayFullscreen');
@@ -149,12 +149,77 @@
     stage.replaceChildren(card);
   }
 
+  function renderFlashQuiz(data) {
+    if (data.mode === 'manage') {
+      waiting('낱말카드를 준비하고 있어요', '선생님이 카드를 고르고 학습을 시작하면 이곳에 표시돼요.');
+      return;
+    }
+    const card = element('section', 'display-card flashquiz-display');
+    const modes = {flash:'낱말카드',quiz:'4지선다 퀴즈',match:'짝 맞추기'};
+    card.append(element('div', 'display-eyebrow', '낱말카드·퀴즈'),element('h1','display-title',modes[data.mode]||'우리 반 낱말 학습'));
+    if (data.empty || data.mode === 'flash' && !data.total) {
+      card.append(element('p','display-subtitle','학습할 카드를 준비하고 있어요.'));
+    } else if (data.mode === 'flash') {
+      const number=element('div','flashquiz-counter',`${numeric(data.index,0,2000)} / ${numeric(data.total,0,2000)}`);
+      const cardFace=element('div','flashquiz-face'+(data.flipped?' revealed':''));
+      cardFace.append(element('span','flashquiz-face-label',data.flipped?'뒷면 · 정답':'앞면 · 문제'),
+        element('div','flashquiz-face-text',safeText(data.flipped?data.back:data.front)));
+      card.append(number,cardFace,element('p','flashquiz-guide','선생님이 카드를 넘기거나 뒤집으면 함께 바뀌어요.'));
+    } else if (data.mode === 'quiz') {
+      if (data.done) {
+        const result=element('div','flashquiz-result');
+        result.append(element('span','','🎉 퀴즈 완료!'),element('strong','',`${numeric(data.total,0,2000)}문제 · ${numeric(data.score,0,1000000).toLocaleString()}점`));
+        card.append(result);
+      } else {
+        card.append(element('div','flashquiz-counter',`문제 ${numeric(data.index,0,2000)} / ${numeric(data.total,0,2000)} · 점수 ${numeric(data.score,0,1000000)}`),
+          element('div','flashquiz-question',safeText(data.question)));
+        const choices=element('div','flashquiz-choices');
+        (Array.isArray(data.choices)?data.choices:[]).slice(0,4).forEach(item=>{
+          choices.append(element('div','flashquiz-choice'+(item.correct?' correct':item.wrong?' wrong':''),safeText(item.text)));
+        });
+        card.append(choices,element('div','flashquiz-feedback',data.answered?safeText(data.feedback):'어느 번호가 정답일까요?'));
+      }
+    } else if (data.mode === 'match') {
+      card.append(element('div','flashquiz-counter',`남은 짝 ${numeric(data.remaining,0,100)} · 실수 ${numeric(data.mistakes,0,1000)} · ${safeText(data.time,'00:00.0')}`));
+      const board=element('div','flashquiz-matchboard');
+      const grid=element('div','flashquiz-matchcolumns');
+      const left=element('div','flashquiz-matchcol');
+      const right=element('div','flashquiz-matchcol');
+      const leftNodes=[],rightNodes=[];
+      (Array.isArray(data.left)?data.left:[]).slice(0,12).forEach(item=>{
+        const node=element('div','flashquiz-matchitem'+(item.matched?' matched':''),safeText(item.text));left.append(node);leftNodes.push(node);
+      });
+      (Array.isArray(data.right)?data.right:[]).slice(0,12).forEach(item=>{
+        const node=element('div','flashquiz-matchitem'+(item.matched?' matched':''),safeText(item.text));right.append(node);rightNodes.push(node);
+      });
+      const paths=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      paths.classList.add('flashquiz-matchlines');paths.setAttribute('aria-hidden','true');
+      grid.append(left,right);board.append(grid,paths);card.append(board);
+      stage.replaceChildren(card);
+      requestAnimationFrame(()=>{
+        if(!board.isConnected)return;
+        const bounds=board.getBoundingClientRect();paths.setAttribute('viewBox',`0 0 ${bounds.width} ${bounds.height}`);
+        (Array.isArray(data.links)?data.links:[]).forEach(link=>{
+          const a=leftNodes[link.left],b=rightNodes[link.right];if(!a||!b)return;
+          const x=a.getBoundingClientRect(),y=b.getBoundingClientRect();
+          const x1=x.right-bounds.left,y1=x.top+x.height/2-bounds.top,x2=y.left-bounds.left,y2=y.top+y.height/2-bounds.top;
+          const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+          path.setAttribute('d',`M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}`);
+          path.setAttribute('stroke','#16a34a');path.setAttribute('fill','none');path.setAttribute('stroke-width','5');path.setAttribute('stroke-linecap','round');paths.append(path);
+        });
+      });
+      return;
+    }
+    stage.replaceChildren(card);
+  }
+
   function render(data) {
     if (!data || data.kind !== kind) return;
     if (kind === 'timer') renderTimer(data);
     else if (kind === 'lesson') renderLesson(data);
     else if (kind === 'seating') renderSeating(data);
     else if (kind === 'manitto') renderManitto(data);
+    else if (kind === 'flashquiz') renderFlashQuiz(data);
   }
   full.addEventListener('click', async () => {
     try {

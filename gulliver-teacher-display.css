@@ -15,3 +15,27 @@ button:focus-visible{outline:3px solid #a5b4fc;outline-offset:3px}.display-stage
 @media(max-width:850px){.timer-layout{grid-template-columns:1fr}.timer-ring{width:min(76vw,440px)}.lesson-activities{grid-template-columns:1fr}.display-stage{padding:12px}.display-card{padding:20px}.seating-seat{font-size:clamp(12px,2.5vw,22px)}}
 @media(max-width:540px){.display-brand span{display:none}.display-tools{gap:7px}#displayConnection{font-size:10px}#displayFullscreen{font-size:11px;padding:7px 9px}.display-stage{min-height:calc(100vh - 78px)}.display-footer{font-size:10px}.seating-seat{min-height:55px;padding:4px}}
 @media print{.display-toolbar,.display-footer{display:none}.display-stage{min-height:0;padding:0}.display-card{box-shadow:none;border:0}}
+
+/* 6.1: projected flashcards and games receive only the public, currently visible state. */
+.flashquiz-display{width:min(100%,1500px)}
+.flashquiz-counter{text-align:center;color:#6154b5;font-weight:900;font-size:clamp(18px,2.3vw,29px);margin:0 0 22px}
+.flashquiz-face{min-height:clamp(330px,57vh,680px);border:3px solid #dddffa;border-radius:32px;background:#f5f6ff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:clamp(20px,4vw,65px);text-align:center;overflow-wrap:anywhere}
+.flashquiz-face.revealed{background:linear-gradient(145deg,#6254c8,#43369f);color:white;border-color:#443aa1}
+.flashquiz-face-label{font-weight:900;font-size:clamp(16px,2vw,26px);opacity:.7}
+.flashquiz-face-text{font-weight:950;font-size:clamp(48px,7vw,115px);line-height:1.15}
+.flashquiz-guide{text-align:center;color:#8490a8;font-size:clamp(15px,1.5vw,20px);margin:18px 0 0}
+.flashquiz-question{text-align:center;font-weight:950;font-size:clamp(37px,5.5vw,77px);line-height:1.2;margin:30px 0 38px;overflow-wrap:anywhere}
+.flashquiz-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(12px,1.8vw,23px)}
+.flashquiz-choice{display:flex;align-items:center;min-height:clamp(115px,14vh,180px);border:3px solid #dfe4f2;border-radius:20px;background:#f9faff;color:#334155;padding:clamp(16px,2vw,30px);font-weight:900;font-size:clamp(21px,2.3vw,33px);overflow-wrap:anywhere}
+.flashquiz-choice.correct{border-color:#16a34a;background:#dff9e7;color:#166534}
+.flashquiz-choice.wrong{border-color:#dc2626;background:#fff1f2;color:#be123c}
+.flashquiz-feedback{text-align:center;min-height:42px;margin-top:22px;color:#6555b2;font-size:clamp(20px,2.3vw,32px);font-weight:900}
+.flashquiz-result{text-align:center;min-height:45vh;display:flex;flex-direction:column;justify-content:center;gap:16px;font-size:clamp(36px,4vw,65px)}
+.flashquiz-result strong{color:#4c3eba;font-size:clamp(32px,5vw,80px)}
+.flashquiz-matchboard{position:relative;max-width:1220px;margin:auto}
+.flashquiz-matchcolumns{display:flex;justify-content:space-between;gap:clamp(70px,19vw,280px)}
+.flashquiz-matchcol{min-width:0;flex:1;display:flex;flex-direction:column;gap:clamp(8px,1.2vw,15px)}
+.flashquiz-matchitem{display:flex;align-items:center;justify-content:center;text-align:center;min-height:clamp(67px,8vh,112px);padding:12px;border:2px solid #dae1f0;border-radius:16px;background:#f8faff;font-size:clamp(17px,2vw,29px);font-weight:900;overflow-wrap:anywhere}
+.flashquiz-matchitem.matched{background:#dcfce7;border-color:#16a34a;color:#166534}
+.flashquiz-matchlines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+@media(max-width:700px){.flashquiz-choices{grid-template-columns:1fr}.flashquiz-choice{min-height:72px}.flashquiz-matchcolumns{gap:46px}.flashquiz-matchitem{font-size:14px;min-height:58px;padding:6px}}
