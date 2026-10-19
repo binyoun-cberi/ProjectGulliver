@@ -135,7 +135,7 @@ test('6.2 projection restricts student popup to public results, including when e
     await popup.close();
 
     popup=await openStudent(tools[5]);
-    await popup.getByText('우리 반 투표',{exact:false}).first().waitFor();
+    await popup.getByText('오늘 어떤 간식을 먹을까요?',{exact:false}).first().waitFor();
     assert.doesNotMatch(await popup.locator('body').innerText(),/참여 코드|온라인 시작|학생별 선택|참여 링크/);
     await popup.close();
 
