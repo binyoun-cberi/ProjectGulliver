@@ -5,7 +5,7 @@ test('5.4 retains six actual creation routes while preserving the original saved
  const js=read('workspace-home.js'),html=read('index.html'),css=read('workspace-home-v54.css');
  assert.equal((js.match(/\['(?:worksheet|presentation|document|video|music|lesson)'/g)||[]).length,6);
  assert.match(js,/class="format-copy"/);
- assert.match(js,/class="home-dashboard/);
+ assert.match(js,/이어서 작업하기/);
  assert.match(js,/id="unifiedHomeRecent"/);
  assert.match(js,/window\.GulliverUnifiedLibraryUI\?\.renderHome/);
  assert.match(js,/templates\.slice\(0,2\)/);

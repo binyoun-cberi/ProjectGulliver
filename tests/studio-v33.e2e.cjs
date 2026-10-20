@@ -35,7 +35,7 @@ test('3.3 Chrome: canvas lesson edit, audio backup, playback and fresh restore',
    const p=(await LessonStorage.list()).find(x=>x.steps.some(s=>s.kind==='canvas'&&s.payload.pages.length===2));
    return !!p?.steps[0].payload.audio&&!!(await LessonStorage.asset(p.steps[0].payload.audio.mediaId));
   });
-  const download=page.waitForEvent('download');await page.locator('#backupLesson').click();
+  const download=page.waitForEvent('download');if(!await page.locator('#backupLesson').isVisible())await page.locator('.work-file-menu summary').click();await page.locator('#backupLesson').click();
   const backup=fs.readFileSync(await (await download).path()),data=JSON.parse(backup);
   assert.equal(data.lesson.steps[0].payload.pages.length,2);assert.equal(data.assets.length,1);
   await page.locator('#previewStep').click();

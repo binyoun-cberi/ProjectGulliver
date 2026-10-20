@@ -30,7 +30,7 @@ test('one consistent site frame, teacher controls, saved roster and safe editor 
       await page.setViewportSize({width,height:width===390?844:960});
       for (const [i,file] of files.entries()) {
         await page.goto(base+encodeURIComponent(file),{waitUntil:'domcontentloaded'});
-        const header = page.locator('.gx-header'); await header.waitFor();
+        const header = page.locator('.gx-header');if(file==='lesson.html'){await page.locator('header.bar').waitFor();assert.equal(await header.isVisible(),false);continue}await header.waitFor();
         assert.equal(await page.locator('.gulliver-shell').count(),1,file+' duplicated site frame');
         assert.deepEqual(await page.locator('.gx-nav a').allTextContents(),names,file+' routes');
         const bounds = await header.evaluate(el=>({rect:el.getBoundingClientRect().toJSON(),scroll:el.scrollWidth,width:innerWidth}));

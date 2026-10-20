@@ -16,13 +16,13 @@ async function sizes(page){
    viewport:innerWidth,bodyScroll:document.documentElement.scrollWidth,
    content:rect('#content'),main:rect('.main'),
    formats:rect('.format-grid'),formatColumns:getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length,
-   dashboard:rect('.home-dashboard'),
-   templates:rect('.home-dashboard .section:first-child'),
-   recent:rect('.home-dashboard .section:nth-child(2)'),
+   dashboard:rect('#content'),
+   templates:rect('#content>.section:last-child'),
+   recent:rect('#content>.section:first-child'),
    tools:rect('.home-tool-list'),
    formatTiles:document.querySelectorAll('.format-tile').length,
    hasRecent:!!document.getElementById('unifiedHomeRecent'),
-   hasLibrary:!!document.querySelector('.home-dashboard .studio-library-link'),
+   hasLibrary:!!document.querySelector('#content a[href="내 보관함.html"]'),
    cssLoaded:[...document.styleSheets].some(x=>x.href?.includes('workspace-home-v54.css'))
   };
  });
@@ -41,7 +41,7 @@ test('5.4 home fluid widths preserve all six actions at 2560, 1920, 1440, 1100, 
   for(const width of viewports){
    await page.setViewportSize({width,height:width<800?844:1080});
    await page.goto(base+'index.html',{waitUntil:'domcontentloaded'});
-   await page.locator('.home-dashboard .section').first().waitFor();
+   await page.locator('#content>.section').first().waitFor();
    await page.locator('#unifiedHomeRecent .unified-empty, #unifiedHomeRecent .unified-item').first().waitFor();
    const m=await sizes(page);
    assert.equal(m.cssLoaded,true,'5.4 CSS loaded at '+width);
@@ -52,13 +52,9 @@ test('5.4 home fluid widths preserve all six actions at 2560, 1920, 1440, 1100, 
    assert.ok(m.content.right<=width+1,'content extends past right edge '+width+': '+JSON.stringify(m));
    assert.ok(m.bodyScroll<=width+2,'horizontal page overflow at '+width+': '+JSON.stringify(m));
    assert.equal(m.formatColumns,width>=1400?6:3,'correct action columns at '+width);
-   if(width>=1400){
-    assert.ok(m.templates.right<m.recent.left,'desktop panels should be side by side at '+width);
-    assert.ok(Math.abs(m.templates.top-m.recent.top)<8,'desktop panel headings aligned '+width);
-    assert.ok(m.content.width>1100,'wide space should be used at '+width);
-   }else{
-    assert.ok(m.templates.bottom<m.recent.top+4,'stacked panels at '+width);
-   }
+   assert.ok(m.recent.bottom<m.templates.top,'recent work precedes examples at '+width);
+   assert.ok(Math.abs(m.recent.left-m.formats.left)<3,'sections align at '+width);
+   if(width>=1400)assert.ok(m.content.width>1100,'wide space is used at '+width);
    if(width===1920){
     assert.ok(m.content.width>=1450,'1920-wide monitor must not retain narrow 1200px max-width');
     await page.screenshot({path:'test-artifacts/home-v54-desktop-1920.png',fullPage:true});

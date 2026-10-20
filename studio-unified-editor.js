@@ -3,7 +3,7 @@
 const C=window.GulliverUnifiedCore,$=id=>document.getElementById(id);
 if(!C)throw Error('공통 캔버스 엔진을 불러오지 못했어요.');
 const preset=new URLSearchParams(location.search).get('preset');
-let model=C.starter(['blank','presentation','worksheet'].includes(preset)?preset:'presentation'),selected='',selectedIds=new Set(),multiSelectMode=false,snapGuides=[],collapsedGroups=new Set(),undoStack=[],redoStack=[],scale=1,drag=null,editing=false,timeline=null,videoController=null;
+let model=C.starter(['blank','presentation','worksheet'].includes(preset)?preset:'presentation'),selected='',selectedIds=new Set(),multiSelectMode=false,snapGuides=[],collapsedGroups=new Set(),undoStack=[],redoStack=[],scale=1,zoomMode='fit',manualZoom=1,drag=null,editing=false,timeline=null,videoController=null;
 let mediaProvider=id=>window.GulliverStudioStorage.getMedia(id),pageChange=()=>{},playbackChange=()=>{};
 const stage=$('stage'),textEditor=$('editText'),stackLimit=80;
 let busSwapMode=false,busFirstSeat=null;
@@ -52,11 +52,15 @@ function redo(){
  timeline?.syncToActive();render();emit();notice('다시 실행했어요.');
 }
 function size(){
- const base=C.LAYOUTS[model.layout],view=$('stageView'),width=Math.max(240,view.clientWidth-20);
+ const base=C.LAYOUTS[model.layout],view=$('stageView'),width=Math.max(100,view.clientWidth-24);
  const immersive=document.fullscreenElement===view||view.classList.contains('lesson-fallback');
- const availH=immersive?Math.max(170,view.clientHeight-115):580;
- scale=immersive?Math.min(width/base.w,availH/base.h):Math.min(1,width/base.w,580/base.h);
+ const availH=Math.max(100,view.clientHeight-24);
+ const fitted=Math.min(width/base.w,availH/base.h);
+ scale=immersive?fitted:zoomMode==='fit'?fitted:manualZoom;
  if(!Number.isFinite(scale)||scale<=0)scale=.5;
+ const readout=$('canvasZoomValue');if(readout)readout.textContent=Math.round(scale*100)+'%';
+ $('canvasFit')?.setAttribute('aria-pressed',String(zoomMode==='fit'));
+ if($('canvasSelectionZoom'))$('canvasSelectionZoom').disabled=!selectedItems().length;
  $('stageSpace').style.width=Math.round(base.w*scale)+'px';
  $('stageSpace').style.height=Math.round(base.h*scale)+'px';
  stage.style.width=base.w+'px';stage.style.height=base.h+'px';
@@ -899,6 +903,10 @@ function changeTrack(id,patch){
  Object.assign(track,normalized);
 }
 window.GulliverStudioAdapter={
+ setZoom:value=>{if(value==='fit'){zoomMode='fit'}else{zoomMode='manual';manualZoom=Math.max(.1,Math.min(4,Number(value)||1))}size();return scale},
+ getZoom:()=>({scale,mode:zoomMode}),
+ zoomSelection:()=>{const selected=selectedItems();if(!selected.length)return false;const bounds=C.selectionBounds(selected),view=$('stageView');zoomMode='manual';manualZoom=Math.max(.1,Math.min(4,Math.min((view.clientWidth-48)/Math.max(1,bounds.w),(view.clientHeight-48)/Math.max(1,bounds.h))));size();requestAnimationFrame(()=>{view.scrollLeft=Math.max(0,(bounds.x+bounds.w/2)*scale-view.clientWidth/2);view.scrollTop=Math.max(0,(bounds.y+bounds.h/2)*scale-view.clientHeight/2)});return true},
+
  kind:'canvas',
  getActiveActivities:()=>page().elements.filter(e=>e.type==='activity'),
  addActivity:activity=>{const dim=C.LAYOUTS[model.layout],w=Math.min(activity.kind==='assignment'?860:activity.kind==='quiz'?600:380,dim.w-40),h=activity.kind==='assignment'?Math.min(420,dim.h-48):activity.kind==='quiz'?300:220,points=[[24,24],[dim.w-w-24,24],[24,dim.h-h-24],[dim.w-w-24,dim.h-h-24]];const overlap=([x,y])=>page().elements.reduce((n,e)=>n+Math.max(0,Math.min(x+w,e.x+e.w)-Math.max(x,e.x))*Math.max(0,Math.min(y+h,e.y+e.h)-Math.max(y,e.y)),0);const [x,y]=points.reduce((a,b)=>overlap(a)<=overlap(b)?a:b);addElement('activity',{activity:window.GulliverActivityCore.clean(activity),x,y,w,h,fill:'#ffffff'})},
@@ -1040,5 +1048,14 @@ window.GulliverStudioAdapter={
   return files;
  }
 };
+const zoomBar=document.createElement('div');zoomBar.className='canvas-zoom';zoomBar.setAttribute('aria-label','페이지 확대·축소');
+function zoomButton(id,label,action){const b=document.createElement('button');b.id=id;b.type='button';b.textContent=label;b.onclick=action;zoomBar.append(b);return b}
+zoomButton('canvasZoomOut','−',()=>GulliverStudioAdapter.setZoom(scale/1.2)).setAttribute('aria-label','축소');
+const zoomValue=document.createElement('output');zoomValue.id='canvasZoomValue';zoomBar.append(zoomValue);
+zoomButton('canvasZoomIn','＋',()=>GulliverStudioAdapter.setZoom(scale*1.2)).setAttribute('aria-label','확대');
+zoomButton('canvasFit','페이지 맞춤',()=>GulliverStudioAdapter.setZoom('fit'));
+zoomButton('canvasSelectionZoom','선택 확대',()=>GulliverStudioAdapter.zoomSelection());
+$('stageView').after(zoomBar);
+if(typeof ResizeObserver!=='undefined')new ResizeObserver(()=>size()).observe($('stageView'));
 bind();render();
 })();

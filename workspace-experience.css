@@ -150,3 +150,16 @@ body{background:#fff}
 .tool-row-copy>span,.card-info p,.activity-card .card-info p{color:#5d6677}
 .format-tile small,.storage-note{color:#5d6575}
 .home-view .section-head p{color:#5e6675}
+/* Actual saved work comes first and shares one content alignment. */
+.home-view .main{max-width:none!important;padding:28px 32px 60px!important}
+.home-view .welcome,.home-view .topbar,.home-view #content{width:100%;max-width:none!important;margin-left:0!important;margin-right:0!important}
+.home-view .welcome{margin-bottom:16px}.home-view .welcome h1{font-size:26px}.home-view .welcome p{display:none}
+.home-view .home-dashboard{display:block}.home-view .home-block,.home-view .section{max-width:none!important;margin:24px 0!important}
+#unifiedHomeRecent{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+#unifiedHomeRecent .unified-open{display:flex;flex-direction:column;gap:10px;padding:10px!important;align-items:stretch;background:#fff;border:1px solid #e5e3eb;border-radius:13px;color:#292535;text-decoration:none}
+#unifiedHomeRecent .unified-preview{display:flex;width:100%;height:174px;border-radius:9px;background:#f0eef5;align-items:center;justify-content:center;overflow:hidden;font-size:38px}
+.unified-preview svg{display:block;width:100%;height:100%;max-width:100%;object-fit:contain}
+#unifiedHomeRecent .unified-info strong{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#unifiedHomeRecent .unified-info small{display:block;margin-top:5px;color:#777080;font-size:11px}
+#unifiedHomeRecent .storage-type,#unifiedHomeRecent .unified-arrow{display:none}.home-view .studio-library-link{display:none}.home-view .home-work-location-note{font-size:11px;color:#817b8d}
+.home-view .format-tile{min-height:72px!important;padding:12px!important}.home-view .format-symbol{width:34px!important;height:34px!important;font-size:22px!important}.home-view .format-copy small{display:none}
+@media(max-width:800px){.home-view .main{padding:20px 16px 50px!important}#unifiedHomeRecent{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#unifiedHomeRecent .unified-preview{height:145px}#unifiedHomeRecent .unified-info strong{max-width:100%;font-size:12px}.home-view .welcome h1{font-size:22px}}

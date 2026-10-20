@@ -22,6 +22,7 @@ test('5.6 Chrome shows identical workspace routes and usable active navigation f
    for(const [path,name] of screens){
     await page.goto(base+encodeURIComponent(path),{waitUntil:'domcontentloaded'});
     const tabs=page.locator('.gulliver-nav a');
+    if(path==='lesson.html'){await page.locator('header.bar').waitFor();assert.equal(await page.locator('.gx-header').isVisible(),false);continue}
     await tabs.first().waitFor();
     assert.equal(await tabs.count(),4,name+' tabs at '+width+'px');
     assert.deepEqual(await tabs.allTextContents(),['홈','만들기','내 보관함','우리 반']);
@@ -67,9 +68,9 @@ test('5.6 Chrome preserves a live canvas on navigation to unified library and ne
   await page.locator('#unifiedLibraryList .unified-item').filter({hasText:'공통 메뉴 이동 검수 자료'}).waitFor();
   await page.locator('.gulliver-nav a[href="lesson.html"]').click();
   await page.waitForURL(/lesson\.html/);
-  await page.locator('#lessonGoal').fill('수업 이동해도 목표가 저장된다');
-  await page.locator('#lessonAudience').fill('한빛반');
-  await page.locator('.gulliver-nav a[href="내 보관함.html"]').click();
+  if(!await page.locator('#lessonGoal').isVisible())await page.locator('#workInfo').click();await page.locator('#lessonGoal').fill('수업 이동해도 목표가 저장된다');
+  if(!await page.locator('#lessonAudience').isVisible())await page.locator('#workInfo').click();await page.locator('#lessonAudience').fill('한빛반');
+  await page.locator('.work-file-menu summary').click();await page.locator('.work-file-actions a[href="내 보관함.html"]').click();
   await page.waitForURL(/%EB%82%B4|내.*보관함/);
   const result=await page.evaluate(async()=>{
    const lessons=await LessonStorage.list();

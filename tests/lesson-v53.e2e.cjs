@@ -14,10 +14,10 @@ test('5.3 Chrome: plan a lesson, import saved teacher activities, teach a quiz, 
   const context=await browser.newContext(),page=await context.newPage();page.setDefaultTimeout(18000);
   const exceptions=[];page.on('pageerror',e=>exceptions.push(e.message));
   await page.goto(base+'lesson.html',{waitUntil:'domcontentloaded'});
-  await page.locator('#lessonGoal').fill('친구와 함께 인사말 알아보기');
-  await page.locator('#lessonAudience').fill('열매 1반');
+  if(!await page.locator('#lessonGoal').isVisible())await page.locator('#workInfo').click();await page.locator('#lessonGoal').fill('친구와 함께 인사말 알아보기');
+  if(!await page.locator('#lessonAudience').isVisible())await page.locator('#workInfo').click();await page.locator('#lessonAudience').fill('열매 1반');
   await page.locator('[data-add="quiz"]').click();
-  await page.locator('#settings textarea').last().fill('한국 수도? | 서울\n일본 수도? | 도쿄');
+  if(!await page.locator('#settings textarea').first().isVisible())await page.locator('#workNotes').click();await page.locator('#settings textarea').last().fill('한국 수도? | 서울\n일본 수도? | 도쿄');
   await page.locator('#settings textarea').last().press('Tab');
   await page.waitForFunction(()=>document.querySelectorAll('.quiz-view .quiz-question').length===1);
   await page.locator('.quiz-reveal').click();
@@ -49,7 +49,7 @@ test('5.3 Chrome: plan a lesson, import saved teacher activities, teach a quiz, 
   await page.locator('.quiz-view .quiz-question').filter({hasText:'일본 수도?'}).waitFor();
   await page.locator('#exitRun').click();
   await page.goto(base+'lesson.html?lesson='+encodeURIComponent(id),{waitUntil:'domcontentloaded'});
-  await page.locator('#lessonAudience').waitFor();
+  if(!await page.locator('#lessonAudience').isVisible())await page.locator('#workInfo').click();await page.locator('#lessonAudience').waitFor();
   await page.waitForFunction(()=>document.querySelector('#lessonGoal')?.value==='친구와 함께 인사말 알아보기');
   assert.equal(await page.locator('#stepList .step-button').count(),4);
   assert.deepEqual(exceptions,[]);

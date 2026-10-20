@@ -20,7 +20,7 @@
     const updatedAt=Number(p.updatedAt||p.createdAt)||0;
     const title=String(p.title||p.name||labels[kind]).trim().slice(0,160)||labels[kind];
     const href=origin==='activities'?null:origin==='lessons'?'lesson.html?lesson='+encodeURIComponent(p.id):origin==='assets'?'뚝딱 제작실.html?library=assets':origin==='official'?'뚝딱 제작실.html?official='+encodeURIComponent(kind+':'+p.id):(['canvas','design','slides','document'].includes(kind)?'lesson.html?project=':'뚝딱 제작실.html?project=')+encodeURIComponent(p.id);
-    result.push({workId:p.workId||'',key:origin+':'+p.id,id:p.id,kind,origin,category,title,updatedAt,href,icon:icons[kind],label:labels[kind],blob:origin==='assets'?p.blob:null,status:origin==='official'?'보관한 사본 · 자동 갱신 안 됨':origin==='assets'?'소재함 · 기기 저장':origin==='lessons'?'기기 저장 · 수업별 백업':origin==='activities'?'직접 저장한 활동':'자동 저장 · 기기 저장'});
+    result.push({previewKind:kind==='lesson'?p.steps?.find(s=>s.payload)?.kind:kind,previewPayload:kind==='lesson'?p.steps?.find(s=>s.payload)?.payload:p.payload,workId:p.workId||'',key:origin+':'+p.id,id:p.id,kind,origin,category,title,updatedAt,href,icon:icons[kind],label:labels[kind],blob:origin==='assets'?p.blob:null,status:origin==='official'?'보관한 사본 · 자동 갱신 안 됨':origin==='assets'?'소재함 · 기기 저장':origin==='lessons'?'기기 저장 · 수업별 백업':origin==='activities'?'직접 저장한 활동':'자동 저장 · 기기 저장'});
    }
   }
   append(source.projects,'projects');append(source.official,'official');append(source.activities,'activities');append(source.lessons,'lessons');append(source.assets,'assets');
@@ -70,7 +70,7 @@
   if(row.origin==='assets'&&row.blob instanceof Blob){
    const url=URL.createObjectURL(row.blob);urls.push(url);
    const img=element('img');img.src=url;img.alt='';thumb.append(img);
-  }else thumb.textContent=row.icon;
+  }else{let preview=null;try{preview=window.GulliverWorkPreview?.make(row.previewKind,row.previewPayload)}catch{}if(preview){thumb.append(preview);thumb.classList.add('has-work-preview')}else thumb.textContent=row.icon;}
   const info=element('span','unified-info');
   info.append(element('strong','',row.title),element('small','',row.label+' · '+date(row.updatedAt)));
   if(!compact)info.append(element('small','storage-type',row.status));
@@ -96,7 +96,7 @@
   const rows=await collect(false);if(gen!==homeGeneration||!root.isConnected)return;
   assetUrlsClear();root.replaceChildren();
   if(!rows.length)root.append(element('p','unified-empty',readErrors.length?'일부 보관함을 읽지 못했어요. 보관함에서 상태를 확인해 주세요.':'아직 저장한 자료가 없어요. 위에서 첫 자료를 만들어 보세요.'));
-  else for(const row of rows.slice(0,4))root.append(card(row,true));
+  else for(const row of rows.slice(0,8))root.append(card(row,false));
  }
  function update(){
   const list=$('unifiedLibraryList');if(!list)return;
