@@ -131,7 +131,7 @@ body.gx-app.gt-teacher-tool:not(.gulliver-studio-embed):not(.student-view):not(.
 .gx-app.studio-canvas .center{min-height:calc(100dvh - var(--gx-header-height))}
 .gx-app.studio-canvas #editorFrame{height:calc(100dvh - var(--gx-header-height) - 60px)!important}
 .gx-app.studio-canvas.canvas-library-open .sidebar{top:calc(var(--gx-header-height) + 60px)!important;height:calc(100dvh - var(--gx-header-height) - 60px)}
-.gx-app.studio-canvas #canvasMobileShade:not([hidden]){top:calc(var(--gx-header-height) + 60px)}
+.gx-app.studio-canvas.canvas-library-open #canvasMobileShade:not([hidden]){top:calc(var(--gx-header-height) + 60px)!important}
 .gx-app[data-gx-page=lesson]>.bar{background:var(--gx-surface);border-bottom:1px solid var(--gx-line);box-shadow:none}
 .gx-app[data-gx-page=lesson] .lesson-plan{background:var(--gx-surface);border-color:var(--gx-line);box-shadow:none}
 .gx-app[data-gx-page=lesson] :is(.left,.right){background:var(--gx-surface)}
@@ -147,6 +147,7 @@ body.gx-app:is(.student-view,.presentation,.running,.gulliver-studio-embed){padd
 .gx-app:is(.student-view,.presentation,.running,.gulliver-studio-embed)>.gx-header{display:none!important}
 .gx-embedded>.gx-header{display:none!important}
 @media(max-width:1100px){
+  .gx-app.studio-managed :is(.studio-palette.is-open,.sidebar.is-open){top:var(--gx-header-height);max-height:calc(100dvh - var(--gx-header-height) - 72px)}
   .gx-header .gx-header-inner{gap:12px;padding:10px 16px}
   .gx-header .gx-nav a{padding:9px 10px}
   .gx-header .gt-help{display:none}
@@ -164,6 +165,7 @@ body.gx-app:is(.student-view,.presentation,.running,.gulliver-studio-embed){padd
   .gx-app[data-gx-page=home] .main{padding:20px 16px 36px}
   .gx-app[data-gx-page=home] .sidebar{top:var(--gx-header-height)}
   .gx-app.studio-canvas #editorFrame{height:calc(100dvh - var(--gx-header-height) - 52px - 72px)!important}
+  .gx-app.studio-canvas.canvas-library-open #canvasMobileShade:not([hidden]){top:calc(var(--gx-header-height) + 52px)!important}
   .gx-app.studio-canvas.canvas-library-open .sidebar{top:calc(var(--gx-header-height) + 52px)!important;height:calc(100dvh - var(--gx-header-height) - 52px - 72px)}
 }
 @media(prefers-reduced-motion:reduce){.gx-app .gx-button{transition:none}}

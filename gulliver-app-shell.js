@@ -67,7 +67,7 @@
       // Opt in controls, never the rendered document, canvas objects or game pieces.
       const exclude = '.gx-header, #stage, .stage, #editorFrame, .slide-surface, .paper, .sheet-box, .design-page, .document-page, .slide-page, .student-screen, .game-area, .race-area, .roulette-area, #view-flash, #view-quiz, #view-match';
       for (const button of scope.querySelectorAll('button, a.btn, a.button, label.btn, label.upload')) {
-        if (button.closest(exclude) || button.matches('.gx-button, .control-btn, .tool-btn, .seat, .desk, .lever, .tab, .palette-tab, .step-button, [data-view], [data-tab], [data-design-tab], [data-category], [data-library-category], [role="tab"], [data-studio-action]')) continue;
+        if (button.closest(exclude) || button.matches('.gx-button, .studio-bottom-shade, .canvas-pane-shade, #drawerShade, .scrim, .control-btn, .tool-btn, .seat, .desk, .lever, .tab, .palette-tab, .step-button, [data-view], [data-tab], [data-design-tab], [data-category], [data-library-category], [role="tab"], [data-studio-action]')) continue;
         button.classList.add('gx-button');
         if (button.matches('.danger, .btn-danger, .gt-button--danger') || /^(全部|全体)?(전체 초기화|학급정보 지우기|기록 지우기|테마 삭제|삭제)$/.test(button.textContent.trim())) button.classList.add('gx-danger');
         else if (button.matches('.primary, .btn-primary, .primary-btn, .gt-button--primary, .gt-v61-button--primary, .create, .btn.green') || /확정$/.test(button.textContent.trim())) button.classList.add('gx-primary');
