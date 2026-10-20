@@ -50,3 +50,44 @@ body.work-surface.running .bar :is(#workUndo,#workRedo,#workInfo,#workNotes,#wor
 body.work-surface .work-file-actions .library-shortcut{display:block!important;padding:8px}
 body.work-surface:not(.running) .bar>a{min-height:36px;min-width:36px;align-items:center;justify-content:center}body.work-surface #workUndo,body.work-surface #workRedo{min-width:36px}.work-file-menu summary{min-height:36px;min-width:44px}
 #workExportDialog button{display:block;width:100%;margin:8px 0;text-align:left}
+
+/* The actual class session must fit its slide and navigation inside one viewport. */
+body.work-surface.running {height:100dvh;overflow:hidden!important}
+body.work-surface.running .bar {
+  height:64px;min-height:64px;flex-wrap:nowrap!important;padding:8px 14px;
+}
+body.work-surface.running #runTitle {
+  min-width:0;max-width:calc(100vw - 210px);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+body.work-surface.running .bar .actions {width:auto;flex:none;overflow:visible}
+body.work-surface.running .layout,
+body.work-surface.canvas-step.running .layout {
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  height:calc(100dvh - 64px)!important;min-height:0!important;overflow:hidden!important;
+}
+body.work-surface.running .layout>.center {
+  display:flex!important;flex-direction:column!important;grid-column:1!important;
+  grid-row:1!important;height:100%;min-height:0!important;min-width:0;
+  overflow:hidden!important;
+}
+body.work-surface.running .stage {
+  display:block!important;flex:1 1 0!important;min-height:0!important;
+  height:auto!important;width:100%;padding:0!important;overflow:hidden!important;
+}
+body.work-surface.running .stage iframe.editor-frame {
+  display:block!important;width:100%!important;height:100%!important;
+  min-height:0!important;border:0!important;
+}
+body.work-surface.running #lessonPresenter,
+body.work-surface.running #runbar {flex:0 0 auto;margin:0;border-radius:0}
+body.work-surface.running #lessonPresenter {padding:4px 12px}
+body.work-surface.running #runbar {min-height:56px;padding:8px 12px}
+body.work-surface.running .center>#status {display:none!important}
+@media(max-width:760px){
+  body.work-surface.running .bar {height:64px;min-height:64px;padding:7px 9px}
+  body.work-surface.running .bar .actions {width:auto;min-width:0}
+  body.work-surface.running #runTitle {max-width:calc(100vw - 190px)}
+  body.work-surface.running #runbar {min-height:52px;padding:6px}
+}
