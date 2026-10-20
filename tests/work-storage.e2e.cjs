@@ -10,7 +10,7 @@ test('제작과 수업이 같은 원본·메모·순서를 공유하고 오래�
  await page.goto(base+encodeURIComponent('뚝딱 제작실.html')+'?project=shared-p1',{waitUntil:'networkidle'});
  const frame=page.frameLocator('#editorFrame');await frame.locator('#stage').getByText('처음 자료',{exact:true}).waitFor();await page.locator('#composeWork').click();await page.waitForURL(/lesson\.html\?work=/);
  const editor=page.frameLocator('#stage iframe');await editor.locator('#stage').getByText('처음 자료',{exact:true}).waitFor();await editor.locator('body').evaluate(()=>{const a=GulliverStudioAdapter,p=a.capture();p.pages[0].elements[0].content='수업에서 수정한 자료';a.apply(p);document.dispatchEvent(new Event('input',{bubbles:true}))});
- await page.locator('#settings textarea').last().fill('교사용 진행 메모');await page.locator('[data-add="timer"]').click();await page.locator('#saveLesson').click();
+ if(!await page.locator('#settings textarea').first().isVisible())await page.locator('#workNotes').click();await page.locator('#settings textarea').last().fill('교사용 진행 메모');await page.locator('[data-add="timer"]').click();await page.locator('#saveLesson').click();
  const work=await page.evaluate(()=>GulliverWorkStorage.get('project:shared-p1'));assert.equal(work.steps.length,2);assert.equal(work.steps[0].payload.pages[0].elements[0].content,'수업에서 수정한 자료');assert.equal(work.steps[0].notes,'교사용 진행 메모');
  await page.reload({waitUntil:'networkidle'});await page.locator('#stepList .step-button').first().click();await page.frameLocator('#editorFrame').locator('#stage').getByText('수업에서 수정한 자료',{exact:true}).waitFor();assert.equal(await page.locator('#materialOnly').count(),0);
  // A stale studio tab cannot overwrite the work saved by a different editor window.

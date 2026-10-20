@@ -21,8 +21,6 @@ test('Classroom journey: home -> canvas create/save -> unified library -> edit -
   await page.waitForFunction(()=>document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.kind==='canvas');
   await page.locator('#lessonSaveState').filter({hasText:'기기에 저장됨'}).waitFor();
   await page.locator('#lessonTitle').fill('종합 검수 발표 자료');
-  await frame.locator('#designTitle').fill('종합 검수 발표 자료');
-  await frame.locator('#designTitle').press('Tab');
   await page.locator('#saveLesson').click();
   const source=await page.evaluate(async()=> (await LessonStorage.list()).find(x=>x.title==='종합 검수 발표 자료'));
   assert.ok(source?.steps[0]?.payload?.pages?.length,'saved work contains editable canvas pages');
@@ -30,8 +28,8 @@ test('Classroom journey: home -> canvas create/save -> unified library -> edit -
   await page.locator('#unifiedLibraryList .unified-item').filter({hasText:'종합 검수 발표 자료'}).waitFor();
   await page.locator('#unifiedLibraryList .unified-item').filter({hasText:'종합 검수 발표 자료'}).locator('a.unified-open').click();
   await page.waitForFunction(()=>document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.capture?.().title==='종합 검수 발표 자료');
-  await page.locator('#lessonAudience').fill('종합 검수 반');
-  await page.locator('#lessonGoal').fill('준비한 자료를 수업에 활용한다');
+  if(!await page.locator('#lessonAudience').isVisible())await page.locator('#workInfo').click();await page.locator('#lessonAudience').fill('종합 검수 반');
+  if(!await page.locator('#lessonGoal').isVisible())await page.locator('#workInfo').click();await page.locator('#lessonGoal').fill('준비한 자료를 수업에 활용한다');
   await page.locator('[data-add=timer]').click();
   await page.locator('#saveLesson').click();
   let recorded=false;
@@ -57,7 +55,7 @@ test('Classroom journey: home -> canvas create/save -> unified library -> edit -
   await page.frameLocator('iframe.editor-frame').locator('#stage').waitFor();
   await page.locator('#exitRun').click();
   const promise=page.waitForEvent('download');
-  await page.locator('#backupLesson').click();
+  if(!await page.locator('#backupLesson').isVisible())await page.locator('.work-file-menu summary').click();await page.locator('#backupLesson').click();
   const dl=await promise;
   assert.match(dl.suggestedFilename(),/\.lesson\.json$/);
   const archive=JSON.parse(fs.readFileSync(await dl.path(),'utf8'));
@@ -69,7 +67,7 @@ test('Classroom journey: home -> canvas create/save -> unified library -> edit -
   await saved.first().waitFor();
   await saved.first().locator('a.unified-open').click();
   await page.waitForFunction(expected=>new URL(location.href).searchParams.get('lesson')===expected,lessonId);
-  await page.locator('#lessonGoal').waitFor();
+  if(!await page.locator('#lessonGoal').isVisible())await page.locator('#workInfo').click();await page.locator('#lessonGoal').waitFor();
   await page.waitForFunction(()=>document.getElementById('lessonGoal')?.value==='준비한 자료를 수업에 활용한다');
   assert.equal(await page.locator('#stepList .step-button').count(),2);
   assert.deepEqual(errors,[],'no page script error on cross-tool journey');

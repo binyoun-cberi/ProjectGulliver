@@ -11,7 +11,7 @@ const mobileQuery=matchMedia('(max-width:700px)');
 const isMobile=()=>mobileQuery.matches;
 const categories=[
  {id:'templates',label:'템플릿',icon:'▤',detail:'출발점을 고르고 자유롭게 바꿔 보세요.'},
- {id:'elements',label:'도형·사진',icon:'◇',detail:'도형이나 사진을 눌러 현재 페이지에 추가하세요.'},
+ {id:'elements',label:'도형',icon:'◇',detail:'도형이나 사진을 눌러 현재 페이지에 추가하세요.'},
  {id:'text',label:'글씨',icon:'T',detail:'글씨 상자를 넣거나, 선택한 글씨를 수정하세요.'},
  {id:'uploads',label:'사진 넣기',icon:'⇧',detail:'기기에 저장된 사진을 현재 페이지에 추가하세요.'},
  {id:'pages',label:'페이지',icon:'▦',detail:'페이지를 추가하거나 크기를 변경하세요.'},
@@ -96,6 +96,9 @@ textEdit.type='button';textEdit.innerHTML='<span class="pane-icon" aria-hidden="
 textEdit.addEventListener('click',()=>activate('properties'));textButtons.append(textEdit);
 note('text','글씨를 두 번 누르면 그 자리에서 수정해요. 한 번 누른 뒤 ‘선택 편집’에서 모양을 바꿀 수 있어요.');
 const uploadButtons=actionsPane('uploads');
+const uploaded=document.createElement('div');uploaded.className='uploaded-previews';panes.get('uploads').append(uploaded);
+function refreshPhotos(){const images=window.GulliverStudioAdapter?.capture?.().pages.flatMap(p=>p.elements).filter(e=>e.type==='image')||[];const unique=[...new Set(images.map(e=>e.src))].filter(src=>/^data:image\/(png|jpeg);base64,/.test(src));uploaded.replaceChildren();for(const src of unique.slice(0,30)){const b=make('button',''),img=make('img');b.type='button';b.setAttribute('aria-label','이 사진 다시 넣기');img.src=src;img.alt='작업에 사용한 사진';b.append(img);b.onclick=async()=>{const blob=await(await fetch(src)).blob();await GulliverStudioAdapter.insertImage(new File([blob],'사진.'+(blob.type==='image/png'?'png':'jpg'),{type:blob.type}));if(isMobile())closePanel()};uploaded.append(b)}}
+
 shortcut(uploadButtons,'기기에서 사진 선택','⇧','#addPhoto',{closeAfter:false});
 note('uploads','PNG·JPG 파일만 지원하며 사진당 최대 2MB예요. 선택한 사진은 현재 페이지에 추가돼요.');
 $('photoPicker')?.addEventListener('change',()=>{if(isMobile())closePanel()});
@@ -139,6 +142,7 @@ const labels=new Map(categories.map(c=>[c.id,c.label]));
 function activate(id){
  if(!panes.has(id))return;
  active=id;
+ if(id==='uploads')refreshPhotos();
  document.body.classList.remove('panel-collapsed');
  document.body.classList.add('panel-open');
  for(const [key,pane] of panes)pane.hidden=key!==id;
@@ -173,7 +177,8 @@ const updateSelection=()=>{
  multiButton.setAttribute('aria-pressed',String(multiActive));
  groupButton.disabled=stage.querySelectorAll('.item.selected').length<2;
  ungroupButton.disabled=$('ungroupSelection')?.disabled!==false;
- if(chosen&&!isMobile()&&!document.body.classList.contains('panel-collapsed')&&active==='elements'){
+ if(chosen?.dataset.type==='activity'&&!isMobile()&&active!=='teacher'&&!document.body.classList.contains('panel-collapsed'))activate('teacher');
+ if(chosen&&chosen.dataset.type!=='activity'&&!isMobile()&&!document.body.classList.contains('panel-collapsed')&&['elements','text'].includes(active)){
   // Selecting an element reveals editing controls on desktop, without covering the canvas.
   activate('properties');
  }
