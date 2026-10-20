@@ -12,17 +12,17 @@ test('Canva-style home has real linked formats with matching studio implementati
  assert.deepEqual(formats,['canvas','canvas','document','video','music']);
  formats.forEach(kind=>assert.ok(studioCore.TOOLS[kind],kind+' editor exists'));
  for(const preset of ['blank','presentation','worksheet']){
-  assert.ok(html.includes('href="뚝딱 제작실.html?new=canvas&amp;template='+preset+'"'));
+  assert.ok(html.includes('href="lesson.html?new=canvas&amp;template='+preset+'"'));
  }
  for(const kind of ['slides','document','design','picture','pdf','video','music']){
-  assert.ok(html.includes('href="뚝딱 제작실.html?new='+kind+'"'));
+  assert.ok(html.includes('href="'+(['slides','document','design'].includes(kind)?'lesson.html':'뚝딱 제작실.html')+'?new='+kind+'"'));
  }
  assert.match(html,/href="lesson\.html"/);
  // The shared site navigation links to the lesson workspace. It is not an
  // additional editor mode inside the specialist tool picker.
  const studio=read('뚝딱 제작실.html');
  assert.match(studio,/gulliver-app-shell\.js/);
- assert.match(read('gulliver-app-shell.js'),/\['lesson', '수업 준비', 'lesson\.html'\]/,'shared site navigation must reach lesson preparation');
+ assert.match(read('gulliver-app-shell.js'),/\['studio', '만들기', 'lesson\.html'\]/,'shared site navigation must reach lesson preparation');
  const picker=studio.slice(studio.indexOf('<dialog class="studio-picker"'));
  assert.doesNotMatch(picker,/data-studio-action="lesson"|data-canvas-template="lesson"/);
  assert.doesNotMatch(html,/class="home-bottom-bar"/,'mobile uses the same site navigation instead of a duplicate');

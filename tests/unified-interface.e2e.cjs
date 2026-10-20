@@ -3,7 +3,7 @@ const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('node:fs'), vm = require('node:vm'), {spawn} = require('node:child_process');
 const {chromium} = require('playwright-core');
 const base = 'http://127.0.0.1:8963/';
-const names = ['홈','제작실','내 보관함','수업 준비','우리 반'];
+const names = ['홈','만들기','내 보관함','우리 반'];
 const catalog = {window:{}};
 vm.runInNewContext(fs.readFileSync('tools-catalog.js','utf8'), catalog);
 const principals = ['index.html','뚝딱 제작실.html','내 보관함.html','lesson.html','우리반.html'];
@@ -38,7 +38,7 @@ test('one consistent site frame, teacher controls, saved roster and safe editor 
         assert.ok(await page.locator('body').evaluate(el=>parseFloat(getComputedStyle(el).paddingTop)>=document.querySelector('.gx-header').getBoundingClientRect().height-1),file+' content covered by header');
         for (const link of await page.locator('.gx-nav a').all()) assert.equal(await link.isVisible(),true,file+' hidden destination');
         if (principals.includes(file)) {
-          assert.equal(await page.locator('.gx-nav [aria-current="page"]').textContent(),names[principals.indexOf(file)]);
+          assert.equal(await page.locator('.gx-nav [aria-current="page"]').textContent(),['홈','만들기','내 보관함','만들기','우리 반'][principals.indexOf(file)]);
         }
         assert.ok(await page.locator('.gt-open-display:visible, [data-gx-display-duplicate]:visible, .gt-v62-student:visible').count()<=1,file+' duplicate student-window launch');
         if (i<5 || file==='자리 배정 프로그램.html' || file==='행운의 모둠 메이커.html') {

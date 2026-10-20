@@ -53,7 +53,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
       const shell = page.locator('.gt-shell');
       await shell.waitFor({state: 'attached'});
       assert.equal(await page.locator('.gulliver-shell').count(), 1, tool.href);
-      assert.equal(await shell.getByRole('navigation', {name: '뚝딱교실 주요 메뉴'}).locator('a').count(), 5, tool.href);
+      assert.equal(await shell.getByRole('navigation', {name: '뚝딱교실 주요 메뉴'}).locator('a').count(), 4, tool.href);
       assert.ok(await page.locator('body').evaluate(node => node.classList.contains('gt-teacher-tool')));
       const status = await shell.locator('.gt-help-panel p').textContent();
       assert.match(status, /저장 방식이 달라요/, tool.href);
@@ -82,7 +82,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
 
     await page.setViewportSize({width: 390, height: 844});
     assert.equal(await page.locator('.gx-nav').isVisible(), true);
-    assert.equal(await page.locator('.gx-nav a').count(), 5);
+    assert.equal(await page.locator('.gx-nav a').count(), 4);
     const overflow = await page.locator('.gx-header-inner').evaluate(node => node.scrollWidth > window.innerWidth + 2);
     assert.equal(overflow, false, 'phone teacher header extends beyond viewport');
   } finally {
