@@ -4,7 +4,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {spawn}=require('node:child_process'),{chromium}=require('playwright-core');
 const port=8803,base='http://127.0.0.1:'+port+'/',url=base+encodeURIComponent('뚝딱 제작실.html');
-async function ready(){for(let i=0;i<90;i++){try{if((await fetch(base+'studio-unified-editor.js')).ok)return}catch{}await new Promise(r=>setTimeout(r,180))}throw Error('Server unavailable')}
+async function ready(){for(let i=0;i<90;i++){try{const response=await fetch(base+'studio-unified-editor.js');await response.arrayBuffer();if(response.ok)return}catch{}await new Promise(r=>setTimeout(r,180))}throw Error('Server unavailable')}
 test('3.0 browser: editable page, drag, resize, text, undo/redo, PNG and persistence',{timeout:120000},async()=>{
  const http=spawn('python3',['-m','http.server',String(port),'--bind','127.0.0.1'],{stdio:'ignore'});let browser;
  try{
@@ -86,7 +86,7 @@ test('3.0 browser: original design/slide projects are preserved on editable conv
   await frame.locator('#stage .item').filter({hasText:'감정 카드'}).waitFor();
   assert.equal(await frame.locator('#layout').inputValue(),'a4');
   await page.waitForFunction(async()=>(await GulliverStudioStorage.projects()).length===3);
-  await page.getByRole('button',{name:'내 작업·소재함'}).click();
+  await page.locator('#canvasLibraryToggle').click();
   await page.locator('.sidebar').waitFor({state:'visible'});
   const slide=page.locator('#projectList .project-item').filter({hasText:'원본 발표'});
   await slide.getByRole('button',{name:'통합에서 편집'}).click();

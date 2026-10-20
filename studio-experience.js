@@ -10,16 +10,14 @@ if(!bridge||!tools)return;
 const bar=$('studioMobileBar'),picker=$('studioToolPicker'),shade=$('canvasMobileShade');
 // Moving between major screens must await the studio's latest IndexedDB
 // commit. Native picture/PDF editors and advanced projects warn before exit.
-document.querySelectorAll('.gulliver-nav a[href],.shell a[href="index.html"],.shell a[href="내 보관함.html"]').forEach(link=>{
- link.addEventListener('click',async event=>{
-  if(event.defaultPrevented||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||link.target==='_blank')return;
-  event.preventDefault();
-  if(link.getAttribute('aria-current')==='page'){
-   $('navHome')?.click();
-   return;
-  }
-  if(await bridge.navigateAway())location.assign(link.href);
- });
+document.addEventListener('click',async event=>{
+ const link=event.target.closest('.gulliver-nav a[href],.gx-brand,.shell a[href="index.html"],.shell a[href="내 보관함.html"]');
+ if(!link||event.defaultPrevented||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||link.target==='_blank')return;
+ event.preventDefault();
+ if(link.getAttribute('aria-current')==='page'){
+  $('navHome')?.click();return;
+ }
+ if(await bridge.navigateAway())location.assign(link.href);
 });
 const parentHeader=document.querySelector('.center .top');
 if(parentHeader){

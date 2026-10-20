@@ -40,7 +40,7 @@ test('실제 Chromium: 자동 저장/새로고침 복원/사진 소재 삽입/JS
   await page.locator('#toolNav button[data-kind="design"]').click();
   const frame=page.frameLocator('#editorFrame');
   await page.locator('#proxy-projectTitle').waitFor();
-  assert.equal(await page.locator('body').getAttribute('class'),'studio-managed');
+  assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('studio-managed')),true);
   assert.equal(await page.locator('#studioPalette').isVisible(),true);
   await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor({timeout:15000});
   await page.locator('#proxy-projectTitle').fill('저장 복원 자동검사 도안');

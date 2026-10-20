@@ -54,7 +54,9 @@ label input,label select{width:100%;min-width:0;border:1px solid #cdd6e3;border-
  .official-edit-note .native-import input[hidden]{display:none}
 #officialStatus[data-state="loading"]{color:#6e599a}
 #officialStatus[data-state="ready"]{color:#26764d}
-</style><link rel="stylesheet" href="media-editors-v52.css?v=20261017-v52"></head><body data-official-kind="video">
+</style><link rel="stylesheet" href="media-editors-v52.css?v=20261017-v52"><link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<script src="gulliver-app-shell.js?v=20261020-1"></script>
+</head><body data-official-kind="video">
 <header class="top"><div><h1>영상 뚝딱</h1><p style="margin:5px 0 0">사진·짧은 영상 클립을 이어 붙여 우리 반 기록 영상을 만들어요.</p></div><div class="actions"><button id="previewPlay">▶ 미리보기</button><button id="stopPreview">■ 멈춤</button><button id="exportVideo" class="primary">영상 내보내기</button></div></header>
 <div class="workflow-save" role="note"><strong>저장 위치</strong><span>제작실에서 열면 간편 작업은 브라우저에 자동 저장돼요. 단독으로 열면 내보내기 파일을 직접 보관해야 해요. 고급 프로젝트는 별도 사본으로 저장하며 자동으로 서로 변환되지 않아요.</span><a href="내 보관함.html">내 보관함 ↗</a></div>
 <section class="media-mode-switch" aria-label="제작 모드 선택"><div class="media-mode-tabs" role="tablist"><button id="simpleMode" type="button" role="tab" aria-selected="true">간편 편집</button><button id="officialMode" type="button" role="tab" aria-selected="false" disabled>고급 편집 · FilmCraft</button></div><p id="officialDescription" class="media-mode-description"></p><p id="officialStatus" role="status" aria-live="polite"></p></section>

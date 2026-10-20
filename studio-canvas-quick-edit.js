@@ -92,15 +92,17 @@ function update(){
  }
  const sel=[...stage.querySelectorAll('.item.selected')][0];
  const rect=sel?.getBoundingClientRect()||stage.getBoundingClientRect();
+ const headerBottom=document.getElementById('gulliverAppHeader')?.getBoundingClientRect().bottom||0;
+ const toolsBottom=document.querySelector('.top-tools')?.getBoundingClientRect().bottom||0;
  if(matchMedia('(max-width:700px)').matches){
-  toolbar.style.left='8px';toolbar.style.top='58px';toolbar.style.width='calc(100vw - 16px)';
+  toolbar.style.left='8px';toolbar.style.top=Math.max(58,headerBottom+8,toolsBottom+8)+'px';toolbar.style.width='calc(100vw - 16px)';
  }else{
   // Keep the toolbar near the selection and inside the working viewport.
   toolbar.style.width='';
   const work=document.querySelector('.work').getBoundingClientRect();
   const width=Math.min(800,Math.max(360,toolbar.scrollWidth||620));
   toolbar.style.left=clamp(rect.left+rect.width/2-width/2,work.left+8,Math.max(work.left+8,innerWidth-width-8))+'px';
-  toolbar.style.top=clamp(rect.top-65,Math.max(66,work.top+7),Math.max(66,innerHeight-110))+'px';
+  toolbar.style.top=clamp(rect.top-65,Math.max(66,work.top+7,headerBottom+8),Math.max(66,innerHeight-110))+'px';
  }
 }
 function schedule(){if(frame)return;frame=requestAnimationFrame(update)}
@@ -130,7 +132,8 @@ function openMenu(id,x,y){
     ||(action==='group'&&selected.length<2)||(action==='ungroup'&&!selected.some(x=>x.groupId));
  }
  menu.style.left=clamp(x,8,Math.max(8,innerWidth-226))+'px';
- menu.style.top=clamp(y,8,Math.max(8,innerHeight-355))+'px';
+ const minTop=(document.getElementById('gulliverAppHeader')?.getBoundingClientRect().bottom||0)+8;
+ menu.style.top=clamp(y,minTop,Math.max(minTop,innerHeight-355))+'px';
 }
 function run(action,id){
  if(action==='more'||action==='position'){openMenu(id,parseFloat(toolbar.style.left)||innerWidth/2,(parseFloat(toolbar.style.top)||80)+50);return}

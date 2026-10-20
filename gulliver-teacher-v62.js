@@ -10,7 +10,7 @@
     info.className = 'gt-v62-info';
     const label = document.createElement('span');
     label.className = 'gt-v62-eyebrow';
-    label.textContent = '학급 운영 · 6.2';
+    label.textContent = '준비 · 결과';
     const title = document.createElement('strong');
     title.textContent = options.title || '우리 반';
     const help = document.createElement('p');
@@ -28,7 +28,9 @@
     const resultButton = button(options.resultLabel || '② 결과 보기', 'gt-v62-button', () => setStep('result'));
     const studentButton = button('📺 학생 화면 열기 ↗', 'gt-v62-button gt-v62-student', () => window.GulliverTeacherDisplay?.open());
     bar.append(info, actions);
-    options.container.prepend(bar);
+    const heading = options.container.querySelector?.(':scope > header.head, :scope > header.topline, :scope > header');
+    if (heading) heading.after(bar);
+    else options.container.prepend(bar);
     function setStep(next) {
       if (next !== 'prepare' && next !== 'result') return false;
       if (next === 'result' && options.onResult?.() === false) return false;

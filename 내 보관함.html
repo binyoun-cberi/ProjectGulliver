@@ -20,11 +20,13 @@ main{max-width:1600px;margin:0 auto;padding:34px clamp(20px,2.2vw,40px) 70px}.he
 @media(max-width:700px){main{padding:24px 13px 90px}.header{padding:10px 13px}.links{gap:11px;font-size:12px}.brand{font-size:15px}.brand img{width:27px;height:27px}.panel{padding:15px;border-radius:15px}.unified-list{grid-template-columns:1fr}.unified-preview{width:56px;height:56px}.unified-download{padding:9px}.toolbar select{flex:1}.hero .button{width:100%}}
 </style>
 <link rel="stylesheet" href="gulliver-ui-v56.css?v=20261018-v56">
+<link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<script src="gulliver-app-shell.js?v=20261020-1"></script>
 </head>
 <body>
-<header class="header"><a class="brand" href="index.html"><img src="logo.png" alt="">뚝딱교실</a><nav class="gulliver-nav" aria-label="뚝딱교실 주요 공간"><a href="index.html"><span class="gulliver-nav-symbol" aria-hidden="true">⌂</span><span>홈</span></a><a href="뚝딱 제작실.html"><span class="gulliver-nav-symbol" aria-hidden="true">✎</span><span>제작실</span></a><a href="내 보관함.html" aria-current="page"><span class="gulliver-nav-symbol" aria-hidden="true">▦</span><span>내 보관함</span></a><a href="lesson.html"><span class="gulliver-nav-symbol" aria-hidden="true">▤</span><span>수업 준비</span></a></nav></header>
+
 <main>
-<div class="gulliver-location-note" aria-label="현재 위치"><span><strong>내 보관함</strong> · 저장한 자료를 찾고 백업하는 곳이에요.</span><span class="gulliver-location-secondary">만들기 → 보관 → 수업 진행</span></div>
+
  <section class="hero"><div><h1>내 보관함</h1><p>어디에서 만들었든 여기에서 찾아 다시 열어요. 원래 저장된 자료는 옮기거나 삭제하지 않아요.</p></div><a class="button primary gulliver-primary-action" href="뚝딱 제작실.html">＋ 제작실에서 만들기</a></section>
  <section class="panel" aria-labelledby="libraryHeading">
  <h2 id="libraryHeading" style="margin:0 0 15px;font-size:18px">저장한 자료 찾기</h2>
@@ -50,7 +52,7 @@ main{max-width:1600px;margin:0 auto;padding:34px clamp(20px,2.2vw,40px) 70px}.he
  <small>중요: 이 화면에는 현재 브라우저의 저장 자료만 나타나요. ZIP 파일은 내려받아 직접 보관해야 합니다. 큰 파일이 많으면 512MB 한도를 넘을 수 있어요. 자료는 현재 브라우저에 저장되어 있어요. 기기 변경·브라우저 데이터 삭제 시 사라질 수 있으며, 백업 파일에는 학생 정보가 포함될 수 있어 안전하게 보관하세요.</small>
  </section>
 </main>
-<script src="classroom-workspace.js"></script>
+<script src="classroom-workspace.js?v=20261020-ui"></script>
 <script src="studio-storage.js"></script>
 <script src="lesson-storage.js"></script>
 <script src="unified-library.js?v=20261018-v56"></script>

@@ -23,8 +23,8 @@ test('5.6 Chrome shows identical workspace routes and usable active navigation f
     await page.goto(base+encodeURIComponent(path),{waitUntil:'domcontentloaded'});
     const tabs=page.locator('.gulliver-nav a');
     await tabs.first().waitFor();
-    assert.equal(await tabs.count(),4,name+' tabs at '+width+'px');
-    assert.deepEqual(await tabs.allTextContents(),['⌂홈','✎제작실','▦내 보관함','▤수업 준비']);
+    assert.equal(await tabs.count(),5,name+' tabs at '+width+'px');
+    assert.deepEqual(await tabs.allTextContents(),['홈','제작실','내 보관함','수업 준비','우리 반']);
     assert.equal(await tabs.filter({hasText:name}).first().getAttribute('aria-current'),'page');
     const m=await page.evaluate(()=>{
      const nav=document.querySelector('.gulliver-nav'),bbox=nav.getBoundingClientRect();

@@ -80,7 +80,9 @@ button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:#6654bd
 @media(max-width:990px){.top-tools{align-items:stretch}.toolbar-group{flex:1 1 auto}.output-tools{flex-grow:2}}
 @media(max-width:620px){.top-tools{padding:8px;gap:6px}.project-title{width:100%;justify-content:space-between}.project-title #designTitle{max-width:none;flex:1}.toolbar-group{min-height:0}.group-caption{width:100%;margin:0 2px}.top-tools button{min-height:35px}.shelf{gap:7px;align-items:stretch}.shelf-section{display:flex;align-items:center;gap:5px;flex:none;padding:6px;margin:0}.shelf-section h3{display:block;white-space:nowrap;margin:0 4px;font-size:10px}.shelf-section button{min-height:34px;margin:0}.properties{background:#faf8ff}.timeline{border-radius:9px}}
 </style>
-<link rel="stylesheet" href="studio-canvas-shell.css?v=20261017-quick1"></head>
+<link rel="stylesheet" href="studio-canvas-shell.css?v=20261017-quick1"><link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<script src="gulliver-app-shell.js?v=20261020-1"></script>
+</head>
 <body><main class="canvas-app">
  <div class="top-tools">
   <label class="group project-title">작업 이름 <input id="designTitle" aria-label="프로젝트 이름" maxlength="90" value="새 발표 자료"></label>
@@ -224,7 +226,7 @@ button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:#6654bd
  </div>
  <dialog class="roster-dialog" id="rosterDialog" aria-labelledby="rosterTitle"><h2 id="rosterTitle">우리 반 이름표 일괄 제작</h2><p>학생 이름을 한 줄에 하나씩 적으면 A4 이름표를 여러 장 만들어요. 생성한 글씨와 테두리는 캔버스에서 다시 수정할 수 있어요. 현재 작업은 새 이름표로 교체되므로 필요한 경우 먼저 저장 상태를 확인하세요.</p><div class="roster-actions"><button id="loadRoster" type="button">우리 반 명단 불러오기</button></div><label>이름 목록<textarea id="rosterNames" placeholder="김하늘&#10;이바다"></textarea></label><label>한 장에 <select id="rosterCount"><option value="8">8개 (2열 × 4행)</option><option value="4">4개 (2열 × 2행)</option></select></label><div class="roster-actions"><button id="closeRoster" type="button">취소</button><button id="createRoster" class="primary" type="button">이름표 만들기</button></div></dialog>
 </main>
-<script src="gulliver-shared.js"></script>
+<script src="gulliver-shared.js?v=20261020-ui"></script>
 <script src="studio-media-core.js?v=20261014-31"></script>
 <script src="studio-storage.js?v=20261014-31"></script>
 <script src="studio-unified-core.js?v=20261017-bus-swap-flow3"></script>
@@ -244,5 +246,5 @@ button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:#6654bd
 <script src="studio-teacher-tools.js?v=20261017-teacher1"></script>
 <script src="studio-teacher-live.js?v=20261017-bus-swap-flow3"></script>
 <script src="studio-presentation-tools.js?v=20261015-presenter1"></script>
-<script src="studio-canvas-quick-edit.js?v=20261017-quick1"></script>
+<script src="studio-canvas-quick-edit.js?v=20261020-merge"></script>
 </body></html>
