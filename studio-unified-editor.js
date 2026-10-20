@@ -91,6 +91,9 @@ function drawItem(e){
    letterSpacing:(e.letterSpacing||0)+'px',whiteSpace:'pre',wordBreak:'normal',
    WebkitTextStroke:C.strokeWidth(e)?C.strokeWidth(e)+'px '+e.stroke:'0px transparent'});
  }
+ else if(e.type==='activity'){
+  window.GulliverCanvasActivities?.draw(node,e);
+ }
  else if(e.type==='image'){
   const crop=C.cropSettings(e),frame=document.createElement('div'),img=document.createElement('img');
   frame.className='image-crop-frame';if(e.mask==='circle')frame.style.borderRadius='50%';
@@ -138,7 +141,7 @@ function drawSnapGuides(){
   node.style[guide.axis==='x'?'left':'top']=guide.position+'px';stage.append(node);
  }
 }
-function layerName(e){return e.type==='text'?(e.content||'빈 글씨').slice(0,22):({image:'사진',rect:'네모',ellipse:'원',triangle:'세모',star:'별',line:'선'}[e.type]||'요소')}
+function layerName(e){if(e.type==='activity')return e.activity.title||'수업 활동';return e.type==='text'?(e.content||'빈 글씨').slice(0,22):({image:'사진',rect:'네모',ellipse:'원',triangle:'세모',star:'별',line:'선'}[e.type]||'요소')}
 function layerUnit(e){return page().elements.filter(x=>e.groupId&&x.groupId===e.groupId||!e.groupId&&x.id===e.id)}
 function layerSelect(e,additive=false){
  const items=layerUnit(e);
@@ -328,6 +331,7 @@ function render(){
  window.GulliverCanvasMedia?.placeVideo?.();
  renderPages();properties();renderLayers();timeline?.refresh();window.GulliverCanvasMedia?.refresh?.();
  window.GulliverMultiTrack?.refresh?.();
+ window.GulliverCanvasActivities?.selection(current());
 }
 function placeNewText(e){
  const blockers=page().elements.filter(item=>item.type==='text');
@@ -459,7 +463,7 @@ function showSelectionWithoutReplacingTextNode(){
  const frame=stage.querySelector('.selection-frame');
  if(items.length>1){if(!frame)drawSelectionFrame()}
  else frame?.remove();
- properties();timeline?.refresh();
+ properties();timeline?.refresh();window.GulliverCanvasActivities?.selection(current());
 }
 function previewDrag(){
  const byId=new Map(page().elements.map(e=>[e.id,e]));
@@ -477,6 +481,7 @@ function previewDrag(){
  stage.querySelectorAll('.snap-guide').forEach(el=>el.remove());drawSnapGuides();
 }
 function startMove(event){
+ if(event.target.closest('[data-activity-control]'))return;
  if(event.button!==0&&event.pointerType==='mouse')return;
  if(editing||stage.classList.contains('playing'))return;
  if(busSwapMode&&page().teacherSource?.kind==='bus'){
@@ -632,7 +637,8 @@ function svg(pageValue){
   items+='<g opacity="'+e.opacity+'"'+(rotation?' transform="rotate('+rotation+' '+(e.x+e.w/2)+' '+(e.y+e.h/2)+')"':'')+
    (shadow?' filter="url(#'+id+'-shadow)"':'')+'>';
   const basic=' fill="'+e.fill+'" stroke="'+(bw?e.stroke:'none')+'" stroke-width="'+bw+'"';
-  if(e.type==='rect')items+='<rect x="'+e.x+'" y="'+e.y+'" width="'+e.w+'" height="'+e.h+'"'+basic+'/>';
+  if(e.type==='activity')items+=window.GulliverCanvasActivities.svg(e);
+  else if(e.type==='rect')items+='<rect x="'+e.x+'" y="'+e.y+'" width="'+e.w+'" height="'+e.h+'"'+basic+'/>';
   else if(e.type==='ellipse')items+='<ellipse cx="'+(e.x+e.w/2)+'" cy="'+(e.y+e.h/2)+'" rx="'+e.w/2+'" ry="'+e.h/2+'"'+basic+'/>';
   else if(e.type==='triangle'||e.type==='star')items+='<g'+basic+'>'+pathFor(e)+'</g>';
   else if(e.type==='line')items+='<line x1="'+e.x+'" y1="'+e.y+'" x2="'+(e.x+e.w)+'" y2="'+(e.y+e.h)+'" stroke="'+e.stroke+'" stroke-width="'+bw+'"/>';
@@ -894,6 +900,11 @@ function changeTrack(id,patch){
 }
 window.GulliverStudioAdapter={
  kind:'canvas',
+ getActiveActivities:()=>page().elements.filter(e=>e.type==='activity'),
+ addActivity:activity=>{const dim=C.LAYOUTS[model.layout],w=Math.min(activity.kind==='assignment'?860:activity.kind==='quiz'?600:380,dim.w-40),h=activity.kind==='assignment'?Math.min(420,dim.h-48):activity.kind==='quiz'?300:220,points=[[24,24],[dim.w-w-24,24],[24,dim.h-h-24],[dim.w-w-24,dim.h-h-24]];const overlap=([x,y])=>page().elements.reduce((n,e)=>n+Math.max(0,Math.min(x+w,e.x+e.w)-Math.max(x,e.x))*Math.max(0,Math.min(y+h,e.y+e.h)-Math.max(y,e.y)),0);const [x,y]=points.reduce((a,b)=>overlap(a)<=overlap(b)?a:b);addElement('activity',{activity:window.GulliverActivityCore.clean(activity),x,y,w,h,fill:'#ffffff'})},
+ updateActivity:(id,activity)=>edit(()=>{const e=page().elements.find(e=>e.id===id&&e.type==='activity');if(e)e.activity=window.GulliverActivityCore.clean(activity)}),
+ controlActivity:(id,action)=>{const e=page().elements.find(e=>e.id===id&&e.type==='activity');if(!e)return;if(action==='assign'){const next=window.GulliverActivityCore.control(e.activity,action);edit(()=>{e.activity=next});return}e.activity=window.GulliverActivityCore.control(e.activity,action);emit();render()},
+ getPublicCanvas:()=>page().videoClip||model.tracks?.some(t=>t.kind==='video')?{kind:'canvas',unsupported:true}:{kind:'canvas',title:model.title,svg:svg(page())},
  capture:()=>C.validate(model),
  appendTeacherPages:(result,options={})=>{
   if(!result||!Array.isArray(result.pages)||!result.pages.length)throw Error('캔버스에 추가할 자료가 없어요.');

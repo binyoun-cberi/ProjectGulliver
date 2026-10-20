@@ -81,7 +81,8 @@ function drawFrame(ctx,model,seconds,images=new Map(),videos=new Map(),opts={}){
   ctx.fillStyle=item.fill;ctx.strokeStyle=item.stroke;ctx.lineWidth=border;
   if(item.shadow){ctx.shadowColor=item.shadow.color;ctx.shadowBlur=item.shadow.blur;
    ctx.shadowOffsetX=item.shadow.x;ctx.shadowOffsetY=item.shadow.y}
-  if(item.type==='rect'){ctx.fillRect(0,0,item.w,item.h);if(border)ctx.strokeRect(0,0,item.w,item.h)}
+  if(item.type==='activity'){(root.GulliverActivityCore||require('./studio-activity-core.js')).paint(ctx,item)}
+  else if(item.type==='rect'){ctx.fillRect(0,0,item.w,item.h);if(border)ctx.strokeRect(0,0,item.w,item.h)}
   else if(item.type==='ellipse'){ctx.beginPath();ctx.ellipse(item.w/2,item.h/2,item.w/2,item.h/2,0,0,Math.PI*2);ctx.fill();if(border)ctx.stroke()}
   else if(item.type==='triangle'){ctx.beginPath();ctx.moveTo(item.w/2,0);ctx.lineTo(item.w,item.h);ctx.lineTo(0,item.h);ctx.closePath();ctx.fill();if(border)ctx.stroke()}
   else if(item.type==='star'){

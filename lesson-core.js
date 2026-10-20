@@ -9,6 +9,7 @@ const number=(v,min,max,fallback)=>Number.isFinite(Number(v))?Math.min(max,Math.
 function step(kind,payload=null){if(!TYPES.includes(kind))throw Error('지원하지 않는 자료예요.');return{id:id(),kind,title:({canvas:'통합 캔버스',slides:'발표 자료',document:'문서',design:'도안',video:'영상',audio:'음악',pdf:'PDF',timer:'활동 시간',quiz:'낱말카드 퀴즈'})[kind],payload,assetId:'',start:0,end:0,volume:1,loop:false,background:false,seconds:300,notes:''}}
 function blank(){return{version:1,id:id(),title:'새 수업',goal:'',audience:'',steps:[],createdAt:Date.now(),updatedAt:Date.now(),position:0}}
 function normalizeCards(raw){
+ const shared=globalThis.GulliverActivityClassroom||(typeof require==='function'?require('./studio-activity-classroom.js'):null);if(shared)return shared.cards(raw);
  if(!Array.isArray(raw)||raw.length>QUIZ_MAX)throw Error('퀴즈 카드는 최대 60개까지 넣을 수 있어요.');
  return raw.map(item=>{
   if(!item||typeof item!=='object')throw Error('퀴즈 카드 내용을 확인해 주세요.');
@@ -18,6 +19,7 @@ function normalizeCards(raw){
  });
 }
 function parseCards(raw){
+ const shared=globalThis.GulliverActivityClassroom||(typeof require==='function'?require('./studio-activity-classroom.js'):null);if(shared)return shared.parseCards(raw);
  const lines=String(raw??'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
  if(lines.length>QUIZ_MAX)throw Error('퀴즈 카드는 최대 60개까지 만들 수 있어요.');
  return normalizeCards(lines.map(line=>{

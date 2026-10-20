@@ -27,7 +27,7 @@ bar.innerHTML=[
  '<div class="teacher-live-grid" id="teacherLiveGrid"></div>',
  '<p class="teacher-live-note">수업 도구를 닫아도 지금 만들던 자료는 그대로 남아요. ‘결과를 캔버스로’를 누르면 편집 가능한 복사본이 추가돼요.</p>'
 ].join('');
-pane.prepend(bar);
+const native=pane.querySelector('.canvas-activities');if(native)native.after(bar);else pane.prepend(bar);
 const dlg=document.createElement('dialog');dlg.id='teacherLiveDialog';dlg.className='teacher-live-dialog';dlg.setAttribute('aria-label','교사 도구 실행 창');
 dlg.innerHTML=[
  '<div class="teacher-run-head"><div><strong id="teacherLiveTitle">교사 도구</strong><small id="teacherLiveDesc">원본 도구를 실행합니다</small></div>',
@@ -36,6 +36,7 @@ dlg.innerHTML=[
  '<iframe id="teacherLiveFrame" title="실행 중인 교사 도구" referrerpolicy="same-origin" allow="camera; microphone; fullscreen" loading="eager"></iframe>'
 ].join('');
 document.body.append(dlg);
+const nativeResult=document.createElement('button');nativeResult.type='button';nativeResult.id='teacherNativeResult';nativeResult.textContent='활동 요소로 추가';nativeResult.hidden=true;dlg.querySelector('.teacher-run-actions').prepend(nativeResult);
 const grid=bar.querySelector('#teacherLiveGrid'),frame=dlg.querySelector('#teacherLiveFrame'),
  status=dlg.querySelector('#teacherLiveStatus');
 let current=null;
@@ -56,6 +57,7 @@ for(const item of tools){
 function open(id){
  const item=tools.find(x=>x.id===id);if(!item)return;
  current=item;
+ nativeResult.hidden=!['groups','roles','seating','quiz'].includes(id);
  copyButton.disabled=true;
  refreshButton.hidden=true;
  dlg.querySelector('#teacherLiveTitle').textContent=item.name;
@@ -120,6 +122,14 @@ function snapshot(){
  }
  return null;
 }
+nativeResult.addEventListener('click',()=>{
+ if(!current)return;
+ try{const get=frame.contentWindow?.GulliverTeacherLiveSnapshot;if(typeof get!=='function')throw Error('도구를 먼저 준비해 주세요.');const live=get();if(live.sampleOnly||live.seededSample)throw Error('기본 예시 대신 직접 만든 문항을 입력해 주세요.');
+ const K=window.GulliverActivityClassroom;
+ const activity=current.id==='quiz'?{kind:'quiz',title:'우리 반 카드·퀴즈',cards:K.cards(live.cards),index:0,revealed:false}:K.fromSnapshot(live);
+ if(activity.kind==='quiz'&&!activity.cards.length)throw Error('문항을 먼저 입력해 주세요.');A.addActivity(activity);close('import');
+ }catch(error){info(error.message,true)}
+});
 copyButton.addEventListener('click',()=>{
  if(!current)return;
  try{
