@@ -5,7 +5,7 @@
   const query = new URLSearchParams(location.search);
   const kind = query.get('kind') || '';
   const token = query.get('session') || '';
-  const allowed = new Set(['timer', 'lesson', 'seating', 'manitto', 'flashquiz', 'bus', 'groups', 'roles', 'check', 'vote', 'praise']);
+  const allowed = new Set(['timer', 'lesson', 'seating', 'manitto', 'flashquiz', 'bus', 'groups', 'roles', 'check', 'vote', 'praise', 'canvas']);
   const stage = document.getElementById('displayStage');
   const connection = document.getElementById('displayConnection');
   const full = document.getElementById('displayFullscreen');
@@ -311,9 +311,21 @@
     stage.replaceChildren(card);
   }
 
+  function renderCanvas(data) {
+    if(data.hidden){waiting('잠시 기다려 주세요', '선생님이 다음 활동을 준비하고 있어요.');return;}
+    if(data.unsupported){waiting('영상 수업을 준비해 주세요', '이 장면의 영상은 교사 화면에서 재생해 주세요.');return;}
+    if(typeof data.svg!=='string'||data.svg.length>8000000||!data.svg.startsWith('<svg ')){waiting('수업 자료를 기다리고 있어요','교사 화면에서 페이지를 확인해 주세요.');return;}
+    let image=stage.querySelector('.display-canvas-image');
+    if(!image){image=element('img','display-canvas-image');stage.replaceChildren(image);}
+    image.alt=safeText(data.title,'수업 화면');
+    // Render as an image: no scripts, teacher controls, or private activity model.
+    image.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(data.svg);
+  }
+
   function render(data) {
     if (!data || data.kind !== kind) return;
-    if (kind === 'timer') renderTimer(data);
+    if (kind === 'canvas') renderCanvas(data);
+    else if (kind === 'timer') renderTimer(data);
     else if (kind === 'lesson') renderLesson(data);
     else if (kind === 'seating') renderSeating(data);
     else if (kind === 'manitto') renderManitto(data);

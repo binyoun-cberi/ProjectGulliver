@@ -901,9 +901,10 @@ function changeTrack(id,patch){
 window.GulliverStudioAdapter={
  kind:'canvas',
  getActiveActivities:()=>page().elements.filter(e=>e.type==='activity'),
- addActivity:activity=>{const dim=C.LAYOUTS[model.layout],w=Math.min(380,dim.w-40),h=220,points=[[24,24],[dim.w-w-24,24],[24,dim.h-h-24],[dim.w-w-24,dim.h-h-24]];const overlap=([x,y])=>page().elements.reduce((n,e)=>n+Math.max(0,Math.min(x+w,e.x+e.w)-Math.max(x,e.x))*Math.max(0,Math.min(y+h,e.y+e.h)-Math.max(y,e.y)),0);const [x,y]=points.reduce((a,b)=>overlap(a)<=overlap(b)?a:b);addElement('activity',{activity:window.GulliverActivityCore.clean(activity),x,y,w,h,fill:'#ffffff'})},
+ addActivity:activity=>{const dim=C.LAYOUTS[model.layout],w=Math.min(activity.kind==='assignment'?860:activity.kind==='quiz'?600:380,dim.w-40),h=activity.kind==='assignment'?Math.min(420,dim.h-48):activity.kind==='quiz'?300:220,points=[[24,24],[dim.w-w-24,24],[24,dim.h-h-24],[dim.w-w-24,dim.h-h-24]];const overlap=([x,y])=>page().elements.reduce((n,e)=>n+Math.max(0,Math.min(x+w,e.x+e.w)-Math.max(x,e.x))*Math.max(0,Math.min(y+h,e.y+e.h)-Math.max(y,e.y)),0);const [x,y]=points.reduce((a,b)=>overlap(a)<=overlap(b)?a:b);addElement('activity',{activity:window.GulliverActivityCore.clean(activity),x,y,w,h,fill:'#ffffff'})},
  updateActivity:(id,activity)=>edit(()=>{const e=page().elements.find(e=>e.id===id&&e.type==='activity');if(e)e.activity=window.GulliverActivityCore.clean(activity)}),
- controlActivity:(id,action)=>{const e=page().elements.find(e=>e.id===id&&e.type==='activity');if(!e)return;e.activity=window.GulliverActivityCore.control(e.activity,action);emit();render()},
+ controlActivity:(id,action)=>{const e=page().elements.find(e=>e.id===id&&e.type==='activity');if(!e)return;if(action==='assign'){const next=window.GulliverActivityCore.control(e.activity,action);edit(()=>{e.activity=next});return}e.activity=window.GulliverActivityCore.control(e.activity,action);emit();render()},
+ getPublicCanvas:()=>page().videoClip||model.tracks?.some(t=>t.kind==='video')?{kind:'canvas',unsupported:true}:{kind:'canvas',title:model.title,svg:svg(page())},
  capture:()=>C.validate(model),
  appendTeacherPages:(result,options={})=>{
   if(!result||!Array.isArray(result.pages)||!result.pages.length)throw Error('캔버스에 추가할 자료가 없어요.');
