@@ -46,6 +46,6 @@ test('기존 도구 데이터와 신규 보관함 검색/복원 UI가 실제 연
  assert.match(js,/W\.importBundle/);
  assert.match(js,/await B\.sync\(true\)/);
  const storage=fs.readFileSync('studio-storage.js','utf8');
- assert.match(storage,/DB_VERSION=4/);
+ assert.match(storage,/DB_VERSION=5/);
  assert.ok(storage.includes("db.transaction(['folders','projects','assets','media','official'],'readwrite')"));
 });

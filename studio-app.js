@@ -24,6 +24,8 @@ function download(value,name,mime){
 }
 const toolItems=Object.entries(C.TOOLS);
 function setupMenu(){
+ const compose=$('composeWork');
+ compose.onclick=async()=>{try{await sync(true);const work=await window.GulliverWorkStorage.ensureProject(activeProject);location.href='lesson.html?work='+encodeURIComponent(work.id)}catch(error){status(error.message,true)}};
  $('canvasLibraryToggle').addEventListener('click',()=>{
   const open=document.body.classList.toggle('canvas-library-open');
   $('canvasLibraryToggle').setAttribute('aria-expanded',String(open));
@@ -110,6 +112,7 @@ function updateNav(){
  if(targets.includes(prior))select.value=prior;
  $('sendToTool').disabled=!canShare||transferBusy;
  $('saveImageToShelf').disabled=!canShare||transferBusy;
+ $('composeWork').hidden=!['canvas','design','slides','document'].includes(activeKind);
  $('newProject').hidden=!tool||!tool.managed;
  $('renameProject').hidden=!tool||!tool.managed;
  $('manualSave').hidden=!tool||!tool.managed;
@@ -216,14 +219,14 @@ async function sync(force=false){
   if(!force&&json===lastSnapshot){await pendingSave;return true;}
   if(new Blob([json]).size>C.MAX_PROJECT_BYTES)throw Error('프로젝트가 26MB를 넘었어요. 사진을 줄이거나 원본을 직접 저장해 주세요.');
   const kind=activeKind,now=Date.now(),prev=activeProject;
-  next=C.normalizeProject({id:prev?.id||uuid(),kind,title:C.safeTitle(payload.title,C.TOOLS[kind].name+' 작업'),payload,folderId:prev?.folderId||'',createdAt:prev?.createdAt||now,updatedAt:now});
+  next=C.normalizeProject({...(prev?.workId?{workId:prev.workId,workStepId:prev.workStepId,workRevision:prev.workRevision}:{}),id:prev?.id||uuid(),kind,title:C.safeTitle(payload.title,C.TOOLS[kind].name+' 작업'),payload,folderId:prev?.folderId||'',createdAt:prev?.createdAt||now,updatedAt:now});
   activeProject=next;
   saveInFlight++;saveLabel('저장 중…');
   // Serialize every IndexedDB write. This prevents an older snapshot from
   // overwriting a newer change when async events arrive quickly.
   const write=pendingSave.catch(()=>{}).then(()=>S.saveProject(next));
   pendingSave=write;
-  await write;
+  const stored=await write;if(activeProject===next&&stored?.workId)Object.assign(activeProject,{workId:stored.workId,workStepId:stored.workStepId,workRevision:stored.workRevision});
   if(kind===activeKind && activeProject?.id===next.id){
    lastSnapshot=json;saveFailure=false;
    saveLabel('기기에 저장됨 · '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}));

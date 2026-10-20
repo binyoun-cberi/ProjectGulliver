@@ -3,7 +3,7 @@
 root.GulliverStudioStorage=lib;
 })(typeof globalThis!=='undefined'?globalThis:this,function(root){
 'use strict';
-const DB_NAME='gulliver-studio-v1',DB_VERSION=4;
+const DB_NAME='gulliver-studio-v1',DB_VERSION=5;
 const OPFS_THRESHOLD=24*1024*1024,OPFS_DIR='gulliver-studio-native-v24';
 let connection=null;
 function open(){
@@ -13,6 +13,8 @@ function open(){
   const req=root.indexedDB.open(DB_NAME,DB_VERSION);
   req.onupgradeneeded=()=>{
    const db=req.result;
+   if(!db.objectStoreNames.contains('works'))db.createObjectStore('works',{keyPath:'id'});
+   if(!db.objectStoreNames.contains('workAssets'))db.createObjectStore('workAssets',{keyPath:'id'});
    if(!db.objectStoreNames.contains('projects'))db.createObjectStore('projects',{keyPath:'id'});
    if(!db.objectStoreNames.contains('assets'))db.createObjectStore('assets',{keyPath:'id'});
    if(!db.objectStoreNames.contains('folders'))db.createObjectStore('folders',{keyPath:'id'});

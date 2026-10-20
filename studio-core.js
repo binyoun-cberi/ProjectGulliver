@@ -37,6 +37,7 @@ function normalizeProject(value){
  if(detectLegacy(value.payload)!==value.kind)throw Error('프로젝트 종류와 문서 형식이 일치하지 않습니다.');
  const date=v=>Number.isFinite(v)&&v>0?v:Date.now();
  return{id:String(value.id||'').slice(0,110),kind:value.kind,title:safeTitle(value.title,TOOLS[value.kind].name+' 작업'),
+  ...(typeof value.workId==='string'?{workId:value.workId,workStepId:String(value.workStepId||''),workRevision:Number(value.workRevision)||0}:{}),
   payload:value.payload,folderId:typeof value.folderId==='string'?value.folderId.slice(0,110):'',createdAt:date(value.createdAt),updatedAt:date(value.updatedAt)};
 }
 function recognizeAsset(file){

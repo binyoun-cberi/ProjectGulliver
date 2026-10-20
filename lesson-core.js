@@ -58,7 +58,7 @@ function normalize(raw,validators={}){
   if(['canvas','slides','document','design'].includes(s.kind)){if(!s.payload||!validators[s.kind])throw Error('편집 자료를 확인할 수 없어요.');copy.payload=validators[s.kind](s.payload)}
   return copy;
  });
- return{version:1,id:text(raw.id,110)||id(),title:text(raw.title,100).trim()||'새 수업',goal:text(raw.goal,240),audience:text(raw.audience,100),steps,createdAt:number(raw.createdAt,1,Number.MAX_SAFE_INTEGER,Date.now()),updatedAt:number(raw.updatedAt,1,Number.MAX_SAFE_INTEGER,Date.now()),position:number(raw.position,0,Math.max(0,steps.length-1),0)};
+ return{version:1,...(raw.workRevision!==undefined?{workRevision:Number(raw.workRevision)||0}:{}),id:text(raw.id,240)||id(),title:text(raw.title,100).trim()||'새 수업',goal:text(raw.goal,240),audience:text(raw.audience,100),steps,createdAt:number(raw.createdAt,1,Number.MAX_SAFE_INTEGER,Date.now()),updatedAt:number(raw.updatedAt,1,Number.MAX_SAFE_INTEGER,Date.now()),position:number(raw.position,0,Math.max(0,steps.length-1),0)};
 }
 function requiredMedia(lesson){
  const refs=new Map();

@@ -12,8 +12,9 @@ async function exportZip(){
  B.status('원본 자료를 ZIP 전체 백업에 담고 있어요. 저장이 끝날 때까지 이 창을 닫지 마세요.');
  try{
   if(C.managed(B.getState().activeKind))await B.sync(true);
-  const projects=(await S.projects()).map(C.normalizeProject),assets=await S.assets(),media=await S.media(),
+  const allProjects=(await S.projects()).map(C.normalizeProject),assets=await S.assets(),media=await S.media(),
    official=await S.official(),folders=await S.folders(),activities=W.read(),lessons=await LS.list(),lessonAssets=await LS.allAssets();
+  const linked=new Set(lessons.map(l=>l.workId).filter(Boolean));const projects=allProjects.filter(p=>!linked.has(p.workId));
   // Validate counts and legacy activity model before producing a misleading success.
   L.checkedManifest({format:L.MAGIC,version:L.VERSION,projects,assets,media,official,folders,activities});
   LA.checkList(lessons,lessonAssets.map(a=>({...a,size:a.blob?.size})));

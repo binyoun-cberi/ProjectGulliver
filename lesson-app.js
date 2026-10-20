@@ -29,7 +29,7 @@ async function save(){
   capture();remember();await ensureCanvasMedia();
   const copy=C.normalize(lesson,validators);
   saveQueue=saveQueue.catch(()=>{}).then(()=>S.save(copy));
-  await saveQueue;saveFailed=false;savedVersion=Math.max(savedVersion,revision);
+  const saved=await saveQueue;if(saved?.workRevision!==undefined&&lesson.id===copy.id){lesson.id=saved.id;lesson.workRevision=saved.workRevision;remember()}saveFailed=false;savedVersion=Math.max(savedVersion,revision);
   if(saveVersion===savedVersion)saveIndicator('saved','기기에 저장됨');
   else saveIndicator('pending','변경 사항 저장 대기 중…');
   status('수업을 이 브라우저에 저장했어요.');return true;
@@ -65,7 +65,9 @@ function renderSettings(){const root=$('settings');root.replaceChildren();const 
  controls.append(button('수업에서 빼기',()=>{capture();lesson.steps.splice(selected,1);selected=Math.max(0,Math.min(selected,lesson.steps.length-1));save();render()}));root.append(controls);
  if(['canvas','slides','document','design'].includes(s.kind))root.append(node('p','muted',s.kind==='canvas'?'캔버스의 글씨·사진·장면을 이 수업에서 다시 수정할 수 있어요.':'파일 내보내기는 가운데 편집기의 PPTX·PDF·HWPX·DOCX 저장 버튼을 사용하세요.'));
 }
-function render(){renderList();renderSettings();$('lessonTitle').value=lesson.title;$('startLesson').disabled=!lesson.steps.length;renderStage()}
+const materialButton=document.createElement('button');materialButton.type='button';materialButton.id='materialOnly';materialButton.textContent='자료 편집으로';materialButton.hidden=true;$('openLesson').after(materialButton);
+materialButton.onclick=async()=>{if(!await save())return;try{const work=await window.GulliverWorkStorage.get(lesson.id),step=work?.steps.find(s=>s.id===current()?.id);if(!step?.project)throw Error('이 활동은 현재 작업실에서 편집해 주세요.');location.assign('뚝딱 제작실.html?project='+encodeURIComponent(step.project.id))}catch(error){status(error.message,true)}};
+function render(){renderList();renderSettings();$('lessonTitle').value=lesson.title;$('startLesson').disabled=!lesson.steps.length;renderStage();const id=lesson.id;window.GulliverWorkStorage?.get(id).then(work=>{if(lesson.id===id)materialButton.hidden=!work?.steps.some(s=>s.id===current()?.id&&s.project)}).catch(()=>{});}
 function updateRunbar(){const s=current(),deck=s?.kind==='slides'?s.payload.slides:s?.kind==='canvas'?s.payload.pages:s?.kind==='quiz'?s.payload?.cards:null;$('runbar').hidden=!(running||previewing);$('counter').textContent=deck?`${selected+1} / ${lesson.steps.length} · ${slideIndex+1} / ${deck.length}장`:`${selected+1} / ${lesson.steps.length}`;$('previous').disabled=selected===0&&slideIndex===0;$('next').disabled=selected===lesson.steps.length-1&&(!deck||slideIndex===deck.length-1)}
 async function choose(index){capture();selected=index;slideIndex=0;quizRevealed=false;previewing=false;save();render()}
 function slidePage(s){const theme=BalpyoCore.THEMES[s.payload.theme],item=s.payload.slides[slideIndex],page=node('section','slide-page');page.style.background=theme.background;page.style.color=theme.foreground;if(item.eyebrow)page.append(node('small','',item.eyebrow));page.append(node('h1','',item.title));if(item.image){const img=node('img');img.src=item.image;img.alt=item.title;page.append(img)}page.append(node('p','',item.body));return page}
@@ -246,5 +248,5 @@ window.addEventListener('beforeunload',event=>{
 window.addEventListener('pagehide',()=>{
  try{capture();remember();S.save(C.normalize(lesson,validators)).catch(()=>{})}catch{}
 });
-(async()=>{try{const id=new URLSearchParams(location.search).get('lesson');if(id){const stored=await S.get(id);if(!stored)throw Error('이 브라우저에 저장된 수업을 찾지 못했어요. 원본 파일을 불러와 주세요.');lesson=C.normalize(stored,validators);selected=lesson.position}render()}catch(e){render();status(e.message,true)}})();
+(async()=>{try{const id=new URLSearchParams(location.search).get('work')||new URLSearchParams(location.search).get('lesson');if(id){const stored=await S.get(id);if(!stored)throw Error('이 브라우저에 저장된 수업을 찾지 못했어요. 원본 파일을 불러와 주세요.');lesson=C.normalize(stored,validators);selected=lesson.position}render()}catch(e){render();status(e.message,true)}})();
 })();
