@@ -14,3 +14,5 @@ body:not(.running) .stage iframe.editor-frame{display:block;width:100%;min-heigh
 .lesson-plan{margin:0;border:0;border-radius:0;padding:10px 20px;background:#fff}.lesson-plan-intro{display:none}
 @media(max-width:1150px){body:not(.running) .layout,body.canvas-step:not(.running) .layout{grid-template-columns:170px minmax(0,1fr)}body:not(.running) .right,body.canvas-step:not(.running) .right{grid-column:2;border-top:1px solid var(--line);border-left:0}}
 @media(max-width:700px){body:not(.running) .layout,body.canvas-step:not(.running) .layout{display:flex;flex-direction:column}.bar,#editActions{max-width:100%}.bar .actions{width:100%}.lesson-plan{padding:10px}.stage-head{flex-wrap:wrap}.left{width:100%}body:not(.running) .stage iframe.editor-frame{min-height:650px}.step-list{max-width:100%;overflow-x:auto}.right{width:100%}}
+/* Keep the embedded editor's fixed bottom toolbar within a scrollable viewport. */
+body:not(.running) .stage iframe.editor-frame{min-height:0;height:75dvh}

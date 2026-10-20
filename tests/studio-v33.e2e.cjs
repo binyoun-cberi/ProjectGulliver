@@ -5,7 +5,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const {spawn}=require('node:child_process'),{chromium}=require('playwright-core');
 const port=8815,base='http://127.0.0.1:'+port+'/';
 fs.mkdirSync('test-artifacts',{recursive:true});
-async function ready(){for(let i=0;i<100;i++){try{if((await fetch(base+'lesson-app.js')).ok)return}catch{}await new Promise(r=>setTimeout(r,160))}throw Error('Lesson server unavailable')}
+async function ready(){for(let i=0;i<100;i++){try{const response=await fetch(base+'lesson-app.js');await response.arrayBuffer();if(response.ok)return}catch{}await new Promise(r=>setTimeout(r,160))}throw Error('Lesson server unavailable')}
 function wav(){const b=Buffer.alloc(44+8000*2);b.write('RIFF',0);b.writeUInt32LE(b.length-8,4);b.write('WAVE',8);b.write('fmt ',12);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(8000,24);b.writeUInt32LE(16000,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(16000,40);return b}
 test('3.3 Chrome: canvas lesson edit, audio backup, playback and fresh restore',{timeout:120000},async()=>{
  const server=spawn('python3',['-m','http.server',String(port),'--bind','127.0.0.1'],{stdio:'ignore'});let browser;
@@ -59,7 +59,7 @@ test('3.3 Chrome: name tags create all printable pages with distinct tool colors
  const printPort=8816,printBase='http://127.0.0.1:'+printPort+'/';
  const server=spawn('python3',['-m','http.server',String(printPort),'--bind','127.0.0.1'],{stdio:'ignore'});let browser;
  try{
-  for(let i=0;i<100;i++){try{if((await fetch(printBase+'studio-unified-editor.js')).ok)break}catch{}await new Promise(r=>setTimeout(r,160))}
+  for(let i=0;i<100;i++){try{const response=await fetch(printBase+'studio-unified-editor.js');await response.arrayBuffer();if(response.ok)break}catch{}await new Promise(r=>setTimeout(r,160))}
   browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox']});
   const page=await browser.newPage();page.setDefaultTimeout(20000);
   await page.goto(printBase+encodeURIComponent('통합 캔버스.html'),{waitUntil:'domcontentloaded'});

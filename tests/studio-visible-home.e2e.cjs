@@ -36,7 +36,7 @@ test('Homepage and new-activity modal expose video/music editor links in Chrome'
   // New Canva-style start flow stays usable from a narrow phone viewport.
   await page.locator('#createDialog [data-close]').click();
   await page.keyboard.press('Escape'); // Dismiss the mobile sidebar opened earlier.
-  await page.locator('.format-tile[href="뚝딱 제작실.html?new=canvas&template=worksheet"]').waitFor();
+  await page.locator('.format-tile[href="lesson.html?new=canvas&template=worksheet"]').waitFor();
   await page.locator('#menuButton').click();
   await page.locator('.sidebar [data-view="templates"]').click();
   assert.equal(await page.locator('.sidebar [data-view="templates"]').getAttribute('aria-current'),'page');

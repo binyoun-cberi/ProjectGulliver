@@ -80,7 +80,7 @@ async function renderStage(){cleanupStage();const signature=renderToken,s=curren
   f.onload=()=>{if(signature!==renderToken||frame!==f)return;try{
    const a=f.contentWindow.GulliverStudioAdapter;if(a?.kind!=='canvas')throw Error('통합 캔버스를 연결하지 못했어요.');
    a.setMediaProvider(async id=>await S.asset(id)||GulliverStudioStorage.getMedia(id));
-   a.setMediaSink(async row=>S.putAsset({id:row.id,name:row.name,mime:row.mime,blob:row.blob}));
+   a.setMediaSink(async row=>S.putAsset({id:row.id,name:row.name,mime:row.mime,blob:new Blob([row.blob],{type:row.mime})}));
    a.apply(s.payload);
    if(running||previewing){
     const style=f.contentDocument.createElement('style');style.textContent='.activity-inline-controls{display:none!important}.top-tools,.shelf,.properties,#pageStrip,#status,.timeline{display:none!important}.editor-grid{display:block!important;min-height:0!important}.work{min-height:100vh;justify-content:center;padding:12px!important}#stageView{align-items:center}';f.contentDocument.head.append(style);
