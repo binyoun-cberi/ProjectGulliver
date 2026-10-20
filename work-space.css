@@ -1,0 +1,18 @@
+/* One work surface for material editing and classroom preparation. */
+body:not(.running) .bar{position:static;display:flex;flex-wrap:wrap;gap:12px;padding:12px 20px;background:#fff;border-bottom:1px solid var(--line)}
+body:not(.running) .bar>a,body:not(.running) .library-shortcut{display:none}
+body:not(.running) .bar input{min-width:160px;flex:1;max-width:340px}
+body:not(.running) .bar .actions{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px}
+#editActions{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+body:not(.running) .layout,body.canvas-step:not(.running) .layout{grid-template-columns:184px minmax(0,1fr) 224px}
+body:not(.running) .right,body.canvas-step:not(.running) .right{grid-column:auto;border-left:1px solid var(--line);border-top:0}
+body:not(.running) .center{min-width:0;padding:12px;background:#edf0f5}
+body:not(.running) .stage{border:0;background:#edf0f5;padding:0;min-width:0}
+body:not(.running) .stage iframe.editor-frame{display:block;width:100%;min-height:760px;height:calc(100vh - 245px);border:0;background:white}
+.left,.right{min-width:0;background:#fff}.left h2,.right h2{border:0;padding-left:0;color:var(--ink)}
+.add-grid button{background:#fff;color:var(--ink);border-color:var(--line);font-weight:500}
+.lesson-plan{margin:0;border:0;border-radius:0;padding:10px 20px;background:#fff}.lesson-plan-intro{display:none}
+@media(max-width:1150px){body:not(.running) .layout,body.canvas-step:not(.running) .layout{grid-template-columns:170px minmax(0,1fr)}body:not(.running) .right,body.canvas-step:not(.running) .right{grid-column:2;border-top:1px solid var(--line);border-left:0}}
+@media(max-width:700px){body:not(.running) .layout,body.canvas-step:not(.running) .layout{display:flex;flex-direction:column}.bar,#editActions{max-width:100%}.bar .actions{width:100%}.lesson-plan{padding:10px}.stage-head{flex-wrap:wrap}.left{width:100%}body:not(.running) .stage iframe.editor-frame{min-height:650px}.step-list{max-width:100%;overflow-x:auto}.right{width:100%}}
+/* Keep the embedded editor's fixed bottom toolbar within a scrollable viewport. */
+body:not(.running) .stage iframe.editor-frame{min-height:0;height:75dvh}

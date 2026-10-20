@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {spawn}=require('node:child_process'),{chromium}=require('playwright-core');
 const port=8926,base='http://127.0.0.1:'+port+'/';
-const screens=[['index.html','홈'],['뚝딱 제작실.html','제작실'],['내 보관함.html','내 보관함'],['lesson.html','수업 준비']];
+const screens=[['index.html','홈'],['뚝딱 제작실.html','만들기'],['내 보관함.html','내 보관함'],['lesson.html','만들기']];
 async function ready(){
  for(let i=0;i<85;i++){
   try{const response=await fetch(base+'gulliver-ui-v56.css');await response.arrayBuffer();if(response.ok)return}catch{}
@@ -23,8 +23,8 @@ test('5.6 Chrome shows identical workspace routes and usable active navigation f
     await page.goto(base+encodeURIComponent(path),{waitUntil:'domcontentloaded'});
     const tabs=page.locator('.gulliver-nav a');
     await tabs.first().waitFor();
-    assert.equal(await tabs.count(),5,name+' tabs at '+width+'px');
-    assert.deepEqual(await tabs.allTextContents(),['홈','제작실','내 보관함','수업 준비','우리 반']);
+    assert.equal(await tabs.count(),4,name+' tabs at '+width+'px');
+    assert.deepEqual(await tabs.allTextContents(),['홈','만들기','내 보관함','우리 반']);
     assert.equal(await tabs.filter({hasText:name}).first().getAttribute('aria-current'),'page');
     const m=await page.evaluate(()=>{
      const nav=document.querySelector('.gulliver-nav'),bbox=nav.getBoundingClientRect();

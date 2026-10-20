@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const paths={'홈':'index.html','제작실':'뚝딱 제작실.html','내 보관함':'내 보관함.html','수업 준비':'lesson.html'};
-const names=['홈','제작실','내 보관함','수업 준비'];
+const names=['홈','만들기','내 보관함'];
 test('principal screens share one navigation renderer instead of per-page menus',()=>{
  for(const path of [...Object.values(paths),'우리반.html']){
   const source=fs.readFileSync(path,'utf8');
@@ -21,7 +21,7 @@ test('5.6 teacher-facing copy distinguishes four workspaces from local lists',()
  assert.match(home,/전체 ZIP 백업/);
  assert.match(studio,/제작실 작업·소재함/);
  assert.match(library,/수업 준비에서 저장한 수업/);
- assert.match(lesson,/저장한 수업/);
+ assert.match(lesson,/작업 열기/);
  assert.match(lesson,/보관함 자료 가져오기/);
  assert.match(css,/@media\(max-width:640px\)/);
  assert.match(css,/body\.running>\.gulliver-nav/);

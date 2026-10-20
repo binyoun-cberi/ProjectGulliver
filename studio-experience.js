@@ -14,7 +14,7 @@ document.addEventListener('click',async event=>{
  const link=event.target.closest('.gulliver-nav a[href],.gx-brand,.shell a[href="index.html"],.shell a[href="내 보관함.html"]');
  if(!link||event.defaultPrevented||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||link.target==='_blank')return;
  event.preventDefault();
- if(link.getAttribute('aria-current')==='page'){
+ if(link.getAttribute('aria-current')==='page'&&new URL(link.href).pathname===location.pathname){
   $('navHome')?.click();return;
  }
  if(await bridge.navigateAway())location.assign(link.href);

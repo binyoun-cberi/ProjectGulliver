@@ -29,10 +29,10 @@ async function save(){
   capture();remember();await ensureCanvasMedia();
   const copy=C.normalize(lesson,validators);
   saveQueue=saveQueue.catch(()=>{}).then(()=>S.save(copy));
-  await saveQueue;saveFailed=false;savedVersion=Math.max(savedVersion,revision);
+  const saved=await saveQueue;if(saved?.workRevision!==undefined&&lesson.id===copy.id){lesson.id=saved.id;lesson.workRevision=saved.workRevision;remember()}saveFailed=false;savedVersion=Math.max(savedVersion,revision);
   if(saveVersion===savedVersion)saveIndicator('saved','기기에 저장됨');
   else saveIndicator('pending','변경 사항 저장 대기 중…');
-  status('수업을 이 브라우저에 저장했어요.');return true;
+  status('작업을 이 브라우저에 저장했어요.');return true;
  }catch(e){
   saveFailed=true;saveIndicator('error','저장 실패 · 원본 확인');
   status('저장하지 못했어요. 원본 백업으로 보관해 주세요. '+e.message,true);return false;
@@ -65,22 +65,22 @@ function renderSettings(){const root=$('settings');root.replaceChildren();const 
  controls.append(button('수업에서 빼기',()=>{capture();lesson.steps.splice(selected,1);selected=Math.max(0,Math.min(selected,lesson.steps.length-1));save();render()}));root.append(controls);
  if(['canvas','slides','document','design'].includes(s.kind))root.append(node('p','muted',s.kind==='canvas'?'캔버스의 글씨·사진·장면을 이 수업에서 다시 수정할 수 있어요.':'파일 내보내기는 가운데 편집기의 PPTX·PDF·HWPX·DOCX 저장 버튼을 사용하세요.'));
 }
-function render(){renderList();renderSettings();$('lessonTitle').value=lesson.title;$('startLesson').disabled=!lesson.steps.length;renderStage()}
+function render(){renderList();renderSettings();$('lessonTitle').value=lesson.title;$('startLesson').disabled=!lesson.steps.length;renderStage();}
 function updateRunbar(){const s=current(),deck=s?.kind==='slides'?s.payload.slides:s?.kind==='canvas'?s.payload.pages:s?.kind==='quiz'?s.payload?.cards:null;$('runbar').hidden=!(running||previewing);$('counter').textContent=deck?`${selected+1} / ${lesson.steps.length} · ${slideIndex+1} / ${deck.length}장`:`${selected+1} / ${lesson.steps.length}`;$('previous').disabled=selected===0&&slideIndex===0;$('next').disabled=selected===lesson.steps.length-1&&(!deck||slideIndex===deck.length-1)}
 async function choose(index){capture();selected=index;slideIndex=0;quizRevealed=false;previewing=false;save();render()}
 function slidePage(s){const theme=BalpyoCore.THEMES[s.payload.theme],item=s.payload.slides[slideIndex],page=node('section','slide-page');page.style.background=theme.background;page.style.color=theme.foreground;if(item.eyebrow)page.append(node('small','',item.eyebrow));page.append(node('h1','',item.title));if(item.image){const img=node('img');img.src=item.image;img.alt=item.title;page.append(img)}page.append(node('p','',item.body));return page}
 function documentPage(s){const page=node('article','document-page');page.append(node('h1','',s.payload.title),node('p','muted',s.payload.subtitle));s.payload.blocks.forEach(b=>{if(b.type==='table'){const table=node('table');b.rows.forEach(row=>{const tr=node('tr');row.forEach(text=>tr.append(node('td','',text)));table.append(tr)});page.append(table)}else if(b.type==='image'){const img=node('img');img.src=b.src;img.alt=b.caption;page.append(img,node('p','muted',b.caption))}else if(b.type==='list'){const list=node('ul');b.text.split('\n').filter(Boolean).forEach(text=>list.append(node('li','',text)));page.append(list)}else page.append(node(b.type==='heading'?'h2':b.type==='rule'?'hr':'p','',b.text))});return page}
 function applyMedia(media,s){media.controls=true;media.volume=s.volume;media.preload='metadata';media.onloadedmetadata=()=>{if(s.start>=media.duration){status('설정한 시작 시간이 파일 길이보다 길어요.',true);return}media.currentTime=s.start};media.ontimeupdate=()=>{if(!media.paused&&media.currentTime<s.start-.1)media.currentTime=s.start;if(s.end&&media.currentTime>=s.end){if(s.loop){media.currentTime=s.start;media.play().catch(()=>{})}else media.pause()}};media.onended=()=>{if(s.loop){media.currentTime=s.start;media.play().catch(()=>{})}};media.onerror=()=>status('이 브라우저에서 파일을 재생하지 못했어요. 다른 형식의 파일을 사용해 주세요.',true)}
-async function renderStage(){cleanupStage();const signature=renderToken,s=current(),stage=$('stage');document.body.classList.toggle('canvas-step',s?.kind==='canvas');stage.dataset.kind=s?.kind||'';$('previewStep').hidden=!s||!['canvas','slides','document','design'].includes(s.kind)||running;$('previewStep').textContent=previewing?'편집으로 돌아가기':'자료 미리보기';$('stepTitle').textContent=s?.title||'수업을 준비해 보세요';$('modeHint').textContent=s?.kind==='slides'&&!running&&!previewing?'슬라이드 편집 · PPTX 내보내기':'';updateRunbar();
+async function renderStage(){cleanupStage();const signature=renderToken,s=current(),stage=$('stage');document.body.classList.toggle('canvas-step',s?.kind==='canvas');stage.dataset.kind=s?.kind||'';$('previewStep').hidden=!s||!['canvas','slides','document','design'].includes(s.kind)||running;$('previewStep').textContent=previewing?'편집으로 돌아가기':'자료 미리보기';$('stepTitle').textContent=s?.title||'작업할 자료를 선택하세요';$('modeHint').textContent=s?.kind==='slides'&&!running&&!previewing?'슬라이드 편집 · PPTX 내보내기':'';updateRunbar();
  $('lessonPresenter').hidden=!(running||previewing)||!s;
  $('lessonPresenterNotes').hidden=true;$('toggleLessonNotes').setAttribute('aria-expanded','false');$('lessonPresenterNotes').textContent=s?.notes||'진행 메모가 없어요. 편집 화면에서 활동 설정에 메모를 적어 보세요.';
- if(!s){const box=node('div','empty');box.append(node('h1','','만들고, 바로 수업하세요.'),node('p','','발표 자료와 문서, 영상, 음악을 한 수업에 담아 보세요. 왼쪽에서 자료를 추가하거나 제작실의 내 자료를 가져오면 시작할 수 있어요.'));stage.append(box);return}
+ if(!s){const box=node('div','empty');box.append(node('h1','','만들고, 바로 수업하세요.'),node('p','','발표 자료와 문서, 영상, 음악을 한 수업에 담아 보세요. 왼쪽에서 자료를 추가하세요. 같은 화면에서 편집하고 순서와 진행 메모를 정할 수 있어요.'));stage.append(box);return}
  if(s.kind==='canvas'){
-  const f=node('iframe','editor-frame');let play=null;frame=f;frameStepId=s.id;f.title='통합 캔버스 '+(running||previewing?'수업 화면':'편집기');stage.classList.add('editor');
+  const f=node('iframe','editor-frame');f.id='editorFrame';let play=null;frame=f;frameStepId=s.id;f.title='통합 캔버스 '+(running||previewing?'수업 화면':'편집기');stage.classList.add('editor');
   f.onload=()=>{if(signature!==renderToken||frame!==f)return;try{
    const a=f.contentWindow.GulliverStudioAdapter;if(a?.kind!=='canvas')throw Error('통합 캔버스를 연결하지 못했어요.');
    a.setMediaProvider(async id=>await S.asset(id)||GulliverStudioStorage.getMedia(id));
-   a.setMediaSink(async row=>S.putAsset({id:row.id,name:row.name,mime:row.mime,blob:row.blob}));
+   a.setMediaSink(async row=>S.putAsset({id:row.id,name:row.name,mime:row.mime,blob:new Blob([row.blob],{type:row.mime})}));
    a.apply(s.payload);
    if(running||previewing){
     const style=f.contentDocument.createElement('style');style.textContent='.activity-inline-controls{display:none!important}.top-tools,.shelf,.properties,#pageStrip,#status,.timeline{display:none!important}.editor-grid{display:block!important;min-height:0!important}.work{min-height:100vh;justify-content:center;padding:12px!important}#stageView{align-items:center}';f.contentDocument.head.append(style);
@@ -99,7 +99,7 @@ async function renderStage(){cleanupStage();const signature=renderToken,s=curren
  }
  if(['slides','document','design'].includes(s.kind)){
   if(running||previewing){if(s.kind==='slides')stage.append(slidePage(s));else if(s.kind==='document')stage.append(documentPage(s));else{const page=node('div','design-page');page.innerHTML=DoanCore.svg(DoanCore.validateProject(s.payload));stage.append(page)}return}
-  const f=node('iframe','editor-frame');frame=f;frameStepId=s.id;f.title=labels[s.kind]+' 편집기';stage.classList.add('editor');f.onload=()=>{if(signature!==renderToken||frame!==f)return;try{const a=f.contentWindow.GulliverStudioAdapter;if(!a||a.kind!==s.kind)throw Error('편집기를 연결하지 못했어요.');a.apply(s.payload);const doc=f.contentDocument,style=doc.createElement('style');style.textContent='body>header,body>section.hero,body>section.intro,body>footer,body>section.advanced,body>.advanced{display:none!important}body{margin:0!important}body>.workspace{margin:0!important;max-width:none!important;padding:12px!important;grid-template-columns:170px minmax(0,1fr) 200px!important}@media(max-width:1100px){body>.workspace{display:flex!important;flex-direction:column!important}}';doc.head.append(style);ready=true;for(const type of ['input','change','pointerup','keyup'])doc.addEventListener(type,schedule,{passive:true});status('자료를 편집할 수 있어요. 변경 내용은 수업에 자동 저장돼요.')}catch(e){status(e.message,true)}};f.src=GulliverStudioCore.TOOLS[s.kind].href+'?studio=1';stage.append(f);return;
+  const f=node('iframe','editor-frame');f.id='editorFrame';frame=f;frameStepId=s.id;f.title=labels[s.kind]+' 편집기';stage.classList.add('editor');f.onload=()=>{if(signature!==renderToken||frame!==f)return;try{const a=f.contentWindow.GulliverStudioAdapter;if(!a||a.kind!==s.kind)throw Error('편집기를 연결하지 못했어요.');a.apply(s.payload);const doc=f.contentDocument,style=doc.createElement('style');style.textContent='body>header,body>section.hero,body>section.intro,body>footer,body>section.advanced,body>.advanced{display:none!important}body{margin:0!important}body>.workspace{margin:0!important;max-width:none!important;padding:12px!important;grid-template-columns:170px minmax(0,1fr) 200px!important}@media(max-width:1100px){body>.workspace{display:flex!important;flex-direction:column!important}}';doc.head.append(style);ready=true;for(const type of ['input','change','pointerup','keyup'])doc.addEventListener(type,schedule,{passive:true});status('자료를 편집할 수 있어요. 변경 내용은 수업에 자동 저장돼요.')}catch(e){status(e.message,true)}};f.src=GulliverStudioCore.TOOLS[s.kind].href+'?studio=1';stage.append(f);return;
  }
  if(s.kind==='quiz'){
   const cards=s.payload?.cards||[],view=node('section','quiz-view');
@@ -146,13 +146,15 @@ function importActivity(p){
 }
 async function library(mode){
  if(!await save())return;
- $('libraryTitle').textContent=mode==='lessons'?'저장한 수업':'내 보관함에서 수업 자료 가져오기';
+ $('libraryTitle').textContent=mode==='lessons'?'저장한 작업':'내 보관함에서 수업 자료 가져오기';
  const root=$('libraryList');root.replaceChildren(node('p','muted','불러오는 중…'));
  $('libraryDialog').showModal();
  try{
   if(mode==='lessons'){
-   const items=await S.list();root.replaceChildren();
-   if(!items.length)root.append(node('p','muted','저장한 수업이 없어요.'));
+   const items=await S.list(),seen=new Set(items.map(p=>p.id));
+   for(const project of await GulliverStudioStorage.projects())if(['canvas','slides','document','design'].includes(project.kind)){const work=await GulliverWorkStorage.ensureProject(project);if(!seen.has(work.id)){items.push(await S.get(work.id));seen.add(work.id)}}
+   items.sort((a,b)=>b.updatedAt-a.updatedAt);root.replaceChildren();
+   if(!items.length)root.append(node('p','muted','저장한 작업이 없어요.'));
    for(const p of items){
     const b=button('',()=>{try{capture();lesson=C.normalize(p,validators);selected=lesson.position;slideIndex=0;quizRevealed=false;previewing=false;remember();render();$('libraryDialog').close()}catch(e){status(e.message,true)}},'import-source');
     b.append(node('strong','',p.title),node('small','',String(p.steps?.length||0)+'개 활동 · 기기 저장'));root.append(b);
@@ -246,5 +248,5 @@ window.addEventListener('beforeunload',event=>{
 window.addEventListener('pagehide',()=>{
  try{capture();remember();S.save(C.normalize(lesson,validators)).catch(()=>{})}catch{}
 });
-(async()=>{try{const id=new URLSearchParams(location.search).get('lesson');if(id){const stored=await S.get(id);if(!stored)throw Error('이 브라우저에 저장된 수업을 찾지 못했어요. 원본 파일을 불러와 주세요.');lesson=C.normalize(stored,validators);selected=lesson.position}render()}catch(e){render();status(e.message,true)}})();
+(async()=>{try{const params=new URLSearchParams(location.search),projectId=params.get('project');let id=params.get('work')||params.get('lesson');if(projectId){const project=await GulliverStudioStorage.getProject(projectId);if(!project)throw Error('저장한 자료를 찾지 못했어요.');if(!['canvas','slides','document','design'].includes(project.kind))throw Error('이 자료는 내 보관함의 전문 편집기에서 열어 주세요.');const work=await GulliverWorkStorage.ensureProject(project);id=work.id;}if(id){const stored=await S.get(id);if(!stored)throw Error('이 브라우저에 저장된 수업을 찾지 못했어요. 원본 파일을 불러와 주세요.');lesson=C.normalize(stored,validators);selected=lesson.position}else if(['canvas','slides','document','design'].includes(params.get('new'))){const kind=params.get('new'),payload=kind==='canvas'?GulliverUnifiedCore.starter(params.get('template')||'blank'):undefined;add(kind,payload);return}render()}catch(e){render();status(e.message,true)}})();
 })();

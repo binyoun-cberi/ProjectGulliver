@@ -27,7 +27,7 @@ test('2.3 official WASM wrapper integrates save/open but does not claim autosave
  const bridge=fs.readFileSync('studio-official-media.js','utf8'),main=fs.readFileSync('studio-app.js','utf8');
  const library=fs.readFileSync('studio-library.js','utf8'),store=fs.readFileSync('studio-storage.js','utf8');
  const html=fs.readFileSync('뚝딱 제작실.html','utf8');
- assert.match(store,/DB_VERSION=4/);assert.match(store,/createObjectStore\('official'/);
+ assert.match(store,/DB_VERSION=5/);assert.match(store,/createObjectStore\('official'/);
  assert.match(store,/staged\.forEach\(item=>o\.add\(item\.data\)\)/);
  assert.match(bridge,/filmcraft\.openProject/);assert.match(bridge,/film\.execute\('file\.saveAs'/);
  assert.match(bridge,/new w\.DragEvent/);assert.match(bridge,/requestedOfficialId/);

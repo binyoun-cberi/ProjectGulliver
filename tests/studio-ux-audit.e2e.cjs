@@ -61,6 +61,8 @@ test('UX inspection: home to new canvas to panels on desktop/tablet/phone',{time
    await frame.locator('[data-pane="elements"] .shelf .insert-tools').waitFor({state:'visible'});
    for(const section of ['templates','teacher-tools','page-tools'])
     assert.equal(await frame.locator('[data-pane="elements"] .shelf .'+section).isVisible(),false,'duplicate '+section+' must not distract from insertion');
+   // The common work header and activity list scroll above the embedded editor.
+   await page.locator('#editorFrame').scrollIntoViewIfNeeded();
    await frame.locator('[data-design-tab="text"]').click();
    await frame.locator('.design-panel').waitFor();
    await frame.locator('[data-add="text"]').evaluate(el=>el.click());

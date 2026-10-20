@@ -3,11 +3,11 @@
   'use strict';
   const file = decodeURIComponent(location.pathname.split('/').pop() || 'index.html');
   const sections = [
-    ['home', '홈', 'index.html'], ['studio', '제작실', '뚝딱 제작실.html'],
-    ['library', '내 보관함', '내 보관함.html'], ['lesson', '수업 준비', 'lesson.html'],
+    ['home', '홈', 'index.html'], ['studio', '만들기', 'lesson.html'],
+    ['library', '내 보관함', '내 보관함.html'],
     ['classroom', '우리 반', '우리반.html']
   ];
-  const principal = {'index.html':'home', '뚝딱 제작실.html':'studio', '내 보관함.html':'library', 'lesson.html':'lesson', '우리반.html':'classroom'};
+  const principal = {'index.html':'home', '뚝딱 제작실.html':'studio', '내 보관함.html':'library', 'lesson.html':'studio', '우리반.html':'classroom'};
   const editors = new Set(['통합 캔버스.html','그림 뚝딱.html','PDF 뚝딱.html','도안 뚝딱.html','발표 뚝딱.html','문서 뚝딱.html','영상 뚝딱.html','음악 뚝딱.html']);
   let shell, actions;
   function embedded() {

@@ -25,7 +25,7 @@ test('normalizes malformed entries and escapes URL IDs',()=>{
   {id:'unknown',kind:'undefined',title:'지원하지 않음'}
  ]});
  assert.equal(rows.length,1);
- assert.equal(rows[0].href,'뚝딱 제작실.html?project=a%20%231');
+ assert.equal(rows[0].href,'lesson.html?project=a%20%231');
 });
 test('filters by kind and search independently of source',()=>{
  const rows=core.entries({projects:[{id:'p',kind:'slides',title:'숲속 발표',updatedAt:10}],lessons:[{id:'l',title:'숲속 수업',updatedAt:20}],activities:[{id:'a',kind:'quiz',title:'숲속 퀴즈',updatedAt:5}]});

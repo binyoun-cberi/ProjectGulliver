@@ -19,56 +19,39 @@ test('Classroom journey: home -> canvas create/save -> unified library -> edit -
   // Wait for the outer studio to attach its adapter and finish its first autosave,
   // not just for the iframe to define GulliverStudioAdapter.
   await page.waitForFunction(()=>document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.kind==='canvas');
-  await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor();
-  // Exercise the actual editable field: parent autosave relies on input/change events.
+  await page.locator('#lessonSaveState').filter({hasText:'기기에 저장됨'}).waitFor();
+  await page.locator('#lessonTitle').fill('종합 검수 발표 자료');
   await frame.locator('#designTitle').fill('종합 검수 발표 자료');
   await frame.locator('#designTitle').press('Tab');
-  // Canvas uses autosave in this mode; the manual-save control is intentionally
-  // hidden. Poll the actual IndexedDB result from Node instead of Playwright's
-  // browser-context waitForFunction(async () => ...), which can pass on a Promise.
-  await page.locator('#saveStatus').filter({hasText:'기기에 저장됨'}).waitFor();
-  for(let i=0;i<50;i++){
-   const exists=await page.evaluate(async()=> (await GulliverStudioStorage.projects()).some(x=>x.title==='종합 검수 발표 자료'));
-   if(exists)break;
-   if(i===49)throw Error('Changed canvas title was not autosaved within 10s');
-   await new Promise(resolve=>setTimeout(resolve,200));
-  }
-  const state=await page.evaluate(async()=>({
-   stored:(await GulliverStudioStorage.projects()).map(x=>({id:x.id,title:x.title,kind:x.kind,pageCount:x.payload?.pages?.length,updatedAt:x.updatedAt})),
-   editor:document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.capture?.()?.title,
-   label:document.querySelector('#saveStatus')?.textContent
-  }));
-  console.log('AUDIT_CANVAS_SAVE',JSON.stringify(state));
-  const source=await page.evaluate(async()=> (await GulliverStudioStorage.projects()).find(x=>x.title==='종합 검수 발표 자료'));
-  assert.ok(source?.payload?.pages?.length,'saved project must contain canvas pages: '+JSON.stringify({kind:source?.kind,payloadKeys:Object.keys(source?.payload||{}),pageLength:source?.payload?.pages?.length,found:!!source}));
+  await page.locator('#saveLesson').click();
+  const source=await page.evaluate(async()=> (await LessonStorage.list()).find(x=>x.title==='종합 검수 발표 자료'));
+  assert.ok(source?.steps[0]?.payload?.pages?.length,'saved work contains editable canvas pages');
   await page.goto(base+encodeURIComponent('내 보관함.html'),{waitUntil:'domcontentloaded'});
   await page.locator('#unifiedLibraryList .unified-item').filter({hasText:'종합 검수 발표 자료'}).waitFor();
   await page.locator('#unifiedLibraryList .unified-item').filter({hasText:'종합 검수 발표 자료'}).locator('a.unified-open').click();
   await page.waitForFunction(()=>document.querySelector('#editorFrame')?.contentWindow?.GulliverStudioAdapter?.capture?.().title==='종합 검수 발표 자료');
-  await page.goto(base+'lesson.html',{waitUntil:'domcontentloaded'});
   await page.locator('#lessonAudience').fill('종합 검수 반');
   await page.locator('#lessonGoal').fill('준비한 자료를 수업에 활용한다');
-  await page.locator('#fromStudio').click();
-  const importSource=page.locator('#libraryList button.import-source').filter({hasText:'종합 검수 발표 자료'});
-  await importSource.waitFor();await importSource.click();
+  await page.locator('[data-add=timer]').click();
+  await page.locator('#saveLesson').click();
   let recorded=false;
   for(let attempt=0;attempt<80;attempt++){
    recorded=await page.evaluate(async()=>{
     const id=new URL(location.href).searchParams.get('lesson');
-    return Boolean((await LessonStorage.get(id))?.steps?.length===1);
+    return Boolean((await LessonStorage.get(id))?.steps?.length===2);
    });
    if(recorded)break;
    await new Promise(resolve=>setTimeout(resolve,200));
   }
-  assert.ok(recorded,'The lesson import must persist in IndexedDB before another tool opens it');
+  assert.ok(recorded,'The same work must persist in IndexedDB before another tool opens it');
   const lessonId=await page.evaluate(()=>new URL(location.href).searchParams.get('lesson'));
   const lesson=await page.evaluate(async id=>LessonStorage.get(id),lessonId);
   assert.equal(lesson.steps[0].kind,'canvas');
   assert.equal(lesson.steps[0].payload.title,'종합 검수 발표 자료');
   assert.equal(lesson.goal,'준비한 자료를 수업에 활용한다');
   assert.equal(lesson.audience,'종합 검수 반');
-  const original=await page.evaluate(async id=>GulliverStudioStorage.getProject(id),source.id);
-  assert.equal(original.title,source.title,'importing the lesson must not mutate source project');
+  assert.equal(lessonId,source.id,'preparation keeps the same work identity');
+  await page.locator('#stepList .step-button').first().click();
   await page.locator('#startLesson').click();
   await page.locator('body.running').waitFor();
   await page.frameLocator('iframe.editor-frame').locator('#stage').waitFor();
@@ -82,13 +65,13 @@ test('Classroom journey: home -> canvas create/save -> unified library -> edit -
   assert.equal(archive.lesson.id,lessonId);
   assert.equal(archive.lesson.steps[0].kind,'canvas');
   await page.goto(base+encodeURIComponent('내 보관함.html'),{waitUntil:'domcontentloaded'});
-  const saved=page.locator('#unifiedLibraryList .unified-item').filter({hasText:'새 수업'});
+  const saved=page.locator('#unifiedLibraryList .unified-item').filter({hasText:'종합 검수 발표 자료'});
   await saved.first().waitFor();
   await saved.first().locator('a.unified-open').click();
   await page.waitForFunction(expected=>new URL(location.href).searchParams.get('lesson')===expected,lessonId);
   await page.locator('#lessonGoal').waitFor();
   await page.waitForFunction(()=>document.getElementById('lessonGoal')?.value==='준비한 자료를 수업에 활용한다');
-  assert.equal(await page.locator('#stepList .step-button').count(),1);
+  assert.equal(await page.locator('#stepList .step-button').count(),2);
   assert.deepEqual(errors,[],'no page script error on cross-tool journey');
  }finally{await browser?.close();server.kill('SIGTERM')}
 });

@@ -9,10 +9,10 @@ const FORMATS=[
  ['document','가정통신문·문서','document','≡','#367ce8','한글·워드 문서 만들기'],
  ['video','영상','video','▶','#d54fc4','사진과 영상으로 만들기'],
  ['music','음악','music','♫','#7561d7','멜로디·음원 편집하기'],
- ['lesson','수업 준비','lesson','▣','#168c89','자료와 활동을 한 수업으로']
+ ['lesson','수업 구성','lesson','▣','#168c89','자료와 활동을 한 작업에서']
 ];
 function startTiles(){
- return '<div class="format-grid">'+FORMATS.map(f=>'<a class="format-tile" href="'+(f[2]==='lesson'?'lesson.html':'뚝딱 제작실.html?new='+f[2]+(f[6]?'&amp;template='+f[6]:''))+'" style="--format-accent:'+f[4]+'" aria-label="'+f[1]+' 만들기"><span class="format-symbol" aria-hidden="true">'+f[3]+'</span><span class="format-copy"><strong>'+f[1]+'</strong><small>'+f[5]+'</small></span></a>').join('')+'</div>';
+ return '<div class="format-grid">'+FORMATS.map(f=>'<a class="format-tile" href="'+(f[2]==='lesson'?'lesson.html':(['canvas','document'].includes(f[2])?'lesson.html?new=':'뚝딱 제작실.html?new=')+f[2]+(f[6]?'&amp;template='+f[6]:''))+'" style="--format-accent:'+f[4]+'" aria-label="'+f[1]+' 만들기"><span class="format-symbol" aria-hidden="true">'+f[3]+'</span><span class="format-copy"><strong>'+f[1]+'</strong><small>'+f[5]+'</small></span></a>').join('')+'</div>';
 }
 const requestedView=new URLSearchParams(location.search).get('view');
 let view=['home','tools','activities','templates','favorites','trash'].includes(requestedView)?requestedView:'home',folderId='',category='전체',editAction=null,toastTimer;

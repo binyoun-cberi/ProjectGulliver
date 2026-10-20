@@ -19,11 +19,12 @@
     const category=kind==='lesson'?'수업':kind==='asset'?'사진·파일':origin==='official'||kind==='video'||kind==='music'?'영상·음악':['timer','quiz','seating'].includes(kind)?'수업 도구':'학습자료';
     const updatedAt=Number(p.updatedAt||p.createdAt)||0;
     const title=String(p.title||p.name||labels[kind]).trim().slice(0,160)||labels[kind];
-    const href=origin==='activities'?null:origin==='lessons'?'lesson.html?lesson='+encodeURIComponent(p.id):origin==='assets'?'뚝딱 제작실.html?library=assets':origin==='official'?'뚝딱 제작실.html?official='+encodeURIComponent(kind+':'+p.id):'뚝딱 제작실.html?project='+encodeURIComponent(p.id);
-    result.push({key:origin+':'+p.id,id:p.id,kind,origin,category,title,updatedAt,href,icon:icons[kind],label:labels[kind],blob:origin==='assets'?p.blob:null,status:origin==='official'?'보관한 사본 · 자동 갱신 안 됨':origin==='assets'?'소재함 · 기기 저장':origin==='lessons'?'기기 저장 · 수업별 백업':origin==='activities'?'직접 저장한 활동':'자동 저장 · 기기 저장'});
+    const href=origin==='activities'?null:origin==='lessons'?'lesson.html?lesson='+encodeURIComponent(p.id):origin==='assets'?'뚝딱 제작실.html?library=assets':origin==='official'?'뚝딱 제작실.html?official='+encodeURIComponent(kind+':'+p.id):(['canvas','design','slides','document'].includes(kind)?'lesson.html?project=':'뚝딱 제작실.html?project=')+encodeURIComponent(p.id);
+    result.push({workId:p.workId||'',key:origin+':'+p.id,id:p.id,kind,origin,category,title,updatedAt,href,icon:icons[kind],label:labels[kind],blob:origin==='assets'?p.blob:null,status:origin==='official'?'보관한 사본 · 자동 갱신 안 됨':origin==='assets'?'소재함 · 기기 저장':origin==='lessons'?'기기 저장 · 수업별 백업':origin==='activities'?'직접 저장한 활동':'자동 저장 · 기기 저장'});
    }
   }
   append(source.projects,'projects');append(source.official,'official');append(source.activities,'activities');append(source.lessons,'lessons');append(source.assets,'assets');
+  const linked=new Set(result.filter(r=>r.origin==='lessons'&&r.workId).map(r=>r.workId));for(let i=result.length-1;i>=0;i--)if(result[i].origin==='projects'&&linked.has(result[i].workId))result.splice(i,1);
   result.sort((a,b)=>b.updatedAt-a.updatedAt||a.title.localeCompare(b.title,'ko'));
   return result;
  }
