@@ -3,6 +3,10 @@ on:
   pull_request:
     paths:
       - 'gulliver-teacher-*'
+      - 'gulliver-app-shell.js'
+      - 'gulliver-design.css'
+      - 'classroom-workspace.js'
+      - 'lesson-circle-timer.js'
       - 'tests/gulliver-teacher-ui.test.cjs'
       - 'tests/gulliver-teacher-display.test.cjs'
       - 'tests/gulliver-teacher-classroom-v62.test.cjs'

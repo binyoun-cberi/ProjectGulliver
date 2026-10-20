@@ -95,7 +95,7 @@ test('6.2 projection restricts student popup to public results, including when e
       await page.goto(base+encodeURIComponent(file));
       await page.locator('.gt-v62-flow').waitFor({state:'visible'});
       const popupEvent=page.waitForEvent('popup');
-      await page.locator('.gt-v62-student').click();
+      await page.locator('.gt-open-display').click();
       const popup=await popupEvent;
       await popup.locator('#displayConnection[data-state="connected"]').waitFor();
       assert.equal(await popup.locator('.gt-shell,.gt-v62-flow,.settings').count(),0);

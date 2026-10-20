@@ -50,7 +50,9 @@ label input{border:1px solid #d4dbea;border-radius:9px;padding:10px;width:100%;m
  .official-edit-note .native-import input[hidden]{display:none}
 #officialStatus[data-state="loading"]{color:#6e599a}
 #officialStatus[data-state="ready"]{color:#26764d}
-</style><link rel="stylesheet" href="media-editors-v52.css?v=20261017-v52"></head><body data-official-kind="music">
+</style><link rel="stylesheet" href="media-editors-v52.css?v=20261017-v52"><link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<script src="gulliver-app-shell.js?v=20261020-1"></script>
+</head><body data-official-kind="music">
 <header class="top"><div><h1>음악 뚝딱</h1><p style="font-size:12px;margin:5px 0 0">박자를 누르고 멜로디를 만들어요. 파일을 업로드하지 않아도 돼요.</p></div><div class="actions"><button id="playMusic" class="primary">▶ 들어보기</button><button id="stopMusic">■ 멈춤</button><button id="exportWav" class="primary">WAV 저장</button></div></header>
 <div class="workflow-save" role="note"><strong>저장 위치</strong><span>제작실에서 열면 간편 작업은 브라우저에 자동 저장돼요. 단독으로 열면 내보내기 파일을 직접 보관해야 해요. 고급 프로젝트는 별도 사본으로 저장하며 자동으로 서로 변환되지 않아요.</span><a href="내 보관함.html">내 보관함 ↗</a></div>
 <section class="media-mode-switch" aria-label="제작 모드 선택"><div class="media-mode-tabs" role="tablist"><button id="simpleMode" type="button" role="tab" aria-selected="true">간편 편집</button><button id="officialMode" type="button" role="tab" aria-selected="false" disabled>고급 편집 · SoundCraft</button></div><p id="officialDescription" class="media-mode-description"></p><p id="officialStatus" role="status" aria-live="polite"></p></section>

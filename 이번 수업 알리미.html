@@ -68,12 +68,14 @@
           .v61-lesson #btn-fullscreen{right:10px;bottom:10px;padding:8px 12px;font-size:12px}
         }
     </style>
-  <script src="gulliver-shared.js?v=20261012-organized2"></script>
+  <script src="gulliver-shared.js?v=20261020-ui"></script>
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
 <link rel="stylesheet" href="gulliver-teacher-v61.css?v=20261019-v61">
 <script src="gulliver-teacher-display.js?v=20261019-dual1"></script>
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
-<script defer src="gulliver-teacher-shell.js?v=20261019-dual1"></script>
+<script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<script src="gulliver-app-shell.js?v=20261020-1"></script>
 </head>
 <body class="v61-lesson flex h-screen w-screen overflow-hidden text-gray-800">
 
@@ -174,7 +176,7 @@
                 <h2>학생에게 보여줄 수업 안내</h2>
                 <p>내용을 입력하면 왼쪽 안내판에 바로 반영돼요. 두 모니터라면 학생창을 열어 다른 화면으로 옮기세요.</p>
                 <div class="gt-v61-flow-actions" style="margin-top:13px;justify-content:stretch">
-                    <button id="v61LessonStudent" type="button" class="gt-v61-button" style="flex:1">📺 학생창 열기</button>
+                    <button id="v61LessonStudent" type="button" class="gt-v61-button" style="flex:1" data-gx-display-duplicate>학생 화면 열기</button>
                     <button id="v61LessonPresent" type="button" class="gt-v61-button gt-v61-button--primary" style="flex:1">② 이 창으로 실행</button>
                 </div>
             </div>

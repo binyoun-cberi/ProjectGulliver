@@ -34,17 +34,6 @@
     catch { return false; }
   }
 
-  const LINKS = [
-    ['홈', 'index.html'], ['제작실', '뚝딱 제작실.html'],
-    ['내 보관함', '내 보관함.html'], ['수업 준비', 'lesson.html'],
-    ['우리 반', '우리반.html']
-  ];
-  function link(name, href) {
-    const a = document.createElement('a');
-    a.textContent = name;
-    a.href = href;
-    return a;
-  }
   function mount() {
     if (!document.body || document.querySelector('.gt-shell')) return;
     document.body.classList.add('gt-teacher-tool');
@@ -53,25 +42,10 @@
       document.body.classList.add('gulliver-studio-embed');
       return;
     }
-    const existing = document.querySelector('.gulliver-shell');
-    const shell = existing || document.createElement('div');
-    shell.className = 'gulliver-shell gt-shell';
-    shell.setAttribute('role', 'banner');
-    shell.replaceChildren();
-
-    const inner = document.createElement('div'); inner.className = 'gt-inner';
-    const brand = link('뚝딱교실', 'index.html'); brand.className = 'gt-brand';
-    const brandIcon = document.createElement('span'); brandIcon.className = 'gt-brand-mark';
-    brandIcon.textContent = '🧰'; brandIcon.setAttribute('aria-hidden', 'true');
-    brand.prepend(brandIcon);
-    const identity = document.createElement('div'); identity.className = 'gt-identity';
-    const name = document.createElement('strong'); name.textContent = current[1];
-    const category = document.createElement('span'); category.className = 'gt-category'; category.textContent = current[2];
-    identity.append(name, category);
-
-    const nav = document.createElement('nav'); nav.className = 'gt-nav'; nav.setAttribute('aria-label', '뚝딱교실 주요 메뉴');
-    LINKS.forEach(([text, href]) => nav.append(link(text, href)));
-    const actions = document.createElement('div'); actions.className = 'gt-actions';
+    const frame = window.GulliverAppShell?.mount({title:current[1]});
+    if (!frame) return;
+    const {shell, actions} = frame;
+    shell.classList.add('gt-shell');
     const help = document.createElement('details'); help.className = 'gt-help';
     const summary = document.createElement('summary'); summary.className = 'gt-action'; summary.textContent = '저장 안내';
     const panel = document.createElement('div'); panel.className = 'gt-help-panel';
@@ -81,7 +55,7 @@
     saveStatus.setAttribute('role', 'status');
     panel.append(panelTitle, saveStatus); help.append(summary, panel);
     const full = document.createElement('button'); full.type = 'button'; full.className = 'gt-action';
-    full.dataset.gtFullscreen = '1'; full.textContent = '⛶ 교사창 확대';
+    full.dataset.gtFullscreen = '1'; full.textContent = '전체화면';
     full.title = '설정과 명단이 있는 현재 교사 화면만 확대합니다. 학생용 화면은 별도 창으로 열어 주세요.';
     full.addEventListener('click', async () => {
       try {
@@ -91,16 +65,9 @@
       } catch { window.GulliverTeacherComponents?.notice('이 브라우저에서는 전체화면을 사용할 수 없어요.'); }
     });
     document.addEventListener('fullscreenchange', () => {
-      full.textContent = document.fullscreenElement ? '⛶ 확대 종료' : '⛶ 교사창 확대';
+      full.textContent = document.fullscreenElement ? '전체화면 닫기' : '전체화면';
     });
-    const mobile = document.createElement('details'); mobile.className = 'gt-mobile-links';
-    const mobileToggle = document.createElement('summary'); mobileToggle.className = 'gt-action'; mobileToggle.textContent = '이동 ▾';
-    const mobileMenu = document.createElement('nav'); mobileMenu.className = 'gt-mobile-menu'; mobileMenu.setAttribute('aria-label', '뚝딱교실 이동');
-    LINKS.forEach(([text, href]) => mobileMenu.append(link(text, href)));
-    mobile.append(mobileToggle, mobileMenu);
-    actions.append(help, full, mobile);
-    inner.append(brand, identity, nav, actions);
-    shell.append(inner);
+    actions.append(help, full);
     let displayButton = null;
     function syncStudentDisplayButton() {
       const display = window.GulliverTeacherDisplay;
@@ -115,14 +82,11 @@
         shell.classList.add('gt-display-ready');
       }
       displayButton.dataset.open = String(display.connected());
-      displayButton.textContent = display.connected() ? '📺 학생창 보기 ↗' : '📺 학생창 열기 ↗';
+      displayButton.textContent = display.connected() ? '학생 화면 보기 ↗' : '학생 화면 열기 ↗';
     }
     window.addEventListener('gulliver:student-display-change', syncStudentDisplayButton);
     syncStudentDisplayButton();
-    if (!existing) {
-      document.body.insertAdjacentElement('afterbegin', shell);
-      window.Gulliver?.trackTool?.({name: current[1], href: pathname, icon: current[3]});
-    }
+    window.Gulliver?.trackTool?.({name:current[1], href:pathname, icon:current[3]});
     window.GulliverTeacherShell = Object.freeze({
       tool: current[1],
       updateSaveState(state, message) {

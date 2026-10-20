@@ -301,6 +301,15 @@
     catch{return false}
   }
   function mountShell(options={}){
+    if(window.GulliverAppShell){
+      connectStudentNames();
+      if(window.GulliverAppShell.embedded()){
+        injectStyles();document.body.classList.add('gulliver-studio-embed');return;
+      }
+      window.GulliverAppShell.mount(options);
+      if(options.track!==false)trackTool({name:options.title||document.title,href:location.pathname.split('/').pop()||'index.html',icon:options.icon||'🧰'});
+      return;
+    }
     if(isStudioEmbedded()){
       // Only the authenticated same-origin canvas embedding gets compact navigation.
       // Direct visits retain their complete standalone toolbar and classroom links.

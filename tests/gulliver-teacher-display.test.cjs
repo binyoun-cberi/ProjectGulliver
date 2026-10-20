@@ -33,7 +33,7 @@ test('6.1 pages keep their existing storage formats and use explicit preparation
     }
   }
   assert.match(fs.readFileSync(files[4], 'utf8'), /body\.v61-running \.topbar\{display:none!important\}/);
-  assert.match(fs.readFileSync(files[0], 'utf8'), /lesson-circle-timer\.js\?v=20261019-v61/);
+  assert.match(fs.readFileSync(files[0], 'utf8'), /lesson-circle-timer\.js\?v=20261020-ui/);
   assert.match(fs.readFileSync('lesson-circle-timer.js', 'utf8'), /const STORAGE_KEY = 'lessonCircleTimerV3'/);
   assert.match(fs.readFileSync(files[4], 'utf8'), /flashQuizMakerPlusV3/);
   assert.match(fs.readFileSync(files[1], 'utf8'), /lessonStorageKey/);
@@ -155,7 +155,7 @@ test('second screen mirrors the timer, lesson board and seating without settings
     assert.equal(await page.locator('#settingsPanel').isVisible(), false);
     assert.equal(await page.locator('#btnStartPause').isVisible(), true);
     const timerPopupEvent = page.waitForEvent('popup');
-    await page.locator('#v61TimerStudent').click();
+    await page.locator('.gt-open-display').click();
     const timerPopup = await timerPopupEvent;
     await timerPopup.locator('#displayConnection[data-state="connected"]').waitFor();
     assert.equal(await timerPopup.locator('#settingsPanel, .gt-shell, #eventList').count(), 0);
@@ -181,7 +181,7 @@ test('second screen mirrors the timer, lesson board and seating without settings
     const front = await page.locator('#frontText').innerText();
     const back = await page.locator('#backText').innerText();
     const flashPopupEvent = page.waitForEvent('popup');
-    await page.locator('#v61OpenStudent').click();
+    await page.locator('.gt-open-display').click();
     const flashPopup = await flashPopupEvent;
     await flashPopup.locator('#displayConnection[data-state="connected"]').waitFor();
     await flashPopup.getByText(front, {exact: true}).waitFor();

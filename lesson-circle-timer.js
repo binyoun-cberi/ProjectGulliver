@@ -692,7 +692,8 @@ function setStudentView(on){
 function setTeacherPhase(running){
   const executing=Boolean(running);
   app.classList.toggle('v61-executing',executing);
-  document.body.classList.toggle('presentation',executing);
+  // Running on the teacher monitor is distinct from showing this window to students.
+  document.body.classList.toggle('gt-executing',executing);
   $('#v61TimerStep').textContent=executing?'② 실행하기':'① 준비하기';
   $('#v61TimerHeading').textContent=executing?'수업이 진행 중이에요':'오늘의 수업 시간표';
   $('#v61TimerPrepare').classList.toggle('hidden',!executing);

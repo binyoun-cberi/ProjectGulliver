@@ -81,11 +81,9 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.equal(save.saved, '저장했어요');
 
     await page.setViewportSize({width: 390, height: 844});
-    assert.equal(await page.locator('.gt-mobile-links').isVisible(), true);
-    assert.equal(await page.locator('.gt-nav').isVisible(), false);
-    await page.locator('.gt-mobile-links summary').click();
-    assert.equal(await page.locator('.gt-mobile-menu a').count(), 5);
-    const overflow = await page.locator('.gt-inner').evaluate(node => node.scrollWidth > window.innerWidth + 2);
+    assert.equal(await page.locator('.gx-nav').isVisible(), true);
+    assert.equal(await page.locator('.gx-nav a').count(), 5);
+    const overflow = await page.locator('.gx-header-inner').evaluate(node => node.scrollWidth > window.innerWidth + 2);
     assert.equal(overflow, false, 'phone teacher header extends beyond viewport');
   } finally {
     await browser?.close();

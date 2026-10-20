@@ -144,17 +144,19 @@ body.flipped .seat.selected{transform:rotate(180deg) translateY(3px)}
  .switch{min-height:24px;width:24px}
 }
 </style>
-<script src="gulliver-shared.js?v=20261013-workspace1"></script>
-<script src="classroom-workspace.js?v=20261013-workspace1"></script>
+<script src="gulliver-shared.js?v=20261020-ui"></script>
+<script src="classroom-workspace.js?v=20261020-ui"></script>
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
 <script src="gulliver-teacher-display.js?v=20261019-dual1"></script>
 <link rel="stylesheet" href="gulliver-teacher-v62.css?v=20261019-v62">
-<script src="gulliver-teacher-v62.js?v=20261019-v62"></script>
+<script src="gulliver-teacher-v62.js?v=20261020-ui"></script>
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
-<script defer src="gulliver-teacher-shell.js?v=20261019-dual1"></script>
+<script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<script src="gulliver-app-shell.js?v=20261020-1"></script>
 </head>
 <body>
-<button class="btn exit-presentation floating-exit" id="exitPresentationBtn">설정으로 돌아가기</button>
+<button class="btn exit-presentation floating-exit" id="exitPresentationBtn">준비 화면으로</button>
 <div class="app">
   <header class="topline">
     <div>
@@ -163,7 +165,7 @@ body.flipped .seat.selected{transform:rotate(180deg) translateY(3px)}
     </div>
     <div class="view-actions">
       <button class="btn" id="loadClassroomBtn">👥 우리 반 불러오기</button>
-      <button class="btn" id="presentationBtn">📺 자리표만 보기</button>
+      <button class="btn" id="presentationBtn">이 화면으로 보여주기</button>
     </div>
   </header>
 

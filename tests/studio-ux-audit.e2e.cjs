@@ -35,8 +35,8 @@ test('UX inspection: home to new canvas to panels on desktop/tablet/phone',{time
    await audit(page,'home',device);
    const headline=await page.locator('#pageTitle').textContent();
    assert.ok(headline.includes('오늘'),headline);
-   const openDialog=device==='desktop'||device==='laptop'?'#createButton':'.home-bottom-bar [data-create]';
-   await page.locator(openDialog).click();
+   if(device!=='desktop'&&device!=='laptop')await page.locator('#menuButton').click();
+   await page.locator('#createButton').click();
    assert.ok(await page.locator('#createDialog[open]').count(),'New-project dialog opens at '+device);
    assert.equal(await page.locator('#createDialog .create-main a').count(),6,'Six primary creation choices must remain usable');
    await page.locator('#createDialog [data-close]').click();

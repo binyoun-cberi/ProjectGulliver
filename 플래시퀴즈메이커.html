@@ -76,13 +76,15 @@ body.v61-running.student-view .modal-actions{display:none!important}
 body.v61-running.student-view #v61SoloExit{display:inline-flex}
 @media(max-width:520px){body.v61-running .choice{font-size:18px;min-height:70px}body.v61-running .match-item{font-size:13px;min-height:54px}}
 </style>
-  <script src="gulliver-shared.js?v=20261013-workspace1"></script>
-<script src="classroom-workspace.js?v=20261013-workspace1"></script>
+  <script src="gulliver-shared.js?v=20261020-ui"></script>
+<script src="classroom-workspace.js?v=20261020-ui"></script>
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
 <link rel="stylesheet" href="gulliver-teacher-v61.css?v=20261019-v61">
 <script src="gulliver-teacher-display.js?v=20261019-v61"></script>
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
-<script defer src="gulliver-teacher-shell.js?v=20261019-dual1"></script>
+<script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<script src="gulliver-app-shell.js?v=20261020-1"></script>
 </head>
 <body>
 <header class="topbar">
@@ -105,7 +107,7 @@ body.v61-running.student-view #v61SoloExit{display:inline-flex}
   <div><div class="gt-v61-run-title" id="v61RunTitle">낱말카드</div><div class="gt-v61-run-desc">교사용 진행 버튼입니다. 학생용 창에는 나타나지 않아요.</div></div>
   <div class="gt-v61-flow-actions">
     <button id="v61ToPrep" type="button" class="gt-v61-button">← 카드 준비로</button>
-    <button id="v61OpenStudent" type="button" class="gt-v61-button">📺 학생창 열기</button>
+    <button id="v61OpenStudent" type="button" class="gt-v61-button" data-gx-display-duplicate>학생 화면 열기</button>
     <button id="v61PresentSolo" type="button" class="gt-v61-button gt-v61-button--primary">⛶ 이 창으로 보여주기</button>
   </div>
 </div>
@@ -282,7 +284,7 @@ function switchTab(name){
  if(!['manage','flash','quiz','match'].includes(name))name='manage';
  if(name==='manage')setSoloPresentation(false);
  state.currentTab=name;$$('.view').forEach(v=>v.classList.add('hidden'));$(`#view-${name}`).classList.remove('hidden');$$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
- const running=name!=='manage';document.body.classList.toggle('v61-running',running);document.body.classList.toggle('presentation',running);
+ const running=name!=='manage';document.body.classList.toggle('v61-running',running);document.body.classList.toggle('gt-executing',running);
  $('#v61Runbar').classList.toggle('hidden',!running);
  $('#v61RunTitle').textContent={flash:'낱말카드 학습',quiz:'4지선다 퀴즈',match:'짝 맞추기'}[name]||'낱말카드';
  if(name==='manage')renderCards(); if(name==='flash')initStudy(false); if(name==='quiz')initQuiz(); if(name==='match')initMatch();
