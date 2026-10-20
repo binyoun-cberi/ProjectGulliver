@@ -83,7 +83,7 @@ async function renderStage(){cleanupStage();const signature=renderToken,s=curren
    a.setMediaSink(async row=>S.putAsset({id:row.id,name:row.name,mime:row.mime,blob:row.blob}));
    a.apply(s.payload);
    if(running||previewing){
-    const style=f.contentDocument.createElement('style');style.textContent='.top-tools,.shelf,.properties,#pageStrip,#status,.timeline{display:none!important}.editor-grid{display:block!important;min-height:0!important}.work{min-height:100vh;justify-content:center;padding:12px!important}#stageView{align-items:center}';f.contentDocument.head.append(style);
+    const style=f.contentDocument.createElement('style');style.textContent='.activity-inline-controls{display:none!important}.top-tools,.shelf,.properties,#pageStrip,#status,.timeline{display:none!important}.editor-grid{display:block!important;min-height:0!important}.work{min-height:100vh;justify-content:center;padding:12px!important}#stageView{align-items:center}';f.contentDocument.head.append(style);
     a.onPageChange(i=>{if(signature===renderToken){slideIndex=i;updateRunbar()}});
     a.onPlaybackChange(playing=>{if(play){play.textContent=playing?'⏸ 일시정지':'▶ 장면 재생';play.setAttribute('aria-pressed',String(playing))}});
     a.seekPage(slideIndex);

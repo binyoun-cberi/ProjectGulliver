@@ -3,7 +3,7 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
 const FORMAT='gulliver.unified.canvas.v1',MAX_PAGES=40,MAX_ITEMS=150,MAX_IMAGE=3000000;
-const TYPES=['text','rect','ellipse','triangle','star','line','image'];
+const TYPES=['text','rect','ellipse','triangle','star','line','image','activity'];
 const LAYOUTS={wide:{w:960,h:540,label:'16:9 발표'},a4:{w:595,h:842,label:'A4 도안'}};
 const ANIMATIONS=['none','fade','rise','zoom'],TRANSITIONS=['none','fade','slide'];
 const MIN_DURATION=1,MAX_DURATION=20,ANIMATION_SECONDS=.65;
@@ -191,6 +191,7 @@ function cleanElement(raw,i){
   ...(typeof raw.groupId==='string'&&/^g-[\w-]{1,70}$/.test(raw.groupId)?{groupId:raw.groupId}:{}),
   ...(raw.rotation!==undefined?{rotation:number(raw.rotation,-180,180,0)}:{}),
   ...(raw.locked===true?{locked:true}:{}),...(raw.hidden===true?{hidden:true}:{}),
+  ...(type==='activity'?{activity:(globalThis.GulliverActivityCore||(typeof require==='function'?require('./studio-activity-core.js'):null)).clean(raw.activity)}:{}),
   ...(type==='text'?{
    ...(Number.isInteger(raw.busSeat)&&raw.busSeat>=0&&raw.busSeat<40?{busSeat:raw.busSeat}:{}),
    fontFamily:Object.hasOwn(FONTS,raw.fontFamily)?raw.fontFamily:'sans',

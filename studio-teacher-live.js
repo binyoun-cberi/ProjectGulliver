@@ -27,7 +27,7 @@ bar.innerHTML=[
  '<div class="teacher-live-grid" id="teacherLiveGrid"></div>',
  '<p class="teacher-live-note">수업 도구를 닫아도 지금 만들던 자료는 그대로 남아요. ‘결과를 캔버스로’를 누르면 편집 가능한 복사본이 추가돼요.</p>'
 ].join('');
-pane.prepend(bar);
+const native=pane.querySelector('.canvas-activities');if(native)native.after(bar);else pane.prepend(bar);
 const dlg=document.createElement('dialog');dlg.id='teacherLiveDialog';dlg.className='teacher-live-dialog';dlg.setAttribute('aria-label','교사 도구 실행 창');
 dlg.innerHTML=[
  '<div class="teacher-run-head"><div><strong id="teacherLiveTitle">교사 도구</strong><small id="teacherLiveDesc">원본 도구를 실행합니다</small></div>',
