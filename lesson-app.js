@@ -2,6 +2,7 @@
 const C=LessonCore,S=LessonStorage,$=id=>document.getElementById(id),validators={canvas:GulliverUnifiedCore.validate,slides:BalpyoCore.validateDeck,document:MunseoCore.validate,design:DoanCore.validateProject};
 let lesson=C.blank(),selected=0,running=false,slideIndex=0,frame=null,frameStepId='',ready=false,renderToken=0,saveTimer,saveQueue=Promise.resolve(),stageUrls=[],clock=null,remaining=0,musicUrl='',fileTarget='',previewing=false,quizRevealed=false,saveVersion=0,savedVersion=0,savingCount=0,saveFailed=false;
 const labels={canvas:'통합 캔버스',slides:'발표',document:'문서',design:'도안',video:'영상',audio:'음악',pdf:'PDF',timer:'타이머',quiz:'퀴즈'};
+function openMaterialChooser(){const dialog=$('createMaterialDialog');if(dialog&&!dialog.open)dialog.showModal()}
 function node(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e}
 function status(text,error=false){$('status').textContent=text;$('status').className=error?'error':''}
 function saveIndicator(state,label){
@@ -65,7 +66,7 @@ function renderSettings(){const root=$('settings');root.replaceChildren();const 
  controls.append(button('수업에서 빼기',()=>{capture();lesson.steps.splice(selected,1);selected=Math.max(0,Math.min(selected,lesson.steps.length-1));save();render()}));root.append(controls);
  if(['canvas','slides','document','design'].includes(s.kind))root.append(node('p','muted',s.kind==='canvas'?'캔버스의 글씨·사진·장면을 이 수업에서 다시 수정할 수 있어요.':'파일 내보내기는 가운데 편집기의 PPTX·PDF·HWPX·DOCX 저장 버튼을 사용하세요.'));
 }
-function render(){renderList();renderSettings();$('lessonTitle').value=lesson.title;$('startLesson').disabled=!lesson.steps.length;renderStage();}
+function render(){renderList();renderSettings();$('lessonTitle').value=lesson.title;$('startLesson').disabled=!lesson.steps.length;$('createMaterial').textContent=lesson.steps.length?'＋ 자료 추가':'＋ 자료 만들기';renderStage();}
 function updateRunbar(){const s=current(),deck=s?.kind==='slides'?s.payload.slides:s?.kind==='canvas'?s.payload.pages:s?.kind==='quiz'?s.payload?.cards:null;$('runbar').hidden=!(running||previewing);$('counter').textContent=deck?`${selected+1} / ${lesson.steps.length} · ${slideIndex+1} / ${deck.length}장`:`${selected+1} / ${lesson.steps.length}`;$('previous').disabled=selected===0&&slideIndex===0;$('next').disabled=selected===lesson.steps.length-1&&(!deck||slideIndex===deck.length-1)}
 async function choose(index){capture();selected=index;slideIndex=0;quizRevealed=false;previewing=false;save();render()}
 function slidePage(s){const theme=BalpyoCore.THEMES[s.payload.theme],item=s.payload.slides[slideIndex],page=node('section','slide-page');page.style.background=theme.background;page.style.color=theme.foreground;if(item.eyebrow)page.append(node('small','',item.eyebrow));page.append(node('h1','',item.title));if(item.image){const img=node('img');img.src=item.image;img.alt=item.title;page.append(img)}page.append(node('p','',item.body));return page}
@@ -74,7 +75,14 @@ function applyMedia(media,s){media.controls=true;media.volume=s.volume;media.pre
 async function renderStage(){cleanupStage();const signature=renderToken,s=current(),stage=$('stage');document.body.classList.toggle('canvas-step',s?.kind==='canvas');stage.dataset.kind=s?.kind||'';$('previewStep').hidden=!s||!['canvas','slides','document','design'].includes(s.kind)||running;$('previewStep').textContent=previewing?'편집으로 돌아가기':'자료 미리보기';$('stepTitle').textContent=s?.title||'작업할 자료를 선택하세요';$('modeHint').textContent=s?.kind==='slides'&&!running&&!previewing?'슬라이드 편집 · PPTX 내보내기':'';updateRunbar();
  $('lessonPresenter').hidden=!(running||previewing)||!s;
  $('lessonPresenterNotes').hidden=true;$('toggleLessonNotes').setAttribute('aria-expanded','false');$('lessonPresenterNotes').textContent=s?.notes||'진행 메모가 없어요. 편집 화면에서 활동 설정에 메모를 적어 보세요.';
- if(!s){const box=node('div','empty');box.append(node('h1','','만들고, 바로 수업하세요.'),node('p','','발표 자료와 문서, 영상, 음악을 한 수업에 담아 보세요. 왼쪽에서 자료를 추가하세요. 같은 화면에서 편집하고 순서와 진행 메모를 정할 수 있어요.'));stage.append(box);return}
+ if(!s){
+  const box=node('div','work-starter');
+  box.append(node('p','work-starter-eyebrow','뚝딱교실 · 새 수업'),node('h1','','어떤 자료를 만들어 볼까요?'),node('p','work-starter-description','발표 자료, 학습지, 문서, 도안 중에서 골라 바로 시작하세요.'));
+  box.append(button('＋ 첫 자료 만들기',openMaterialChooser,'work-starter-primary'));
+  box.append(node('p','work-starter-examples','발표 · 학습지 · 문서 · 도안 · 퀴즈 · 영상'));
+  box.append(button('도입·활동·마무리 수업 틀로 시작',()=>$('createLessonFlow').click(),'work-starter-template'));
+  stage.append(box);return
+ }
  if(s.kind==='canvas'){
   const f=node('iframe','editor-frame');f.id='editorFrame';let play=null;frame=f;frameStepId=s.id;f.title='통합 캔버스 '+(running||previewing?'수업 화면':'편집기');stage.classList.add('editor');
   f.onload=()=>{if(signature!==renderToken||frame!==f)return;try{
@@ -222,6 +230,14 @@ $('createLessonFlow').onclick=()=>{
  selected=lesson.steps.length-3;slideIndex=0;quizRevealed=false;previewing=false;
  save();render();status('도입·활동·마무리 수업 틀을 만들었어요. 각 장면을 바로 편집할 수 있어요.');
 };
+$('createMaterial').onclick=openMaterialChooser;
+$('createMaterialClose').onclick=()=>$('createMaterialDialog').close();
+document.querySelectorAll('#createMaterialDialog [data-create-kind]').forEach(b=>b.onclick=()=>{
+ const kind=b.dataset.createKind;
+ const preset=b.dataset.createPreset;
+ $('createMaterialDialog').close();
+ add(kind,kind==='canvas'&&preset?GulliverUnifiedCore.starter(preset):undefined);
+});
 $('lessonTitle').oninput=e=>{lesson.title=e.target.value.slice(0,100)||'새 수업';if(lesson.steps.length===1){current().title=lesson.title;frame?.contentWindow?.GulliverStudioAdapter?.rename?.(lesson.title);renderList()}schedule()};$('saveLesson').onclick=save;$('newLesson').onclick=async()=>{if(!await save())return;lesson=C.blank();selected=0;previewing=false;remember();render();status('새 수업을 준비했어요.')};$('openLesson').onclick=()=>library('lessons');$('fromStudio').onclick=()=>library('studio');$('closeLibrary').onclick=()=>$('libraryDialog').close();document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>add(b.dataset.add));
 $('previewStep').onclick=()=>{capture();previewing=!previewing;slideIndex=0;renderStage()};
 $('startLesson').onclick=async()=>{if(!lesson.steps.length)return;if(!await save())return;previewing=false;running=true;slideIndex=0;quizRevealed=false;document.body.classList.add('running');$('runTitle').textContent=lesson.title;$('runTitle').hidden=false;$('startLesson').hidden=true;$('exitRun').hidden=false;$('fullScreen').hidden=false;renderStage()};
