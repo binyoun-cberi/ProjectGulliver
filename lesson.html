@@ -22,9 +22,9 @@
 @media(max-width:700px){.add-grid button{text-align:center}.stage-head{padding:8px 10px}}
 </style><link rel="stylesheet" href="lesson-v53.css?v=20261017-v53"><link rel="stylesheet" href="lesson-v55.css?v=20261018-v55"><link rel="stylesheet" href="gulliver-ui-v56.css?v=20261018-v56"><link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
 <script src="gulliver-app-shell.js?v=20261020-work2"></script>
-<link rel="stylesheet" href="work-space.css?v=20261021-presenter1">
+<link rel="stylesheet" href="work-space.css?v=20261022-firststart1">
 </head><body>
-<header class="bar"><a href="index.html">← 홈</a><input id="lessonTitle" aria-label="작업 이름" maxlength="100" value="새 작업"><span id="runTitle" hidden></span><div class="actions"><span id="editActions"><button id="newLesson">새 작업</button> <button id="openLesson">작업 열기</button> <a class="library-shortcut" href="내 보관함.html">내 보관함</a> <span id="lessonSaveState" class="lesson-save-state" role="status" aria-live="polite" data-state="saved">기기 저장 준비됨</span> <button id="saveLesson">지금 저장</button> <button id="backupLesson">원본 내보내기</button> <label class="upload" style="display:inline-block" for="restoreLesson">원본 불러오기</label><input type="file" id="restoreLesson" accept=".json,application/json" hidden></span><button class="primary" id="startLesson">수업 시작 ▶</button><button id="exitRun" hidden>편집으로</button><button id="fullScreen" hidden>전체화면</button></div><div id="musicHost" class="music-host" hidden></div></header>
+<header class="bar"><a href="index.html">← 홈</a><input id="lessonTitle" aria-label="작업 이름" maxlength="100" value="새 작업"><span id="runTitle" hidden></span><div class="actions"><button id="createMaterial" type="button" class="work-create primary">＋ 자료 만들기</button><span id="editActions"><button id="newLesson">새 작업</button> <button id="openLesson">작업 열기</button> <a class="library-shortcut" href="내 보관함.html">내 보관함</a> <span id="lessonSaveState" class="lesson-save-state" role="status" aria-live="polite" data-state="saved">기기 저장 준비됨</span> <button id="saveLesson">지금 저장</button> <button id="backupLesson">원본 내보내기</button> <label class="upload" style="display:inline-block" for="restoreLesson">원본 불러오기</label><input type="file" id="restoreLesson" accept=".json,application/json" hidden></span><button class="primary" id="startLesson">수업 시작 ▶</button><button id="exitRun" hidden>편집으로</button><button id="fullScreen" hidden>전체화면</button></div><div id="musicHost" class="music-host" hidden></div></header>
 
 
 <section id="lessonPlan" class="lesson-plan" aria-label="수업 준비 정보">
@@ -38,6 +38,21 @@
 <div id="lessonPresenter" class="presenter" hidden><button id="toggleLessonNotes" type="button" aria-expanded="false">진행 메모 보기</button><p id="lessonPresenterNotes" hidden></p></div>
 <div id="runbar" class="runbar" hidden><button id="previous">← 이전</button><span id="counter"></span><button id="next">다음 →</button></div><p id="status" role="status" aria-live="polite"></p></main>
 <aside class="right"><h2>이름·진행 메모</h2><div id="settings"></div><hr class="separator"><p class="muted">수업 내용은 이 브라우저에 자동 저장돼요. 다른 기기에서 쓰려면 내 보관함의 ‘전체 ZIP 백업’을 이용하세요. 보관함 자료 가져오기는 별도 사본을 추가해요. 보관함에서 직접 연 자료는 같은 원본에 저장돼요.</p></aside></div>
+<dialog id="createMaterialDialog" class="create-material-dialog" aria-labelledby="createMaterialTitle">
+ <div class="create-material-heading"><div><h2 id="createMaterialTitle">어떤 자료를 만들까요?</h2><p>종류를 고르면 바로 편집할 수 있어요. 기존 수업 자료는 그대로 유지돼요.</p></div><button id="createMaterialClose" type="button" aria-label="자료 선택 닫기">닫기</button></div>
+ <div class="create-material-grid">
+  <button type="button" data-create-kind="canvas" data-create-preset="presentation"><span class="create-material-icon" aria-hidden="true">▣</span><strong>발표 자료</strong><small>슬라이드와 화면 자료</small></button>
+  <button type="button" data-create-kind="canvas" data-create-preset="worksheet"><span class="create-material-icon" aria-hidden="true">▤</span><strong>학습지</strong><small>A4 활동지 · 인쇄</small></button>
+  <button type="button" data-create-kind="document"><span class="create-material-icon" aria-hidden="true">≡</span><strong>문서</strong><small>안내문 · 수업 계획</small></button>
+  <button type="button" data-create-kind="design"><span class="create-material-icon" aria-hidden="true">◇</span><strong>도안</strong><small>오리기 · 색칠 자료</small></button>
+  <button type="button" data-create-kind="canvas" data-create-preset="blank"><span class="create-material-icon" aria-hidden="true">＋</span><strong>빈 캔버스</strong><small>자유롭게 만들기</small></button>
+  <button type="button" data-create-kind="quiz"><span class="create-material-icon" aria-hidden="true">?</span><strong>퀴즈</strong><small>문제와 정답 카드</small></button>
+  <button type="button" data-create-kind="video"><span class="create-material-icon" aria-hidden="true">▶</span><strong>영상</strong><small>파일을 수업에 추가</small></button>
+  <button type="button" data-create-kind="audio"><span class="create-material-icon" aria-hidden="true">♫</span><strong>음악</strong><small>소리 · 배경음악</small></button>
+  <button type="button" data-create-kind="pdf"><span class="create-material-icon" aria-hidden="true">▧</span><strong>PDF</strong><small>파일을 수업에 추가</small></button>
+  <button type="button" data-create-kind="timer"><span class="create-material-icon" aria-hidden="true">◷</span><strong>타이머</strong><small>활동 시간 표시</small></button>
+ </div>
+</dialog>
 <dialog id="libraryDialog"><div class="dialog-top"><h2 id="libraryTitle">내 수업</h2><button id="closeLibrary">닫기</button></div><div id="libraryList" class="library-list"></div></dialog>
 <input id="mediaFile" type="file" hidden>
 <script src="balpyo-core.js"></script><script src="munseo-core.js"></script><script src="doan-core.js"></script><script src="studio-core.js?v=20261020-work1"></script><script src="studio-storage.js?v=20261020-work1"></script><script src="vendor/qrcode.js"></script>
@@ -45,5 +60,5 @@
 <script src="studio-activity-classroom.js?v=20261020-classroom2"></script>
 <script src="studio-activity-core.js?v=20261020-classroom2"></script>
 <script src="studio-unified-core.js?v=20261020-activities1"></script><script src="classroom-workspace.js?v=20261020-ui"></script><script src="lesson-core.js?v=20261020-work1"></script><script src="lesson-storage.js?v=20261018-v55"></script><script src="work-core.js?v=1"></script><script src="work-storage.js?v=1"></script>
-<script src="work-surface.js?v=20261020-surface1"></script>
-<script src="lesson-app.js?v=20261021-presenter1"></script></body></html>
+<script src="work-surface.js?v=20261022-firststart1"></script>
+<script src="lesson-app.js?v=20261022-firststart1"></script></body></html>
