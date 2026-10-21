@@ -11,6 +11,27 @@ const student=control('workStudent','학생 화면',()=>engineButton('canvasStud
 const redo=control('workRedo','↷',()=>engineButton('redo'));redo.setAttribute('aria-label','다시 실행');const undo=control('workUndo','↶',()=>engineButton('undo'));undo.setAttribute('aria-label','실행 취소');
 const exportButton=control('workExport','내보내기',()=>{const child=$('editorFrame')?.contentWindow;if(child?.GulliverCanvasShell)child.GulliverCanvasShell.activate('export');else openExports(child)});
 const preview=$('previewStep');actions.append(preview);
+// On narrow screens, keep the primary creation/save/start actions visible.
+// Move the original secondary controls into one accessible menu rather than duplicating handlers.
+const mobileMore=document.createElement('details');
+mobileMore.className='mobile-work-more';
+mobileMore.id='mobileWorkMore';
+const moreSummary=document.createElement('summary');moreSummary.textContent='더보기';mobileMore.append(moreSummary);
+const moreBody=document.createElement('div');moreBody.className='mobile-work-more-body';mobileMore.append(moreBody);
+actions.append(mobileMore);
+const secondary=[exportButton,undo,redo,student,$('workSequence'),$('workNotes'),$('workInfo'),menu,preview];
+const anchors=secondary.map(el=>{const marker=document.createComment('restore control');el.parentNode.insertBefore(marker,el);return {el,marker}});
+const narrow=window.matchMedia('(max-width:760px)');
+function syncMobileWorkMenu(){
+ for(const {el,marker} of anchors){
+  if(narrow.matches)moreBody.append(el);
+  else marker.parentNode.insertBefore(el,marker);
+ }
+ if(!narrow.matches)mobileMore.open=false;
+}
+narrow.addEventListener('change',syncMobileWorkMenu);
+syncMobileWorkMenu();
+moreBody.addEventListener('click',e=>{if(e.target.closest('button,a,label.upload'))queueMicrotask(()=>{mobileMore.open=false})});
 const exportDialog=document.createElement('dialog');exportDialog.id='workExportDialog';document.body.append(exportDialog);
 function openExports(child){const doc=child?.document,ids=['saveHwpx','saveDocx','savePdf','exportPptx','printDeck','print','exportSvg','exportPng'];exportDialog.replaceChildren();const heading=document.createElement('h2');heading.textContent='자료 내보내기';exportDialog.append(heading);for(const id of ids){const source=doc?.getElementById(id);if(!source)continue;const b=document.createElement('button');b.type='button';b.textContent=source.textContent;b.disabled=source.disabled;b.onclick=()=>{source.click();exportDialog.close()};exportDialog.append(b)}const original=document.createElement('button');original.type='button';original.textContent='전체 작업 원본';original.onclick=()=>{$('backupLesson').click();exportDialog.close()};exportDialog.append(original);const close=document.createElement('button');close.type='button';close.textContent='닫기';close.onclick=()=>exportDialog.close();exportDialog.append(close);exportDialog.showModal()}
 function engineButton(id){$('editorFrame')?.contentDocument?.getElementById(id)?.click()}
