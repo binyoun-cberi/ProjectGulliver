@@ -35,3 +35,12 @@ test('filters by kind and search independently of source',()=>{
  assert.equal(core.filter(rows,'없는 말','전체').length,0);
  assert.deepEqual(core.filter(rows,'','전체','old').map(x=>x.id),['a','p','l']);
 });
+test('홈 통합 검색은 로컬 보관함 인덱스를 재사용하고 실패한 저장소를 알린다',()=>{
+ const fs=require('node:fs'),home=fs.readFileSync('workspace-home.js','utf8'),ui=fs.readFileSync('unified-library.js','utf8');
+ assert.match(home,/homeSavedSearchResults/);
+ assert.match(home,/renderHomeSearch\(query\)/);
+ assert.match(ui,/collectResult\(true\)/);
+ assert.match(ui,/C\.filter\(result\.rows,term,'전체'\)/);
+ assert.match(ui,/home-search-warning/);
+ assert.match(ui,/searchGeneration/);
+});

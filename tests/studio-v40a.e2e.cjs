@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {spawn}=require('node:child_process'),{chromium}=require('playwright-core');
 const port=8897,base='http://127.0.0.1:'+port+'/';
-async function ready(){for(let i=0;i<80;i++){try{if((await fetch(base+'studio-unified-editor.js')).ok)return}catch{}await new Promise(r=>setTimeout(r,180))}throw Error('Local server not ready')}
+async function ready(){for(let i=0;i<80;i++){try{const response=await fetch(base+'studio-unified-editor.js');await response.arrayBuffer();if(response.ok)return}catch{}await new Promise(r=>setTimeout(r,180))}throw Error('Local server not ready')}
 test('4.0-A browser: select, group, move, resize, save, ungroup, undo/redo and touch multiselect',{timeout:120000},async()=>{
  const server=spawn('python3',['-m','http.server',String(port),'--bind','127.0.0.1'],{stdio:'ignore'});let browser;
  try{

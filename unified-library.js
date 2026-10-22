@@ -44,12 +44,12 @@
  const C=window.GulliverUnifiedLibraryCore,$=id=>document.getElementById(id);
  if(!C)return;
  const W=window.ClassroomWorkspace,S=window.GulliverStudioStorage,L=window.LessonStorage;
- let fullRows=[],urls=[],homeGeneration=0,refreshGeneration=0,readErrors=[];
+ let fullRows=[],urls=[],homeGeneration=0,searchGeneration=0,searchTimer=null,refreshGeneration=0;
  function element(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n}
  function date(value){return value?new Date(value).toLocaleDateString('ko-KR'):'날짜 정보 없음'}
  function target(row){return row.origin==='activities'?W.openUrl({kind:row.kind,id:row.id}):row.href}
  function assetUrlsClear(){urls.forEach(url=>URL.revokeObjectURL(url));urls=[]}
- async function collect(includeAssets){
+ async function collectResult(includeAssets){
   const jobs=[
    ['projects',()=>S.projects()],
    ['official',()=>S.official()],
@@ -58,12 +58,13 @@
   ];
   if(includeAssets)jobs.push(['assets',()=>S.assets()]);
   const settled=await Promise.all(jobs.map(async ([name,fn])=>{try{return{name,data:await fn()}}catch(error){return{name,error}}}));
-  const data={};readErrors=[];
+  const data={},errors=[];
   for(const r of settled){
-   if(r.error){data[r.name]=[];readErrors.push(r.name)}else data[r.name]=r.data;
+   if(r.error){data[r.name]=[];errors.push(r.name)}else data[r.name]=r.data;
   }
-  return C.entries(data);
+  return {rows:C.entries(data),errors};
  }
+ async function collect(includeAssets){return (await collectResult(includeAssets)).rows}
  function card(row,compact){
   const article=element('article',compact?'unified-item compact':'unified-item');
   const thumb=element('span','unified-preview '+row.kind);
@@ -93,10 +94,38 @@
   const root=$('unifiedHomeRecent');if(!root)return;
   const gen=++homeGeneration;
   root.replaceChildren(element('p','unified-empty','이 기기에 저장한 자료를 확인하는 중이에요.'));
-  const rows=await collect(false);if(gen!==homeGeneration||!root.isConnected)return;
+  const result=await collectResult(false);if(gen!==homeGeneration||!root.isConnected)return;
   assetUrlsClear();root.replaceChildren();
-  if(!rows.length)root.append(element('p','unified-empty',readErrors.length?'일부 보관함을 읽지 못했어요. 보관함에서 상태를 확인해 주세요.':'아직 저장한 자료가 없어요. 위에서 첫 자료를 만들어 보세요.'));
-  else for(const row of rows.slice(0,8))root.append(card(row,false));
+  if(!result.rows.length)root.append(element('p','unified-empty',result.errors.length?'일부 보관함을 읽지 못했어요. 보관함에서 상태를 확인해 주세요.':'아직 저장한 자료가 없어요. 아래에서 첫 자료를 만들어 보세요.'));
+  else for(const row of result.rows.slice(0,8))root.append(card(row,false));
+ }
+ function renderHomeSearch(query){
+  const root=$('homeSavedSearchResults');if(!root)return;
+  const term=String(query||'').trim().slice(0,160),gen=++searchGeneration;
+  clearTimeout(searchTimer);root.dataset.query=term;root.setAttribute('aria-busy','true');
+  root.replaceChildren(element('p','unified-empty','저장 자료를 검색할게요.'));
+  searchTimer=setTimeout(async()=>{
+   const result=await collectResult(true);
+   if(gen!==searchGeneration||!root.isConnected||root.dataset.query!==term)return;
+   assetUrlsClear();root.replaceChildren();root.setAttribute('aria-busy','false');
+   const rows=C.filter(result.rows,term,'전체');
+   if(result.errors.length){
+    const warning=element('p','home-search-warning','일부 저장소를 읽지 못해 결과가 빠졌을 수 있어요.');warning.setAttribute('role','status');root.append(warning);
+   }
+   if(!rows.length){
+    const empty=element('p','unified-empty',result.errors.length?'읽을 수 있는 저장 자료에서 검색 결과를 찾지 못했어요.':'저장한 자료에서 검색 결과가 없어요.');root.append(empty);
+    return;
+   }
+   const count=element('p','home-search-count','저장한 자료 '+rows.length+'개');root.append(count);
+   const groups=['학습자료','수업 도구','영상·음악','수업','사진·파일'];
+   for(const group of groups){
+    const matches=rows.filter(row=>row.category===group);if(!matches.length)continue;
+    const section=element('section','home-search-group'),heading=element('h3','',group+' · '+matches.length);
+    const list=element('div','home-search-grid');matches.slice(0,40).forEach(row=>list.append(card(row,true)));
+    section.append(heading,list);root.append(section);
+   }
+   if(rows.length>200){const note=element('p','home-search-warning','검색 결과가 많아 최근 수정한 자료 200개만 보여드려요.');root.append(note)}
+  },220);
  }
  function update(){
   const list=$('unifiedLibraryList');if(!list)return;
@@ -110,9 +139,9 @@
  async function refresh(){
   const status=$('unifiedStatus');if(!status)return;
   const gen=++refreshGeneration;status.textContent='내 기기의 저장 자료를 불러오는 중이에요.';
-  const rows=await collect(true);if(gen!==refreshGeneration)return;
-  fullRows=rows;
-  status.textContent=readErrors.length?'일부 저장소('+readErrors.join(', ')+')를 읽지 못했어요. 다른 브라우저·기기에서 만든 자료는 여기에 보이지 않아요.':'이 브라우저에 저장한 자료를 모았어요. 다른 기기와 자동 동기화되지 않아요.';
+  const result=await collectResult(true);if(gen!==refreshGeneration)return;
+  fullRows=result.rows;
+  status.textContent=result.errors.length?'일부 저장소('+result.errors.join(', ')+')를 읽지 못했어요. 다른 브라우저·기기에서 만든 자료는 여기에 보이지 않아요.':'이 브라우저에 저장한 자료를 모았어요. 다른 기기와 자동 동기화되지 않아요.';
   update();
  }
  function init(){
@@ -131,6 +160,6 @@
   window.addEventListener('gulliver:activities-change',refresh);
   refresh();
  }
- window.GulliverUnifiedLibraryUI={collect,renderHome,refresh};
+ window.GulliverUnifiedLibraryUI={collect,renderHome,renderHomeSearch,refresh};
  init();
 })();
