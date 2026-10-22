@@ -24,7 +24,7 @@ test('Starting a lesson displays only the presentation, fits slide and controls,
   await page.locator('#workNotes').click();
 
   await page.locator('#startLesson').click();
-  await page.waitForFunction(()=>document.querySelector('#editorFrame')?.contentDocument?.body.classList.contains('common-work-presenting'));
+  await page.waitForFunction(()=>{const body=document.querySelector('#editorFrame')?.contentDocument?.body;return !!body?.classList.contains('common-work-presenting')});
   for(const [width,height] of [[1920,1080],[1440,900],[768,900],[390,844]]){
    await page.setViewportSize({width,height});
    await page.waitForTimeout(180);

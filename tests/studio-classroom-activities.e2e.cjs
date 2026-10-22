@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {spawn}=require('node:child_process'),{chromium}=require('playwright-core');
 const base='http://127.0.0.1:8777/';
-async function ready(){for(let i=0;i<100;i++){try{if((await fetch(base+'studio-activity-core.js')).ok)return}catch{}await new Promise(r=>setTimeout(r,100))}throw Error('server unavailable')}
+async function ready(){for(let i=0;i<100;i++){try{const response=await fetch(base+'studio-activity-core.js');await response.arrayBuffer();if(response.ok)return}catch{}await new Promise(r=>setTimeout(r,100))}throw Error('server unavailable')}
 async function svg(page){return page.locator('.display-canvas-image').evaluate(e=>decodeURIComponent(e.src.slice(e.src.indexOf(',')+1)))}
 async function contains(page,text){await page.waitForFunction(text=>{const image=document.querySelector('.display-canvas-image');return image&&decodeURIComponent(image.src.slice(image.src.indexOf(',')+1)).replace(/<[^>]*>/g,'').includes(text)},text)}
 test('배정·퀴즈·타이머를 두 모니터에서 조작하고 비공개 정보를 전송하지 않음',{timeout:60000},async()=>{
@@ -39,7 +39,7 @@ test('배정·퀴즈·타이머를 두 모니터에서 조작하고 비공개 �
   await teacher.locator('#canvasStudentHide').click();await contains(student,'두 번째 질문');
   await teacher.locator('[data-add-activity="timer"]').click();await teacher.locator('[name="seconds"]').fill('10');await teacher.locator('.activity-settings button[type="submit"]').click();await teacher.locator('.activity-settings [data-activity-control="start"]').click();await student.waitForFunction(()=>{const e=document.querySelector('.display-canvas-image');return e&&/>00:0[1-9]</.test(decodeURIComponent(e.src))});await teacher.locator('.activity-settings [data-activity-control="pause"]').click();
   // Page changes project the new page rather than leaving the old quiz visible.
-  await teacher.locator('[data-design-tab="pages"]').click();await teacher.getByRole('button',{name:'새 페이지 추가',exact:false}).click();await student.waitForFunction(()=>{const e=document.querySelector('.display-canvas-image');return e&&!decodeURIComponent(e.src).includes('두 번째 질문')});
+  await teacher.locator('[data-design-tab="pages"]').click();await teacher.locator('[data-pane="pages"]').waitFor({state:'visible'});await teacher.getByRole('button',{name:'새 페이지 추가',exact:false}).click();await student.waitForFunction(()=>{const e=document.querySelector('.display-canvas-image');return e&&!decodeURIComponent(e.src).includes('두 번째 질문')});
   await teacher.setViewportSize({width:390,height:844});await teacher.locator('[data-design-tab="teacher"]').click();await teacher.locator('[data-add-activity="assignment"]').waitFor({state:'visible'});assert.ok(await teacher.locator('.canvas-activities').evaluate(e=>e.getBoundingClientRect().width<=innerWidth));
   assert.deepEqual(errors,[]);await teacher.close({runBeforeUnload:true});await student.getByRole('heading',{name:'교사 화면 연결이 종료됐어요'}).waitFor();
  }finally{await browser?.close();server.kill()}

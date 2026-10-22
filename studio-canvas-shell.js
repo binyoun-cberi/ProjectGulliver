@@ -170,15 +170,20 @@ shade.addEventListener('click',closePanel);
 document.addEventListener('keydown',e=>{
  if(e.key==='Escape'&&document.body.classList.contains('panel-open')&&!document.querySelector('dialog[open]'))closePanel();
 });
+let lastSelectionContext='';
 const updateSelection=()=>{
+ const selected=[...stage.querySelectorAll('.item.selected')];
+ const selectionContext=selected.map((item,index)=>item.dataset.id||`${item.dataset.type||'item'}:${index}`).sort().join('|');
+ const selectionChanged=selectionContext!==lastSelectionContext;
+ lastSelectionContext=selectionContext;
  const chosen=stage.querySelector('.item.selected');
  const multiActive=$('multiSelectMode')?.getAttribute('aria-pressed')==='true';
  selection.hidden=(!chosen&&!multiActive)||stage.classList.contains('playing');
  multiButton.setAttribute('aria-pressed',String(multiActive));
  groupButton.disabled=stage.querySelectorAll('.item.selected').length<2;
  ungroupButton.disabled=$('ungroupSelection')?.disabled!==false;
- if(chosen?.dataset.type==='activity'&&!isMobile()&&active!=='teacher'&&!document.body.classList.contains('panel-collapsed'))activate('teacher');
- if(chosen&&chosen.dataset.type!=='activity'&&!isMobile()&&!document.body.classList.contains('panel-collapsed')&&['elements','text'].includes(active)){
+ if(selectionChanged&&chosen?.dataset.type==='activity'&&!isMobile()&&active!=='teacher'&&!document.body.classList.contains('panel-collapsed'))activate('teacher');
+ if(selectionChanged&&chosen&&chosen.dataset.type!=='activity'&&!isMobile()&&!document.body.classList.contains('panel-collapsed')&&['elements','text'].includes(active)){
   // Selecting an element reveals editing controls on desktop, without covering the canvas.
   activate('properties');
  }

@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {spawn}=require('node:child_process'),{chromium}=require('playwright-core');
 const port=8898,base='http://127.0.0.1:'+port+'/';
-async function ready(){for(let n=0;n<100;n++){try{if((await fetch(base+'studio-unified-editor.js')).ok)return}catch{}await new Promise(r=>setTimeout(r,180))}throw Error('Local server unavailable')}
+async function ready(){for(let n=0;n<100;n++){try{const response=await fetch(base+'studio-unified-editor.js');await response.arrayBuffer();if(response.ok)return}catch{}await new Promise(r=>setTimeout(r,180))}throw Error('Local server unavailable')}
 test('4.0-B browser: group rotate, alignment, snap UI, layers and saved output',{timeout:120000},async()=>{
  const server=spawn('python3',['-m','http.server',String(port),'--bind','127.0.0.1'],{stdio:'ignore'});let browser;
  try{
