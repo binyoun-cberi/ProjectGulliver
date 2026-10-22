@@ -5,13 +5,15 @@
   const query = new URLSearchParams(location.search);
   const kind = query.get('kind') || '';
   const token = query.get('session') || '';
-  const allowed = new Set(['timer', 'lesson', 'seating', 'manitto', 'flashquiz', 'bus', 'groups', 'roles', 'check', 'vote', 'praise', 'canvas']);
+  const allowed = new Set(['timer', 'lesson', 'lesson-run', 'seating', 'manitto', 'flashquiz', 'bus', 'groups', 'roles', 'check', 'vote', 'praise', 'canvas']);
   const stage = document.getElementById('displayStage');
   const connection = document.getElementById('displayConnection');
   const full = document.getElementById('displayFullscreen');
+  const announcement = document.getElementById('displayAnnouncement');
   let channel = null;
   let lastSeen = 0;
   let lastState = null;
+  let lastSequence = 0;
   let selectedManitto = '';
 
   const element = (tag, className = '', content = '') => {
@@ -322,9 +324,74 @@
     image.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(data.svg);
   }
 
+  function renderLessonRun(data) {
+    if (data.hidden) {
+      waiting('잠시 기다려 주세요', '선생님이 다음 자료를 준비하고 있어요.');
+      return;
+    }
+    const view = data.current;
+    if (!view || !['canvas', 'slides', 'document', 'design', 'timer', 'quiz'].includes(view.kind)) {
+      waiting('이 자료는 학생 화면에서 지원되지 않아요', '선생님 화면에서 수업을 계속 진행해 주세요.');
+      return;
+    }
+    const card = element('section', 'display-card lesson-run-card');
+    const head = element('header', 'lesson-run-head');
+    head.append(element('span', 'lesson-run-progress', `활동 ${numeric(data.stepIndex, 0, 59) + 1} / ${numeric(data.stepCount, 1, 60)}`));
+    if (view.pageCount > 1) head.append(element('span', 'lesson-run-page', `자료 ${numeric(view.pageIndex, 0, 999) + 1} / ${numeric(view.pageCount, 1, 1000)}`));
+    card.append(head);
+    const content = element('div', 'lesson-run-content');
+    if (view.kind === 'canvas') {
+      if (view.unsupported || typeof view.svg !== 'string' || view.svg.length > 8000000 || !view.svg.startsWith('<svg ')) {
+        waiting('이 캔버스 장면은 학생 화면에서 지원되지 않아요', '선생님 화면에서 수업을 계속 진행해 주세요.');
+        return;
+      }
+      const image = element('img', 'display-canvas-image'); image.alt = '수업 캔버스';
+      image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(view.svg); content.append(image);
+    } else if (view.kind === 'slides') {
+      const theme = view.theme === 'dark' ? ['#242536', '#fff'] : view.theme === 'warm' ? ['#fff4df', '#3b2a1b'] : ['#fff', '#243047'];
+      content.classList.add('lesson-run-slide'); content.style.background = theme[0]; content.style.color = theme[1];
+      if (view.eyebrow) content.append(element('small', '', safeText(view.eyebrow, '').slice(0, 120)));
+      content.append(element('h1', '', safeText(view.title, '수업 자료')), element('p', '', safeText(view.body, '').slice(0, 4000)));
+      if (typeof view.image === 'string' && /^data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+=*$/.test(view.image) && view.image.length < 1500000) {
+        const image = element('img'); image.src = view.image; image.alt = safeText(view.title, '수업 자료'); content.append(image);
+      }
+    } else if (view.kind === 'document') {
+      content.classList.add('lesson-run-document');
+      content.append(element('h1', '', safeText(view.title, '수업 자료')), element('p', 'muted', safeText(view.subtitle, '')));
+      (Array.isArray(view.blocks) ? view.blocks : []).slice(0, 120).forEach(block => {
+        if (!block || typeof block !== 'object') return;
+        if (block.type === 'table') {
+          const table = element('table');
+          (Array.isArray(block.rows) ? block.rows : []).slice(0, 30).forEach(row => {
+            const tr = element('tr'); (Array.isArray(row) ? row : []).slice(0, 12).forEach(text => tr.append(element('td', '', safeText(text).slice(0, 500)))); table.append(tr);
+          }); content.append(table);
+        } else if (block.type === 'list') {
+          const list = element('ul'); safeText(block.text).split('\n').slice(0, 40).forEach(text => { if (text) list.append(element('li', '', text.slice(0, 500))); }); content.append(list);
+        } else if (block.type === 'image') {
+          if (typeof block.src === 'string' && /^data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+=*$/.test(block.src) && block.src.length < 1500000) {
+            const img = element('img'); img.src = block.src; img.alt = safeText(block.caption, '수업 이미지'); content.append(img);
+          }
+          if (block.caption) content.append(element('p', 'muted', safeText(block.caption).slice(0, 500)));
+        } else if (['heading', 'paragraph', 'rule'].includes(block.type)) {
+          content.append(element(block.type === 'heading' ? 'h2' : block.type === 'rule' ? 'hr' : 'p', '', safeText(block.text).slice(0, 4000)));
+        }
+      });
+    } else if (view.kind === 'design') {
+      if (typeof view.svg !== 'string' || view.svg.length > 2000000 || !view.svg.startsWith('<svg ')) { waiting('도안 자료를 불러올 수 없어요', '선생님 화면에서 수업을 계속 진행해 주세요.'); return; }
+      const image = element('img', 'lesson-run-design'); image.alt = '수업 도안'; image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(view.svg); content.append(image);
+    } else if (view.kind === 'timer') {
+      content.classList.add('lesson-run-timer'); content.append(element('h1', '', safeText(view.title, '활동 시간')), element('strong', '', clock(view.remaining)));
+    } else if (view.kind === 'quiz') {
+      content.classList.add('lesson-run-quiz'); content.append(element('div', 'quiz-counter', `문제 ${numeric(view.index, 0, 999) + 1} / ${numeric(view.count, 1, 1000)}`), element('h1', '', safeText(view.question, '')));
+      if (view.revealed) content.append(element('p', 'lesson-run-answer', safeText(view.answer, '')));
+    }
+    card.append(content); stage.replaceChildren(card);
+  }
+
   function render(data) {
     if (!data || data.kind !== kind) return;
     if (kind === 'canvas') renderCanvas(data);
+    else if (kind === 'lesson-run') renderLessonRun(data);
     else if (kind === 'timer') renderTimer(data);
     else if (kind === 'lesson') renderLesson(data);
     else if (kind === 'seating') renderSeating(data);
@@ -336,6 +403,21 @@
     else if (kind === 'check') renderCheck(data);
     else if (kind === 'vote') renderVote(data);
     else if (kind === 'praise') renderPraise(data);
+  }
+  function announceLessonRun(data) {
+    if (!announcement || kind !== 'lesson-run') return;
+    if (data.hidden) { announcement.textContent = '선생님이 다음 자료를 준비하고 있어요.'; return; }
+    const view = data.current || {};
+    const page = Number.isFinite(view.pageIndex) ? ` ${view.pageIndex + 1} / ${view.pageCount || 1}쪽.` : '';
+    let message = '';
+    if (view.kind === 'slides') message = `발표 자료${page} ${safeText(view.title, '제목 없음')}. ${safeText(view.body)}`;
+    else if (view.kind === 'canvas') message = `통합 캔버스${page}`;
+    else if (view.kind === 'document') message = `문서 자료. ${safeText(view.title, '제목 없음')}`;
+    else if (view.kind === 'design') message = '도안 자료';
+    else if (view.kind === 'timer') message = `활동 타이머. ${safeText(view.title, '활동 시간')}.`;
+    else if (view.kind === 'quiz') message = `문제 ${numeric(view.index, 0, 999) + 1} / ${numeric(view.count, 1, 1000)}. ${safeText(view.question)}${view.revealed ? ` 정답 공개. ${safeText(view.answer)}` : ''}`;
+    else message = '이 자료는 학생 화면에서 지원되지 않습니다.';
+    announcement.textContent = `자료 ${numeric(data.stepIndex, 0, 999) + 1} / ${numeric(data.stepCount, 1, 1000)}. ${message}`;
   }
   full.addEventListener('click', async () => {
     try {
@@ -354,17 +436,25 @@
   channel.onmessage = event => {
     const message = event.data;
     if (!message || message.version !== 1 || message.token !== token || message.kind !== kind) return;
+    if (Number.isFinite(message.sequence)) {
+      if (message.sequence <= lastSequence) return;
+      lastSequence = message.sequence;
+    }
     if (message.type === 'state') {
       lastSeen = Date.now();
       lastState = message.payload;
       setConnection('connected', '● 교사 화면과 연결됨');
       render(lastState);
+      announceLessonRun(lastState);
     } else if (message.type === 'end') {
       lastSeen = 0;
       lastState = null;
       setConnection('disconnected', '교사 화면 연결 종료');
       waiting('교사 화면 연결이 종료됐어요', '교사 화면에서 학생 창을 다시 열어 주세요.');
     } else if (message.type === 'error') {
+      lastSeen = Date.now();
+      lastState = null;
+      setConnection('error', '학생 화면 갱신 오류');
       waiting('학생 화면을 갱신할 수 없어요', safeText(message.payload?.message));
     }
   };

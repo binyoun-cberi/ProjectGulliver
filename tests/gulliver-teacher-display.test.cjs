@@ -37,7 +37,23 @@ test('6.1 pages keep their existing storage formats and use explicit preparation
   assert.match(fs.readFileSync('lesson-circle-timer.js', 'utf8'), /const STORAGE_KEY = 'lessonCircleTimerV3'/);
   assert.match(fs.readFileSync(files[4], 'utf8'), /flashQuizMakerPlusV3/);
   assert.match(fs.readFileSync(files[1], 'utf8'), /lessonStorageKey/);
-  assert.match(fs.readFileSync('gulliver-teacher-display.html', 'utf8'), /display-view\.js\?v=(?:20261019-v6[12]|20261020-canvas)/);
+  assert.match(fs.readFileSync('gulliver-teacher-display.html', 'utf8'), /display-view\.js\?v=(?:20261019-v6[12]|20261020-canvas|20261022-lessonrun2)/);
+});
+
+test('mixed lesson presenter uses a dedicated public projection and an explicit student-window fallback', () => {
+  const html=fs.readFileSync('lesson.html','utf8'),app=fs.readFileSync('lesson-app.js','utf8'),controller=fs.readFileSync('gulliver-teacher-display.js','utf8'),viewer=fs.readFileSync('gulliver-teacher-display-view.js','utf8');
+  assert.match(html,/gulliver-teacher-display\.js\?v=20261022-lessonrun2/);
+  for(const id of ['studentDisplayOpen','studentDisplayToggle','studentDisplayStatus'])assert.ok(html.includes('id="'+id+'"'),id);
+  assert.match(html,/id="counter" aria-live="polite"/);
+  assert.match(controller,/lesson-run/);assert.match(controller,/sequence: \+\+messageSequence/);assert.match(controller,/adapter\.onError/);
+  assert.match(app,/kind:'lesson-run',windowName:'gulliver-lesson-student-display',getSnapshot:lessonDisplaySnapshot/);
+  const snapshot=app.slice(app.indexOf('function lessonDisplaySnapshot()'),app.indexOf('function refreshStudentDisplay()'));
+  assert.doesNotMatch(snapshot,/lesson\.(?:audience|goal)|\.notes\b/);
+  assert.match(snapshot,/quizRevealed\?safeDisplayText\(card\.back\)/);
+  assert.match(app,/studentDisplayTransition/);assert.match(app,/current 자료|학생창|교사 화면에서 진행/);
+  assert.match(viewer,/function renderLessonRun\(data\)/);assert.match(viewer,/이 자료는 학생 화면에서 지원되지 않아요/);assert.match(viewer,/message\.sequence <= lastSequence/);
+  assert.match(viewer,/function announceLessonRun\(data\)/);assert.match(viewer,/정답 공개/);
+  assert.match(fs.readFileSync('gulliver-teacher-display.html','utf8'),/displayAnnouncement.*aria-live="polite"/);
 });
 
 test('teacher controller only broadcasts an explicit public snapshot and accepts student action requests', () => {
@@ -49,13 +65,14 @@ test('teacher controller only broadcasts an explicit public snapshot and accepts
   }
   const events = new Map();
   let popupUrl = '';
+  let popupName = '';
   let studentRequest = null;
   const context = {
     window: {
       addEventListener(name, listener) {events.set(name, listener);},
       dispatchEvent() {},
       crypto: {getRandomValues(bytes) {bytes.fill(37);}},
-      open(url) {popupUrl = url; return {closed: false, focus() {}};},
+      open(url, name) {popupUrl = url; popupName = name; return {closed: false, focus() {}};},
       alert() {},
     },
     BroadcastChannel: MockChannel, URL,
@@ -67,9 +84,10 @@ test('teacher controller only broadcasts an explicit public snapshot and accepts
   vm.runInNewContext(fs.readFileSync('gulliver-teacher-display.js', 'utf8'), context);
   const display = context.window.GulliverTeacherDisplay;
   assert.equal(display.supported(), false);
-  display.register({kind: 'manitto', getSnapshot: () => ({kind: 'manitto', started: true, students: [{name: '가', checked: false}]}), onAction: request => {studentRequest = request;}});
+  display.register({kind: 'manitto', windowName: 'gulliver-test-display', getSnapshot: () => ({kind: 'manitto', started: true, students: [{name: '가', checked: false}]}), onAction: request => {studentRequest = request;}});
   assert.equal(display.open(), true);
   assert.match(popupUrl, /gulliver-teacher-display\.html\?kind=manitto&session=[a-f0-9]{32}/);
+  assert.equal(popupName, 'gulliver-test-display');
   const channel = [...channels.values()][0];
   const initial = channel.messages.find(message => message.type === 'state');
   assert.equal(initial.payload.students[0].name, '가');
