@@ -154,12 +154,29 @@ body{background:#fff}
 .home-view .main{max-width:none!important;padding:28px 32px 60px!important}
 .home-view .welcome,.home-view .topbar,.home-view #content{width:100%;max-width:none!important;margin-left:0!important;margin-right:0!important}
 .home-view .welcome{margin-bottom:16px}.home-view .welcome h1{font-size:26px}.home-view .welcome p{display:none}
-.home-view .home-dashboard{display:block}.home-view .home-block,.home-view .section{max-width:none!important;margin:24px 0!important}
-#unifiedHomeRecent{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.home-view .home-block,.home-view .section{max-width:none!important;margin:24px 0!important}
+#unifiedHomeRecent{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
 #unifiedHomeRecent .unified-open{display:flex;flex-direction:column;gap:10px;padding:10px!important;align-items:stretch;background:#fff;border:1px solid #e5e3eb;border-radius:13px;color:#292535;text-decoration:none}
 #unifiedHomeRecent .unified-preview{display:flex;width:100%;height:174px;border-radius:9px;background:#f0eef5;align-items:center;justify-content:center;overflow:hidden;font-size:38px}
 .unified-preview svg{display:block;width:100%;height:100%;max-width:100%;object-fit:contain}
 #unifiedHomeRecent .unified-info strong{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#unifiedHomeRecent .unified-info small{display:block;margin-top:5px;color:#777080;font-size:11px}
 #unifiedHomeRecent .storage-type,#unifiedHomeRecent .unified-arrow{display:none}.home-view .studio-library-link{display:none}.home-view .home-work-location-note{font-size:11px;color:#817b8d}
+#homeSavedSearchResults{display:grid;gap:14px}
+.home-search-count{margin:0;color:#626078;font-size:12px;font-weight:750}
+.home-search-warning{margin:0;padding:10px 12px;color:#76551b;background:#fff8e8;border:1px solid #f0dfb7;border-radius:10px;font-size:12px}
+.home-search-group{min-width:0}
+.home-search-group h3{margin:0 0 8px;color:#655f73;font-size:13px}
+.home-search-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:10px}
+#homeSavedSearchResults .unified-item{min-width:0;border:1px solid #e7e4ed;border-radius:12px;background:#fff;overflow:hidden}
+#homeSavedSearchResults .unified-open{display:flex;align-items:center;gap:10px;min-width:0;padding:9px;color:#292535;text-decoration:none}
+#homeSavedSearchResults .unified-open:hover{background:#faf9ff}
+#homeSavedSearchResults .unified-preview{display:flex;align-items:center;justify-content:center;flex:none;width:56px;height:54px;overflow:hidden;border-radius:9px;background:#f0eef5;font-size:22px}
+#homeSavedSearchResults .unified-preview img{width:100%;height:100%;object-fit:cover}
+#homeSavedSearchResults .unified-info{display:grid;min-width:0;gap:3px}
+#homeSavedSearchResults .unified-info strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+#homeSavedSearchResults .unified-info small{color:#777080;font-size:10px}
+#homeSavedSearchResults .unified-arrow{margin-left:auto;color:#7547e8}
 .home-view .format-tile{min-height:72px!important;padding:12px!important}.home-view .format-symbol{width:34px!important;height:34px!important;font-size:22px!important}.home-view .format-copy small{display:none}
-@media(max-width:800px){.home-view .main{padding:20px 16px 50px!important}#unifiedHomeRecent{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#unifiedHomeRecent .unified-preview{height:145px}#unifiedHomeRecent .unified-info strong{max-width:100%;font-size:12px}.home-view .welcome h1{font-size:22px}}
+@media(max-width:1399px){#unifiedHomeRecent{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1000px){#unifiedHomeRecent{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){.home-view .main{padding:20px 16px 50px!important}#unifiedHomeRecent{gap:10px}#unifiedHomeRecent .unified-preview{height:145px}#unifiedHomeRecent .unified-info strong{max-width:100%;font-size:12px}.home-view .welcome h1{font-size:22px}}

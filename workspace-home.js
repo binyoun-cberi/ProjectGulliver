@@ -39,7 +39,7 @@ function render(){
  $('folders').innerHTML=data.folders.length?data.folders.map(f=>'<button class="folder-link '+(f.id===folderId?'active':'')+'" data-folder="'+esc(f.id)+'">▱ '+esc(f.name)+'</button>').join(''):'<p style="font-size:11px;color:#a1a9b8;padding:0 13px;line-height:1.6">수업별로 활동을 모아 보세요.</p>';
  const room=Gulliver.getClassroom();$('classSummary').replaceChildren();$('classSummary').append(document.createTextNode('♧ '+room.className));const span=document.createElement('span');span.textContent=room.students.length?room.students.length+'명 · 명단 관리 →':'명단 등록하기 →';$('classSummary').append(span);
  document.querySelectorAll('.workspace-switch [data-view]').forEach(button=>button.setAttribute('aria-current',button.dataset.view===view?'page':'false'));
- $('search').placeholder=view==='home'?'도구·예시를 찾으세요. 저장 자료는 내 보관함에서 검색할 수 있어요':view==='tools'||view==='favorites'?'도구 이름이나 필요한 일로 검색':view==='templates'?'예시 활동 검색':'교사 도구 활동 이름으로 검색';
+ $('search').placeholder=view==='home'?'내 자료·도구·예시를 검색하세요':view==='tools'||view==='favorites'?'도구 이름이나 필요한 일로 검색':view==='templates'?'예시 활동 검색':'교사 도구 활동 이름으로 검색';
  let html='';const activities=W.list({trash:view==='trash',folder:folderId}).filter(a=>matches(a.title+' '+W.kinds[a.kind].name));const filteredTools=tools.filter(t=>(view==='favorites'||!t.studioLegacy)&&(category==='전체'||t.category===category)&&matches(t.name+' '+t.situation+' '+t.tags.join(' ')));
  if(view==='activities'||view==='trash'){html=(view==='activities'?'<a class="studio-library-link activities-studio" href="내 보관함.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>제작실 자료 찾기</strong><small>저장한 제작실 자료도 내 보관함에서 찾을 수 있어요.</small></span><span aria-hidden="true">→</span></a>':'')+'<div class="activity-grid">'+activities.map(a=>activityCard(a,view==='trash')).join('')+'</div>';if(!activities.length)html=(view==='activities'?'<a class="studio-library-link activities-studio" href="내 보관함.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>제작실에서 만든 자료 찾기</strong><small>학습지·발표·수업자료도 내 보관함에서 찾을 수 있어요.</small></span><span aria-hidden="true">→</span></a>':'')+'<div class="empty"><strong>'+($('search').value?'검색 결과가 없어요.':view==='trash'?'보관한 활동이 없어요.':'아직 저장한 활동이 없어요.')+'</strong>'+(view==='trash'?'보관한 활동은 여기에서 다시 복원할 수 있어요.':'타이머·퀴즈·자리표에서 이름을 붙여 저장해 보세요.')+'</div>';
  }else if(view==='templates'){const ts=W.templates.filter(t=>matches(t.title+' '+t.desc));html=ts.length?'<div class="template-grid">'+ts.map(templateCard).join('')+'</div>':'<div class="empty">검색 결과가 없어요.</div>';
@@ -66,12 +66,9 @@ function render(){
       if(favoriteItems.length)html+=section('즐겨찾는 수업 활동','','<div class="tool-list">'+favoriteItems.slice(0,4).map(toolCard).join('')+'</div>');
       if(templates.length)html+=section('예시 자료로 시작','예시를 선택하고 우리 반에 맞게 수정하세요.','<div class="template-grid home-template-grid">'+templates.slice(0,2).map(templateCard).join('')+'</div>','<button class="text-btn" data-view="templates">예시 더 보기 →</button>');
    }else if(isHome&&query){
-     const results=activities.length+templates.length+filteredTools.length;
-     if(activities.length)html+=section('교사 도구 활동 · '+activities.length+'개','','<div class="activity-grid">'+activities.map(a=>activityCard(a)).join('')+'</div>');
+     html+=section('저장한 자료','학습자료·수업·활동·영상·사진을 이 기기에서 찾아요.','<div id="homeSavedSearchResults" class="home-saved-search-results" role="region" aria-label="저장 자료 검색 결과" aria-live="polite"><p class="unified-empty" role="status">저장 자료를 검색할게요.</p></div>','<a class="text-btn" href="내 보관함.html?q='+encodeURIComponent(query)+'">보관함에서 모두 보기 →</a>');
      if(templates.length)html+=section('수업 템플릿 · '+templates.length+'개','','<div class="template-grid home-template-grid">'+templates.map(templateCard).join('')+'</div>');
      if(filteredTools.length)html+=section('사용할 수 있는 도구 · '+filteredTools.length+'개','','<div class="tool-list">'+filteredTools.map(toolCard).join('')+'</div>');
-     if(!results)html='<div class="empty"><strong>검색 결과가 없어요.</strong>다른 단어나 수업 자료 종류로 검색해 보세요.</div>';
-     html+='<p class="home-work-location-note"><a href="내 보관함.html?q='+encodeURIComponent(query)+'">저장한 학습지·수업·영상에서도 검색하기 →</a></p>';
    }else{
      const favorites=Gulliver.getFavorites().map(f=>tools.find(t=>t.href===f.href)).filter(Boolean);
      if(favorites.length&&!query&&category==='전체')html+='<div class="favorite-strip"><span>★ 즐겨찾기</span>'+favorites.map(t=>'<a data-tool="'+esc(t.href)+'" href="'+esc(t.href)+'">'+esc(t.icon)+' '+esc(t.name)+'</a>').join('')+'</div>';
@@ -82,11 +79,15 @@ function render(){
    }
  }
  document.querySelectorAll('.workspace-switch [data-view]').forEach(button=>button.setAttribute('aria-current',button.dataset.view===view?'page':'false'));
- $('search').placeholder=view==='home'?'도구·예시를 찾으세요. 저장 자료는 내 보관함에서 검색할 수 있어요':view==='tools'||view==='favorites'?'도구 이름이나 필요한 일로 검색':view==='templates'?'예시 활동 검색':'교사 도구 활동 이름으로 검색';
+ $('search').placeholder=view==='home'?'내 자료·도구·예시를 검색하세요':view==='tools'||view==='favorites'?'도구 이름이나 필요한 일로 검색':view==='templates'?'예시 활동 검색':'교사 도구 활동 이름으로 검색';
  document.querySelector('.storage-note').hidden=['home','tools','favorites'].includes(view);
 
  $('content').innerHTML=html;
- if(view==='home'&&!$('search').value.trim())window.GulliverUnifiedLibraryUI?.renderHome();
+ if(view==='home'){
+  const query=$('search').value.trim();
+  if(query)window.GulliverUnifiedLibraryUI?.renderHomeSearch(query);
+  else window.GulliverUnifiedLibraryUI?.renderHome();
+ }
 }
 function edit(title,label,value,action,move=false){editAction=action;$('editTitle').textContent=title;$('editLabel').textContent=label;$('editValue').hidden=move;$('editValue').required=!move;$('editFolder').hidden=!move;$('editValue').value=value||'';if(move){$('editFolder').innerHTML='<option value="">미분류</option>'+W.read().folders.map(f=>'<option value="'+esc(f.id)+'">'+esc(f.name)+'</option>').join('');$('editFolder').value=value||''}$('editDialog').showModal();(move?$('editFolder'):$('editValue')).focus()}
 function create(){document.body.classList.remove('menu-open');$('menuButton').setAttribute('aria-expanded','false');$('createDialog').showModal()}
