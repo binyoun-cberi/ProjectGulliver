@@ -52,3 +52,25 @@ button:focus-visible{outline:3px solid #a5b4fc;outline-offset:3px}.display-stage
 
 .display-toolbar #displayConnection[data-state="error"]{color:#b45309}
 .screen-reader-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+
+/* Unified time tool: public clock styles share one teacher-side time state. */
+.tt-display-card{text-align:center;max-width:1250px}
+.tt-display-card .display-title{margin:8px 0 15px}
+.tt-student-face{min-height:clamp(300px,55vh,670px);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px;background:linear-gradient(145deg,#f4f7ff,#ebf4ff);border:1px solid #dfe9fa;border-radius:28px;padding:clamp(16px,3vw,36px)}
+.tt-student-ring{width:min(60vh,67vw,590px);aspect-ratio:1;padding:clamp(16px,2.4vw,28px);border-radius:50%;display:grid;place-items:center;box-shadow:0 15px 40px #5467a128}
+.tt-student-ring-inside{width:100%;height:100%;border-radius:50%;background:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:15px}
+.tt-student-number{font-size:clamp(55px,10vw,135px);font-variant-numeric:tabular-nums;letter-spacing:-.07em;font-weight:950;line-height:1.05;overflow-wrap:anywhere}
+.tt-student-ring .tt-student-number{font-size:clamp(45px,8vw,98px)}
+.tt-student-label{font-size:clamp(23px,3vw,43px);font-weight:900}
+.tt-student-sub{font-size:clamp(16px,1.7vw,24px);color:#65758e;font-weight:750;overflow-wrap:anywhere}
+.tt-student-digital{width:min(100%,920px);background:#182842;color:#fff;border-radius:26px;min-height:300px;display:flex;justify-content:center;align-items:center;flex-direction:column;gap:20px;padding:32px;box-shadow:0 22px 35px #1b324d25}
+.tt-student-digital .tt-student-sub{color:#c5d6e8}
+.tt-student-track{height:clamp(27px,5vh,55px);width:min(90%,870px);background:#d4deef;border-radius:100px;overflow:hidden}
+.tt-student-track-fill{height:100%;border-radius:100px;transition:width .25s linear}
+.tt-student-sand{font-size:clamp(125px,23vh,250px);line-height:1.05}
+.tt-student-analog{width:min(56vh,68vw,560px);max-width:100%;filter:drop-shadow(0 17px 22px #33466e22)}
+.tt-student-remaining{font-size:clamp(18px,2.1vw,29px);color:#57657c;font-weight:800;margin:18px 0 0}
+.tt-student-events{display:flex;justify-content:center;flex-wrap:wrap;gap:9px;margin:19px auto 0}
+.tt-student-event{padding:10px 15px;border-radius:12px;background:#e8ecf5;color:#6d7890;font-weight:900;font-size:clamp(13px,1.3vw,19px)}
+.tt-student-event.active{background:#dce5ff;color:#3755bf}
+@media(max-width:700px){.tt-student-face{min-height:320px;padding:12px}.tt-student-ring{width:min(78vw,380px)}.tt-student-ring .tt-student-number{font-size:clamp(37px,9vw,73px)}.tt-student-ring .tt-student-label{font-size:20px}.tt-student-ring .tt-student-sub{font-size:13px}.tt-student-digital{min-height:260px;padding:12px}.tt-student-number{font-size:clamp(39px,10vw,70px)}}

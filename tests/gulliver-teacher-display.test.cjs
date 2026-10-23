@@ -7,7 +7,7 @@ const {spawn} = require('node:child_process');
 let chromium;
 try { ({chromium} = require('playwright-core')); } catch {}
 
-const files = ['지도안식 원형 타이머.html', '이번 수업 알리미.html', '자리 배정 프로그램.html', '마니또 배정 도우미.html', '플래시퀴즈메이커.html'];
+const files = ['지도안식 원형 타이머.html', '이번 수업 알리미.html', '자리 배정 프로그램.html', '마니또 배정 도우미.html', '플래시퀴즈메이커.html', '시간 도구.html'];
 const base = 'http://127.0.0.1:8957/';
 const browserInstalled = Boolean(chromium && (fs.existsSync(chromium.executablePath()) || ['/opt/google/chrome/chrome', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable'].some(fs.existsSync)));
 
@@ -37,7 +37,7 @@ test('6.1 pages keep their existing storage formats and use explicit preparation
   assert.match(fs.readFileSync('lesson-circle-timer.js', 'utf8'), /const STORAGE_KEY = 'lessonCircleTimerV3'/);
   assert.match(fs.readFileSync(files[4], 'utf8'), /flashQuizMakerPlusV3/);
   assert.match(fs.readFileSync(files[1], 'utf8'), /lessonStorageKey/);
-  assert.match(fs.readFileSync('gulliver-teacher-display.html', 'utf8'), /display-view\.js\?v=(?:20261019-v6[12]|20261020-canvas|20261022-lessonrun2)/);
+  assert.match(fs.readFileSync('gulliver-teacher-display.html', 'utf8'), /display-view\.js\?v=(?:20261019-v6[12]|20261020-canvas|20261022-lessonrun2|20261023-unified-time)/);
 });
 
 test('teacher controller only broadcasts an explicit public snapshot and accepts student action requests', () => {
