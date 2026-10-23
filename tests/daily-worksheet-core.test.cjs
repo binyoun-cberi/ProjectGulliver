@@ -45,7 +45,7 @@ test('five subjects expose only supported grades and topics, with complete uniqu
  assert.deepEqual(Object.keys(SUBJECTS),['korean','math','social','science','english']);
  for(const [subject,info] of Object.entries(SUBJECTS))for(const grade of info.grades)for(const [topic,,fromGrade,toGrade=6] of info.topics){
   if(grade<fromGrade||grade>toGrade)continue;
-  if(['mixed','decimal','history-review'].includes(topic))continue;
+  if(['mixed','decimal','history-review','reading-set'].includes(topic))continue;
   const dense=subject==='math'&&['addition','hundreds','multiplication'].includes(topic);
   for(const difficulty of ['basic','challenge'])for(const count of [5,10,15,...(dense?[24]:[])])for(const seed of [1,42,2026]){
    const sheet=generate({subject,topic,grade,count,seed,difficulty});
@@ -58,6 +58,7 @@ test('five subjects expose only supported grades and topics, with complete uniqu
 
 test('social units generate sourced history quizzes and local evidence exercises',()=>{
  for(const grade of [3,4,5,6])for(const unit of units('social',grade))for(const [type,,topic] of unit.types){
+  if(!['past','local','prehistoric','ancient','goryeo','joseon','modern','history-review'].includes(topic))continue;
   for(const seed of [1,42,2026]){
    const options={subject:'social',grade,topic,type,count:15,seed},sheet=generate(options);
    assert.deepEqual(sheet,generate(options));
@@ -75,6 +76,7 @@ test('social units generate sourced history quizzes and local evidence exercises
 test('regenerating history changes questions while retaining answer and source',()=>{
  for(const grade of [3,5])for(const unit of units('social',grade)){
   const [type,,topic]=unit.types[0],options={subject:'social',grade,topic,type,count:15};
+  if(!['past','local','prehistoric','ancient','goryeo','joseon','modern','history-review'].includes(topic))continue;
   const first=generate({...options,seed:1}),second=generate({...options,seed:2026});
   assert.notDeepStrictEqual(first.items,second.items,topic);
   for(let seed=1;seed<=100;seed++){
@@ -94,6 +96,33 @@ test('history matching and ordering keep their printed answers consistent',()=>{
   const ordering=generate({subject:'social',grade:5,topic:'history-review',type:'history-order',count,seed}).items;
   for(const q of ordering){const indices=q.answer.split(' → ').map(Number);assert.deepEqual([...indices].sort(),[1,2,3,4]);const expected=indices.map(i=>q.orderChoices[i-1]);assert.deepEqual(expected,[...q.orderChoices].sort((a,b)=>chronology.indexOf(a)-chronology.indexOf(b)));assert.equal(q.explanation,expected.join(' → '))}
  }
+});
+
+test('Korean context words and five-question reading sets print with their own answers',()=>{
+ for(const grade of [3,4,5,6]){
+  const topics=grade>=5?['vocabulary','idiom','hanja']:['vocabulary','idiom'];
+  for(const topic of topics){const [type]=types('korean',grade,topic)[0];for(const seed of [1,42,2026]){
+   const sheet=generate({subject:'korean',grade,topic,type,count:15,seed});assert.equal(sheet.items.length,15);
+   assert.equal(new Set(sheet.items.map(q=>q.detail+'|'+q.prompt)).size,15);
+   for(const item of sheet.items){assert.ok(item.detail.includes('.'));assert.equal(item.choices.length,4);assert.ok(item.choices.includes(item.answer))}
+  }}
+  for(const count of [5,10,15]){const sheet=generate({subject:'korean',grade,topic:'reading-set',type:'reading-set-five',count,seed:42});assert.equal(sheet.items.length,count);
+   const groups=[...new Set(sheet.items.map(q=>q.readingGroup))];assert.equal(groups.length,count/5);
+   for(const group of groups){const questions=sheet.items.filter(q=>q.readingGroup===group);assert.equal(questions.length,5);assert.equal(questions.filter(q=>q.readingPassage).length,1);assert.ok(questions[0].readingPassage.length>150);for(const q of questions)assert.ok(q.choices.includes(q.answer))}
+  }
+ }
+ assert.throws(()=>generate({subject:'korean',grade:2,topic:'hanja',type:'hanja-meaning',count:5}));
+ assert.throws(()=>generate({subject:'korean',grade:5,topic:'reading-set',count:5}));
+});
+
+test('social geography, civic, economy and world themes offer distinct grade-banded sheets',()=>{
+ const lower=['map-symbol','natural','human','cultural','family','community-rules','local-gov','transport'];
+ const upper=['korea-geography','democracy','rights','government','market','world-geography','international','environment','contemporary'];
+ for(const [grades,topics] of [[[3,4],lower],[[5,6],upper]])for(const grade of grades)for(const topic of topics){const [type]=types('social',grade,topic)[0];for(const seed of [1,42,2026]){
+  const sheet=generate({subject:'social',grade,topic,type,count:15,seed});assert.equal(sheet.items.length,15,`${grade}/${topic}`);assert.equal(new Set(sheet.items.map(q=>q.prompt)).size,15);
+  assert.equal(sheet.alignment,null);for(const q of sheet.items){assert.ok(q.prompt&&q.answer);assert.equal(q.choices.length,3);assert.ok(q.choices.includes(q.answer));assert.doesNotMatch(q.choices.join(' '),/세트장|지구의 자전 정지|계절의 소멸|바다가 사라짐/)}
+ }}
+ for(const topic of upper)assert.throws(()=>generate({subject:'social',grade:4,topic,type:`${topic}-quiz`,count:5}));
 });
 
 test('a worksheet number reproduces the same sheet and a new seed changes it',()=>{
