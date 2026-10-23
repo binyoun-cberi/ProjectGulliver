@@ -2,6 +2,23 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {SUBJECTS,generate,types,units}=require('../daily-worksheet-core.js');
 
+test('expanded social bank reaches beyond one 15-question sheet and Korean reading offers seven passages per band',()=>{
+ const lower=['map-symbol','natural','human','cultural','family','community-rules','local-gov','transport'];
+ const upper=['korea-geography','democracy','rights','government','market','world-geography','international','environment','contemporary'];
+ for(const [grade,topics] of [[3,lower],[5,upper]])for(const topic of topics){
+  const prompts=new Set();
+  for(let seed=1;seed<=30;seed++)for(const q of generate({subject:'social',grade,topic,count:15,seed}).items){
+   prompts.add(q.prompt);assert.equal(q.choices.length,3);assert.ok(q.choices.includes(q.answer));
+  }
+  assert.ok(prompts.size>=21,`${topic}: 새 문제지에서 같은 질문이 너무 빨리 반복됨`);
+ }
+ for(const grade of [3,5]){
+  const groups=new Set();
+  for(let seed=1;seed<=50;seed++)for(const q of generate({subject:'korean',grade,topic:'reading-set',type:'reading-set-five',count:15,seed}).items)groups.add(q.readingGroup);
+  assert.ok(groups.size>=7,`${grade}학년 독해 지문 수가 부족함`);
+ }
+});
+
 test('unit selectors generate the requested arithmetic constraints and mixed order',()=>{
  assert.equal(units('math',3)[0].label,'1학기 · 덧셈과 뺄셈');
  assert.equal(types('math',5,'mixed').length,11);
