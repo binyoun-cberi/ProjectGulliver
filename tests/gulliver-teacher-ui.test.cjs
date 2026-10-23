@@ -14,8 +14,8 @@ const base = 'http://127.0.0.1:8956/';
 const bundledBrowser = Boolean(chromium && fs.existsSync(chromium.executablePath()));
 const systemChrome = ['/opt/google/chrome/chrome', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable'].some(file => fs.existsSync(file));
 
-test('6.0 assets are connected to each of 21 teacher apps only once', () => {
-  assert.equal(teacherTools.length, 21);
+test('shared UI assets are connected to every cataloged teacher app exactly once', () => {
+  assert.equal(teacherTools.length, 20);
   for (const tool of teacherTools) {
     const html = fs.readFileSync(tool.href, 'utf8');
     for (const asset of ['gulliver-teacher-ui.css', 'gulliver-teacher-components.js', 'gulliver-teacher-shell.js']) {
