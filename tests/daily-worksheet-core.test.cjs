@@ -62,14 +62,27 @@ test('social history units use evidence with an accountable answer and source',(
    const options={subject:'social',grade,topic,type,count:15,seed},sheet=generate(options);
    assert.deepEqual(sheet,generate(options));
    assert.equal(sheet.items.length,15);
-   assert.equal(new Set(sheet.items.map(q=>q.detail+'|'+q.prompt)).size,15);
+   assert.equal(new Set(sheet.items.map(q=>q.detail)).size,15,`${grade}/${topic}/${seed}: 자료가 중복됨`);
    if(sheet.alignment)assert.match(sheet.alignment.code,/^\[[46]사\d{2}-\d{2}\]$/);
    else assert.ok(['joseon','modern'].includes(topic));
-   for(const question of sheet.items){assert.ok(question.detail&&question.explanation&&question.sourceLabel);assert.ok(question.choices.includes(question.answer));assert.ok(question.explanation.includes(question.answer));if(grade>=5)assert.match(question.source,/^https:\/\/contents\.history\.go\.kr\//);else assert.equal(question.source,'')}
+   for(const question of sheet.items){assert.ok(question.detail&&question.explanation&&question.explanation!==question.detail&&question.sourceLabel);assert.ok(question.choices.includes(question.answer));if(grade>=5)assert.match(question.source,/^https:\/\/contents\.history\.go\.kr\/mobile\/eh\/view\.do\?/);else assert.equal(question.source,'')}
   }
  }
  assert.throws(()=>generate({subject:'social',grade:4,topic:'goryeo',type:'goryeo-evidence',count:5}));
  assert.throws(()=>generate({subject:'social',grade:5,topic:'past',type:'past-evidence',count:5}));
+});
+
+test('regenerating social history selects different evidence and direct era sources',()=>{
+ for(const grade of [3,5])for(const unit of units('social',grade)){
+  const [type,,topic]=unit.types[0],options={subject:'social',grade,topic,type,count:15};
+  const first=generate({...options,seed:1}),second=generate({...options,seed:2026});
+  assert.notDeepEqual(new Set(first.items.map(q=>q.detail)),new Set(second.items.map(q=>q.detail)),topic);
+  for(let seed=1;seed<=100;seed++){
+   const sheet=generate({...options,seed});
+   assert.equal(new Set(sheet.items.map(q=>q.detail)).size,15,`${topic}/${seed}`);
+   for(const q of sheet.items){assert.ok(q.explanation.length>=20);if(topic==='modern')assert.match(q.source,/code=eh_age_(40|50)&levelId=/);if(q.source)assert.ok(!q.source.includes('/list.do?'))}
+  }
+ }
 });
 
 test('a worksheet number reproduces the same sheet and a new seed changes it',()=>{

@@ -46,7 +46,7 @@ function render(sheet){current=sheet;const dense=sheet.count===24&&sheet.subject
    const space=document.createElement('span');space.className='result-space result-answer';space.textContent=item.answer;space.setAttribute('aria-hidden','true');stack.append(top,bottom,space);li.append(number,stack);
   }else{
    const prompt=document.createElement('strong');prompt.textContent=item.prompt;li.append(prompt);
-   if(item.detail){const detail=document.createElement('p');detail.className='question-detail'+(sheet.topic==='direction'?' map-detail':'');detail.textContent=item.detail;li.append(detail)}
+   if(item.detail){const detail=document.createElement('p');detail.className='question-detail'+(sheet.topic==='direction'?' map-detail':'');if(item.sourceLabel){const label=document.createElement('small');label.className='evidence-label';label.textContent=item.source?'역사 자료를 바탕으로 재구성':'가상의 연습 자료';detail.append(label)}detail.append(document.createTextNode(item.detail));li.append(detail)}
    if(item.choices?.length){const list=document.createElement('ul');list.className='choice-list';item.choices.forEach((answer,i)=>{const choice=document.createElement('li');choice.textContent=['①','②','③','④'][i]+' '+answer;list.append(choice)});li.append(list)}
    else{const line=document.createElement('span');line.className='answer-blank';line.setAttribute('aria-hidden','true');li.append(line)}
    const inlineAnswer=document.createElement('span');inlineAnswer.className='inline-answer result-answer';inlineAnswer.textContent='정답: '+(item.choices?.length?['①','②','③','④'][item.choices.indexOf(item.answer)]+' ':'')+item.answer;
