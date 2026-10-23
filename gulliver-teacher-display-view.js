@@ -87,7 +87,7 @@
         item('line',{x1:150,y1:150,x2:150+length*Math.sin(r),y2:150-length*Math.cos(r),stroke:color,'stroke-width':width,'stroke-linecap':'round'});
       }
       hand(((hour%12)+minute/60)*30,76,'#263852',9);
-      hand((minute+second/60)*6,105,'#556be9',6);
+      hand((minute+(mode==='clock'?second:0)/60)*6,105,'#556be9',6);
       if(mode==='clock')hand(second*6,114,'#dc6570',2);
       item('circle',{cx:150,cy:150,r:6,fill:'#263852'});
       return svg;
