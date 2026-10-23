@@ -6,7 +6,8 @@ test('five subjects expose only supported grades and topics, with complete uniqu
  assert.deepEqual(Object.keys(SUBJECTS),['korean','math','social','science','english']);
  for(const [subject,info] of Object.entries(SUBJECTS))for(const grade of info.grades)for(const [topic,,fromGrade,toGrade=6] of info.topics){
   if(grade<fromGrade||grade>toGrade)continue;
-  for(const difficulty of ['basic','challenge'])for(const count of [5,10,15])for(const seed of [1,42,2026]){
+  const dense=subject==='math'&&['addition','hundreds','multiplication'].includes(topic);
+  for(const difficulty of ['basic','challenge'])for(const count of [5,10,15,...(dense?[24]:[])])for(const seed of [1,42,2026]){
    const sheet=generate({subject,topic,grade,count,seed,difficulty});
    assert.equal(sheet.items.length,count,`${subject}/${grade}/${topic}`);
    assert.equal(new Set(sheet.items.map(q=>q.prompt+'|'+q.answer+'|'+q.detail)).size,count);
@@ -26,11 +27,26 @@ test('invalid grade, unavailable topic, and excessive item count are rejected',(
   {subject:'social',grade:1,topic:'direction',count:5},
   {subject:'math',grade:1,topic:'fraction',count:5},
   {subject:'math',grade:4,topic:'number',count:5},
+  {subject:'math',grade:2,topic:'hundreds',count:24},
+  {subject:'korean',grade:3,topic:'reading',count:24},
+  {subject:'math',grade:3,topic:'division',count:24},
   {subject:'english',grade:3,topic:'unknown',count:5},
   {subject:'science',grade:3,topic:'weather',count:100},
   {subject:'math',grade:3,topic:'division',count:5,difficulty:'unknown'},
   {subject:'other',grade:3,topic:'weather',count:5}
  ])assert.throws(()=>generate(options));
+});
+
+test('24 three-digit addition questions have no carrying and keep correct answers',()=>{
+ for(const difficulty of ['basic','challenge'])for(let seed=1;seed<=80;seed++){
+  const sheet=generate({subject:'math',topic:'hundreds',grade:3,count:24,seed,difficulty});
+  assert.equal(sheet.items.length,24);
+  for(const q of sheet.items){
+   const match=q.prompt.match(/^(\d+) \+ (\d+) =$/);assert.ok(match);
+   const a=Number(match[1]),b=Number(match[2]);assert.equal(a%10,0);assert.equal(b%10,0);
+   assert.ok(a>=100&&b>=100&&a+b<1000);assert.ok(a%100+b%100<100);assert.equal(Number(q.answer),a+b);
+  }
+ }
 });
 
 test('arithmetic and fraction answers correspond to printed expressions',()=>{

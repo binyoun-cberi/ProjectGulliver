@@ -2,7 +2,7 @@
 'use strict';
 const SUBJECTS={
  korean:{name:'국어',grades:[1,2,3,4,5,6],topics:[['opposite','반대말 찾기',1],['spacing','바른 띄어쓰기',2],['reading','글 읽고 답하기',1]]},
- math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3]]},
+ math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['hundreds','세 자리 수 덧셈 · 받아올림 없음',3,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3]]},
  social:{name:'사회',grades:[3,4,5,6],topics:[['direction','방향과 위치',3],['community','우리 사회의 일',3],['economy','생산과 소비',4]]},
  science:{name:'과학',grades:[3,4,5,6],topics:[['living','생물과 비생물',3],['matter','물질의 상태',3],['weather','날씨 관찰',3]]},
  english:{name:'영어',grades:[3,4,5,6],topics:[['words','기본 낱말',3],['sentence','문장 만들기',3],['conversation','상황에 맞는 대답',3]]}
@@ -128,6 +128,11 @@ function item(subject,topic,grade,r,difficulty){
  }
  if(subject==='math'){
   if(topic==='addition')return arithmetic(grade,difficulty,r);
+  if(topic==='hundreds'){
+   const hundreds=int(1,8,r),tens=int(0,9,r),a=hundreds*100+tens*10;
+   const b=int(1,9-hundreds,r)*100+int(0,9-tens,r)*10;
+   return{prompt:`${a} + ${b} =`,answer:String(a+b),choices:[]};
+  }
   if(topic==='number'){
    const unit=grade===1?10:grade===2?100:1000,n=grade===1?int(10,99,r):grade===2?int(100,999,r):int(1000,9999,r);
    if(difficulty==='basic')return{prompt:`수 ${n}. ${unit}씩 묶으면 몇 묶음이고, 얼마가 남나요?`,answer:`${Math.floor(n/unit)}묶음, ${n%unit}`,choices:[]};
@@ -170,7 +175,8 @@ function item(subject,topic,grade,r,difficulty){
  const [question,answer,options]=pick(CONVERSATIONS,r);return choice(`다음 말에 알맞은 대답을 고르세요.  “${question}”`,answer,options,r);
 }
 function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basic'}){
- const info=SUBJECTS[subject],year=Number(grade),size=Number(count);if(!info||!info.grades.includes(year)||!info.topics.some(t=>t[0]===topic&&available(t,year))||![5,10,15].includes(size)||!['basic','challenge'].includes(difficulty))throw Error('학년·교과·유형을 다시 선택해 주세요.');
+ const info=SUBJECTS[subject],year=Number(grade),size=Number(count),dense=subject==='math'&&['addition','hundreds','multiplication'].includes(topic);
+ if(!info||!info.grades.includes(year)||!info.topics.some(t=>t[0]===topic&&available(t,year))||![5,10,15,...(dense?[24]:[])].includes(size)||!['basic','challenge'].includes(difficulty))throw Error('학년·교과·유형을 다시 선택해 주세요.');
  const random=rng(seed),items=[],seen=new Set(),seenPassages=new Set();let attempts=0;
  while(items.length<size&&attempts++<3000){const candidate=item(subject,topic,year,random,difficulty),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);if(topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
  if(items.length<size)throw Error('이 유형에서는 서로 다른 문제를 충분히 만들지 못했어요. 문항 수를 줄여 주세요.');
