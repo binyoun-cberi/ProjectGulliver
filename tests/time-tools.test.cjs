@@ -83,6 +83,37 @@
     engine.setReveal(true);
     assert.equal(engine.snapshot().reveal,true);
   });
+  test('timer leaderboard preserves legacy remaining-time ranking and rejects finished records',()=>{
+    let now=10000;
+    const engine=core.createEngine({},()=>now);
+    engine.start();now+=10000;
+    assert.equal(engine.record('빠른 학생'),true);
+    assert.equal(engine.listRecords('timer')[0].valueMs,290000);
+    now+=100000;
+    assert.equal(engine.record('느린 학생'),true);
+    assert.equal(engine.listRecords('timer')[0].name,'빠른 학생');
+    assert.equal(engine.listRecords('timer')[1].valueMs,190000);
+    now+=200000;
+    assert.equal(engine.record('끝난 학생'),false);
+    assert.equal(engine.listRecords('timer').length,2);
+  });
+  test('adjusting an active countdown and lesson does not interrupt the running clock',()=>{
+    let now=1000;
+    const engine=core.createEngine({},()=>now);
+    engine.start();now+=25000;
+    engine.adjust(60000);
+    assert.equal(engine.snapshot().running,true);
+    assert.equal(engine.snapshot().remainingMs,335000);
+    now+=5000;
+    assert.equal(engine.snapshot().remainingMs,330000);
+    engine.switchMode('lesson');
+    engine.start();now+=10000;
+    engine.adjust(-60000);
+    assert.equal(engine.snapshot().running,true);
+    now+=1000;
+    assert.equal(engine.snapshot().phase,'도입');
+    assert.equal(engine.snapshot().remainingMs,2290000);
+  });
   test('unified entry and second-screen rendering are wired without deleting old tool files',()=>{
     const html=fs.readFileSync('시간 도구.html','utf8');
     const view=fs.readFileSync('gulliver-teacher-display-view.js','utf8');
