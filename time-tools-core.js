@@ -77,7 +77,7 @@
       const remaining=Math.max(0,remainingMs),total=Math.max(0,totalMs);
       return {
         status,phase,note,next,remainingMs:remaining,totalMs:total,
-        progress:total?Math.min(100,Math.max(0,(total-remaining)/total*100)):100,
+        progress:total?Math.min(100,Math.max(0,(total-remaining)/total*100)):(status==='after'?100:0),
         index,color
       };
     };
