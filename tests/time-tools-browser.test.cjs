@@ -49,6 +49,17 @@
       await page.locator('#ttSetHands').click();
       await page.locator('#ttReveal').click();
       await student.locator('.tt-student-number').getByText('11:25').waitFor();
+      await page.locator('[data-mode="period"]').click();
+      await student.locator('.tt-student-events .tt-student-event').first().waitFor();
+      assert.equal(await page.locator('#ttPeriodRows .tt-period-row').count(),6);
+      assert.equal(await student.locator('.tt-student-events .tt-student-event').count(),6);
+      await page.locator('#ttPeriodPresets [data-duration="45"]').click();
+      await page.locator('#ttPeriodRows .tt-period-row').first().locator('[data-field="start"]').fill('08:50');
+      await page.locator('#ttPeriodApply').click();
+      assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('gulliver.timeTools.v1')).periods[0].start),'08:50');
+      await page.locator('#ttStyles [data-style="bar"]').click();
+      await student.locator('.tt-student-track').waitFor();
+      assert.equal(await student.locator('#ttPeriodSettings,#ttPeriodRows').count(),0);
       assert.equal(await student.locator('#ttEvents,#ttRecords,#ttStudentName').count(),0);
       await student.close();
     }finally{
