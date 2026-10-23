@@ -45,8 +45,8 @@ test('unit selectors generate the requested arithmetic constraints and mixed ord
  assert.equal(units('math',3)[1].label,'1학기 · 덧셈과 뺄셈');
  assert.equal(types('math',5,'mixed').length,11);
  for(const topic of ['hundreds','addition'])for(const [type] of types('math',3,topic))for(const seed of [1,42,2026]){
-  const sheet=generate({subject:'math',grade:3,topic,type,count:24,seed});
-  assert.equal(sheet.items.length,24);
+  const sheet=generate({subject:'math',grade:3,topic,type,count:20,seed});
+  assert.equal(sheet.items.length,20);
   for(const q of sheet.items){const [,left,operator,right]=q.prompt.match(/^(\d+) ([+−]) (\d+) =$/),a=Number(left),b=Number(right);assert.equal(Number(q.answer),operator==='+'?a+b:a-b);assert.ok(a>=100&&b>=(type.includes('-two-digit-')?10:100));if(type==='add-tens-none')assert.equal(a%100+b%100,0);
    let carry=0,n=0;for(const unit of [1,10,100]){const x=Math.floor(a/unit)%10,y=Math.floor(b/unit)%10,next=operator==='+'?x+y+carry>=10?1:0:x-carry<y?1:0;if(type.endsWith('-units')&&unit===1)assert.equal(next,1);if(type.endsWith('-tens')&&unit===1)assert.equal(next,0);if(type.endsWith('-tens')&&unit===10)assert.equal(next,1);n+=next;carry=next}assert.equal(n,type.endsWith('-two')?2:/-(one|carry|borrow|units|tens)$/.test(type)?1:0);
   }
@@ -65,7 +65,7 @@ test('every listed unit type produces distinct, reproducible exercises with corr
   if(topic==='math-mix')continue;
   const dense=/^(add-|sub-|small-|two-|times-)/.test(type)&&type!=='times-missing';
   for(const seed of [1,42,2026]){
-   const options={subject:'math',grade,topic,type,count:dense?24:15,seed};
+   const options={subject:'math',grade,topic,type,count:dense?20:15,seed};
    const sheet=generate(options);assert.equal(sheet.items.length,options.count,`${grade}/${type}/${seed}`);
    assert.deepEqual(sheet,generate(options));assert.equal(new Set(sheet.items.map(q=>q.prompt)).size,options.count);
    for(const q of sheet.items){
@@ -87,7 +87,7 @@ test('five subjects expose only supported grades and topics, with complete uniqu
   if(grade<fromGrade||grade>toGrade)continue;
   if(['mixed','decimal','history-review','history-mix','math-mix','reading-set'].includes(topic))continue;
   const dense=subject==='math'&&['addition','hundreds','multiplication'].includes(topic);
-  for(const difficulty of ['basic','challenge'])for(const count of [5,10,15,...(dense?[24]:[])])for(const seed of [1,42,2026]){
+  for(const difficulty of ['basic','challenge'])for(const count of [5,10,15,...(dense?[20]:[])])for(const seed of [1,42,2026]){
    const sheet=generate({subject,topic,grade,count,seed,difficulty});
    assert.equal(sheet.items.length,count,`${subject}/${grade}/${topic}`);
    assert.equal(new Set(sheet.items.map(q=>q.prompt+'|'+q.answer+'|'+q.detail)).size,count);
@@ -183,7 +183,7 @@ test('Korean context words and five-question reading sets print with their own a
    assert.equal(new Set(sheet.items.map(q=>q.detail+'|'+q.prompt)).size,15);
    for(const item of sheet.items){assert.ok(item.detail.includes('.'));assert.equal(item.choices.length,4);assert.ok(item.choices.includes(item.answer))}
   }}
-  for(const count of [5,10,15]){const sheet=generate({subject:'korean',grade,topic:'reading-set',type:'reading-set-five',count,seed:42});assert.equal(sheet.items.length,count);
+  for(const count of [5,10,15,20]){const sheet=generate({subject:'korean',grade,topic:'reading-set',type:'reading-set-five',count,seed:42});assert.equal(sheet.items.length,count);
    const groups=[...new Set(sheet.items.map(q=>q.readingGroup))];assert.equal(groups.length,count/5);
    for(const group of groups){const questions=sheet.items.filter(q=>q.readingGroup===group);assert.equal(questions.length,5);assert.equal(questions.filter(q=>q.readingPassage).length,1);assert.ok(questions[0].readingPassage.length>150);for(const q of questions)assert.ok(q.choices.includes(q.answer))}
   }
@@ -200,11 +200,11 @@ test('curated Korean literary and nonfiction texts have complete five-question e
    for(let seed=1;seed<=30;seed++){
     const sheet=generate({subject:'korean',grade,topic:'reading-set',type,count:15,seed});
     assert.equal(new Set(sheet.items.map(q=>q.readingGroup)).size,3);
-    for(const q of sheet.items){assert.equal(q.readingGenre,genre);assert.ok(q.choices.includes(q.answer));assert.ok(q.explanation.length>=10);titles.add(q.readingGroup);all.add(q.readingGroup);if(q.readingPassage)assert.ok(q.readingPassage.length>=170)}
+    for(const q of sheet.items){assert.equal(q.readingGenre,genre);assert.ok(q.choices.includes(q.answer));assert.ok(q.explanation.length>=10);titles.add(q.readingGroup);all.add(q.readingGroup);if(q.readingPassage)assert.ok(q.readingPassage.length>=120)}
    }
-   assert.equal(titles.size,4);
+   assert.equal(titles.size,grade===1?4:6);
   }
-  assert.equal(all.size,8);
+  assert.equal(all.size,grade===1?8:12);
  }
  for(const grade of [3,4,5,6]){
   const all=new Set();
@@ -213,14 +213,30 @@ test('curated Korean literary and nonfiction texts have complete five-question e
    for(let seed=1;seed<=60;seed++){
     const sheet=generate({subject:'korean',grade,topic:'reading-set',type,count:15,seed});
     assert.equal(sheet.items.length,15);assert.equal(new Set(sheet.items.map(q=>q.readingGroup)).size,3);
-    for(const q of sheet.items){assert.equal(q.readingGenre,genre);assert.equal(q.choices.length,4);assert.equal(new Set(q.choices).size,4);assert.ok(q.choices.includes(q.answer));assert.ok(q.explanation.length>=18);assert.doesNotMatch(q.explanation,/내용과 비교해 보세요/);titles.add(q.readingGroup);all.add(q.readingGroup);if(q.readingPassage)assert.ok(q.readingPassage.length>=280,q.readingGroup)}
+    for(const q of sheet.items){assert.equal(q.readingGenre,genre);assert.equal(q.choices.length,4);assert.equal(new Set(q.choices).size,4);assert.ok(q.choices.includes(q.answer));assert.ok(q.explanation.length>=18);assert.doesNotMatch(q.explanation,/내용과 비교해 보세요/);titles.add(q.readingGroup);all.add(q.readingGroup);if(q.readingPassage)assert.ok(q.readingPassage.length>=140,q.readingGroup)}
    }
-   assert.equal(titles.size,5,`${grade}/${type}`);
+   assert.equal(titles.size,grade%2?5:7,`${grade}/${type}`);
   }
-  assert.equal(all.size,10);
+  assert.equal(all.size,grade%2?10:14);
   const mixed=generate({subject:'korean',grade,topic:'reading-set',type:'reading-set-five',count:15,seed:24});assert.ok(mixed.items.every(q=>q.readingGenre==='literary'||q.readingGenre==='nonfiction'));
   const brief=generate({subject:'korean',grade,topic:'reading-set',type:'reading-set-brief',count:15,seed:24});assert.ok(brief.items.every(q=>q.readingGenre==='brief'));
  }
+});
+
+test('twenty-question Korean reading follows grade bands and keeps four distinct passages',()=>{
+ for(const grade of [1,2,3,4,5,6])for(const type of ['reading-set-literary','reading-set-nonfiction','reading-set-five']){
+  const titles=new Set(),standards=new Set();
+  for(let seed=1;seed<=40;seed++){
+   const sheet=generate({subject:'korean',grade,topic:'reading-set',type,count:20,seed});
+   assert.equal(sheet.items.length,20);
+   assert.equal(new Set(sheet.items.map(item=>item.readingGroup)).size,4);
+   for(const item of sheet.items)if(item.readingPassage){titles.add(item.readingTitle);assert.ok(item.readingStandard);standards.add(item.readingStandard)}
+  }
+  const count=grade<=2?(grade===1?4:6):(grade%2?5:7);
+  if(type!=='reading-set-five')assert.equal(titles.size,count,`${grade}/${type}`);
+  const band=grade<=2?'2국':grade<=4?'4국':'6국';assert.ok([...standards].every(code=>code.startsWith('['+band)));
+ }
+ assert.throws(()=>generate({subject:'korean',grade:4,topic:'reading-set',type:'reading-set-five',count:24}));
 });
 
 test('social geography, civic, economy and world themes offer distinct grade-banded sheets',()=>{
@@ -254,10 +270,10 @@ test('invalid grade, unavailable topic, and excessive item count are rejected',(
  ])assert.throws(()=>generate(options));
 });
 
-test('24 three-digit addition questions have no carrying and keep correct answers',()=>{
+test('20 three-digit addition questions have no carrying and keep correct answers',()=>{
  for(const variant of ['tens','ones'])for(let seed=1;seed<=80;seed++){
-  const sheet=generate({subject:'math',topic:'hundreds',grade:3,count:24,seed,variant});
-  assert.equal(sheet.items.length,24);
+  const sheet=generate({subject:'math',topic:'hundreds',grade:3,count:20,seed,variant});
+  assert.equal(sheet.items.length,20);
   assert.equal(sheet.variant,variant);
   for(const q of sheet.items){
    const match=q.prompt.match(/^(\d+) \+ (\d+) =$/);assert.ok(match);
@@ -268,7 +284,7 @@ test('24 three-digit addition questions have no carrying and keep correct answer
 });
 
 test('the same variant and seed reproduce a sheet, and invalid variants fail',()=>{
- const options={subject:'math',grade:3,topic:'hundreds',count:24,seed:20261023};
+ const options={subject:'math',grade:3,topic:'hundreds',count:20,seed:20261023};
  assert.deepEqual(generate({...options,variant:'ones'}),generate({...options,variant:'ones'}));
  assert.notDeepEqual(generate({...options,variant:'ones'}).items,generate({...options,variant:'tens'}).items);
  assert.throws(()=>generate({...options,variant:'unknown'}));
