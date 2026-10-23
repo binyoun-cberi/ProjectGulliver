@@ -137,6 +137,13 @@ test('history matching and ordering keep their printed answers consistent',()=>{
  }
 });
 
+test('a history quiz sheet does not repeat a correct answer',()=>{
+ for(const topic of ['prehistoric','ancient','goryeo','joseon','modern'])for(const suffix of ['quiz','short','initial'])for(let seed=1;seed<=200;seed++){
+  const items=generate({subject:'social',grade:5,topic,type:`${topic}-${suffix}`,count:15,seed}).items;
+  assert.equal(new Set(items.map(item=>item.answer)).size,items.length,`${topic}-${suffix}/${seed}`);
+ }
+});
+
 test('Korean context words and five-question reading sets print with their own answers',()=>{
  for(const grade of [3,4,5,6]){
   const topics=grade>=5?['vocabulary','idiom','hanja']:['vocabulary','idiom'];
