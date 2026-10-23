@@ -33,7 +33,7 @@ test('challenger checks seeded repeatability, coverage, answer presence, and uni
         const variants = matchingUnits.length ? matchingUnits : [''];
         for (const type of variants) {
           for (const seed of seeds) {
-            const options = { subject, grade, topic, type, count: 10, seed, difficulty: 'basic' };
+            const options = { subject, grade, topic, type, count: 10, seed, difficulty: 'basic', ...(topic==='history-mix'?{eras:['prehistoric','ancient','goryeo','joseon','modern']}:{}) };
             const label = [subject, grade, topic, type || 'general', seed].join('/');
             const first = generate(options), second = generate(options);
             assert.deepEqual(first, second, label + ' must be reproducible');
