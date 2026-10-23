@@ -119,7 +119,7 @@ function arithmetic(grade,difficulty,r){
  const minus=r()<.5;
  return minus?{prompt:`${a+b} − ${b} =`,answer:String(a),choices:[]}:{prompt:`${a} + ${b} =`,answer:String(a+b),choices:[]};
 }
-function item(subject,topic,grade,r,difficulty){
+function item(subject,topic,grade,r,difficulty,variant){
  if(subject==='korean'){
   if(topic==='opposite'){const [word,answer]=pick(OPPOSITES,r);const pool=OPPOSITES.flat().filter(v=>v!==word&&v!==answer);return choice('‘'+word+'’의 반대말은 무엇인가요?',answer,[answer,...shuffle(pool,r).slice(0,3)],r)}
   if(topic==='spacing'){const [correct,wrong]=pick(SPACING,r);return choice('바르게 띄어 쓴 문장을 고르세요.',correct,[correct,wrong],r)}
@@ -129,8 +129,8 @@ function item(subject,topic,grade,r,difficulty){
  if(subject==='math'){
   if(topic==='addition')return arithmetic(grade,difficulty,r);
   if(topic==='hundreds'){
-   const hundreds=int(1,8,r),tens=int(0,9,r),a=hundreds*100+tens*10;
-   const b=int(1,9-hundreds,r)*100+int(0,9-tens,r)*10;
+   const hundreds=int(1,8,r),tens=int(0,9,r),ones=variant==='ones'?int(0,9,r):0,a=hundreds*100+tens*10+ones;
+   const b=int(1,9-hundreds,r)*100+int(0,9-tens,r)*10+(variant==='ones'?int(0,9-ones,r):0);
    return{prompt:`${a} + ${b} =`,answer:String(a+b),choices:[]};
   }
   if(topic==='number'){
@@ -174,13 +174,13 @@ function item(subject,topic,grade,r,difficulty){
  if(topic==='sentence'){const [meaning,answer,words]=pick(SENTENCES,r);return{prompt:`‘${meaning}’에 맞게 낱말을 배열해 영어 문장을 쓰세요.`,answer,choices:[],detail:words}}
  const [question,answer,options]=pick(CONVERSATIONS,r);return choice(`다음 말에 알맞은 대답을 고르세요.  “${question}”`,answer,options,r);
 }
-function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basic'}){
+function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basic',variant='tens'}){
  const info=SUBJECTS[subject],year=Number(grade),size=Number(count),dense=subject==='math'&&['addition','hundreds','multiplication'].includes(topic);
- if(!info||!info.grades.includes(year)||!info.topics.some(t=>t[0]===topic&&available(t,year))||![5,10,15,...(dense?[24]:[])].includes(size)||!['basic','challenge'].includes(difficulty))throw Error('학년·교과·유형을 다시 선택해 주세요.');
+ if(!info||!info.grades.includes(year)||!info.topics.some(t=>t[0]===topic&&available(t,year))||![5,10,15,...(dense?[24]:[])].includes(size)||!['basic','challenge'].includes(difficulty)||!['tens','ones'].includes(variant))throw Error('학년·교과·유형을 다시 선택해 주세요.');
  const random=rng(seed),items=[],seen=new Set(),seenPassages=new Set();let attempts=0;
- while(items.length<size&&attempts++<3000){const candidate=item(subject,topic,year,random,difficulty),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);if(topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
+ while(items.length<size&&attempts++<3000){const candidate=item(subject,topic,year,random,difficulty,variant),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);if(topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
  if(items.length<size)throw Error('이 유형에서는 서로 다른 문제를 충분히 만들지 못했어요. 문항 수를 줄여 주세요.');
- return{subject,topic,grade:year,count:size,difficulty,seed:Number(seed)>>>0,title:info.name+' · '+info.topics.find(t=>t[0]===topic)[1],items};
+ return{subject,topic,grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:info.name+' · '+info.topics.find(t=>t[0]===topic)[1],items};
 }
 return{SUBJECTS,generate};
 });

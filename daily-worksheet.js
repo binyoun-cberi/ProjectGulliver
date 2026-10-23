@@ -12,15 +12,17 @@ function syncGrades(preferred,topic){const info=C.SUBJECTS[subject],grade=$('gra
 function syncTopics(preferred){const topic=$('topic'),grade=Number($('grade').value);topic.replaceChildren();C.SUBJECTS[subject].topics.filter(t=>grade>=t[2]&&grade<=(t[3]??6)).forEach(t=>option(topic,t[0],t[1]));if([...topic.options].some(o=>o.value===preferred))topic.value=preferred}
 function denseAvailable(){return subject==='math'&&['addition','hundreds','multiplication'].includes($('topic').value)}
 function syncCount(preferred){const dense=denseAvailable();$('count').querySelector('[value="24"]').disabled=!dense;$('count').value=[5,10,15,...(dense?[24]:[])].includes(preferred)?String(preferred):dense?'24':'10'}
-function syncDifficulty(){const math=subject==='math'&&$('topic').value!=='hundreds';$('difficultySetting').hidden=!math;$('difficulty').disabled=!math;if(!math)$('difficulty').value='basic'}
+function syncDifficulty(){const hundreds=subject==='math'&&$('topic').value==='hundreds',math=subject==='math'&&!hundreds;$('difficultySetting').hidden=!math;$('difficulty').disabled=!math;$('variantSetting').hidden=!hundreds;$('variant').disabled=!hundreds;if(!math)$('difficulty').value='basic'}
 syncGrades(initialGrade,initialTopic);syncCount(initialCount);
 if(['basic','challenge'].includes(params.get('difficulty')))$('difficulty').value=params.get('difficulty');
+if(['tens','ones'].includes(params.get('variant')))$('variant').value=params.get('variant');
 syncDifficulty();
 $('largePrint').checked=params.get('large')==='1';
 function render(sheet){current=sheet;const dense=sheet.count===24&&sheet.subject==='math';$('sheetStatus').textContent='새 문제지 완성';$('sheetMeta').textContent=C.SUBJECTS[sheet.subject].name+' · '+sheet.grade+'학년 · '+(sheet.difficulty==='challenge'?'도전':'기본')+' · '+sheet.items.length+'문항';$('paperTitle').textContent=sheet.title;$('answerTitle').textContent=sheet.title+' 정답';$('sheetNumber').textContent='문제지 번호 '+sheet.seed.toString(36).toUpperCase();
  const questions=$('questions'),answers=$('answers');questions.replaceChildren();answers.replaceChildren();
  questions.classList.toggle('calculation-grid',dense);answers.classList.toggle('calculation-answers',dense);$('questionSheet').classList.toggle('dense-paper',dense);$('answerSheet').classList.toggle('dense-paper',dense);
  $('paperInstruction').hidden=!dense;if(dense)$('paperInstruction').textContent=sheet.topic==='hundreds'?'받아올림 없이 덧셈을 하세요.':'계산해 보세요.';
+ if(sheet.topic==='hundreds')$('paperTitle').textContent+=' · '+(sheet.variant==='ones'?'B · 일의 자리까지':'A · 일의 자리가 0');
  sheet.items.forEach((item,index)=>{
   const li=document.createElement('li');
   if(dense){
@@ -41,9 +43,11 @@ function render(sheet){current=sheet;const dense=sheet.count===24&&sheet.subject
   questions.append(li);
   const solution=document.createElement('li');const number=item.choices?.length?['①','②','③','④'][item.choices.indexOf(item.answer)]+' ':'';solution.textContent=number+item.answer;answers.append(solution);
  });
- const url=new URL(location.href);url.search=new URLSearchParams({subject:sheet.subject,grade:String(sheet.grade),topic:sheet.topic,difficulty:sheet.difficulty,count:String(sheet.count),seed:String(sheet.seed),...($('largePrint').checked?{large:'1'}:{})}).toString();history.replaceState(null,'',url.href);
+ const url=new URL(location.href);url.search=new URLSearchParams({subject:sheet.subject,grade:String(sheet.grade),topic:sheet.topic,difficulty:sheet.difficulty,count:String(sheet.count),seed:String(sheet.seed),...(sheet.topic==='hundreds'?{variant:sheet.variant}:{}),...($('largePrint').checked?{large:'1'}:{})}).toString();history.replaceState(null,'',url.href);
+ const qr=$('answerQr'),code=$('answerQrCode');code.replaceChildren();qr.hidden=true;
+ if(/^https?:$/.test(url.protocol)&&typeof window.qrcode==='function')try{const generator=window.qrcode(0,'M');generator.addData(url.href,'Byte');generator.make();code.innerHTML=generator.createSvgTag(2,4);qr.hidden=false}catch(error){console.warn('문제지 QR을 생성할 수 없습니다.',error)}
 }
-function make(newSeed){try{const state={subject,grade:Number($('grade').value),topic:$('topic').value,difficulty:$('difficulty').value,count:Number($('count').value),seed:newSeed};render(C.generate(state))}catch(error){$('sheetStatus').textContent=error.message;$('sheetMeta').textContent=''}}
+function make(newSeed){try{const state={subject,grade:Number($('grade').value),topic:$('topic').value,difficulty:$('difficulty').value,variant:$('variant').value,count:Number($('count').value),seed:newSeed};render(C.generate(state))}catch(error){$('sheetStatus').textContent=error.message;$('sheetMeta').textContent=''}}
 form.addEventListener('change',e=>{if(e.target.name==='subject'){subject=e.target.value;syncGrades($('grade').value);syncCount();syncDifficulty()}else if(e.target.name==='grade'){syncTopics($('topic').value);syncCount();syncDifficulty()}else if(e.target.name==='topic'){syncCount();syncDifficulty()}});
 form.addEventListener('submit',e=>{e.preventDefault();make(seed())});$('regenerate').onclick=()=>make(seed());
 $('toggleAnswers').onclick=()=>{const open=$('answerSheet').hidden;$('answerSheet').hidden=!open;$('toggleAnswers').textContent=open?'정답 닫기':'정답 보기';$('toggleAnswers').setAttribute('aria-expanded',String(open))};
