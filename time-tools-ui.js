@@ -89,7 +89,12 @@
       box.append(el('div','tt-face-label',label),el('div','tt-number',main),el('div','tt-face-sub',status));
       face.append(box);
     }else if(s.style==='sand'){
-      face.append(el('div','tt-face-label',label),el('div','tt-sand',progress>=100?'⌛':'⏳'),el('div','tt-number',main),el('div','tt-face-sub',status));
+      const layout=el('div','tt-sand-layout');
+      const visual=window.TimeToolsHourglass?.create(progress,s.running);
+      if(visual)layout.append(visual);
+      const information=el('div','tt-sand-copy');
+      information.append(el('div','tt-face-label',label),el('div','tt-number',main),el('div','tt-face-sub',s.status));
+      layout.append(information);face.append(layout);
     }else{
       face.append(el('div','tt-face-label',label),el('div','tt-number',main));
       const track=el('div','tt-track');const fill=el('div');fill.style.width=progress+'%';fill.style.background=s.color;track.append(fill);face.append(track,el('div','tt-face-sub',status));
