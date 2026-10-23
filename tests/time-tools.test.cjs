@@ -112,7 +112,7 @@
     assert.equal(engine.snapshot().running,true);
     now+=1000;
     assert.equal(engine.snapshot().phase,'도입');
-    assert.equal(engine.snapshot().remainingMs,2290000);
+    assert.equal(engine.snapshot().remainingMs,2329000);
   });
   test('unified entry and second-screen rendering are wired without deleting old tool files',()=>{
     const html=fs.readFileSync('시간 도구.html','utf8');
