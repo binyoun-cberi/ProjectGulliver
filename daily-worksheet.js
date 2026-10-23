@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const C=window.DailyWorksheetCore,$=id=>document.getElementById(id),form=$('sheetForm');
-let current=null;const params=new URLSearchParams(location.search);
+let current=null,answersVisible=false;const params=new URLSearchParams(location.search);
 let subject=C.SUBJECTS[params.get('subject')]?params.get('subject'):'math';
 const initialGrade=Number(params.get('grade')),initialTopic=params.get('topic'),initialCount=params.has('count')?Number(params.get('count')):null;
 const seed=()=>{if(globalThis.crypto?.getRandomValues)return crypto.getRandomValues(new Uint32Array(1))[0];return (Date.now()^Math.floor(Math.random()*0xffffffff))>>>0};
@@ -22,32 +22,36 @@ if(['basic','challenge'].includes(params.get('difficulty')))$('difficulty').valu
 if(['tens','ones'].includes(params.get('variant')))$('variant').value=params.get('variant');
 syncDifficulty();
 $('largePrint').checked=params.get('large')==='1';
-function render(sheet){current=sheet;const dense=sheet.count===24&&sheet.subject==='math';$('sheetStatus').textContent='새 문제지 완성';$('sheetMeta').textContent=C.SUBJECTS[sheet.subject].name+' · '+sheet.grade+'학년 · '+(sheet.difficulty==='challenge'?'도전':'기본')+' · '+sheet.items.length+'문항';$('paperTitle').textContent=sheet.title;$('answerTitle').textContent=sheet.title+' 정답';$('sheetNumber').textContent='문제지 번호 '+sheet.seed.toString(36).toUpperCase();
- const questions=$('questions'),answers=$('answers');questions.replaceChildren();answers.replaceChildren();
- questions.classList.toggle('calculation-grid',dense);answers.classList.toggle('calculation-answers',dense);$('questionSheet').classList.toggle('dense-paper',dense);$('answerSheet').classList.toggle('dense-paper',dense);
+function setPreview(open){answersVisible=open;document.body.classList.toggle('show-inline-answers',open);$('toggleAnswers').textContent=open?'정답 닫기':'정답 보기';$('toggleAnswers').setAttribute('aria-expanded',String(open));
+ for(const li of $('questions').children){if(li.classList.contains('calculation-item'))li.setAttribute('aria-label',li.dataset.prompt+(open?' 정답: '+li.dataset.answer:''));else li.querySelector('.inline-answer')?.setAttribute('aria-hidden',String(!open))}
+}
+function render(sheet){current=sheet;const dense=sheet.count===24&&sheet.subject==='math';$('sheetStatus').textContent='새 문제지 완성';$('sheetMeta').textContent=C.SUBJECTS[sheet.subject].name+' · '+sheet.grade+'학년 · '+(sheet.difficulty==='challenge'?'도전':'기본')+' · '+sheet.items.length+'문항';$('paperTitle').textContent=sheet.title;$('sheetNumber').textContent='문제지 번호 '+sheet.seed.toString(36).toUpperCase();
+ const questions=$('questions');questions.replaceChildren();
+ questions.classList.toggle('calculation-grid',dense);$('questionSheet').classList.toggle('dense-paper',dense);
  $('paperInstruction').hidden=!dense;if(dense)$('paperInstruction').textContent=sheet.topic==='hundreds'?'받아올림 없이 덧셈을 하세요.':'계산해 보세요.';
  if(sheet.topic==='hundreds')$('paperTitle').textContent+=' · '+(sheet.variant==='ones'?'B · 일의 자리까지':'A · 일의 자리가 0');
  $('paperStandard').hidden=!sheet.alignment;if(sheet.alignment)$('paperStandard').textContent=`2022 개정 성취기준 ${sheet.alignment.code} · ${sheet.alignment.scope}`;
  sheet.items.forEach((item,index)=>{
-  const li=document.createElement('li');
+  const li=document.createElement('li');li.dataset.prompt=`${index+1}번. ${item.prompt}`;li.dataset.answer=item.answer;
   if(dense){
    const match=item.prompt.match(/^(\d+) ([+×−]) (\d+) =$/);
    if(!match)throw Error('세로셈으로 표시할 수 없는 문제가 있습니다.');
-   li.className='calculation-item';li.setAttribute('aria-label',`${index+1}번. ${item.prompt}`);
+   li.className='calculation-item';
    const number=document.createElement('span');number.className='calculation-number';number.textContent=String(index+1);number.setAttribute('aria-hidden','true');
    const stack=document.createElement('div');stack.className='vertical-operation';stack.setAttribute('aria-hidden','true');
    const top=document.createElement('span');top.className='operand';top.textContent=match[1];
    const bottom=document.createElement('span');bottom.className='operand second-operand';bottom.textContent=match[3];bottom.dataset.operator=match[2];
-   const space=document.createElement('span');space.className='result-space';stack.append(top,bottom,space);li.append(number,stack);
+   const space=document.createElement('span');space.className='result-space result-answer';space.textContent=item.answer;space.setAttribute('aria-hidden','true');stack.append(top,bottom,space);li.append(number,stack);
   }else{
    const prompt=document.createElement('strong');prompt.textContent=item.prompt;li.append(prompt);
    if(item.detail){const detail=document.createElement('p');detail.className='question-detail'+(sheet.topic==='direction'?' map-detail':'');detail.textContent=item.detail;li.append(detail)}
    if(item.choices?.length){const list=document.createElement('ul');list.className='choice-list';item.choices.forEach((answer,i)=>{const choice=document.createElement('li');choice.textContent=['①','②','③','④'][i]+' '+answer;list.append(choice)});li.append(list)}
    else{const line=document.createElement('span');line.className='answer-blank';line.setAttribute('aria-hidden','true');li.append(line)}
+   const inlineAnswer=document.createElement('span');inlineAnswer.className='inline-answer result-answer';inlineAnswer.textContent='정답: '+(item.choices?.length?['①','②','③','④'][item.choices.indexOf(item.answer)]+' ':'')+item.answer;inlineAnswer.setAttribute('aria-hidden','true');li.append(inlineAnswer);
   }
   questions.append(li);
-  const solution=document.createElement('li');const number=item.choices?.length?['①','②','③','④'][item.choices.indexOf(item.answer)]+' ':'';solution.textContent=number+item.answer;answers.append(solution);
  });
+ setPreview(answersVisible);
  const url=new URL(location.href);url.search=new URLSearchParams({subject:sheet.subject,grade:String(sheet.grade),topic:sheet.topic,difficulty:sheet.difficulty,count:String(sheet.count),seed:String(sheet.seed),...(sheet.topic==='hundreds'?{variant:sheet.variant}:{}),...($('largePrint').checked?{large:'1'}:{})}).toString();history.replaceState(null,'',url.href);
  const qr=$('answerQr'),code=$('answerQrCode');code.replaceChildren();qr.hidden=true;
  if(/^https?:$/.test(url.protocol)&&typeof window.qrcode==='function')try{const generator=window.qrcode(0,'M');generator.addData(url.href,'Byte');generator.make();code.innerHTML=generator.createSvgTag(2,4);qr.hidden=false}catch(error){console.warn('문제지 QR을 생성할 수 없습니다.',error)}
@@ -55,7 +59,7 @@ function render(sheet){current=sheet;const dense=sheet.count===24&&sheet.subject
 function make(newSeed){try{const state={subject,grade:Number($('grade').value),topic:$('topic').value,difficulty:$('difficulty').value,variant:$('variant').value,count:Number($('count').value),seed:newSeed};render(C.generate(state))}catch(error){$('sheetStatus').textContent=error.message;$('sheetMeta').textContent=''}}
 form.addEventListener('change',e=>{if(e.target.name==='subject'){subject=e.target.value;syncGrades($('grade').value);syncCount();syncDifficulty()}else if(e.target.name==='grade'){syncTopics($('topic').value);syncCount();syncDifficulty()}else if(e.target.name==='topic'){syncCount();syncDifficulty()}});
 form.addEventListener('submit',e=>{e.preventDefault();make(seed())});$('regenerate').onclick=()=>make(seed());
-$('toggleAnswers').onclick=()=>{const open=$('answerSheet').hidden;$('answerSheet').hidden=!open;$('toggleAnswers').textContent=open?'정답 닫기':'정답 보기';$('toggleAnswers').setAttribute('aria-expanded',String(open))};
+$('toggleAnswers').onclick=()=>setPreview(!answersVisible);
 function print(withAnswers){if(!current)return;document.body.classList.toggle('print-answers',withAnswers);window.print()}
 $('largePrint').addEventListener('change',()=>{document.body.classList.toggle('large-print',$('largePrint').checked);if(current)render(current)});
 document.body.classList.toggle('large-print',$('largePrint').checked);
