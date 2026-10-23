@@ -57,6 +57,25 @@ test('the same variant and seed reproduce a sheet, and invalid variants fail',()
  assert.throws(()=>generate({...options,variant:'unknown'}));
 });
 
+test('only reviewed math drills display a curriculum code, within the cited number range',()=>{
+ for(const grade of [1,2,3,4])for(const topic of ['addition','multiplication','division','hundreds']){
+  if(!SUBJECTS.math.topics.some(t=>t[0]===topic&&grade>=t[2]&&grade<=(t[3]??6)))continue;
+  const sheet=generate({subject:'math',grade,topic,count:15,seed:2030});
+  assert.match(sheet.alignment.code,/^\[[24]수01-\d{2}\]$/);
+  for(const q of sheet.items){
+   const numbers=q.prompt.match(/\d+/g).map(Number);
+   if(topic==='addition'&&grade===2)assert.ok(numbers.every(n=>n<=99));
+   if(topic==='addition'&&grade>=3)assert.ok(numbers.every(n=>n>=100&&n<=999));
+   if(topic==='division'&&grade===3)assert.ok(numbers[1]<10&&numbers[0]<100);
+   if(topic==='division'&&grade===4)assert.ok(numbers[1]>=10&&numbers[1]<=99&&numbers[0]<1000);
+  }
+ }
+ for(const subject of ['korean','social','science','english']){
+  const info=SUBJECTS[subject],grade=info.grades[0];
+  for(const [topic,,from,to=6] of info.topics)if(grade>=from&&grade<=to)assert.equal(generate({subject,grade,topic,count:5,seed:2}).alignment,null);
+ }
+});
+
 test('arithmetic and fraction answers correspond to printed expressions',()=>{
  for(const grade of SUBJECTS.math.grades)for(const topic of SUBJECTS.math.topics.filter(t=>grade>=t[2]&&grade<=(t[3]??6)&&['addition','multiplication','division','fraction'].includes(t[0])).map(t=>t[0]))for(const difficulty of ['basic','challenge']){
   const sheet=generate({subject:'math',grade,topic,count:15,seed:1024,difficulty});

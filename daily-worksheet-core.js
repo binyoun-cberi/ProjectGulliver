@@ -7,6 +7,16 @@ const SUBJECTS={
  science:{name:'과학',grades:[3,4,5,6],topics:[['living','생물과 비생물',3],['matter','물질의 상태',3],['weather','날씨 관찰',3]]},
  english:{name:'영어',grades:[3,4,5,6],topics:[['words','기본 낱말',3],['sentence','문장 만들기',3],['conversation','상황에 맞는 대답',3]]}
 };
+// Verified against the 2022 mathematics curriculum (MOE notice 2022-33, appendix 8).
+// These are practice links, not a claim that a sheet assesses the entire standard.
+const CURRICULUM_SOURCE='https://ncic.re.kr/inv/org/download.do?orgType=ogi4&seq=10003559&year=2022';
+const MATH_ALIGNMENT={
+ addition:{1:['[2수01-06]','두 자리 수 범위의 덧셈과 뺄셈 계산'],2:['[2수01-06]','두 자리 수 범위의 덧셈과 뺄셈 계산'],3:['[4수01-03]','세 자리 수의 덧셈과 뺄셈 계산'],4:['[4수01-03]','세 자리 수의 덧셈과 뺄셈 계산']},
+ hundreds:{3:['[4수01-03]','세 자리 수의 덧셈과 뺄셈 계산']},
+ multiplication:{2:['[2수01-11]','곱셈구구와 한 자리 수의 곱셈'],3:['[4수01-04]','곱하는 수가 한두 자리인 곱셈'],4:['[4수01-04]','곱하는 수가 한두 자리인 곱셈']},
+ division:{3:['[4수01-06]','한 자리 수로 나누는 계산'],4:['[4수01-07]','두 자리 수로 나누는 계산']}
+};
+function alignment(subject,topic,grade){const match=subject==='math'&&MATH_ALIGNMENT[topic]?.[grade];return match?{code:match[0],summary:match[1],source:CURRICULUM_SOURCE,scope:'이 문제지는 성취기준 중 계산 연습만 다룹니다.'}:null}
 const OPPOSITES=[['크다','작다'],['높다','낮다'],['길다','짧다'],['빠르다','느리다'],['밝다','어둡다'],['따뜻하다','차갑다'],['무겁다','가볍다'],['넓다','좁다'],['많다','적다'],['가깝다','멀다'],['기쁘다','슬프다'],['시작','끝'],['앞','뒤'],['안','밖'],['위','아래'],['열다','닫다'],['주다','받다'],['들어가다','나오다'],['깨끗하다','더럽다'],['쉽다','어렵다']];
 const SPACING=[
  ['할 수 있어요.','할수 있어요.'],['갈 수 없어요.','갈수 없어요.'],['먹을 수 있어요.','먹을수 있어요.'],['읽을 수 있어요.','읽을수 있어요.'],
@@ -110,10 +120,11 @@ function choice(prompt,answer,options,r,detail=''){return{prompt,answer,choices:
 function available(topic,grade){return grade>=topic[2]&&grade<=(topic[3]??6)}
 function carrying(a,b){for(let unit=1;unit<=Math.max(a,b);unit*=10)if(Math.floor(a/unit)%10+Math.floor(b/unit)%10>=10)return true;return false}
 function arithmetic(grade,difficulty,r){
- const cap=grade===1?(difficulty==='basic'?10:20):grade===2?100:grade===3?1000:grade===4?10000:100000;
+ const cap=grade===1?(difficulty==='basic'?10:20):grade===2?99:grade<=4?999:100000;
  let a,b;
  for(let i=0;i<300;i++){
-  a=int(grade===1?1:10,Math.floor(cap*.75),r);b=int(1,Math.min(cap-a,Math.floor(cap*.45)),r);
+  a=int(grade===1?1:grade<=2?10:grade<=4?100:10,Math.floor(cap*(grade<=4&&grade>=3?.7:.75)),r);
+  b=int(grade<=4&&grade>=3?100:1,Math.min(cap-a,Math.floor(cap*(grade<=4&&grade>=3?.3:.45))),r);
   if(grade>3||carrying(a,b)===(difficulty==='challenge'))break;
  }
  const minus=r()<.5;
@@ -153,7 +164,7 @@ function item(subject,topic,grade,r,difficulty,variant){
    return{prompt:`${a} × ${b} =`,answer:String(a*b),choices:[]};
   }
   if(topic==='division'){
-   const divisor=grade===3?int(2,9,r):int(2,grade===4?12:29,r),quotient=int(grade===3?2:5,grade===3?9:grade===4?30:99,r),remainder=difficulty==='challenge'?int(1,divisor-1,r):0;
+   const divisor=grade===3?int(2,9,r):int(grade===4?10:2,grade===4?12:29,r),quotient=int(grade===3?2:5,grade===3?9:grade===4?30:99,r),remainder=difficulty==='challenge'?int(1,divisor-1,r):0;
    return{prompt:`${divisor*quotient+remainder} ÷ ${divisor} =`,answer:`${quotient}${remainder?' … '+remainder:''}`,choices:[]};
   }
   const denominator=int(3,difficulty==='challenge'?12:8,r),a=int(1,denominator-1,r),b=int(1,denominator-1,r);
@@ -180,7 +191,7 @@ function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basi
  const random=rng(seed),items=[],seen=new Set(),seenPassages=new Set();let attempts=0;
  while(items.length<size&&attempts++<3000){const candidate=item(subject,topic,year,random,difficulty,variant),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);if(topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
  if(items.length<size)throw Error('이 유형에서는 서로 다른 문제를 충분히 만들지 못했어요. 문항 수를 줄여 주세요.');
- return{subject,topic,grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:info.name+' · '+info.topics.find(t=>t[0]===topic)[1],items};
+ return{subject,topic,grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:year+'학년 '+info.name+' · '+info.topics.find(t=>t[0]===topic)[1],alignment:alignment(subject,topic,year),items};
 }
-return{SUBJECTS,generate};
+return{SUBJECTS,generate,alignment};
 });

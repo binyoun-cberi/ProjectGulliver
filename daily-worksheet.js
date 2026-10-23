@@ -12,7 +12,11 @@ function syncGrades(preferred,topic){const info=C.SUBJECTS[subject],grade=$('gra
 function syncTopics(preferred){const topic=$('topic'),grade=Number($('grade').value);topic.replaceChildren();C.SUBJECTS[subject].topics.filter(t=>grade>=t[2]&&grade<=(t[3]??6)).forEach(t=>option(topic,t[0],t[1]));if([...topic.options].some(o=>o.value===preferred))topic.value=preferred}
 function denseAvailable(){return subject==='math'&&['addition','hundreds','multiplication'].includes($('topic').value)}
 function syncCount(preferred){const dense=denseAvailable();$('count').querySelector('[value="24"]').disabled=!dense;$('count').value=[5,10,15,...(dense?[24]:[])].includes(preferred)?String(preferred):dense?'24':'10'}
-function syncDifficulty(){const hundreds=subject==='math'&&$('topic').value==='hundreds',math=subject==='math'&&!hundreds;$('difficultySetting').hidden=!math;$('difficulty').disabled=!math;$('variantSetting').hidden=!hundreds;$('variant').disabled=!hundreds;if(!math)$('difficulty').value='basic'}
+function syncDifficulty(){const hundreds=subject==='math'&&$('topic').value==='hundreds',math=subject==='math'&&!hundreds;$('difficultySetting').hidden=!math;$('difficulty').disabled=!math;$('variantSetting').hidden=!hundreds;$('variant').disabled=!hundreds;if(!math)$('difficulty').value='basic';
+ const standard=C.alignment(subject,$('topic').value,Number($('grade').value)),note=$('curriculumNote');note.replaceChildren();
+ if(standard){note.append(document.createTextNode(`2022 개정 · ${standard.code} ${standard.summary} · 계산 연습 `));const link=document.createElement('a');link.href=standard.source;link.target='_blank';link.rel='noopener noreferrer';link.textContent='원문 보기';note.append(link)}
+ else note.textContent='이 유형은 성취기준 연계를 검토 중입니다.';
+}
 syncGrades(initialGrade,initialTopic);syncCount(initialCount);
 if(['basic','challenge'].includes(params.get('difficulty')))$('difficulty').value=params.get('difficulty');
 if(['tens','ones'].includes(params.get('variant')))$('variant').value=params.get('variant');
@@ -23,6 +27,7 @@ function render(sheet){current=sheet;const dense=sheet.count===24&&sheet.subject
  questions.classList.toggle('calculation-grid',dense);answers.classList.toggle('calculation-answers',dense);$('questionSheet').classList.toggle('dense-paper',dense);$('answerSheet').classList.toggle('dense-paper',dense);
  $('paperInstruction').hidden=!dense;if(dense)$('paperInstruction').textContent=sheet.topic==='hundreds'?'받아올림 없이 덧셈을 하세요.':'계산해 보세요.';
  if(sheet.topic==='hundreds')$('paperTitle').textContent+=' · '+(sheet.variant==='ones'?'B · 일의 자리까지':'A · 일의 자리가 0');
+ $('paperStandard').hidden=!sheet.alignment;if(sheet.alignment)$('paperStandard').textContent=`2022 개정 성취기준 ${sheet.alignment.code} · ${sheet.alignment.scope}`;
  sheet.items.forEach((item,index)=>{
   const li=document.createElement('li');
   if(dense){
