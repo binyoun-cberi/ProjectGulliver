@@ -2,6 +2,28 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {SUBJECTS,generate,types,units}=require('../daily-worksheet-core.js');
 
+test('social expansion keeps at least 29 themed prompts and offers history answers without initials',()=>{
+ const lower=['map-symbol','natural','human','cultural','family','community-rules','local-gov','transport'];
+ const upper=['korea-geography','democracy','rights','government','market','world-geography','international','environment','contemporary'];
+ for(const [grade,topics] of [[3,lower],[5,upper]])for(const topic of topics){
+  const prompts=new Set();
+  for(let seed=1;seed<=100;seed++)for(const q of generate({subject:'social',grade,topic,count:15,seed}).items){
+   prompts.add(q.prompt);assert.equal(q.choices.length,3);assert.ok(q.choices.includes(q.answer));
+  }
+  assert.equal(prompts.size,29,`${topic}: 확장한 질문이 생성되지 않음`);
+ }
+ for(const grade of [5,6])for(const topic of ['prehistoric','ancient','goryeo','joseon','modern']){
+  const named=types('social',grade,topic);
+  assert.ok(named.some(([type])=>type===topic+'-short'));
+  const prompts=new Set();
+  for(let seed=1;seed<=100;seed++){
+   const sheet=generate({subject:'social',grade,topic,type:topic+'-short',count:15,seed});
+   for(const q of sheet.items){prompts.add(q.prompt);assert.deepEqual(q.choices,[]);assert.equal(q.detail,'');assert.ok(q.answer);assert.ok(q.source&&q.explanation)}
+  }
+  assert.ok(prompts.size>=25,`${topic}: 역사 질문의 실질적 풀이 범위가 좁음`);
+ }
+});
+
 test('expanded social bank reaches beyond one 15-question sheet and Korean reading offers seven passages per band',()=>{
  const lower=['map-symbol','natural','human','cultural','family','community-rules','local-gov','transport'];
  const upper=['korea-geography','democracy','rights','government','market','world-geography','international','environment','contemporary'];
@@ -83,7 +105,7 @@ test('social units generate sourced history quizzes and local evidence exercises
    assert.equal(new Set(sheet.items.map(q=>topic==='history-review'?q.format==='ordering'?q.orderChoices.join('|'):q.prompt:grade>=5?q.prompt:q.detail)).size,15,`${grade}/${topic}/${seed}: 문제가 중복됨`);
    if(sheet.alignment)assert.match(sheet.alignment.code,/^\[[46]사\d{2}-\d{2}\]$/);
    else assert.ok(['joseon','modern','history-review'].includes(topic));
-   for(const question of sheet.items){assert.ok(question.explanation&&question.sourceLabel);if(grade>=5){assert.match(question.source,/^https:\/\/contents\.history\.go\.kr\/mobile\/eh\/list\.do\?/);assert.ok(!question.prompt.includes('자료에서 알 수 있는 것을'));assert.ok(!/세트장|놀이공원|텔레비전/.test(question.prompt+' '+question.choices.join(' ')));if(topic==='history-review'){if(type==='history-matching')assert.ok(question.right&&question.answer.includes('번 · '));else assert.ok(question.orderChoices.length===4&&/^[1-4] → [1-4] → [1-4] → [1-4]$/.test(question.answer))}else if(type.endsWith('-initial'))assert.ok(question.detail.includes('힌트:'));else assert.ok(question.choices.includes(question.answer))}else{assert.ok(question.detail&&question.choices.includes(question.answer));assert.equal(question.source,'')}}
+   for(const question of sheet.items){assert.ok(question.explanation&&question.sourceLabel);if(grade>=5){assert.match(question.source,/^https:\/\/contents\.history\.go\.kr\/mobile\/eh\/list\.do\?/);assert.ok(!question.prompt.includes('자료에서 알 수 있는 것을'));assert.ok(!/세트장|놀이공원|텔레비전/.test(question.prompt+' '+question.choices.join(' ')));if(topic==='history-review'){if(type==='history-matching')assert.ok(question.right&&question.answer.includes('번 · '));else assert.ok(question.orderChoices.length===4&&/^[1-4] → [1-4] → [1-4] → [1-4]$/.test(question.answer))}else if(type.endsWith('-initial'))assert.ok(question.detail.includes('힌트:'));else if(type.endsWith('-short'))assert.ok(!question.detail&&!question.choices.length);else assert.ok(question.choices.includes(question.answer))}else{assert.ok(question.detail&&question.choices.includes(question.answer));assert.equal(question.source,'')}}
   }
  }
  assert.throws(()=>generate({subject:'social',grade:4,topic:'goryeo',type:'goryeo-evidence',count:5}));
@@ -99,7 +121,7 @@ test('regenerating history changes questions while retaining answer and source',
   for(let seed=1;seed<=100;seed++){
    const sheet=generate({...options,seed});
    assert.equal(new Set(sheet.items.map(q=>topic==='history-review'?q.format==='ordering'?q.orderChoices.join('|'):q.prompt:grade>=5?q.prompt:q.detail)).size,15,`${topic}/${seed}`);
-  for(const q of sheet.items){assert.ok(q.explanation);if(grade>=5){assert.match(q.source,/code=eh_age_(10|20|30|40)/);if(topic!=='history-review')assert.ok(q.choices.includes(q.answer))}}
+  for(const q of sheet.items){assert.ok(q.explanation);if(grade>=5){assert.match(q.source,/code=eh_age_(10|20|30|40|50)/);if(topic!=='history-review')assert.ok(q.choices.includes(q.answer))}}
   }
  }
 });
