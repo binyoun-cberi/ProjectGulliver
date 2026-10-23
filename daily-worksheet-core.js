@@ -2,23 +2,46 @@
 'use strict';
 const SUBJECTS={
  korean:{name:'국어',grades:[1,2,3,4,5,6],topics:[['opposite','반대말 찾기',1],['spacing','바른 띄어쓰기',2],['reading','글 읽고 답하기',1],['mainidea','짧은 글의 중심 내용',1,2]]},
- math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['hundreds','세 자리 수 덧셈 · 받아올림 없음',3,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3],['mixed','자연수의 혼합 계산',5,5]]},
+ math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['hundreds','세 자리 수 덧셈',3,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3],['mixed','자연수의 혼합 계산',5,5],['decimal','소수의 계산',5,6]]},
  social:{name:'사회',grades:[3,4,5,6],topics:[['direction','방향과 위치',3],['community','우리 사회의 일',3],['economy','생산과 소비',4]]},
  science:{name:'과학',grades:[3,4,5,6],topics:[['living','생물과 비생물',3],['matter','물질의 상태',3],['weather','날씨 관찰 도구',5]]},
  english:{name:'영어',grades:[3,4,5,6],topics:[['words','기본 낱말',3],['sentence','문장 만들기',3],['conversation','상황에 맞는 대답',3]]}
 };
 // Semester labels are a browsing aid based on common unit names; textbook order varies.
 const MATH_UNITS={
- 3:[{id:'g3-add',label:'1학기 · 덧셈과 뺄셈',topics:['hundreds','addition'],types:[
-  ['add-tens-none','몇백 + 몇백 (받아올림 없음)'],['add-ones-none','세 자리 + 세 자리 (받아올림 없음)'],
-  ['add-carry-one','세 자리 + 세 자리 (받아올림 1번)'],['add-carry-two','세 자리 + 세 자리 (받아올림 2번)'],
-  ['sub-borrow-none','세 자리 − 세 자리 (받아내림 없음)'],['sub-borrow-one','세 자리 − 세 자리 (받아내림 1번)'],['sub-borrow-two','세 자리 − 세 자리 (받아내림 2번)']]}],
- 5:[{id:'g5-mixed',label:'1학기 · 자연수의 혼합 계산',topics:['mixed'],types:[
-  ['mix-add-sub','덧셈과 뺄셈의 혼합 계산'],['mix-mul-div','곱셈과 나눗셈의 혼합 계산'],
-  ['mix-four','사칙연산의 혼합 계산'],['mix-parentheses','괄호가 있는 혼합 계산']]}]
+ 1:[
+  {id:'g1-sum',label:'1학기 · 덧셈과 뺄셈',topics:['addition'],types:[['small-add-10','10 이하의 덧셈','addition'],['small-sub-10','10 이하의 뺄셈','addition']]},
+  {id:'g1-sum2',label:'2학기 · 덧셈과 뺄셈',topics:['addition'],types:[['small-add-20-no','20 이하의 덧셈 (받아올림 없음)','addition'],['small-add-20-carry','20 이하의 덧셈 (받아올림 있음)','addition'],['small-sub-20-no','20 이하의 뺄셈 (받아내림 없음)','addition'],['small-sub-20-borrow','20 이하의 뺄셈 (받아내림 있음)','addition']]}
+ ],
+ 2:[
+  {id:'g2-sum',label:'1학기 · 덧셈과 뺄셈',topics:['addition'],types:[['two-add-none','두 자리 수 덧셈 (받아올림 없음)','addition'],['two-add-carry','두 자리 수 덧셈 (받아올림 있음)','addition'],['two-sub-none','두 자리 수 뺄셈 (받아내림 없음)','addition'],['two-sub-borrow','두 자리 수 뺄셈 (받아내림 있음)','addition']]},
+  {id:'g2-times',label:'2학기 · 곱셈구구',topics:['multiplication'],types:[['times-table','곱셈구구 연습','multiplication'],['times-missing','곱셈구구의 빈칸 찾기','multiplication']]}
+ ],
+ 3:[
+  {id:'g3-add',label:'1학기 · 덧셈과 뺄셈',topics:['hundreds','addition'],types:[
+   ['add-tens-none','몇백 + 몇백 (받아올림 없음)','hundreds'],['add-ones-none','세 자리 + 세 자리 (받아올림 없음)','hundreds'],
+   ['add-carry-one','세 자리 + 세 자리 (받아올림 1번)','hundreds'],['add-carry-units','세 자리 + 세 자리 (일의 자리 받아올림)','hundreds'],['add-carry-tens','세 자리 + 세 자리 (십의 자리 받아올림)','hundreds'],['add-carry-two','세 자리 + 세 자리 (받아올림 2번)','hundreds'],
+   ['add-two-digit-no','세 자리 + 두 자리 (받아올림 없음)','hundreds'],['add-two-digit-carry','세 자리 + 두 자리 (받아올림 있음)','hundreds'],
+   ['sub-borrow-none','세 자리 − 세 자리 (받아내림 없음)','addition'],['sub-borrow-one','세 자리 − 세 자리 (받아내림 1번)','addition'],['sub-borrow-units','세 자리 − 세 자리 (일의 자리 받아내림)','addition'],['sub-borrow-tens','세 자리 − 세 자리 (십의 자리 받아내림)','addition'],['sub-borrow-two','세 자리 − 세 자리 (받아내림 2번)','addition'],['sub-two-digit-no','세 자리 − 두 자리 (받아내림 없음)','addition'],['sub-two-digit-borrow','세 자리 − 두 자리 (받아내림 있음)','addition']]},
+  {id:'g3-division',label:'1학기 · 나눗셈',topics:['division'],types:[['divide-two-one','두 자리 수 ÷ 한 자리 수 (나머지 없음)','division'],['divide-remainder','두 자리 수 ÷ 한 자리 수 (나머지 있음)','division']]},
+  {id:'g3-times',label:'2학기 · 곱셈',topics:['multiplication'],types:[['times-two-one','두 자리 수 × 한 자리 수','multiplication'],['times-three-one','세 자리 수 × 한 자리 수','multiplication']]}
+ ],
+ 4:[
+  {id:'g4-operations',label:'1학기 · 곱셈과 나눗셈',topics:['multiplication','division'],types:[['times-two-two','두 자리 수 × 두 자리 수','multiplication'],['divide-three-one','세 자리 수 ÷ 한 자리 수','division'],['divide-three-two','세 자리 수 ÷ 두 자리 수','division']]},
+  {id:'g4-fraction',label:'2학기 · 분수의 덧셈과 뺄셈',topics:['fraction'],types:[['fraction-add-same','분모가 같은 분수의 덧셈','fraction'],['fraction-sub-same','분모가 같은 분수의 뺄셈','fraction']]}
+ ],
+ 5:[
+  {id:'g5-mixed',label:'1학기 · 자연수의 혼합 계산',topics:['mixed'],types:[['mix-add-sub','덧셈과 뺄셈의 혼합 계산','mixed'],['mix-mul-div','곱셈과 나눗셈의 혼합 계산','mixed'],['mix-add-mul','덧셈과 곱셈의 혼합 계산','mixed'],['mix-sub-div','뺄셈과 나눗셈의 혼합 계산','mixed'],['mix-four','사칙연산의 혼합 계산','mixed'],['mix-parentheses','괄호가 있는 덧셈·뺄셈 계산','mixed'],['mix-paren-mul','괄호가 있는 곱셈·나눗셈 계산','mixed'],['mix-paren-add-mul','괄호가 있는 덧셈·곱셈 계산','mixed'],['mix-paren-sub-div','괄호가 있는 뺄셈·나눗셈 계산','mixed'],['mix-paren-four','괄호가 있는 사칙연산','mixed'],['mix-nested','중첩 괄호의 혼합 계산','mixed']]},
+  {id:'g5-fraction',label:'1학기 · 약분과 통분·분수의 계산',topics:['fraction'],types:[['fraction-add-diff','분모가 다른 분수의 덧셈','fraction'],['fraction-sub-diff','분모가 다른 분수의 뺄셈','fraction']]},
+  {id:'g5-decimal',label:'2학기 · 소수의 곱셈',topics:['decimal'],types:[['decimal-mul-int','소수 × 자연수','decimal'],['decimal-mul-dec','소수 × 소수','decimal']]}
+ ],
+ 6:[
+  {id:'g6-fraction',label:'1학기 · 분수의 나눗셈',topics:['fraction'],types:[['fraction-div-int','분수 ÷ 자연수','fraction'],['fraction-div-frac','분수 ÷ 분수','fraction']]},
+  {id:'g6-decimal',label:'2학기 · 소수의 나눗셈',topics:['decimal'],types:[['decimal-div-int','소수 ÷ 자연수','decimal'],['decimal-div-dec','소수 ÷ 소수','decimal']]}
+ ]
 };
 function units(subject,grade){return subject==='math'?(MATH_UNITS[grade]||[]):[]}
-function types(subject,grade,topic){return units(subject,grade).flatMap(unit=>unit.topics.includes(topic)?unit.types.filter(([id])=>grade!==3||id.startsWith(topic==='hundreds'?'add-':'sub-')):[])}
+function types(subject,grade,topic,unitId){return units(subject,grade).filter(unit=>!unitId||unit.id===unitId).flatMap(unit=>unit.types.filter(entry=>entry[2]===topic).map(([id,label])=>[id,label]))}
 // Verified against the 2022 mathematics curriculum (MOE notice 2022-33, appendix 8).
 // These are practice links, not a claim that a sheet assesses the entire standard.
 const CURRICULUM_SOURCE='https://ncic.re.kr/inv/org/download.do?orgType=ogi4&seq=10003559&year=2022';
@@ -166,20 +189,67 @@ function available(topic,grade){return grade>=topic[2]&&grade<=(topic[3]??6)}
 function carrying(a,b){for(let unit=1;unit<=Math.max(a,b);unit*=10)if(Math.floor(a/unit)%10+Math.floor(b/unit)%10>=10)return true;return false}
 function carryCount(a,b,subtract=false){let carry=0,count=0;for(let unit=1;unit<=100;unit*=10){const x=Math.floor(a/unit)%10,y=Math.floor(b/unit)%10;if(subtract){const next=x-carry<y?1:0;count+=next;carry=next}else{const next=x+y+carry>=10?1:0;count+=next;carry=next}}return count}
 function typedArithmetic(type,r){
- const add=type.startsWith('add-'),target=type.endsWith('-two')?2:type.endsWith('-one')?1:0,tens=type==='add-tens-none';
+ const add=type.startsWith('add-')||type.includes('-add-'),target=type.endsWith('-two')?2:/-(one|carry|borrow|units|tens)$/.test(type)?1:0,tens=type==='add-tens-none',small=type.startsWith('small-'),two=type.startsWith('two-'),short=type.includes('-two-digit-');
  for(let attempt=0;attempt<10000;attempt++){
-  const a=tens?int(1,8,r)*100:int(100,899,r),b=tens?int(1,9-Math.floor(a/100),r)*100:int(100,899,r);
-  if(add&&a+b>=1000||!add&&a<=b||carryCount(a,b,!add)!==target)continue;
+  const cap=small?(type.includes('-10')?10:20):two?99:999;
+  const a=tens?int(1,8,r)*100:int(small?2:two?10:100,small?cap:two?89:899,r);
+  const b=tens?int(1,9-Math.floor(a/100),r)*100:int(small?1:short?10:two?10:100,small?cap:short?99:two?89:899,r);
+  if(add&&a+b>cap||!add&&a<=b||carryCount(a,b,!add)!==target)continue;
+  if(type.endsWith('-units')&&(add?a%10+b%10<10:a%10>=b%10))continue;
+  if(type.endsWith('-tens')&&(add?a%10+b%10>=10:a%10<b%10))continue;
   return{prompt:`${a} ${add?'+':'−'} ${b} =`,answer:String(add?a+b:a-b),choices:[]};
  }
  throw Error('선택한 유형의 문제를 만들지 못했어요.');
+}
+function typedMultiplication(type,r){
+ const table=type==='times-table'||type==='times-missing',a=int(table?2:type==='times-three-one'?100:10,table?9:type==='times-three-one'?299:89,r),b=int(type==='times-two-two'?10:2,type==='times-two-two'?19:9,r);
+ return{prompt:type==='times-missing'?`□ × ${b} = ${a*b}`:`${a} × ${b} =`,answer:String(type==='times-missing'?a:a*b),choices:[]};
+}
+function typedDivision(type,r){
+ const divisor=int(type==='divide-three-two'?11:2,type==='divide-three-two'?19:9,r),min=type.startsWith('divide-three')?100:20,max=type.startsWith('divide-three')?999:99;
+ const quotient=int(Math.ceil(min/divisor),Math.floor((max-(type==='divide-remainder'?divisor-1:0))/divisor),r),remainder=type==='divide-remainder'?int(1,divisor-1,r):0;
+ return{prompt:`${divisor*quotient+remainder} ÷ ${divisor} =`,answer:String(quotient)+(remainder?' … '+remainder:''),choices:[]};
+}
+function gcd(a,b){return b?gcd(b,a%b):a}
+function fractionText(a,b){const divisor=gcd(a,b),numerator=a/divisor,denominator=b/divisor;return denominator===1?String(numerator):`${numerator}/${denominator}`}
+function typedFraction(type,r){
+ if(type.endsWith('-same')){const den=int(5,12,r),a=int(type.includes('-sub-')?2:1,den-2,r),b=int(1,type.includes('-sub-')?a-1:den-1-a,r);return{prompt:`${a}/${den} ${type.includes('-sub-')?'−':'+'} ${b}/${den} =`,answer:fractionText(type.includes('-sub-')?a-b:a+b,den),choices:[]}}
+ const den=int(3,9,r),other=int(3,9,r),a=int(1,den-1,r),b=int(1,other-1,r);
+ if(type==='fraction-div-int'){const divisor=int(2,6,r);return{prompt:`${a}/${den} ÷ ${divisor} =`,answer:fractionText(a,den*divisor),choices:[]}}
+ if(type==='fraction-div-frac')return{prompt:`${a}/${den} ÷ ${b}/${other} =`,answer:fractionText(a*other,den*b),choices:[]};
+ if(type.endsWith('-diff')&&den===other||type==='fraction-sub-diff'&&a*other<=b*den)return typedFraction(type,r);
+ return{prompt:`${a}/${den} ${type==='fraction-sub-diff'?'−':'+'} ${b}/${other} =`,answer:fractionText(type==='fraction-sub-diff'?a*other-b*den:a*other+b*den,den*other),choices:[]};
+}
+function decimalText(tenths){return String(tenths/10)}
+function typedDecimal(type,r){
+ const a=int(11,89,r),b=int(type.endsWith('-int')?2:11,type.endsWith('-int')?9:49,r);
+ if(type.startsWith('decimal-mul'))return{prompt:`${decimalText(a)} × ${type.endsWith('-int')?b:decimalText(b)} =`,answer:String(a*b/(type.endsWith('-int')?10:100)),choices:[]};
+ const quotient=int(2,19,r),divisor=type.endsWith('-int')?b:b/10;
+ const dividend=Number((quotient*divisor/10).toFixed(2));
+ return{prompt:`${dividend} ÷ ${divisor} =`,answer:String(quotient/10),choices:[]};
+}
+function typedMath(type,r){
+ if(/^(add-|sub-|small-|two-)/.test(type))return typedArithmetic(type,r);
+ if(type.startsWith('times-'))return typedMultiplication(type,r);
+ if(type.startsWith('divide-'))return typedDivision(type,r);
+ if(type.startsWith('mix-'))return mixedArithmetic(type,r);
+ if(type.startsWith('fraction-'))return typedFraction(type,r);
+ if(type.startsWith('decimal-'))return typedDecimal(type,r);
+ throw Error('지원하지 않는 세부 유형입니다.');
 }
 function mixedArithmetic(type,r){
  const a=int(12,89,r),b=int(11,49,r),c=int(2,9,r),d=int(2,9,r);
  if(type==='mix-add-sub'){const start=a+b+c,ops=r()<.5?[`${start} − ${b} + ${c}`,start-b+c]:[`${a} + ${b} − ${c}`,a+b-c];return{prompt:ops[0]+' =',answer:String(ops[1]),choices:[]}}
  if(type==='mix-mul-div'){const x=c*d;return{prompt:`${x} × ${b} ÷ ${c} =`,answer:String(d*b),choices:[]}}
+ if(type==='mix-add-mul')return{prompt:`${a} + ${b} × ${c} =`,answer:String(a+b*c),choices:[]};
+ if(type==='mix-sub-div')return{prompt:`${a} − ${c*d} ÷ ${c} =`,answer:String(a-d),choices:[]};
  if(type==='mix-four')return{prompt:`${a} + ${b} × ${c} − ${d} =`,answer:String(a+b*c-d),choices:[]};
- return{prompt:`(${a} + ${b}) × ${c} − ${d} =`,answer:String((a+b)*c-d),choices:[]};
+ if(type==='mix-parentheses')return{prompt:`${a+b} − (${b} − ${c}) =`,answer:String(a+c),choices:[]};
+ if(type==='mix-paren-mul')return{prompt:`${c*d} × (${b*c} ÷ ${c}) =`,answer:String(c*d*b),choices:[]};
+ if(type==='mix-paren-add-mul')return{prompt:`(${a} + ${b}) × ${c} =`,answer:String((a+b)*c),choices:[]};
+ if(type==='mix-paren-sub-div')return{prompt:`(${b+c*d} − ${b}) ÷ ${c} =`,answer:String(d),choices:[]};
+ if(type==='mix-paren-four')return{prompt:`(${a} + ${b}) × ${c} − ${d} =`,answer:String((a+b)*c-d),choices:[]};
+ return{prompt:`${a} + (${b} − (${c} + ${d})) =`,answer:String(a+b-c-d),choices:[]};
 }
 function arithmetic(grade,difficulty,r){
  const cap=grade===1?(difficulty==='basic'?10:20):grade===2?99:grade<=4?999:100000;
@@ -249,12 +319,12 @@ function item(subject,topic,grade,r,difficulty,variant){
  const [question,answer,options]=pick(CONVERSATIONS,r);return choice(`다음 말에 알맞은 대답을 고르세요.  “${question}”`,answer,options,r);
 }
 function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basic',variant='tens',type=''}){
- const info=SUBJECTS[subject],year=Number(grade),size=Number(count),validTypes=types(subject,year,topic),selected=validTypes.find(entry=>entry[0]===type),dense=subject==='math'&&(['addition','hundreds','multiplication'].includes(topic)||Boolean(selected&&topic!=='mixed'));
- if(!info||!info.grades.includes(year)||!info.topics.some(t=>t[0]===topic&&available(t,year))||![5,10,15,...(dense?[24]:[])].includes(size)||!['basic','challenge'].includes(difficulty)||!['tens','ones'].includes(variant)||type&&!selected||topic==='mixed'&&!selected)throw Error('학년·교과·유형을 다시 선택해 주세요.');
+ const info=SUBJECTS[subject],year=Number(grade),size=Number(count),selected=types(subject,year,topic).find(entry=>entry[0]===type),dense=subject==='math'&&(selected? /^(add-|sub-|small-|two-|times-)/.test(type)&&type!=='times-missing':['addition','hundreds','multiplication'].includes(topic));
+ if(!info||!info.grades.includes(year)||!info.topics.some(t=>t[0]===topic&&available(t,year))||![5,10,15,...(dense?[24]:[])].includes(size)||!['basic','challenge'].includes(difficulty)||!['tens','ones'].includes(variant)||type&&!selected||['mixed','decimal'].includes(topic)&&!selected)throw Error('학년·교과·유형을 다시 선택해 주세요.');
  const random=rng(seed),items=[],seen=new Set(),seenPassages=new Set();let attempts=0;
- while(items.length<size&&attempts++<3000){const candidate=selected?(topic==='mixed'?mixedArithmetic(type,random):typedArithmetic(type,random)):item(subject,topic,year,random,difficulty,variant),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);if(topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
+ while(items.length<size&&attempts++<3000){const candidate=selected?typedMath(type,random):item(subject,topic,year,random,difficulty,variant),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);if(topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
  if(items.length<size)throw Error('이 유형에서는 서로 다른 문제를 충분히 만들지 못했어요. 문항 수를 줄여 주세요.');
- return{subject,topic,type,grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:year+'학년 '+info.name+' · '+(selected?selected[1]:info.topics.find(t=>t[0]===topic)[1]),alignment:topic==='mixed'?null:alignment(subject,topic,year),items};
+ return{subject,topic,type,grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:year+'학년 '+info.name+' · '+(selected?selected[1]:info.topics.find(t=>t[0]===topic)[1]),alignment:['mixed','decimal'].includes(topic)?null:alignment(subject,topic,year),items};
 }
 return{SUBJECTS,generate,alignment,units,types};
 });

@@ -4,12 +4,12 @@ const {SUBJECTS,generate,types,units}=require('../daily-worksheet-core.js');
 
 test('unit selectors generate the requested arithmetic constraints and mixed order',()=>{
  assert.equal(units('math',3)[0].label,'1학기 · 덧셈과 뺄셈');
- assert.equal(types('math',5,'mixed').length,4);
+ assert.equal(types('math',5,'mixed').length,11);
  for(const topic of ['hundreds','addition'])for(const [type] of types('math',3,topic))for(const seed of [1,42,2026]){
   const sheet=generate({subject:'math',grade:3,topic,type,count:24,seed});
   assert.equal(sheet.items.length,24);
-  for(const q of sheet.items){const [,left,operator,right]=q.prompt.match(/^(\d+) ([+−]) (\d+) =$/),a=Number(left),b=Number(right);assert.equal(Number(q.answer),operator==='+'?a+b:a-b);assert.ok(a>=100&&b>=100);if(type==='add-tens-none')assert.equal(a%100+b%100,0);
-   let carry=0,n=0;for(const unit of [1,10,100]){const x=Math.floor(a/unit)%10,y=Math.floor(b/unit)%10,next=operator==='+'?x+y+carry>=10?1:0:x-carry<y?1:0;n+=next;carry=next}assert.equal(n,type.endsWith('-two')?2:type.endsWith('-one')?1:0);
+  for(const q of sheet.items){const [,left,operator,right]=q.prompt.match(/^(\d+) ([+−]) (\d+) =$/),a=Number(left),b=Number(right);assert.equal(Number(q.answer),operator==='+'?a+b:a-b);assert.ok(a>=100&&b>=(type.includes('-two-digit-')?10:100));if(type==='add-tens-none')assert.equal(a%100+b%100,0);
+   let carry=0,n=0;for(const unit of [1,10,100]){const x=Math.floor(a/unit)%10,y=Math.floor(b/unit)%10,next=operator==='+'?x+y+carry>=10?1:0:x-carry<y?1:0;if(type.endsWith('-units')&&unit===1)assert.equal(next,1);if(type.endsWith('-tens')&&unit===1)assert.equal(next,0);if(type.endsWith('-tens')&&unit===10)assert.equal(next,1);n+=next;carry=next}assert.equal(n,type.endsWith('-two')?2:/-(one|carry|borrow|units|tens)$/.test(type)?1:0);
   }
  }
  for(const [type] of types('math',5,'mixed'))for(const seed of [1,42]){
@@ -20,11 +20,32 @@ test('unit selectors generate the requested arithmetic constraints and mixed ord
  assert.throws(()=>generate({subject:'math',grade:3,topic:'hundreds',type:'sub-borrow-one',count:5}));
 });
 
+test('every listed unit type produces distinct, reproducible exercises with correct arithmetic',()=>{
+ const rational=value=>{const [a,b]=value.split('/').map(Number);return b?a/b:a};
+ for(const grade of [1,2,3,4,5,6])for(const unit of units('math',grade))for(const [type,,topic] of unit.types){
+  const dense=/^(add-|sub-|small-|two-|times-)/.test(type)&&type!=='times-missing';
+  for(const seed of [1,42,2026]){
+   const options={subject:'math',grade,topic,type,count:dense?24:15,seed};
+   const sheet=generate(options);assert.equal(sheet.items.length,options.count,`${grade}/${type}/${seed}`);
+   assert.deepEqual(sheet,generate(options));assert.equal(new Set(sheet.items.map(q=>q.prompt)).size,options.count);
+   for(const q of sheet.items){
+    if(type==='times-missing'){const [,factor,product]=q.prompt.match(/^□ × (\d+) = (\d+)$/);assert.equal(Number(q.answer)*Number(factor),Number(product));continue}
+    if(type.startsWith('mix-')){const expression=q.prompt.slice(0,-2).replaceAll('×','*').replaceAll('÷','/').replaceAll('−','-');assert.equal(Number(q.answer),Function(`return ${expression}`)());continue}
+    const [,a,operator,b]=q.prompt.match(/^([\d./]+) ([+−×÷]) ([\d./]+) =$/)||[];
+    assert.ok(a&&b,`${type}: ${q.prompt}`);
+    const left=rational(a),right=rational(b),expected=operator==='+'?left+right:operator==='−'?left-right:operator==='×'?left*right:left/right;
+    if(operator==='÷'&&q.answer.includes(' … ')){const [quotient,remainder]=q.answer.split(' … ').map(Number);assert.equal(left,right*quotient+remainder);assert.ok(remainder<right)}
+    else assert.ok(Math.abs(rational(q.answer)-expected)<1e-9,`${type}: ${q.prompt} → ${q.answer}`);
+   }
+  }
+ }
+});
+
 test('five subjects expose only supported grades and topics, with complete unique sheets',()=>{
  assert.deepEqual(Object.keys(SUBJECTS),['korean','math','social','science','english']);
  for(const [subject,info] of Object.entries(SUBJECTS))for(const grade of info.grades)for(const [topic,,fromGrade,toGrade=6] of info.topics){
   if(grade<fromGrade||grade>toGrade)continue;
-  if(topic==='mixed')continue;
+  if(['mixed','decimal'].includes(topic))continue;
   const dense=subject==='math'&&['addition','hundreds','multiplication'].includes(topic);
   for(const difficulty of ['basic','challenge'])for(const count of [5,10,15,...(dense?[24]:[])])for(const seed of [1,42,2026]){
    const sheet=generate({subject,topic,grade,count,seed,difficulty});
