@@ -3,11 +3,11 @@
   'use strict';
   const file = decodeURIComponent(location.pathname.split('/').pop() || 'index.html');
   const sections = [
-    ['home', '홈', 'index.html'], ['studio', '만들기', 'lesson.html'],
+    ['home', '홈', 'index.html'], ['worksheet', '문제지', '문제지 만들기.html'], ['tools', '교사 도구', 'index.html?view=tools'],
     ['library', '내 보관함', '내 보관함.html'],
     ['classroom', '우리 반', '우리반.html']
   ];
-  const principal = {'index.html':'home', '뚝딱 제작실.html':'studio', '내 보관함.html':'library', 'lesson.html':'studio', '우리반.html':'classroom'};
+  const principal = {'index.html':'home', '문제지 만들기.html':'worksheet', '뚝딱 제작실.html':'studio', '내 보관함.html':'library', 'lesson.html':'studio', '우리반.html':'classroom'};
   const editors = new Set(['통합 캔버스.html','그림 뚝딱.html','PDF 뚝딱.html','도안 뚝딱.html','발표 뚝딱.html','문서 뚝딱.html','영상 뚝딱.html','음악 뚝딱.html']);
   let shell, actions;
   function embedded() {
@@ -37,9 +37,9 @@
     const inner = element('div', 'gx-header-inner');
     const brand = element('a', 'gx-brand'); brand.href = 'index.html';
     const logo = element('img'); logo.src = 'logo.png'; logo.alt = ''; logo.width = 30; logo.height = 30;
-    brand.append(logo, element('span', '', '뚝딱교실'));
-    const nav = element('nav', 'gulliver-nav gx-nav'); nav.setAttribute('aria-label', '뚝딱교실 주요 메뉴');
-    const selected = principal[file] || (editors.has(file) ? 'studio' : null);
+    brand.append(logo, element('span', '', '매일 수업'));
+    const nav = element('nav', 'gulliver-nav gx-nav'); nav.setAttribute('aria-label', '매일 수업 주요 메뉴');
+    const selected = file === 'index.html' && new URLSearchParams(location.search).get('view') === 'tools' ? 'tools' : principal[file] || null;
     for (const [key, label, href] of sections) {
       const a = element('a', '', label); a.href = href;
       if (key === selected) a.setAttribute('aria-current', 'page');
@@ -80,6 +80,7 @@
   }
   function init() {
     if (embedded()) { document.body.classList.add('gx-embedded'); return; }
+    document.title = document.title.replaceAll('뚝딱교실', '매일 수업');
     mount();
     const titleSelectors = {
       home: '.welcome', studio: '.center>.top', library: '.hero', lesson: '.lesson-plan-intro',

@@ -2,7 +2,7 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
-test('New video and music editors are visible as independent homepage tools',()=>{
+test('legacy video and music editors survive the worksheet-first home pivot',()=>{
  const code=fs.readFileSync('tools-catalog.js','utf8');
  const names=['영상 뚝딱','음악 뚝딱'];
  const before=code.slice(0,code.indexOf(']; const purposes=['));
@@ -15,11 +15,9 @@ test('New video and music editors are visible as independent homepage tools',()=
   assert.ok(fs.existsSync(name+'.html'),'actual editor exists: '+name);
  }
  const home=fs.readFileSync('workspace-home.js','utf8');
- assert.ok(home.includes("'video','영상'"));
- assert.ok(home.includes("'music','음악'"));
- assert.ok(home.includes('새 자료 만들기'));
+ assert.match(home,/ClassroomTools\.filter\(t=>!t\.studioLegacy/);
+ assert.match(home,/오늘의 문제지 만들기/);
  const html=fs.readFileSync('index.html','utf8');
- assert.ok(html.includes('href="영상 뚝딱.html"'));
- assert.ok(html.includes('href="음악 뚝딱.html"'));
+ assert.doesNotMatch(html,/href="영상 뚝딱\.html"|href="음악 뚝딱\.html"/);
  assert.ok(html.includes('tools-catalog.js?v=20261013-videomusic-visible1'));
 });

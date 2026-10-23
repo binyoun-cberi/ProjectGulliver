@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const C=window.GulliverMediaCore,S=window.GulliverStudioStorage,P=window.GulliverMediaTimeline,$=id=>document.getElementById(id);
-let model=C.makeVideo(),current=-1,urls=[],generation=0,playing=false,exporting=false,stopRequested=false,shelfTicket=0;
+let model=C.makeVideo(new URLSearchParams(location.search).get('template')||''),current=-1,urls=[],generation=0,playing=false,exporting=false,stopRequested=false,shelfTicket=0;
 const thumbCache=new Map();
 const status=(s,bad=false)=>{$('msg').textContent=s;$('msg').style.color=bad?'#b3374f':'#277a56'};
 const uuid=()=>crypto.randomUUID?.()||'media_'+Date.now().toString(36)+Math.random().toString(36).slice(2);

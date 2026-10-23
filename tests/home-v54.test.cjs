@@ -1,25 +1,30 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const read=name=>fs.readFileSync(name,'utf8');
-test('5.4 retains six actual creation routes and styles only live home structures',()=>{
- const js=read('workspace-home.js'),html=read('index.html'),css=read('workspace-home-v54.css'),experience=read('workspace-experience.css');
- assert.equal((js.match(/\['(?:worksheet|presentation|document|video|music|lesson)'/g)||[]).length,6);
+test('home foregrounds five worksheet subjects and preserves saved-work search',()=>{
+ const js=read('workspace-home.js'),html=read('index.html'),css=read('workspace-home-v54.css'),experience=read('workspace-experience.css'),lesson=read('lesson.html');
+ assert.equal((js.match(/\['(?:korean|math|social|science|english)'/g)||[]).length,5);
  assert.match(js,/class="format-copy"/);
- assert.match(js,/이어서 작업하기/);
+ assert.match(js,/기존 자료 이어서 열기/);
  assert.match(js,/id="unifiedHomeRecent"/);
  assert.match(js,/id="homeSavedSearchResults"/);
  assert.match(js,/renderHomeSearch\(query\)/);
  assert.match(js,/window\.GulliverUnifiedLibraryUI\?\.renderHome/);
- assert.match(js,/templates\.slice\(0,2\)/);
+ assert.match(js,/오늘의 문제지 만들기/);
+ assert.match(js,/문제지 만들기\.html\?subject=/);
  assert.match(js,/href="내 보관함\.html"/);
  assert.match(html,/workspace-home-v54\.css/);
  assert.match(css,/max-width:var\(--home-content-max\)/);
  assert.match(css,/--home-content-max:1720px/);
- assert.match(css,/repeat\(6,minmax\(0,1fr\)\)/);
+ assert.match(css,/\.home-view \.format-grid\{grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
  assert.doesNotMatch(css,/home-dashboard/);
  assert.match(experience,/#unifiedHomeRecent\{display:grid!important;grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
  assert.match(experience,/#homeSavedSearchResults/);
  assert.doesNotMatch(experience,/home-dashboard/);
  assert.match(experience,/@media\(max-width:1399px\)/);
+ assert.match(experience,/--brand:var\(--gx-brand,#6949d3\)/);
+ assert.match(experience,/--soft:var\(--gx-soft,#f1ecff\)/);
+ assert.match(lesson,/--brand:var\(--gx-brand,#6949d3\)/);
+ assert.match(lesson,/--ink:var\(--gx-ink,#28354e\)/);
  assert.match(css,/@media\(max-width:480px\)/);
 });

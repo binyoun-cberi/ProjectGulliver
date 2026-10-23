@@ -4,32 +4,23 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const read=name=>fs.readFileSync(path.join(__dirname,'..',name),'utf8');
-const studioCore=require('../studio-core.js');
 
-test('Canva-style home has real linked formats with matching studio implementations',()=>{
- const html=read('index.html'),home=read('workspace-home.js'),css=read('workspace-experience.css');
- const formats=[...home.matchAll(/\['(?:presentation|worksheet|document|video|music)','[^']+','([^']+)'/g)].map(x=>x[1]);
- assert.deepEqual(formats,['canvas','canvas','document','video','music']);
- formats.forEach(kind=>assert.ok(studioCore.TOOLS[kind],kind+' editor exists'));
- for(const preset of ['blank','presentation','worksheet']){
-  assert.ok(html.includes('href="lesson.html?new=canvas&amp;template='+preset+'"'));
- }
- for(const kind of ['slides','document','design','picture','pdf','video','music']){
-  assert.ok(html.includes('href="'+(['slides','document','design'].includes(kind)?'lesson.html':'뚝딱 제작실.html')+'?new='+kind+'"'));
- }
- assert.match(html,/href="lesson\.html"/);
- // The shared site navigation links to the lesson workspace. It is not an
- // additional editor mode inside the specialist tool picker.
- const studio=read('뚝딱 제작실.html');
- assert.match(studio,/gulliver-app-shell\.js/);
- assert.match(read('gulliver-app-shell.js'),/\['studio', '만들기', 'lesson\.html'\]/,'shared site navigation must reach lesson preparation');
- const picker=studio.slice(studio.indexOf('<dialog class="studio-picker"'));
- assert.doesNotMatch(picker,/data-studio-action="lesson"|data-canvas-template="lesson"/);
- assert.doesNotMatch(html,/class="home-bottom-bar"/,'mobile uses the same site navigation instead of a duplicate');
+test('daily lesson home routes five subjects to the same worksheet generator',()=>{
+ const html=read('index.html'),home=read('workspace-home.js'),shell=read('gulliver-app-shell.js');
+ assert.match(html,/<title>매일 수업/);
+ assert.match(html,/href="문제지 만들기\.html"/);
+ assert.doesNotMatch(html,/id="createDialog"|id="browseTemplates"|data-view="templates"/);
+ for(const key of ['korean','math','social','science','english'])assert.ok(home.includes("['"+key+"'"));
+ assert.match(home,/href="문제지 만들기\.html\?subject=/);
+ assert.match(shell,/\['worksheet', '문제지', '문제지 만들기\.html'\]/);
+ assert.match(shell,/\['tools', '교사 도구', 'index\.html\?view=tools'\]/);
+ assert.match(home,/id="unifiedHomeRecent"/);
+ assert.doesNotMatch(home,/function allTemplates|function templateCard|else if\(view==='templates'\)/);
+ assert.doesNotMatch(html,/workspace-template-catalog\.js|studio-unified-core\.js|studio-media-core\.js/);
+ const library=read('내 보관함.html');
+ assert.match(library,/href="문제지 만들기\.html">＋ 새 문제지 만들기/);
+ assert.doesNotMatch(library,/href="뚝딱 제작실\.html">＋ 제작실에서 만들기/);
  assert.match(html,/workspace-experience\.css/);
- assert.match(home,/templates\.slice\(0,2\)/);
- assert.match(home,/studio-library-link/);
- assert.match(css,/@media\(max-width:460px\)/);
 });
 
 test('Studio mobile panel and deep links use the existing editor bridge',()=>{
@@ -50,10 +41,11 @@ test('Studio mobile panel and deep links use the existing editor bridge',()=>{
  assert.match(css,/env\(safe-area-inset-bottom\)/);
 });
 
-test('Separate video/audio native editors remain reachable',()=>{
+test('legacy video/audio editors remain intact but are absent from the daily home',()=>{
  const html=read('index.html'),home=read('workspace-home.js');
  for(const name of ['영상 뚝딱','음악 뚝딱']){
-  assert.ok(home.includes(name==='영상 뚝딱'?"'video','영상'":"'music','음악'"));
-  assert.ok(html.includes('href="'+name+'.html"'));
+  assert.ok(fs.existsSync(path.join(__dirname,'..',name+'.html')));
+  assert.doesNotMatch(html,new RegExp('href="'+name+'\\.html"'));
  }
+ assert.match(home,/ClassroomTools\.filter/);
 });
