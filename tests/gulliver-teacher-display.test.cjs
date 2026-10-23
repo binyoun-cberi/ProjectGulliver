@@ -40,22 +40,6 @@ test('6.1 pages keep their existing storage formats and use explicit preparation
   assert.match(fs.readFileSync('gulliver-teacher-display.html', 'utf8'), /display-view\.js\?v=(?:20261019-v6[12]|20261020-canvas|20261022-lessonrun2)/);
 });
 
-test('mixed lesson presenter uses a dedicated public projection and an explicit student-window fallback', () => {
-  const html=fs.readFileSync('lesson.html','utf8'),app=fs.readFileSync('lesson-app.js','utf8'),controller=fs.readFileSync('gulliver-teacher-display.js','utf8'),viewer=fs.readFileSync('gulliver-teacher-display-view.js','utf8');
-  assert.match(html,/gulliver-teacher-display\.js\?v=20261022-lessonrun2/);
-  for(const id of ['studentDisplayOpen','studentDisplayToggle','studentDisplayStatus'])assert.ok(html.includes('id="'+id+'"'),id);
-  assert.match(html,/id="counter" aria-live="polite"/);
-  assert.match(controller,/lesson-run/);assert.match(controller,/sequence: \+\+messageSequence/);assert.match(controller,/adapter\.onError/);
-  assert.match(app,/kind:'lesson-run',windowName:'gulliver-lesson-student-display',getSnapshot:lessonDisplaySnapshot/);
-  const snapshot=app.slice(app.indexOf('function lessonDisplaySnapshot()'),app.indexOf('function refreshStudentDisplay()'));
-  assert.doesNotMatch(snapshot,/lesson\.(?:audience|goal)|\.notes\b/);
-  assert.match(snapshot,/quizRevealed\?safeDisplayText\(card\.back\)/);
-  assert.match(app,/studentDisplayTransition/);assert.match(app,/current 자료|학생창|교사 화면에서 진행/);
-  assert.match(viewer,/function renderLessonRun\(data\)/);assert.match(viewer,/이 자료는 학생 화면에서 지원되지 않아요/);assert.match(viewer,/message\.sequence <= lastSequence/);
-  assert.match(viewer,/function announceLessonRun\(data\)/);assert.match(viewer,/정답 공개/);
-  assert.match(fs.readFileSync('gulliver-teacher-display.html','utf8'),/displayAnnouncement.*aria-live="polite"/);
-});
-
 test('teacher controller only broadcasts an explicit public snapshot and accepts student action requests', () => {
   const channels = new Map();
   class MockChannel {

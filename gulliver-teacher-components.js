@@ -110,14 +110,12 @@
     });
   }
 
-  /* Only expose buttons with real supplied handlers; copying private assignments
-   * to a public canvas must be an explicit tool-specific decision. */
-  function createResultActions({onPrint, onImage, onCanvas, privateResult = false} = {}) {
+  /* Only expose buttons with real supplied handlers. */
+  function createResultActions({onPrint, onImage} = {}) {
     const group = document.createElement('div');
     group.className = 'gt-result-actions';
     const actions = [
-      ['인쇄', onPrint], ['이미지 저장', onImage],
-      ['캔버스로 추가', privateResult ? null : onCanvas]
+      ['인쇄', onPrint], ['이미지 저장', onImage]
     ];
     actions.forEach(([label, handler]) => {
       if (typeof handler !== 'function') return;

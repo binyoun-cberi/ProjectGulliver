@@ -1,22 +1,18 @@
-/* One site frame. Editors and student activities keep their own working surface. */
+/* One site frame for worksheets and classroom tools. */
 (() => {
   'use strict';
   const file = decodeURIComponent(location.pathname.split('/').pop() || 'index.html');
   const sections = [
     ['home', '홈', 'index.html'], ['worksheet', '문제지', '문제지 만들기.html'], ['tools', '교사 도구', 'index.html?view=tools'],
-    ['library', '내 보관함', '내 보관함.html'],
     ['classroom', '우리 반', '우리반.html']
   ];
-  const principal = {'index.html':'home', '문제지 만들기.html':'worksheet', '뚝딱 제작실.html':'studio', '내 보관함.html':'library', 'lesson.html':'studio', '우리반.html':'classroom'};
-  const editors = new Set(['통합 캔버스.html','그림 뚝딱.html','PDF 뚝딱.html','도안 뚝딱.html','발표 뚝딱.html','문서 뚝딱.html','영상 뚝딱.html','음악 뚝딱.html']);
+  const principal = {'index.html':'home', '문제지 만들기.html':'worksheet', '우리반.html':'classroom'};
   let shell, actions;
   function embedded() {
     if (window.parent === window) return false;
     try {
       if (window.parent.location.origin !== location.origin) return false;
-      return Boolean(window.parent.GulliverTeacherLive ||
-        (window.frameElement?.matches('#editorFrame, iframe.editor-frame') &&
-          (window.parent.GulliverStudioBridge || window.parent.LessonStorage)));
+      return Boolean(window.parent.GulliverTeacherLive);
     } catch { return false; }
   }
   function element(tag, cls, text) {
@@ -29,7 +25,7 @@
     if (!document.body || embedded()) return null;
     if (shell?.isConnected) return {shell, actions};
     document.body.classList.add('gx-app');
-    document.body.dataset.gxPage = principal[file] || (editors.has(file) ? 'editor' : 'tool');
+    document.body.dataset.gxPage = principal[file] || 'tool';
     // Remove the previous floating frame if an older caller ran first.
     document.querySelectorAll('.gulliver-shell:not(.gx-header)').forEach(node => node.remove());
     shell = element('header', 'gx-header gulliver-shell');
@@ -64,10 +60,10 @@
     const scopes = root === document ? [document.body] : [root];
     for (const scope of scopes) {
       if (!scope?.querySelectorAll) continue;
-      // Opt in controls, never the rendered document, canvas objects or game pieces.
-      const exclude = '.gx-header, #stage, .stage, #editorFrame, .slide-surface, .paper, .sheet-box, .design-page, .document-page, .slide-page, .student-screen, .game-area, .race-area, .roulette-area, #view-flash, #view-quiz, #view-match';
+      // Opt in controls without changing game pieces or student displays.
+      const exclude = '.gx-header, #stage, .stage, .student-screen, .game-area, .race-area, .roulette-area, #view-flash, #view-quiz, #view-match';
       for (const button of scope.querySelectorAll('button, a.btn, a.button, label.btn, label.upload')) {
-        if (button.closest(exclude) || button.matches('.gx-button, .studio-bottom-shade, .canvas-pane-shade, #drawerShade, .scrim, .control-btn, .tool-btn, .seat, .desk, .lever, .tab, .palette-tab, .step-button, [data-view], [data-tab], [data-design-tab], [data-category], [data-library-category], [role="tab"], [data-studio-action]')) continue;
+        if (button.closest(exclude) || button.matches('.gx-button, #drawerShade, .scrim, .control-btn, .tool-btn, .seat, .desk, .lever, .tab, .palette-tab, .step-button, [data-view], [data-tab], [data-category], [role="tab"]')) continue;
         button.classList.add('gx-button');
         if (button.matches('.danger, .btn-danger, .gt-button--danger') || /^(全部|全体)?(전체 초기화|학급정보 지우기|기록 지우기|테마 삭제|삭제)$/.test(button.textContent.trim())) button.classList.add('gx-danger');
         else if (button.matches('.primary, .btn-primary, .primary-btn, .gt-button--primary, .gt-v61-button--primary, .create, .btn.green') || /확정$/.test(button.textContent.trim())) button.classList.add('gx-primary');
@@ -83,8 +79,7 @@
     document.title = document.title.replaceAll('뚝딱교실', '매일 수업');
     mount();
     const titleSelectors = {
-      home: '.welcome', studio: '.center>.top', library: '.hero', lesson: '.lesson-plan-intro',
-      classroom: 'main>.hero', editor: 'body>header.top, body>.workspace>.intro',
+      home: '.welcome', classroom: 'main>.hero',
       tool: '.topline, .head, .hero, main.app>header, .topbar, .dashboard-container>header, body>div>header'
     };
     const heading = document.querySelector(titleSelectors[document.body.dataset.gxPage]);

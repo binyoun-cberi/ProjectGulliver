@@ -28,20 +28,10 @@
   const current = tools.find(([file]) => file === pathname);
   if (!current) return;
 
-  function embeddedInCanvas() {
-    if (window.parent === window || new URLSearchParams(location.search).get('studioEmbed') !== '1') return false;
-    try { return window.parent.location.origin === location.origin && Boolean(window.parent.GulliverTeacherLive); }
-    catch { return false; }
-  }
-
   function mount() {
     if (!document.body || document.querySelector('.gt-shell')) return;
     document.body.classList.add('gt-teacher-tool');
     document.body.dataset.gtTool = pathname;
-    if (embeddedInCanvas()) {
-      document.body.classList.add('gulliver-studio-embed');
-      return;
-    }
     const frame = window.GulliverAppShell?.mount({title:current[1]});
     if (!frame) return;
     const {shell, actions} = frame;
@@ -51,7 +41,7 @@
     const panel = document.createElement('div'); panel.className = 'gt-help-panel';
     const panelTitle = document.createElement('strong'); panelTitle.textContent = '도구의 저장 상태';
     const saveStatus = document.createElement('p');
-    saveStatus.textContent = '설정과 결과는 도구마다 저장 방식이 달라요. 기존 도구의 저장 버튼과 안내를 확인해 주세요. 내 보관함에 자동으로 들어간다는 뜻은 아니에요.';
+    saveStatus.textContent = '설정과 결과는 도구마다 저장 방식이 달라요. 각 도구의 저장 버튼과 안내를 확인해 주세요.';
     saveStatus.setAttribute('role', 'status');
     panel.append(panelTitle, saveStatus); help.append(summary, panel);
     const full = document.createElement('button'); full.type = 'button'; full.className = 'gt-action';

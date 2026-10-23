@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-const W=ClassroomWorkspace,tools=ClassroomTools.filter(t=>!t.studioLegacy&&!['뚝딱 제작실','영상 뚝딱','음악 뚝딱'].includes(t.name)),$=id=>document.getElementById(id);
+const W=ClassroomWorkspace,tools=ClassroomTools,$=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const CATEGORIES=['전체','시간·수업 안내','뽑기·편성','퀴즈·놀이','학급 관리','자료·기록'];
 const FORMATS=[['korean','국어','가','#e88460','낱말·띄어쓰기·읽기'],['math','수학','＋','#408ac4','연산·곱셈·분수'],['social','사회','◎','#da9742','방향·우리 사회·경제'],['science','과학','✳','#4aa98e','생물·물질·날씨'],['english','영어','A','#8564c8','낱말·문장·대화']];
@@ -32,9 +32,9 @@ function render(){
  $('folders').innerHTML=data.folders.length?data.folders.map(f=>'<button class="folder-link '+(f.id===folderId?'active':'')+'" data-folder="'+esc(f.id)+'">▱ '+esc(f.name)+'</button>').join(''):'<p style="font-size:11px;color:#a1a9b8;padding:0 13px;line-height:1.6">수업별로 활동을 모아 보세요.</p>';
  const room=Gulliver.getClassroom();$('classSummary').replaceChildren();$('classSummary').append(document.createTextNode('♧ '+room.className));const span=document.createElement('span');span.textContent=room.students.length?room.students.length+'명 · 명단 관리 →':'명단 등록하기 →';$('classSummary').append(span);
  document.querySelectorAll('.workspace-switch [data-view]').forEach(button=>button.setAttribute('aria-current',button.dataset.view===view?'page':'false'));
- $('search').placeholder=view==='home'?'도구·저장 자료 검색':view==='tools'||view==='favorites'?'도구 이름이나 필요한 일로 검색':'교사 도구 활동 이름으로 검색';
- let html='';const activities=W.list({trash:view==='trash',folder:folderId}).filter(a=>matches(a.title+' '+W.kinds[a.kind].name));const filteredTools=tools.filter(t=>(view==='favorites'||!t.studioLegacy)&&(category==='전체'||t.category===category)&&matches(t.name+' '+t.situation+' '+t.tags.join(' ')));
- if(view==='activities'||view==='trash'){html=(view==='activities'?'<a class="studio-library-link activities-studio" href="내 보관함.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>제작실 자료 찾기</strong><small>저장한 제작실 자료도 내 보관함에서 찾을 수 있어요.</small></span><span aria-hidden="true">→</span></a>':'')+'<div class="activity-grid">'+activities.map(a=>activityCard(a,view==='trash')).join('')+'</div>';if(!activities.length)html=(view==='activities'?'<a class="studio-library-link activities-studio" href="내 보관함.html"><span class="studio-library-icon" aria-hidden="true">▦</span><span><strong>제작실에서 만든 자료 찾기</strong><small>학습지·발표·수업자료도 내 보관함에서 찾을 수 있어요.</small></span><span aria-hidden="true">→</span></a>':'')+'<div class="empty"><strong>'+($('search').value?'검색 결과가 없어요.':view==='trash'?'보관한 활동이 없어요.':'아직 저장한 활동이 없어요.')+'</strong>'+(view==='trash'?'보관한 활동은 여기에서 다시 복원할 수 있어요.':'타이머·퀴즈·자리표에서 이름을 붙여 저장해 보세요.')+'</div>';
+ $('search').placeholder=view==='home'?'교사 도구·활동 검색':view==='tools'||view==='favorites'?'도구 이름이나 필요한 일로 검색':'교사 도구 활동 이름으로 검색';
+ let html='';const activities=W.list({trash:view==='trash',folder:folderId}).filter(a=>matches(a.title+' '+W.kinds[a.kind].name));const filteredTools=tools.filter(t=>(category==='전체'||t.category===category)&&matches(t.name+' '+t.situation+' '+t.tags.join(' ')));
+ if(view==='activities'||view==='trash'){html='<div class="activity-grid">'+activities.map(a=>activityCard(a,view==='trash')).join('')+'</div>';if(!activities.length)html='<div class="empty"><strong>'+($('search').value?'검색 결과가 없어요.':view==='trash'?'보관한 활동이 없어요.':'아직 저장한 활동이 없어요.')+'</strong>'+(view==='trash'?'보관한 활동은 여기에서 다시 복원할 수 있어요.':'타이머·퀴즈·자리표에서 이름을 붙여 저장해 보세요.')+'</div>';
  }else if(view==='home'||view==='tools'||view==='favorites'){
    const isHome=view==='home',query=$('search').value.trim();
    const favoriteItems=filteredTools.filter(t=>Gulliver.isFavorite(t.href));
@@ -50,12 +50,10 @@ function render(){
         '<div class="tool-list home-tool-list">'+selected.map(toolCard).join('')+'</div>',
         '<button class="text-btn" data-view="tools">도구 전체 보기 →</button>');
       if(favoriteItems.length)html+=section('즐겨찾는 수업 활동','','<div class="tool-list">'+favoriteItems.slice(0,4).map(toolCard).join('')+'</div>');
-      html+=section('기존 자료 이어서 열기','이 브라우저에 저장한 자료와 수업을 다시 열어요.',
-        '<div class="unified-home-recent" id="unifiedHomeRecent"><p>저장한 자료를 불러오는 중이에요.</p></div>'+
-        '<p class="home-work-location-note">기존 자료는 현재 브라우저에 저장돼요. 다른 기기로 옮기려면 내 보관함에서 백업해 주세요.</p>',
-        '<a class="text-btn" href="내 보관함.html">내 보관함 →</a>');
+      const recent=W.list().slice(0,6);
+      if(recent.length)html+=section('최근 교사 도구 활동','이 브라우저에 저장한 활동을 다시 열어요.','<div class="activity-grid">'+recent.map(a=>activityCard(a)).join('')+'</div>','<button class="text-btn" data-view="activities">활동 모두 보기 →</button>');
    }else if(isHome&&query){
-     html+=section('저장한 자료','학습자료·수업·활동·영상·사진을 이 기기에서 찾아요.','<div id="homeSavedSearchResults" class="home-saved-search-results" role="region" aria-label="저장 자료 검색 결과" aria-live="polite"><p class="unified-empty" role="status">저장 자료를 검색할게요.</p></div>','<a class="text-btn" href="내 보관함.html?q='+encodeURIComponent(query)+'">보관함에서 모두 보기 →</a>');
+     if(activities.length)html+=section('저장한 활동 · '+activities.length+'개','','<div class="activity-grid">'+activities.map(a=>activityCard(a)).join('')+'</div>');
      if(filteredTools.length)html+=section('사용할 수 있는 도구 · '+filteredTools.length+'개','','<div class="tool-list">'+filteredTools.map(toolCard).join('')+'</div>');
    }else{
      const favorites=Gulliver.getFavorites().map(f=>tools.find(t=>t.href===f.href)).filter(Boolean);
@@ -67,15 +65,10 @@ function render(){
    }
  }
  document.querySelectorAll('.workspace-switch [data-view]').forEach(button=>button.setAttribute('aria-current',button.dataset.view===view?'page':'false'));
- $('search').placeholder=view==='home'?'도구·저장 자료 검색':view==='tools'||view==='favorites'?'도구 이름이나 필요한 일로 검색':'교사 도구 활동 이름으로 검색';
+ $('search').placeholder=view==='home'?'교사 도구·활동 검색':view==='tools'||view==='favorites'?'도구 이름이나 필요한 일로 검색':'교사 도구 활동 이름으로 검색';
  document.querySelector('.storage-note').hidden=['home','tools','favorites'].includes(view);
 
  $('content').innerHTML=html;
- if(view==='home'){
-  const query=$('search').value.trim();
-  if(query)window.GulliverUnifiedLibraryUI?.renderHomeSearch(query);
-  else window.GulliverUnifiedLibraryUI?.renderHome();
- }
 }
 function edit(title,label,value,action,move=false){editAction=action;$('editTitle').textContent=title;$('editLabel').textContent=label;$('editValue').hidden=move;$('editValue').required=!move;$('editFolder').hidden=!move;$('editValue').value=value||'';if(move){$('editFolder').innerHTML='<option value="">미분류</option>'+W.read().folders.map(f=>'<option value="'+esc(f.id)+'">'+esc(f.name)+'</option>').join('');$('editFolder').value=value||''}$('editDialog').showModal();(move?$('editFolder'):$('editValue')).focus()}
 function create(){location.href='문제지 만들기.html'}
