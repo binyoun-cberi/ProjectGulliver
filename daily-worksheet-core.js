@@ -3,7 +3,7 @@
 const SUBJECTS={
  korean:{name:'국어',grades:[1,2,3,4,5,6],topics:[['opposite','반대말 찾기',1],['spacing','바른 띄어쓰기',2],['reading','글 읽고 답하기',1],['mainidea','짧은 글의 중심 내용',1,2]]},
  math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['hundreds','세 자리 수 덧셈',3,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3],['mixed','자연수의 혼합 계산',5,5],['decimal','소수의 계산',5,6]]},
- social:{name:'사회',grades:[3,4,5,6],topics:[['direction','방향과 위치',3],['community','우리 사회의 일',3],['economy','생산과 소비',4],['past','생활 속 옛 모습',3,4],['local','지역의 변화',3,4],['prehistoric','선사와 고조선',5],['ancient','삼국·가야의 유적',5],['goryeo','고려',5],['joseon','조선',5],['modern','일제 강점기·광복·전쟁',5]]},
+ social:{name:'사회',grades:[3,4,5,6],topics:[['direction','방향과 위치',3],['community','우리 사회의 일',3],['economy','생산과 소비',4],['past','생활 속 옛 모습',3,4],['local','지역의 변화',3,4],['prehistoric','선사와 고조선',5],['ancient','삼국·가야의 유적',5],['goryeo','고려',5],['joseon','조선',5],['modern','일제 강점기·광복·전쟁',5],['history-review','한국사 종합',5]]},
  science:{name:'과학',grades:[3,4,5,6],topics:[['living','생물과 비생물',3],['matter','물질의 상태',3],['weather','날씨 관찰 도구',5]]},
  english:{name:'영어',grades:[3,4,5,6],topics:[['words','기본 낱말',3],['sentence','문장 만들기',3],['conversation','상황에 맞는 대답',3]]}
 };
@@ -43,8 +43,8 @@ const MATH_UNITS={
 const SOCIAL_UNITS={
  3:[{id:'s3-past',label:'생활 속 옛 모습',topics:['past'],types:[['past-evidence','옛 물건으로 생활 추론','past']]},{id:'s3-local',label:'우리 지역의 변화',topics:['local'],types:[['local-evidence','옛날과 오늘 자료 비교','local']]}],
  4:[{id:'s4-past',label:'생활 속 옛 모습',topics:['past'],types:[['past-evidence','옛 물건으로 생활 추론','past']]},{id:'s4-local',label:'우리 지역의 변화',topics:['local'],types:[['local-evidence','옛날과 오늘 자료 비교','local']]}],
- 5:[['prehistoric','선사와 고조선'],['ancient','삼국·가야의 유적'],['goryeo','고려'],['joseon','조선'],['modern','일제 강점기·광복·전쟁']].map(([id,label])=>({id:'s5-'+id,label,topics:[id],types:[[id+'-quiz','시대별 객관식',id],[id+'-ox','역사 OX',id],[id+'-initial','초성으로 문화유산·인물 찾기',id]]})),
- 6:[['prehistoric','선사와 고조선'],['ancient','삼국·가야의 유적'],['goryeo','고려'],['joseon','조선'],['modern','일제 강점기·광복·전쟁']].map(([id,label])=>({id:'s6-'+id,label,topics:[id],types:[[id+'-quiz','시대별 객관식',id],[id+'-ox','역사 OX',id],[id+'-initial','초성으로 문화유산·인물 찾기',id]]}))
+ 5:[...['prehistoric','ancient','goryeo','joseon','modern'].map((id,i)=>({id:'s5-'+id,label:['선사와 고조선','삼국·가야의 유적','고려','조선','일제 강점기·광복·전쟁'][i],topics:[id],types:[[id+'-quiz','시대별 객관식',id],[id+'-ox','역사 OX',id],[id+'-initial','초성으로 문화유산·인물 찾기',id]]})),{id:'s5-history-review',label:'한국사 종합 · 인물과 연표',topics:['history-review'],types:[['history-matching','인물과 업적 줄 잇기','history-review'],['history-order','사건 순서 쓰기','history-review']]}],
+ 6:[...['prehistoric','ancient','goryeo','joseon','modern'].map((id,i)=>({id:'s6-'+id,label:['선사와 고조선','삼국·가야의 유적','고려','조선','일제 강점기·광복·전쟁'][i],topics:[id],types:[[id+'-quiz','시대별 객관식',id],[id+'-ox','역사 OX',id],[id+'-initial','초성으로 문화유산·인물 찾기',id]]})),{id:'s6-history-review',label:'한국사 종합 · 인물과 연표',topics:['history-review'],types:[['history-matching','인물과 업적 줄 잇기','history-review'],['history-order','사건 순서 쓰기','history-review']]}]
 };
 function units(subject,grade){return subject==='math'?(MATH_UNITS[grade]||[]):subject==='social'?(SOCIAL_UNITS[grade]||[]):[]}
 function types(subject,grade,topic,unitId){return units(subject,grade).filter(unit=>!unitId||unit.id===unitId).flatMap(unit=>unit.types.filter(entry=>entry[2]===topic).map(([id,label])=>[id,label]))}
@@ -442,6 +442,27 @@ function historyQuiz(topic,type,r){const [prompt,answer,wrong1,wrong2]=pick(HIST
  if(kind==='initial'){const initials=Array.from(answer).map(ch=>{const n=ch.charCodeAt(0)-0xac00;return n>=0&&n<11172?'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'[Math.floor(n/588)]:/[0-9]/.test(ch)?'□':ch}).join('');return {...common,prompt,detail:`초성·빈칸 힌트: ${initials}`,answer,choices:[]}}
  return {...choice(prompt,answer,[answer,wrong1,wrong2],r),...common};
 }
+const HISTORY_PEOPLE=[
+ ['단군왕검','고조선을 세웠다고 전해져요','10'],['주몽','고구려를 세웠어요','10'],['온조','백제를 세웠어요','10'],['박혁거세','신라를 세웠다고 전해져요','10'],['수로왕','금관가야를 세웠다고 전해져요','10'],['대조영','발해를 세웠어요','10'],['왕건','고려를 세웠어요','20'],['이성계','조선을 세웠어요','30'],['세종','훈민정음을 만들었어요','30'],['장영실','자격루 제작에 참여했어요','30'],['허준','동의보감을 편찬했어요','30'],['정조','수원 화성 건설을 추진했어요','30'],['김정호','대동여지도를 만들었어요','30'],['유관순','3·1 운동에 참여했어요','40'],['방정환','어린이날을 만드는 데 힘썼어요','40'],['주시경','한글 연구와 보급에 힘썼어요','40']
+];
+const HISTORY_EVENTS=[
+ [1,'고조선의 등장'],[2,'신라 건국'],[3,'고구려 건국'],[4,'백제 건국'],[5,'금관가야 건국'],[6,'발해 건국'],[7,'고려 건국'],[8,'조선 건국'],[9,'훈민정음 반포'],[10,'임진왜란'],[11,'수원 화성 완공'],[12,'독립신문 창간'],[13,'대한제국 선포'],[14,'3·1 운동'],[15,'대한민국 임시 정부 수립'],[16,'광복'],[17,'대한민국 정부 수립'],[18,'6·25 전쟁 시작']
+];
+// Historic founding dates for the early states can be disputed. Use the familiar
+// school chronology only when the relative order is certain, and avoid near ties.
+function historyReview(type,size,r){const sourceLabel='국사편찬위원회 · 재미있는 초등역사';
+ if(type==='history-matching'){
+  const people=shuffle(HISTORY_PEOPLE,r).slice(0,size),right=shuffle(people,r);
+  return people.map(([person,achievement,age],index)=>({format:'matching',prompt:person,right:right[index][1],answer:`${right.findIndex(pair=>pair[0]===person)+1}번 · ${achievement}`,choices:[],detail:'',explanation:`${person}: ${achievement}`,source:`https://contents.history.go.kr/mobile/eh/list.do?code=eh_age_${age}`,sourceLabel}));
+ }
+ const items=[],seen=new Set();let attempts=0;
+ while(items.length<size&&attempts++<2000){const selected=shuffle(HISTORY_EVENTS,r).slice(0,4),key=selected.map(entry=>entry[0]).sort((a,b)=>a-b).join('-');if(seen.has(key))continue;seen.add(key);
+  const correct=[...selected].sort((a,b)=>a[0]-b[0]).map(entry=>selected.indexOf(entry)+1).join(' → ');
+  const ages=[...new Set(selected.map(([n])=>n<=5?'10':n<=7?'20':n<=11?'30':n<=15?'40':'50'))];
+  items.push({format:'ordering',prompt:'다음 사건을 먼저 일어난 순서대로 배열하세요.',orderChoices:selected.map(entry=>entry[1]),answer:correct,choices:[],detail:'',explanation:`${[...selected].sort((a,b)=>a[0]-b[0]).map(entry=>entry[1]).join(' → ')}`,source:`https://contents.history.go.kr/mobile/eh/list.do?code=eh_age_${ages[0]}`,sourceAges:ages,sourceLabel});
+ }
+ return items;
+}
 function available(topic,grade){return grade>=topic[2]&&grade<=(topic[3]??6)}
 function carrying(a,b){for(let unit=1;unit<=Math.max(a,b);unit*=10)if(Math.floor(a/unit)%10+Math.floor(b/unit)%10>=10)return true;return false}
 function carryCount(a,b,subtract=false){let carry=0,count=0;for(let unit=1;unit<=100;unit*=10){const x=Math.floor(a/unit)%10,y=Math.floor(b/unit)%10;if(subtract){const next=x-carry<y?1:0;count+=next;carry=next}else{const next=x+y+carry>=10?1:0;count+=next;carry=next}}return count}
@@ -577,8 +598,8 @@ function item(subject,topic,grade,r,difficulty,variant){
 }
 function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basic',variant='tens',type=''}){
  const info=SUBJECTS[subject],year=Number(grade),size=Number(count),selected=types(subject,year,topic).find(entry=>entry[0]===type),dense=subject==='math'&&(selected? /^(add-|sub-|small-|two-|times-)/.test(type)&&type!=='times-missing':['addition','hundreds','multiplication'].includes(topic));
- if(!info||!info.grades.includes(year)||!info.topics.some(t=>t[0]===topic&&available(t,year))||![5,10,15,...(dense?[24]:[])].includes(size)||!['basic','challenge'].includes(difficulty)||!['tens','ones'].includes(variant)||type&&!selected||['mixed','decimal'].includes(topic)&&!selected)throw Error('학년·교과·유형을 다시 선택해 주세요.');
- const random=rng(seed),items=[],seen=new Set(),seenPassages=new Set();let attempts=0;
+ if(!info||!info.grades.includes(year)||!info.topics.some(t=>t[0]===topic&&available(t,year))||![5,10,15,...(dense?[24]:[])].includes(size)||!['basic','challenge'].includes(difficulty)||!['tens','ones'].includes(variant)||type&&!selected||['mixed','decimal','history-review'].includes(topic)&&!selected)throw Error('학년·교과·유형을 다시 선택해 주세요.');
+ const random=rng(seed),items=topic==='history-review'?historyReview(type,size,random):[],seen=new Set(),seenPassages=new Set();let attempts=0;
  while(items.length<size&&attempts++<3000){const candidate=subject==='social'&&HISTORY_QUIZ[topic]?historyQuiz(topic,type,random):subject==='social'&&SOCIAL_EVIDENCE[topic]?socialEvidence(topic,random):selected?typedMath(type,random):item(subject,topic,year,random,difficulty,variant),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||subject==='social'&&!HISTORY_QUIZ[topic]&&SOCIAL_EVIDENCE[topic]&&seenPassages.has(candidate.detail)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);if(subject==='social'&&!HISTORY_QUIZ[topic]&&SOCIAL_EVIDENCE[topic]||topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
  if(items.length<size)throw Error('이 유형에서는 서로 다른 문제를 충분히 만들지 못했어요. 문항 수를 줄여 주세요.');
  return{subject,topic,type,grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:year+'학년 '+info.name+' · '+(selected?selected[1]:info.topics.find(t=>t[0]===topic)[1]),alignment:['mixed','decimal'].includes(topic)?null:alignment(subject,topic,year),items};
