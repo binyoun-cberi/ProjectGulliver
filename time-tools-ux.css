@@ -51,3 +51,30 @@ body:has(.tt-app) {--tt-accent:#137767;--tt-line:#dce8e4;--tt-muted:#596c77;--tt
 @media(max-width:860px){.tt-grid{grid-template-columns:1fr}.tt-stage{min-height:370px}.tt-grid>aside.tt-card{position:static;max-height:none;overflow:visible}}
 @media(max-width:620px){.tt-sand-layout{grid-template-columns:1fr;gap:2px;justify-items:center}.tt-sand-layout .tt-hourglass{width:min(155px,45vw)}.tt-sand-copy{text-align:center;align-items:center;gap:7px}.tt-sand-copy .tt-number{font-size:clamp(43px,11vw,67px)}.tt-student-sand-layout{grid-template-columns:1fr;gap:0;justify-items:center}.tt-student-sand-layout .tt-hourglass{width:min(170px,42vw)}.tt-student-sand-copy{text-align:center;align-items:center;gap:6px}.tt-student-sand-copy .tt-student-number{font-size:clamp(40px,11vw,70px)}.tt-stage{min-height:330px}}
 @media(prefers-reduced-motion:reduce){.tt-hourglass [data-part="falling-sand"]{animation:none!important}.tt-modes button{transition:none}}
+
+/* Pass 2 - guide the teacher's choices without hiding the timer. */
+.tt-view-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 2px 15px}
+.tt-view-name{font-size:14px;font-weight:900;color:#3e6e61}
+.tt-live-state{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;background:#e7f2ee;color:#255f52;font-size:12px;font-weight:850;white-space:nowrap}
+.tt-live-state:before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.tt-live-state[data-state="진행 중"],.tt-live-state[data-state="수업 중"]{color:#047857;background:#dff8ed}
+.tt-live-state[data-state="일시정지"]{color:#8f6614;background:#fff3d9}
+.tt-live-state[data-state="종료"]{color:#637589;background:#edf1f5}
+.tt-live-state[data-state="쉬는 시간"],.tt-live-state[data-state="점심시간"]{color:#a46322;background:#fff1dc}
+.tt-mode-description{margin:0 0 20px;border-left:3px solid #7cbca7;padding:11px 13px;background:#f2f8f5;color:#385951;border-radius:0 9px 9px 0;font-size:13px;line-height:1.6;font-weight:700}
+.tt-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+.tt-actions button{padding:11px 6px;white-space:normal;line-height:1.25;min-width:0}
+.tt-actions button:only-child{grid-column:1/-1}
+.tt-preset button[aria-pressed="true"],.tt-preset button[aria-current="true"]{color:#0f6b58;background:#dcf3e8;border-color:#78ba9f}
+.tt-line>.tt-btn--primary{min-width:120px}
+.tt-card .tt-section>h2{letter-spacing:-.025em}
+.tt-records li{border:1px solid #e6efeb;background:#f7faf8}
+.tt-event{background:#f8fbf9;border-color:#deebe6}
+.tt-event input{background:#fff}
+.tt-period-row{border-color:#deebe6}
+.tt-btn{transition:border-color .15s ease,background .15s ease}
+.tt-styles button{min-height:43px}
+.tt-sand-copy .tt-face-sub{max-width:28ch}
+@media(max-width:1180px){.tt-actions{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:860px){.tt-actions{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:550px){.tt-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.tt-actions .tt-btn--primary{grid-column:span 2}.tt-actions button{min-height:47px}.tt-styles button{flex:1 0 auto}.tt-mode-description{font-size:13px}}
