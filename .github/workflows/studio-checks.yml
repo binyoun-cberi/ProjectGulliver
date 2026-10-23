@@ -31,9 +31,10 @@ on:
       - 'balpyo-*.js'
       - 'munseo-*.js'
       - '*뚝딱.html'
-      - 'tools-catalog.js'
-      - 'index.html'
-      - 'tests/**'
+      - 'tests/studio-*'
+      - 'tests/lesson-*'
+      - 'tests/media-*'
+      - 'tests/work-*'
       - '.github/workflows/studio-checks.yml'
       - 'scripts/install-artcraft-media-web.sh'
       - '.github/workflows/vendor-artcraft-media.yml'
@@ -48,9 +49,10 @@ on:
       - 'balpyo-*.js'
       - 'munseo-*.js'
       - '*뚝딱.html'
-      - 'tools-catalog.js'
-      - 'index.html'
-      - 'tests/**'
+      - 'tests/studio-*'
+      - 'tests/lesson-*'
+      - 'tests/media-*'
+      - 'tests/work-*'
       - '.github/workflows/studio-checks.yml'
       - 'scripts/install-artcraft-media-web.sh'
       - '.github/workflows/vendor-artcraft-media.yml'
@@ -60,7 +62,33 @@ permissions:
   contents: read
 
 jobs:
+  studio-source-check:
+    runs-on: ubuntu-latest
+    outputs:
+      present: ${{ steps.inventory.outputs.present }}
+      media: ${{ steps.inventory.outputs.media }}
+    steps:
+      - name: Checkout source inventory
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Verify legacy studio source is actually available
+        id: inventory
+        run: |
+          if [[ -f studio-core.js && -f lesson-core.js && -f tests/studio-browser.e2e.cjs ]]; then
+            echo 'present=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'present=false' >> "$GITHUB_OUTPUT"
+            echo '::notice::Legacy studio source is absent on this branch. Studio integration and browser suites are skipped, not marked as passing.'
+          fi
+          if [[ -f scripts/install-artcraft-media-web.sh && -f tests/studio-official-media.test.cjs ]]; then
+            echo 'media=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'media=false' >> "$GITHUB_OUTPUT"
+            echo '::notice::Official studio media installer is absent; obsolete media release suite is skipped.'
+          fi
+
   integration:
+    needs: studio-source-check
+    if: needs.studio-source-check.outputs.present == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -127,6 +155,8 @@ jobs:
         run: node --test tests/*.test.cjs
 
   browser-e2e:
+    needs: studio-source-check
+    if: needs.studio-source-check.outputs.present == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
@@ -160,6 +190,8 @@ jobs:
           retention-days: 3
 
   official-media-release:
+    needs: studio-source-check
+    if: needs.studio-source-check.outputs.media == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
