@@ -56,6 +56,22 @@ test('five subjects expose only supported grades and topics, with complete uniqu
  }
 });
 
+test('social history units use evidence with an accountable answer and source',()=>{
+ for(const grade of [3,4,5,6])for(const unit of units('social',grade))for(const [type,,topic] of unit.types){
+  for(const seed of [1,42,2026]){
+   const options={subject:'social',grade,topic,type,count:15,seed},sheet=generate(options);
+   assert.deepEqual(sheet,generate(options));
+   assert.equal(sheet.items.length,15);
+   assert.equal(new Set(sheet.items.map(q=>q.detail+'|'+q.prompt)).size,15);
+   if(sheet.alignment)assert.match(sheet.alignment.code,/^\[[46]사\d{2}-\d{2}\]$/);
+   else assert.ok(['joseon','modern'].includes(topic));
+   for(const question of sheet.items){assert.ok(question.detail&&question.explanation&&question.sourceLabel);assert.ok(question.choices.includes(question.answer));assert.ok(question.explanation.includes(question.answer));if(grade>=5)assert.match(question.source,/^https:\/\/contents\.history\.go\.kr\//);else assert.equal(question.source,'')}
+  }
+ }
+ assert.throws(()=>generate({subject:'social',grade:4,topic:'goryeo',type:'goryeo-evidence',count:5}));
+ assert.throws(()=>generate({subject:'social',grade:5,topic:'past',type:'past-evidence',count:5}));
+});
+
 test('a worksheet number reproduces the same sheet and a new seed changes it',()=>{
  const options={subject:'science',grade:5,topic:'weather',count:10};
  assert.deepEqual(generate({...options,seed:31415}),generate({...options,seed:31415}));

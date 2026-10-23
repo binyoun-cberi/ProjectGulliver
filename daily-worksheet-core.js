@@ -3,7 +3,7 @@
 const SUBJECTS={
  korean:{name:'국어',grades:[1,2,3,4,5,6],topics:[['opposite','반대말 찾기',1],['spacing','바른 띄어쓰기',2],['reading','글 읽고 답하기',1],['mainidea','짧은 글의 중심 내용',1,2]]},
  math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['hundreds','세 자리 수 덧셈',3,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3],['mixed','자연수의 혼합 계산',5,5],['decimal','소수의 계산',5,6]]},
- social:{name:'사회',grades:[3,4,5,6],topics:[['direction','방향과 위치',3],['community','우리 사회의 일',3],['economy','생산과 소비',4]]},
+ social:{name:'사회',grades:[3,4,5,6],topics:[['direction','방향과 위치',3],['community','우리 사회의 일',3],['economy','생산과 소비',4],['past','생활 속 옛 모습',3,4],['local','지역의 변화',3,4],['prehistoric','선사와 고조선',5],['ancient','삼국과 남북국',5],['goryeo','고려',5],['joseon','조선',5],['modern','근현대',5]]},
  science:{name:'과학',grades:[3,4,5,6],topics:[['living','생물과 비생물',3],['matter','물질의 상태',3],['weather','날씨 관찰 도구',5]]},
  english:{name:'영어',grades:[3,4,5,6],topics:[['words','기본 낱말',3],['sentence','문장 만들기',3],['conversation','상황에 맞는 대답',3]]}
 };
@@ -40,7 +40,13 @@ const MATH_UNITS={
   {id:'g6-decimal',label:'2학기 · 소수의 나눗셈',topics:['decimal'],types:[['decimal-div-int','소수 ÷ 자연수','decimal'],['decimal-div-dec','소수 ÷ 소수','decimal']]}
  ]
 };
-function units(subject,grade){return subject==='math'?(MATH_UNITS[grade]||[]):[]}
+const SOCIAL_UNITS={
+ 3:[{id:'s3-past',label:'생활 속 옛 모습',topics:['past'],types:[['past-evidence','옛 물건으로 생활 추론','past']]},{id:'s3-local',label:'우리 지역의 변화',topics:['local'],types:[['local-evidence','옛날과 오늘 자료 비교','local']]}],
+ 4:[{id:'s4-past',label:'생활 속 옛 모습',topics:['past'],types:[['past-evidence','옛 물건으로 생활 추론','past']]},{id:'s4-local',label:'우리 지역의 변화',topics:['local'],types:[['local-evidence','옛날과 오늘 자료 비교','local']]}],
+ 5:[['prehistoric','선사와 고조선'],['ancient','삼국과 남북국'],['goryeo','고려'],['joseon','조선'],['modern','근현대']].map(([id,label])=>({id:'s5-'+id,label,topics:[id],types:[[id+'-evidence','자료에서 근거 찾기',id]]})),
+ 6:[['prehistoric','선사와 고조선'],['ancient','삼국과 남북국'],['goryeo','고려'],['joseon','조선'],['modern','근현대']].map(([id,label])=>({id:'s6-'+id,label,topics:[id],types:[[id+'-evidence','자료에서 근거 찾기',id]]}))
+};
+function units(subject,grade){return subject==='math'?(MATH_UNITS[grade]||[]):subject==='social'?(SOCIAL_UNITS[grade]||[]):[]}
 function types(subject,grade,topic,unitId){return units(subject,grade).filter(unit=>!unitId||unit.id===unitId).flatMap(unit=>unit.types.filter(entry=>entry[2]===topic).map(([id,label])=>[id,label]))}
 // Verified against the 2022 mathematics curriculum (MOE notice 2022-33, appendix 8).
 // These are practice links, not a claim that a sheet assesses the entire standard.
@@ -53,7 +59,7 @@ const MATH_ALIGNMENT={
 };
 const OTHER_ALIGNMENT={
  korean:{mainidea:{1:['[2국02-03]','글의 중심 내용 확인'],2:['[2국02-03]','글의 중심 내용 확인']}},
- social:{economy:{4:['[4사07-02]','생산·소비 활동과 지역 간 교류 탐색']}},
+ social:{economy:{4:['[4사07-02]','생산·소비 활동과 지역 간 교류 탐색']},past:{3:['[4사02-02]','옛 물건과 자료로 생활 모습 탐색'],4:['[4사02-02]','옛 물건과 자료로 생활 모습 탐색']},local:{3:['[4사02-03]','자료를 통해 지역의 변화 탐색'],4:['[4사02-03]','자료를 통해 지역의 변화 탐색']},prehistoric:{5:['[6사04-01]','선사 시대 유물로 생활 모습 추론'],6:['[6사04-01]','선사 시대 유물로 생활 모습 추론']},ancient:{5:['[6사04-02]','고대의 문화유산과 역사 자료 탐색'],6:['[6사04-02]','고대의 문화유산과 역사 자료 탐색']},goryeo:{5:['[6사04-03]','고려의 역사 자료 탐색'],6:['[6사04-03]','고려의 역사 자료 탐색']}},
  science:{matter:{3:['[4과05-02]','고체·액체·기체의 성질 관찰과 비교'],4:['[4과05-02]','고체·액체·기체의 성질 관찰과 비교']},weather:{5:['[6과06-01]','기상 요소 조사와 생활에 미치는 영향'],6:['[6과06-01]','기상 요소 조사와 생활에 미치는 영향']}},
  english:{words:{3:['[4영01-05]','쉬운 낱말·어구·문장의 의미 이해'],4:['[4영01-05]','쉬운 낱말·어구·문장의 의미 이해'],5:['[6영01-03]','낱말·어구·문장의 의미 이해'],6:['[6영01-03]','낱말·어구·문장의 의미 이해']}}
 };
@@ -64,7 +70,7 @@ const OTHER_SOURCES={
  social:'https://www.nise.go.kr/ebook/src/viewer/download.php?host=main&no=1&site=20240819_172144'
 };
 function alignment(subject,topic,grade){const math=subject==='math',match=math?MATH_ALIGNMENT[topic]?.[grade]:OTHER_ALIGNMENT[subject]?.[topic]?.[grade];if(!match)return null;
- const scope=math?'이 문제지는 성취기준 중 계산 연습만 다룹니다.':subject==='korean'?'이 문제지는 짧은 글의 중심 내용 고르기만 다룹니다.':subject==='science'&&topic==='matter'?'이 문제지는 물질의 상태 분류만 다룹니다.':subject==='science'?'이 문제지는 기상 관찰 도구 고르기만 다룹니다.':subject==='social'?'이 문제지는 생산과 소비의 구별만 다룹니다.':'이 문제지는 글로 제시된 낱말의 뜻 고르기만 다룹니다.';
+ const scope=math?'이 문제지는 성취기준 중 계산 연습만 다룹니다.':subject==='korean'?'이 문제지는 짧은 글의 중심 내용 고르기만 다룹니다.':subject==='science'&&topic==='matter'?'이 문제지는 물질의 상태 분류만 다룹니다.':subject==='science'?'이 문제지는 기상 관찰 도구 고르기만 다룹니다.':subject==='social'&&topic!=='economy'?'이 문제지는 짧은 자료에서 근거를 찾는 연습만 다룹니다. 성취기준 전체를 평가하지 않습니다.':subject==='social'?'이 문제지는 생산과 소비의 구별만 다룹니다.':'이 문제지는 글로 제시된 낱말의 뜻 고르기만 다룹니다.';
  const source=math?CURRICULUM_SOURCE:subject==='science'&&topic==='weather'?'https://www.goe.go.kr/resource/old/BBSMSTR_000000030136/BBS_202502201106162700.pdf':subject==='english'&&grade>=5?'https://www.goe.go.kr/resource/old/BBSMSTR_000000030136/BBS_202411110130211774.pdf':OTHER_SOURCES[subject];
  return{code:match[0],summary:match[1],source,scope}}
 const OPPOSITES=[['크다','작다'],['높다','낮다'],['길다','짧다'],['빠르다','느리다'],['밝다','어둡다'],['따뜻하다','차갑다'],['무겁다','가볍다'],['넓다','좁다'],['많다','적다'],['가깝다','멀다'],['기쁘다','슬프다'],['시작','끝'],['앞','뒤'],['안','밖'],['위','아래'],['열다','닫다'],['주다','받다'],['들어가다','나오다'],['깨끗하다','더럽다'],['쉽다','어렵다']];
@@ -185,6 +191,84 @@ function pick(list,r){return list[Math.floor(r()*list.length)]}
 function shuffle(list,r){const copy=[...list];for(let i=copy.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
 function int(min,max,r){return min+Math.floor(r()*(max-min+1))}
 function choice(prompt,answer,options,r,detail=''){return{prompt,answer,choices:shuffle([...new Set(options)],r),detail}}
+// Original, short classroom evidence prompts. Historical facts are cross-checkable in the
+// National Institute of Korean History elementary history collection; local cases are fictional.
+const HISTORY_BASE='https://contents.history.go.kr/front/newEh/list.do?code=';
+const SOCIAL_EVIDENCE={
+ past:{source:'',cards:[
+  ['옛 다리미는 안에 달군 숯을 넣어 천을 눌렀습니다.','전기를 쓰지 않고 열을 얻었습니다.','전기 콘센트에 꽂았습니다.','물을 얼려 옷을 폈습니다.'],
+  ['옛 우물가에서는 사람들이 두레박으로 물을 길었습니다.','생활에 필요한 물을 직접 길었습니다.','수도꼭지를 틀었습니다.','물을 배달하는 차를 탔습니다.'],
+  ['옛 사진에는 같은 길에 자동차보다 손수레가 많이 보입니다.','물건을 옮기는 수단이 지금과 달랐습니다.','자동차만 이용했습니다.','길에 아무도 다니지 않았습니다.'],
+  ['옛 편지는 종이에 글을 쓰고 우표를 붙여 보냈습니다.','소식을 전하는 데 종이와 우편을 썼습니다.','휴대 전화로 사진을 보냈습니다.','영상 통화를 했습니다.'],
+  ['옛 교실 사진에는 칠판 앞에 학생들이 함께 앉아 있습니다.','사진으로 당시 교실 모습을 살펴볼 수 있습니다.','사진만으로 모든 학생의 생각을 알 수 있습니다.','사진이 미래의 교실을 보여 줍니다.'],
+  ['할머니는 어릴 때 연탄을 갈아 끼워 방을 데웠다고 말씀하셨습니다.','구술 자료로 옛 난방 방식을 알 수 있습니다.','모든 집에서 지금도 연탄만 씁니다.','말씀만으로 정확한 연도를 알 수 있습니다.'],
+  ['옛 장부에는 시장에서 판 물건과 날짜가 적혀 있습니다.','기록으로 당시 거래를 조사할 수 있습니다.','장부가 물건의 냄새까지 알려 줍니다.','장부는 미래의 가격표입니다.'],
+  ['옛 사진에는 사람들이 빨랫감을 냇가에서 씻고 있습니다.','빨래하는 장소와 방법을 추론할 수 있습니다.','모든 집에 세탁기가 있었습니다.','사진만으로 모두의 직업을 알 수 있습니다.']
+ ]},
+ local:{source:'',cards:[
+  ['옛 지도에는 논이 있던 자리에 오늘 지도에는 아파트가 있습니다.','땅을 이용하는 모습이 달라졌습니다.','논의 위치가 전혀 바뀌지 않았습니다.','옛 지도에 아파트가 있었습니다.'],
+  ['옛 사진에는 흙길이, 같은 장소의 오늘 사진에는 포장도로가 보입니다.','길의 모습이 달라졌습니다.','오늘 사진이 더 오래되었습니다.','사진으로 길의 폭을 정확히 재야만 합니다.'],
+  ['옛 지도에는 작은 나루터가, 오늘 지도에는 강을 건너는 다리가 있습니다.','강을 건너는 시설이 달라졌습니다.','옛날에는 다리만 이용했습니다.','강이 사라졌습니다.'],
+  ['옛 신문에는 시장이 월요일마다 섰다고 쓰여 있고 오늘 안내에는 매일 연다고 적혀 있습니다.','시장 운영 날짜가 달라졌습니다.','옛 시장도 매일 열렸습니다.','오늘은 월요일에만 엽니다.'],
+  ['옛 사진 속 빈터에 오늘은 도서관이 서 있습니다.','지역의 시설이 달라졌습니다.','도서관은 옛 사진에도 있습니다.','빈터는 언제나 그대로였습니다.'],
+  ['옛 기록에는 배로 건너던 길을 오늘은 버스로 이동한다고 적혀 있습니다.','이동 수단이 달라졌습니다.','오늘도 배만 이용합니다.','버스가 배보다 먼저 있었습니다.'],
+  ['옛 지도에 표시된 작은 학교가 오늘 지도에는 큰 학교로 나타납니다.','같은 장소의 학교 규모가 달라졌을 수 있습니다.','지도만으로 학생 수를 정확히 알 수 있습니다.','학교가 언제나 작았습니다.'],
+  ['옛 사진에는 공장 굴뚝이, 오늘 사진에는 공원이 같은 자리에 보입니다.','공간의 쓰임이 달라졌습니다.','오늘도 공장이 그대로 있습니다.','옛 사진에 공원이 보입니다.']
+ ]},
+ prehistoric:{source:HISTORY_BASE+'eh_age_10',cards:[
+  ['암사동 집터에는 땅을 파서 만든 움집 흔적이 남았습니다.','사람들이 이곳에 살았습니다.','이곳에서 철도를 놓았습니다.','이곳에서 책을 인쇄했습니다.'],
+  ['암사동 유적에서 그물추가 발견되었습니다.','물고기를 잡는 데 그물을 썼을 수 있습니다.','비행기를 만들었습니다.','한글을 가르쳤습니다.'],
+  ['암사동 유적에서 갈돌과 갈판이 발견되었습니다.','곡식을 갈아 먹었을 수 있습니다.','쇠를 녹였습니다.','기계를 운전했습니다.'],
+  ['빗살무늬 토기는 음식을 담거나 조리하는 데 쓰였습니다.','토기를 생활에 이용했습니다.','금속으로 만든 그릇입니다.','전기로 작동했습니다.'],
+  ['강가의 신석기 집터에서 여러 생활 도구가 함께 나왔습니다.','같은 장소에서 생활한 흔적을 살펴볼 수 있습니다.','집터만으로 주민의 이름을 알 수 있습니다.','도구는 모두 현대 물건입니다.'],
+  ['청동기 시대 고인돌 아래에서 무덤 구조가 발견되었습니다.','고인돌을 무덤으로 사용했습니다.','고인돌은 전기 발전소였습니다.','고인돌은 우편함이었습니다.'],
+  ['큰 고인돌을 만들려면 무거운 돌을 함께 옮겨야 했습니다.','여러 사람의 협력이 필요했을 수 있습니다.','한 사람이 종이로 만들었습니다.','현대 중장비가 반드시 있었습니다.'],
+  ['유적에서 나온 유물은 만들어진 시대와 사용 흔적을 함께 살핍니다.','유물의 특징을 근거로 생활 모습을 추론합니다.','유물 하나로 모든 사람의 삶을 단정합니다.','유물의 색만 보고 시대를 확정합니다.']
+ ]},
+ ancient:{source:HISTORY_BASE+'eh_age_10',cards:[
+  ['고구려 고분 벽화에는 당시 사람들이 그린 인물과 생활 장면이 남아 있습니다.','그림을 통해 당시 모습을 조사할 수 있습니다.','그림만으로 모든 사람의 생각을 알 수 있습니다.','벽화는 오늘 촬영한 사진입니다.'],
+  ['무령왕릉에서는 무덤 주인을 알려 주는 기록이 발견되었습니다.','기록과 유물을 함께 살펴 무덤을 연구합니다.','무덤 주인을 마음대로 정합니다.','무덤 기록은 생활과 관계없습니다.'],
+  ['무령왕릉에서 나온 물건과 묘지는 함께 발견된 자료입니다.','여러 자료를 비교해 해석할 수 있습니다.','물건의 개수만으로 모든 역사를 알 수 있습니다.','묘지는 현대 광고입니다.'],
+  ['고분에서 나온 장신구는 당시의 제작 기술을 살필 단서가 됩니다.','유물의 재료와 모양을 조사합니다.','장신구가 왕의 말을 녹음했습니다.','장신구만으로 정확한 날씨를 압니다.'],
+  ['삼국의 유적은 서로 다른 지역에서 발견됩니다.','출토 장소를 살펴 각 나라의 흔적을 조사합니다.','발견 장소는 언제나 중요하지 않습니다.','유적은 모두 같은 날 만들어졌습니다.'],
+  ['절터에서 발견된 기와는 건물의 흔적을 알려 줍니다.','유물과 터를 함께 살펴 건물을 추론합니다.','기와만으로 건물의 모든 사람을 알 수 있습니다.','기와는 현대 플라스틱입니다.'],
+  ['옛 비석의 글은 당시 사람들이 남긴 기록입니다.','글의 내용과 세워진 맥락을 함께 읽습니다.','비석에 적힌 말은 비교할 필요가 없습니다.','비석은 미래의 뉴스입니다.'],
+  ['옛 무덤의 벽화와 출토품은 종류가 다른 자료입니다.','자료를 비교하면 추론의 근거가 늘어납니다.','한 가지 자료만 반드시 참입니다.','자료의 종류가 다르면 비교할 수 없습니다.']
+ ]},
+ goryeo:{source:HISTORY_BASE+'eh_age_20',cards:[
+  ['고려청자는 흙으로 빚고 유약을 입혀 구웠습니다.','도자기 제작 기술을 살필 수 있습니다.','종이로 만든 그릇입니다.','현대 플라스틱입니다.'],
+  ['고려의 팔만대장경은 나무판에 글자를 새겨 만들었습니다.','목판 인쇄에 필요한 기술과 노력을 살필 수 있습니다.','전자책으로만 남았습니다.','바위에 그림만 그렸습니다.'],
+  ['대장경 목판에는 여러 글자가 거꾸로 새겨져 있습니다.','찍어 낸 글자가 바르게 보이도록 했습니다.','글을 읽지 못하게 하려 했습니다.','목판을 거울로 사용했습니다.'],
+  ['고려 시대 금속활자로 찍은 책이 전해집니다.','금속활자 인쇄를 연구할 근거입니다.','컴퓨터 프린터를 사용했습니다.','책을 전혀 만들지 않았습니다.'],
+  ['고려의 수도 개경과 관련한 기록이 남아 있습니다.','기록을 통해 수도의 모습을 조사할 수 있습니다.','기록만으로 모든 거리의 길이를 압니다.','개경은 오늘의 지명입니다.'],
+  ['고려 시대의 불상과 절터가 전해집니다.','종교와 관련된 문화유산을 조사합니다.','모든 사람의 직업을 알아냅니다.','현대 놀이 기구의 흔적입니다.'],
+  ['청자와 목판은 서로 다른 재료로 만든 고려의 유물입니다.','재료와 쓰임을 비교할 수 있습니다.','두 유물 모두 종이로만 만들었습니다.','두 유물은 같은 기능만 했습니다.'],
+  ['옛 책의 간행 기록은 만든 때와 목적을 밝히는 단서가 됩니다.','유물과 기록을 함께 확인합니다.','책 표지만 보고 모든 내용을 단정합니다.','간행 기록은 필요 없는 자료입니다.']
+ ]},
+ joseon:{source:HISTORY_BASE+'eh_age_30',cards:[
+  ['조선의 향교는 지역에서 유학을 가르치는 교육 공간이었습니다.','유학 교육의 흔적을 살필 수 있습니다.','비행기 정비 장소였습니다.','전화 교환소였습니다.'],
+  ['조선의 과거 시험은 관리 선발과 관련이 있었습니다.','관리 선발 방식을 조사할 수 있습니다.','모든 주민이 자동으로 관리가 되었습니다.','기계를 평가하는 시험이었습니다.'],
+  ['세종 때 창제된 훈민정음의 해례에는 글자의 원리가 설명되어 있습니다.','문자의 원리를 기록에서 확인할 수 있습니다.','글자가 자연에서 저절로 생겼습니다.','해례는 현대 문자 메시지입니다.'],
+  ['조선 시대 실록에는 나라에서 있었던 일이 기록되어 있습니다.','당시 기록을 살펴 사건을 조사합니다.','실록만으로 모든 사람의 생각을 압니다.','실록은 미래 예측서입니다.'],
+  ['조선 후기의 풍속화에는 당시 사람들의 모습이 그려져 있습니다.','그림에서 생활 모습을 살펴볼 수 있습니다.','그림이 정확한 사진과 같습니다.','그림만으로 모든 사람의 이름을 압니다.'],
+  ['조선 후기 장시에는 사람들이 물건을 사고팔았습니다.','교환과 거래의 모습을 살필 수 있습니다.','장시에서는 아무도 물건을 팔지 않았습니다.','모든 거래가 전자 결제였습니다.'],
+  ['개항기 항구와 관련한 기록에는 외국과의 교류가 나타납니다.','교류가 늘어난 배경을 조사할 수 있습니다.','외국과의 접촉이 전혀 없었습니다.','기록은 오늘 작성되었습니다.'],
+  ['옛 사진과 문서는 개항 무렵의 변화를 보여 주는 서로 다른 자료입니다.','두 자료를 비교해 변화를 조사합니다.','사진만 보고 문서를 버립니다.','문서의 날짜는 확인하지 않습니다.']
+ ]},
+ modern:{source:HISTORY_BASE+'eh_age_50',cards:[
+  ['일제 강점기 독립운동 선언서에는 독립을 바라는 뜻이 담겨 있습니다.','선언서에서 운동의 목적을 확인할 수 있습니다.','선언서가 전쟁의 모든 일을 설명합니다.','선언서는 오늘의 광고입니다.'],
+  ['3·1 운동 당시 여러 지역의 사람들이 독립 만세를 외쳤습니다.','운동이 여러 곳으로 퍼졌음을 살필 수 있습니다.','오직 한 장소에서만 일어났습니다.','운동과 독립은 관계없습니다.'],
+  ['독립운동가의 편지에는 당시의 생각과 상황이 담길 수 있습니다.','편지 작성자와 날짜를 확인하며 읽습니다.','편지만으로 모든 사람의 생각을 압니다.','편지는 모두 같은 사람이 썼습니다.'],
+  ['1945년 광복을 알리는 당시 신문 기사가 남아 있습니다.','기사가 작성된 때와 내용을 살펴봅니다.','기사는 사건보다 수백 년 앞서 쓰였습니다.','신문의 날짜는 중요하지 않습니다.'],
+  ['광복 직후의 사진에는 거리에서 기뻐하는 사람들이 보입니다.','사진에서 당시의 한 장면을 볼 수 있습니다.','사진만으로 모든 사람의 마음을 압니다.','사진은 미래의 거리입니다.'],
+  ['한국 전쟁 시기의 피란 기록에는 살던 곳을 떠난 경험이 담겨 있습니다.','전쟁이 사람들의 생활에 끼친 영향을 살핍니다.','전쟁 중에 아무도 이동하지 않았습니다.','기록은 전쟁과 관계없습니다.'],
+  ['전쟁 전후의 가족 사진과 구술 자료가 남아 있습니다.','사진과 증언을 비교해 삶의 변화를 조사합니다.','한 장의 사진이 모든 가족을 대표합니다.','구술 자료는 확인할 필요가 없습니다.'],
+  ['같은 사건의 신문과 개인 일기는 서로 다른 관점의 자료입니다.','자료를 비교하고 작성자를 확인합니다.','자료는 모두 같은 관점으로 쓰입니다.','날짜를 확인하지 않아도 됩니다.']
+ ]}
+};
+function socialEvidence(topic,r){const bank=SOCIAL_EVIDENCE[topic],index=int(0,bank.cards.length-1,r),[detail,answer,wrong1,wrong2]=bank.cards[index],variant=int(0,1,r);
+ return {...choice(variant?'이 자료를 바탕으로 가장 타당한 설명을 고르세요.':'자료에서 알 수 있는 것을 고르세요.',answer,[answer,wrong1,wrong2],r,detail),explanation:`자료의 ‘${detail}’라는 단서를 바탕으로 ${answer}`,source:bank.source,sourceLabel:bank.source?'국사편찬위원회 초등 역사 자료':'교실용 가상 자료'};
+}
 function available(topic,grade){return grade>=topic[2]&&grade<=(topic[3]??6)}
 function carrying(a,b){for(let unit=1;unit<=Math.max(a,b);unit*=10)if(Math.floor(a/unit)%10+Math.floor(b/unit)%10>=10)return true;return false}
 function carryCount(a,b,subtract=false){let carry=0,count=0;for(let unit=1;unit<=100;unit*=10){const x=Math.floor(a/unit)%10,y=Math.floor(b/unit)%10;if(subtract){const next=x-carry<y?1:0;count+=next;carry=next}else{const next=x+y+carry>=10?1:0;count+=next;carry=next}}return count}
@@ -322,7 +406,7 @@ function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basi
  const info=SUBJECTS[subject],year=Number(grade),size=Number(count),selected=types(subject,year,topic).find(entry=>entry[0]===type),dense=subject==='math'&&(selected? /^(add-|sub-|small-|two-|times-)/.test(type)&&type!=='times-missing':['addition','hundreds','multiplication'].includes(topic));
  if(!info||!info.grades.includes(year)||!info.topics.some(t=>t[0]===topic&&available(t,year))||![5,10,15,...(dense?[24]:[])].includes(size)||!['basic','challenge'].includes(difficulty)||!['tens','ones'].includes(variant)||type&&!selected||['mixed','decimal'].includes(topic)&&!selected)throw Error('학년·교과·유형을 다시 선택해 주세요.');
  const random=rng(seed),items=[],seen=new Set(),seenPassages=new Set();let attempts=0;
- while(items.length<size&&attempts++<3000){const candidate=selected?typedMath(type,random):item(subject,topic,year,random,difficulty,variant),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);if(topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
+ while(items.length<size&&attempts++<3000){const candidate=subject==='social'&&SOCIAL_EVIDENCE[topic]?socialEvidence(topic,random):selected?typedMath(type,random):item(subject,topic,year,random,difficulty,variant),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);if(topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
  if(items.length<size)throw Error('이 유형에서는 서로 다른 문제를 충분히 만들지 못했어요. 문항 수를 줄여 주세요.');
  return{subject,topic,type,grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:year+'학년 '+info.name+' · '+(selected?selected[1]:info.topics.find(t=>t[0]===topic)[1]),alignment:['mixed','decimal'].includes(topic)?null:alignment(subject,topic,year),items};
 }
