@@ -56,31 +56,31 @@ test('five subjects expose only supported grades and topics, with complete uniqu
  }
 });
 
-test('social history units use evidence with an accountable answer and source',()=>{
+test('social units generate sourced history quizzes and local evidence exercises',()=>{
  for(const grade of [3,4,5,6])for(const unit of units('social',grade))for(const [type,,topic] of unit.types){
   for(const seed of [1,42,2026]){
    const options={subject:'social',grade,topic,type,count:15,seed},sheet=generate(options);
    assert.deepEqual(sheet,generate(options));
    assert.equal(sheet.items.length,15);
-   assert.equal(new Set(sheet.items.map(q=>q.detail)).size,15,`${grade}/${topic}/${seed}: 자료가 중복됨`);
+   assert.equal(new Set(sheet.items.map(q=>grade>=5?q.prompt:q.detail)).size,15,`${grade}/${topic}/${seed}: 문제가 중복됨`);
    if(sheet.alignment)assert.match(sheet.alignment.code,/^\[[46]사\d{2}-\d{2}\]$/);
    else assert.ok(['joseon','modern'].includes(topic));
-   for(const question of sheet.items){assert.ok(question.detail&&question.explanation&&question.explanation!==question.detail&&question.sourceLabel);assert.ok(question.choices.includes(question.answer));if(grade>=5)assert.match(question.source,/^https:\/\/contents\.history\.go\.kr\/mobile\/eh\/view\.do\?/);else assert.equal(question.source,'')}
+   for(const question of sheet.items){assert.ok(question.explanation&&question.sourceLabel);if(grade>=5){assert.match(question.source,/^https:\/\/contents\.history\.go\.kr\/mobile\/eh\/list\.do\?/);assert.ok(!question.prompt.includes('자료에서 알 수 있는 것을'));assert.ok(!/세트장|놀이공원|텔레비전/.test(question.prompt+' '+question.choices.join(' ')));if(type.endsWith('-initial'))assert.ok(question.detail.includes('힌트:'));else assert.ok(question.choices.includes(question.answer))}else{assert.ok(question.detail&&question.choices.includes(question.answer));assert.equal(question.source,'')}}
   }
  }
  assert.throws(()=>generate({subject:'social',grade:4,topic:'goryeo',type:'goryeo-evidence',count:5}));
  assert.throws(()=>generate({subject:'social',grade:5,topic:'past',type:'past-evidence',count:5}));
 });
 
-test('regenerating social history selects different evidence and direct era sources',()=>{
+test('regenerating history changes questions while retaining answer and source',()=>{
  for(const grade of [3,5])for(const unit of units('social',grade)){
   const [type,,topic]=unit.types[0],options={subject:'social',grade,topic,type,count:15};
   const first=generate({...options,seed:1}),second=generate({...options,seed:2026});
-  assert.notDeepEqual(new Set(first.items.map(q=>q.detail)),new Set(second.items.map(q=>q.detail)),topic);
+  assert.notDeepStrictEqual(first.items,second.items,topic);
   for(let seed=1;seed<=100;seed++){
    const sheet=generate({...options,seed});
-   assert.equal(new Set(sheet.items.map(q=>q.detail)).size,15,`${topic}/${seed}`);
-   for(const q of sheet.items){assert.ok(q.explanation.length>=20);if(topic==='modern')assert.match(q.source,/code=eh_age_(40|50)&levelId=/);if(q.source)assert.ok(!q.source.includes('/list.do?'))}
+   assert.equal(new Set(sheet.items.map(q=>grade>=5?q.prompt:q.detail)).size,15,`${topic}/${seed}`);
+   for(const q of sheet.items){assert.ok(q.explanation);if(grade>=5){assert.match(q.source,/code=eh_age_(10|20|30|40)/);assert.ok(q.choices.includes(q.answer))}}
   }
  }
 });

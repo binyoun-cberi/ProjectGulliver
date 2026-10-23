@@ -43,8 +43,8 @@ const MATH_UNITS={
 const SOCIAL_UNITS={
  3:[{id:'s3-past',label:'생활 속 옛 모습',topics:['past'],types:[['past-evidence','옛 물건으로 생활 추론','past']]},{id:'s3-local',label:'우리 지역의 변화',topics:['local'],types:[['local-evidence','옛날과 오늘 자료 비교','local']]}],
  4:[{id:'s4-past',label:'생활 속 옛 모습',topics:['past'],types:[['past-evidence','옛 물건으로 생활 추론','past']]},{id:'s4-local',label:'우리 지역의 변화',topics:['local'],types:[['local-evidence','옛날과 오늘 자료 비교','local']]}],
- 5:[['prehistoric','선사와 고조선'],['ancient','삼국·가야의 유적'],['goryeo','고려'],['joseon','조선'],['modern','일제 강점기·광복·전쟁']].map(([id,label])=>({id:'s5-'+id,label,topics:[id],types:[[id+'-evidence','자료에서 근거 찾기',id]]})),
- 6:[['prehistoric','선사와 고조선'],['ancient','삼국·가야의 유적'],['goryeo','고려'],['joseon','조선'],['modern','일제 강점기·광복·전쟁']].map(([id,label])=>({id:'s6-'+id,label,topics:[id],types:[[id+'-evidence','자료에서 근거 찾기',id]]}))
+ 5:[['prehistoric','선사와 고조선'],['ancient','삼국·가야의 유적'],['goryeo','고려'],['joseon','조선'],['modern','일제 강점기·광복·전쟁']].map(([id,label])=>({id:'s5-'+id,label,topics:[id],types:[[id+'-quiz','시대별 객관식',id],[id+'-ox','역사 OX',id],[id+'-initial','초성으로 문화유산·인물 찾기',id]]})),
+ 6:[['prehistoric','선사와 고조선'],['ancient','삼국·가야의 유적'],['goryeo','고려'],['joseon','조선'],['modern','일제 강점기·광복·전쟁']].map(([id,label])=>({id:'s6-'+id,label,topics:[id],types:[[id+'-quiz','시대별 객관식',id],[id+'-ox','역사 OX',id],[id+'-initial','초성으로 문화유산·인물 찾기',id]]}))
 };
 function units(subject,grade){return subject==='math'?(MATH_UNITS[grade]||[]):subject==='social'?(SOCIAL_UNITS[grade]||[]):[]}
 function types(subject,grade,topic,unitId){return units(subject,grade).filter(unit=>!unitId||unit.id===unitId).flatMap(unit=>unit.types.filter(entry=>entry[2]===topic).map(([id,label])=>[id,label]))}
@@ -70,7 +70,7 @@ const OTHER_SOURCES={
  social:'https://www.nise.go.kr/ebook/src/viewer/download.php?host=main&no=1&site=20240819_172144'
 };
 function alignment(subject,topic,grade){const math=subject==='math',match=math?MATH_ALIGNMENT[topic]?.[grade]:OTHER_ALIGNMENT[subject]?.[topic]?.[grade];if(!match)return null;
- const scope=math?'이 문제지는 성취기준 중 계산 연습만 다룹니다.':subject==='korean'?'이 문제지는 짧은 글의 중심 내용 고르기만 다룹니다.':subject==='science'&&topic==='matter'?'이 문제지는 물질의 상태 분류만 다룹니다.':subject==='science'?'이 문제지는 기상 관찰 도구 고르기만 다룹니다.':subject==='social'&&topic!=='economy'?'이 문제지는 짧은 자료에서 근거를 찾는 연습만 다룹니다. 성취기준 전체를 평가하지 않습니다.':subject==='social'?'이 문제지는 생산과 소비의 구별만 다룹니다.':'이 문제지는 글로 제시된 낱말의 뜻 고르기만 다룹니다.';
+ const scope=math?'이 문제지는 성취기준 중 계산 연습만 다룹니다.':subject==='korean'?'이 문제지는 짧은 글의 중심 내용 고르기만 다룹니다.':subject==='science'&&topic==='matter'?'이 문제지는 물질의 상태 분류만 다룹니다.':subject==='science'?'이 문제지는 기상 관찰 도구 고르기만 다룹니다.':subject==='social'&&HISTORY_AGE[topic]?'이 문제지는 시대별 주요 역사 사실을 확인합니다. 성취기준 전체를 평가하지 않습니다.':subject==='social'&&topic!=='economy'?'이 문제지는 짧은 자료에서 근거를 찾는 연습만 다룹니다. 성취기준 전체를 평가하지 않습니다.':subject==='social'?'이 문제지는 생산과 소비의 구별만 다룹니다.':'이 문제지는 글로 제시된 낱말의 뜻 고르기만 다룹니다.';
  const source=math?CURRICULUM_SOURCE:subject==='science'&&topic==='weather'?'https://www.goe.go.kr/resource/old/BBSMSTR_000000030136/BBS_202502201106162700.pdf':subject==='english'&&grade>=5?'https://www.goe.go.kr/resource/old/BBSMSTR_000000030136/BBS_202411110130211774.pdf':OTHER_SOURCES[subject];
  return{code:match[0],summary:match[1],source,scope}}
 const OPPOSITES=[['크다','작다'],['높다','낮다'],['길다','짧다'],['빠르다','느리다'],['밝다','어둡다'],['따뜻하다','차갑다'],['무겁다','가볍다'],['넓다','좁다'],['많다','적다'],['가깝다','멀다'],['기쁘다','슬프다'],['시작','끝'],['앞','뒤'],['안','밖'],['위','아래'],['열다','닫다'],['주다','받다'],['들어가다','나오다'],['깨끗하다','더럽다'],['쉽다','어렵다']];
@@ -416,6 +416,32 @@ function evidenceSource(key){if(!key)return '';const [age,id]=HISTORY_REFS[key];
 function socialEvidence(topic,r){const cards=SOCIAL_EVIDENCE[topic].cards,extra=[...SOCIAL_EXTRA[topic],...SOCIAL_VARIETY[topic]],index=int(0,cards.length+extra.length-1,r),note=SOCIAL_LEGACY_NOTES[topic][index],row=index<cards.length?[...cards[index],note[1],note[0]]:extra[index-cards.length],[detail,answer,wrong1,wrong2,key,reason]=row,source=evidenceSource(key);
  return {...choice('자료에서 알 수 있는 것을 고르세요.',answer,[answer,wrong1,wrong2],r,detail),explanation:reason,source,sourceLabel:source?'국사편찬위원회 · 해당 자료 보기':'교실용 재구성 자료'};
 }
+// Each row is a verified question, answer, and two plausible alternatives. The
+// quiz asks for historical knowledge; it never invents a passage or a false source.
+const HISTORY_QUIZ={
+ prehistoric:[
+  ['우리나라에서 처음 등장한 나라로 배우는 것은?','고조선','고구려','고려'],['고조선을 세웠다고 전해지는 인물은?','단군왕검','주몽','왕건'],['청동기 시대의 대표적인 무덤은?','고인돌','석굴암','무령왕릉'],['신석기 시대를 대표하는 토기는?','빗살무늬토기','민무늬토기','백자'],['신석기 시대 사람들이 강가에 집을 짓고 살았던 흔적을 볼 수 있는 곳은?','암사동 유적','수원 화성','경복궁'],['청동기 시대에 주로 쓰인 토기는?','민무늬토기','빗살무늬토기','고려청자'],['고조선의 법을 짐작하게 하는 기록은?','8조법','훈민정음','경국대전'],['간 곡식을 얻기 위해 갈돌과 함께 쓰던 도구는?','갈판','자격루','거중기'],['신석기 시대에 물고기를 잡는 그물에 매달던 것은?','그물추','비파형 동검','금관'],['청동기 문화를 보여 주는 무기는?','비파형 동검','철제 갑옷','화포'],['돌을 깨뜨려 도구로 쓰던 시대는?','구석기 시대','청동기 시대','조선 시대'],['곡식을 저장하고 음식을 담는 데 사용한 신석기 시대의 도구는?','토기','금관','나침반'],['청동기 시대 농경 생활이 널리 퍼졌음을 보여 주는 유물은?','반달 돌칼','자격루','직지'],['신석기 시대에 사람들이 머물며 살았던 집은?','움집','기와집','초가집'],['고조선과 관련된 청동기 문화의 유물은?','비파형 동검','첨성대','팔만대장경'],['큰 돌을 이용해 만든 청동기 시대의 무덤 이름은?','고인돌','석굴암','불국사']
+ ],
+ ancient:[
+  ['고구려를 세운 인물은?','주몽','온조','박혁거세'],['백제를 세운 인물은?','온조','주몽','왕건'],['신라를 세운 인물로 전해지는 사람은?','박혁거세','단군왕검','대조영'],['금관가야를 세운 인물로 전해지는 사람은?','수로왕','온조','주몽'],['경주에 있는 신라 시대의 천문 관측 건축물은?','첨성대','자격루','거중기'],['백제 무령왕의 무덤은?','무령왕릉','고인돌','석굴암'],['통일 신라 시기에 세운 대표적인 사찰은?','불국사','경복궁','수원 화성'],['통일 신라 시기에 만든 석조 불교 유산은?','석굴암','무령왕릉','고인돌'],['고구려의 넓은 영토를 알리는 비석은?','광개토 대왕릉비','진흥왕 순수비','독립문'],['신라의 영토 확장을 기록한 비석은?','진흥왕 순수비','광개토 대왕릉비','독립문'],['고구려 사람들의 생활 모습을 그린 자료는?','고분 벽화','조선왕조실록','훈민정음'],['백제의 문화가 일본에 전해졌음을 보여 주는 활동은?','불교와 학문의 전파','팔만대장경 제작','한글 반포'],['당과 함께 고구려를 멸망시킨 나라는?','신라','고려','조선'],['고구려를 계승한다고 내세운 나라의 건국자는?','대조영','왕건','이성계'],['한반도 남부에서 철의 생산과 교역으로 성장한 나라는?','가야','발해','고조선'],['신라와 당의 전쟁 끝에 삼국 통일을 완성한 나라는?','신라','백제','발해']
+ ],
+ goryeo:[
+  ['고려를 세운 사람은?','왕건','이성계','주몽'],['고려의 수도는?','개경','한양','경주'],['고려의 대표적인 도자기는?','고려청자','조선백자','빗살무늬토기'],['고려의 금속 활자로 인쇄한 책은?','직지','훈민정음','조선왕조실록'],['몽골의 침입 때 다시 새긴 불교 경전 목판은?','팔만대장경','직지','경국대전'],['팔만대장경 목판이 보관된 절은?','해인사','불국사','봉정사'],['고려에서 몽골의 침입에 맞서 임시 수도로 삼은 섬은?','강화도','제주도','독도'],['고려 초 나라를 통일한 왕은?','태조 왕건','세종','광개토 대왕'],['고려 말 몽골의 간섭을 줄이려 한 왕은?','공민왕','정조','진흥왕'],['고려 말 새로운 왕조 건설을 주도한 인물은?','이성계','주몽','대조영'],['고려청자의 특징적인 빛깔은?','비취색','새하얀색','검은색'],['무늬를 파고 다른 색 흙을 채워 넣는 고려청자 기법은?','상감','목판 인쇄','활자 주조'],['고려의 불교 문화를 보여 주는 기록 유산은?','팔만대장경','독립신문','승정원일기'],['고려의 대외 무역이 활발했던 항구는?','벽란도','제물포','부산포'],['고려의 뛰어난 인쇄 기술을 보여 주는 유산은?','직지','첨성대','자격루'],['고려를 건국한 왕의 이름은?','태조','세종','영조']
+ ],
+ joseon:[
+  ['조선을 세운 인물은?','이성계','왕건','주몽'],['조선의 수도는?','한양','개경','경주'],['훈민정음을 만든 왕은?','세종','정조','태조'],['훈민정음이 반포된 해는?','1446년','1392년','1592년'],['그림자로 시간을 알 수 있는 조선의 기구는?','앙부일구','자격루','거중기'],['물의 힘을 이용해 시간을 알리는 시계는?','자격루','앙부일구','측우기'],['조선 시대 비가 내린 양을 재는 도구는?','측우기','거중기','해시계'],['조선의 대표적인 역사 기록은?','조선왕조실록','삼국사기','직지'],['조선의 정궁으로 세워진 궁궐은?','경복궁','덕수궁','창경궁'],['수원 화성을 쌓을 때 무거운 것을 들어 올리는 데 쓰인 기구는?','거중기','측우기','자격루'],['수원 화성 건설을 추진한 왕은?','정조','세종','태조'],['임진왜란 때 조선 수군을 이끈 장군은?','이순신','강감찬','김유신'],['조선의 과학 기구 제작에 참여한 인물은?','장영실','대조영','김정호'],['허준이 편찬한 의학서는?','동의보감','훈민정음','직지'],['조선 후기 우리 땅을 그린 대동여지도를 만든 인물은?','김정호','주시경','왕건'],['조선의 글자 창제 원리를 설명한 책은?','훈민정음 해례본','직지','삼국사기']
+ ],
+ modern:[
+  ['1897년 고종이 선포한 나라 이름은?','대한제국','고려','발해'],['1896년에 창간된 우리나라의 민간 신문은?','독립신문','황성신문','매일신보'],['1919년 3월 1일 시작된 독립 만세 운동은?','3·1 운동','6·10 만세 운동','광주 학생 항일 운동'],['1919년 대한민국 임시 정부가 세워진 도시는?','상하이','서울','도쿄'],['1945년 8월 15일 우리나라가 일제의 지배에서 벗어난 일은?','광복','정부 수립','정전'],['대한민국 정부가 수립된 해는?','1948년','1919년','1953년'],['어린이날을 만드는 데 힘쓴 인물은?','방정환','주시경','김구'],['한글날의 날짜는?','10월 9일','3월 1일','8월 15일'],['한글 연구와 보급에 힘쓴 인물은?','주시경','안중근','정약용'],['대한민국 임시 정부에서 활동한 독립운동가는?','김구','왕건','세종'],['유관순이 참여한 독립운동은?','3·1 운동','동학 농민 운동','임진왜란'],['일제 강점기에 우리말과 글을 지키려 한 단체는?','조선어학회','집현전','독립협회'],['6·25 전쟁이 시작된 해는?','1950년','1945년','1919년'],['6·25 전쟁의 전투가 멈춘 정전 협정이 체결된 해는?','1953년','1948년','1960년'],['광복을 맞이한 뒤 정부가 세워진 순서는?','광복 → 정부 수립','정부 수립 → 광복','정전 → 광복'],['대한제국을 선포한 왕은?','고종','세종','정조']
+ ]
+};
+const HISTORY_AGE={prehistoric:'10',ancient:'10',goryeo:'20',joseon:'30',modern:'40'};
+function historyQuiz(topic,type,r){const [prompt,answer,wrong1,wrong2]=pick(HISTORY_QUIZ[topic],r),source=`https://contents.history.go.kr/mobile/eh/list.do?code=eh_age_${HISTORY_AGE[topic]}`,kind=type?.split('-').at(-1)||'quiz';
+ const common={explanation:`${prompt} 정답은 ${answer}입니다.`,source,sourceLabel:'국사편찬위원회 · 재미있는 초등역사'};
+ if(kind==='ox'){const falseStatement=r()<.5;return {...common,prompt:`“${falseStatement?wrong1:answer}”은(는) 다음 질문의 답입니다. ${prompt} (O/X)`,answer:falseStatement?'X':'O',choices:['O','X']}}
+ if(kind==='initial'){const initials=Array.from(answer).map(ch=>{const n=ch.charCodeAt(0)-0xac00;return n>=0&&n<11172?'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'[Math.floor(n/588)]:/[0-9]/.test(ch)?'□':ch}).join('');return {...common,prompt,detail:`초성·빈칸 힌트: ${initials}`,answer,choices:[]}}
+ return {...choice(prompt,answer,[answer,wrong1,wrong2],r),...common};
+}
 function available(topic,grade){return grade>=topic[2]&&grade<=(topic[3]??6)}
 function carrying(a,b){for(let unit=1;unit<=Math.max(a,b);unit*=10)if(Math.floor(a/unit)%10+Math.floor(b/unit)%10>=10)return true;return false}
 function carryCount(a,b,subtract=false){let carry=0,count=0;for(let unit=1;unit<=100;unit*=10){const x=Math.floor(a/unit)%10,y=Math.floor(b/unit)%10;if(subtract){const next=x-carry<y?1:0;count+=next;carry=next}else{const next=x+y+carry>=10?1:0;count+=next;carry=next}}return count}
@@ -553,7 +579,7 @@ function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basi
  const info=SUBJECTS[subject],year=Number(grade),size=Number(count),selected=types(subject,year,topic).find(entry=>entry[0]===type),dense=subject==='math'&&(selected? /^(add-|sub-|small-|two-|times-)/.test(type)&&type!=='times-missing':['addition','hundreds','multiplication'].includes(topic));
  if(!info||!info.grades.includes(year)||!info.topics.some(t=>t[0]===topic&&available(t,year))||![5,10,15,...(dense?[24]:[])].includes(size)||!['basic','challenge'].includes(difficulty)||!['tens','ones'].includes(variant)||type&&!selected||['mixed','decimal'].includes(topic)&&!selected)throw Error('학년·교과·유형을 다시 선택해 주세요.');
  const random=rng(seed),items=[],seen=new Set(),seenPassages=new Set();let attempts=0;
- while(items.length<size&&attempts++<3000){const candidate=subject==='social'&&SOCIAL_EVIDENCE[topic]?socialEvidence(topic,random):selected?typedMath(type,random):item(subject,topic,year,random,difficulty,variant),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||subject==='social'&&SOCIAL_EVIDENCE[topic]&&seenPassages.has(candidate.detail)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);if(subject==='social'&&SOCIAL_EVIDENCE[topic]||topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
+ while(items.length<size&&attempts++<3000){const candidate=subject==='social'&&HISTORY_QUIZ[topic]?historyQuiz(topic,type,random):subject==='social'&&SOCIAL_EVIDENCE[topic]?socialEvidence(topic,random):selected?typedMath(type,random):item(subject,topic,year,random,difficulty,variant),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||subject==='social'&&!HISTORY_QUIZ[topic]&&SOCIAL_EVIDENCE[topic]&&seenPassages.has(candidate.detail)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);if(subject==='social'&&!HISTORY_QUIZ[topic]&&SOCIAL_EVIDENCE[topic]||topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
  if(items.length<size)throw Error('이 유형에서는 서로 다른 문제를 충분히 만들지 못했어요. 문항 수를 줄여 주세요.');
  return{subject,topic,type,grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:year+'학년 '+info.name+' · '+(selected?selected[1]:info.topics.find(t=>t[0]===topic)[1]),alignment:['mixed','decimal'].includes(topic)?null:alignment(subject,topic,year),items};
 }
