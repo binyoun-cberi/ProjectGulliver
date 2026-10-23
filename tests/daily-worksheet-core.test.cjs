@@ -84,7 +84,7 @@ test('five subjects expose only supported grades and topics, with complete uniqu
  assert.deepEqual(Object.keys(SUBJECTS),['korean','math','social','science','english']);
  for(const [subject,info] of Object.entries(SUBJECTS))for(const grade of info.grades)for(const [topic,,fromGrade,toGrade=6] of info.topics){
   if(grade<fromGrade||grade>toGrade)continue;
-  if(['mixed','decimal','history-review','reading-set'].includes(topic))continue;
+  if(['mixed','decimal','history-review','history-mix','reading-set'].includes(topic))continue;
   const dense=subject==='math'&&['addition','hundreds','multiplication'].includes(topic);
   for(const difficulty of ['basic','challenge'])for(const count of [5,10,15,...(dense?[24]:[])])for(const seed of [1,42,2026]){
    const sheet=generate({subject,topic,grade,count,seed,difficulty});
@@ -142,6 +142,20 @@ test('a history quiz sheet does not repeat a correct answer',()=>{
   const items=generate({subject:'social',grade:5,topic,type:`${topic}-${suffix}`,count:15,seed}).items;
   assert.equal(new Set(items.map(item=>item.answer)).size,items.length,`${topic}-${suffix}/${seed}`);
  }
+});
+
+test('checked history eras alone contribute balanced, reproducible questions',()=>{
+ for(const grade of [5,6]){
+  assert.ok(units('social',grade).some(unit=>unit.topics.includes('history-mix')));
+  for(const eras of [['ancient'],['goryeo','joseon'],['prehistoric','ancient','goryeo','joseon','modern']])for(const suffix of ['quiz','short','initial','ox'])for(const seed of [1,42,2026]){
+   const options={subject:'social',grade,topic:'history-mix',type:`history-mix-${suffix}`,eras,count:15,seed},sheet=generate(options);
+   assert.deepEqual(sheet,generate(options));assert.deepEqual(sheet.eras,eras);assert.equal(sheet.items.length,15);
+   if(suffix!=='ox')assert.equal(new Set(sheet.items.map(q=>q.answer)).size,15);
+   if(eras.length===1)assert.ok(sheet.items.every(q=>q.source.includes(`eh_age_${eras[0]==='prehistoric'||eras[0]==='ancient'?'10':eras[0]==='goryeo'?'20':eras[0]==='joseon'?'30':'40'}`)||eras[0]==='modern'&&q.source.includes('eh_age_50')));
+   if(eras.length>1){const sources=sheet.items.map(q=>q.source.match(/eh_age_(\d+)/)[1]);for(const age of [...new Set(eras.map(era=>({prehistoric:'10',ancient:'10',goryeo:'20',joseon:'30',modern:'40'})[era]))])assert.ok(sources.includes(age))}
+  }
+ }
+ for(const eras of [[],['ancient','ancient'],['future']])assert.throws(()=>generate({subject:'social',grade:5,topic:'history-mix',type:'history-mix-quiz',eras,count:10,seed:1}));
 });
 
 test('Korean context words and five-question reading sets print with their own answers',()=>{
