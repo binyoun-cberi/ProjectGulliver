@@ -2,6 +2,45 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {SUBJECTS,generate,types,units}=require('../daily-worksheet-core.js');
 
+test('social expansion keeps at least 29 themed prompts and offers history answers without initials',()=>{
+ const lower=['map-symbol','natural','human','cultural','family','community-rules','local-gov','transport'];
+ const upper=['korea-geography','democracy','rights','government','market','world-geography','international','environment','contemporary'];
+ for(const [grade,topics] of [[3,lower],[5,upper]])for(const topic of topics){
+  const prompts=new Set();
+  for(let seed=1;seed<=100;seed++)for(const q of generate({subject:'social',grade,topic,count:15,seed}).items){
+   prompts.add(q.prompt);assert.equal(q.choices.length,3);assert.ok(q.choices.includes(q.answer));
+  }
+  assert.equal(prompts.size,29,`${topic}: 확장한 질문이 생성되지 않음`);
+ }
+ for(const grade of [5,6])for(const topic of ['prehistoric','ancient','goryeo','joseon','modern']){
+  const named=types('social',grade,topic);
+  assert.ok(named.some(([type])=>type===topic+'-short'));
+  const prompts=new Set();
+  for(let seed=1;seed<=100;seed++){
+   const sheet=generate({subject:'social',grade,topic,type:topic+'-short',count:15,seed});
+   for(const q of sheet.items){prompts.add(q.prompt);assert.deepEqual(q.choices,[]);assert.equal(q.detail,'');assert.ok(q.answer);assert.ok(q.source&&q.explanation)}
+  }
+  assert.ok(prompts.size>=25,`${topic}: 역사 질문의 실질적 풀이 범위가 좁음`);
+ }
+});
+
+test('expanded social bank reaches beyond one 15-question sheet and Korean reading offers seven passages per band',()=>{
+ const lower=['map-symbol','natural','human','cultural','family','community-rules','local-gov','transport'];
+ const upper=['korea-geography','democracy','rights','government','market','world-geography','international','environment','contemporary'];
+ for(const [grade,topics] of [[3,lower],[5,upper]])for(const topic of topics){
+  const prompts=new Set();
+  for(let seed=1;seed<=30;seed++)for(const q of generate({subject:'social',grade,topic,count:15,seed}).items){
+   prompts.add(q.prompt);assert.equal(q.choices.length,3);assert.ok(q.choices.includes(q.answer));
+  }
+  assert.ok(prompts.size>=21,`${topic}: 새 문제지에서 같은 질문이 너무 빨리 반복됨`);
+ }
+ for(const grade of [3,5]){
+  const groups=new Set();
+  for(let seed=1;seed<=50;seed++)for(const q of generate({subject:'korean',grade,topic:'reading-set',type:'reading-set-five',count:15,seed}).items)groups.add(q.readingGroup);
+  assert.ok(groups.size>=7,`${grade}학년 독해 지문 수가 부족함`);
+ }
+});
+
 test('unit selectors generate the requested arithmetic constraints and mixed order',()=>{
  assert.equal(units('math',3)[0].label,'1학기 · 덧셈과 뺄셈');
  assert.equal(types('math',5,'mixed').length,11);
@@ -66,7 +105,7 @@ test('social units generate sourced history quizzes and local evidence exercises
    assert.equal(new Set(sheet.items.map(q=>topic==='history-review'?q.format==='ordering'?q.orderChoices.join('|'):q.prompt:grade>=5?q.prompt:q.detail)).size,15,`${grade}/${topic}/${seed}: 문제가 중복됨`);
    if(sheet.alignment)assert.match(sheet.alignment.code,/^\[[46]사\d{2}-\d{2}\]$/);
    else assert.ok(['joseon','modern','history-review'].includes(topic));
-   for(const question of sheet.items){assert.ok(question.explanation&&question.sourceLabel);if(grade>=5){assert.match(question.source,/^https:\/\/contents\.history\.go\.kr\/mobile\/eh\/list\.do\?/);assert.ok(!question.prompt.includes('자료에서 알 수 있는 것을'));assert.ok(!/세트장|놀이공원|텔레비전/.test(question.prompt+' '+question.choices.join(' ')));if(topic==='history-review'){if(type==='history-matching')assert.ok(question.right&&question.answer.includes('번 · '));else assert.ok(question.orderChoices.length===4&&/^[1-4] → [1-4] → [1-4] → [1-4]$/.test(question.answer))}else if(type.endsWith('-initial'))assert.ok(question.detail.includes('힌트:'));else assert.ok(question.choices.includes(question.answer))}else{assert.ok(question.detail&&question.choices.includes(question.answer));assert.equal(question.source,'')}}
+   for(const question of sheet.items){assert.ok(question.explanation&&question.sourceLabel);if(grade>=5){assert.match(question.source,/^https:\/\/contents\.history\.go\.kr\/mobile\/eh\/list\.do\?/);assert.ok(!question.prompt.includes('자료에서 알 수 있는 것을'));assert.ok(!/세트장|놀이공원|텔레비전/.test(question.prompt+' '+question.choices.join(' ')));if(topic==='history-review'){if(type==='history-matching')assert.ok(question.right&&question.answer.includes('번 · '));else assert.ok(question.orderChoices.length===4&&/^[1-4] → [1-4] → [1-4] → [1-4]$/.test(question.answer))}else if(type.endsWith('-initial'))assert.ok(question.detail.includes('힌트:'));else if(type.endsWith('-short'))assert.ok(!question.detail&&!question.choices.length);else assert.ok(question.choices.includes(question.answer))}else{assert.ok(question.detail&&question.choices.includes(question.answer));assert.equal(question.source,'')}}
   }
  }
  assert.throws(()=>generate({subject:'social',grade:4,topic:'goryeo',type:'goryeo-evidence',count:5}));
@@ -82,13 +121,13 @@ test('regenerating history changes questions while retaining answer and source',
   for(let seed=1;seed<=100;seed++){
    const sheet=generate({...options,seed});
    assert.equal(new Set(sheet.items.map(q=>topic==='history-review'?q.format==='ordering'?q.orderChoices.join('|'):q.prompt:grade>=5?q.prompt:q.detail)).size,15,`${topic}/${seed}`);
-  for(const q of sheet.items){assert.ok(q.explanation);if(grade>=5){assert.match(q.source,/code=eh_age_(10|20|30|40)/);if(topic!=='history-review')assert.ok(q.choices.includes(q.answer))}}
+  for(const q of sheet.items){assert.ok(q.explanation);if(grade>=5){assert.match(q.source,/code=eh_age_(10|20|30|40|50)/);if(topic!=='history-review')assert.ok(q.choices.includes(q.answer))}}
   }
  }
 });
 
 test('history matching and ordering keep their printed answers consistent',()=>{
- const chronology=['고조선의 등장','신라 건국','고구려 건국','백제 건국','금관가야 건국','발해 건국','고려 건국','조선 건국','훈민정음 반포','임진왜란','수원 화성 완공','독립신문 창간','대한제국 선포','3·1 운동','대한민국 임시 정부 수립','광복','대한민국 정부 수립','6·25 전쟁 시작'];
+ const chronology=['고조선의 등장','신라 건국','고구려 건국','백제 건국','금관가야 건국','광개토 대왕 즉위','백제 사비 천도','백제 멸망','고구려 멸망','발해 건국','장보고 청해진 설치','고려 건국','귀주 대첩','고려 강화도 천도','직지 인쇄','조선 건국','훈민정음 반포','임진왜란','병자호란','수원 화성 완공','동학 농민 운동','독립신문 창간','대한제국 선포','국권 피탈','3·1 운동','대한민국 임시 정부 수립','광주 학생 항일 운동','광복','대한민국 정부 수립','6·25 전쟁 시작','정전 협정','4·19 혁명','5·18 민주화 운동','6월 민주 항쟁'];
  for(const count of [5,10,15])for(const seed of [1,42,2026]){
   const matching=generate({subject:'social',grade:5,topic:'history-review',type:'history-matching',count,seed}).items;
   const right=matching.map(q=>q.right);assert.equal(new Set(right).size,count);
