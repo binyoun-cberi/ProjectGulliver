@@ -42,7 +42,7 @@ test('expanded social bank reaches beyond one 15-question sheet and Korean readi
 });
 
 test('unit selectors generate the requested arithmetic constraints and mixed order',()=>{
- assert.equal(units('math',3)[0].label,'1학기 · 덧셈과 뺄셈');
+ assert.equal(units('math',3)[1].label,'1학기 · 덧셈과 뺄셈');
  assert.equal(types('math',5,'mixed').length,11);
  for(const topic of ['hundreds','addition'])for(const [type] of types('math',3,topic))for(const seed of [1,42,2026]){
   const sheet=generate({subject:'math',grade:3,topic,type,count:24,seed});
@@ -62,6 +62,7 @@ test('unit selectors generate the requested arithmetic constraints and mixed ord
 test('every listed unit type produces distinct, reproducible exercises with correct arithmetic',()=>{
  const rational=value=>{const [a,b]=value.split('/').map(Number);return b?a/b:a};
  for(const grade of [1,2,3,4,5,6])for(const unit of units('math',grade))for(const [type,,topic] of unit.types){
+  if(topic==='math-mix')continue;
   const dense=/^(add-|sub-|small-|two-|times-)/.test(type)&&type!=='times-missing';
   for(const seed of [1,42,2026]){
    const options={subject:'math',grade,topic,type,count:dense?24:15,seed};
@@ -84,7 +85,7 @@ test('five subjects expose only supported grades and topics, with complete uniqu
  assert.deepEqual(Object.keys(SUBJECTS),['korean','math','social','science','english']);
  for(const [subject,info] of Object.entries(SUBJECTS))for(const grade of info.grades)for(const [topic,,fromGrade,toGrade=6] of info.topics){
   if(grade<fromGrade||grade>toGrade)continue;
-  if(['mixed','decimal','history-review','history-mix','reading-set'].includes(topic))continue;
+  if(['mixed','decimal','history-review','history-mix','math-mix','reading-set'].includes(topic))continue;
   const dense=subject==='math'&&['addition','hundreds','multiplication'].includes(topic);
   for(const difficulty of ['basic','challenge'])for(const count of [5,10,15,...(dense?[24]:[])])for(const seed of [1,42,2026]){
    const sheet=generate({subject,topic,grade,count,seed,difficulty});
@@ -156,6 +157,22 @@ test('checked history eras alone contribute balanced, reproducible questions',()
   }
  }
  for(const eras of [[],['ancient','ancient'],['future']])assert.throws(()=>generate({subject:'social',grade:5,topic:'history-mix',type:'history-mix-quiz',eras,count:10,seed:1}));
+});
+
+test('selected math exercise types are mixed evenly within the grade',()=>{
+ for(const grade of [1,2,3,4,5,6]){
+  const available=units('math',grade).filter(unit=>unit.id!==`g${grade}-mix`).flatMap(unit=>unit.types.map(([id])=>id));
+  for(const mathTypes of [[available[0]],[...available.slice(0,Math.min(3,available.length))]])for(const seed of [1,42,2026]){
+   const options={subject:'math',grade,topic:'math-mix',type:'math-mix-worksheet',mathTypes,count:15,seed},sheet=generate(options);
+   assert.deepEqual(sheet,generate(options));assert.deepEqual(sheet.mathTypes,mathTypes);assert.equal(sheet.alignment,null);
+   assert.equal(new Set(sheet.items.map(q=>q.prompt)).size,15);
+   for(const skill of mathTypes)assert.ok(sheet.items.filter(q=>q.skill===skill).length>=Math.floor(15/mathTypes.length));
+  }
+  assert.throws(()=>generate({subject:'math',grade,topic:'math-mix',type:'math-mix-worksheet',mathTypes:['unknown'],seed:1}));
+ }
+ assert.throws(()=>generate({subject:'math',grade:1,topic:'math-mix',type:'math-mix-worksheet',mathTypes:[],seed:1}));
+ assert.throws(()=>generate({subject:'math',grade:1,topic:'math-mix',type:'math-mix-worksheet',mathTypes:['small-add-10','small-add-10'],seed:1}));
+ assert.throws(()=>generate({subject:'math',grade:1,topic:'math-mix',type:'math-mix-worksheet',mathTypes:['fraction-div-frac'],seed:1}));
 });
 
 test('Korean context words and five-question reading sets print with their own answers',()=>{
