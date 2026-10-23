@@ -38,15 +38,23 @@ test('invalid grade, unavailable topic, and excessive item count are rejected',(
 });
 
 test('24 three-digit addition questions have no carrying and keep correct answers',()=>{
- for(const difficulty of ['basic','challenge'])for(let seed=1;seed<=80;seed++){
-  const sheet=generate({subject:'math',topic:'hundreds',grade:3,count:24,seed,difficulty});
+ for(const variant of ['tens','ones'])for(let seed=1;seed<=80;seed++){
+  const sheet=generate({subject:'math',topic:'hundreds',grade:3,count:24,seed,variant});
   assert.equal(sheet.items.length,24);
+  assert.equal(sheet.variant,variant);
   for(const q of sheet.items){
    const match=q.prompt.match(/^(\d+) \+ (\d+) =$/);assert.ok(match);
-   const a=Number(match[1]),b=Number(match[2]);assert.equal(a%10,0);assert.equal(b%10,0);
-   assert.ok(a>=100&&b>=100&&a+b<1000);assert.ok(a%100+b%100<100);assert.equal(Number(q.answer),a+b);
+   const a=Number(match[1]),b=Number(match[2]);if(variant==='tens'){assert.equal(a%10,0);assert.equal(b%10,0)}
+   assert.ok(a>=100&&b>=100&&a+b<1000);assert.ok(a%100+b%100<100);assert.ok(a%10+b%10<10);assert.equal(Number(q.answer),a+b);
   }
  }
+});
+
+test('the same variant and seed reproduce a sheet, and invalid variants fail',()=>{
+ const options={subject:'math',grade:3,topic:'hundreds',count:24,seed:20261023};
+ assert.deepEqual(generate({...options,variant:'ones'}),generate({...options,variant:'ones'}));
+ assert.notDeepEqual(generate({...options,variant:'ones'}).items,generate({...options,variant:'tens'}).items);
+ assert.throws(()=>generate({...options,variant:'unknown'}));
 });
 
 test('arithmetic and fraction answers correspond to printed expressions',()=>{
