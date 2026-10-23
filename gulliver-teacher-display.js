@@ -1,7 +1,7 @@
 /* Teacher tools 6.0.1: send only opt-in, student-safe state to a second window. */
 (() => {
   'use strict';
-  const KINDS = new Set(['timer', 'lesson', 'lesson-run', 'seating', 'manitto', 'flashquiz', 'bus', 'groups', 'roles', 'check', 'vote', 'praise', 'canvas']);
+  const KINDS = new Set(['timer', 'lesson', 'seating', 'manitto', 'flashquiz', 'bus', 'groups', 'roles', 'check', 'vote', 'praise']);
   const CHANNEL_PREFIX = 'gulliver.student-display.v1.';
   let adapter = null;
   let channel = null;
@@ -37,7 +37,7 @@
       const snapshot = adapter.getSnapshot();
       if (!snapshot || snapshot.kind !== adapter.kind) throw Error('학생용 내용의 종류가 일치하지 않아요.');
       const serialized = JSON.stringify(snapshot);
-      if (serialized.length > (adapter.kind==='canvas'||adapter.kind==='lesson-run'?8000000:40000)) throw Error('학생 화면 내용이 너무 커요.');
+      if (serialized.length > 40000) throw Error('학생 화면 내용이 너무 커요.');
       if (lastError) { lastError = ''; adapter.onRecovery?.(); }
       const now = Date.now();
       if (force || serialized !== lastState || now - lastSent > 3000) {

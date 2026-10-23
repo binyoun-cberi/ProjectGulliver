@@ -9,7 +9,7 @@
   --gt-radius: 14px;
 }
 
-body.gt-teacher-tool:not(.gulliver-studio-embed):not(.student-view):not(.presentation) {
+body.gt-teacher-tool:not(.student-view):not(.presentation) {
   padding-top: max(76px, var(--gulliver-original-top, 0px)) !important;
 }
 
@@ -119,10 +119,8 @@ body.gt-teacher-tool[data-gt-tool="뚝딱영상.html"] .page > header.topbar {di
 
 body.gt-teacher-tool.presentation .gt-shell,
 body.gt-teacher-tool.student-view .gt-shell,
-body.gt-teacher-tool.gulliver-studio-embed .gt-shell {display: none !important}
 body.gt-teacher-tool.presentation,
 body.gt-teacher-tool.student-view,
-body.gt-teacher-tool.gulliver-studio-embed {padding-top: 0 !important}
 body.gt-teacher-tool.presentation[data-gt-tool="자리 배정 프로그램.html"] {padding-top: 24px !important}
 body.gt-teacher-tool.presentation[data-gt-tool="버스 좌석 배치 프로그램.html"] {padding-top: 10px !important}
 body.gt-teacher-tool.presentation[data-gt-tool="토너먼트 메이커.html"] {padding-top: 16px !important}
