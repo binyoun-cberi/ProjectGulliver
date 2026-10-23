@@ -53,13 +53,27 @@
     return svg;
   }
   function paintFace(s){
-    const face=$('ttFace');face.replaceChildren();
+    const face=$('ttFace');
     const label=s.phase||modeLabels[s.mode];
     const main=s.mode==='clock'?`${String(s.hour).padStart(2,'0')}:${String(s.minute).padStart(2,'0')}:${String(s.second).padStart(2,'0')}`:
       s.mode==='learn'?(s.reveal?`${String(s.hour).padStart(2,'0')}:${String(s.minute).padStart(2,'0')}`:'몇 시일까요?'):
       core.format(s.timeMs,s.mode==='stopwatch');
     const status=s.mode==='period'?(s.note||'')+' · 다음: '+(s.next||'오늘 수업 마무리'):s.mode==='lesson'?(s.note||s.next):s.mode==='timer'?`${core.format(s.totalMs)} 중 ${core.format(s.elapsedMs)} 지남`:s.mode==='stopwatch'?'시작을 누르면 시간이 흘러요.':s.mode==='clock'?'컴퓨터의 현재 시각':s.reveal?'정답을 확인했어요.':'시침과 분침을 읽어 보세요.';
     const progress=Math.min(100,Math.max(0,Number(s.progress)||0));
+    // Keep the SVG mounted between ticks: restarting it every 250ms used to make
+    // falling grains flicker or appear frozen.
+    const existing=face.querySelector('.tt-hourglass');
+    if(s.style==='sand' && face.dataset.renderMode===s.mode && existing?.updateHourglass){
+      existing.updateHourglass(progress,s.running);
+      const value=face.querySelector('.tt-number');
+      const caption=face.querySelector('.tt-face-sub');
+      if(value && value.textContent!==main)value.textContent=main;
+      if(caption && caption.textContent!==s.status)caption.textContent=s.status;
+      $('ttStart').textContent=s.running?'Ⅱ 일시정지':'▶ 시작';
+      return;
+    }
+    face.replaceChildren();
+    face.dataset.renderMode=s.mode;
     function appendStrip(){
       if(s.mode==='period'){
         const strip=el('div','tt-period-strip');
@@ -233,7 +247,7 @@
     const s=engine.snapshot();
     if(s.mode!==lastMode)syncMode();
     $('ttCurrentMode').textContent=modeLabels[s.mode];
-    $('ttLiveState').textContent=s.status;
+    if($('ttLiveState').textContent!==s.status)$('ttLiveState').textContent=s.status;
     $('ttLiveState').dataset.state=s.status;
     $('ttReveal').textContent=engine.data.learn.reveal?'정답 가리기':'정답 보기';
     const connected=window.GulliverTeacherDisplay?.connected?.()===true;
@@ -261,6 +275,16 @@
   $('ttModes').addEventListener('click',event=>{
     const b=event.target.closest('button[data-mode]');if(!b)return;
     changed(()=>engine.switchMode(b.dataset.mode));syncMode();
+  });
+  $('ttModes').addEventListener('keydown',event=>{
+    if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+    const tabs=[...$('ttModes').querySelectorAll('[role="tab"]')];
+    const current=tabs.indexOf(document.activeElement);
+    if(current<0)return;
+    event.preventDefault();
+    const next=event.key==='Home'?0:event.key==='End'?tabs.length-1:
+      (current+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+    tabs[next].focus();tabs[next].click();
   });
   $('ttStart').onclick=()=>changed(()=>engine.toggle());
   $('ttReset').onclick=()=>{if(!confirm('현재 시계를 처음부터 다시 시작할까요?'))return;changed(()=>engine.reset());};
@@ -352,6 +376,7 @@
     const wasRunning=engine.data.running;
     render();
     if(wasRunning&&!engine.data.running)persist();
-    if(Date.now()-lastPersist>=1000){lastPersist=Date.now();persist();}
+    // Start/pause and changes already save the running timestamp. No 1s storage
+    // writes are needed while the clock merely repaints its numbers.
   },250);
 })();
