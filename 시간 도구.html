@@ -100,10 +100,11 @@ button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,inpu
   <div class="tt-grid">
     <section class="tt-card" aria-label="시간 표시와 조작">
       <div class="tt-styles" id="ttStyles"><span>표시 스타일</span></div>
+      <div class="tt-view-meta"><span id="ttCurrentMode" class="tt-view-name">타이머</span><span id="ttLiveState" class="tt-live-state" role="status" aria-live="off">준비</span></div>
       <div class="tt-stage"><div class="tt-display-face" id="ttFace" role="timer" aria-live="off"></div></div>
       <div class="tt-actions" id="ttControls">
-        <button class="tt-btn tt-btn--primary" id="ttStart" type="button">▶ 시작</button>
-        <button class="tt-btn" id="ttReset" type="button">↺ 초기화</button>
+        <button class="tt-btn tt-btn--primary" id="ttStart" type="button" aria-keyshortcuts="Space">▶ 시작</button>
+        <button class="tt-btn" id="ttReset" type="button" aria-keyshortcuts="R">↺ 초기화</button>
         <button class="tt-btn" id="ttMinus" type="button">−1분</button>
         <button class="tt-btn" id="ttPlus" type="button">+1분</button>
         <button class="tt-btn" id="ttNext" type="button">다음 활동 →</button>
@@ -111,7 +112,7 @@ button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,inpu
       <p class="tt-footer-note" id="ttKeyboard">Space 시작·정지 · R 초기화</p>
       <p class="tt-notice" id="ttNotice" role="status" aria-live="polite"></p>
     </section>
-    <aside class="tt-card" aria-label="시계 설정">
+    <aside class="tt-card" aria-label="시계 설정"><p id="ttModeDescription" class="tt-mode-description">남은 시간을 설정하고 시작해 보세요.</p>
       <div class="tt-section" id="ttTimerSettings">
         <h2>타이머 설정</h2>
         <div class="tt-preset" id="ttPresets"><button class="tt-btn" type="button" data-seconds="60">1분</button><button class="tt-btn" type="button" data-seconds="180">3분</button><button class="tt-btn" type="button" data-seconds="300">5분</button><button class="tt-btn" type="button" data-seconds="600">10분</button></div>
