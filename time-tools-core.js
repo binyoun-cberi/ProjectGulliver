@@ -41,7 +41,7 @@
     const byMode={clock:'analog',timer:'ring',stopwatch:'digital',lesson:'ring',learn:'analog'};
     for(const key of modes) if(styles[key].includes(a.styles?.[key]))byMode[key]=a.styles[key];
     const time=a.time && typeof a.time==='object'?a.time:{};
-    const timerDuration=Math.round(clamp(time.timer?.durationMs,1000,21600000));
+    const timerDuration=Math.round(clamp(time.timer?.durationMs??300000,1000,21600000));
     const schedule=sanitizeEvents(a.events);
     const total=schedule.reduce((s,e)=>s+e.durationSec*1000,0);
     return {
@@ -52,7 +52,7 @@
         stopwatch:{elapsedMs:Math.round(clamp(time.stopwatch?.elapsedMs,0,86400000))},
         lesson:{elapsedMs:Math.round(clamp(time.lesson?.elapsedMs,0,total))}
       },
-      learn:{hour:Math.round(clamp(a.learn?.hour,1,12)),minute:Math.round(clamp(a.learn?.minute,0,59)),reveal:!!a.learn?.reveal},
+      learn:{hour:Math.round(clamp(a.learn?.hour??3,1,12)),minute:Math.round(clamp(a.learn?.minute??30,0,59)),reveal:!!a.learn?.reveal},
       records:{timer:records(a.records?.timer),stopwatch:records(a.records?.stopwatch)},
       running:!!a.running && ['timer','stopwatch','lesson'].includes(mode),
       startedAt:Math.round(clamp(a.startedAt,0,9999999999999))
