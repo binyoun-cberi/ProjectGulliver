@@ -10,7 +10,7 @@ function startTiles(){
 const requestedView=new URLSearchParams(location.search).get('view');
 if(requestedView==='templates')location.replace('문제지 만들기.html');
 let view=['home','tools','activities','favorites','trash'].includes(requestedView)?requestedView:'home',folderId='',category='전체',editAction=null,toastTimer;
-const descriptions={home:['매일 수업','필요한 문제를 뽑고, 수업 도구를 바로 실행하세요.'],favorites:['즐겨찾기','자주 쓰는 교사 도구를 빠르게 꺼내 보세요.'],activities:['교실 활동','저장한 타이머·퀴즈·자리표를 다시 열어요.'],tools:['교사 도구','수업 준비와 진행에 필요한 도구를 골라 쓰세요.'],trash:['보관한 활동','보관한 활동은 교사 도구 활동 목록으로 복원할 수 있어요.']};
+const descriptions={home:['클라시트','수업의 모든 순간을 한곳에. 문제지부터 수업 도구까지 바로 시작하세요.'],favorites:['즐겨찾기','자주 쓰는 교사 도구를 빠르게 꺼내 보세요.'],activities:['교실 활동','저장한 타이머·퀴즈·자리표를 다시 열어요.'],tools:['교사 도구','수업 준비와 진행에 필요한 도구를 골라 쓰세요.'],trash:['보관한 활동','보관한 활동은 교사 도구 활동 목록으로 복원할 수 있어요.']};
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,2500)}
 function matches(text){const q=$('search').value.toLowerCase().replace(/\s+/g,'');return !q||String(text).toLowerCase().replace(/\s+/g,'').includes(q)}
 function switchView(next,folder=''){view=next;folderId=folder;category='전체';$('search').value='';document.body.classList.remove('menu-open');$('menuButton').setAttribute('aria-expanded','false');history.replaceState(null,'',location.pathname+(view==='activities'?'?view=activities':view==='home'?'':'?view='+encodeURIComponent(view)));render();window.scrollTo({top:0,behavior:'smooth'})}

@@ -32,9 +32,9 @@
     shell.id = 'gulliverAppHeader';
     const inner = element('div', 'gx-header-inner');
     const brand = element('a', 'gx-brand'); brand.href = 'index.html';
-    const logo = element('img'); logo.src = 'logo.png'; logo.alt = ''; logo.width = 30; logo.height = 30;
-    brand.append(logo, element('span', '', '매일 수업'));
-    const nav = element('nav', 'gulliver-nav gx-nav'); nav.setAttribute('aria-label', '매일 수업 주요 메뉴');
+    const logo = element('img'); logo.src = 'clasheet-mark.svg?v=20261023-1'; logo.alt = ''; logo.width = 30; logo.height = 30;
+    brand.append(logo, element('span', '', '클라시트'));
+    const nav = element('nav', 'gulliver-nav gx-nav'); nav.setAttribute('aria-label', '클라시트 주요 메뉴');
     const selected = file === 'index.html' && new URLSearchParams(location.search).get('view') === 'tools' ? 'tools' : principal[file] || null;
     for (const [key, label, href] of sections) {
       const a = element('a', '', label); a.href = href;
@@ -76,7 +76,11 @@
   }
   function init() {
     if (embedded()) { document.body.classList.add('gx-embedded'); return; }
-    document.title = document.title.replaceAll('뚝딱교실', '매일 수업');
+    document.title = document.title.replaceAll('뚝딱교실', '클라시트').replaceAll('매일 수업', '클라시트');
+    if (!document.title.includes('클라시트')) document.title += ' · 클라시트';
+    const icon = document.querySelector('link[rel="icon"]') || document.createElement('link');
+    icon.rel = 'icon'; icon.type = 'image/svg+xml'; icon.href = 'clasheet-mark.svg?v=20261023-1';
+    if (!icon.isConnected) document.head.append(icon);
     mount();
     const titleSelectors = {
       home: '.welcome', classroom: 'main>.hero',
