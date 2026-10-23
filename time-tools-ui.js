@@ -39,7 +39,7 @@
       part('line',{x1:150,y1:150,x2:150+length*Math.sin(theta),y2:150-length*Math.cos(theta),stroke:color,'stroke-width':width,'stroke-linecap':'round'});
     };
     hand(((hour%12)+minute/60)*30,78,'#2c3e60',9);
-    hand((minute+second/60)*6,105,'#556be9',6);
+    hand((minute+(showSecond?second:0)/60)*6,105,'#556be9',6);
     if(showSecond)hand(second*6,113,'#e26c68',2);
     part('circle',{cx:150,cy:150,r:6,fill:'#2c3e60'});
     return svg;
@@ -97,6 +97,7 @@
   }
   function renderRecords(){
     const mode=engine.data.mode;const list=$('ttRecords');list.replaceChildren();
+    $('ttRankGuide').textContent=mode==='timer'?'남은 시간이 많은 순으로 정렬해요. 타이머가 진행된 후 종료되기 전에 기록해 주세요.':'가장 짧은 기록이 1등이에요.';
     const records=engine.listRecords();
     if(!records.length)list.append(el('li','','아직 저장한 기록이 없어요.'));
     for(const [i,r] of records.entries()){
