@@ -114,6 +114,83 @@
     assert.equal(engine.snapshot().phase,'도입');
     assert.equal(engine.snapshot().remainingMs,2329000);
   });
+
+  test('class bell presets include six periods, breaks and a lunch gap',()=>{
+    const p=core.defaultPeriods();
+    assert.equal(p.length,6);
+    assert.equal(p[0].start,'09:00');
+    assert.equal(p[1].start,'09:50');
+    assert.equal(p[3].start,'11:30');
+    assert.equal(p[4].start,'13:10');
+    assert.equal(p[5].start,'14:00');
+    assert.equal(core.defaultPeriods(45)[1].start,'09:55');
+    assert.equal(core.defaultPeriods(50)[1].start,'10:00');
+  });
+  test('period countdown follows local current time across class break and lunch boundaries',()=>{
+    const p=core.defaultPeriods();
+    const at=(h,m,s=0)=>core.periodAt(p,new Date(2026,9,23,h,m,s).getTime());
+    assert.equal(at(8,59,50).status,'before');
+    assert.equal(at(8,59,50).remainingMs,10000);
+    assert.equal(at(8,59,50).progress,0);
+    assert.equal(at(9,0).phase,'1교시');
+    assert.equal(at(9,0).remainingMs,2400000);
+    assert.equal(at(9,40).status,'break');
+    assert.equal(at(9,40).remainingMs,600000);
+    assert.equal(at(9,49,59).remainingMs,1000);
+    assert.equal(at(9,50).phase,'2교시');
+    assert.equal(at(12,10).status,'lunch');
+    assert.equal(at(12,10).phase,'점심시간');
+    assert.equal(at(12,10).next,'5교시');
+    assert.equal(at(12,10).remainingMs,3600000);
+    assert.equal(at(13,10).phase,'5교시');
+    assert.equal(at(14,40).status,'after');
+    assert.equal(at(14,40).remainingMs,0);
+  });
+  test('period settings cannot overlap and rejected edits preserve previous schedule',()=>{
+    let now=new Date(2026,9,23,9,20).getTime();
+    const clock=()=>now;
+    const engine=core.createEngine({},clock);
+    const before=JSON.stringify(engine.data.periods);
+    engine.switchMode('period');
+    const overlapping=core.defaultPeriods();
+    overlapping[1].start='09:35';
+    assert.equal(core.validatePeriods(overlapping).ok,false);
+    assert.equal(engine.setPeriods(overlapping).ok,false);
+    assert.equal(JSON.stringify(engine.data.periods),before);
+    const late=core.defaultPeriods();
+    late[0].start='08:50';
+    assert.equal(engine.setPeriods(late).ok,true);
+    assert.equal(engine.data.periods[0].start,'08:50');
+    assert.equal(engine.snapshot().phase,'1교시');
+    assert.equal(engine.snapshot().timeMs,600000);
+    now=new Date(2026,9,23,9,45).getTime();
+    assert.equal(engine.snapshot().phase,'쉬는 시간');
+    assert.equal(engine.snapshot().next,'2교시');
+    const saved=engine.save();
+    const reopened=core.createEngine(saved,clock);
+    assert.equal(reopened.snapshot().mode,'period');
+    assert.equal(reopened.data.periods[0].start,'08:50');
+    assert.equal(reopened.snapshot().timeMs,300000);
+  });
+  test('period mode stays wall-clock-driven and student snapshot contains no student records',()=>{
+    let now=new Date(2026,9,23,9,0).getTime();
+    const engine=core.createEngine({},()=>now);
+    engine.switchMode('period');
+    assert.equal(engine.start(),false);
+    assert.equal(engine.snapshot().running,false);
+    assert.equal(engine.setStyle('bar'),true);
+    now+=70000;
+    const snap=engine.snapshot();
+    assert.equal(snap.phase,'1교시');
+    assert.equal(snap.timeMs,2330000);
+    assert.equal(snap.style,'bar');
+    assert.equal(snap.periods.length,6);
+    assert.equal(snap.periodStatus,'class');
+    assert.doesNotMatch(JSON.stringify(snap),/records|studentName|teacherNote/);
+    assert.equal(core.validatePeriods([{start:'24:01',durationMin:40}]).ok,false);
+    assert.equal(core.validatePeriods([{start:'23:50',durationMin:30}]).ok,false);
+  });
+
   test('unified entry and second-screen rendering are wired without deleting old tool files',()=>{
     const html=fs.readFileSync('시간 도구.html','utf8');
     const view=fs.readFileSync('gulliver-teacher-display-view.js','utf8');

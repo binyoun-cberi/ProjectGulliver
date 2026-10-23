@@ -62,13 +62,26 @@ button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,inpu
 .tt-hidden{display:none!important}
 @media(max-width:860px){.tt-grid{grid-template-columns:1fr}.tt-stage{min-height:320px}.tt-card{padding:17px}.tt-modes button{padding:10px 12px}}
 @media(max-width:440px){.tt-event-top{flex-wrap:wrap}.tt-hero p{font-size:13px}.tt-stage{padding:12px}.tt-ring{width:min(300px,79vw)}.tt-actions button{flex:1;min-width:110px}}
+
+
+.tt-period-rows{display:grid;gap:8px;margin-top:15px}
+.tt-period-row{display:grid;grid-template-columns:minmax(74px,1fr) 112px 76px 31px;align-items:end;gap:6px;padding:11px 8px;border:1px solid #e2e8f1;border-radius:13px;background:#f8faff}
+.tt-period-row .tt-field{min-width:0;font-size:12px}
+.tt-period-row .tt-field input{min-width:0;padding:6px;min-height:40px;font-size:14px}
+.tt-period-row .tt-remove{border:0;background:#fff1f2;color:#be4658;border-radius:8px;min-height:40px;font-weight:900}
+.tt-period-row .tt-remove:disabled{opacity:.4;cursor:not-allowed}
+.tt-period-strip{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px}
+.tt-period-pill{border-radius:999px;padding:7px 11px;background:#e1e6f2;color:#607089;font-size:12px;font-weight:850}
+.tt-period-pill.active{background:#dfe7ff;color:#3552bd}
+.tt-period-pill.done{opacity:.55}
+@media(max-width:430px){.tt-period-row{grid-template-columns:minmax(0,1fr) 96px 62px 28px;gap:4px;padding:8px 6px}.tt-period-row .tt-field input{font-size:12px;padding:5px}.tt-period-pill{font-size:11px;padding:6px 9px}}
 </style>
 <script src="gulliver-app-shell.js?v=20261023"></script>
 <script src="gulliver-teacher-components.js?v=20261023"></script>
 <script src="gulliver-teacher-display.js?v=20261019-dual1"></script>
 <script defer src="gulliver-teacher-shell.js?v=20261023"></script>
-<script defer src="time-tools-core.js?v=20261023"></script>
-<script defer src="time-tools-ui.js?v=20261023"></script>
+<script defer src="time-tools-core.js?v=20261023-period1"></script>
+<script defer src="time-tools-ui.js?v=20261023-period1"></script>
 </head>
 <body>
 <main class="tt-app">
@@ -79,6 +92,7 @@ button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,inpu
     <button type="button" data-mode="timer">타이머</button>
     <button type="button" data-mode="stopwatch">스톱워치</button>
     <button type="button" data-mode="lesson">수업 흐름</button>
+    <button type="button" data-mode="period">교시별 타이머</button>
     <button type="button" data-mode="learn">시계 읽기</button>
   </nav>
   <div class="tt-grid">
@@ -106,6 +120,20 @@ button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,inpu
         <p class="tt-caption">활동의 이름·시간·색을 바꿀 수 있어요. 수정하면 진행이 멈추고 처음부터 시작해요.</p>
         <div class="tt-preset"><button class="tt-btn" id="ttLesson40" type="button">40분 기본</button><button class="tt-btn" id="ttLesson45" type="button">45분 기본</button></div>
         <div class="tt-events" id="ttEvents"></div><div class="tt-line"><button class="tt-btn" id="ttAddEvent" type="button">+ 활동 추가</button><span id="ttLessonTotal" class="tt-caption"></span></div>
+      </div>
+
+      <div class="tt-section" id="ttPeriodSettings" hidden>
+        <h2>하루 교시 시간표</h2>
+        <p class="tt-caption">교시 시작 시각과 길이에 따라 수업·쉬는 시간·점심시간을 자동으로 보여줘요. 시간표는 이 브라우저에 저장되며 매일 반복됩니다.</p>
+        <div class="tt-preset" id="ttPeriodPresets">
+          <button class="tt-btn" type="button" data-duration="40">40분 수업 예시</button>
+          <button class="tt-btn" type="button" data-duration="45">45분 수업 예시</button>
+          <button class="tt-btn" type="button" data-duration="50">50분 수업 예시</button>
+        </div>
+        <p class="tt-caption">예시 시간표는 09:00 시작·교시 사이 10분·4교시 후 점심 60분 기준이에요. 학교 일정에 맞게 수정해 주세요.</p>
+        <div id="ttPeriodRows" class="tt-period-rows"></div>
+        <div class="tt-line"><button id="ttPeriodAdd" type="button" class="tt-btn">+ 교시 추가</button><button id="ttPeriodApply" type="button" class="tt-btn tt-btn--primary">시간표 적용</button></div>
+        <p id="ttPeriodSummary" class="tt-caption" role="status"></p>
       </div>
       <div class="tt-section" id="ttLearnSettings" hidden>
         <h2>시계 읽기 연습</h2><p class="tt-caption">시침과 분침이 가리키는 시각을 정하고 학생들에게 맞혀 보게 해요.</p>
