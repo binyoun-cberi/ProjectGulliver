@@ -61,7 +61,23 @@
     const shownTime=mode==='clock'?`${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:${String(second).padStart(2,'0')}`:
       mode==='learn'?(data.reveal?`${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`:'몇 시일까요?'):
       format(data.timeMs,mode==='stopwatch');
+    // Preserve the hourglass element across synchronized ticks so its animated
+    // falling stream stays continuous on a classroom display.
+    const previous=stage.querySelector('.tt-display-card[data-time-mode="timer"][data-time-style="sand"]');
+    if(mode==='timer'&&style==='sand'&&previous){
+      const glass=previous.querySelector('.tt-hourglass');
+      if(glass?.updateHourglass){
+        glass.updateHourglass(progress,Boolean(data.running));
+        const value=previous.querySelector('.tt-student-number');
+        const status=previous.querySelector('.tt-student-sub');
+        if(value&&value.textContent!==shownTime)value.textContent=shownTime;
+        if(status&&status.textContent!==String(data.status||''))status.textContent=String(data.status||'');
+        return;
+      }
+    }
     const card=element('section','display-card tt-display-card');
+    card.dataset.timeMode=mode;
+    card.dataset.timeStyle=style;
     const head=element('div','display-eyebrow',labels[mode]);
     const title=element('h1','display-title',safeText(mode==='lesson'?data.title:labels[mode]));
     const center=element('div','tt-student-face');
