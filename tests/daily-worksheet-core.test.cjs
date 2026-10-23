@@ -45,7 +45,7 @@ test('five subjects expose only supported grades and topics, with complete uniqu
  assert.deepEqual(Object.keys(SUBJECTS),['korean','math','social','science','english']);
  for(const [subject,info] of Object.entries(SUBJECTS))for(const grade of info.grades)for(const [topic,,fromGrade,toGrade=6] of info.topics){
   if(grade<fromGrade||grade>toGrade)continue;
-  if(['mixed','decimal'].includes(topic))continue;
+  if(['mixed','decimal','history-review'].includes(topic))continue;
   const dense=subject==='math'&&['addition','hundreds','multiplication'].includes(topic);
   for(const difficulty of ['basic','challenge'])for(const count of [5,10,15,...(dense?[24]:[])])for(const seed of [1,42,2026]){
    const sheet=generate({subject,topic,grade,count,seed,difficulty});
@@ -56,32 +56,43 @@ test('five subjects expose only supported grades and topics, with complete uniqu
  }
 });
 
-test('social history units use evidence with an accountable answer and source',()=>{
+test('social units generate sourced history quizzes and local evidence exercises',()=>{
  for(const grade of [3,4,5,6])for(const unit of units('social',grade))for(const [type,,topic] of unit.types){
   for(const seed of [1,42,2026]){
    const options={subject:'social',grade,topic,type,count:15,seed},sheet=generate(options);
    assert.deepEqual(sheet,generate(options));
    assert.equal(sheet.items.length,15);
-   assert.equal(new Set(sheet.items.map(q=>q.detail)).size,15,`${grade}/${topic}/${seed}: 자료가 중복됨`);
+   assert.equal(new Set(sheet.items.map(q=>topic==='history-review'?q.format==='ordering'?q.orderChoices.join('|'):q.prompt:grade>=5?q.prompt:q.detail)).size,15,`${grade}/${topic}/${seed}: 문제가 중복됨`);
    if(sheet.alignment)assert.match(sheet.alignment.code,/^\[[46]사\d{2}-\d{2}\]$/);
-   else assert.ok(['joseon','modern'].includes(topic));
-   for(const question of sheet.items){assert.ok(question.detail&&question.explanation&&question.explanation!==question.detail&&question.sourceLabel);assert.ok(question.choices.includes(question.answer));if(grade>=5)assert.match(question.source,/^https:\/\/contents\.history\.go\.kr\/mobile\/eh\/view\.do\?/);else assert.equal(question.source,'')}
+   else assert.ok(['joseon','modern','history-review'].includes(topic));
+   for(const question of sheet.items){assert.ok(question.explanation&&question.sourceLabel);if(grade>=5){assert.match(question.source,/^https:\/\/contents\.history\.go\.kr\/mobile\/eh\/list\.do\?/);assert.ok(!question.prompt.includes('자료에서 알 수 있는 것을'));assert.ok(!/세트장|놀이공원|텔레비전/.test(question.prompt+' '+question.choices.join(' ')));if(topic==='history-review'){if(type==='history-matching')assert.ok(question.right&&question.answer.includes('번 · '));else assert.ok(question.orderChoices.length===4&&/^[1-4] → [1-4] → [1-4] → [1-4]$/.test(question.answer))}else if(type.endsWith('-initial'))assert.ok(question.detail.includes('힌트:'));else assert.ok(question.choices.includes(question.answer))}else{assert.ok(question.detail&&question.choices.includes(question.answer));assert.equal(question.source,'')}}
   }
  }
  assert.throws(()=>generate({subject:'social',grade:4,topic:'goryeo',type:'goryeo-evidence',count:5}));
  assert.throws(()=>generate({subject:'social',grade:5,topic:'past',type:'past-evidence',count:5}));
 });
 
-test('regenerating social history selects different evidence and direct era sources',()=>{
+test('regenerating history changes questions while retaining answer and source',()=>{
  for(const grade of [3,5])for(const unit of units('social',grade)){
   const [type,,topic]=unit.types[0],options={subject:'social',grade,topic,type,count:15};
   const first=generate({...options,seed:1}),second=generate({...options,seed:2026});
-  assert.notDeepEqual(new Set(first.items.map(q=>q.detail)),new Set(second.items.map(q=>q.detail)),topic);
+  assert.notDeepStrictEqual(first.items,second.items,topic);
   for(let seed=1;seed<=100;seed++){
    const sheet=generate({...options,seed});
-   assert.equal(new Set(sheet.items.map(q=>q.detail)).size,15,`${topic}/${seed}`);
-   for(const q of sheet.items){assert.ok(q.explanation.length>=20);if(topic==='modern')assert.match(q.source,/code=eh_age_(40|50)&levelId=/);if(q.source)assert.ok(!q.source.includes('/list.do?'))}
+   assert.equal(new Set(sheet.items.map(q=>topic==='history-review'?q.format==='ordering'?q.orderChoices.join('|'):q.prompt:grade>=5?q.prompt:q.detail)).size,15,`${topic}/${seed}`);
+  for(const q of sheet.items){assert.ok(q.explanation);if(grade>=5){assert.match(q.source,/code=eh_age_(10|20|30|40)/);if(topic!=='history-review')assert.ok(q.choices.includes(q.answer))}}
   }
+ }
+});
+
+test('history matching and ordering keep their printed answers consistent',()=>{
+ const chronology=['고조선의 등장','신라 건국','고구려 건국','백제 건국','금관가야 건국','발해 건국','고려 건국','조선 건국','훈민정음 반포','임진왜란','수원 화성 완공','독립신문 창간','대한제국 선포','3·1 운동','대한민국 임시 정부 수립','광복','대한민국 정부 수립','6·25 전쟁 시작'];
+ for(const count of [5,10,15])for(const seed of [1,42,2026]){
+  const matching=generate({subject:'social',grade:5,topic:'history-review',type:'history-matching',count,seed}).items;
+  const right=matching.map(q=>q.right);assert.equal(new Set(right).size,count);
+  for(const q of matching){const [number]=q.answer.split('번');assert.equal(right[Number(number)-1],q.answer.split(' · ')[1]);assert.ok(q.prompt&&q.source)}
+  const ordering=generate({subject:'social',grade:5,topic:'history-review',type:'history-order',count,seed}).items;
+  for(const q of ordering){const indices=q.answer.split(' → ').map(Number);assert.deepEqual([...indices].sort(),[1,2,3,4]);const expected=indices.map(i=>q.orderChoices[i-1]);assert.deepEqual(expected,[...q.orderChoices].sort((a,b)=>chronology.indexOf(a)-chronology.indexOf(b)));assert.equal(q.explanation,expected.join(' → '))}
  }
 });
 

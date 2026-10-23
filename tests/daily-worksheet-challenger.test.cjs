@@ -41,7 +41,7 @@ test('challenger checks seeded repeatability, coverage, answer presence, and uni
             const signatures = new Set();
             first.items.forEach((q, index) => {
               assertQuestionQuality(q, label + '#' + index);
-              signatures.add([q.prompt, q.detail ?? '', q.answer].join('|'));
+              signatures.add([q.prompt, q.detail ?? '', q.right ?? '', ...(q.orderChoices ?? []), q.answer].join('|'));
             });
             assert.equal(signatures.size, first.items.length, label + ' duplicate questions');
             if (first.alignment) {
