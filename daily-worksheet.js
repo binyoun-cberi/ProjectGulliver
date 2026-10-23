@@ -14,7 +14,7 @@ function denseAvailable(){return subject==='math'&&['addition','hundreds','multi
 function syncCount(preferred){const dense=denseAvailable();$('count').querySelector('[value="24"]').disabled=!dense;$('count').value=[5,10,15,...(dense?[24]:[])].includes(preferred)?String(preferred):dense?'24':'10'}
 function syncDifficulty(){const hundreds=subject==='math'&&$('topic').value==='hundreds',math=subject==='math'&&!hundreds;$('difficultySetting').hidden=!math;$('difficulty').disabled=!math;$('variantSetting').hidden=!hundreds;$('variant').disabled=!hundreds;if(!math)$('difficulty').value='basic';
  const standard=C.alignment(subject,$('topic').value,Number($('grade').value)),note=$('curriculumNote');note.replaceChildren();
- if(standard){note.append(document.createTextNode(`2022 개정 · ${standard.code} ${standard.summary} · 계산 연습 `));const link=document.createElement('a');link.href=standard.source;link.target='_blank';link.rel='noopener noreferrer';link.textContent='원문 보기';note.append(link)}
+ if(standard){note.append(document.createTextNode(`2022 개정 · ${standard.code} ${standard.summary} · ${standard.scope} `));const link=document.createElement('a');link.href=standard.source;link.target='_blank';link.rel='noopener noreferrer';link.textContent='기준 자료 보기';note.append(link)}
  else note.textContent='이 유형은 성취기준 연계를 검토 중입니다.';
 }
 syncGrades(initialGrade,initialTopic);syncCount(initialCount);

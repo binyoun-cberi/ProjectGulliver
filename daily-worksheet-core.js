@@ -1,10 +1,10 @@
 (function(root,factory){'use strict';const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;root.DailyWorksheetCore=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
 const SUBJECTS={
- korean:{name:'국어',grades:[1,2,3,4,5,6],topics:[['opposite','반대말 찾기',1],['spacing','바른 띄어쓰기',2],['reading','글 읽고 답하기',1]]},
+ korean:{name:'국어',grades:[1,2,3,4,5,6],topics:[['opposite','반대말 찾기',1],['spacing','바른 띄어쓰기',2],['reading','글 읽고 답하기',1],['mainidea','짧은 글의 중심 내용',1,2]]},
  math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['hundreds','세 자리 수 덧셈 · 받아올림 없음',3,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3]]},
  social:{name:'사회',grades:[3,4,5,6],topics:[['direction','방향과 위치',3],['community','우리 사회의 일',3],['economy','생산과 소비',4]]},
- science:{name:'과학',grades:[3,4,5,6],topics:[['living','생물과 비생물',3],['matter','물질의 상태',3],['weather','날씨 관찰',3]]},
+ science:{name:'과학',grades:[3,4,5,6],topics:[['living','생물과 비생물',3],['matter','물질의 상태',3],['weather','날씨 관찰 도구',5]]},
  english:{name:'영어',grades:[3,4,5,6],topics:[['words','기본 낱말',3],['sentence','문장 만들기',3],['conversation','상황에 맞는 대답',3]]}
 };
 // Verified against the 2022 mathematics curriculum (MOE notice 2022-33, appendix 8).
@@ -16,7 +16,22 @@ const MATH_ALIGNMENT={
  multiplication:{2:['[2수01-11]','곱셈구구와 한 자리 수의 곱셈'],3:['[4수01-04]','곱하는 수가 한두 자리인 곱셈'],4:['[4수01-04]','곱하는 수가 한두 자리인 곱셈']},
  division:{3:['[4수01-06]','한 자리 수로 나누는 계산'],4:['[4수01-07]','두 자리 수로 나누는 계산']}
 };
-function alignment(subject,topic,grade){const match=subject==='math'&&MATH_ALIGNMENT[topic]?.[grade];return match?{code:match[0],summary:match[1],source:CURRICULUM_SOURCE,scope:'이 문제지는 성취기준 중 계산 연습만 다룹니다.'}:null}
+const OTHER_ALIGNMENT={
+ korean:{mainidea:{1:['[2국02-03]','글의 중심 내용 확인'],2:['[2국02-03]','글의 중심 내용 확인']}},
+ social:{economy:{4:['[4사07-02]','생산·소비 활동과 지역 간 교류 탐색']}},
+ science:{matter:{3:['[4과05-02]','고체·액체·기체의 성질 관찰과 비교'],4:['[4과05-02]','고체·액체·기체의 성질 관찰과 비교']},weather:{5:['[6과06-01]','기상 요소 조사와 생활에 미치는 영향'],6:['[6과06-01]','기상 요소 조사와 생활에 미치는 영향']}},
+ english:{words:{3:['[4영01-05]','쉬운 낱말·어구·문장의 의미 이해'],4:['[4영01-05]','쉬운 낱말·어구·문장의 의미 이해'],5:['[6영01-03]','낱말·어구·문장의 의미 이해'],6:['[6영01-03]','낱말·어구·문장의 의미 이해']}}
+};
+const OTHER_SOURCES={
+ korean:'https://www.goe.go.kr/resource/old/BBSMSTR_000000030136/BBS_202401091000514080.pdf',
+ science:'https://www.goe.go.kr/resource/old/BBSMSTR_000000030136/BBS_202411110127574203.pdf',
+ english:'https://www.goe.go.kr/resource/old/BBSMSTR_000000030136/BBS_202312210923589990.pdf',
+ social:'https://www.nise.go.kr/ebook/src/viewer/download.php?host=main&no=1&site=20240819_172144'
+};
+function alignment(subject,topic,grade){const math=subject==='math',match=math?MATH_ALIGNMENT[topic]?.[grade]:OTHER_ALIGNMENT[subject]?.[topic]?.[grade];if(!match)return null;
+ const scope=math?'이 문제지는 성취기준 중 계산 연습만 다룹니다.':subject==='korean'?'이 문제지는 짧은 글의 중심 내용 고르기만 다룹니다.':subject==='science'&&topic==='matter'?'이 문제지는 물질의 상태 분류만 다룹니다.':subject==='science'?'이 문제지는 기상 관찰 도구 고르기만 다룹니다.':subject==='social'?'이 문제지는 생산과 소비의 구별만 다룹니다.':'이 문제지는 글로 제시된 낱말의 뜻 고르기만 다룹니다.';
+ const source=math?CURRICULUM_SOURCE:subject==='science'&&topic==='weather'?'https://www.goe.go.kr/resource/old/BBSMSTR_000000030136/BBS_202502201106162700.pdf':subject==='english'&&grade>=5?'https://www.goe.go.kr/resource/old/BBSMSTR_000000030136/BBS_202411110130211774.pdf':OTHER_SOURCES[subject];
+ return{code:match[0],summary:match[1],source,scope}}
 const OPPOSITES=[['크다','작다'],['높다','낮다'],['길다','짧다'],['빠르다','느리다'],['밝다','어둡다'],['따뜻하다','차갑다'],['무겁다','가볍다'],['넓다','좁다'],['많다','적다'],['가깝다','멀다'],['기쁘다','슬프다'],['시작','끝'],['앞','뒤'],['안','밖'],['위','아래'],['열다','닫다'],['주다','받다'],['들어가다','나오다'],['깨끗하다','더럽다'],['쉽다','어렵다']];
 const SPACING=[
  ['할 수 있어요.','할수 있어요.'],['갈 수 없어요.','갈수 없어요.'],['먹을 수 있어요.','먹을수 있어요.'],['읽을 수 있어요.','읽을수 있어요.'],
@@ -78,6 +93,24 @@ const ECONOMY=[
  ['동생이 우유를 마셨습니다.','소비'],['가족이 영화표를 사서 영화를 보았습니다.','소비'],['새 연필을 사서 글씨를 썼습니다.','소비'],
  ['공장에서 신발을 만들었습니다.','생산'],['농부가 벼를 길렀습니다.','생산'],['학생이 산 빵을 먹었습니다.','소비'],['가족이 산 옷을 입었습니다.','소비']
 ];
+const MAIN_IDEAS=[
+ ["비가 오자 민지는 우산을 폈습니다. 집에 갈 때까지 옷이 젖지 않았습니다.", "민지는 우산으로 비를 피했습니다."],
+ ["준호는 도서관에서 책을 빌렸습니다. 읽은 뒤에는 제자리에 돌려놓았습니다.", "준호는 빌린 책을 읽고 돌려놓았습니다."],
+ ["화분의 흙이 말랐습니다. 소라는 물을 주고 창가에 놓았습니다.", "소라는 화분을 돌보았습니다."],
+ ["우리 반은 책상을 닦았습니다. 바닥도 쓸어 교실이 깨끗해졌습니다.", "우리 반은 교실을 청소했습니다."],
+ ["다람쥐는 도토리를 주웠습니다. 먹고 남은 것은 나무 구멍에 모아 두었습니다.", "다람쥐는 도토리를 모아 두었습니다."],
+ ["지우는 친구에게 연필을 빌렸습니다. 다 쓰고 고맙다고 말하며 돌려주었습니다.", "지우는 빌린 연필을 돌려주었습니다."],
+ ["기차가 늦게 왔습니다. 승객들은 역에서 기다렸다가 기차에 올랐습니다.", "승객들은 늦은 기차를 기다렸습니다."],
+ ["아침에는 추워서 외투를 입었습니다. 낮에는 따뜻해져 외투를 벗었습니다.", "날씨가 따뜻해져 외투를 벗었습니다."],
+ ["현수는 씨앗을 심었습니다. 날마다 흙을 살피고 물을 주었습니다.", "현수는 심은 씨앗을 돌보았습니다."],
+ ["유나는 길에서 장갑을 주웠습니다. 주인을 찾으려고 선생님께 가져갔습니다.", "유나는 주운 장갑의 주인을 찾으려 했습니다."],
+ ["아이들은 운동장에서 공을 찼습니다. 해가 지자 공을 챙겨 집으로 갔습니다.", "아이들은 공놀이를 마치고 집으로 갔습니다."],
+ ["동생이 넘어지자 수연이 손을 내밀었습니다. 동생은 그 손을 잡고 일어났습니다.", "수연은 넘어진 동생을 도왔습니다."],
+ ["아버지는 시장에서 배추를 샀습니다. 집에 와서 씻고 김치를 담갔습니다.", "아버지는 배추로 김치를 담갔습니다."],
+ ["나뭇가지에 새싹이 돋았습니다. 준이는 봄이 왔다고 느꼈습니다.", "준이는 새싹을 보고 봄을 느꼈습니다."],
+ ["자전거가 고장 나서 탈 수 없었습니다. 은서는 바퀴를 고친 뒤 다시 탔습니다.", "은서는 자전거를 고쳐 다시 탔습니다."],
+ ["할머니는 옛날 사진을 꺼냈습니다. 사진을 보며 가족 이야기를 들려주셨습니다.", "할머니는 사진을 보며 가족 이야기를 하셨습니다."]
+];
 const LIVING=[['참새','생물'],['강아지','생물'],['소나무','생물'],['민들레','생물'],['버섯','생물'],['지렁이','생물'],['개미','생물'],['이끼','생물'],['콩나물','생물'],['고양이','생물'],['돌멩이','비생물'],['유리컵','비생물'],['책상','비생물'],['장난감 자동차','비생물'],['물','비생물'],['공기','비생물'],['연필','비생물'],['종이','비생물'],['모래','비생물'],['자전거','비생물']];
 const MATTER=[['얼음','고체'],['돌','고체'],['소금','고체'],['나무 책상','고체'],['유리컵','고체'],['연필','고체'],['물','액체'],['우유','액체'],['식용유','액체'],['주스','액체'],['식초','액체'],['간장','액체'],['공기','기체'],['수증기','기체'],['산소','기체'],['이산화 탄소','기체'],['헬륨','기체']];
 const WEATHER=[
@@ -134,6 +167,7 @@ function item(subject,topic,grade,r,difficulty,variant){
  if(subject==='korean'){
   if(topic==='opposite'){const [word,answer]=pick(OPPOSITES,r);const pool=OPPOSITES.flat().filter(v=>v!==word&&v!==answer);return choice('‘'+word+'’의 반대말은 무엇인가요?',answer,[answer,...shuffle(pool,r).slice(0,3)],r)}
   if(topic==='spacing'){const [correct,wrong]=pick(SPACING,r);return choice('바르게 띄어 쓴 문장을 고르세요.',correct,[correct,wrong],r)}
+  if(topic==='mainidea'){const [passage,answer]=pick(MAIN_IDEAS,r),others=MAIN_IDEAS.map(v=>v[1]).filter(v=>v!==answer);return choice('이 글의 중심 내용은 무엇인가요?',answer,[answer,...shuffle(others,r).slice(0,2)],r,passage)}
   if(grade<=2||r()<.35){const [passage,question,answer,options]=pick(READING,r);return choice(question,answer,options,r,passage)}
   const [passage,questions]=pick(READING_PASSAGES,r),[question,answer,options]=pick(questions,r);return choice(question,answer,options,r,passage);
  }

@@ -17,7 +17,7 @@ test('five subjects expose only supported grades and topics, with complete uniqu
 });
 
 test('a worksheet number reproduces the same sheet and a new seed changes it',()=>{
- const options={subject:'science',grade:4,topic:'weather',count:10};
+ const options={subject:'science',grade:5,topic:'weather',count:10};
  assert.deepEqual(generate({...options,seed:31415}),generate({...options,seed:31415}));
  assert.notDeepEqual(generate({...options,seed:31415}).items,generate({...options,seed:27182}).items);
 });
@@ -70,9 +70,29 @@ test('only reviewed math drills display a curriculum code, within the cited numb
    if(topic==='division'&&grade===4)assert.ok(numbers[1]>=10&&numbers[1]<=99&&numbers[0]<1000);
   }
  }
- for(const subject of ['korean','social','science','english']){
-  const info=SUBJECTS[subject],grade=info.grades[0];
-  for(const [topic,,from,to=6] of info.topics)if(grade>=from&&grade<=to)assert.equal(generate({subject,grade,topic,count:5,seed:2}).alignment,null);
+ assert.equal(generate({subject:'social',grade:3,topic:'direction',count:5,seed:2}).alignment,null);
+});
+
+test('reviewed language and science units carry scoped standards at the right grades',()=>{
+ const cases=[
+  ['korean',1,'mainidea','[2국02-03]'],['korean',2,'mainidea','[2국02-03]'],
+  ['english',3,'words','[4영01-05]'],['english',4,'words','[4영01-05]'],
+  ['english',5,'words','[6영01-03]'],['english',6,'words','[6영01-03]'],
+  ['social',4,'economy','[4사07-02]'],
+  ['science',3,'matter','[4과05-02]'],['science',4,'matter','[4과05-02]'],
+  ['science',5,'weather','[6과06-01]'],['science',6,'weather','[6과06-01]']
+ ];
+ for(const [subject,grade,topic,code] of cases){
+  const sheet=generate({subject,grade,topic,count:15,seed:104});
+  assert.equal(sheet.alignment.code,code);
+  assert.ok(sheet.alignment.source.startsWith('https://'));
+  assert.equal(new Set(sheet.items.map(q=>q.detail||q.prompt+'|'+q.answer)).size,15);
+ }
+ assert.throws(()=>generate({subject:'science',grade:3,topic:'weather',count:5,seed:1}));
+ assert.throws(()=>generate({subject:'korean',grade:3,topic:'mainidea',count:5,seed:1}));
+ for(const seed of [1,42,2048]){
+  const sheet=generate({subject:'korean',grade:1,topic:'mainidea',count:15,seed});
+  assert.ok(sheet.items.every(q=>q.detail.includes('습니다.')&&q.choices.includes(q.answer)&&q.choices.length===3));
  }
 });
 
