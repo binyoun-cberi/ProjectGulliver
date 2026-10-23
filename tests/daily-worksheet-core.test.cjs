@@ -192,6 +192,37 @@ test('Korean context words and five-question reading sets print with their own a
  assert.throws(()=>generate({subject:'korean',grade:5,topic:'reading-set',count:5}));
 });
 
+test('curated Korean literary and nonfiction texts have complete five-question evidence sets',()=>{
+ for(const grade of [1,2]){
+  const all=new Set();
+  for(const [type,genre] of [['reading-set-literary','literary'],['reading-set-nonfiction','nonfiction']]){
+   const titles=new Set();
+   for(let seed=1;seed<=30;seed++){
+    const sheet=generate({subject:'korean',grade,topic:'reading-set',type,count:15,seed});
+    assert.equal(new Set(sheet.items.map(q=>q.readingGroup)).size,3);
+    for(const q of sheet.items){assert.equal(q.readingGenre,genre);assert.ok(q.choices.includes(q.answer));assert.ok(q.explanation.length>=10);titles.add(q.readingGroup);all.add(q.readingGroup);if(q.readingPassage)assert.ok(q.readingPassage.length>=170)}
+   }
+   assert.equal(titles.size,4);
+  }
+  assert.equal(all.size,8);
+ }
+ for(const grade of [3,4,5,6]){
+  const all=new Set();
+  for(const [type,genre] of [['reading-set-literary','literary'],['reading-set-nonfiction','nonfiction']]){
+   const titles=new Set();
+   for(let seed=1;seed<=60;seed++){
+    const sheet=generate({subject:'korean',grade,topic:'reading-set',type,count:15,seed});
+    assert.equal(sheet.items.length,15);assert.equal(new Set(sheet.items.map(q=>q.readingGroup)).size,3);
+    for(const q of sheet.items){assert.equal(q.readingGenre,genre);assert.equal(q.choices.length,4);assert.equal(new Set(q.choices).size,4);assert.ok(q.choices.includes(q.answer));assert.ok(q.explanation.length>=18);assert.doesNotMatch(q.explanation,/내용과 비교해 보세요/);titles.add(q.readingGroup);all.add(q.readingGroup);if(q.readingPassage)assert.ok(q.readingPassage.length>=280,q.readingGroup)}
+   }
+   assert.equal(titles.size,5,`${grade}/${type}`);
+  }
+  assert.equal(all.size,10);
+  const mixed=generate({subject:'korean',grade,topic:'reading-set',type:'reading-set-five',count:15,seed:24});assert.ok(mixed.items.every(q=>q.readingGenre==='literary'||q.readingGenre==='nonfiction'));
+  const brief=generate({subject:'korean',grade,topic:'reading-set',type:'reading-set-brief',count:15,seed:24});assert.ok(brief.items.every(q=>q.readingGenre==='brief'));
+ }
+});
+
 test('social geography, civic, economy and world themes offer distinct grade-banded sheets',()=>{
  const lower=['map-symbol','natural','human','cultural','family','community-rules','local-gov','transport'];
  const upper=['korea-geography','democracy','rights','government','market','world-geography','international','environment','contemporary'];
