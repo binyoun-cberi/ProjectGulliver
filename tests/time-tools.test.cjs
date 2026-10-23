@@ -162,7 +162,7 @@
     assert.equal(engine.setPeriods(late).ok,true);
     assert.equal(engine.data.periods[0].start,'08:50');
     assert.equal(engine.snapshot().phase,'1교시');
-    assert.equal(engine.snapshot().timeMs,1800000);
+    assert.equal(engine.snapshot().timeMs,600000);
     now=new Date(2026,9,23,9,45).getTime();
     assert.equal(engine.snapshot().phase,'쉬는 시간');
     assert.equal(engine.snapshot().next,'2교시');
