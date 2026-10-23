@@ -8,6 +8,14 @@
   const engine=core.createEngine(core.migrate(safeRead(key),safeRead('lessonCircleTimerV3'),safeRead('classUniversalClock.v2')));
   const modeLabels={clock:'현재 시각',timer:'타이머',stopwatch:'스톱워치',lesson:'수업 흐름',period:'교시별 타이머',learn:'시계 읽기'};
   const styleLabels={ring:'원형',digital:'디지털',analog:'아날로그',bar:'막대형',sand:'모래시계'};
+  const descriptions={
+    clock:'현재 시각을 아날로그 또는 디지털 시계로 크게 보여줘요.',
+    timer:'남은 시간을 설정하고 시작하세요. 진행 중 스타일을 변경해도 시간이 유지돼요.',
+    stopwatch:'미션을 시작하고 학생별 기록을 모아 비교해 보세요.',
+    lesson:'한 교시의 도입·활동·정리 시간을 연결해 보여줘요.',
+    period:'학교 시간표를 저장하면 수업·쉬는 시간·점심시간을 자동으로 안내해요.',
+    learn:'시침과 분침을 설정하고 정답을 가린 채 시계 읽기를 연습해요.'
+  };
   let lastRecordMode='',lastStatus='',lastRunning=false,lastMode='',lastStyle='',lastPersist=0;
   const el=(tag,cls,text)=>{
     const node=document.createElement(tag);
@@ -212,6 +220,10 @@
     $('ttMinute').value=Math.floor(t/60);$('ttSecond').value=Math.round(t%60);
     $('ttHour').value=engine.data.learn.hour;$('ttLearnMinute').value=engine.data.learn.minute;
     $('ttSound').checked=engine.data.soundOn;
+    $('ttModeDescription').textContent=descriptions[mode];
+    const seconds=engine.data.time.timer.durationMs/1000;
+    for(const b of $('ttPresets').querySelectorAll('[data-seconds]'))
+      b.setAttribute('aria-pressed',String(Number(b.dataset.seconds)===seconds));
     if(mode==='lesson')renderEvents();
     if(mode==='period')renderPeriodRows();
     if(['timer','stopwatch'].includes(mode))renderRecords();
@@ -220,6 +232,13 @@
   function render(){
     const s=engine.snapshot();
     if(s.mode!==lastMode)syncMode();
+    $('ttCurrentMode').textContent=modeLabels[s.mode];
+    $('ttLiveState').textContent=s.status;
+    $('ttLiveState').dataset.state=s.status;
+    $('ttReveal').textContent=engine.data.learn.reveal?'정답 가리기':'정답 보기';
+    const connected=window.GulliverTeacherDisplay?.connected?.()===true;
+    $('ttStudent').textContent=connected?'학생 화면 보기 ↗':'학생 화면 열기 ↗';
+    $('ttStudent').setAttribute('aria-label',connected?'연결된 학생 화면 열기':'새 학생 화면 열기');
     if(s.style!==lastStyle){renderStyles();lastStyle=s.style;}
     paintFace(s);
     if(lastRunning&&!s.running&&(s.mode==='timer'||s.mode==='lesson')&&s.remainingMs===0){
