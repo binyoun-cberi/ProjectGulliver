@@ -1,7 +1,8 @@
 (()=>{
 'use strict';
 const C=window.GulliverMediaCore,M=window.GulliverMusicCore,$=id=>document.getElementById(id);
-let model=C.makeMusic(),url='',seekStep=0;
+const params=new URLSearchParams(location.search),template=params.get('template');
+let model=C.validateMusic(M.presets()[template]||C.makeMusic()),url='',seekStep=0;
 function notify(s,bad=false){$('msg').textContent=s;$('msg').style.color=bad?'#ac3b50':'#2d7b57';}
 function seconds(){return model.loops*16*.25*60/model.bpm+.5}
 function stamp(value){const n=Math.max(0,Math.floor(value)||0);return Math.floor(n/60)+':'+String(n%60).padStart(2,'0')}

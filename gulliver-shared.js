@@ -326,7 +326,7 @@
     const wrap=document.createElement('div');wrap.className='gulliver-shell';
     wrap.innerHTML=`<div class="gulliver-shell-inner">
       <div class="gulliver-shell-left">
-        <a class="gulliver-shell-brand" href="index.html">🧰 뚝딱교실</a>
+        <a class="gulliver-shell-brand" href="index.html">🧰 매일 수업</a>
         <span class="gulliver-shell-sep">/</span>
         <span class="gulliver-shell-title"></span>
       </div>

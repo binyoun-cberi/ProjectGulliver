@@ -4,7 +4,15 @@ const VIDEO_MAX=15*1024*1024,MEDIA_COUNT=18,VIDEO_CLIPS=5,VIDEO_SECONDS=45;
 const BEATS=16,TRACKS=['melody','bass','clap','hat'];
 const VIDEO_MIME=['video/mp4','video/webm','video/quicktime','image/png','image/jpeg'];
 const AUDIO_MIME=['audio/wav','audio/wave','audio/x-wav'];
-function makeVideo(){return{title:'우리 반 활동 영상',format:'wide',caption:'우리 반의 즐거운 하루',clips:[],audio:null}}
+const VIDEO_STARTERS={
+ week:{title:'우리 반 한 주',caption:'이번 주에 있었던 즐거운 일을 소개해요.'},
+ fieldtrip:{title:'현장 체험 기록',caption:'함께 보고 느낀 순간을 담았어요.'},
+ project:{title:'프로젝트 발표',caption:'우리의 생각과 만든 결과를 소개합니다.'},
+ classroom:{title:'우리 교실 소개',caption:'우리 교실의 공간과 약속을 안내해요.'},
+ celebration:{title:'함께 축하해요',caption:'기억하고 싶은 축하의 순간입니다.'}
+};
+function videoPresets(){return JSON.parse(JSON.stringify(VIDEO_STARTERS))}
+function makeVideo(template=''){const p=VIDEO_STARTERS[template];return p?{...p,format:'wide',clips:[],audio:null}:{title:'우리 반 활동 영상',format:'wide',caption:'우리 반의 즐거운 하루',clips:[],audio:null}}
 function makeMusic(){return{title:'우리 반 음악',bpm:110,loops:2,notes:{melody:[0,4,7,12],bass:[0,8],clap:[4,12],hat:[0,2,4,6,8,10,12,14]},melodyPitch:64}}
 function validateVideo(raw){
  if(!raw||!Array.isArray(raw.clips)||raw.clips.length>VIDEO_CLIPS)throw Error('영상은 최대 5개 장면까지 사용할 수 있어요.');
@@ -38,5 +46,5 @@ function fileAllowed(file){return!!file&&VIDEO_MIME.includes(file.type)&&file.si
 function mediaAllowed(file){return!!file&&[...VIDEO_MIME,...AUDIO_MIME].includes(file.type)&&file.size>0&&file.size<=VIDEO_MAX}
 function audioAllowed(file){return!!file&&AUDIO_MIME.includes(file.type)&&Number.isFinite(file.size)&&file.size>44&&file.size<=VIDEO_MAX}
 function durationOf(project){return validateVideo(project).clips.reduce((n,c)=>n+c.duration,0)}
-return{VIDEO_MAX,MEDIA_COUNT,VIDEO_CLIPS,VIDEO_SECONDS,BEATS,TRACKS,VIDEO_MIME,AUDIO_MIME,audioAllowed,mediaAllowed,makeVideo,makeMusic,validateVideo,validateMusic,fileAllowed,durationOf};
+return{VIDEO_MAX,MEDIA_COUNT,VIDEO_CLIPS,VIDEO_SECONDS,BEATS,TRACKS,VIDEO_MIME,AUDIO_MIME,audioAllowed,mediaAllowed,VIDEO_STARTERS,videoPresets,makeVideo,makeMusic,validateVideo,validateMusic,fileAllowed,durationOf};
 });

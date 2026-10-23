@@ -272,7 +272,8 @@ async function start(kind,existing=null,officialId='',preset=''){
  // Saved quick-edit projects must reopen in the editor that created them.
  // A separate official FilmCraft/SoundCraft session is never this saved payload.
  const quickProject=(!!existing&&(kind==='video'||kind==='music'))||(pendingTransfer?.target===kind&&kind==='video');
- frame.src=path+'?studio=1'+(officialId?'&officialId='+encodeURIComponent(officialId):(quickProject?'&editor=simple':''))+(kind==='canvas'&&!existing&&['blank','presentation','worksheet'].includes(preset)?'&preset='+preset:'');
+ const supportedPreset=kind==='canvas'?['blank','presentation','worksheet'].includes(preset):kind==='video'?Object.prototype.hasOwnProperty.call(window.GulliverMediaCore?.VIDEO_STARTERS||{},preset):kind==='music'?Object.prototype.hasOwnProperty.call(window.GulliverMusicCore?.presets?.()||{},preset):false;
+ frame.src=path+'?studio=1'+(officialId?'&officialId='+encodeURIComponent(officialId):(quickProject?'&editor=simple':''))+(!existing&&supportedPreset?(kind==='canvas'?'&preset=':'&template=')+encodeURIComponent(preset):'');
  status(C.managed(kind)?'작업을 여는 중이에요. 변경 사항은 자동으로 저장돼요.':'편집기를 불러오고 있어요. 파일은 해당 도구 안에서 저장해 주세요.');
  return true;
 }

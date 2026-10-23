@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const paths={'홈':'index.html','제작실':'뚝딱 제작실.html','내 보관함':'내 보관함.html','수업 준비':'lesson.html'};
-const names=['홈','만들기','내 보관함'];
+const names=['홈','문제지','교사 도구','내 보관함'];
 test('principal screens share one navigation renderer instead of per-page menus',()=>{
  for(const path of [...Object.values(paths),'우리반.html']){
   const source=fs.readFileSync(path,'utf8');
