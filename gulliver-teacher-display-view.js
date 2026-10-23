@@ -104,7 +104,11 @@
     }else if(style==='digital'){
       const box=element('div','tt-student-digital');box.append(label,number,sub);center.append(box);
     }else if(style==='sand'){
-      center.append(label,element('div','tt-student-sand',progress>=100?'⌛':'⏳'),number,sub);
+      const sand=element('div','tt-student-sand-layout');
+      const visual=window.TimeToolsHourglass?.create(progress,Boolean(data.running));
+      if(visual)sand.append(visual);
+      const text=element('div','tt-student-sand-copy');
+      text.append(label,number,sub);sand.append(text);center.append(sand);
     }else{
       const bar=element('div','tt-student-track'),fill=element('div','tt-student-track-fill');
       fill.style.width=progress+'%';fill.style.background=color;bar.append(fill);
