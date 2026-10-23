@@ -127,7 +127,7 @@ test('regenerating history changes questions while retaining answer and source',
 });
 
 test('history matching and ordering keep their printed answers consistent',()=>{
- const chronology=['고조선의 등장','신라 건국','고구려 건국','백제 건국','금관가야 건국','발해 건국','고려 건국','조선 건국','훈민정음 반포','임진왜란','수원 화성 완공','독립신문 창간','대한제국 선포','3·1 운동','대한민국 임시 정부 수립','광복','대한민국 정부 수립','6·25 전쟁 시작'];
+ const chronology=['고조선의 등장','신라 건국','고구려 건국','백제 건국','금관가야 건국','광개토 대왕 즉위','백제 사비 천도','백제 멸망','고구려 멸망','발해 건국','장보고 청해진 설치','고려 건국','귀주 대첩','고려 강화도 천도','직지 인쇄','조선 건국','훈민정음 반포','임진왜란','병자호란','수원 화성 완공','동학 농민 운동','독립신문 창간','대한제국 선포','국권 피탈','3·1 운동','대한민국 임시 정부 수립','광주 학생 항일 운동','광복','대한민국 정부 수립','6·25 전쟁 시작','정전 협정','4·19 혁명','5·18 민주화 운동','6월 민주 항쟁'];
  for(const count of [5,10,15])for(const seed of [1,42,2026]){
   const matching=generate({subject:'social',grade:5,topic:'history-review',type:'history-matching',count,seed}).items;
   const right=matching.map(q=>q.right);assert.equal(new Set(right).size,count);
