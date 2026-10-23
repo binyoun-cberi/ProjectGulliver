@@ -43,7 +43,89 @@
     channel?.postMessage({version: 1, token, kind, type, payload});
   }
 
+  function renderUnifiedTime(data){
+    const mode=['clock','timer','stopwatch','lesson','learn'].includes(data.mode)?data.mode:'timer';
+    const styles={clock:['analog','digital'],timer:['ring','digital','bar','sand'],stopwatch:['digital','ring','bar'],lesson:['ring','bar','digital'],learn:['analog','digital']};
+    const style=styles[mode].includes(data.style)?data.style:styles[mode][0];
+    const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number(v)||0));
+    const hour=clamp(data.hour,0,23),minute=clamp(data.minute,0,59),second=clamp(data.second,0,59);
+    const format=(ms,centiseconds)=>{
+      const n=clamp(ms,0,86400000),t=centiseconds?Math.floor(n/1000):Math.ceil(n/1000);
+      const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;
+      const result=h?`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      return centiseconds?`${result}.${String(Math.floor(n%1000/10)).padStart(2,'0')}`:result;
+    };
+    const labels={clock:'현재 시각',timer:'타이머',stopwatch:'스톱워치',lesson:'수업 흐름',learn:'시계 읽기'};
+    const progress=clamp(data.progress,0,100);
+    const color=/^#[0-9a-f]{6}$/i.test(data.color||'')?data.color:'#556be9';
+    const shownTime=mode==='clock'?`${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:${String(second).padStart(2,'0')}`:
+      mode==='learn'?(data.reveal?`${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`:'몇 시일까요?'):
+      format(data.timeMs,mode==='stopwatch');
+    const card=element('section','display-card tt-display-card');
+    const head=element('div','display-eyebrow',labels[mode]);
+    const title=element('h1','display-title',safeText(mode==='lesson'?data.title:labels[mode]));
+    const center=element('div','tt-student-face');
+    const label=element('div','tt-student-label',safeText(data.phase,labels[mode]));
+    const number=element('div','tt-student-number',shownTime);
+    const sub=element('div','tt-student-sub',mode==='lesson'?safeText(data.note):mode==='learn'?(data.reveal?'정답을 확인했어요.':'시곗바늘을 보고 시간을 말해 보세요.'):mode==='clock'?'':safeText(data.status));
+    function clockSvg(){
+      const ns='http://www.w3.org/2000/svg';
+      const svg=document.createElementNS(ns,'svg');
+      svg.setAttribute('class','tt-student-analog');svg.setAttribute('viewBox','0 0 300 300');svg.setAttribute('role','img');
+      svg.setAttribute('aria-label',`${hour}시 ${minute}분`);
+      const item=(tag,attrs,text)=>{
+        const node=document.createElementNS(ns,tag);for(const [name,val] of Object.entries(attrs))node.setAttribute(name,String(val));
+        if(text!==undefined)node.textContent=String(text);svg.append(node);return node;
+      };
+      item('circle',{cx:150,cy:150,r:143,fill:'#fff',stroke:'#c3cde4','stroke-width':4});
+      for(let h=1;h<=12;h++){
+        const r=h*Math.PI/6;
+        item('text',{x:150+114*Math.sin(r),y:157-114*Math.cos(r),'text-anchor':'middle','font-size':23,'font-weight':800,fill:'#2e405d'},h);
+      }
+      function hand(angle,length,color,width){
+        const r=angle*Math.PI/180;
+        item('line',{x1:150,y1:150,x2:150+length*Math.sin(r),y2:150-length*Math.cos(r),stroke:color,'stroke-width':width,'stroke-linecap':'round'});
+      }
+      hand(((hour%12)+minute/60)*30,76,'#263852',9);
+      hand((minute+second/60)*6,105,'#556be9',6);
+      if(mode==='clock')hand(second*6,114,'#dc6570',2);
+      item('circle',{cx:150,cy:150,r:6,fill:'#263852'});
+      return svg;
+    }
+    if(style==='analog'){
+      center.append(clockSvg());
+      if(mode==='clock'||data.reveal)center.append(number);
+      else center.append(sub);
+    }else if(style==='ring'){
+      const ring=element('div','tt-student-ring');
+      ring.style.background=`conic-gradient(${color} ${progress}%,#e0e5f2 ${progress}%)`;
+      const inside=element('div','tt-student-ring-inside');
+      inside.append(label,number,sub);ring.append(inside);center.append(ring);
+    }else if(style==='digital'){
+      const box=element('div','tt-student-digital');box.append(label,number,sub);center.append(box);
+    }else if(style==='sand'){
+      center.append(label,element('div','tt-student-sand',progress>=100?'⌛':'⏳'),number,sub);
+    }else{
+      const bar=element('div','tt-student-track'),fill=element('div','tt-student-track-fill');
+      fill.style.width=progress+'%';fill.style.background=color;bar.append(fill);
+      center.append(label,number,bar,sub);
+    }
+    card.append(head,title,center);
+    if(mode==='lesson'){
+      card.append(element('p','tt-student-remaining',`수업 전체 ${format(data.remainingMs)} 남음`));
+      const strip=element('div','tt-student-events');
+      (Array.isArray(data.events)?data.events:[]).slice(0,30).forEach((event,index)=>{
+        const pill=element('span','tt-student-event'+(index===data.currentIndex?' active':''),safeText(event.name,`활동 ${index+1}`));
+        strip.append(pill);
+      });
+      card.append(strip);
+      card.append(element('p','tt-student-remaining',`다음: ${safeText(data.next,'수업 마무리')}`));
+    }
+    stage.replaceChildren(card);
+  }
+
   function renderTimer(data) {
+    if (data?.unified === true) { renderUnifiedTime(data); return; }
     const card = element('section', 'display-card');
     const eyebrow = element('div', 'display-eyebrow', '수업 흐름 타이머');
     const title = element('h1', 'display-title', safeText(data.title, '오늘의 수업'));
