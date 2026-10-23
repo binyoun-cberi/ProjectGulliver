@@ -53,7 +53,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
       const shell = page.locator('.gt-shell');
       await shell.waitFor({state: 'attached'});
       assert.equal(await page.locator('.gulliver-shell').count(), 1, tool.href);
-      assert.equal(await shell.getByRole('navigation', {name: '매일 수업 주요 메뉴'}).locator('a').count(), 4, tool.href);
+      assert.equal(await shell.getByRole('navigation', {name: '클라시트 주요 메뉴'}).locator('a').count(), 4, tool.href);
       assert.ok(await page.locator('body').evaluate(node => node.classList.contains('gt-teacher-tool')));
       const status = await shell.locator('.gt-help-panel p').textContent();
       assert.match(status, /저장 방식이 달라요/, tool.href);

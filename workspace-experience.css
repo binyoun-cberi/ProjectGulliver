@@ -1,6 +1,6 @@
 /* Canva-inspired, teacher-first navigation (2026-10-14).
    Existing classroom activities remain available. */
-:root{--brand:var(--gx-brand,#6949d3);--soft:var(--gx-soft,#f1ecff);--ink:var(--gx-ink,#28354e);--muted:var(--gx-muted,#627086);--line:var(--gx-line,#e2e6ef)}
+:root{--brand:var(--gx-brand,#247b6b);--soft:var(--gx-soft,#e8f5ef);--ink:var(--gx-ink,#28354e);--muted:var(--gx-muted,#627086);--line:var(--gx-line,#e2e6ef)}
 body{background:#fff}
 .main{max-width:1620px}
 .sidebar{border-right-color:#eceaf2}

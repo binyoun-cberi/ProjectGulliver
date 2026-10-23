@@ -1,0 +1,19 @@
+{
+  "name": "클라시트 — 수업의 모든 순간을 한곳에",
+  "short_name": "클라시트",
+  "description": "문제지와 수업 도구를 한곳에 모은 교사용 플랫폼",
+  "lang": "ko",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#247b6b",
+  "background_color": "#f5f9f6",
+  "icons": [
+    {
+      "src": "./clasheet-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

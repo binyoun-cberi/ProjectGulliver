@@ -1,8 +1,8 @@
 /* Shared application chrome and teacher controls. Student content is not themed here. */
 :root {
-  --gx-brand:#6949d3; --gx-brand-hover:#5736bb; --gx-soft:#f1ecff;
+  --gx-brand:#247b6b; --gx-brand-hover:#176a5b; --gx-soft:#e8f5ef;
   --gx-ink:#28354e; --gx-muted:#627086; --gx-line:#e2e6ef;
-  --gx-background:#f7f8fc; --gx-surface:#fff; --gx-danger:#b4233c;
+  --gx-background:#f5f9f6; --gx-surface:#fff; --gx-danger:#b4233c;
   --gx-radius:12px; --gx-header-height:72px; --gx-content:1560px;
 }
 body.gx-app {
@@ -41,7 +41,7 @@ body.gx-app.gt-teacher-tool:not(.student-view):not(.presentation){padding-top:va
   color:var(--gx-muted);background:transparent;text-decoration:none;line-height:1.4;
   font-family:inherit;font-size:13px;font-weight:750;white-space:nowrap;
 }
-.gx-header .gx-nav a:hover{background:#f5f3fb;color:var(--gx-brand-hover)}
+.gx-header .gx-nav a:hover{background:#ecf6f1;color:var(--gx-brand-hover)}
 .gx-header .gx-nav a[aria-current=page]{background:var(--gx-soft);color:var(--gx-brand-hover);border-color:transparent}
 .gx-header .gx-header-actions{display:flex;align-items:center;gap:7px;flex:none}
 .gx-header .gx-header-actions:empty{display:none}
@@ -52,9 +52,9 @@ body.gx-app.gt-teacher-tool:not(.student-view):not(.presentation){padding-top:va
   background:var(--gx-surface);color:var(--gx-ink);font:750 12px/1.4 "Pretendard",system-ui,sans-serif;
   cursor:pointer;white-space:nowrap;list-style:none;
 }
-.gx-header .gt-open-display,.gx-header .gt-open-display[data-open=true]{background:var(--gx-soft);border-color:#ded3f7;color:var(--gx-brand-hover)}
+.gx-header .gt-open-display,.gx-header .gt-open-display[data-open=true]{background:var(--gx-soft);border-color:#bcded2;color:var(--gx-brand-hover)}
 .gx-header .gt-help{position:relative;margin:0;padding:0;border:0;border-radius:0;background:transparent}
-.gx-header .gt-action:hover{transform:none;background:#f5f3fb}
+.gx-header .gt-action:hover{transform:none;background:#ecf6f1}
 .gx-header .gt-help-panel{top:calc(100% + 12px);right:0;z-index:2}
 .gx-header .gx-skip{position:absolute;left:16px;top:-100px;padding:12px 18px;background:var(--gx-brand);color:white;border-radius:10px;text-decoration:none}
 .gx-header .gx-skip:focus{top:8px}

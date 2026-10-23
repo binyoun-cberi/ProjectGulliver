@@ -309,7 +309,7 @@
 
   function classroomCard(title, subtitle) {
     const card = element('section', 'display-card classroom-card');
-    card.append(element('div', 'display-eyebrow', '뚝딱교실 · 학급 운영'), element('h1', 'display-title', title));
+    card.append(element('div', 'display-eyebrow', '클라시트 · 학급 운영'), element('h1', 'display-title', title));
     if (subtitle) card.append(element('p', 'classroom-subtitle', subtitle));
     return card;
   }
