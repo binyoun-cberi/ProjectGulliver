@@ -9,6 +9,8 @@ test('클라시트 브랜드가 홈, 문제지, 시간 도구, 학생 화면에 
  }
  assert.match(read('workspace-home.js'),/home:\['클라시트'/);
  assert.match(read('gulliver-app-shell.js'),/클라시트 주요 메뉴/);
+ assert.match(read('gulliver-teacher-display-view.js'),/클라시트 · 학급 운영/);
+ assert.match(read('gulliver-shared.js'),/클라시트/);
 });
 test('브랜드 변경 뒤에도 학급 기록 키와 백업 데이터 구조를 유지한다',()=>{
  assert.match(read('clasheet-mark.svg'),/<svg[\s\S]*<\/svg>/);
