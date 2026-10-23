@@ -3,8 +3,8 @@
   --gt-ink: #263247;
   --gt-muted: #738098;
   --gt-line: #e4e8f1;
-  --gt-brand: #6958dc;
-  --gt-soft: #f2efff;
+  --gt-brand: #247b6b;
+  --gt-soft: #e8f5ef;
   --gt-surface: #fff;
   --gt-radius: 14px;
 }
@@ -40,7 +40,7 @@ body.gt-teacher-tool:not(.student-view):not(.presentation) {
   display: inline-flex;
   gap: 8px;
   align-items: center;
-  color: #5545bf;
+  color: #176a5b;
   font-size: 14px;
   font-weight: 900;
   white-space: nowrap;
