@@ -1,0 +1,53 @@
+/* CLASHEET time tools: three focused interface improvement passes. */
+/* Pass 1 - hierarchy, consistent palette and a real SVG hourglass. */
+body:has(.tt-app) {--tt-accent:#137767;--tt-line:#dce8e4;--tt-muted:#596c77;--tt-ink:#1c3434;--tt-bg:#f3f8f5}
+.tt-app{max-width:1540px}
+.tt-hero{margin:10px 0 20px}
+.tt-hero h1{font-weight:900;letter-spacing:-.055em;color:#183f38}
+.tt-hero p{line-height:1.55}
+.tt-student,.tt-btn--primary{background:#137767;border-color:#137767;color:#fff}
+.tt-student:hover,.tt-btn--primary:hover{background:#095b50}
+.tt-modes{border-bottom:1px solid #d9e8e1;padding:4px 0 17px;scroll-snap-type:x proximity}
+.tt-modes button{scroll-snap-align:start;border-radius:14px;color:#465f67;font-size:14px;transition:background .16s ease,border-color .16s ease}
+.tt-modes button:hover{background:#f2f7f5;border-color:#a1cfc3}
+.tt-modes button[aria-selected=true]{border-color:#65ac99;background:#e4f4ec;color:#0c6856;box-shadow:0 0 0 1px #65ac9925}
+.tt-grid{grid-template-columns:minmax(0,1.5fr) minmax(310px,.72fr);gap:20px}
+.tt-card{border-color:#dfeae6;box-shadow:0 12px 28px #2a655b0a;border-radius:22px}
+.tt-card h2{color:#204b45}
+.tt-styles{padding-bottom:16px;border-bottom:1px solid #edf2f0}
+.tt-styles button{color:#51696b}
+.tt-styles button:hover{background:#edf6f2}
+.tt-styles button[aria-pressed=true]{background:#e1f3ea;border-color:#8cc6b5;color:#126e5c}
+.tt-stage{min-height:425px;background:linear-gradient(148deg,#f6faf8,#edf6f1);border-color:#dceae4}
+.tt-digital{background:#193c3b;box-shadow:0 15px 32px #254a4830}
+.tt-ring{box-shadow:0 15px 36px #246b5920}
+.tt-track>div{background:#157766}
+.tt-face-label{color:#254c44}
+.tt-digital .tt-face-label{color:#ffffff}
+.tt-digital .tt-number{color:#fff}
+.tt-actions{padding:2px 0 0}
+.tt-actions .tt-btn--primary{min-width:150px}
+.tt-notice{color:#126655;font-weight:800}
+.tt-field input:focus,.tt-field select:focus{border-color:#4d9d8c}
+.tt-btn:hover:not(:disabled){border-color:#89beb0}
+.tt-btn--primary:hover:not(:disabled){border-color:#095b50}
+.tt-period-pill.active{background:#dff3e9;color:#0c6654}
+.tt-period-row{background:#f7faf8}
+.tt-hourglass{display:block;width:100%;height:auto;max-height:310px;overflow:visible;filter:drop-shadow(0 12px 18px #2b62552c)}
+.tt-hourglass [data-part="falling-sand"]{animation:tt-sand-fall .55s linear infinite;stroke-dashoffset:0}
+.tt-hourglass[data-running="false"] [data-part="falling-sand"]{animation:none}
+@keyframes tt-sand-fall {to{stroke-dashoffset:-16}}
+.tt-sand-layout{display:grid;grid-template-columns:minmax(150px,235px) minmax(0,1fr);gap:clamp(12px,2vw,34px);align-items:center;width:min(100%,740px);margin:auto}
+.tt-sand-copy{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:17px;text-align:left;min-width:0}
+.tt-sand-copy .tt-number{font-size:clamp(50px,6.5vw,91px);white-space:nowrap}
+.tt-sand-copy .tt-face-label{font-size:clamp(21px,2.3vw,31px)}
+.tt-sand-copy .tt-face-sub{line-height:1.55}
+.tt-student-sand-layout{display:grid;grid-template-columns:minmax(145px,300px) minmax(0,1fr);gap:clamp(16px,3vw,48px);align-items:center;justify-content:center;width:min(100%,930px);margin:auto}
+.tt-student-sand-layout .tt-hourglass{max-height:410px}
+.tt-student-sand-copy{min-width:0;text-align:left;display:flex;flex-direction:column;gap:19px;align-items:flex-start}
+.tt-student-sand-copy .tt-student-number{font-size:clamp(50px,8vw,110px)}
+.tt-student-sand-copy .tt-student-sub{line-height:1.55}
+@media(min-width:1160px){.tt-modes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr))}.tt-modes button{white-space:normal}.tt-grid>aside.tt-card{position:sticky;top:82px;max-height:calc(100vh - 106px);overflow:auto;scrollbar-gutter:stable}}
+@media(max-width:860px){.tt-grid{grid-template-columns:1fr}.tt-stage{min-height:370px}.tt-grid>aside.tt-card{position:static;max-height:none;overflow:visible}}
+@media(max-width:620px){.tt-sand-layout{grid-template-columns:1fr;gap:2px;justify-items:center}.tt-sand-layout .tt-hourglass{width:min(155px,45vw)}.tt-sand-copy{text-align:center;align-items:center;gap:7px}.tt-sand-copy .tt-number{font-size:clamp(43px,11vw,67px)}.tt-student-sand-layout{grid-template-columns:1fr;gap:0;justify-items:center}.tt-student-sand-layout .tt-hourglass{width:min(170px,42vw)}.tt-student-sand-copy{text-align:center;align-items:center;gap:6px}.tt-student-sand-copy .tt-student-number{font-size:clamp(40px,11vw,70px)}.tt-stage{min-height:330px}}
+@media(prefers-reduced-motion:reduce){.tt-hourglass [data-part="falling-sand"]{animation:none!important}.tt-modes button{transition:none}}
