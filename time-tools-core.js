@@ -151,6 +151,7 @@
     }
     function adjust(ms){
       if(state.mode!=='timer'&&state.mode!=='lesson')return;
+      const wasRunning=state.running;
       pause();
       if(state.mode==='timer'){
         const remaining=Math.max(0,duration('timer')-elapsed('timer'));
@@ -161,6 +162,7 @@
         state.events[pos.index].durationSec=Math.round(clamp(state.events[pos.index].durationSec+ms/1000,10,21600));
         state.time.lesson.elapsedMs=clamp(state.time.lesson.elapsedMs,0,duration('lesson'));
       }
+      if(wasRunning && elapsed(state.mode)<duration(state.mode))start();
     }
     function next(){
       if(state.mode!=='lesson')return;
@@ -176,8 +178,11 @@
       if(!['timer','stopwatch'].includes(state.mode))return false;
       const label=clean(name,25);
       if(!label)return false;
-      const valueMs=state.mode==='timer'?elapsed('timer'):elapsed('stopwatch');
-      if(valueMs<=0)return false;
+      const spent=elapsed(state.mode);
+      if(spent<=0 || (state.mode==='timer' && spent>=duration('timer')))return false;
+      // Countdown records represent remaining time; stopwatch records represent elapsed time.
+      // This preserves the ranking semantics of classUniversalClock.v2.
+      const valueMs=state.mode==='timer'?duration('timer')-spent:spent;
       const list=state.records[state.mode];
       list.push({id:`r-${now()}-${list.length}`,name:label,valueMs:Math.round(valueMs),createdAt:now()});
       if(list.length>200)list.shift();
@@ -224,7 +229,8 @@
       setLearning(hour,minute){state.learn={hour:Math.round(clamp(hour,1,12)),minute:Math.round(clamp(minute,0,59)),reveal:false};},
       setReveal(v){state.learn.reveal=!!v;},
       get data(){return state;},
-      listRecords(mode=state.mode){return (state.records[mode]||[]).slice().sort((a,b)=>a.valueMs-b.valueMs);}
+      listRecords(mode=state.mode){return (state.records[mode]||[]).slice().sort((a,b)=>
+        (mode==='timer' ? b.valueMs-a.valueMs : a.valueMs-b.valueMs) || a.createdAt-b.createdAt);}
     };
   }
   const api=Object.freeze({modes,styles,defaultEvents,sanitizeEvents,normalize,migrate,format,lessonAt,createEngine});
