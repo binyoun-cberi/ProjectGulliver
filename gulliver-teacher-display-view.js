@@ -44,8 +44,8 @@
   }
 
   function renderUnifiedTime(data){
-    const mode=['clock','timer','stopwatch','lesson','learn'].includes(data.mode)?data.mode:'timer';
-    const styles={clock:['analog','digital'],timer:['ring','digital','bar','sand'],stopwatch:['digital','ring','bar'],lesson:['ring','bar','digital'],learn:['analog','digital']};
+    const mode=['clock','timer','stopwatch','lesson','period','learn'].includes(data.mode)?data.mode:'timer';
+    const styles={clock:['analog','digital'],timer:['ring','digital','bar','sand'],stopwatch:['digital','ring','bar'],lesson:['ring','bar','digital'],period:['ring','bar','digital'],learn:['analog','digital']};
     const style=styles[mode].includes(data.style)?data.style:styles[mode][0];
     const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number(v)||0));
     const hour=clamp(data.hour,0,23),minute=clamp(data.minute,0,59),second=clamp(data.second,0,59);
@@ -55,7 +55,7 @@
       const result=h?`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
       return centiseconds?`${result}.${String(Math.floor(n%1000/10)).padStart(2,'0')}`:result;
     };
-    const labels={clock:'현재 시각',timer:'타이머',stopwatch:'스톱워치',lesson:'수업 흐름',learn:'시계 읽기'};
+    const labels={clock:'현재 시각',timer:'타이머',stopwatch:'스톱워치',lesson:'수업 흐름',period:'교시별 타이머',learn:'시계 읽기'};
     const progress=clamp(data.progress,0,100);
     const color=/^#[0-9a-f]{6}$/i.test(data.color||'')?data.color:'#556be9';
     const shownTime=mode==='clock'?`${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:${String(second).padStart(2,'0')}`:
@@ -67,7 +67,7 @@
     const center=element('div','tt-student-face');
     const label=element('div','tt-student-label',safeText(data.phase,labels[mode]));
     const number=element('div','tt-student-number',shownTime);
-    const sub=element('div','tt-student-sub',mode==='lesson'?safeText(data.note):mode==='learn'?(data.reveal?'정답을 확인했어요.':'시곗바늘을 보고 시간을 말해 보세요.'):mode==='clock'?'':safeText(data.status));
+    const sub=element('div','tt-student-sub',mode==='period'?safeText(data.note)+(data.next?' · 다음: '+safeText(data.next):''):mode==='lesson'?safeText(data.note):mode==='learn'?(data.reveal?'정답을 확인했어요.':'시곗바늘을 보고 시간을 말해 보세요.'):mode==='clock'?'':safeText(data.status));
     function clockSvg(){
       const ns='http://www.w3.org/2000/svg';
       const svg=document.createElementNS(ns,'svg');
@@ -111,6 +111,16 @@
       center.append(label,number,bar,sub);
     }
     card.append(head,title,center);
+    if(mode==='period'){
+      const strip=element('div','tt-student-events');
+      (Array.isArray(data.periods)?data.periods:[]).slice(0,12).forEach((item,index)=>{
+        const active=index===data.currentIndex&&data.periodStatus==='class';
+        const pill=element('span','tt-student-event'+(active?' active':''),safeText(item.name,`교시 ${index+1}`));
+        strip.append(pill);
+      });
+      card.append(strip);
+      card.append(element('p','tt-student-remaining',safeText(data.note)+(data.next?' · 다음: '+safeText(data.next):'')));
+    }
     if(mode==='lesson'){
       card.append(element('p','tt-student-remaining',`수업 전체 ${format(data.remainingMs)} 남음`));
       const strip=element('div','tt-student-events');
