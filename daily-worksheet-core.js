@@ -91,7 +91,7 @@ const OTHER_SOURCES={
  social:'https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458&lev=0'
 };
 function alignment(subject,topic,grade){const math=subject==='math',match=math?MATH_ALIGNMENT[topic]?.[grade]:OTHER_ALIGNMENT[subject]?.[topic]?.[grade];if(!match)return null;
- const scope=math?'이 문제지는 성취기준 중 계산 연습만 다룹니다.':subject==='korean'?'이 문제지는 짧은 글의 중심 내용 고르기만 다룹니다.':subject==='science'&&topic==='matter'?'이 문제지는 물질의 상태 분류만 다룹니다.':subject==='science'?'이 문제지는 기상 관찰 도구 고르기만 다룹니다.':subject==='social'&&HISTORY_AGE[topic]?'이 문제지는 시대별 주요 역사 사실을 확인합니다. 성취기준 전체를 평가하지 않습니다.':subject==='social'&&topic!=='economy'?'이 문제지는 짧은 자료에서 근거를 찾는 연습만 다룹니다. 성취기준 전체를 평가하지 않습니다.':subject==='social'?'이 문제지는 생산과 소비의 구별만 다룹니다.':'이 문제지는 글로 제시된 낱말의 뜻 고르기만 다룹니다.';
+ const scope=math?'이 문제지는 성취기준 중 계산 연습만 다룹니다.':subject==='korean'?'이 문제지는 짧은 글의 중심 내용 고르기만 다룹니다.':subject==='science'&&topic==='matter'?'이 문제지는 물질의 상태와 기본 성질을 관찰·비교하는 연습을 다룹니다.':subject==='science'?'이 문제지는 기상 관찰 도구, 측정 방법과 간단한 자료 해석을 다룹니다.':subject==='social'&&HISTORY_AGE[topic]?'이 문제지는 시대별 주요 역사 사실을 확인합니다. 성취기준 전체를 평가하지 않습니다.':subject==='social'&&topic!=='economy'?'이 문제지는 짧은 자료에서 근거를 찾는 연습만 다룹니다. 성취기준 전체를 평가하지 않습니다.':subject==='social'?'이 문제지는 생산과 소비의 구별만 다룹니다.':'이 문제지는 글로 제시된 낱말의 뜻 고르기만 다룹니다.';
  const source=math?CURRICULUM_SOURCE:subject==='science'&&topic==='weather'?'https://www.goe.go.kr/resource/old/BBSMSTR_000000030136/BBS_202502201106162700.pdf':subject==='english'&&grade>=5?'https://www.goe.go.kr/resource/old/BBSMSTR_000000030136/BBS_202411110130211774.pdf':OTHER_SOURCES[subject];
  return{code:match[0],summary:match[1],source,scope}}
 const OPPOSITES=[['크다','작다'],['높다','낮다'],['길다','짧다'],['빠르다','느리다'],['밝다','어둡다'],['따뜻하다','차갑다'],['무겁다','가볍다'],['넓다','좁다'],['많다','적다'],['가깝다','멀다'],['기쁘다','슬프다'],['시작','끝'],['앞','뒤'],['안','밖'],['위','아래'],['열다','닫다'],['주다','받다'],['들어가다','나오다'],['깨끗하다','더럽다'],['쉽다','어렵다']];
@@ -484,21 +484,13 @@ const MAIN_IDEAS=[
  ["자전거가 고장 나서 탈 수 없었습니다. 은서는 바퀴를 고친 뒤 다시 탔습니다.", "은서는 자전거를 고쳐 다시 탔습니다."],
  ["할머니는 옛날 사진을 꺼냈습니다. 사진을 보며 가족 이야기를 들려주셨습니다.", "할머니는 사진을 보며 가족 이야기를 하셨습니다."]
 ];
-const LIVING=[['참새','생물'],['강아지','생물'],['소나무','생물'],['민들레','생물'],['버섯','생물'],['지렁이','생물'],['개미','생물'],['이끼','생물'],['콩나물','생물'],['고양이','생물'],['돌멩이','비생물'],['유리컵','비생물'],['책상','비생물'],['장난감 자동차','비생물'],['물','비생물'],['공기','비생물'],['연필','비생물'],['종이','비생물'],['모래','비생물'],['자전거','비생물']];
-const MATTER=[['얼음','고체'],['돌','고체'],['소금','고체'],['나무 책상','고체'],['유리컵','고체'],['연필','고체'],['물','액체'],['우유','액체'],['식용유','액체'],['주스','액체'],['식초','액체'],['간장','액체'],['공기','기체'],['수증기','기체'],['산소','기체'],['이산화 탄소','기체'],['헬륨','기체']];
-const WEATHER=[
- ['기온을 재는 도구','온도계'],['비가 내린 양을 재는 도구','우량계'],['바람이 불어오는 방향을 재는 도구','풍향계'],['바람의 빠르기를 재는 도구','풍속계'],
- ['오늘의 기온을 알고 싶을 때','온도계'],['밤새 내린 비의 양을 알고 싶을 때','우량계'],['바람이 어느 쪽에서 오는지 알고 싶을 때','풍향계'],['바람이 얼마나 빠르게 부는지 알고 싶을 때','풍속계'],
- ['운동장 바람의 방향을 알고 싶을 때','풍향계'],['비 오는 날 강수량을 조사할 때','우량계'],['현재 공기의 온도를 재고 싶을 때','온도계'],['태풍이 올 때 바람의 빠르기를 재고 싶을 때','풍속계'],
- ['어제와 오늘의 기온을 비교하고 싶을 때','온도계'],['빗물이 얼마나 모였는지 재고 싶을 때','우량계'],['바람이 불어오는 쪽을 관찰할 때','풍향계'],['바람의 세기를 수치로 비교하고 싶을 때','풍속계']
-];
 // Original classroom scenarios. Each row: context, question, correct answer, distractors, reason.
 const PLANT_OBSERVATION=[
  ['강낭콩 씨앗을 젖은 솜 위에 두었더니 며칠 뒤 씨껍질이 갈라졌다.','가장 먼저 관찰할 변화는?','뿌리가 나온다',['꽃이 핀다','열매가 열린다'],'싹이 틀 때 먼저 어린뿌리가 나온다.'],
  ['한 화분은 햇빛이 드는 창가, 다른 화분은 어두운 상자에 두었다. 물과 흙은 같다.','비교하려는 조건은?','빛',['물','흙'],'두 화분에서 다르게 한 조건은 빛이다.'],
  ['같은 콩을 심은 두 화분 중 하나에만 물을 주었다.','비교하려는 조건은?','물',['빛','화분 크기'],'다른 조건을 같게 하고 물의 유무만 바꾸었다.'],
  ['씨앗을 심은 뒤 날짜마다 싹의 길이를 자로 재었다.','변화를 기록하기에 알맞은 것은?','날짜별 싹의 길이',['씨앗 봉투의 색','화분을 산 가격'],'날짜와 길이를 함께 기록해야 자란 정도를 비교할 수 있다.'],
- ['싹이 자라 첫 번째 잎이 펼쳐졌다.','관찰 기록에 알맞은 것은?','잎 두 장이 펼쳐졌다',['식물이 행복하다','곧 열매가 열릴 것이다'],'관찰 기록에는 실제로 본 모습을 쓴다.'],
+ ['싹이 자라 잎 두 장이 펼쳐졌다.','관찰 기록에 알맞은 것은?','잎 두 장이 펼쳐졌다',['식물이 행복하다','곧 열매가 열릴 것이다'],'관찰 기록에는 실제로 본 모습을 쓴다.'],
  ['같은 날 심은 씨앗의 싹이 서로 다른 날 나왔다.','알맞은 결론은?','씨앗마다 싹트는 날이 다를 수 있다',['모든 씨앗은 같은 날 싹튼다','늦게 나온 싹은 자라지 않는다'],'실제 관찰 결과로는 싹트는 시기가 다름을 알 수 있다.'],
  ['꽃이 지고 꽃이 있던 자리에 작은 열매가 생겼다.','다음에 살펴볼 부분은?','열매 속 씨앗',['뿌리의 색만','화분의 무늬'],'열매 안에 새 씨앗이 생기는지 살펴본다.'],
  ['씨앗에서 싹이 나고 자라 꽃과 열매가 생겼다.','한살이의 순서로 알맞은 것은?','씨앗 → 싹 → 꽃 → 열매',['꽃 → 씨앗 → 싹 → 열매','열매 → 꽃 → 싹 → 씨앗'],'관찰한 성장 순서가 씨앗에서 열매로 이어진다.'],
@@ -506,7 +498,7 @@ const PLANT_OBSERVATION=[
  ['해바라기의 키를 매주 같은 요일에 쟀다. 1주 8cm, 2주 13cm, 3주 18cm였다.','2주에서 3주 사이 얼마나 자랐나요?','5cm',['10cm','18cm'],'18cm에서 13cm를 빼면 5cm이다.'],
  ['화분 A와 B를 비교할 때 A에는 콩 2개, B에는 콩 20개를 심고 빛도 다르게 했다.','빛의 영향을 알아보기 어려운 까닭은?','씨앗 수와 빛을 함께 바꾸었다',['물을 똑같이 주었다','같은 종류의 콩을 썼다'],'한 번에 여러 조건을 바꾸면 원인을 구별하기 어렵다.'],
  ['관찰한 잎의 길이는 월요일 3cm, 금요일 5cm였다.','기록에 근거한 설명은?','잎이 2cm 자랐다',['잎이 5cm 줄었다','꽃이 두 송이 피었다'],'길이가 3cm에서 5cm로 늘었다.'],
- ['민들레 꽃이 진 뒤 솜털이 달린 씨앗이 생겼다.','솜털이 도와주는 일은?','바람을 타고 퍼지기',['흙을 더 단단하게 하기','꽃의 색 바꾸기'],'솜털이 씨앗을 바람에 실어 보낸다.'],
+ ['민들레 꽃이 진 뒤 씨가 들어 있는 솜털 달린 작은 열매가 생겼다.','솜털이 도와주는 일은?','바람을 타고 퍼지기',['흙을 더 단단하게 하기','꽃의 색 바꾸기'],'솜털이 씨앗을 바람에 실어 보낸다.'],
  ['식물의 뿌리가 흙 속으로 뻗었다.','뿌리의 역할로 알맞은 것은?','물을 흡수한다',['씨앗을 멀리 날린다','꽃가루를 만든다'],'뿌리는 흙 속의 물을 흡수한다.'],
  ['두 식물을 비교했더니 하나는 넓은 잎, 다른 하나는 가늘고 긴 잎이었다.','관찰 결과에 알맞은 말은?','잎의 모양이 다르다',['뿌리가 같은 길이다','둘 다 꽃이 피지 않는다'],'제시된 정보는 잎의 모양 차이이다.'],
  ['싹의 길이를 눈대중으로만 기록하다가 자를 사용했다.','자로 재면 좋은 점은?','길이를 수치로 비교할 수 있다',['싹이 더 빨리 자란다','물주기가 필요 없어진다'],'같은 단위로 측정하면 변화량을 비교할 수 있다.'],
@@ -522,7 +514,7 @@ const ECOSYSTEM_EVIDENCE=[
  ['낙엽 위에서 버섯이 자라고 낙엽이 점차 분해된다.','버섯의 역할은?','죽은 생물을 분해한다',['빛으로 양분을 만든다','동물을 사냥한다'],'버섯 같은 분해자는 죽은 생물을 분해한다.'],
  ['연못에 물풀, 물벼룩, 작은 물고기, 새가 산다.','생물 요소에 해당하는 것은?','물벼룩',['물','햇빛'],'물벼룩은 살아 있는 생물이다.'],
  ['숲의 햇빛, 흙, 나무, 다람쥐를 조사했다.','비생물 요소는?','햇빛',['나무','다람쥐'],'햇빛은 살아 있지 않은 환경 요소이다.'],
- ['같은 화분의 식물 두 개 중 한 개만 어두운 곳에 두었다.','알아보려는 환경 요인은?','빛',['공기','씨앗 종류'],'빛의 조건만 다르게 설정했다.'],
+ ['같은 종류의 식물을 같은 크기의 화분에 하나씩 심었다. 다른 조건은 같게 하고 한 화분만 어두운 곳에 두었다.','알아보려는 환경 요인은?','빛',['공기','씨앗 종류'],'빛의 조건만 다르게 설정했다.'],
  ['하천의 물이 마르자 물고기가 사는 곳이 줄었다.','이 변화의 직접적인 원인은?','물의 감소',['햇빛의 증가','돌의 색 변화'],'물이라는 비생물 요소가 줄어 서식지가 달라졌다.'],
  ['풀 → 쥐 → 올빼미','쥐가 줄면 올빼미는 어떤 영향을 받나요?','먹이를 구하기 어려워진다',['먹이가 반드시 늘어난다','풀로 양분을 만든다'],'올빼미의 먹이인 쥐가 줄어든다.'],
  ['나무 열매를 새가 먹고, 새가 씨앗을 다른 곳에 떨어뜨렸다.','새가 열매를 먹는 일이 나무에 주는 영향은?','씨앗이 퍼질 수 있다',['나무가 물을 못 마신다','나무가 바로 죽는다'],'새의 이동을 통해 씨앗이 다른 곳으로 옮겨진다.'],
@@ -537,6 +529,19 @@ const ECOSYSTEM_EVIDENCE=[
  ['숲의 나무, 돌, 곤충을 관찰했다.','생물과 비생물로 바르게 나눈 것은?','나무·곤충은 생물, 돌은 비생물',['돌·나무는 생물, 곤충은 비생물','모두 비생물'],'나무와 곤충은 살아 있고 돌은 비생물이다.'],
  ['먹이 그물에서 메뚜기를 새와 개구리가 모두 먹는다.','메뚜기와 연결된 소비자는?','새와 개구리',['풀과 햇빛','물과 돌'],'새와 개구리 모두 메뚜기를 먹는다.']
 ];
+// Reuse the reviewed context banks through the same science selection path.
+for(const [topic,rows] of [['plant-observation',PLANT_OBSERVATION],['ecosystem',ECOSYSTEM_EVIDENCE]]){
+ const materials=SCIENCE.banks[topic]||[];
+ SCIENCE.banks[topic]=rows.map(([detail,prompt,answer,wrong,explanation],i)=>({id:topic+'-context-'+(i+1),detail:detail.includes('→')?'화살표는 먹이에서 먹는 생물 쪽을 가리킵니다. '+detail:detail,prompt,answer,wrong,explanation})).concat(materials);
+}
+SCIENCE.review(SCIENCE.banks);
+function scienceQuestions(topic,size,random){
+ const bank=SCIENCE.banks[topic],groups=new Map(),selected=shuffle(bank.filter(q=>q.material),random).slice(0,2),used=new Set(selected.map(q=>q.id));
+ for(const q of shuffle(bank.filter(q=>!q.material),random)){if(!groups.has(q.family))groups.set(q.family,[]);groups.get(q.family).push(q)}
+ const families=shuffle([...groups.keys()],random);
+ while(selected.length<size){let added=false;for(const family of families){const candidate=groups.get(family).find(q=>!used.has(q.id));if(!candidate)continue;selected.push(candidate);used.add(candidate.id);added=true;if(selected.length===size)break}if(!added)throw Error('과학 문항 수를 줄여 주세요.')}
+ return selected.map(q=>({...choice(q.prompt,q.answer,[q.answer,...q.wrong],random,q.detail||''),scienceId:q.id,scienceFamily:q.material?'data':q.family,explanation:q.explanation,...(q.material?{scienceMaterial:q.material}:{})}));
+}
 const WORDS=[['apple','사과'],['book','책'],['school','학교'],['water','물'],['friend','친구'],['family','가족'],['cat','고양이'],['dog','개'],['sun','태양'],['moon','달'],['tree','나무'],['flower','꽃'],['milk','우유'],['pencil','연필'],['chair','의자'],['table','탁자'],['happy','행복한'],['small','작은'],['big','큰'],['blue','파란색'],['red','빨간색'],['yellow','노란색'],['morning','아침'],['night','밤']];
 const SENTENCES=[
  ['나는 사과를 좋아해요.','I like apples.','I / like / apples.'],['이것은 내 책이에요.','This is my book.','This / is / my / book.'],
@@ -1034,11 +1039,6 @@ ECONOMY.push(
  ['재봉사가 옷을 만들어 판매했습니다.','생산'],['목공소에서 의자를 만들었습니다.','생산'],
  ['가족이 공연 표를 사서 공연을 보았습니다.','소비'],['학생이 미용실에서 머리를 잘랐습니다.','소비']
 );
-MATTER.push(['밀가루','고체'],['꿀','액체'],['질소','기체']);
-WEATHER.push(
- ['아침과 오후의 기온 차이를 조사할 때','온도계'],['운동장에 내린 비의 양을 측정할 때','우량계'],
- ['학교 깃발이 향하는 쪽과 바람이 불어오는 쪽을 구별해 관찰할 때','풍향계'],['어제와 오늘의 바람 빠르기를 비교할 때','풍속계']
-);
 SENTENCES.push(
  ['나는 아침에 우유를 마셔요.','I drink milk in the morning.','I / drink / milk / in / the / morning.'],
  ['그녀는 책을 읽어요.','She reads a book.','She / reads / a / book.'],
@@ -1120,13 +1120,7 @@ function item(subject,topic,grade,r,difficulty,variant){
   if(topic==='community'){const [job,answer]=pick(COMMUNITY,r);return choice(`${job}을 하는 사람은 누구인가요?`,answer,[answer,...shuffle(COMMUNITY.map(v=>v[1]).filter(v=>v!==answer),r).slice(0,3)],r)}
   const [scenario,answer]=pick(ECONOMY,r);return choice(`다음은 생산과 소비 중 무엇에 해당하나요?  ${scenario}`,answer,['생산','소비'],r);
  }
- if(subject==='science'){
-  if(SCIENCE.banks[topic]){const q=pick(SCIENCE.banks[topic].filter(q=>!q.material),r);return {...choice(q.prompt,q.answer,[q.answer,...q.wrong],r),scienceId:q.id,explanation:q.explanation}}
-  if(topic==='plant-observation'||topic==='ecosystem'){const [detail,prompt,answer,wrong,explanation]=pick(topic==='plant-observation'?PLANT_OBSERVATION:ECOSYSTEM_EVIDENCE,r);return{...choice(prompt,answer,[answer,...wrong],r,detail),explanation}}
-  if(topic==='living'){const [thing,answer]=pick(LIVING,r);return choice(`‘${thing}’은(는) 생물인가요, 비생물인가요?`,answer,['생물','비생물'],r)}
-  if(topic==='matter'){const [thing,answer]=pick(MATTER,r);return choice(`실온에서 ‘${thing}’의 상태는 무엇인가요?`,answer,['고체','액체','기체'],r)}
-  const [task,answer]=pick(WEATHER,r);return choice(`'${task}'에 알맞은 관찰 도구는 무엇인가요?`,answer,['온도계','우량계','풍향계','풍속계'],r);
- }
+ if(subject==='science')throw Error('과학 문항은 검수된 문제 은행에서 생성해 주세요.');
  if(topic==='short-reading'||topic==='message-reading'){const [detail,prompt,answer,wrong,explanation]=pick(topic==='short-reading'?SHORT_READING:MESSAGE_READING,r);return{...choice(prompt,answer,[answer,...wrong],r,detail),explanation}}
  if(topic==='words'){const [word,answer]=pick(WORDS,r);return choice(`‘${word}’의 뜻을 고르세요.`,answer,[answer,...shuffle(WORDS.map(v=>v[1]).filter(v=>v!==answer),r).slice(0,3)],r)}
  if(topic==='sentence'){const [meaning,answer,words]=pick(SENTENCES,r);return{prompt:`‘${meaning}’에 맞게 낱말을 배열해 영어 문장을 쓰세요.`,answer,choices:[],detail:words}}
@@ -1229,16 +1223,17 @@ function generateSingle({subject,topic,grade,count=10,seed=Date.now(),difficulty
  const mixed=topic==='history-mix',mathMixed=topic==='math-mix',chosen=mixed?eras:[],selectedMath=mathMixed?mathTypes:[],allowedMath=mathMixed?new Set(mathMixOptions(year).map(([id])=>id)):null;
  if(responseFormat&&(!answerFormats(subject,topic).some(([id])=>id===responseFormat)||subject==='math'))throw Error('이 학습 내용에서는 선택한 문제 유형을 사용할 수 없어요.');
  if(!info||!info.grades.includes(year)||!info.topics.some(t=>t[0]===topic&&available(t,year))||![5,10,15,20].includes(size)||!['basic','challenge'].includes(difficulty)||!['tens','ones'].includes(variant)||type&&!selected||['mixed','decimal','history-review','history-mix','math-mix','reading-set'].includes(topic)&&!selected||mixed&&(!Array.isArray(chosen)||!chosen.length||new Set(chosen).size!==chosen.length||chosen.some(era=>!HISTORY_ERAS.includes(era)))||mathMixed&&(!Array.isArray(selectedMath)||!selectedMath.length||new Set(selectedMath).size!==selectedMath.length||selectedMath.some(id=>!allowedMath.has(id))))throw Error(mixed?'역사 시대를 하나 이상 선택해 주세요.':mathMixed?'수학 유형을 하나 이상 선택해 주세요.':'학년·교과·유형을 다시 선택해 주세요.');
- const random=rng(seed),eraOrder=mixed?shuffle(chosen,random):[],mathOrder=mathMixed?shuffle(selectedMath,random):[],items=topic==='history-review'?historyReview(type,size,random):topic==='reading-set'?readingSet(size,year,random,type):[],seen=new Set(),seenAnswers=new Set(),seenPassages=new Set(),uniqueHistoryAnswers=subject==='social'&&(mixed||Boolean(HISTORY_QUIZ[topic]))&&!type.endsWith('-ox');let attempts=0;
+ const random=rng(seed),eraOrder=mixed?shuffle(chosen,random):[],mathOrder=mathMixed?shuffle(selectedMath,random):[],items=subject==='science'?scienceQuestions(topic,size,random):topic==='history-review'?historyReview(type,size,random):topic==='reading-set'?readingSet(size,year,random,type):[],seen=new Set(),seenAnswers=new Set(),seenPassages=new Set(),uniqueHistoryAnswers=subject==='social'&&(mixed||Boolean(HISTORY_QUIZ[topic]))&&!type.endsWith('-ox');let attempts=0;
  while(items.length<size&&attempts++<3000){const skill=mathMixed?mathOrder[items.length%mathOrder.length]:null,candidate=mathMixed?{...typedMath(skill,random),skill}:mixed?historyQuiz(eraOrder[items.length%eraOrder.length],type,random):subject==='social'&&HISTORY_QUIZ[topic]?historyQuiz(topic,type,random):subject==='social'&&SOCIAL_THEME_QUESTIONS[topic]?socialTheme(topic,random):subject==='social'&&SOCIAL_EVIDENCE[topic]?socialEvidence(topic,random):subject==='korean'&&['vocabulary','idiom','hanja'].includes(topic)?koreanPractice(topic,year,random):selected&&subject==='math'?typedMath(type,random):item(subject,topic,year,random,difficulty,variant),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||uniqueHistoryAnswers&&seenAnswers.has(candidate.answer)||subject==='social'&&!HISTORY_QUIZ[topic]&&SOCIAL_EVIDENCE[topic]&&seenPassages.has(candidate.detail)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);seenAnswers.add(candidate.answer);if(subject==='social'&&!HISTORY_QUIZ[topic]&&SOCIAL_EVIDENCE[topic]||topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
  if(items.length<size)throw Error('이 유형에서는 서로 다른 문제를 충분히 만들지 못했어요. 문항 수를 줄여 주세요.');
- if(subject==='science'&&SCIENCE.banks[topic]){const evidence=shuffle(SCIENCE.banks[topic].filter(q=>q.material),random).slice(0,2).map(q=>({...choice(q.prompt,q.answer,[q.answer,...q.wrong],random),scienceId:q.id,explanation:q.explanation,scienceMaterial:q.material}));items.splice(0,evidence.length,...evidence)}
+
  const finalized=convertAnswerFormat(items,subject,topic,responseFormat,seed);
  return{subject,topic,type,responseFormat:responseFormat||'',eras:mixed?[...chosen]:[],mathTypes:mathMixed?[...selectedMath]:[],grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:year+'학년 '+info.name+' · '+(mixed?'선택한 시대 역사':mathMixed?'선택한 유형 혼합 연습':subject!=='math'?info.topics.find(t=>t[0]===topic)[1]:selected?selected[1]:info.topics.find(t=>t[0]===topic)[1]),alignment:['mixed','decimal','history-mix','math-mix'].includes(topic)?null:alignment(subject,topic,year),items:finalized};
 }
 function supportedCounts(options){return (options.subject==='math'&&options.topic==='column'?[6,8,10,12]:[5,10,15,20]).filter(count=>{try{generate({...options,count,seed:42});return true}catch{return false}})}
 return{SUBJECTS,generate,mixOptions,supportedCounts,alignment,units,types,answerFormats,answerFormatFor};
 });
+
 
 
 

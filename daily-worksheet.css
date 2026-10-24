@@ -275,3 +275,8 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
 .print-paper .science-evidence .choice-list>li{padding:1px 0}
 .print-paper .science-evidence .answer-explanation{font-size:10px;line-height:1.5}
 .large-print .print-paper .print-question-list.science-evidence{grid-template-columns:1fr}
+
+
+/* Context boxes must not force a short science teacher sheet onto a second page. */
+.print-paper .science-evidence .question-detail{font-size:11px;line-height:1.4;padding:4px 6px;margin-top:5px}
+.large-print .print-paper .science-evidence .question-detail{font-size:14px;line-height:1.6;padding:7px 9px}
