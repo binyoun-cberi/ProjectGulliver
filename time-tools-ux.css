@@ -78,3 +78,45 @@ body:has(.tt-app) {--tt-accent:#137767;--tt-line:#dce8e4;--tt-muted:#596c77;--tt
 @media(max-width:1180px){.tt-actions{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:860px){.tt-actions{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(max-width:550px){.tt-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.tt-actions .tt-btn--primary{grid-column:span 2}.tt-actions button{min-height:47px}.tt-styles button{flex:1 0 auto}.tt-mode-description{font-size:13px}}
+
+/* Pass 3 - keyboard, touch, projection and reduced-motion refinement. */
+.tt-modes [role="tab"]{min-width:0}
+.tt-modes [role="tab"]:focus-visible,.tt-styles button:focus-visible,.tt-actions button:focus-visible{outline:3px solid #18937a;outline-offset:2px}
+.tt-app :is(input,button,select):disabled{cursor:not-allowed}
+.tt-stage:has(.tt-sand-layout){padding:clamp(12px,2vw,25px)}
+.tt-stage:has(.tt-sand-layout) .tt-display-face{max-width:800px}
+.tt-ring .tt-face-label{color:#254c44}
+.tt-ring-inner .tt-number{font-variant-numeric:tabular-nums}
+.tt-student-sand-layout .tt-hourglass{filter:drop-shadow(0 17px 23px #356f642d)}
+.tt-student-sand-copy .tt-student-number{font-variant-numeric:tabular-nums;word-break:normal;letter-spacing:-.065em}
+.tt-mode-description{overflow-wrap:anywhere}
+.tt-card{min-width:0}
+.tt-stage .tt-number{max-width:100%;overflow-wrap:anywhere}
+.tt-view-name,.tt-live-state{letter-spacing:0}
+@media(max-width:860px){
+  .tt-grid>aside.tt-card{scroll-margin-top:22px}
+  .tt-styles{gap:7px}
+  .tt-styles button{min-height:44px}
+  .tt-student-sand-layout .tt-hourglass{max-height:295px}
+}
+@media(max-width:520px){
+  .tt-app{padding:13px 12px max(36px,env(safe-area-inset-bottom))}
+  .tt-hero{align-items:start}
+  .tt-hero h1{font-size:29px}
+  .tt-student{width:100%;min-height:46px}
+  .tt-modes{gap:7px;padding-bottom:12px;scroll-padding-inline:8px}
+  .tt-modes button{font-size:13px;min-height:45px;padding:9px 12px}
+  .tt-card{border-radius:18px;padding:14px}
+  .tt-stage{border-radius:17px}
+  .tt-face-sub{line-height:1.45}
+  .tt-ring{width:min(280px,77vw);padding:15px}
+  .tt-ring .tt-number{font-size:clamp(36px,12vw,58px)}
+  .tt-digital{padding:29px 13px}
+  .tt-digital .tt-number{font-size:clamp(42px,11vw,66px)}
+  .tt-period-row .tt-remove{min-width:28px}
+  .tt-footer-note{line-height:1.65}
+  .tt-student-sand-layout .tt-hourglass{max-height:195px}
+}
+@media(prefers-reduced-motion:reduce){
+  .tt-btn,.tt-track>div,.tt-student-track-fill{transition:none!important}
+}
