@@ -412,3 +412,13 @@ test('unit quotas are exact, grade limited and reproducible in all five subjects
  const columns=C.mixOptions('math',3).filter(x=>x.topic==='column');
  assert.ok(C.generate({subject:'math',grade:3,seed:10,unitMix:columns.slice(0,2).map(x=>({id:x.id,count:3}))}).items.every(q=>q.column));
 });
+
+test('science expansion covers twelve distinct topics and 240 authored questions in four answer formats',()=>{
+ const B=require('../science-expansion.js'),C=require('../daily-worksheet-core.js');assert.equal(B.topics.length,12);
+ const ids=new Set();for(const [topic,,minimum] of B.topics){assert.equal(B.banks[topic].length,20);for(const q of B.banks[topic]){assert.ok(!ids.has(q.id));ids.add(q.id);assert.equal(new Set([q.answer,...q.wrong]).size,3)}
+ for(const responseFormat of ['choice','ox','short','essay']){const state={subject:'science',grade:minimum,topic,count:20,responseFormat,seed:27},sheet=C.generate(state);assert.deepEqual(sheet,C.generate(state));assert.equal(new Set(sheet.items.map(q=>q.scienceId)).size,20);for(const q of sheet.items)assert.ok(q.answer&&q.explanation)}
+ if(minimum===5)assert.throws(()=>C.generate({subject:'science',grade:3,topic,count:5}));
+ }
+ assert.equal(ids.size,240);
+ for(const grade of [3,4,5,6])for(const [topic] of C.SUBJECTS.science.topics.filter(t=>grade>=t[2]&&grade<=(t[3]||6)))assert.ok(C.units('science',grade).some(u=>u.topics.includes(topic)));
+});

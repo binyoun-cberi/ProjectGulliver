@@ -2,6 +2,7 @@
 'use strict';
 const HISTORY_PHOTOS=typeof module==='object'&&module.exports?require('./data/history-photo-bank.js'):globalThis.HistoryPhotoBank;
 const COLUMN=typeof module==='object'&&module.exports?require('./column-math.js'):globalThis.ColumnMath;
+const SCIENCE=typeof module==='object'&&module.exports?require('./science-expansion.js'):globalThis.ScienceExpansion;
 const SUBJECTS={
  korean:{name:'국어',grades:[1,2,3,4,5,6],topics:[['opposite','반대말 찾기',1],['spacing','바른 띄어쓰기',2],['reading','글 읽고 답하기',1],['mainidea','짧은 글의 중심 내용',1,2],['vocabulary','문장 속 낱말의 뜻',3],['idiom','관용 표현과 속담',3],['hanja','한자어의 뜻',5],['reading-set','한 글을 읽고 여러 문제 풀기',1]]},
  math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['column','세로셈 연습',2],['math-mix','유형 골라 섞기',1],['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['shape','도형의 성질',1],['measurement','길이와 들이',2],['data-reading','표와 자료 읽기',3],['hundreds','세 자리 수 덧셈',3,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3],['mixed','자연수의 혼합 계산',5,5],['decimal','소수의 계산',5,6]]},
@@ -9,6 +10,7 @@ const SUBJECTS={
  science:{name:'과학',grades:[3,4,5,6],topics:[['living','생물과 비생물',3],['matter','물질의 상태',3],['plant-observation','식물의 한살이 관찰',3,4],['weather','날씨 관찰 도구',5],['ecosystem','생태계 자료 읽기',5]]},
  english:{name:'영어',grades:[3,4,5,6],topics:[['words','기본 낱말',3],['sentence','문장 만들기',3],['conversation','상황에 맞는 대답',3],['short-reading','짧은 글 읽기',3,4],['message-reading','안내문·메시지 읽기',5]]}
 };
+SUBJECTS.science.topics.push(...SCIENCE.topics);
 // Semester labels are a browsing aid based on common unit names; textbook order varies.
 const MATH_UNITS={
  1:[
@@ -65,7 +67,7 @@ for(const grade of [3,4,5,6])KOREAN_UNITS[grade]=[
  {id:`k${grade}-reading`,label:grade<=4?'읽기 · 중심 생각과 이야기 흐름 [4국02-02·4국05-01]':'읽기 · 구조·추론과 작품 감상 [6국02-01·02·6국05-03]',topics:['reading-set'],types:[['reading-set-five','문학·비문학 함께 읽기','reading-set'],['reading-set-literary','문학 작품 읽기','reading-set'],['reading-set-nonfiction','비문학 글 읽기','reading-set'],['reading-set-brief','기초 짧은 글 읽기','reading-set']]}
 ];
 const COLUMN_TYPES=[['column-mul2','두 자리 수 × 한 자리 수','column'],['column-mul3','세 자리 수 × 한 자리 수','column'],['column-div3','세 자리 수 ÷ 한 자리 수','column'],['column-add3','세 자리 수 + 세 자리 수','column'],['column-sub3','세 자리 수 − 세 자리 수','column']];
-function units(subject,grade){return subject==='math'?[...(MATH_UNITS[grade]||[]),...(Number(grade)>=2?[{id:'column-practice',label:'세로셈 연습',topics:['column'],types:Number(grade)===2?COLUMN_TYPES.filter(t=>['column-mul2','column-add3','column-sub3'].includes(t[0])):COLUMN_TYPES}]:[])]:subject==='social'?(SOCIAL_UNITS[grade]||[]):subject==='korean'?(KOREAN_UNITS[grade]||[]):[]}
+function units(subject,grade){return subject==='science'?SUBJECTS.science.topics.filter(t=>available(t,Number(grade))).map(([id,label])=>({id:'science-'+id,label,topics:[id],types:[[id+'-practice',label,id]]})):subject==='math'?[...(MATH_UNITS[grade]||[]),...(Number(grade)>=2?[{id:'column-practice',label:'세로셈 연습',topics:['column'],types:Number(grade)===2?COLUMN_TYPES.filter(t=>['column-mul2','column-add3','column-sub3'].includes(t[0])):COLUMN_TYPES}]:[])]:subject==='social'?(SOCIAL_UNITS[grade]||[]):subject==='korean'?(KOREAN_UNITS[grade]||[]):[]}
 function types(subject,grade,topic,unitId){return units(subject,grade).filter(unit=>!unitId||unit.id===unitId).flatMap(unit=>unit.types.filter(entry=>entry[2]===topic).map(([id,label])=>[id,label]))}
 // Verified against the 2022 mathematics curriculum (MOE notice 2022-33, appendix 8).
 // These are practice links, not a claim that a sheet assesses the entire standard.
@@ -1119,6 +1121,7 @@ function item(subject,topic,grade,r,difficulty,variant){
   const [scenario,answer]=pick(ECONOMY,r);return choice(`다음은 생산과 소비 중 무엇에 해당하나요?  ${scenario}`,answer,['생산','소비'],r);
  }
  if(subject==='science'){
+  if(SCIENCE.banks[topic]){const q=pick(SCIENCE.banks[topic],r);return {...choice(q.prompt,q.answer,[q.answer,...q.wrong],r),scienceId:q.id,explanation:q.explanation}}
   if(topic==='plant-observation'||topic==='ecosystem'){const [detail,prompt,answer,wrong,explanation]=pick(topic==='plant-observation'?PLANT_OBSERVATION:ECOSYSTEM_EVIDENCE,r);return{...choice(prompt,answer,[answer,...wrong],r,detail),explanation}}
   if(topic==='living'){const [thing,answer]=pick(LIVING,r);return choice(`‘${thing}’은(는) 생물인가요, 비생물인가요?`,answer,['생물','비생물'],r)}
   if(topic==='matter'){const [thing,answer]=pick(MATTER,r);return choice(`실온에서 ‘${thing}’의 상태는 무엇인가요?`,answer,['고체','액체','기체'],r)}
@@ -1235,5 +1238,6 @@ function generateSingle({subject,topic,grade,count=10,seed=Date.now(),difficulty
 function supportedCounts(options){return (options.subject==='math'&&options.topic==='column'?[6,8,10,12]:[5,10,15,20]).filter(count=>{try{generate({...options,count,seed:42});return true}catch{return false}})}
 return{SUBJECTS,generate,mixOptions,supportedCounts,alignment,units,types,answerFormats,answerFormatFor};
 });
+
 
 
