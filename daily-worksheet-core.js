@@ -585,18 +585,21 @@ const SENTENCES=[
  ['나는 강아지를 좋아해요.','I like dogs.','I / like / dogs.'],['이것은 내 연필이에요.','This is my pencil.','This / is / my / pencil.']
 ];
 const CONVERSATIONS=[
- ['How are you?','I am fine.',['I am fine.','It is a book.','It is blue.']],['What is your name?','My name is Mina.',['My name is Mina.','I am ten.','It is sunny.']],
- ['What color is it?','It is blue.',['It is blue.','I am hungry.','It is a dog.']],['Do you like apples?','Yes, I do.',['Yes, I do.','It is red.','My name is Mina.']],
- ['Where is the library?','It is next to the school.',['It is next to the school.','It is a pencil.','I like milk.']],
- ['How old are you?','I am ten years old.',['I am ten years old.','I am fine.','It is ten o’clock.']],
- ['What time is it?','It is three o’clock.',['It is three o’clock.','It is a chair.','I am three.']],
- ['Can you swim?','Yes, I can.',['Yes, I can.','Yes, it is.','Yes, I do.']],['What is this?','It is a pencil.',['It is a pencil.','I am happy.','It is Monday.']],
- ['How is the weather?','It is sunny.',['It is sunny.','I am seven.','It is a book.']],
- ['What day is it today?','It is Monday.',['It is Monday.','It is a pencil.','I am ten.']],
- ['Are you hungry?','Yes, I am.',['Yes, I am.','Yes, I do.','Yes, it is.']],
- ['Where is my book?','It is on the desk.',['It is on the desk.','It is sunny.','I am fine.']],
- ['What do you want?','I want water.',['I want water.','I am seven.','It is Friday.']],
- ['Thank you.','You are welcome.',['You are welcome.','I am sorry.','Good night.']],
+ ['How are you?','I am fine.',['I am fine.','I am ten years old.','My name is Mina.']],
+ ['What is your name?','My name is Mina.',['My name is Mina.','I am ten years old.','My favorite color is blue.']],
+ ['What color is it?','It is blue.',['It is blue.','It is red.','It is green.'],'파란 풍선을 가리키며 색을 묻습니다.'],
+ ['Do you like apples?','Yes, I do.',['Yes, I do.','No, I do not.','Yes, I am.'],'사과를 좋아한다고 대답하는 상황입니다.'],
+ ['Where is the library?','It is next to the school.',['It is next to the school.','It is behind the hospital.','It is across from the park.'],'도서관이 학교 옆에 있다고 알려 줍니다.'],
+ ['How old are you?','I am ten years old.',['I am ten years old.','I am ten o’clock.','I have ten books.'],'열 살이라고 대답합니다.'],
+ ['What time is it?','It is three o’clock.',['It is three o’clock.','It is two o’clock.','It is four o’clock.'],'시계가 세 시를 가리킵니다.'],
+ ['Can you swim?','Yes, I can.',['Yes, I can.','Yes, I do.','Yes, it is.'],'수영할 수 있다고 대답합니다.'],
+ ['What is this?','It is a pencil.',['It is a pencil.','It is a pen.','It is an eraser.'],'연필을 가리키며 물어봅니다.'],
+ ['How is the weather?','It is sunny.',['It is sunny.','It is rainy.','It is cloudy.'],'오늘은 맑은 날씨입니다.'],
+ ['What day is it today?','It is Monday.',['It is Monday.','It is Tuesday.','It is Friday.'],'달력에 오늘이 월요일로 표시되어 있습니다.'],
+ ['Are you hungry?','Yes, I am.',['Yes, I am.','Yes, I do.','Yes, it is.'],'배가 고프다고 대답합니다.'],
+ ['Where is my book?','It is on the desk.',['It is on the desk.','It is under the desk.','It is in the bag.'],'책이 책상 위에 놓여 있습니다.'],
+ ['What do you want?','I want water.',['I want water.','I want orange juice.','I want an apple.'],'물을 마시고 싶다고 대답합니다.'],
+ ['Thank you.','You are welcome.',['You are welcome.','I am sorry.','Excuse me.']],
  ['Good morning!','Good morning!',['Good morning!','Good night!','Goodbye!']]
 ];
 const SHORT_READING=[
@@ -1155,7 +1158,7 @@ function item(subject,topic,grade,r,difficulty,variant){
  if(topic==='short-reading'||topic==='message-reading'){const [detail,prompt,answer,wrong,explanation]=pick(topic==='short-reading'?SHORT_READING:MESSAGE_READING,r);return{...choice(prompt,answer,[answer,...wrong],r,detail),explanation}}
  if(topic==='words'){const [word,answer]=pick(WORDS,r);return choice(`‘${word}’의 뜻을 고르세요.`,answer,[answer,...shuffle(WORDS.map(v=>v[1]).filter(v=>v!==answer),r).slice(0,3)],r)}
  if(topic==='sentence'){const [meaning,answer,words]=pick(SENTENCES,r);return{prompt:`‘${meaning}’에 맞게 낱말을 배열해 영어 문장을 쓰세요.`,answer,choices:[],detail:words}}
- const [question,answer,options]=pick(CONVERSATIONS,r);return choice(`다음 말에 알맞은 대답을 고르세요.  “${question}”`,answer,options,r);
+ const [question,answer,options,context]=pick(CONVERSATIONS,r);return choice(`${context?context+'  ':''}다음 말에 알맞은 대답을 고르세요. “${question}”`,answer,options,r);
 }
 
 /* An answer format is different from the topic/content bank. Preserve legacy
