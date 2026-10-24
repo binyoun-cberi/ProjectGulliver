@@ -164,3 +164,15 @@ body.print-answers .print-paper .result-answer{visibility:visible!important}
   .daily-workspace>#sheetForm{position:static;max-height:none;overflow:visible}
  }
 }
+
+
+/* Keep the screen measurement copy metrically identical to the printed page. */
+.daily-layout{box-sizing:border-box}
+.print-paper .history-photo img{height:35mm;max-width:75mm}
+.print-paper .history-photo{margin:5px 0}
+.print-paper .history-photo figcaption{font-size:8pt}
+.print-paper .reading-text{margin:0 0 12px -10px;padding:12px 14px}
+.print-paper .reading-text p{font-size:12px;line-height:1.6}
+.print-paper .reading-question{padding-bottom:6px!important;margin-bottom:4px}
+body:not(.print-answers) .print-paper .paper-standard,
+body:not(.print-answers) .print-paper .reading-standard{display:none!important}
