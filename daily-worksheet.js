@@ -56,7 +56,7 @@ function resetMix(){ $('unitMixEnabled').checked=false;$('unitMixRows').replaceC
 $('addUnitMix').onclick=()=>{addMixRow();updateFilterSummary()};
 function denseAvailable(){if(subject!=='math')return false;if(!$('typeSetting').hidden)return /^(add-|sub-|small-|two-|times-)/.test($('type').value)&&$('type').value!=='times-missing';return ['addition','hundreds','multiplication'].includes($('topic').value)}
 function syncCount(preferred){
- const column=subject==='math'&&$('topic').value==='column';$('columnSettings').hidden=!column;$('columnSettings').disabled=!column;$('columnModeLabel').textContent=$('type').value==='column-div3'?'나머지':$('type').value==='column-sub3'?'받아내림':'받아올림';
+ const column=subject==='math'&&$('topic').value==='column';$('columnSettings').hidden=!column;$('columnSettings').disabled=!column;$('columnModeLabel').textContent=$('type').value==='column-div3'?'나머지':['column-sub2','column-sub3'].includes($('type').value)?'받아내림':'받아올림';
  const dense=denseAvailable(),counts=C.supportedCounts({subject,grade:Number($('grade').value),topic:$('topic').value,
   type:contentType(),eras:selectedEras(),mathTypes:selectedMathTypes(),
   columnMode:$('columnMode').value,columnPlaces:$('columnPlaces').checked,difficulty:$('difficulty').value,variant:$('variant').value,responseFormat:subject==='math'?'':$('responseFormat').value});
