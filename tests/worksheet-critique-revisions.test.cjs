@@ -51,3 +51,12 @@ test('sample science distractors no longer assume physical impossibilities',()=>
  assert.ok(temperature);
  assert.equal(temperature.answer,'둘 다 실내 온도에 가까워진다');
 });
+
+test('final science review does not restore rejected distractors',()=>{
+ const oil=Science.banks['mixture-separation'].find(x=>x.id==='mixture-separation-8');
+ assert.deepEqual(oil.wrong,['기름이 물에 고르게 녹아 투명해진다','시간이 지나도 층 없이 고르게 섞여 있다']);
+ const habitat=Science.banks['environment-energy'].find(x=>x.id==='environment-energy-7');
+ assert.deepEqual(habitat.wrong,['모든 동물의 먹이가 더 많아진다','나무와 풀이 사라져도 서식 장소는 그대로 유지된다']);
+ const thermal=Science.banks.heat.find(x=>x.id==='heat-6');
+ assert.ok(thermal.wrong.every(x=>!x.includes('항상 실내 온도')));
+});
