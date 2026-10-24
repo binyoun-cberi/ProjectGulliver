@@ -587,6 +587,7 @@
             </div>
             <canvas id="qrCanvas" width="768" height="768" aria-label="생성된 QR 코드"></canvas>
           </div>
+          <p id="qrFreshness" role="status" aria-live="polite" style="margin:12px 0;padding:10px 12px;border:1px solid #d7e8e2;border-radius:12px;background:#f2f9f5;color:#316457;font-size:13px;font-weight:700">내용을 입력하고 QR 만들기를 눌러 주세요.</p>
           <div class="actions preview-actions">
             <button id="downloadBtn" class="btn btn-primary" type="button" disabled>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"/></svg>
@@ -693,7 +694,7 @@
         wifiSecurity: $('#wifiSecurity'), wifiPassword: $('#wifiPassword'),
         wifiPasswordField: $('#wifiPasswordField'), showWifiPassword: $('#showWifiPassword'), wifiHidden: $('#wifiHidden'),
         errorLevel: $('#errorLevel'), darkColor: $('#darkColor'), lightColor: $('#lightColor'),
-        qrSize: $('#qrSize'), sizeLabel: $('#sizeLabel'), generateBtn: $('#generateBtn'), clearBtn: $('#clearBtn'),
+        qrSize: $('#qrSize'), sizeLabel: $('#sizeLabel'), generateBtn: $('#generateBtn'), clearBtn: $('#clearBtn'),freshness: $('#qrFreshness'),
         engineNotice: $('#engineNotice'), qrCanvas: $('#qrCanvas'), qrEmpty: $('#qrEmpty'),
         downloadBtn: $('#downloadBtn'), copyImageBtn: $('#copyImageBtn'), testScanBtn: $('#testScanBtn'),
         video: $('#video'), scanCanvas: $('#scanCanvas'), cameraPlaceholder: $('#cameraPlaceholder'), scanFrame: $('#scanFrame'),
@@ -716,6 +717,21 @@
         }, 2600);
       }
 
+      function markQrStale(){
+        if(!state.generated)return;
+        state.generated=false;state.generatedText='';
+        els.qrCanvas.classList.remove('show');
+        els.qrCanvas.removeAttribute('data-generated-content');
+        els.qrEmpty.style.display='';
+        [els.downloadBtn,els.copyImageBtn,els.testScanBtn].forEach(btn=>btn.disabled=true);
+        els.freshness.textContent='내용이나 디자인이 변경됐어요. QR 만들기를 눌러 새 코드를 생성하세요.';
+        els.freshness.dataset.status='stale';
+      }
+      for(const input of [els.qrText,els.wifiName,els.wifiPassword,els.wifiSecurity,els.wifiHidden,els.errorLevel,els.darkColor,els.lightColor,els.qrSize]){
+        input.addEventListener('input',markQrStale);
+        input.addEventListener('change',markQrStale);
+      }
+
       function setTab(name) {
         els.tabs.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === name));
         $('#generatePanel').classList.toggle('active', name === 'generate');
@@ -726,6 +742,7 @@
       els.tabs.forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
 
       function setContentType(type) {
+        if(type!==state.contentType)markQrStale();
         state.contentType = type;
         els.typePills.forEach(btn => btn.classList.toggle('active', btn.dataset.type === type));
         els.textForm.style.display = type === 'text' ? 'block' : 'none';
@@ -778,7 +795,7 @@
 
       function drawQr(text) {
         if (typeof window.qrcode !== 'function') {
-          toast('QR 생성 엔진을 불러오지 못했습니다. 인터넷 연결을 확인하세요.', 'error');
+          toast('QR 생성 엔진 연결에 실패했어요. 학교 네트워크에서 CDN 접속을 허용하거나 다른 네트워크에서 다시 열어주세요.', 'error');
           return false;
         }
         if (!colorsHaveContrast(els.darkColor.value, els.lightColor.value)) {
@@ -825,6 +842,8 @@
           [els.downloadBtn, els.copyImageBtn, els.testScanBtn].forEach(btn => btn.disabled = false);
           state.generated = true;
           state.generatedText = text;
+          els.freshness.textContent='최신 QR 코드예요. 아래에서 저장하거나 직접 스캔해 확인하세요.';
+          els.freshness.dataset.status='ready';
           els.qrCanvas.dataset.generatedContent=text;
           return true;
         } catch (error) {
@@ -852,6 +871,7 @@
       });
 
       els.clearBtn.addEventListener('click', () => {
+        markQrStale();
         if (state.contentType === 'text') {
           els.qrText.value = '';
           els.charCount.textContent = '0';
@@ -1037,8 +1057,8 @@
         setScanStatus('이미지를 확인하고 있습니다…', 'working');
         const value = await decodeSource(canvas, canvas.width, canvas.height);
         if (value) { showResult(value); return true; }
-        setScanStatus('QR 코드를 찾지 못했습니다.', 'error');
-        toast('이미지에서 QR 코드를 찾지 못했습니다.', 'error');
+        setScanStatus(!('BarcodeDetector' in window)&&typeof window.jsQR!=='function'?'QR 스캔 엔진을 불러오지 못했어요. 네트워크를 확인해 주세요.':'QR 코드를 찾지 못했습니다.', 'error');
+        toast('이미지에서 QR 코드를 읽지 못했어요. 사진 또는 스캔 엔진 상태를 확인해 주세요.', 'error');
         return false;
       }
 
