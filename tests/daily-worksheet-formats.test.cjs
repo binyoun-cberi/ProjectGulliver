@@ -180,7 +180,7 @@ test('all 17 science topics preserve diagrams and tables in student and teacher 
  assert.equal(await page.locator('#questions .science-material svg').count(),1,topic);assert.equal(await page.locator('#questions .science-material table').count(),1,topic);
  for(const teacher of [false,true]){
  await page.evaluate(t=>document.body.classList.toggle('print-answers',t),teacher);await page.emulateMedia({media:'print'});
- const packed=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(packed.ok,topic+': '+packed.issue);assert.equal(packed.pages,1,topic+' five choice questions should fit one A4');
+ const packed=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(packed.ok,topic+': '+packed.issue);assert.equal(packed.pages,1,topic+' '+(teacher?'teacher':'student')+' five choice questions should fit one A4');
  const result=await page.evaluate(()=>({pages:[...document.querySelectorAll('.print-paper')].length,diagrams:document.querySelectorAll('.print-paper .science-material svg').length,tables:document.querySelectorAll('.print-paper .science-material table').length}));assert.equal(result.diagrams,1);assert.equal(result.tables,1);
  await page.pdf({path:`test-artifacts/worksheet-science-${topic}-${teacher?'teacher':'student'}.pdf`,format:'A4',printBackground:true});
  }
