@@ -18,8 +18,11 @@ function syncTypes(preferred){
  $('typeSetting').hidden=!available.length||!chooseContent;
  $('typeSetting').firstChild.textContent=subject==='math'?'수학 문제 유형':topic==='reading-set'?'읽을 글의 종류':'활동 종류';
  type.disabled=!available.length;
- if(available.some(([id])=>id===preferred))type.value=preferred;
- syncAnswerFormats(params.get('format')||C.answerFormatFor(preferred,subject,topic));
+ if(available.some(([id])=>id===preferred)&&chooseContent)type.value=preferred;
+ // When the legacy URL points to a historical OX or short bank, retain
+ // its answer format but generate factual questions from the quiz bank.
+ const previousFormat=$('responseFormat').value;
+ syncAnswerFormats(previousFormat||params.get('format')||C.answerFormatFor(preferred,subject,topic));
 }
 function contentType(){return subject==='math'&&$('typeSetting').hidden?'':$('type').value}
 function syncAnswerFormats(preferred){
