@@ -5,7 +5,10 @@ const {pathToFileURL}=require('node:url');
 let chromium;try{({chromium}=require('playwright-core'));}catch{}
 const chrome=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/google-chrome-stable','/usr/bin/chromium','/opt/google/chrome/chrome'].find(p=>p&&fs.existsSync(p));
 const fixtures=[
+ {subject:'math',grade:3,unit:'g3-add',topic:'hundreds',type:'add-carry-two',count:5,seed:343},
+ {subject:'math',grade:3,unit:'g3-add',topic:'hundreds',type:'add-carry-two',count:10,seed:344},
  {subject:'math',grade:3,unit:'g3-add',topic:'hundreds',type:'add-carry-two',count:20,seed:345},
+ {subject:'korean',grade:4,unit:'k4-vocabulary',topic:'vocabulary',type:'vocabulary-context',count:5,seed:124},
  {subject:'korean',grade:4,unit:'k4-vocabulary',topic:'vocabulary',type:'vocabulary-context',count:10,seed:125},
  {subject:'english',grade:3,unit:'',topic:'words',type:'',count:20,seed:128},
  {subject:'science',grade:3,unit:'',topic:'living',type:'',count:20,seed:129},
@@ -26,7 +29,14 @@ async function inspect(page){
    pagesHaveHead:all.every(x=>!!x.querySelector('.paper-topline')&&!!x.querySelector('.print-page-footer')),
    columns:getComputedStyle(all[0]?.querySelector('ol')).gridTemplateColumns,
    compact:document.getElementById('questions').classList.contains('compact-questions'),
-   dense:document.getElementById('questions').classList.contains('calculation-grid')
+   dense:document.getElementById('questions').classList.contains('calculation-grid'),
+   roomy:all.length===1&&all[0].classList.contains('roomy-page'),
+   roomShare:all.length===1&&all[0].querySelectorAll('.print-question-list>li').length?
+     ((all[0].querySelector('.print-question-list>li:last-child').getBoundingClientRect().bottom-
+     all[0].querySelector('.print-question-list').getBoundingClientRect().top)/
+     (all[0].getBoundingClientRect().bottom-all[0].querySelector('.print-question-list').getBoundingClientRect().top)):
+     0,
+   roomyColumns:all.length===1&&all[0].classList.contains('roomy-calculations')
   };
   root.classList.remove('is-measuring');return out;
  });
@@ -38,6 +48,10 @@ test('A4 print styles and pagination module are wired before core renderer',()=>
  assert.match(css,/@page\{size:A4;margin:12mm\}/);
  assert.match(css,/print-paper:last-child/);
  assert.match(css,/compact-questions/);
+ assert.match(css,/roomy-page/);
+ const js=fs.readFileSync('daily-worksheet.js','utf8');
+ assert.doesNotMatch(js,/성취기준 전체 평가 아님|가상의 연습 자료|성취기준 연계를 검토 중입니다/);
+ assert.match(fs.readFileSync('문제지 만들기.html','utf8'),/교사용 정답·풀이 인쇄/);
 });
 test('five subjects: no A4-spanning questions, efficient short sheets, full PDF pagination', {timeout:180000,skip:!chrome&&'Chrome unavailable'},async()=>{
  const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--allow-file-access-from-files']});
@@ -58,8 +72,13 @@ test('five subjects: no A4-spanning questions, efficient short sheets, full PDF 
    assert.deepEqual(result.overflow,[],`${f.subject}/${f.topic} questions overflow A4`);
    assert.equal(result.pagesHaveHead,true);
    assert.ok(result.pages>=1&&result.pages<=f.count);
-   if(f.subject==='math')assert.equal(result.pages,1,'20 short arithmetic items must fit on one sheet');
-   if(f.subject==='korean'&&f.topic==='vocabulary')assert.equal(result.pages,1,'10 short vocabulary items must fit on one sheet');
+   if(f.subject==='math')assert.equal(result.pages,1,'short arithmetic questions must fit on one sheet');
+   if(f.count<=10&&((f.subject==='math'&&f.topic==='hundreds')||(f.subject==='korean'&&f.topic==='vocabulary'))){
+     assert.equal(result.roomy,true,'five or ten short questions should be spread over A4');
+     assert.ok(result.roomShare>.60,'room to answer should cover most of the writable page, got '+result.roomShare);
+     if(f.subject==='math')assert.equal(result.roomyColumns,true,'few calculation problems must use wide two-column writing spaces');
+   }
+   if(f.subject==='korean'&&f.topic==='vocabulary')assert.equal(result.pages,1,'short vocabulary items must fit on one sheet');
    if(f.subject==='math'||f.subject==='korean'&&f.topic==='vocabulary'){
     await page.emulateMedia({media:'print'});
     const pdf=await page.pdf({format:'A4',printBackground:true,preferCSSPageSize:true});
