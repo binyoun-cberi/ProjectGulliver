@@ -60,3 +60,21 @@ test('final science review does not restore rejected distractors',()=>{
  const thermal=Science.banks.heat.find(x=>x.id==='heat-6');
  assert.ok(thermal.wrong.every(x=>!x.includes('항상 실내 온도')));
 });
+
+test('all legacy history suffixes can change to every supported response format',()=>{
+ for(const topic of ['prehistoric','ancient','goryeo','joseon','modern','history-mix']){
+  for(const suffix of ['quiz','short','initial','ox']){
+   const type=topic==='history-mix'?'history-mix-'+suffix:topic+'-'+suffix;
+   for(const responseFormat of ['choice','ox','short','essay']){
+    const options={subject:'social',grade:5,topic,type,responseFormat,count:10,seed:7,
+      ...(topic==='history-mix'?{eras:['prehistoric','ancient','goryeo','joseon','modern']}: {})};
+    const sheet=Core.generate(options);
+    assert.equal(sheet.items.length,10,topic+'/'+type+'/'+responseFormat);
+    if(responseFormat==='choice')assert.ok(sheet.items.every(x=>x.choices.includes(x.answer)));
+    if(responseFormat==='ox')assert.ok(sheet.items.every(x=>x.oxProposal && ['O','X'].includes(x.answer)));
+    if(responseFormat==='short')assert.ok(sheet.items.every(x=>x.choices.length===0 && x.answer!=='O'&&x.answer!=='X'));
+    if(responseFormat==='essay')assert.ok(sheet.items.every(x=>x.format==='essay'&&x.modelExplanation));
+   }
+  }
+ }
+});
