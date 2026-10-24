@@ -156,3 +156,20 @@ body.gx-app:is(.student-view,.presentation,.running){padding-top:0!important}
 .gx-header .gx-subject-menu a[aria-current=page]{background:var(--gx-soft);color:var(--gx-brand-hover)}
 .gx-header .gx-worksheet-picker summary:focus-visible{outline:3px solid #8bbda9;outline-offset:2px}
 @media(max-width:640px){.gx-header .gx-worksheet-picker>summary{width:100%;padding:9px 6px}.gx-header .gx-subject-menu{min-width:145px;max-width:calc(100vw - 24px)}}
+
+
+/* Release information belongs to the teacher frame and travels with the loaded shell. */
+.gx-header .gx-release{position:relative;flex:none;margin:0;color:var(--gx-muted);font-size:11px}
+.gx-header .gx-release-label{display:flex;align-items:center;justify-content:center;min-height:32px;padding:4px 9px;border:1px solid var(--gx-line);border-radius:8px;list-style:none;cursor:pointer;font:700 11px/1.4 system-ui,sans-serif;white-space:nowrap;box-sizing:border-box}
+.gx-header .gx-release-label::-webkit-details-marker{display:none}
+.gx-header .gx-release[open]>.gx-release-label,.gx-header .gx-release-label:hover{background:var(--gx-soft);color:var(--gx-brand-hover)}
+.gx-header .gx-release-panel{position:absolute;top:calc(100% + 10px);right:0;width:300px;max-width:calc(100vw - 24px);padding:16px;box-sizing:border-box;border:1px solid var(--gx-line);border-radius:12px;background:white;color:var(--gx-ink);box-shadow:0 12px 35px #243b3022;z-index:1100;font-size:12px;line-height:1.65}
+.gx-release-panel strong,.gx-release-panel time{display:block}.gx-release-panel strong{font-size:14px}.gx-release-panel time{font-size:11px;color:var(--gx-muted);margin-top:4px}
+.gx-release-panel p{font-weight:750;margin:12px 0 5px}.gx-release-panel ul{margin:0;padding-left:17px}.gx-release-panel li{padding:0;margin:5px 0;overflow-wrap:anywhere}
+@media(max-width:760px){.gx-header .gx-header-inner{grid-template-columns:auto minmax(0,1fr) auto;gap:5px 8px}.gx-header .gx-header-actions{justify-content:flex-end}.gx-header .gx-release{grid-column:3;grid-row:1;justify-self:end}.gx-header .gx-release-label{padding:4px 7px;font-size:10px}}
+/* On very narrow phones, keep tool actions on their own row instead of covering the brand. */
+@media(max-width:360px){
+ body.gx-app:has(.gx-header-actions:not(:empty)){--gx-header-height:144px}
+ .gx-header .gx-header-inner:has(.gx-header-actions:not(:empty)) .gx-header-actions{grid-column:1/-1;grid-row:2;justify-content:flex-end}
+ .gx-header .gx-header-inner:has(.gx-header-actions:not(:empty)) .gx-nav{grid-row:3}
+}
