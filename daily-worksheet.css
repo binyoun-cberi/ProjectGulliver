@@ -136,3 +136,19 @@ body.print-answers .print-paper .result-answer{visibility:visible!important}
   body:not(.print-answers) .print-paper .paper-standard,
   body:not(.print-answers) .print-paper .reading-standard{display:none!important}
 }
+
+
+/* Response format is independent of the unit; writing tasks need working space. */
+.paper .essay-question{break-inside:avoid;page-break-inside:avoid;min-height:122px}
+.paper .essay-question>strong{display:block;line-height:1.6;white-space:pre-line}
+.paper .essay-writing{height:94px;margin:13px 0 3px;max-width:100%;background:repeating-linear-gradient(to bottom,transparent 0,transparent 28px,#bccbce 29px,#bccbce 30px);break-inside:avoid}
+.paper .ox-statement{font-size:14px;line-height:1.6;margin:7px 0;padding:7px 11px;border:1px solid #d4dfdf;background:#f8fbfa;border-radius:7px;break-inside:avoid}
+.paper .ox-question .choice-list{grid-template-columns:repeat(2,minmax(0,60px));gap:16px;margin:8px 0 0}
+.paper .ox-question .choice-list li{border:1px solid #8596a0;border-radius:7px;text-align:center;font-size:16px;font-weight:800;padding:5px 0}
+.print-paper .essay-question{padding-bottom:12px!important}
+.print-paper .essay-question .essay-writing{height:26mm;margin-top:4mm}
+.print-paper .ox-question .ox-statement{font-size:12px;padding:4px 7px;margin:4px 0}
+@media print{
+ .paper .essay-writing{background:repeating-linear-gradient(to bottom,transparent 0,transparent 28px,#a9b7b7 29px,#a9b7b7 30px)!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .paper .ox-statement{background:#fff}
+}
