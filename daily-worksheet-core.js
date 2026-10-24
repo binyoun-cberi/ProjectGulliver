@@ -1127,15 +1127,71 @@ function item(subject,topic,grade,r,difficulty,variant){
  if(topic==='sentence'){const [meaning,answer,words]=pick(SENTENCES,r);return{prompt:`‘${meaning}’에 맞게 낱말을 배열해 영어 문장을 쓰세요.`,answer,choices:[],detail:words}}
  const [question,answer,options]=pick(CONVERSATIONS,r);return choice(`다음 말에 알맞은 대답을 고르세요.  “${question}”`,answer,options,r);
 }
-function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basic',variant='tens',type='',eras=[],mathTypes=[]}){
+
+/* An answer format is different from the topic/content bank. Preserve legacy
+ * type IDs for reading genres, history activities, seeded links and tests. */
+const ANSWER_FORMAT_LABELS={
+ choice:'객관식 (보기 고르기)',ox:'OX형',short:'단답형',essay:'서술형',activity:'짝 잇기·순서 배열하기'
+};
+function answerFormats(subject,topic){
+ if(subject==='math')return [];
+ if(topic==='history-review')return [['activity',ANSWER_FORMAT_LABELS.activity]];
+ if(subject==='english'&&topic==='sentence')return [['short',ANSWER_FORMAT_LABELS.short]];
+ const allowed=subject==='korean'&&topic==='spacing'?['choice','ox','short']:
+ ['choice','ox','short','essay'];
+ return allowed.map(format=>[format,ANSWER_FORMAT_LABELS[format]]);
+}
+function answerFormatFor(type,subject,topic){
+ if(topic==='history-review')return 'activity';
+ if(subject==='english'&&topic==='sentence')return 'short';
+ if(/-ox$/.test(type))return 'ox';
+ if(/-short$|-initial$/.test(type))return 'short';
+ return 'choice';
+}
+function asWritingPrompt(prompt){
+ return String(prompt).replace(/고르세요\.?$/,'쓰세요.').replace(/선택하세요\.?$/,'쓰세요.')
+ .replace(/알맞은 것을 쓰세요\.?$/,'알맞은 답을 쓰세요.')
+ .replace(/보기에서 /g,'').replace(/보기 중 /g,'');
+}
+function convertAnswerFormat(items,subject,topic,responseFormat,seed){
+ if(!responseFormat||responseFormat==='activity'||responseFormat==='choice')return items;
+ const rngForFormat=rng((Number(seed)>>>0)^0x473C7912);
+ return items.map((item,index)=>{
+  const original=item.prompt,common={...item,responseFormat};
+  if(responseFormat==='ox'){
+   const wrong=item.choices?.filter(answer=>answer!==item.answer)||[];
+   if(!wrong.length)throw Error('이 학습 내용에서는 OX 문제를 만들 수 없어요. 다른 유형을 골라 주세요.');
+   const correct=(index+((Number(seed)>>>0)%2))%2===0,proposal=correct?item.answer:pick(wrong,rngForFormat);
+   return {...common,originalAnswer:item.answer,oxProposal:proposal,format:'ox',
+     prompt:original+'  다음에 제시된 답이 맞으면 O, 틀리면 X를 표시하세요.',
+     answer:correct?'O':'X',choices:['O','X']};
+  }
+  if(responseFormat==='short'){
+   if(subject==='korean'&&topic==='spacing'){
+    const wrong=item.choices?.find(choice=>choice!==item.answer);
+    if(wrong)return {...common,format:'short',prompt:'다음 문장을 바르게 띄어 써 보세요.',detail:wrong,choices:[]};
+   }
+   return {...common,format:'short',prompt:asWritingPrompt(original),choices:[]};
+  }
+  if(responseFormat==='essay'){
+   return {...common,format:'essay',choices:[],
+     prompt:asWritingPrompt(original)+' 답을 쓰고, 그렇게 생각한 까닭을 한두 문장으로 설명해 보세요.',
+     modelExplanation:item.explanation||'학생이 쓴 까닭이 제시된 자료나 학습 내용에 알맞은지 확인해 주세요.'};
+  }
+  throw Error('선택한 문제 유형을 확인해 주세요.');
+ });
+}
+function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basic',variant='tens',type='',eras=[],mathTypes=[],responseFormat=''}){
  const info=SUBJECTS[subject],year=Number(grade),size=Number(count),selected=types(subject,year,topic).find(entry=>entry[0]===type),dense=subject==='math'&&(selected? /^(add-|sub-|small-|two-|times-)/.test(type)&&type!=='times-missing':['addition','hundreds','multiplication'].includes(topic));
  const mixed=topic==='history-mix',mathMixed=topic==='math-mix',chosen=mixed?eras:[],selectedMath=mathMixed?mathTypes:[],allowedMath=mathMixed?new Set(mathMixOptions(year).map(([id])=>id)):null;
+ if(responseFormat&&(!answerFormats(subject,topic).some(([id])=>id===responseFormat)||subject==='math'))throw Error('이 학습 내용에서는 선택한 문제 유형을 사용할 수 없어요.');
  if(!info||!info.grades.includes(year)||!info.topics.some(t=>t[0]===topic&&available(t,year))||![5,10,15,20].includes(size)||!['basic','challenge'].includes(difficulty)||!['tens','ones'].includes(variant)||type&&!selected||['mixed','decimal','history-review','history-mix','math-mix','reading-set'].includes(topic)&&!selected||mixed&&(!Array.isArray(chosen)||!chosen.length||new Set(chosen).size!==chosen.length||chosen.some(era=>!HISTORY_ERAS.includes(era)))||mathMixed&&(!Array.isArray(selectedMath)||!selectedMath.length||new Set(selectedMath).size!==selectedMath.length||selectedMath.some(id=>!allowedMath.has(id))))throw Error(mixed?'역사 시대를 하나 이상 선택해 주세요.':mathMixed?'수학 유형을 하나 이상 선택해 주세요.':'학년·교과·유형을 다시 선택해 주세요.');
  const random=rng(seed),eraOrder=mixed?shuffle(chosen,random):[],mathOrder=mathMixed?shuffle(selectedMath,random):[],items=topic==='history-review'?historyReview(type,size,random):topic==='reading-set'?readingSet(size,year,random,type):[],seen=new Set(),seenAnswers=new Set(),seenPassages=new Set(),uniqueHistoryAnswers=subject==='social'&&(mixed||Boolean(HISTORY_QUIZ[topic]))&&!type.endsWith('-ox');let attempts=0;
  while(items.length<size&&attempts++<3000){const skill=mathMixed?mathOrder[items.length%mathOrder.length]:null,candidate=mathMixed?{...typedMath(skill,random),skill}:mixed?historyQuiz(eraOrder[items.length%eraOrder.length],type,random):subject==='social'&&HISTORY_QUIZ[topic]?historyQuiz(topic,type,random):subject==='social'&&SOCIAL_THEME_QUESTIONS[topic]?socialTheme(topic,random):subject==='social'&&SOCIAL_EVIDENCE[topic]?socialEvidence(topic,random):subject==='korean'&&['vocabulary','idiom','hanja'].includes(topic)?koreanPractice(topic,year,random):selected&&subject==='math'?typedMath(type,random):item(subject,topic,year,random,difficulty,variant),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||uniqueHistoryAnswers&&seenAnswers.has(candidate.answer)||subject==='social'&&!HISTORY_QUIZ[topic]&&SOCIAL_EVIDENCE[topic]&&seenPassages.has(candidate.detail)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);seenAnswers.add(candidate.answer);if(subject==='social'&&!HISTORY_QUIZ[topic]&&SOCIAL_EVIDENCE[topic]||topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
  if(items.length<size)throw Error('이 유형에서는 서로 다른 문제를 충분히 만들지 못했어요. 문항 수를 줄여 주세요.');
- return{subject,topic,type,eras:mixed?[...chosen]:[],mathTypes:mathMixed?[...selectedMath]:[],grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:year+'학년 '+info.name+' · '+(mixed?'선택한 시대 역사':mathMixed?'선택한 유형 혼합 연습':selected?selected[1]:info.topics.find(t=>t[0]===topic)[1]),alignment:['mixed','decimal','history-mix','math-mix'].includes(topic)?null:alignment(subject,topic,year),items};
+ const finalized=convertAnswerFormat(items,subject,topic,responseFormat,seed);
+ return{subject,topic,type,responseFormat:responseFormat||'',eras:mixed?[...chosen]:[],mathTypes:mathMixed?[...selectedMath]:[],grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:year+'학년 '+info.name+' · '+(mixed?'선택한 시대 역사':mathMixed?'선택한 유형 혼합 연습':subject!=='math'?info.topics.find(t=>t[0]===topic)[1]:selected?selected[1]:info.topics.find(t=>t[0]===topic)[1]),alignment:['mixed','decimal','history-mix','math-mix'].includes(topic)?null:alignment(subject,topic,year),items:finalized};
 }
 function supportedCounts(options){return [5,10,15,20].filter(count=>{try{generate({...options,count,seed:42});return true}catch{return false}})}
-return{SUBJECTS,generate,supportedCounts,alignment,units,types};
+return{SUBJECTS,generate,supportedCounts,alignment,units,types,answerFormats,answerFormatFor};
 });

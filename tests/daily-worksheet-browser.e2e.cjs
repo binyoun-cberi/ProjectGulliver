@@ -47,7 +47,8 @@ test('worksheet editor generates and prints student/teacher versions in real Chr
     await page.locator('input[name="subject"][value="korean"]').check();
     await page.selectOption('#grade', '4');
     await page.selectOption('#unit', 'k4-reading');
-    await page.selectOption('#topic', 'reading-set');
+    assert.equal(await page.locator('#topic').inputValue(), 'reading-set');
+    assert.equal(await page.locator('#topicSetting').isVisible(), false, 'hide repeated learning-content selector when the unit has only one topic');
     await page.selectOption('#type', 'reading-set-literary');
     await page.selectOption('#count', '20');
     await page.locator('button.daily-primary').click();

@@ -9,9 +9,29 @@ for(const [key,info] of Object.entries(C.SUBJECTS)){
  const label=document.createElement('label'),input=document.createElement('input'),caption=document.createElement('span');input.type='radio';input.name='subject';input.value=key;input.checked=key===subject;caption.textContent=info.name;label.append(input,caption);$('subjectOptions').append(label);
 }
 function syncGrades(preferred,topic){const info=C.SUBJECTS[subject],grade=$('grade');grade.replaceChildren();info.grades.forEach(n=>option(grade,n,n+'학년'));grade.value=info.grades.includes(Number(preferred))?String(preferred):String(info.grades[0]);syncUnits(params.get('unit'),topic)}
-function syncUnits(preferred,topic){const unit=$('unit'),grade=Number($('grade').value),special=C.units(subject,grade);unit.replaceChildren();special.forEach(u=>option(unit,u.id,u.label));option(unit,'general','전체 학습 내용에서 고르기');const matched=special.find(u=>u.types.some(([id])=>id===params.get('type')))||special.find(u=>u.topics.includes(topic));unit.value=preferred&&[...unit.options].some(o=>o.value===preferred)?preferred:matched?.id||special[0]?.id||'general';syncTopics(topic)}
-function syncTopics(preferred){const topic=$('topic'),grade=Number($('grade').value),unit=C.units(subject,grade).find(u=>u.id===$('unit').value);topic.replaceChildren();C.SUBJECTS[subject].topics.filter(t=>grade>=t[2]&&grade<=(t[3]??6)&&(!unit||unit.topics.includes(t[0]))&&(unit||!['mixed','decimal','past','local','prehistoric','ancient','goryeo','joseon','modern','history-review','reading-set'].includes(t[0]))).forEach(t=>option(topic,t[0],t[1]));if([...topic.options].some(o=>o.value===preferred))topic.value=preferred;syncTypes(params.get('type'))}
-function syncTypes(preferred){const type=$('type'),available=$('unit').value!=='general'?C.types(subject,Number($('grade').value),$('topic').value,$('unit').value):[];type.replaceChildren();available.forEach(([id,label],index)=>option(type,id,`${index+1}) ${label}`));$('typeSetting').hidden=!available.length;type.disabled=!available.length;if(available.some(([id])=>id===preferred))type.value=preferred}
+function syncUnits(preferred,topic){const unit=$('unit'),grade=Number($('grade').value),special=C.units(subject,grade);unit.replaceChildren();special.forEach(u=>option(unit,u.id,u.label));option(unit,'general','전체 학습 내용에서 고르기');$('unitSetting').hidden=!special.length;const matched=special.find(u=>u.types.some(([id])=>id===params.get('type')))||special.find(u=>u.topics.includes(topic));unit.value=preferred&&[...unit.options].some(o=>o.value===preferred)?preferred:matched?.id||special[0]?.id||'general';syncTopics(topic)}
+function syncTopics(preferred){const topic=$('topic'),grade=Number($('grade').value),unit=C.units(subject,grade).find(u=>u.id===$('unit').value);topic.replaceChildren();C.SUBJECTS[subject].topics.filter(t=>grade>=t[2]&&grade<=(t[3]??6)&&(!unit||unit.topics.includes(t[0]))&&(unit||!['mixed','decimal','past','local','prehistoric','ancient','goryeo','joseon','modern','history-review','reading-set'].includes(t[0]))).forEach(t=>option(topic,t[0],t[1]));if([...topic.options].some(o=>o.value===preferred))topic.value=preferred;$('topicSetting').hidden=Boolean(unit)&&topic.options.length===1;syncTypes(params.get('type'))}
+function syncTypes(preferred){
+ const type=$('type'),topic=$('topic').value,available=$('unit').value!=='general'?C.types(subject,Number($('grade').value),topic,$('unit').value):[];
+ type.replaceChildren();available.forEach(([id,label])=>option(type,id,label));
+ const chooseContent=subject==='math'||topic==='reading-set'||topic==='history-review';
+ $('typeSetting').hidden=!available.length||!chooseContent;
+ $('typeSetting').firstChild.textContent=subject==='math'?'수학 문제 유형':topic==='reading-set'?'읽을 글의 종류':'활동 종류';
+ type.disabled=!available.length;
+ if(available.some(([id])=>id===preferred)&&chooseContent)type.value=preferred;
+ // When the legacy URL points to a historical OX or short bank, retain
+ // its answer format but generate factual questions from the quiz bank.
+ const previousFormat=$('responseFormat').value;
+ syncAnswerFormats(previousFormat||params.get('format')||C.answerFormatFor(preferred,subject,topic));
+}
+function contentType(){return subject==='math'&&$('typeSetting').hidden?'':$('type').value}
+function syncAnswerFormats(preferred){
+ const control=$('responseSetting'),select=$('responseFormat'),available=C.answerFormats(subject,$('topic').value);
+ select.replaceChildren();available.forEach(([id,label])=>option(select,id,label));
+ const shown=subject!=='math'&&$('topic').value!=='history-review';
+ control.hidden=!shown;select.disabled=!shown;
+ if(available.some(([id])=>id===preferred))select.value=preferred;
+}
 function selectedEras(){return [...$('historyEraSetting').querySelectorAll('input:checked')].map(input=>input.value)}
 function syncHistoryEras(){const mixed=subject==='social'&&$('topic').value==='history-mix';$('historyEraSetting').hidden=!mixed;$('historyEraSetting').disabled=!mixed}
 function selectedMathTypes(){return [...$('mathTypeOptions').querySelectorAll('input:checked')].map(input=>input.value)}
@@ -23,8 +43,8 @@ function syncMathTypes(preferred){const mixed=subject==='math'&&$('topic').value
 function denseAvailable(){if(subject!=='math')return false;if(!$('typeSetting').hidden)return /^(add-|sub-|small-|two-|times-)/.test($('type').value)&&$('type').value!=='times-missing';return ['addition','hundreds','multiplication'].includes($('topic').value)}
 function syncCount(preferred){
  const dense=denseAvailable(),counts=C.supportedCounts({subject,grade:Number($('grade').value),topic:$('topic').value,
-  type:$('typeSetting').hidden?'':$('type').value,eras:selectedEras(),mathTypes:selectedMathTypes(),
-  difficulty:$('difficulty').value,variant:$('variant').value});
+  type:contentType(),eras:selectedEras(),mathTypes:selectedMathTypes(),
+  difficulty:$('difficulty').value,variant:$('variant').value,responseFormat:subject==='math'?'':$('responseFormat').value});
  for(const option of $('count').options)option.disabled=!counts.includes(Number(option.value));
  const prior=Number($('count').value),fallback=dense?20:10;
  $('count').value=String(counts.includes(Number(preferred))?Number(preferred):counts.includes(prior)?prior:counts.includes(fallback)?fallback:counts[0]||5);
@@ -50,7 +70,7 @@ current=sheet;
 const simpleOperation=item=>/^(\d+) ([+×−]) (\d+) =$/.test(item.prompt);
 const mathVertical=sheet.subject==='math'&&sheet.items.length>=5&&sheet.items.every(simpleOperation);
 const dense=mathVertical&&(sheet.type?/^(add-|sub-|small-|two-|times-)/.test(sheet.type)&&sheet.type!=='times-missing':['addition','hundreds','multiplication'].includes(sheet.topic));
-const compact=!dense&&sheet.items.length>=5&&sheet.items.every(item=>
+const compact=!dense&&sheet.responseFormat!=='essay'&&sheet.items.length>=5&&sheet.items.every(item=>
   !item.readingGroup&&!item.readingPassage&&!item.photo&&!item.shapeSides&&!item.sourceLabel&&
   !['matching','ordering'].includes(item.format)&&
   String(item.prompt||'').length<=100&&String(item.detail||'').length<=85&&
@@ -62,7 +82,7 @@ const compact=!dense&&sheet.items.length>=5&&sheet.items.every(item=>
  if(sheet.topic==='hundreds'&&!sheet.type)$('paperTitle').textContent+=' · '+(sheet.variant==='ones'?'B · 일의 자리까지':'A · 일의 자리가 0');
  $('paperStandard').hidden=!sheet.alignment;if(sheet.alignment)$('paperStandard').textContent=`교사용 수업 참고 · ${sheet.alignment.code} · ${sheet.alignment.scope}`;
  sheet.items.forEach((item,index)=>{
-  const li=document.createElement('li');li.dataset.prompt=`${index+1}번. ${item.prompt}`;li.dataset.answer=item.answer;
+  const li=document.createElement('li');if(item.format==='essay')li.classList.add('essay-question');if(item.format==='ox')li.classList.add('ox-question');li.dataset.prompt=`${index+1}번. ${item.prompt}`;li.dataset.answer=item.answer;
   if(dense){
    const match=item.prompt.match(/^(\d+) ([+×−]) (\d+) =$/);
    if(!match)throw Error('세로셈으로 표시할 수 없는 문제가 있습니다.');
@@ -82,10 +102,15 @@ const compact=!dense&&sheet.items.length>=5&&sheet.items.every(item=>
    if(item.shapeSides){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 120 110');svg.setAttribute('width','120');svg.setAttribute('height','110');svg.setAttribute('role','img');svg.setAttribute('aria-label',`변이 ${item.shapeSides}개인 도형`);const polygon=document.createElementNS('http://www.w3.org/2000/svg','polygon');polygon.setAttribute('points',Array.from({length:item.shapeSides},(_,i)=>{const angle=-Math.PI/2+i*2*Math.PI/item.shapeSides;return `${60+42*Math.cos(angle)},${55+42*Math.sin(angle)}`}).join(' '));polygon.setAttribute('fill','#f6f3ff');polygon.setAttribute('stroke','#44318b');polygon.setAttribute('stroke-width','3');svg.append(polygon);li.append(svg)}
    if(item.photo){const figure=document.createElement('figure');figure.className='history-photo';const photo=document.createElement('img');photo.src=item.photo.src;photo.alt='관찰할 국가유산·자료 사진';photo.loading='eager';const caption=document.createElement('figcaption');const link=document.createElement('a');link.href=item.photo.sourceUrl;link.target='_blank';link.rel='noopener noreferrer';link.textContent=item.photo.credit;caption.append(link);figure.append(photo,caption);li.append(figure)}
    if(item.detail){const detail=document.createElement('p');detail.className='question-detail'+(sheet.topic==='direction'?' map-detail':'');detail.append(document.createTextNode(item.detail));li.append(detail)}
+   if(item.format==='ox'){const row=document.createElement('p');row.className='ox-statement';row.textContent='제시된 답: '+item.oxProposal;li.append(row)}
    if(item.choices?.length){const list=document.createElement('ul');list.className='choice-list';item.choices.forEach((answer,i)=>{const choice=document.createElement('li');if(sheet.subject==='math')appendMathText(choice,['①','②','③','④'][i]+' '+answer);else choice.textContent=['①','②','③','④'][i]+' '+answer;list.append(choice)});li.append(list)}
-   else if(item.format!=='matching'){const line=document.createElement('span');line.className='answer-blank';line.setAttribute('aria-hidden','true');li.append(line)}
-   const inlineAnswer=document.createElement('span');inlineAnswer.className='inline-answer result-answer';const answerText='정답: '+(item.choices?.length?['①','②','③','④'][item.choices.indexOf(item.answer)]+' ':'')+item.answer;if(sheet.subject==='math')appendMathText(inlineAnswer,answerText);else inlineAnswer.textContent=answerText;
-   if(item.explanation){const why=document.createElement('small');why.className='answer-explanation';why.textContent='근거: '+item.explanation;inlineAnswer.append(why)}
+   else if(item.format!=='matching'){
+    if(item.format==='essay'){const lines=document.createElement('div');lines.className='essay-writing';lines.setAttribute('aria-label','답과 까닭을 쓸 공간');li.append(lines)}
+    else{const line=document.createElement('span');line.className='answer-blank';line.setAttribute('aria-hidden','true');li.append(line)}
+   }
+   const inlineAnswer=document.createElement('span');inlineAnswer.className='inline-answer result-answer';const answerText=(item.format==='essay'?'예시 답: ':'정답: ')+(item.choices?.length&&item.format!=='ox'?['①','②','③','④'][item.choices.indexOf(item.answer)]+' ':'')+item.answer;if(sheet.subject==='math')appendMathText(inlineAnswer,answerText);else inlineAnswer.textContent=answerText;
+   if(item.format==='essay'&&item.modelExplanation){const why=document.createElement('small');why.className='answer-explanation';why.textContent='설명 참고: '+item.modelExplanation;inlineAnswer.append(why)}
+   else if(item.explanation){const why=document.createElement('small');why.className='answer-explanation';why.textContent='근거: '+item.explanation;inlineAnswer.append(why)}
    if(item.sourceLabel){const source=document.createElement(item.source?'a':'small');source.className='answer-source';source.textContent='자료: '+item.sourceLabel;if(item.source){source.href=item.source;source.target='_blank';source.rel='noopener noreferrer'}inlineAnswer.append(source)}
    if(item.sourceAges?.length>1){const ages=document.createElement('small');ages.className='answer-source';ages.textContent='시대별 자료: ';item.sourceAges.forEach((age,i)=>{const link=document.createElement('a');link.href=`https://contents.history.go.kr/mobile/eh/list.do?code=eh_age_${age}`;link.textContent={'10':'선사·고대','20':'고려','30':'조선','40':'근대','50':'현대'}[age];link.target='_blank';link.rel='noopener noreferrer';if(i)ages.append(' · ');ages.append(link)});inlineAnswer.append(ages)}
    inlineAnswer.setAttribute('aria-hidden','true');li.append(inlineAnswer);
@@ -102,11 +127,11 @@ const compact=!dense&&sheet.items.length>=5&&sheet.items.every(item=>
      else if(measured&&!measured.ok)$('sheetStatus').textContent=measured.issue;
    }
  });
- const url=new URL(location.href);url.search=new URLSearchParams({subject:sheet.subject,grade:String(sheet.grade),unit:$('unit').value,topic:sheet.topic,...(sheet.type?{type:sheet.type}:{}),...(sheet.topic==='history-mix'?{eras:sheet.eras.join(',')}:{}),...(sheet.topic==='math-mix'?{mathTypes:sheet.mathTypes.join(',')}:{}),difficulty:sheet.difficulty,count:String(sheet.count),seed:String(sheet.seed),...(sheet.topic==='hundreds'&&!sheet.type?{variant:sheet.variant}:{}),...($('largePrint').checked?{large:'1'}:{})}).toString();history.replaceState(null,'',url.href);
+ const url=new URL(location.href);url.search=new URLSearchParams({subject:sheet.subject,grade:String(sheet.grade),unit:$('unit').value,topic:sheet.topic,...(sheet.type?{type:sheet.type}:{}),...(sheet.responseFormat?{format:sheet.responseFormat}:{}),...(sheet.topic==='history-mix'?{eras:sheet.eras.join(',')}:{}),...(sheet.topic==='math-mix'?{mathTypes:sheet.mathTypes.join(',')}:{}),difficulty:sheet.difficulty,count:String(sheet.count),seed:String(sheet.seed),...(sheet.topic==='hundreds'&&!sheet.type?{variant:sheet.variant}:{}),...($('largePrint').checked?{large:'1'}:{})}).toString();history.replaceState(null,'',url.href);
  const qr=$('answerQr'),code=$('answerQrCode');code.replaceChildren();qr.hidden=true;
  if(/^https?:$/.test(url.protocol)&&typeof window.qrcode==='function')try{const generator=window.qrcode(0,'M');generator.addData(url.href,'Byte');generator.make();code.innerHTML=generator.createSvgTag(2,4);qr.hidden=false}catch(error){console.warn('문제지 QR을 생성할 수 없습니다.',error)}
 }
-function make(newSeed){try{const state={subject,grade:Number($('grade').value),topic:$('topic').value,type:$('typeSetting').hidden?'':$('type').value,eras:selectedEras(),mathTypes:selectedMathTypes(),difficulty:$('difficulty').value,variant:$('variant').value,count:Number($('count').value),seed:newSeed};render(C.generate(state))}catch(error){console.warn('문제지 만들기:',error);$('sheetStatus').textContent='선택한 조건으로 문제를 만들지 못했어요. 문제 유형이나 문항 수를 바꾸어 다시 시도해 주세요.';$('sheetMeta').textContent=''}}
+function make(newSeed){try{const state={subject,grade:Number($('grade').value),topic:$('topic').value,type:contentType(),eras:selectedEras(),mathTypes:selectedMathTypes(),difficulty:$('difficulty').value,variant:$('variant').value,count:Number($('count').value),seed:newSeed,responseFormat:subject==='math'?'':$('responseFormat').value};render(C.generate(state))}catch(error){console.warn('문제지 만들기:',error);$('sheetStatus').textContent='선택한 조건으로 문제를 만들지 못했어요. 문제 유형이나 문항 수를 바꾸어 다시 시도해 주세요.';$('sheetMeta').textContent=''}}
 form.addEventListener('change',e=>{const name=e.target.name;if(name==='subject'){subject=e.target.value;syncGrades($('grade').value);syncHistoryEras();syncMathTypes([])}else if(name==='grade'){syncUnits(null);syncHistoryEras();syncMathTypes([])}else if(name==='unit'){syncTopics();syncHistoryEras();syncMathTypes()}else if(name==='topic'){syncTypes();syncHistoryEras();syncMathTypes()}if(['subject','grade','unit','topic','type'].includes(name))syncDifficulty();if(name!=='count'&&name!=='largePrint')syncCount(Number($('count').value))});
 form.addEventListener('submit',e=>{e.preventDefault();make(seed())});$('regenerate').onclick=()=>make(seed());
 $('toggleAnswers').onclick=()=>setPreview(!answersVisible);
