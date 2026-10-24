@@ -34,17 +34,19 @@ input,textarea,select{width:100%;border:1px solid #dfe4eb;border-radius:11px;pad
   <section class="hero">
     <h1>👥 우리 반</h1>
     <p>명단뿐 아니라 자리·모둠·역할 배정에서 공통으로 참고할 교사용 운영 정보를 한곳에서 관리합니다.</p>
-    <span class="privacy">🔒 이 정보는 현재 브라우저에만 저장되며 학생 화면에는 표시되지 않습니다.</span>
+    <span class="privacy">🔒 이 정보는 이 기기의 브라우저에 저장됩니다. 학생 화면에는 표시되지 않습니다.</span>
   </section>
 
   <nav class="tabs">
-    <button class="tab active" data-tab="roster">명단</button>
+<button class="tab active" data-tab="today">오늘의 우리 반</button>
+    <button class="tab" data-tab="roster">명단</button>
     <button class="tab" data-tab="profiles">학생 프로필</button>
     <button class="tab" data-tab="relations">관계</button>
     <button class="tab" data-tab="history">운영 기록</button>
   </nav>
 
-  <section class="panel active" id="panel-roster">
+  <section class="panel active" id="panel-today"><div class="section-head"><h2>오늘의 우리 반</h2><input id="dailyDate" type="date" style="width:auto" aria-label="기록 날짜"></div><p id="dailySummary"></p><div id="dailyCards" class="daily-cards"></div></section>
+<section class="panel" id="panel-roster">
     <div class="section-head"><div><h2>학급 명단</h2><p>명단을 저장하면 자리·모둠·역할 도구에서 불러올 수 있습니다.</p></div></div>
     <div class="grid">
       <div>
@@ -79,7 +81,7 @@ input,textarea,select{width:100%;border:1px solid #dfe4eb;border-radius:11px;pad
 
   <section class="panel" id="panel-relations">
     <div class="section-head"><div><h2>학생 관계</h2><p>관계는 자리·모둠 편성에 가중치로 적용됩니다. ‘떨어뜨리기’가 가장 강하고, 수다·장난은 부드럽게 분산합니다.</p></div></div>
-    <div class="relation-form"><div class="field"><label>학생 1</label><select id="relA"></select></div><div class="field"><label>학생 2</label><select id="relB"></select></div></div>
+    <p>선 색: 초록 협력 · 빨강 갈등/거리 두기 · 주황 수다/장난. 굵기: 강도 1~3. 기록이 없으면 선을 그리지 않습니다.</p><label>관계망에서 살펴볼 학생<select id="graphFocus"></select></label><div id="relationGraph" class="relation-graph"></div><p>학생 카드를 누르면 연결만 모아 보고, 선을 누르면 관계 기록을 수정할 수 있어요.</p><div class="relation-form"><div class="field"><label>학생 1</label><select id="relA"></select></div><div class="field"><label>학생 2</label><select id="relB"></select></div></div>
     <div class="relation-tags">
       <label class="tag-check"><input type="checkbox" value="avoid"> 떨어뜨리기</label>
       <label class="tag-check"><input type="checkbox" value="conflict"> 갈등 있음</label>
@@ -128,7 +130,7 @@ function renderAll(){
   $('#preview').innerHTML=c.students.length?c.students.map((s,i)=>'<span class="chip">'+(i+1)+'. '+esc(s.name)+'</span>').join(''):'<div class="empty">아직 저장된 학생이 없습니다.</div>';
   if(selectedStudentId&&!c.students.some(s=>String(s.id)===String(selectedStudentId)))selectedStudentId=null;
   if(!selectedStudentId&&c.students.length)selectedStudentId=String(c.students[0].id);
-  renderStudentList();renderProfileEditor();renderRelationSelects();renderRelations();renderHistory();
+  renderStudentList();renderProfileEditor();renderRelationSelects();renderRelations();renderHistory();window.ClassroomToday?.render();
 }
 function renderStudentList(){
   const c=room();
@@ -155,7 +157,7 @@ function renderProfileEditor(){
   });
   $('#frontSeat').onchange=e=>{Gulliver.updateStudentProfile(s.id,{frontSeat:e.target.checked});renderAllCountsOnly()};
   $('#leader').onchange=e=>{Gulliver.updateStudentProfile(s.id,{leader:e.target.checked});renderAllCountsOnly()};
-  let noteTimer=0;$('#profileNote').oninput=e=>{clearTimeout(noteTimer);noteTimer=setTimeout(()=>Gulliver.updateStudentProfile(s.id,{note:e.target.value}),250)};
+  $('#profileNote').oninput=e=>{try{Gulliver.updateStudentProfile(s.id,{note:e.target.value})}catch{Gulliver.toast('메모를 저장하지 못했습니다. 백업 후 저장 공간을 확인해 주세요.')}};
 }
 function renderAllCountsOnly(){
   const profiles=Gulliver.getProfiles();
@@ -168,6 +170,7 @@ function renderRelationSelects(){
   const a=$('#relA').value,b=$('#relB').value,opts=studentOptions();$('#relA').innerHTML=opts;$('#relB').innerHTML=opts;$('#relA').value=a;$('#relB').value=b
 }
 function renderRelations(){
+  window.ClassroomToday?.graph();
   const c=room(),byId=new Map(c.students.map(s=>[String(s.id),s.name])),rels=Gulliver.getRelations();
   $('#relationList').innerHTML=rels.length?rels.map(r=>{
     const tags=r.tags.map(t=>'<span class="r-tag '+(t==='cooperate'?'good':t==='avoid'||t==='conflict'?'warn':'')+'">'+TAG_LABEL[t]+'</span>').join('');
@@ -207,5 +210,5 @@ $('#fileInput').onchange=async e=>{const file=e.target.files[0];if(!file)return;
 window.addEventListener('gulliver:classroom-meta-change',()=>{renderAllCountsOnly();renderRelations();renderHistory()});
 renderAll();
 </script>
-</body>
+<link rel="stylesheet" href="classroom-today.css"><script src="classroom-today.js"></script><script src="classroom-storage.js"></script></body>
 </html>
