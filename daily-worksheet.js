@@ -51,7 +51,7 @@ function addMixRow(value){
  const remove=document.createElement('button');remove.type='button';remove.textContent='삭제';remove.setAttribute('aria-label','이 단원 삭제');remove.onclick=()=>{row.remove();updateMixTotal();updateFilterSummary()};
  row.append(label,amount,remove);$('unitMixRows').append(row);updateMixTotal();
 }
-function updateMixTotal(){const plan=mixPlan(),total=plan.reduce((n,row)=>n+row.count,0);$('unitMixTotal').textContent=plan.length+'개 유형 · 총 '+total+'문항';const active=$('unitMixEnabled').checked;$('count').disabled=active;$('addUnitMix').disabled=plan.length>=20}
+function updateMixTotal(){const plan=mixPlan(),total=plan.reduce((n,row)=>n+row.count,0);$('unitMixTotal').textContent=plan.length+'개 유형 · 총 '+total+'문항';const active=$('unitMixEnabled').checked;form.classList.toggle('unit-mix-active',active);$('count').disabled=active;$('addUnitMix').disabled=plan.length>=20}
 function resetMix(){ $('unitMixEnabled').checked=false;$('unitMixRows').replaceChildren();addMixRow();updateMixTotal() }
 $('addUnitMix').onclick=()=>{addMixRow();updateFilterSummary()};
 function denseAvailable(){if(subject!=='math')return false;if(!$('typeSetting').hidden)return /^(add-|sub-|small-|two-|times-)/.test($('type').value)&&$('type').value!=='times-missing';return ['addition','hundreds','multiplication'].includes($('topic').value)}

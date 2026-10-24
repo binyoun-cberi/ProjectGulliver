@@ -252,3 +252,5 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
 
 /* Mixed text and grid exercises retain a writable, bounded column area. */
 #questions:not(.column-questions) .column-cells,.print-paper .print-question-list:not(.column-questions) .column-cells{width:50mm;max-width:100%}
+
+@media screen{.unit-mix-active :is(#unitSetting,#topicSetting,#typeSetting,#mathTypeSetting,#historyEraSetting,#curriculumNote,#difficultySetting,#variantSetting),.unit-mix-active label:has(>#count){display:none!important}}
