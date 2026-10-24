@@ -129,6 +129,7 @@ test('Chrome requires a teacher PIN before sharing mafia roles and labels direct
   await page.goto('http://127.0.0.1:8996/'+encodeURIComponent('범퍼 룰렛.html'));
   await page.locator('#names-input').fill('하나\n둘');
   await page.locator('#slots-input').fill('질문\n통과');
+  await page.locator('#open-debug-btn').click();
   await page.locator('#cheat-list .cheat-name').first().fill('하나');
   await page.locator('#cheat-list .cheat-result').first().fill('질문');
   page.once('dialog',dlg=>dlg.accept());
