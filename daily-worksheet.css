@@ -249,3 +249,6 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
  #unitMixTotal{display:inline-block;margin:10px;font-weight:700}
  @media(max-width:600px){.unit-mix-row{grid-template-columns:minmax(0,1fr) 76px}.unit-mix-row>label:first-child{grid-column:1/-1}.unit-mix-row button{justify-self:start}}
 }
+
+/* Mixed text and grid exercises retain a writable, bounded column area. */
+#questions:not(.column-questions) .column-cells,.print-paper .print-question-list:not(.column-questions) .column-cells{width:50mm;max-width:100%}

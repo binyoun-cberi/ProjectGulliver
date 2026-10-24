@@ -154,6 +154,9 @@ test('collapsible unit quotas generate exact counts, survive reload and print on
  await page.evaluate(()=>{document.body.classList.add('print-answers');window.DailyWorksheetA4.compose()});await page.pdf({path:'test-artifacts/worksheet-unit-mix-teacher.pdf',format:'A4',printBackground:true});
  await page.emulateMedia({media:'screen'});await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
  await page.screenshot({path:'test-artifacts/worksheet-unit-mix-mobile.png',fullPage:true});
- await rows.nth(1).locator('button').click();assert.equal(await rows.count(),1);assert.deepEqual(errors,[]);
+ await rows.nth(1).locator('button').click();assert.equal(await rows.count(),1);
+ const columnUrl=await page.evaluate(()=>{const C=window.DailyWorksheetCore,options=C.mixOptions('math',3),plan=[options.find(x=>x.topic==='column'),options.find(x=>x.topic==='multiplication')].map(x=>({id:x.id,count:3}));const url=new URL(location.href);url.search=new URLSearchParams({subject:'math',grade:'3',unitMix:JSON.stringify(plan),seed:'99'});return url.href});
+ await page.goto(columnUrl,{waitUntil:'load'});assert.equal(await page.locator('#questions>li').count(),6);assert.equal(await page.locator('#questions .column-cells').count(),3);
+ const mixedPack=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(mixedPack.ok,mixedPack.issue);assert.deepEqual(errors,[]);
  }finally{await browser.close()}
 });

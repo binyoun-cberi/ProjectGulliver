@@ -98,7 +98,7 @@ function renderColumn(li,item,index,places){
 function render(sheet){
 current=sheet;
 const simpleOperation=item=>/^(\d+) ([+×−]) (\d+) =$/.test(item.prompt);
-const column=sheet.topic==='column';
+const column=sheet.topic==='column'||sheet.items.every(item=>item.column);
 const mathVertical=!column&&sheet.subject==='math'&&sheet.items.length>=5&&sheet.items.every(simpleOperation);
 const dense=mathVertical&&(sheet.type?/^(add-|sub-|small-|two-|times-)/.test(sheet.type)&&sheet.type!=='times-missing':['addition','hundreds','multiplication'].includes(sheet.topic));
 const compact=!column&&!dense&&sheet.responseFormat!=='essay'&&sheet.items.length>=5&&sheet.items.every(item=>
@@ -159,7 +159,7 @@ const compact=!column&&!dense&&sheet.responseFormat!=='essay'&&sheet.items.lengt
      else if(measured&&!measured.ok)$('sheetStatus').textContent=measured.issue;
    }
  });
- const url=new URL(location.href);url.search=new URLSearchParams({subject:sheet.subject,grade:String(sheet.grade),unit:$('unit').value,topic:sheet.topic,...(sheet.unitMix?{unitMix:JSON.stringify(sheet.unitMix.map(({id,count})=>({id,count})))}:{}),...(sheet.type?{type:sheet.type}:{}),...(column?{columnMode:sheet.columnMode,columnPlaces:sheet.columnPlaces?'1':'0'}:{}),...(sheet.responseFormat?{format:sheet.responseFormat}:{}),...(sheet.topic==='history-mix'?{eras:sheet.eras.join(',')}:{}),...(sheet.topic==='math-mix'?{mathTypes:sheet.mathTypes.join(',')}:{}),difficulty:sheet.difficulty,count:String(sheet.count),seed:String(sheet.seed),...(sheet.topic==='hundreds'&&!sheet.type?{variant:sheet.variant}:{}),...($('largePrint').checked?{large:'1'}:{})}).toString();history.replaceState(null,'',url.href);
+ const url=new URL(location.href);url.search=new URLSearchParams({subject:sheet.subject,grade:String(sheet.grade),unit:$('unit').value,topic:sheet.topic,...(sheet.unitMix?{unitMix:JSON.stringify(sheet.unitMix.map(({id,count})=>({id,count})))}:{}),...(sheet.type?{type:sheet.type}:{}),...(sheet.topic==='column'?{columnMode:sheet.columnMode,columnPlaces:sheet.columnPlaces?'1':'0'}:{}),...(sheet.responseFormat?{format:sheet.responseFormat}:{}),...(sheet.topic==='history-mix'?{eras:sheet.eras.join(',')}:{}),...(sheet.topic==='math-mix'?{mathTypes:sheet.mathTypes.join(',')}:{}),difficulty:sheet.difficulty,count:String(sheet.count),seed:String(sheet.seed),...(sheet.topic==='hundreds'&&!sheet.type?{variant:sheet.variant}:{}),...($('largePrint').checked?{large:'1'}:{})}).toString();history.replaceState(null,'',url.href);
  const qr=$('answerQr'),code=$('answerQrCode');code.replaceChildren();qr.hidden=true;
  if(/^https?:$/.test(url.protocol)&&typeof window.qrcode==='function')try{const generator=window.qrcode(0,'M');generator.addData(url.href,'Byte');generator.make();code.innerHTML=generator.createSvgTag(2,4);qr.hidden=false}catch(error){console.warn('문제지 QR을 생성할 수 없습니다.',error)}
 }
