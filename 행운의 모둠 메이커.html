@@ -288,7 +288,7 @@ function refreshStudentUI(){
 function renderConditions(){
   const renderPairs=(id,arr,kind)=>{
     $(id).innerHTML=arr.length?arr.map((p,i)=>'<span class="chip">'+esc(studentName(p[0]))+' ↔ '+esc(studentName(p[1]))+' <button data-del-'+kind+'="'+i+'">×</button></span>').join(""):'<span class="help">설정 없음</span>';
-    document.querySelectorAll("[data-del-"+kind+"]").forEach(b=>b.onclick=()=>{arr.splice(Number(b.getAttribute("data-del-"+kind)),1);saveConfig();renderConditions()});
+    document.querySelectorAll("[data-del-"+kind+"]").forEach(b=>b.onclick=()=>{const current=kind==="avoid"?state.avoidPairs:state.togetherPairs;current.splice(Number(b.getAttribute("data-del-"+kind)),1);saveConfig();renderConditions()});
   };
   renderPairs("avoidList",state.avoidPairs,"avoid");renderPairs("togetherList",state.togetherPairs,"together");
   $("leaderList").innerHTML=state.leaders.length?state.leaders.map(id=>'<span class="chip">⭐ '+esc(studentName(id))+' <button data-del-leader="'+esc(id)+'">×</button></span>').join(""):'<span class="help">설정 없음</span>';
