@@ -52,7 +52,7 @@ test('13: revised science evidence questions preserve final answers and specific
   ['mixture-separation','mixture-separation-17','일부 고형물','하수 처리 모형'],
   ['mixture-separation','mixture-separation-18','튀거나 흘러넘치는','유리 막대를 타고'],
   ['electricity','electricity-2','회로가 끊어져','스위치를 열자'],
-  ['electricity','electricity-6','함께 꺼진다','직렬로 연결'],
+  ['electricity','electricity-6','경로가 끊어지면','직렬로 연결'],
   ['environment-energy','environment-energy-8','서식지에 영향','하천에 놓아주려'],
   ['environment-energy','environment-energy-18','오염시키면','플라스틱 용기'],
   ['light-sound','light-sound-16','전달 매질','진공'],
