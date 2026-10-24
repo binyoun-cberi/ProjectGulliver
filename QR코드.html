@@ -844,7 +844,7 @@
           state.generatedText = text;
           els.freshness.textContent='최신 QR 코드예요. 아래에서 저장하거나 직접 스캔해 확인하세요.';
           els.freshness.dataset.status='ready';
-          els.qrCanvas.dataset.generatedContent=text;
+          // Do not expose the complete Wi-Fi payload as an extra DOM attribute.
           return true;
         } catch (error) {
           console.error(error);
@@ -952,7 +952,8 @@
         els.scanResult.classList.add('show');
         els.openResultBtn.style.display = isSafeOpenable(text) ? 'inline-flex' : 'none';
         if (isSafeOpenable(text)) els.openResultBtn.href = text;
-        addHistory(text);
+        // A scanned Wi-Fi QR may contain a password: do not persist it in history.
+        if(!/^WIFI:/i.test(text))addHistory(text);
         setScanStatus('QR 코드를 읽었습니다.', 'success');
         beep();
         if (navigator.vibrate) navigator.vibrate(80);
@@ -977,7 +978,7 @@
       });
 
       function loadHistory() {
-        try { return JSON.parse(localStorage.getItem('qr-tool-history') || '[]'); }
+        try { const items=JSON.parse(localStorage.getItem('qr-tool-history') || '[]');return Array.isArray(items)?items.filter(x=>x&&typeof x.value==='string'&&!/^WIFI:/i.test(x.value)).slice(0,5):[]; }
         catch { return []; }
       }
 
