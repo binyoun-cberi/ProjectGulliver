@@ -1223,10 +1223,10 @@ function convertAnswerFormat(items,subject,topic,responseFormat,seed){
    return {...common,format:'short',prompt:asWritingPrompt(original),choices:[]};
   }
   if(responseFormat==='essay'){
-    const hasEvidence=Boolean(item.detail||item.scienceMaterial||item.readingPassage||item.material||item.photo||item.passage);
+    const hasEvidence=Boolean(item.detail||item.scienceMaterial||item.readingPassage||item.readingGroup||item.material||item.photo||item.passage);
     const instruction=hasEvidence
       ?subject==='science'?'관찰 결과나 자료를 근거로, 그렇게 생각한 까닭을 한두 문장으로 설명해 보세요.'
-       :subject==='english'?'영어 글에서 근거가 되는 표현을 찾아, 그렇게 생각한 까닭을 한두 문장으로 설명해 보세요.'
+       :subject==='english'?'제시된 대화나 영어 글에서 근거가 되는 표현을 찾아, 그렇게 생각한 까닭을 한두 문장으로 설명해 보세요.'
        :'글이나 자료에서 근거를 찾아, 그렇게 생각한 까닭을 한두 문장으로 설명해 보세요.'
       :'배운 내용과 연결해 그렇게 생각한 까닭을 한두 문장으로 설명해 보세요.';
     return {...common,format:'essay',choices:[],
