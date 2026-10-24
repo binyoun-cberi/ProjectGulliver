@@ -236,3 +236,4 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
  .horizontal-worksheet .filter-submit{order:5}
  .horizontal-worksheet .daily-settings .scope-note{order:6}
 }
+@media screen{.horizontal-worksheet .filter-submit .daily-primary{color:#fff;border-color:#247b6b}}
