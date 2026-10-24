@@ -2,7 +2,7 @@
 'use strict';
 // These original schematic drawings are not to scale. Student labels contain only the evidence.
 const svg=(title,body)=>({kind:'diagram',title,body});
-const table=(title,headers,rows,note='')=>({kind:'table',title,headers,rows,note:'학습용 예시 자료입니다.'+(note?' '+note:'')});
+const table=(title,headers,rows,note='')=>({kind:'table',title,headers,rows,note});
 const box=(x,y,w,h,label)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="#f4f7f7" stroke="#344d56"/><text x="${x+w/2}" y="${y+h/2+5}" text-anchor="middle">${label}</text>`;
 const arrow=(x,y,x2,y2)=>{const angle=Math.atan2(y2-y,x2-x),dx=Math.cos(angle),dy=Math.sin(angle);return `<path d="M${x} ${y} L${x2} ${y2}" fill="none" stroke="#344d56" stroke-width="2"/><polygon points="${x2},${y2} ${x2-8*dx+4*dy},${y2-8*dy-4*dx} ${x2-8*dx-4*dy},${y2-8*dy+4*dx}" fill="#344d56"/>`};
 const text=(x,y,label)=>`<text x="${x}" y="${y}">${label}</text>`;

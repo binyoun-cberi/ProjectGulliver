@@ -5,7 +5,7 @@
 const entries=[];
 function add(topic,goal,title,headers,rows,prompt,answer,wrong,explanation,note=''){
  const q={topic,id:topic+'-inquiry-'+goal,goal,stimulusId:topic+'-'+goal,prompt,answer,wrong,explanation,
- material:{kind:'table',title,headers,rows,note:note||'학습용 예시 자료'}};entries.push(q);return q;
+ material:{kind:'table',title,headers,rows,note}};entries.push(q);return q;
 }
 const data={
 living:[
@@ -154,7 +154,7 @@ function chart(material){
  let body='<path d="M45 28 V132 H312" stroke="#344d56" fill="none"/>';
  body+=`<text x="4" y="18">${esc(material.headers[1])}</text><text x="45" y="147">0</text>`;
  rows.forEach((r,i)=>{const x=80+i*85,h=values[i]*scale;body+=`<rect x="${x}" y="${base-h}" width="36" height="${h}" fill="#d2dedf" stroke="#344d56"/><text x="${x+18}" y="${base-h-5}" text-anchor="middle">${values[i]}</text><text x="${x+18}" y="154" text-anchor="middle">${esc(r[0])}</text>`});
- return {kind:'diagram',title:material.title+' · 막대그래프',body,note:material.note+' · 가로: '+material.headers[0]};
+ return {kind:'diagram',title:material.title+' · 막대그래프',body,note:(material.note?material.note+' · ':'')+'가로: '+material.headers[0]};
 }
 for(const [topic,rows] of Object.entries(data))for(let i=0;i<rows.length;i++){
  const [goal,title,headers,values,prompt,answer,wrong,explanation,note]=rows[i];const q=add(topic,goal,title,headers,values,prompt,answer,wrong,explanation,note);
