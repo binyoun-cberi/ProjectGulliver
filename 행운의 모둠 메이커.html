@@ -71,8 +71,14 @@ details.conditions>summary::after{content:"＋";color:#9aa4b4}details.conditions
 .teacher-only{}
 @media(max-width:850px){.setup-grid{grid-template-columns:1fr}.group-grid{grid-template-columns:1fr 1fr}.field-row{grid-template-columns:1fr 1fr}.condition-form,.condition-form.fixed{grid-template-columns:1fr 1fr}.condition-form .btn,.condition-form.fixed .btn{grid-column:1/-1}}
 @media(max-width:560px){body{padding:70px 8px 28px}.head{align-items:flex-start;flex-direction:column}.head-actions{justify-content:flex-start}.setup{padding:11px}.group-grid{grid-template-columns:1fr}.field-row{grid-template-columns:1fr}.slot-window{height:80px}.machine{padding:10px}.slot-deck{padding:9px}.condition-form,.condition-form.fixed{grid-template-columns:1fr}}
+ .allocation-summary{padding:12px 16px;background:#eff7f2;color:#205d4d;border-radius:13px;border:1px solid #cce3d6;font-size:13px;font-weight:800;line-height:1.55}
+ .allocation-summary[data-valid="false"]{background:#fff0f0;color:#a23232;border-color:#f7d1d1}
+ #conditionPreview{border:1px solid #d9e8df}
+ #setupNotice,#conditionPreview,#resultNotice{overflow-wrap:anywhere}
+ @media(max-width:560px){.result-tools .btn,.machine-actions .btn{min-height:44px}}
 </style>
 <script src="gulliver-shared.js?v=20261020-ui"></script>
+<script src="classroom-allocation-audit.js?v=20261024-1"></script>
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
 <script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
@@ -135,6 +141,7 @@ details.conditions>summary::after{content:"＋";color:#9aa4b4}details.conditions
           </div>
         </details>
         <div class="notice" id="setupNotice">학생 명단을 넣으면 조건을 설정할 수 있어요.</div>
+        <div class="notice" id="conditionPreview" role="status" aria-live="polite">모둠 조건 확인 전</div>
       </div>
     </div>
     <div class="start-area"><button class="btn primary" id="startBtn">✨ 좋은 모둠 계산하고 슬롯 시작</button></div>
@@ -162,6 +169,7 @@ details.conditions>summary::after{content:"＋";color:#9aa4b4}details.conditions
       <div class="result-tools" id="resultTools"><strong id="selectedLabel">학생 선택</strong><span class="help">다른 학생을 누르면 두 학생의 모둠을 서로 바꿉니다.</span><button class="btn small" id="cancelSelectBtn">선택 해제</button></div>
       <div class="group-grid" id="groupGrid"></div>
       <div class="notice" id="resultNotice">레버를 당기면 계산된 모둠을 하나씩 공개합니다.</div>
+      <p id="groupAuditSummary" class="allocation-summary">모둠 결과의 조건을 확인할 수 있어요.</p>
     </div>
   </section>
 </div>
@@ -280,7 +288,7 @@ function refreshStudentUI(){
 function renderConditions(){
   const renderPairs=(id,arr,kind)=>{
     $(id).innerHTML=arr.length?arr.map((p,i)=>'<span class="chip">'+esc(studentName(p[0]))+' ↔ '+esc(studentName(p[1]))+' <button data-del-'+kind+'="'+i+'">×</button></span>').join(""):'<span class="help">설정 없음</span>';
-    document.querySelectorAll("[data-del-"+kind+"]").forEach(b=>b.onclick=()=>{arr.splice(Number(b.getAttribute("data-del-"+kind)),1);saveConfig();renderConditions()});
+    document.querySelectorAll("[data-del-"+kind+"]").forEach(b=>b.onclick=()=>{const current=kind==="avoid"?state.avoidPairs:state.togetherPairs;current.splice(Number(b.getAttribute("data-del-"+kind)),1);saveConfig();renderConditions()});
   };
   renderPairs("avoidList",state.avoidPairs,"avoid");renderPairs("togetherList",state.togetherPairs,"together");
   $("leaderList").innerHTML=state.leaders.length?state.leaders.map(id=>'<span class="chip">⭐ '+esc(studentName(id))+' <button data-del-leader="'+esc(id)+'">×</button></span>').join(""):'<span class="help">설정 없음</span>';
@@ -288,10 +296,18 @@ function renderConditions(){
   const fixed=Object.entries(state.fixedGroups);
   $("fixedList").innerHTML=fixed.length?fixed.map(([id,g])=>'<span class="chip">📌 '+esc(studentName(id))+' → '+g+'모둠 <button data-del-fixed="'+esc(id)+'">×</button></span>').join(""):'<span class="help">설정 없음</span>';
   document.querySelectorAll("[data-del-fixed]").forEach(b=>b.onclick=()=>{delete state.fixedGroups[b.dataset.delFixed];saveConfig();renderConditions()});
-  renderHistory();
+  renderHistory();showConditionPreview();
 }
 function renderHistory(){
   const hist=getHistory();$("historyList").innerHTML=hist.length?hist.map((h,i)=>'<div class="history-line"><span>'+(i===0?"최근 ":"")+new Date(h.at).toLocaleString("ko-KR")+'</span><span>'+Object.keys(h.assignments).length+'명</span></div>').join(""):'<div class="help">아직 확정한 모둠 기록이 없습니다.</div>'
+}
+function showConditionPreview(){
+  const element=$('conditionPreview');
+  if(!state.students.length){element.textContent='학생 명단을 불러오면 조건을 확인할 수 있어요.';element.className='notice';return}
+  const issue=validateSetup();
+  element.textContent=issue?'배정 전에 해결할 조건: '+issue:
+    '조건 사전 확인 완료 · '+groupCount()+'모둠 · 같이 묶기 '+state.togetherPairs.length+'쌍 · 분리 '+state.avoidPairs.length+'쌍';
+  element.className='notice '+(issue?'bad':'good');
 }
 function addPair(kind){
   const a=$(kind+"A").value,b=$(kind+"B").value;if(!a||!b||a===b){Gulliver.toast("서로 다른 학생 두 명을 선택해 주세요.");return}
@@ -359,11 +375,11 @@ function validateSetup(){
   const sizes=balancedSizes(),max=Math.max(...sizes),gc=sizes.length;
   const comps=components();
   for(const comp of comps){
-    if(comp.length>max)return"같이 묶기로 연결된 학생이 한 모둠 정원보다 많습니다.";
+    if(comp.length>max)return"같이 묶은 "+comp.map(studentName).join("·")+" 학생 "+comp.length+"명을 한 모둠("+max+"명)에 넣을 수 없습니다.";
     const fixed=[...new Set(comp.map(id=>Number(state.fixedGroups[id]||0)).filter(Boolean))];
-    if(fixed.length>1)return"같이 묶인 학생들이 서로 다른 고정 모둠으로 지정되어 있습니다.";
+    if(fixed.length>1)return"같이 묶인 "+comp.map(studentName).join("·")+" 학생에게 서로 다른 고정 모둠이 지정돼 있습니다.";
     if(fixed[0]&&fixed[0]>gc)return"존재하지 않는 모둠 번호로 고정된 학생이 있습니다.";
-    for(let i=0;i<comp.length;i++)for(let j=i+1;j<comp.length;j++)if(pairExists(state.avoidPairs,comp[i],comp[j]))return"같이 묶기와 떨어뜨리기 조건이 서로 충돌합니다.";
+    for(let i=0;i<comp.length;i++)for(let j=i+1;j<comp.length;j++)if(pairExists(state.avoidPairs,comp[i],comp[j]))return studentName(comp[i])+"·"+studentName(comp[j])+" 학생을 같이 묶으면서 동시에 분리할 수 없습니다.";
   }
   const fixedCounts=Array(gc).fill(0);
   comps.forEach(comp=>{const g=comp.map(id=>Number(state.fixedGroups[id]||0)).find(Boolean);if(g)fixedCounts[g-1]+=comp.length});
@@ -456,6 +472,7 @@ function renderResults(){
     return'<div class="group-card"><div class="group-head"><strong>'+(gi+1)+'모둠</strong><span class="pill">'+g.length+'명</span></div><div class="members">'+members+'</div></div>'
   }).join("");
   document.querySelectorAll("[data-member]").forEach(b=>b.onclick=()=>selectStudent(b.dataset.member));
+  if(state.revealed===state.groups.length)updateGroupAuditSummary();
   $("resultTools").classList.toggle("show",Boolean(selectedStudentId));
   if(selectedStudentId)$("selectedLabel").textContent=studentName(selectedStudentId)+" 선택됨";
 }
@@ -466,10 +483,24 @@ function selectStudent(id){
     const a=findGroupOf(selectedStudentId),b=findGroupOf(id);if(a===b){selectedStudentId=null;renderResults();return}
     const ai=state.groups[a].findIndex(s=>s.id===selectedStudentId),bi=state.groups[b].findIndex(s=>s.id===id);
     [state.groups[a][ai],state.groups[b][bi]]=[state.groups[b][bi],state.groups[a][ai]];
-    selectedStudentId=null;renderResults();
-    const hard=hardViolations();setNotice("resultNotice",hard.length?"교환은 했지만 조건이 깨졌습니다: "+hard.join(" · "):"두 학생의 모둠을 서로 바꿨습니다.",hard.length?"bad":"good");return
+    const hard=hardViolations();
+    if(hard.length){
+      [state.groups[a][ai],state.groups[b][bi]]=[state.groups[b][bi],state.groups[a][ai]];
+      selectedStudentId=null;renderResults();
+      setNotice("resultNotice","교환을 취소했어요. "+hard.join(" · ")+" 조건을 위반하게 됩니다.","bad");return;
+    }
+    selectedStudentId=null;renderResults();updateGroupAuditSummary();
+    setNotice("resultNotice","두 학생의 모둠을 서로 바꿨습니다. 필수 조건은 모두 유지돼요.","good");return
   }
   selectedStudentId=selectedStudentId===id?null:id;renderResults()
+}
+function updateGroupAuditSummary(){
+  const ids=state.groups.map(g=>g.map(x=>x.id));
+  const issues=ClassroomAllocationAudit.groupIssues(ids,state.avoidPairs,state.togetherPairs,state.fixedGroups);
+  const summary=$('groupAuditSummary');
+  summary.textContent=issues.length?'필수 조건 위반 · '+issues.join(' · '):
+    '필수 조건 충족 · '+state.groups.length+'모둠 · 학생 '+state.groups.reduce((n,g)=>n+g.length,0)+'명';
+  summary.dataset.valid=String(!issues.length);
 }
 function hardViolations(){
   const map={};state.groups.forEach((g,gi)=>g.forEach(s=>map[s.id]=gi+1));const issues=[];

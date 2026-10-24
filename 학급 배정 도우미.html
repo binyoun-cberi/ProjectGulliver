@@ -18,8 +18,13 @@ input,select{width:100%;border:1px solid #dce2eb;background:#fff;color:#334155;b
 .condition-list{display:grid;gap:9px}.condition-card{border:1px solid var(--line);background:#fff;border-radius:15px;padding:12px}.condition-top{display:grid;grid-template-columns:150px minmax(170px,240px) 1fr;gap:10px;align-items:center}.condition-name{font-weight:950}.exclude-title{font-size:10px;color:#8994a6;font-weight:900;margin-bottom:6px}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{border:1px solid #dbe2eb;background:#f8fafc;color:#64748b;border-radius:999px;padding:6px 8px;font-size:11px;font-weight:850}.chip.on{background:#fff1f2;border-color:#fda4af;color:#be123c}.history{margin-top:15px;border-top:1px dashed var(--line);padding-top:14px}.history-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #f1f3f6;font-size:12px}.history-row:last-child{border-bottom:0}
 .result-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.result-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin-top:14px}.role-card{border:1px solid var(--line);background:#fff;border-radius:17px;padding:13px;min-height:150px}.role-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:9px;border-bottom:1px solid #eef1f5}.role-card-head strong{font-size:16px}.assigned-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.assigned{border:1px solid #dbe4ff;background:#f3f6ff;color:#384b85;border-radius:10px;padding:8px 9px;font-size:12px;font-weight:900;cursor:pointer}.assigned.selected{outline:3px solid rgba(245,158,11,.22);border-color:#f59e0b;background:#fff8e8}.assigned.fixed::after{content:" · 고정";font-size:9px;color:#7c3aed}.empty{color:#9aa4b5;font-size:12px;padding:12px 0}.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}.stat{border:1px solid var(--line);background:#fff;border-radius:14px;padding:10px;text-align:center}.stat b{display:block;font-size:20px}.stat span{font-size:10px;color:#7b8794;font-weight:850}.manual-box{display:none;margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:11px}.manual-box.show{display:block}.manual-box-inner{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.notice{margin-top:12px;border-radius:13px;padding:11px 12px;background:#f8fafc;color:#64748b;font-size:12px;font-weight:750;line-height:1.55}.notice.good{background:#ecfdf5;color:#047857}.notice.bad{background:#fff1f2;color:#be123c}
 @media(max-width:850px){.result-grid{grid-template-columns:1fr 1fr}.condition-top{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}}@media(max-width:600px){body{padding:70px 9px 28px}.head{align-items:flex-start;flex-direction:column}.tabs{grid-template-columns:1fr 1fr}.panel{padding:12px}.addbar{grid-template-columns:1fr 90px auto}.result-grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+.allocation-fairness{margin:10px 0 12px;padding:13px 15px;border-radius:13px;border:1px solid #cce7dd;background:#eff8f4;color:#175c4c;font-size:13px;line-height:1.6;font-weight:800}
+#resultNotice{overflow-wrap:anywhere}
+.assigned:focus-visible,.result-actions button:focus-visible{outline:3px solid #187c69;outline-offset:2px}
+@media(max-width:600px){.allocation-fairness{font-size:12px}.assigned{min-height:44px}.role-card{min-height:125px}}
 </style>
 <script src="gulliver-shared.js?v=20261020-ui"></script>
+<script src="classroom-allocation-audit.js?v=20261024-1"></script>
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
 <script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
@@ -93,6 +98,7 @@ input,select{width:100%;border:1px solid #dce2eb;background:#fff;color:#334155;b
       <div><h2>배정 결과</h2><p>전체 만족도를 계산해 편성하고, 결과가 마음에 들지 않으면 교사가 직접 수정할 수 있어요.</p></div>
       <div class="result-actions"><button class="btn primary" id="runBtn">✨ 가장 좋은 배정 찾기</button><button class="btn" id="copyBtn">결과 복사</button><button class="btn green" id="confirmBtn">✓ 이번 역할 확정</button></div>
     </div>
+    <p id="roleFairnessSummary" class="allocation-fairness" role="status">희망 순위와 최근 기록을 함께 고려해 결과를 계산해요.</p>
     <div class="stats">
       <div class="stat"><b id="stat1">-</b><span>1지망</span></div>
       <div class="stat"><b id="stat2">-</b><span>2지망</span></div>
@@ -283,6 +289,8 @@ function validate(){
     if(!allowed.length)return s.name+" 학생이 맡을 수 있는 역할이 하나도 없습니다.";
   }
   for(const r of state.roles)if((fixedCount[r.id]||0)>r.count)return"‘"+r.name+"’ 역할은 "+r.count+"자리인데 필수 배정이 "+fixedCount[r.id]+"명입니다.";
+  const feasible=ClassroomAllocationAudit.roleFeasibility(state.students,state.roles,state.fixed,state.excluded);
+  if(!feasible.ok)return feasible.message;
   return"";
 }
 function studentRoleScore(student,roleId){
@@ -329,7 +337,7 @@ function runAssignment(){
   refreshSharedProfiles();
   const err=validate();if(err){setNotice(err,"bad");switchTab("results");return}
   const solved=solveAssignment();if(!solved){setNotice("현재 필수·제외 조건으로는 모든 학생을 배정할 수 없습니다. 조건을 조금 완화해 주세요.","bad");switchTab("results");return}
-  state.assignment=solved;selectedStudentId=null;save();switchTab("results");renderResults();setNotice("희망 순위와 최근 역할 기록을 함께 계산해 전체 만족도가 높은 배치를 만들었습니다. 결과는 아직 확정되지 않았습니다.","good")
+  state.assignment=solved;selectedStudentId=null;save();switchTab("results");renderResults();setNotice("희망 순위와 최근 역할 기록을 함께 고려했습니다. 위의 지망 충족 내역을 확인한 다음 확정해 주세요.","good")
 }
 function preferenceRank(student,roleId){const i=student.prefs.indexOf(roleId);return i>=0?i+1:0}
 function recentChanged(studentId,roleId){const h=getHistory()[0];return!h||String(h.assignments[studentId]||"")!==String(roleId)}
@@ -348,7 +356,11 @@ function renderResults(){
 function renderStats(){
   let c1=0,c2=0,c3=0,other=0,changed=0,total=0;
   state.students.forEach(s=>{const r=state.assignment[s.id];if(!r)return;total++;const p=preferenceRank(s,r);if(p===1)c1++;else if(p===2)c2++;else if(p===3)c3++;else other++;if(recentChanged(s.id,r))changed++});
-  $("stat1").textContent=total?c1+"명":"-";$("stat2").textContent=total?c2+"명":"-";$("stat3").textContent=total?c3+"명":"-";$("statOther").textContent=total?other+"명":"-";$("statNew").textContent=total?Math.round(changed/total*100)+"%":"-"
+  $("stat1").textContent=total?c1+"명":"-";$("stat2").textContent=total?c2+"명":"-";$("stat3").textContent=total?c3+"명":"-";$("statOther").textContent=total?other+"명":"-";$("statNew").textContent=total?Math.round(changed/total*100)+"%":"-";
+  const summary=$("roleFairnessSummary");
+  summary.textContent=total?
+    '희망 순위 충족: 1지망 '+c1+'명 · 2~3지망 '+(c2+c3)+'명 · 기타 '+other+'명'+(getHistory().length?' · 지난 역할과 달라진 학생 '+changed+'명':' · 첫 배정'):
+    '아직 배정 결과가 없어요. 1~3지망, 교사 조건, 최근 기록을 참고해 배정해요.';
 }
 function selectResultStudent(id){
   if(!state.assignment[id])return;

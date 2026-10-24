@@ -189,24 +189,37 @@
     stage.replaceChildren(card);
   }
 
-  function renderLesson(data) {
-    const card = element('section', 'display-card lesson-card');
-    card.dataset.subject = safeText(data.subject, '국어');
-    const head = element('div', 'lesson-head');
-    head.append(element('span', 'lesson-subject', safeText(data.subject, '수업')), element('span', 'lesson-page', safeText(data.page)));
-    card.append(head,
-      element('p', 'lesson-unit', safeText(data.unit)),
-      element('h1', 'lesson-topic', safeText(data.topic, '오늘의 수업')));
-    const objective = element('div', 'lesson-objective');
-    objective.append(element('small', '', '🎯 학습 목표'), element('div', '', safeText(data.objective)));
-    card.append(objective);
-    const activities = element('div', 'lesson-activities');
-    ['act1', 'act2', 'act3'].forEach((key, index) => {
-      const item = element('div', 'lesson-activity');
-      item.append(element('span', '', `활동 ${index + 1}`), element('strong', '', safeText(data[key])));
-      activities.append(item);
-    });
-    card.append(activities, element('div', 'lesson-wrapup', `✨ 정리 · ${safeText(data.wrapup)}`));
+  function renderLesson(data){
+    const modes=['all','intro','act1','act2','act3','wrapup'];
+    const stageName={all:'전체 수업',intro:'도입 · 학습 목표',act1:'활동 1',act2:'활동 2',act3:'활동 3',wrapup:'정리'};
+    const current=modes.includes(data.stage)?data.stage:'all';
+    const card=element('section','display-card lesson-card');
+    card.dataset.lessonStage=current;
+    card.dataset.subject=safeText(data.subject,'국어');
+    const head=element('div','lesson-head');
+    head.append(element('span','lesson-subject',safeText(data.subject,'수업')),element('span','lesson-page',safeText(data.page)));
+    card.append(head,element('p','lesson-unit',safeText(data.unit)),element('h1','lesson-topic',safeText(data.topic,'오늘의 수업')));
+    if(current!=='all')card.append(element('span','lesson-stage-label',stageName[current]));
+    if(current==='all'||current==='intro'){
+      const objective=element('div','lesson-objective');
+      objective.append(element('small','','학습 목표'),element('div','',safeText(data.objective)));
+      card.append(objective);
+    }
+    if(current==='all'){
+      const activities=element('div','lesson-activities');
+      ['act1','act2','act3'].forEach((key,index)=>{
+        const item=element('div','lesson-activity');
+        item.append(element('span','',`활동 ${index+1}`),element('strong','',safeText(data[key])));
+        activities.append(item);
+      });
+      card.append(activities);
+    }
+    if(['act1','act2','act3'].includes(current)){
+      const box=element('div','lesson-focus-activity');
+      box.append(element('span','',stageName[current]),element('strong','',safeText(data[current],'함께 활동해요')));
+      card.append(box);
+    }
+    if(current==='all'||current==='wrapup')card.append(element('div','lesson-wrapup',`정리 · ${safeText(data.wrapup)}`));
     stage.replaceChildren(card);
   }
 
