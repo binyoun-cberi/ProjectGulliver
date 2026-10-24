@@ -25,7 +25,8 @@ test('Chrome first use: links and dismiss persist on 390px screen',{timeout:1000
   assert.equal(await page.locator('#firstStartTitle').count(),0);
   await page.reload();
   assert.equal(await page.locator('#firstStartTitle').count(),0);
-  await page.locator('button[data-view="tools"]').first().click();
+  await page.locator('#menuButton').click();
+  await page.locator('.sidebar button[data-view="tools"]').click();
   assert.ok(await page.locator('.tool-row-link').count()>10);
  }finally{await browser?.close();server.kill('SIGTERM')}
 });
