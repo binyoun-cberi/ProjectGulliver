@@ -92,6 +92,9 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.screenshot({path:'test-artifacts/time-tools-version-mobile.png',fullPage:false});
     await page.keyboard.press('Escape');assert.equal(await page.locator('.gx-release-panel').isVisible(),false);
     await page.setViewportSize({width:320,height:740});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+    assert.ok(await page.evaluate(()=>{const boxes=['.gx-brand','.gx-header-actions','.gx-release'].map(s=>document.querySelector(s).getBoundingClientRect());for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){const a=boxes[i],b=boxes[j];if(Math.min(a.right,b.right)-Math.max(a.left,b.left)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>1)return false}return true}),'narrow header controls overlap');
+    await page.screenshot({path:'test-artifacts/time-tools-version-narrow.png',fullPage:false});
+
     await page.setViewportSize({width:1440,height:900});await page.locator('.gx-release-label').click();
     assert.ok(await page.evaluate(()=>{const b=document.querySelector('.gx-release').getBoundingClientRect(),n=document.querySelector('.gx-nav').getBoundingClientRect();return b.x>=n.right&&b.right<=innerWidth}));
     await page.screenshot({path:'test-artifacts/time-tools-version-desktop.png',fullPage:false});

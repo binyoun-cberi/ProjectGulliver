@@ -167,3 +167,9 @@ body.gx-app:is(.student-view,.presentation,.running){padding-top:0!important}
 .gx-release-panel strong,.gx-release-panel time{display:block}.gx-release-panel strong{font-size:14px}.gx-release-panel time{font-size:11px;color:var(--gx-muted);margin-top:4px}
 .gx-release-panel p{font-weight:750;margin:12px 0 5px}.gx-release-panel ul{margin:0;padding-left:17px}.gx-release-panel li{padding:0;margin:5px 0;overflow-wrap:anywhere}
 @media(max-width:760px){.gx-header .gx-header-inner{grid-template-columns:auto minmax(0,1fr) auto;gap:5px 8px}.gx-header .gx-header-actions{justify-content:flex-end}.gx-header .gx-release{grid-column:3;grid-row:1;justify-self:end}.gx-header .gx-release-label{padding:4px 7px;font-size:10px}}
+/* On very narrow phones, keep tool actions on their own row instead of covering the brand. */
+@media(max-width:360px){
+ body.gx-app:has(.gx-header-actions:not(:empty)){--gx-header-height:144px}
+ .gx-header .gx-header-inner:has(.gx-header-actions:not(:empty)) .gx-header-actions{grid-column:1/-1;grid-row:2;justify-content:flex-end}
+ .gx-header .gx-header-inner:has(.gx-header-actions:not(:empty)) .gx-nav{grid-row:3}
+}
