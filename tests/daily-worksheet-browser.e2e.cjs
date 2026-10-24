@@ -44,6 +44,7 @@ test('worksheet editor generates and prints student/teacher versions in real Chr
     await page.evaluate(() => document.body.classList.remove('print-answers'));
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: 'test-artifacts/worksheet-mobile.png', fullPage: true });
+    await page.locator('input[name="subject"][value="korean"]').check();
     await page.selectOption('#grade', '4');
     await page.selectOption('#unit', 'k4-reading');
     await page.selectOption('#topic', 'reading-set');
