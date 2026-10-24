@@ -284,3 +284,9 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
 
 /* An unpaired science task uses the full final row, including its teacher explanation. */
 .print-paper .science-evidence>li:last-child:nth-child(odd){grid-column:1 / -1}
+/* Keep source tables readable while using less space between their rows and the task. */
+.print-paper .print-question-list.science-evidence{gap:3mm 6mm}
+.print-paper .science-evidence>li{padding-bottom:2px}
+.print-paper .science-material{margin:1mm 0}
+.print-paper .science-material th,.print-paper .science-material td{padding:.8mm 1.5mm}
+.print-paper .science-evidence .inline-answer{margin-top:5px}

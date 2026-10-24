@@ -174,20 +174,20 @@ test('all new science topics are selectable, compose A4, and mix across domains'
 
 test('all 17 science topics preserve diagrams and tables in student and teacher PDFs',{skip:(!chrome||!chromium)&&'Chrome required',timeout:150000},async()=>{
  const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--allow-file-access-from-files']});
- try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));const base=pathToFileURL(path.resolve('문제지 만들기.html')).href,B=require('../science-expansion.js');
+ try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],layoutIssues=[];page.on('pageerror',e=>errors.push(e.message));const base=pathToFileURL(path.resolve('문제지 만들기.html')).href,B=require('../science-expansion.js');
  for(const [topic,,grade] of C.SUBJECTS.science.topics){
  await page.goto(base+'?'+new URLSearchParams({subject:'science',grade,topic,count:5,seed:42}),{waitUntil:'load'});await page.evaluate(()=>document.fonts.ready);
  assert.equal(await page.locator('#questions .science-material svg').count()>=1,true,topic);assert.ok(await page.locator('#questions .science-material table').count()>=1,topic);
  for(const teacher of [false,true]){
  await page.evaluate(t=>document.body.classList.toggle('print-answers',t),teacher);await page.emulateMedia({media:'print'});
- const packed=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(packed.ok,topic+': '+packed.issue);assert.equal(packed.pages,1,topic+' '+(teacher?'teacher':'student')+' five choice questions should fit one A4');
+ const packed=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(packed.ok,topic+': '+packed.issue);if(packed.pages!==1)layoutIssues.push(topic+'/'+(teacher?'teacher':'student')+': '+JSON.stringify(packed));
  const result=await page.evaluate(()=>({pages:[...document.querySelectorAll('.print-paper')].length,diagrams:document.querySelectorAll('.print-paper .science-material svg').length,tables:document.querySelectorAll('.print-paper .science-material table').length}));assert.ok(result.diagrams>=1);assert.ok(result.tables>=1);
  await page.pdf({path:`test-artifacts/worksheet-science-${topic}-${teacher?'teacher':'student'}.pdf`,format:'A4',printBackground:true});
  }
  await page.emulateMedia({media:'screen'});await page.evaluate(()=>document.body.classList.remove('print-answers'));
  const bounds=await page.locator('#questions .science-material svg').evaluate(svg=>{const b=svg.getBBox();return {x:b.x,y:b.y,right:b.x+b.width,bottom:b.y+b.height}});assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.right<=331&&bounds.bottom<=176,topic+' SVG labels fit: '+JSON.stringify(bounds));
  }
- await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
+ await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);assert.deepEqual(layoutIssues,[],'five choice questions should fit one A4');
  }finally{await browser.close()}
 });
 
