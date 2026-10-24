@@ -651,13 +651,13 @@
                 row.innerHTML = `
                     <!-- 1. 색상 선택 동그라미 -->
                     <div class="w-8 h-8 rounded-full ${theme.fill} shadow-inner flex-shrink-0 flex items-center justify-center hover:scale-110 transition-transform" 
-                         onclick="cycleColor(${opt.id}, event)" title="클릭해서 색상 변경">
+                         data-vote-action="color" title="클릭해서 색상 변경">
                         ${isSelected ? '<i class="ph-bold ph-check text-white"></i>' : ''}
                     </div>
                     
                     <!-- 2. 항목 이름 (우클릭 수정) -->
                     <div class="ml-4 flex-1 text-2xl md:text-3xl text-slate-700 truncate select-none h-full flex items-center" 
-                         oncontextmenu="editOptionName(event, ${opt.id}, this)">
+                         data-vote-action="rename">
                         <span class="vote-option-safe-name"></span>
                     </div>
 
@@ -667,13 +667,16 @@
                             ${count}<span class="text-xl text-slate-500 ml-1 font-sans font-bold">명</span>
                         </span>
                         
-                        <button onclick="deleteOption(${opt.id}, event)" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors ml-1" title="선택지 삭제">
+                        <button data-vote-action="delete" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors ml-1" title="선택지 삭제">
                             <i class="ph-bold ph-x text-lg"></i>
                         </button>
                     </div>
                 `;
                 
                 const nameNode=row.querySelector(".vote-option-safe-name");if(nameNode)nameNode.textContent=String(opt.name||"");
+                row.querySelector('[data-vote-action="color"]')?.addEventListener('click',e=>cycleColor(opt.id,e));
+                row.querySelector('[data-vote-action="rename"]')?.addEventListener('contextmenu',e=>editOptionName(e,opt.id,e.currentTarget));
+                row.querySelector('[data-vote-action="delete"]')?.addEventListener('click',e=>deleteOption(opt.id,e));
                 listContainer.appendChild(row);
             });
         }
