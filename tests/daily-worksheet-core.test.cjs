@@ -7,8 +7,8 @@ test('science and English contextual reading yields twenty distinct sourced-by-c
   for(const grade of grades)for(const seed of [1,42,2026]){
    const options={subject,topic,grade,count:20,seed},sheet=generate(options);
    assert.deepEqual(sheet,generate(options));
-   assert.equal(new Set(sheet.items.map(q=>q.detail)).size,20);
-   for(const q of sheet.items){assert.ok(q.detail&&q.explanation);assert.equal(q.choices.length,3);assert.ok(q.choices.includes(q.answer))}
+   assert.equal(new Set(sheet.items.map(q=>q.scienceId||q.detail)).size,20);
+   for(const q of sheet.items){assert.ok((q.detail||q.scienceMaterial)&&q.explanation);assert.equal(q.choices.length,3);assert.ok(q.choices.includes(q.answer))}
   }
   for(const grade of [3,4,5,6].filter(g=>!grades.includes(g)))assert.throws(()=>generate({subject,topic,grade,count:5}));
  }
@@ -388,7 +388,7 @@ test('heritage photo sheets keep unique photos and answers with local credited a
   const sheet=generate({subject:'social',grade,topic:'history-photo',type:'photo-identify',count,seed});
   assert.equal(new Set(sheet.items.map(q=>q.answer)).size,count);
   assert.equal(new Set(sheet.items.map(q=>q.photo.src)).size,count);
-  for(const q of sheet.items){assert.ok(fs.existsSync(path.join(__dirname,'..',q.photo.src)));assert.match(q.photo.license,/제1유형/);assert.match(q.photo.sourceUrl,/^https:\/\/www\.heritage\.go\.kr\/heri\/cul\/imgHeritage.do\?/);assert.ok(q.detail&&q.explanation);assert.ok(!q.photo.src.includes(q.answer))}
+  for(const q of sheet.items){assert.ok(fs.existsSync(path.join(__dirname,'..',q.photo.src)));assert.match(q.photo.license,/제1유형/);assert.match(q.photo.sourceUrl,/^https:\/\/www\.heritage\.go\.kr\/heri\/cul\/imgHeritage.do\?/);assert.ok((q.detail||q.scienceMaterial)&&q.explanation);assert.ok(!q.photo.src.includes(q.answer))}
  }
 });
 
@@ -426,12 +426,40 @@ test('science expansion covers twelve distinct topics and 264 authored questions
 
 
 test('science evidence is included in short, long and quota sheets and survives response conversion',()=>{
- const C=require('../daily-worksheet-core'),M=require('../science-materials');assert.equal(M.entries.length,24);
+ const C=require('../daily-worksheet-core'),M=require('../science-materials');assert.equal(M.entries.length,34);
  for(const entry of M.entries){assert.ok(entry.explanation.length>45);assert.ok(!entry.material.body||!entry.material.body.includes('url(#'));assert.ok(!entry.material.body||!/<(?:script|foreignObject|image)\b/i.test(entry.material.body));}
  for(const topic of [...new Set(M.entries.map(q=>q.topic))])for(const count of [5,10,20])for(const responseFormat of ['choice','ox','short','essay']){
- const sheet=C.generate({subject:'science',topic,grade:5,count,responseFormat,seed:42}),evidence=sheet.items.filter(q=>q.scienceMaterial);
+ const sheet=C.generate({subject:'science',topic,grade:topic==='plant-observation'?3:5,count,responseFormat,seed:42}),evidence=sheet.items.filter(q=>q.scienceMaterial);
  assert.equal(evidence.length,2,topic);assert.deepEqual(new Set(evidence.map(q=>q.scienceMaterial.kind)),new Set(['table','diagram']));
  assert.equal(new Set(sheet.items.map(q=>q.scienceId)).size,count);assert.ok(evidence.every(q=>q.explanation.length>45));
  }
  const id=C.mixOptions('science',5).find(x=>x.topic==='heat').id;assert.ok(C.generate({subject:'science',grade:5,unitMix:[{id,count:1}],seed:42}).items[0].scienceMaterial);
+});
+
+
+test('science audit covers all 17 banks and prevents repeated binary worksheets and answer-only explanations',()=>{
+ const C=require('../daily-worksheet-core'),B=require('../science-expansion'),legacy=['living','matter','weather'];
+ assert.equal(Object.keys(B.banks).length,17);assert.equal(Object.values(B.banks).flat().length,404);
+ for(const q of Object.values(B.banks).flat()){
+  assert.ok(q.explanation.length>=18,q.id);assert.doesNotMatch(q.explanation,/ → /,q.id);
+  assert.doesNotMatch(q.prompt,/은\(는\)|이\(가\)/,q.id);assert.equal(new Set([q.answer,...q.wrong]).size,3,q.id);
+ }
+ for(const topic of legacy)for(const count of [5,10,15,20])for(let seed=1;seed<=50;seed++){
+  const sheet=C.generate({subject:'science',grade:5,topic,count,seed}),families=new Set(sheet.items.map(q=>q.scienceFamily));assert.ok(families.size>=3,topic+seed);
+  assert.ok(sheet.items.filter(q=>q.scienceFamily==='classification').length<=Math.ceil(count/5),topic+seed);
+  assert.equal(new Set(sheet.items.map(q=>q.scienceId)).size,count);assert.ok(sheet.items.every(q=>q.detail||q.scienceMaterial));
+  assert.equal(sheet.items.filter(q=>q.scienceMaterial).length,2);
+ }
+ const p=B.banks['plant-observation'].find(q=>q.id==='plant-observation-context-5');assert.match(p.detail,/잎 두 장/);
+ const e=B.banks.ecosystem.find(q=>q.detail.includes('화분'));assert.doesNotMatch(e.detail,/같은 화분의 식물 두 개/);
+ const old=C.generate({subject:'science',grade:3,topic:'living',count:10,seed:1337});assert.ok(old.items.some(q=>q.scienceMaterial));assert.ok(old.items.every(q=>q.choices.length===3));
+});
+
+test('every offered science grade and format yields complete reproducible contextual sheets',()=>{
+ const C=require('../daily-worksheet-core');let checked=0;
+ for(const grade of C.SUBJECTS.science.grades)for(const [topic,,min,max=6] of C.SUBJECTS.science.topics){if(grade<min||grade>max)continue;
+ for(const count of [5,10,15,20])for(const responseFormat of ['choice','ox','short','essay'])for(const seed of [1,42]){
+ const state={subject:'science',grade,topic,count,responseFormat,seed},sheet=C.generate(state);assert.deepEqual(sheet,C.generate(state));assert.equal(sheet.items.length,count);assert.equal(new Set(sheet.items.map(q=>q.scienceId)).size,count);assert.equal(sheet.items.filter(q=>q.scienceMaterial).length,2);
+ for(const q of sheet.items){assert.ok(q.explanation);if(responseFormat==='choice')assert.ok(q.choices.includes(q.answer));if(responseFormat==='ox')assert.equal(q.answer==='O',q.oxProposal===q.originalAnswer);if(['short','essay'].includes(responseFormat))assert.deepEqual(q.choices,[])}checked++;
+ }}assert.ok(checked>=1600);console.log('Science audit generated variants:',checked);
 });

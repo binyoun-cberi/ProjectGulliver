@@ -270,8 +270,13 @@ const definitions=[
 const sources={space:'https://science.nasa.gov/earth/facts/','weather-process':'https://www.noaa.gov/jetstream/clouds/how-clouds-form','earth-water':'https://www.usgs.gov/faqs/what-earths-water-cycle',electricity:'https://www.eia.gov/energyexplained/electricity/batteries-circuits-and-transformers.php'};
 const topics=definitions.map(([id,label,min])=>[id,label,min]);
 const banks=Object.fromEntries(definitions.map(([id,label,min,text])=>[id,text.trim().split('\n').map((line,i)=>{const [prompt,answer,...wrong]=line.split('|');if(!prompt||!answer||wrong.length!==2||new Set([answer,...wrong]).size!==3)throw Error('과학 문항 확인: '+id+' '+i);return {id:id+'-'+(i+1),prompt,answer,wrong,explanation:prompt.replace(/\?$/,'')+' → '+answer,source:sources[id]||'',sourceLabel:sources[id]?'과학 개념 참고 자료':''}})]));
+const legacy=typeof module==='object'&&module.exports?require('./science-legacy.js'):globalThis.ScienceLegacy;
+Object.assign(banks,legacy.banks);
 const materials=typeof module==='object'&&module.exports?require('./science-materials.js'):globalThis.ScienceMaterials;
-for(const {topic,...question} of materials.entries)banks[topic].push(question);
-return {topics,banks};
+for(const {topic,...question} of materials.entries)(banks[topic]||=([])).push(question);
+const review=typeof module==='object'&&module.exports?require('./science-review.js'):globalThis.ScienceReview;
+review.apply(banks);
+return {topics,banks,review:review.apply};
 });
+
 

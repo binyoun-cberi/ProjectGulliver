@@ -172,11 +172,11 @@ test('all new science topics are selectable, compose A4, and mix across domains'
 });
 
 
-test('science diagrams and data tables remain intact in actual student and teacher PDFs',{skip:(!chrome||!chromium)&&'Chrome required',timeout:150000},async()=>{
+test('all 17 science topics preserve diagrams and tables in student and teacher PDFs',{skip:(!chrome||!chromium)&&'Chrome required',timeout:150000},async()=>{
  const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--allow-file-access-from-files']});
  try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));const base=pathToFileURL(path.resolve('문제지 만들기.html')).href,B=require('../science-expansion.js');
- for(const [topic] of B.topics){
- await page.goto(base+'?'+new URLSearchParams({subject:'science',grade:5,topic,count:5,seed:42}),{waitUntil:'load'});await page.evaluate(()=>document.fonts.ready);
+ for(const [topic,,grade] of C.SUBJECTS.science.topics){
+ await page.goto(base+'?'+new URLSearchParams({subject:'science',grade,topic,count:5,seed:42}),{waitUntil:'load'});await page.evaluate(()=>document.fonts.ready);
  assert.equal(await page.locator('#questions .science-material svg').count(),1,topic);assert.equal(await page.locator('#questions .science-material table').count(),1,topic);
  for(const teacher of [false,true]){
  await page.evaluate(t=>document.body.classList.toggle('print-answers',t),teacher);await page.emulateMedia({media:'print'});
@@ -188,5 +188,21 @@ test('science diagrams and data tables remain intact in actual student and teach
  const bounds=await page.locator('#questions .science-material svg').evaluate(svg=>{const b=svg.getBBox();return {x:b.x,y:b.y,right:b.x+b.width,bottom:b.y+b.height}});assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.right<=331&&bounds.bottom<=176,topic+' SVG labels fit: '+JSON.stringify(bounds));
  }
  await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
+ }finally{await browser.close()}
+});
+
+
+test('legacy science screenshot cases use contextual questions with evidence in all four formats',{skip:(!chrome||!chromium)&&'Chrome required',timeout:100000},async()=>{
+ const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--allow-file-access-from-files']});
+ try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));const base=pathToFileURL(path.resolve('문제지 만들기.html')).href;
+ for(const topic of ['living','matter','weather'])for(const format of ['choice','ox','short','essay']){
+ await page.goto(base+'?'+new URLSearchParams({subject:'science',grade:topic==='weather'?5:3,topic,count:10,seed:1337,format}),{waitUntil:'load'});
+ assert.equal(await page.locator('#questions>li').count(),10);assert.equal(await page.locator('#questions .science-material').count(),2);
+ assert.doesNotMatch(await page.locator('#questions').textContent(),/은\(는\)|이\(가\)|생물인가요, 비생물인가요/);
+ if(format==='essay')assert.equal(await page.locator('#questions .essay-writing').count(),10);
+ for(const teacher of [false,true]){await page.evaluate(t=>document.body.classList.toggle('print-answers',t),teacher);const packed=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(packed.ok,topic+'/'+format+': '+packed.issue)}
+ }
+ await page.goto(base+'?'+new URLSearchParams({subject:'science',grade:3,topic:'living',count:10,seed:1337}),{waitUntil:'load'});await page.emulateMedia({media:'print'});await page.evaluate(()=>window.DailyWorksheetA4.compose());await page.pdf({path:'test-artifacts/worksheet-science-living-10-audited.pdf',format:'A4',printBackground:true});
+ await page.emulateMedia({media:'screen'});await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
  }finally{await browser.close()}
 });
