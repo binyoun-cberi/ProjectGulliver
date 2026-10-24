@@ -37,6 +37,18 @@
     const nav = element('nav', 'gulliver-nav gx-nav'); nav.setAttribute('aria-label', '클라시트 주요 메뉴');
     const selected = file === 'index.html' && new URLSearchParams(location.search).get('view') === 'tools' ? 'tools' : principal[file] || null;
     for (const [key, label, href] of sections) {
+      if(key==='worksheet'){
+        const picker=element('details','gx-worksheet-picker'),summary=element('summary','','문제지 ▾');summary.setAttribute('aria-label','문제지 과목 선택');
+        if(key===selected)summary.setAttribute('aria-current','page');
+        const menu=element('div','gx-subject-menu');menu.setAttribute('aria-label','문제지 과목');
+        const subjects=[['korean','국어'],['math','수학'],['social','사회'],['science','과학'],['english','영어']];
+        for(const [value,name] of subjects){const link=element('a','',name);link.href=href+'?subject='+value;link.dataset.worksheetSubject=value;
+          link.onclick=e=>{if(file==='문제지 만들기.html'&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){e.preventDefault();picker.open=false;window.dispatchEvent(new CustomEvent('gulliver:worksheet-subject',{detail:{subject:value}}));summary.focus();}};menu.append(link)}
+        picker.append(summary,menu);nav.append(picker);
+        document.addEventListener('click',e=>{if(!picker.contains(e.target))picker.open=false});
+        picker.addEventListener('keydown',e=>{if(e.key==='Escape'){picker.open=false;summary.focus()}});
+        continue;
+      }
       const a = element('a', '', label); a.href = href;
       if (key === selected) a.setAttribute('aria-current', 'page');
       nav.append(a);

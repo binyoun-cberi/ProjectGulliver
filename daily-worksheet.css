@@ -193,3 +193,47 @@ body:not(.print-answers) .print-paper .reading-standard{display:none!important}
 .print-paper .photo-questions .answer-explanation{font-size:10px;line-height:1.4}
 
 body.print-answers .print-paper .print-question-list.photo-small{grid-template-columns:repeat(3,minmax(0,1fr))}
+
+
+/* One full-width settings panel below navigation; the worksheet owns the next row. */
+@media screen{
+ .horizontal-worksheet.daily-layout{max-width:1480px;padding-top:24px}
+ .horizontal-worksheet .daily-intro{margin-bottom:20px}
+ .horizontal-worksheet .daily-intro h1{font-size:28px}
+ .horizontal-worksheet .daily-workspace{display:flex;flex-direction:column;gap:28px}
+ .horizontal-worksheet .daily-workspace>#sheetForm{position:static;width:100%;max-height:none;overflow:visible;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 20px;padding:22px;scroll-margin-top:100px}
+ .horizontal-worksheet .daily-output{width:100%;min-width:0}
+ .horizontal-worksheet .filter-heading{grid-column:1/-1;display:flex;justify-content:space-between;gap:16px;align-items:center;padding-bottom:14px;border-bottom:1px solid #e3eae5}
+ .filter-heading h2{margin:4px 0 0}.filter-heading p{font-size:12px;color:#687a70;margin:0}
+ .filter-step{font-size:11px;font-weight:750;letter-spacing:.02em;color:#247b6b}
+ .horizontal-worksheet .daily-settings>label{align-self:start}
+ .horizontal-worksheet .daily-settings .curriculum-note,.horizontal-worksheet .daily-settings .scope-note{grid-column:1/-1;margin:0;font-size:11px}
+ .horizontal-worksheet .daily-settings .curriculum-note{background:#f6f8f6;border-radius:8px;padding:8px 10px}
+ .horizontal-worksheet #mathTypeSetting,.horizontal-worksheet #historyEraSetting,.horizontal-worksheet #columnSettings{grid-column:1/-1;background:#f7faf7;border:1px solid #e0e9e2;border-radius:12px;padding:14px}
+ .horizontal-worksheet #mathTypeOptions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+ .horizontal-worksheet #mathTypeOptions .math-type-group{min-width:0}
+ .horizontal-worksheet #mathTypeOptions label{display:flex;align-items:flex-start;gap:5px;margin-top:6px;font-size:12px;line-height:1.5}
+ .horizontal-worksheet #mathTypeOptions input{flex:none;accent-color:#247b6b}
+ .horizontal-worksheet #columnSettings{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+ .horizontal-worksheet #columnSettings select{min-width:160px}
+ .horizontal-worksheet #columnSettings label{font-size:13px}
+ .horizontal-worksheet .filter-submit{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid #e3eae5;padding-top:16px}
+ .filter-submit>span{font-size:13px;color:#52665b;line-height:1.6}
+ .filter-submit .daily-primary{background:#247b6b;min-width:230px;min-height:46px}
+ .horizontal-worksheet .output-actions{padding:0 2px;gap:16px}
+ .horizontal-worksheet .paper-stack{width:100%;border-top:1px solid #e0e8e2;padding-top:20px}
+ .horizontal-worksheet .paper{width:min(100%,210mm)}
+ @media(max-width:1000px){.horizontal-worksheet .daily-workspace>#sheetForm{grid-template-columns:repeat(2,minmax(0,1fr))}.horizontal-worksheet #mathTypeOptions{grid-template-columns:repeat(2,minmax(0,1fr))}}
+ @media(max-width:600px){.horizontal-worksheet .daily-workspace>#sheetForm{padding:16px;gap:14px;scroll-margin-top:120px}.horizontal-worksheet .filter-heading{display:block}.filter-heading p{margin-top:8px}.horizontal-worksheet .daily-intro h1{font-size:23px}.horizontal-worksheet .filter-submit{align-items:stretch;flex-direction:column}.filter-submit .daily-primary{width:100%;min-width:0}.horizontal-worksheet #mathTypeOptions{grid-template-columns:1fr}.horizontal-worksheet .paper-stack{padding-top:12px}}
+}
+@media print{.filter-step{display:none!important}}
+@media screen{
+ .horizontal-worksheet .filter-heading{order:0}
+ .horizontal-worksheet .daily-settings>label{order:1}
+ .horizontal-worksheet #mathTypeSetting,.horizontal-worksheet #historyEraSetting,.horizontal-worksheet #columnSettings{order:2}
+ .horizontal-worksheet .daily-settings>label.print-option{order:3;grid-column:1/-1}
+ .horizontal-worksheet .daily-settings .curriculum-note{order:4}
+ .horizontal-worksheet .filter-submit{order:5}
+ .horizontal-worksheet .daily-settings .scope-note{order:6}
+}
+@media screen{.horizontal-worksheet .filter-submit .daily-primary{color:#fff;border-color:#247b6b}}

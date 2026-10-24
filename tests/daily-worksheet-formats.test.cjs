@@ -85,7 +85,7 @@ test('browser dropdown and actual A4 student/teacher layouts reflect the selecte
  const errors=[];page.on('pageerror',err=>errors.push(err.message));
  try{
   await page.goto(pathToFileURL(path.resolve('문제지 만들기.html')).href,{waitUntil:'load'});
-  await page.locator('input[name="subject"][value="korean"]').check();
+  await page.locator('.gx-worksheet-picker summary').click();await page.locator('[data-worksheet-subject="korean"]').click();
   await page.selectOption('#grade','4');
   await page.selectOption('#unit','k4-vocabulary');
   await page.selectOption('#topic','vocabulary');
@@ -107,10 +107,10 @@ test('browser dropdown and actual A4 student/teacher layouts reflect the selecte
    assert.ok(packed.ok,'A4 page composition succeeds for '+mode+': '+packed.issue);
    if(mode==='essay')assert.ok(packed.pages>=1);
   }
-  await page.locator('input[name="subject"][value="math"]').check();
+  await page.locator('.gx-worksheet-picker summary').click();await page.locator('[data-worksheet-subject="math"]').click();
   assert.equal(await page.locator('#responseSetting').isVisible(),false);
   assert.equal(await page.locator('#typeSetting').isVisible(),true);
-  await page.locator('input[name="subject"][value="english"]').check();
+  await page.locator('.gx-worksheet-picker summary').click();await page.locator('[data-worksheet-subject="english"]').click();
   assert.equal(await page.locator('#unitSetting').isVisible(),false,'do not show an empty unit selector for English');
   await page.selectOption('#grade','3');
   await page.selectOption('#topic','sentence');
@@ -120,16 +120,21 @@ test('browser dropdown and actual A4 student/teacher layouts reflect the selecte
 });
 
 
-test('workspace keeps settings left and full preview right across extra links, scrolling and mobile',{skip:(!chrome||!chromium)&&'Chrome required',timeout:90000},async()=>{
+test('worksheet subject navigation and horizontal settings work on desktop and mobile',{skip:(!chrome||!chromium)&&'Chrome required',timeout:90000},async()=>{
  const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--allow-file-access-from-files']});
- try{const page=await browser.newPage({viewport:{width:1824,height:1266}});
+ try{const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(pathToFileURL(path.resolve('문제지 만들기.html')).href,{waitUntil:'load'});
- async function bounds(){return page.evaluate(()=>{const settings=document.querySelector('#sheetForm').getBoundingClientRect(),output=document.querySelector('.daily-output').getBoundingClientRect();return {settings:{x:settings.x,y:settings.y,width:settings.width,right:settings.right},output:{x:output.x,y:output.y,width:output.width}}})}
- let rect=await bounds();assert.ok(rect.settings.width<=330,'settings remain a narrow sidebar');assert.ok(rect.output.width>=650,'worksheet keeps enough width');assert.ok(rect.settings.right<rect.output.x,'settings must stay left of preview');
- await page.evaluate(()=>{const link=document.createElement('a');link.className='column-math-link';link.textContent='세로셈';document.querySelector('.daily-workspace').prepend(link)});
- rect=await bounds();assert.ok(rect.settings.right<rect.output.x);assert.ok(rect.output.width>=650);
- await page.evaluate(()=>scrollTo(0,300));rect=await bounds();assert.ok(rect.settings.right<rect.output.x,'sticky scrolling cannot swap columns');
- await page.setViewportSize({width:390,height:844});await page.evaluate(()=>scrollTo(0,0));rect=await bounds();assert.ok(rect.output.y>rect.settings.y,'mobile stacks preview below settings');
- assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'mobile page has no horizontal overflow');
+ async function geometry(){return page.evaluate(()=>{const s=document.getElementById('sheetForm').getBoundingClientRect(),o=document.querySelector('.daily-output').getBoundingClientRect();return {settings:{x:s.x,y:s.y,width:s.width,bottom:s.bottom},output:{x:o.x,y:o.y,width:o.width}}})}
+ let rect=await geometry();assert.ok(rect.settings.width>1100,'settings should span the workspace');assert.ok(rect.output.y>=rect.settings.bottom,'preview belongs below settings');assert.ok(Math.abs(rect.settings.width-rect.output.width)<3);
+ assert.equal(await page.locator('.subject-source').isVisible(),false,'subject belongs in top navigation');
+ await page.locator('.gx-worksheet-picker summary').click();assert.equal(await page.locator('.gx-subject-menu a').count(),5);await page.locator('[data-worksheet-subject="english"]').click();
+ assert.equal(await page.locator('#filterSubjectTitle').textContent(),'영어 문제지 설정');assert.equal(await page.locator('.gx-worksheet-picker').getAttribute('open'),null);
+ await page.selectOption('#grade','5');await page.selectOption('#topic','message-reading');await page.selectOption('#count','20');await page.locator('button.daily-primary').click();
+ assert.equal(await page.locator('#questions>li').count(),20);assert.match(await page.locator('#questionSheet #paperTitle').textContent(),/영어/);assert.match(await page.locator('#filterSelectionSummary').textContent(),/20문항/);
+ await page.locator('.gx-worksheet-picker summary').click();await page.keyboard.press('Escape');assert.equal(await page.locator('.gx-worksheet-picker').getAttribute('open'),null);
+ await page.screenshot({path:'test-artifacts/worksheet-horizontal-desktop.png',fullPage:true});
+ await page.setViewportSize({width:390,height:844});await page.evaluate(()=>scrollTo(0,0));await page.locator('.gx-worksheet-picker summary').click();await page.locator('[data-worksheet-subject="science"]').click();
+ assert.equal(await page.locator('#filterSubjectTitle').textContent(),'과학 문제지 설정');assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ rect=await geometry();assert.ok(rect.output.y>=rect.settings.bottom);await page.screenshot({path:'test-artifacts/worksheet-horizontal-mobile.png',fullPage:true});assert.deepEqual(errors,[]);
  }finally{await browser.close()}
 });

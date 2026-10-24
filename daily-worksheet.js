@@ -147,7 +147,14 @@ const compact=!column&&!dense&&sheet.responseFormat!=='essay'&&sheet.items.lengt
  if(/^https?:$/.test(url.protocol)&&typeof window.qrcode==='function')try{const generator=window.qrcode(0,'M');generator.addData(url.href,'Byte');generator.make();code.innerHTML=generator.createSvgTag(2,4);qr.hidden=false}catch(error){console.warn('문제지 QR을 생성할 수 없습니다.',error)}
 }
 function make(newSeed){try{const state={subject,grade:Number($('grade').value),topic:$('topic').value,type:contentType(),eras:selectedEras(),mathTypes:selectedMathTypes(),difficulty:$('difficulty').value,variant:$('variant').value,count:Number($('count').value),columnMode:$('columnMode').value,columnPlaces:$('columnPlaces').checked,seed:newSeed,responseFormat:subject==='math'?'':$('responseFormat').value};render(C.generate(state))}catch(error){console.warn('문제지 만들기:',error);$('sheetStatus').textContent='선택한 조건으로 문제를 만들지 못했어요. 문제 유형이나 문항 수를 바꾸어 다시 시도해 주세요.';$('sheetMeta').textContent=''}}
-form.addEventListener('change',e=>{const name=e.target.name;if(name==='subject'){subject=e.target.value;syncGrades($('grade').value);syncHistoryEras();syncMathTypes([])}else if(name==='grade'){syncUnits(null);syncHistoryEras();syncMathTypes([])}else if(name==='unit'){syncTopics();syncHistoryEras();syncMathTypes()}else if(name==='topic'){syncTypes();syncHistoryEras();syncMathTypes()}if(['subject','grade','unit','topic','type'].includes(name))syncDifficulty();if(name!=='count'&&name!=='largePrint')syncCount(Number($('count').value))});
+function updateFilterSummary(){
+ const name=C.SUBJECTS[subject].name;$('filterSubjectTitle').textContent=name+' 문제지 설정';
+ const labels=[$('grade').selectedOptions[0]?.textContent,$('typeSetting').hidden?$('topic').selectedOptions[0]?.textContent:$('type').selectedOptions[0]?.textContent,$('count').value+'문항'];
+ $('filterSelectionSummary').textContent=labels.filter(Boolean).join(' · ');
+ document.querySelectorAll('[data-worksheet-subject]').forEach(link=>{if(link.dataset.worksheetSubject===subject)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current')});
+}
+window.addEventListener('gulliver:worksheet-subject',e=>{const input=[...form.querySelectorAll('input[name="subject"]')].find(input=>input.value===e.detail?.subject);if(!input)return;input.checked=true;input.dispatchEvent(new Event('change',{bubbles:true}));form.scrollIntoView({block:'start',behavior:'smooth'})});
+form.addEventListener('change',e=>{const name=e.target.name;if(name==='subject'){subject=e.target.value;syncGrades($('grade').value);syncHistoryEras();syncMathTypes([])}else if(name==='grade'){syncUnits(null);syncHistoryEras();syncMathTypes([])}else if(name==='unit'){syncTopics();syncHistoryEras();syncMathTypes()}else if(name==='topic'){syncTypes();syncHistoryEras();syncMathTypes()}if(['subject','grade','unit','topic','type'].includes(name))syncDifficulty();if(name!=='count'&&name!=='largePrint')syncCount(Number($('count').value));updateFilterSummary();if(name!=='largePrint')$('sheetStatus').textContent='조건을 골랐어요. ‘문제지 만들기’를 눌러 반영하세요.'});
 form.addEventListener('submit',e=>{e.preventDefault();make(seed())});$('regenerate').onclick=()=>make(seed());
 $('toggleAnswers').onclick=()=>setPreview(!answersVisible);
 async function print(withAnswers){
@@ -170,8 +177,11 @@ async function print(withAnswers){
 $('largePrint').addEventListener('change',()=>{document.body.classList.toggle('large-print',$('largePrint').checked);if(current)render(current)});
 document.body.classList.toggle('large-print',$('largePrint').checked);
 $('printOnly').onclick=()=>print(false);$('printWithAnswers').onclick=()=>print(true);
+document.addEventListener('DOMContentLoaded',updateFilterSummary,{once:true});
 window.addEventListener('beforeprint',()=>{if(current)window.DailyWorksheetA4?.compose()});
 window.addEventListener('afterprint',()=>document.body.classList.remove('print-answers'));
+updateFilterSummary();
 make(Number.isFinite(Number(params.get('seed')))&&params.has('seed')?Number(params.get('seed')):seed());
 })();
+
 
