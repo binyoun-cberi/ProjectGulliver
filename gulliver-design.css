@@ -144,3 +144,15 @@ body.gx-app:is(.student-view,.presentation,.running){padding-top:0!important}
 }
 @media(prefers-reduced-motion:reduce){.gx-app .gx-button{transition:none}}
 @media print{body.gx-app{padding-top:0!important;background:white}.gx-app>.gx-header{display:none!important}}
+
+
+/* Subject navigation is a native disclosure, usable by keyboard and touch. */
+.gx-header .gx-worksheet-picker{position:relative;font:inherit}
+.gx-header .gx-worksheet-picker>summary{display:flex;align-items:center;justify-content:center;min-height:40px;box-sizing:border-box;padding:9px 13px;border:1px solid transparent;border-radius:10px;list-style:none;cursor:pointer;font:750 13px/1.4 "Pretendard",system-ui,sans-serif;color:var(--gx-muted);white-space:nowrap}
+.gx-header .gx-worksheet-picker>summary::-webkit-details-marker{display:none}
+.gx-header .gx-worksheet-picker>summary[aria-current=page],.gx-header .gx-worksheet-picker[open]>summary{background:var(--gx-soft);color:var(--gx-brand-hover)}
+.gx-header .gx-subject-menu{position:absolute;top:calc(100% + 9px);left:0;z-index:1100;min-width:170px;padding:7px;border:1px solid var(--gx-line);border-radius:12px;background:white;box-shadow:0 12px 35px #243b3022;display:grid;gap:3px}
+.gx-header .gx-subject-menu a{justify-content:flex-start;padding:10px 14px}
+.gx-header .gx-subject-menu a[aria-current=page]{background:var(--gx-soft);color:var(--gx-brand-hover)}
+.gx-header .gx-worksheet-picker summary:focus-visible{outline:3px solid #8bbda9;outline-offset:2px}
+@media(max-width:640px){.gx-header .gx-worksheet-picker>summary{width:100%;padding:9px 6px}.gx-header .gx-subject-menu{min-width:145px;max-width:calc(100vw - 24px)}}
