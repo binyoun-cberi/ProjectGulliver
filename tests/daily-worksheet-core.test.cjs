@@ -488,3 +488,5 @@ test('science pagination uses another page when the minimum-page split is badly 
  assert.deepEqual(balancedPlan(units,fits).map(([a,b])=>b-a),[8,12]);
  const balanced=balancedPlan(units,fits,true).map(([a,b])=>b-a);assert.equal(balanced.reduce((a,b)=>a+b,0),20);assert.equal(balanced.length,3);assert.ok(Math.max(...balanced)-Math.min(...balanced)<=1);
 });
+
+test('mushroom observations do not equate new fruiting bodies with new fungal individuals',()=>{const q=require('../science-inquiry').entries.find(q=>q.id==='living-inquiry-fungus');assert.doesNotMatch(q.answer+' '+q.explanation,/새 개체|개체 발생/);assert.match(q.answer,/성장/);});
