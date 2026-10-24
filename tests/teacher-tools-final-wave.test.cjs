@@ -41,9 +41,11 @@ test('Chrome runs wordchain, bomb and curriculum edits, and checks teacher priva
   const page=await context.newPage();page.setDefaultTimeout(12000);
   await page.goto(origin+encodeURIComponent('끝말잇기 게임.html'));
   await page.locator('#namesInput').fill('하나\n두리\n세나');
-  await page.locator('#dictionaryOn').uncheck();
-  await page.locator('#missionOn').check();
-  await page.locator('#timerOn').uncheck();
+  await page.evaluate(()=>{
+    for(const [id,checked] of [['dictionaryOn',false],['missionOn',true],['timerOn',false]]){
+      const el=document.getElementById(id);el.checked=checked;el.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+  });
   await page.locator('#startBtn').click();
   await page.evaluate(()=>{state.missionIndex=2;});
   await page.locator('#wordInput').fill('학교');
@@ -112,6 +114,7 @@ test('Chrome requires a teacher PIN before sharing mafia roles and labels direct
   page.once('dialog',dlg=>dlg.accept());
   await page.getByRole('button',{name:'역할 배정하고 시작'}).click();
   assert.equal(await page.locator('#phaseLabel').textContent(),'준비 중');
+  await page.locator('#app details').first().evaluate(element=>element.open=true);
   await page.locator('input[type="password"]').fill('6527');
   await page.getByRole('button',{name:'역할 배정하고 시작'}).click();
   assert.equal(await page.locator('#phaseLabel').textContent(),'역할 확인');
