@@ -1201,7 +1201,7 @@ function generate(options){
  if(!Number.isInteger(total)||total<1||total>40)throw Error('전체 문항 수는 1~40문항으로 정해 주세요.');
  const items=[],plan=[];
  unitMix.forEach((row,index)=>{
-  const entry=availableOptions.find(option=>option.id===row.id),amount=Number(row.count);
+  const entry=availableOptions.find(option=>option.id===row.id||(subject==='science'&&row.id==='topic:'+option.topic)),amount=Number(row.count);
   if(!entry||ids.has(row.id)||!Number.isInteger(amount)||amount<1||amount>20)throw Error('단원과 문항 수를 확인해 주세요.');
   ids.add(row.id);
   const base={...options,unitMix:undefined,topic:entry.topic,type:entry.type,seed:((Number(seed)>>>0)+Math.imul(index+1,2654435761))>>>0,responseFormat:subject==='math'?'':options.responseFormat||''};

@@ -420,5 +420,6 @@ test('science expansion covers twelve distinct topics and 240 authored questions
  if(minimum===5)assert.throws(()=>C.generate({subject:'science',grade:3,topic,count:5}));
  }
  assert.equal(ids.size,240);
+ assert.equal(C.generate({subject:'science',grade:5,seed:19,unitMix:[{id:'topic:living',count:2},{id:'topic:weather',count:3}]}).items.length,5);
  for(const grade of [3,4,5,6])for(const [topic] of C.SUBJECTS.science.topics.filter(t=>grade>=t[2]&&grade<=(t[3]||6)))assert.ok(C.units('science',grade).some(u=>u.topics.includes(topic)));
 });
