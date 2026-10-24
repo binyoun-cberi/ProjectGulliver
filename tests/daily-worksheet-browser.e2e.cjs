@@ -24,10 +24,10 @@ test('worksheet editor generates and prints student/teacher versions in real Chr
     await page.selectOption('#unit', 'g3-add');
     await page.selectOption('#topic', 'hundreds');
     await page.selectOption('#type', 'add-carry-two');
-    await page.selectOption('#count', '24');
+    await page.selectOption('#count', '20');
     await page.locator('button.daily-primary').click();
-    assert.equal(await page.locator('#questions > li').count(), 24);
-    assert.equal(await page.locator('.calculation-grid > li').count(), 24);
+    assert.equal(await page.locator('#questions > li').count(), 20);
+    assert.equal(await page.locator('.calculation-grid > li').count(), 20);
     const original = await page.locator('.result-answer').first().evaluate(el => getComputedStyle(el).visibility);
     assert.equal(original, 'hidden', 'the student preview must not leak answers');
     await page.screenshot({ path: 'test-artifacts/worksheet-desktop.png', fullPage: true });
@@ -45,6 +45,14 @@ test('worksheet editor generates and prints student/teacher versions in real Chr
     await page.evaluate(() => document.body.classList.remove('print-answers'));
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: 'test-artifacts/worksheet-mobile.png', fullPage: true });
+    await page.selectOption('#grade', '4');
+    await page.selectOption('#unit', 'k4-reading');
+    await page.selectOption('#topic', 'reading-set');
+    await page.selectOption('#type', 'reading-set-literary');
+    await page.selectOption('#count', '20');
+    await page.locator('button.daily-primary').click();
+    assert.equal(await page.locator('#questions > li').count(), 20);
+    assert.equal(await page.locator('.reading-text').count(), 4);
     assert.equal(pageErrors.length, 0, 'browser runtime errors: ' + pageErrors.join(' / '));
   } finally {
     await browser.close();

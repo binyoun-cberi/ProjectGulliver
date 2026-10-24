@@ -918,6 +918,44 @@ function arithmetic(grade,difficulty,r){
  const minus=r()<.5;
  return minus?{prompt:`${a+b} − ${b} =`,answer:String(a),choices:[]}:{prompt:`${a} + ${b} =`,answer:String(a+b),choices:[]};
 }
+// Reviewed additions keep every finite bank large enough for a 20-item sheet.
+READING.push(
+ ['아라는 책갈피를 만들어 읽던 페이지에 끼워 두었습니다.','아라가 책갈피를 끼운 곳은?','읽던 페이지',['읽던 페이지','신발 안','창문 틈']],
+ ['승우는 새싹이 밟히지 않도록 화단 옆 길로 걸었습니다.','승우가 화단 옆으로 걸은 까닭은?','새싹을 밟지 않으려고',['새싹을 밟지 않으려고','친구를 피하려고','물을 마시려고']],
+ ['할아버지는 고장 난 시계에 새 건전지를 넣어 바늘을 다시 움직이게 하셨습니다.','할아버지가 시계에 넣은 것은?','새 건전지',['새 건전지','열쇠','종이']],
+ ['비가 그친 뒤 지민은 젖은 우산을 펼쳐 말렸습니다.','지민이 우산을 펼친 까닭은?','우산을 말리려고',['우산을 말리려고','비를 맞으려고','우산을 잃어버려서']]
+);
+MAIN_IDEAS.push(
+ ['다온은 아침에 물병을 채웠습니다. 운동을 마친 뒤에는 물을 마시고 빈 병을 가방에 넣었습니다.','다온은 운동 후 준비한 물을 마셨습니다.'],
+ ['서진은 책의 제목을 보고 읽고 싶은 책을 골랐습니다. 다 읽은 다음에는 사서에게 반납했습니다.','서진은 도서관에서 책을 골라 읽고 반납했습니다.'],
+ ['우리 반은 화단에 꽃을 심었습니다. 며칠 동안 흙이 마른 것을 살피며 물을 주었습니다.','우리 반은 심은 꽃을 돌보았습니다.'],
+ ['하은은 잃어버린 공을 친구들과 함께 찾았습니다. 벤치 아래에서 공을 발견해 다시 놀이를 했습니다.','하은은 친구들과 공을 찾아 다시 놀았습니다.']
+);
+COMMUNITY.push(
+ ['치아를 살피고 아픈 이를 치료하는 일','치과 의사'],['옷을 만들거나 고쳐 입을 수 있게 돕는 일','재봉사'],
+ ['길과 다리의 안전 상태를 살피는 일','토목 기술자'],['과학 실험으로 새로운 사실을 조사하는 일','연구원']
+);
+ECONOMY.push(
+ ['재봉사가 옷을 만들어 판매했습니다.','생산'],['목공소에서 의자를 만들었습니다.','생산'],
+ ['가족이 공연 표를 사서 공연을 보았습니다.','소비'],['학생이 미용실에서 머리를 잘랐습니다.','소비']
+);
+MATTER.push(['밀가루','고체'],['꿀','액체'],['질소','기체']);
+WEATHER.push(
+ ['아침과 오후의 기온 차이를 조사할 때','온도계'],['운동장에 내린 비의 양을 측정할 때','우량계'],
+ ['학교 깃발이 향하는 쪽과 바람이 불어오는 쪽을 구별해 관찰할 때','풍향계'],['어제와 오늘의 바람 빠르기를 비교할 때','풍속계']
+);
+SENTENCES.push(
+ ['나는 아침에 우유를 마셔요.','I drink milk in the morning.','I / drink / milk / in / the / morning.'],
+ ['그녀는 책을 읽어요.','She reads a book.','She / reads / a / book.'],
+ ['우리는 공원에서 놀아요.','We play in the park.','We / play / in / the / park.'],
+ ['내 친구는 빨간 가방이 있어요.','My friend has a red bag.','My / friend / has / a / red / bag.']
+);
+CONVERSATIONS.push(
+ ['May I come in?','Yes, you may.',['Yes, you may.','It is blue.','I am ten.']],
+ ['What is your favorite food?','I like rice.',['I like rice.','It is a book.','I am at school.']],
+ ['Where are you going?','I am going to the park.',['I am going to the park.','It is sunny.','I am fine.']],
+ ['Would you like some water?','Yes, please.',['Yes, please.','It is Monday.','I am ten.']]
+);
 function item(subject,topic,grade,r,difficulty,variant){
  if(subject==='korean'){
   if(topic==='opposite'){const [word,answer]=pick(OPPOSITES,r);const pool=OPPOSITES.flat().filter(v=>v!==word&&v!==answer);return choice('‘'+word+'’의 반대말은 무엇인가요?',answer,[answer,...shuffle(pool,r).slice(0,3)],r)}
@@ -944,8 +982,8 @@ function item(subject,topic,grade,r,difficulty,variant){
    const hour=int(1,grade===1?12:11,r);
    if(grade===1){const half=r()<(difficulty==='challenge'?.8:.5),next=hour%12+1;return choice(`긴바늘은 ${half?'6':'12'}에 있습니다. 짧은바늘은 ${hour}${half?'~'+next+' 사이':'에'} 있습니다. 몇 시 몇 분인가요?`,`${hour}시 ${half?30:0}분`,[`${hour}시 ${half?30:0}분`,`${hour}시 ${half?0:30}분`,`${next}시 ${half?30:0}분`],r)}
    if(grade===2){const minute=int(1,difficulty==='challenge'?11:5,r)*(difficulty==='challenge'?5:10);return{prompt:`${hour}시간 ${minute}분은 모두 몇 분인가요?`,answer:`${hour*60+minute}분`,choices:[]}}
-   const start=int(8,15,r),elapsed=int(1,difficulty==='challenge'?5:2,r)*10;
-   return{prompt:`${start}시 ${difficulty==='challenge'?40:10}분부터 ${elapsed}분이 지났습니다. 몇 시 몇 분인가요?`,answer:`${start+Math.floor((elapsed+(difficulty==='challenge'?40:10))/60)}시 ${(elapsed+(difficulty==='challenge'?40:10))%60}분`,choices:[]};
+   const start=int(8,15,r),startMinute=pick(difficulty==='challenge'?[20,30,40]:[0,10,20,30],r),elapsed=int(1,difficulty==='challenge'?5:3,r)*10;
+   return{prompt:`${start}시 ${startMinute}분부터 ${elapsed}분이 지났습니다. 몇 시 몇 분인가요?`,answer:`${start+Math.floor((elapsed+startMinute)/60)}시 ${(elapsed+startMinute)%60}분`,choices:[]};
   }
   if(topic==='multiplication'){
    const a=grade===2?int(difficulty==='challenge'?5:2,9,r):grade===3?int(difficulty==='challenge'?40:11,difficulty==='challenge'?99:39,r):int(12,difficulty==='challenge'?199:99,r);
@@ -983,5 +1021,6 @@ function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basi
  if(items.length<size)throw Error('이 유형에서는 서로 다른 문제를 충분히 만들지 못했어요. 문항 수를 줄여 주세요.');
  return{subject,topic,type,eras:mixed?[...chosen]:[],mathTypes:mathMixed?[...selectedMath]:[],grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:year+'학년 '+info.name+' · '+(mixed?'선택한 시대 역사':mathMixed?'선택한 유형 혼합 연습':selected?selected[1]:info.topics.find(t=>t[0]===topic)[1]),alignment:['mixed','decimal','history-mix','math-mix'].includes(topic)?null:alignment(subject,topic,year),items};
 }
-return{SUBJECTS,generate,alignment,units,types};
+function supportedCounts(options){return [5,10,15,20].filter(count=>{try{generate({...options,count,seed:42});return true}catch{return false}})}
+return{SUBJECTS,generate,supportedCounts,alignment,units,types};
 });

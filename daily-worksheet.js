@@ -21,24 +21,31 @@ function syncMathTypes(preferred){const mixed=subject==='math'&&$('topic').value
   for(const [id,label] of unit.types){const row=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=id;input.checked=prior.length?prior.includes(id):index<3;row.append(input,document.createTextNode(' '+label));group.append(row);index++}options.append(group)}
 }
 function denseAvailable(){if(subject!=='math')return false;if(!$('typeSetting').hidden)return /^(add-|sub-|small-|two-|times-)/.test($('type').value)&&$('type').value!=='times-missing';return ['addition','hundreds','multiplication'].includes($('topic').value)}
-function syncCount(preferred){const dense=denseAvailable(),topic=$('topic').value,limited={korean:['reading','mainidea'],math:['time'],social:['community','economy'],science:['matter','weather'],english:['sentence','conversation']};const twentyAvailable=!(limited[subject]||[]).includes(topic);$('count').querySelector('[value="20"]').disabled=!twentyAvailable;$('count').value=[5,10,15,...(twentyAvailable?[20]:[])].includes(preferred)?String(preferred):dense?'20':'10'}
+function syncCount(preferred){
+ const dense=denseAvailable(),counts=C.supportedCounts({subject,grade:Number($('grade').value),topic:$('topic').value,
+  type:$('typeSetting').hidden?'':$('type').value,eras:selectedEras(),mathTypes:selectedMathTypes(),
+  difficulty:$('difficulty').value,variant:$('variant').value});
+ for(const option of $('count').options)option.disabled=!counts.includes(Number(option.value));
+ const prior=Number($('count').value),fallback=dense?20:10;
+ $('count').value=String(counts.includes(Number(preferred))?Number(preferred):counts.includes(prior)?prior:counts.includes(fallback)?fallback:counts[0]||5);
+}
 function syncDifficulty(){const typed=!$('typeSetting').hidden,hundreds=subject==='math'&&$('topic').value==='hundreds'&&!typed,math=subject==='math'&&!hundreds&&!typed;$('difficultySetting').hidden=!math;$('difficulty').disabled=!math;$('variantSetting').hidden=!hundreds;$('variant').disabled=!hundreds;if(!math)$('difficulty').value='basic';
  const standard=C.alignment(subject,$('topic').value,Number($('grade').value)),note=$('curriculumNote');note.replaceChildren();
  if(standard){note.append(document.createTextNode(`2022 개정 · ${standard.code} ${standard.summary} · ${standard.scope} `));const link=document.createElement('a');link.href=standard.source;link.target='_blank';link.rel='noopener noreferrer';link.textContent='기준 자료 보기';note.append(link)}
  else note.textContent='이 유형은 성취기준 연계를 검토 중입니다.';
 }
-syncGrades(initialGrade,initialTopic);syncCount(initialCount);
+syncGrades(initialGrade,initialTopic);
 if(['basic','challenge'].includes(params.get('difficulty')))$('difficulty').value=params.get('difficulty');
 if(['tens','ones'].includes(params.get('variant')))$('variant').value=params.get('variant');
 syncDifficulty();
 $('historyEraSetting').querySelectorAll('input').forEach(input=>{input.checked=params.has('eras')?params.get('eras').split(',').includes(input.value):true});syncHistoryEras();
-syncMathTypes(params.has('mathTypes')?params.get('mathTypes').split(','):null);
+syncMathTypes(params.has('mathTypes')?params.get('mathTypes').split(','):null);syncCount(initialCount);
 $('largePrint').checked=params.get('large')==='1';
 function appendMathText(node,value){const parts=String(value).split(/(\d+\/\d+)/g);for(const part of parts){const match=part.match(/^(\d+)\/(\d+)$/);if(!match){node.append(document.createTextNode(part));continue}const fraction=document.createElement('span'),top=document.createElement('span'),bottom=document.createElement('span');fraction.className='stacked-fraction';fraction.setAttribute('role','img');fraction.setAttribute('aria-label',`${match[2]}분의 ${match[1]}`);top.textContent=match[1];bottom.textContent=match[2];fraction.append(top,bottom);node.append(fraction)}}
 function setPreview(open){answersVisible=open;document.body.classList.toggle('show-inline-answers',open);$('toggleAnswers').textContent=open?'정답 닫기':'정답 보기';$('toggleAnswers').setAttribute('aria-expanded',String(open));
  for(const li of $('questions').children){if(li.classList.contains('calculation-item'))li.setAttribute('aria-label',li.dataset.prompt+(open?' 정답: '+li.dataset.answer:''));else li.querySelector('.inline-answer')?.setAttribute('aria-hidden',String(!open))}
 }
-function render(sheet){current=sheet;const dense=sheet.count===20&&sheet.subject==='math'&&denseAvailable();$('sheetStatus').textContent='새 문제지 완성';$('sheetMeta').textContent=C.SUBJECTS[sheet.subject].name+' · '+sheet.grade+'학년 · '+(sheet.type?'세부 유형':sheet.difficulty==='challenge'?'도전':'기본')+' · '+sheet.items.length+'문항';$('paperTitle').textContent=sheet.title;$('sheetNumber').textContent='문제지 번호 '+sheet.seed.toString(36).toUpperCase();
+function render(sheet){current=sheet;const dense=sheet.count===20&&sheet.subject==='math'&&(sheet.type?/^(add-|sub-|small-|two-|times-)/.test(sheet.type)&&sheet.type!=='times-missing':['addition','hundreds','multiplication'].includes(sheet.topic));$('sheetStatus').textContent='새 문제지 완성';$('sheetMeta').textContent=C.SUBJECTS[sheet.subject].name+' · '+sheet.grade+'학년 · '+(sheet.type?'세부 유형':sheet.difficulty==='challenge'?'도전':'기본')+' · '+sheet.items.length+'문항';$('paperTitle').textContent=sheet.title;$('sheetNumber').textContent='문제지 번호 '+sheet.seed.toString(36).toUpperCase();
  const questions=$('questions');questions.replaceChildren();
  questions.classList.toggle('calculation-grid',dense);$('questionSheet').classList.toggle('dense-paper',dense);
  $('paperInstruction').hidden=!dense;if(dense)$('paperInstruction').textContent=sheet.type?'계산해 보세요.':sheet.topic==='hundreds'?'받아올림 없이 덧셈을 하세요.':'계산해 보세요.';
@@ -79,7 +86,7 @@ function render(sheet){current=sheet;const dense=sheet.count===20&&sheet.subject
  if(/^https?:$/.test(url.protocol)&&typeof window.qrcode==='function')try{const generator=window.qrcode(0,'M');generator.addData(url.href,'Byte');generator.make();code.innerHTML=generator.createSvgTag(2,4);qr.hidden=false}catch(error){console.warn('문제지 QR을 생성할 수 없습니다.',error)}
 }
 function make(newSeed){try{const state={subject,grade:Number($('grade').value),topic:$('topic').value,type:$('typeSetting').hidden?'':$('type').value,eras:selectedEras(),mathTypes:selectedMathTypes(),difficulty:$('difficulty').value,variant:$('variant').value,count:Number($('count').value),seed:newSeed};render(C.generate(state))}catch(error){$('sheetStatus').textContent=error.message;$('sheetMeta').textContent=''}}
-form.addEventListener('change',e=>{if(e.target.name==='subject'){subject=e.target.value;syncGrades($('grade').value);syncCount();syncDifficulty();syncHistoryEras();syncMathTypes([])}else if(e.target.name==='grade'){syncUnits(null);syncCount();syncDifficulty();syncHistoryEras();syncMathTypes([])}else if(e.target.name==='unit'){syncTopics();syncCount();syncDifficulty();syncHistoryEras();syncMathTypes()}else if(e.target.name==='topic'){syncTypes();syncCount();syncDifficulty();syncHistoryEras();syncMathTypes()}else if(e.target.name==='type'){syncCount();syncDifficulty()}});
+form.addEventListener('change',e=>{const name=e.target.name;if(name==='subject'){subject=e.target.value;syncGrades($('grade').value);syncHistoryEras();syncMathTypes([])}else if(name==='grade'){syncUnits(null);syncHistoryEras();syncMathTypes([])}else if(name==='unit'){syncTopics();syncHistoryEras();syncMathTypes()}else if(name==='topic'){syncTypes();syncHistoryEras();syncMathTypes()}if(['subject','grade','unit','topic','type'].includes(name))syncDifficulty();if(name!=='count'&&name!=='largePrint')syncCount(Number($('count').value))});
 form.addEventListener('submit',e=>{e.preventDefault();make(seed())});$('regenerate').onclick=()=>make(seed());
 $('toggleAnswers').onclick=()=>setPreview(!answersVisible);
 function print(withAnswers){if(!current)return;document.body.classList.toggle('print-answers',withAnswers);window.print()}

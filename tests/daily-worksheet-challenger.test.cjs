@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { SUBJECTS, generate, units, alignment } = require('../daily-worksheet-core.js');
+const { SUBJECTS, generate, supportedCounts, units, alignment } = require('../daily-worksheet-core.js');
 
 const seeds = [7, 42, 20261023];
 const forbidden = /(?:^|[^a-z])(?:undefined|NaN|Infinity|null)(?:[^a-z]|$)/i;
@@ -68,4 +68,34 @@ test('unreviewed curriculum links remain visibly unaligned instead of inventing 
   ]) {
     assert.equal(alignment(subject, topic, grade), null);
   }
+});
+
+test('every offered grade and question type supports twenty distinct exercises', () => {
+  for (const [subject, info] of Object.entries(SUBJECTS)) for (const grade of info.grades) {
+    for (const [topic, , from, to = 6] of info.topics) {
+      if (grade < from || grade > to) continue;
+      const types = units(subject, grade).flatMap(unit => unit.types.filter(entry => entry[2] === topic).map(([id]) => id));
+      for (const type of types.length ? types : ['']) {
+        const options = {subject, grade, topic, type,
+          eras: ['prehistoric','ancient','goryeo','joseon','modern'],
+          mathTypes: units('math', grade).flatMap(unit => unit.types.map(([id]) => id)).filter(id => id !== 'math-mix-worksheet')};
+        assert.ok(supportedCounts(options).includes(20), `${subject}/${grade}/${topic}/${type} 20 unavailable`);
+        for (const seed of [7,42,20261024]) {
+          const sheet = generate({...options, count:20, seed});
+          assert.equal(sheet.items.length,20);
+          const signatures = sheet.items.map(q => [q.prompt,q.detail,q.right,...(q.orderChoices||[]),q.answer].join('|'));
+          assert.equal(new Set(signatures).size,20,`${subject}/${grade}/${topic}/${type}/${seed}`);
+        }
+      }
+    }
+  }
+});
+
+test('count availability reflects actual selected history eras and math types', () => {
+ const history={subject:'social',grade:5,topic:'history-mix',type:'history-mix-quiz'};
+ assert.deepEqual(supportedCounts({...history,eras:[]}),[]);
+ assert.ok(supportedCounts({...history,eras:['goryeo']}).includes(20));
+ const math={subject:'math',grade:3,topic:'math-mix',type:'math-mix-worksheet'};
+ assert.deepEqual(supportedCounts({...math,mathTypes:[]}),[]);
+ assert.ok(supportedCounts({...math,mathTypes:['add-carry-one','sub-borrow-one']}).includes(20));
 });
