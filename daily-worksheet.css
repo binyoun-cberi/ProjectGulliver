@@ -176,3 +176,18 @@ body.print-answers .print-paper .result-answer{visibility:visible!important}
 .print-paper .reading-question{padding-bottom:6px!important;margin-bottom:4px}
 body:not(.print-answers) .print-paper .paper-standard,
 body:not(.print-answers) .print-paper .reading-standard{display:none!important}
+
+/* Keep two-digit list markers inside the printable margin at large font sizes. */
+.large-print .print-paper .print-question-list:not(.calculation-grid):not(.column-questions){padding-left:12mm!important}
+/* Photo recognition tasks need readable images without one oversized block per page. */
+.print-paper .print-question-list.photo-questions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4mm 7mm;list-style:decimal outside;padding-left:7mm;margin-top:5mm}
+.print-paper .photo-questions>li{min-width:0;font-size:12px;line-height:1.45;padding:0 0 7px 2px!important}
+.print-paper .photo-questions>li>strong{display:block;font-size:12px;line-height:1.45}
+.print-paper .photo-questions .history-photo{margin:4px 0}
+.print-paper .photo-questions .history-photo img{height:28mm;max-width:60mm}
+.print-paper .photo-questions .history-photo figcaption{font-size:7pt;line-height:1.35}
+.print-paper .photo-questions .question-detail{font-size:12px;line-height:1.45;padding:5px 7px;margin:5px 0}
+.print-paper .photo-questions .choice-list{font-size:12px;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px 5px;margin:5px 0}
+.print-paper .photo-questions .choice-list li{padding:1px 0}
+.print-paper .photo-questions .inline-answer{font-size:11px;line-height:1.4;margin-top:5px}
+.print-paper .photo-questions .answer-explanation{font-size:10px;line-height:1.4}

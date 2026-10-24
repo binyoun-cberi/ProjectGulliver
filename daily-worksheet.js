@@ -91,7 +91,7 @@ const compact=!column&&!dense&&sheet.responseFormat!=='essay'&&sheet.items.lengt
   (!item.choices||item.choices.length<=4&&item.choices.every(choice=>String(choice).length<=62))
 );$('sheetStatus').textContent='문제지가 준비됐어요';$('sheetMeta').textContent=C.SUBJECTS[sheet.subject].name+' · '+sheet.grade+'학년 · '+sheet.items.length+'문제'+(sheet.difficulty==='challenge'?' · 도전 문제':'');$('paperTitle').textContent=sheet.title;$('sheetNumber').textContent='문제지 번호 '+sheet.seed.toString(36).toUpperCase();
  const questions=$('questions');questions.replaceChildren();
- questions.classList.toggle('column-questions',column);questions.classList.toggle('column-few',column&&sheet.count<=8);questions.classList.toggle('calculation-grid',dense);questions.classList.toggle('compact-questions',compact);$('questionSheet').classList.toggle('dense-paper',dense);
+ questions.classList.toggle('photo-questions',sheet.items.length>0&&sheet.items.every(item=>item.photo));questions.classList.toggle('column-questions',column);questions.classList.toggle('column-few',column&&sheet.count<=8);questions.classList.toggle('calculation-grid',dense);questions.classList.toggle('compact-questions',compact);$('questionSheet').classList.toggle('dense-paper',dense);
  $('paperInstruction').hidden=!(dense||column);if(column)$('paperInstruction').textContent='칸에 계산 과정을 쓰고 답을 구해 보세요.';if(dense)$('paperInstruction').textContent=sheet.type?'계산해 보세요.':sheet.topic==='hundreds'?'받아올림 없이 덧셈을 하세요.':'계산해 보세요.';
  if(sheet.topic==='hundreds'&&!sheet.type)$('paperTitle').textContent+=' · '+(sheet.variant==='ones'?'B · 일의 자리까지':'A · 일의 자리가 0');
  $('paperStandard').hidden=!sheet.alignment;if(sheet.alignment)$('paperStandard').textContent=`교사용 수업 참고 · ${sheet.alignment.code} · ${sheet.alignment.scope}`;
