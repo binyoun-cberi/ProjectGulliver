@@ -109,6 +109,7 @@ let selectedOptionId = null;
 let socket = null;
 let reconnectTimer = null;
 let previousVotedCount = null;
+let voteSubmitting = false;
 
 const $ = s => document.querySelector(s);
 const identityKey = () => 'gulliver.vote.identity.' + roomCode;
@@ -189,7 +190,7 @@ function renderOptions() {
     btn.type = 'button';
     btn.className = 'option-btn' + (String(option.id) === String(selectedOptionId) ? ' selected' : '');
     btn.textContent = option.name;
-    btn.disabled = Boolean(state?.closed);
+    btn.disabled = Boolean(state?.closed)||voteSubmitting;
     btn.onclick = () => submitVote(option.id);
     host.appendChild(btn);
   }
@@ -261,7 +262,8 @@ function render() {
 }
 
 async function submitVote(optionId) {
-  if (!identityId || state?.closed) return;
+  if (!identityId || state?.closed || voteSubmitting) return;
+  voteSubmitting=true;renderOptions();
   showError($('#vote-error'),'');
   try {
     await api('/api/rooms/' + roomCode + '/vote', {
@@ -274,7 +276,7 @@ async function submitVote(optionId) {
     renderOptions();
   } catch (error) {
     showError($('#vote-error'), friendlyError(error));
-  }
+  }finally{voteSubmitting=false;renderOptions();}
 }
 
 function connectSocket() {

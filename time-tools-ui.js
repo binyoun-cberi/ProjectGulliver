@@ -365,6 +365,22 @@
     if(key==='r'&&!['clock','learn','period'].includes(engine.data.mode)){event.preventDefault();changed(()=>engine.reset());}
     if(key==='n'&&engine.data.mode==='lesson'){event.preventDefault();changed(()=>engine.next());}
   });
+  // Existing saved classroom timer activities (including pre-unification
+  // snapshots) load as editable lesson flow without touching other clock modes.
+  window.ClassroomWorkspace?.mount({
+    kind:'timer',
+    suggestedTitle:'수업 흐름',
+    blank(){return {title:'새 수업',events:core.defaultEvents()};},
+    title(){return engine.data.title;},
+    capture(){return {title:engine.data.title,events:engine.data.events.map(e=>({...e}))};},
+    apply(payload){
+      if(!payload||!Array.isArray(payload.events)||!payload.events.length)throw Error('수업 활동 내용이 없습니다.');
+      engine.switchMode('lesson');
+      engine.setTitle(payload.title||'오늘의 수업');
+      engine.updateEvents(payload.events);
+      persist();syncMode();render();
+    }
+  });
   window.GulliverTeacherDisplay?.register({
     kind:'timer',windowName:'gulliver-unified-clock',
     getSnapshot(){return engine.snapshot();}
