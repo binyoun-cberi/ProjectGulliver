@@ -4,6 +4,17 @@ const W=ClassroomWorkspace,tools=ClassroomTools,$=id=>document.getElementById(id
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const CATEGORIES=['전체','시간·수업 안내','뽑기·편성','퀴즈·놀이','학급 관리','자료·기록'];
 const FORMATS=[['korean','국어','가','#e88460','낱말·띄어쓰기·읽기'],['math','수학','＋','#408ac4','연산·곱셈·분수'],['social','사회','◎','#da9742','방향·우리 사회·경제'],['science','과학','✳','#4aa98e','생물·물질·날씨'],['english','영어','A','#8564c8','낱말·문장·대화']];
+const FIRST_START_KEY='clasheet.firstStart.dismissed.v1';
+function firstStartVisible(){
+ try{return W.list().length===0&&localStorage.getItem(FIRST_START_KEY)!=='1';}catch{return W.list().length===0}
+}
+function firstStart(){
+ return '<section class="first-start" aria-labelledby="firstStartTitle"><div class="first-start-head"><div><span class="first-start-eyebrow">첫 사용 안내</span><h2 id="firstStartTitle">오늘 할 일을 먼저 골라 보세요</h2><p>처음부터 빈 편집 화면을 만들 필요 없어요. 필요한 도구로 바로 시작할 수 있어요.</p></div><button class="first-start-close" type="button" data-dismiss-first-start aria-label="첫 사용 안내 닫기">안내 닫기 ×</button></div><div class="first-start-links">'+
+ '<a class="first-start-card" href="문제지 만들기.html"><span aria-hidden="true">▤</span><strong>문제지 만들기</strong><small>학년과 교과를 고른 뒤 인쇄</small></a>'+
+ '<a class="first-start-card" href="이번 수업 알리미.html"><span aria-hidden="true">◷</span><strong>수업 화면 준비</strong><small>학습 목표와 활동 순서 표시</small></a>'+
+ '<a class="first-start-card" href="플래시퀴즈메이커.html"><span aria-hidden="true">▧</span><strong>퀴즈·낱말카드</strong><small>학생용 카드와 퀴즈 제작</small></a>'+
+ '</div><p class="first-start-foot">수업 중 쓸 도구는 아래에서 언제든 다시 찾을 수 있어요.</p></section>';
+}
 function startTiles(){
  return '<div class="format-grid daily-subject-grid">'+FORMATS.map(f=>'<a class="format-tile" href="문제지 만들기.html?subject='+f[0]+'" style="--format-accent:'+f[3]+'" aria-label="'+f[1]+' 문제지 만들기"><span class="format-symbol" aria-hidden="true">'+f[2]+'</span><span class="format-copy"><strong>'+f[1]+'</strong><small>'+f[4]+'</small></span></a>').join('')+'</div>';
 }
@@ -43,6 +54,7 @@ function render(){
      $('content').innerHTML=html;document.querySelector('.storage-note').hidden=true;return;
    }
    if(isHome&&!query){
+      if(firstStartVisible())html+=firstStart();
       html+='<section class="home-block home-design"><div class="section-head"><div><h2>오늘의 문제지 만들기</h2><p>교과를 고르고 같은 유형의 새 문제를 계속 뽑을 수 있어요.</p></div><a class="text-btn" href="문제지 만들기.html">문제지 만들기 →</a></div>'+startTiles()+'</section>';
       const featured=['수업 흐름 타이머','낱말카드·퀴즈','교실 자리 배정','우리 반 투표판'];
       const selected=featured.map(n=>tools.find(t=>t.name===n)).filter(Boolean);
@@ -73,7 +85,7 @@ function render(){
 function edit(title,label,value,action,move=false){editAction=action;$('editTitle').textContent=title;$('editLabel').textContent=label;$('editValue').hidden=move;$('editValue').required=!move;$('editFolder').hidden=!move;$('editValue').value=value||'';if(move){$('editFolder').innerHTML='<option value="">미분류</option>'+W.read().folders.map(f=>'<option value="'+esc(f.id)+'">'+esc(f.name)+'</option>').join('');$('editFolder').value=value||''}$('editDialog').showModal();(move?$('editFolder'):$('editValue')).focus()}
 function create(){location.href='문제지 만들기.html'}
 document.addEventListener('click',e=>{const b=e.target.closest('button,a');if(!b)return;try{
- if(b.dataset.view)switchView(b.dataset.view);else if(b.dataset.folder)switchView('activities',b.dataset.folder);else if(b.dataset.category){category=b.dataset.category;render()}else if(b.hasAttribute('data-create'))create();else if(b.dataset.star){const t=tools.find(t=>t.href===b.dataset.star);if(t)Gulliver.toggleFavorite(t)}else if(b.dataset.tool){const t=tools.find(t=>t.href===b.dataset.tool);if(t)Gulliver.trackTool(t)}else if(b.dataset.duplicate){W.duplicate(b.dataset.duplicate);toast('활동을 복제했습니다.')}else if(b.dataset.archive){W.change(b.dataset.archive,{archived:true});toast('보관함으로 옮겼습니다. 언제든 복원할 수 있어요.')}else if(b.dataset.restore){W.change(b.dataset.restore,{archived:false});toast('내 활동으로 복원했습니다.')}else if(b.dataset.rename){const a=W.get(b.dataset.rename);if(a)edit('활동 이름 바꾸기','활동 이름',a.title,v=>W.change(a.id,{title:v.trim().slice(0,80)||a.title}))}else if(b.dataset.move){const a=W.get(b.dataset.move);if(a)edit('폴더로 옮기기','폴더 선택',a.folderId,v=>W.change(a.id,{folderId:v}),true)}
+ if(b.hasAttribute('data-dismiss-first-start')){try{localStorage.setItem(FIRST_START_KEY,'1')}catch{}render()}else if(b.dataset.view)switchView(b.dataset.view);else if(b.dataset.folder)switchView('activities',b.dataset.folder);else if(b.dataset.category){category=b.dataset.category;render()}else if(b.hasAttribute('data-create'))create();else if(b.dataset.star){const t=tools.find(t=>t.href===b.dataset.star);if(t)Gulliver.toggleFavorite(t)}else if(b.dataset.tool){const t=tools.find(t=>t.href===b.dataset.tool);if(t)Gulliver.trackTool(t)}else if(b.dataset.duplicate){W.duplicate(b.dataset.duplicate);toast('활동을 복제했습니다.')}else if(b.dataset.archive){W.change(b.dataset.archive,{archived:true});toast('보관함으로 옮겼습니다. 언제든 복원할 수 있어요.')}else if(b.dataset.restore){W.change(b.dataset.restore,{archived:false});toast('내 활동으로 복원했습니다.')}else if(b.dataset.rename){const a=W.get(b.dataset.rename);if(a)edit('활동 이름 바꾸기','활동 이름',a.title,v=>W.change(a.id,{title:v.trim().slice(0,80)||a.title}))}else if(b.dataset.move){const a=W.get(b.dataset.move);if(a)edit('폴더로 옮기기','폴더 선택',a.folderId,v=>W.change(a.id,{folderId:v}),true)}
  }catch(error){toast(error.message||'변경 내용을 저장하지 못했습니다. 브라우저 저장 공간을 확인해 주세요.')}});
 $('editForm').onsubmit=e=>{e.preventDefault();try{editAction?.($('editFolder').hidden?$('editValue').value:$('editFolder').value);$('editDialog').close()}catch(error){toast(error.message||'저장하지 못했습니다.')}};$('editCancel').onclick=()=>$('editDialog').close();$('newFolder').onclick=()=>edit('폴더 만들기','폴더 이름','',name=>W.folder(name));$('createButton').onclick=create;$('topCreate').onclick=create;$('search').oninput=render;
 try{document.body.classList.toggle('rail-expanded',localStorage.getItem('gulliver.railExpanded')==='true')}catch{}

@@ -1,0 +1,23 @@
+name: Clasheet current first-use entry
+on:
+  pull_request:
+    paths:
+      - 'workspace-home.js'
+      - 'workspace-experience.css'
+      - 'tests/clasheet-first-start.test.cjs'
+      - '.github/workflows/clasheet-first-start.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  first-start:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Validate current home script
+        run: node --check workspace-home.js && node --check tests/clasheet-first-start.test.cjs
+      - name: Install browser driver
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
+      - name: Test real first-use desktop and phone navigation
+        run: node --test tests/clasheet-first-start.test.cjs

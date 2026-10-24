@@ -175,3 +175,19 @@ body{background:#fff}
 @media(max-width:1399px){#unifiedHomeRecent{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:1000px){#unifiedHomeRecent{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:800px){.home-view .main{padding:20px 16px 50px!important}#unifiedHomeRecent{gap:10px}#unifiedHomeRecent .unified-preview{height:145px}#unifiedHomeRecent .unified-info strong{max-width:100%;font-size:12px}.home-view .welcome h1{font-size:22px}}
+
+
+/* First use on the current CLASHEET homepage; no retired canvas dependencies. */
+.first-start{margin:0 0 30px;padding:clamp(16px,2.8vw,28px);border-radius:20px;border:1px solid #cde6dc;background:linear-gradient(135deg,#f0faf4,#fbfaff);color:#193e36}
+.first-start-head{display:flex;align-items:flex-start;gap:18px;justify-content:space-between}
+.first-start-head h2{font-size:clamp(21px,3vw,29px);font-weight:900;letter-spacing:-.045em;margin:5px 0 6px}
+.first-start-head p,.first-start-foot{color:#57726a;font-size:13px;line-height:1.7;margin:0}
+.first-start-eyebrow{color:#176d55;font-size:11px;font-weight:900}
+.first-start-close{border:1px solid #cde2d7;background:white;color:#49685c;border-radius:10px;padding:10px 12px;font-weight:750;font-size:12px;flex:none}
+.first-start-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:19px 0 10px}
+.first-start-card{background:white;border:1px solid #d5e6df;border-radius:15px;min-width:0;padding:16px;display:grid;gap:6px;transition:border-color .15s,box-shadow .15s;color:#22594b}
+.first-start-card>span{width:36px;height:36px;display:grid;place-items:center;background:#e4f4eb;border-radius:10px;font-size:20px}
+.first-start-card strong{font-size:15px}.first-start-card small{color:#607269;font-size:12px;line-height:1.55}
+.first-start-card:hover,.first-start-card:focus-visible{border-color:#4c9d7d;box-shadow:0 5px 18px #24594313}
+@media(max-width:680px){.first-start{margin-bottom:20px;padding:16px}.first-start-head{gap:9px;flex-wrap:wrap}.first-start-head h2{font-size:22px}.first-start-close{margin-left:auto}.first-start-links{grid-template-columns:1fr;gap:8px;margin-top:13px}.first-start-card{padding:12px 14px;grid-template-columns:36px 1fr;column-gap:12px;align-items:center}.first-start-card>span{grid-row:span 2}.first-start-card strong,.first-start-card small{grid-column:2}}
+@media(prefers-reduced-motion:reduce){.first-start-card{transition:none}}
