@@ -185,7 +185,7 @@ test('all 17 science topics preserve diagrams and tables in student and teacher 
  await page.pdf({path:`test-artifacts/worksheet-science-${topic}-${teacher?'teacher':'student'}.pdf`,format:'A4',printBackground:true});
  }
  await page.emulateMedia({media:'screen'});await page.evaluate(()=>document.body.classList.remove('print-answers'));
- const bounds=await page.locator('#questions .science-material svg').evaluate(svg=>{const b=svg.getBBox();return {x:b.x,y:b.y,right:b.x+b.width,bottom:b.y+b.height}});assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.right<=331&&bounds.bottom<=176,topic+' SVG labels fit: '+JSON.stringify(bounds));
+ const bounds=await page.locator('#questions .science-material svg').evaluate(svg=>{const b=svg.getBBox(),v=svg.viewBox.baseVal;return {x:b.x,y:b.y,right:b.x+b.width,bottom:b.y+b.height,leftLimit:v.x,topLimit:v.y,rightLimit:v.x+v.width,bottomLimit:v.y+v.height}});assert.ok(bounds.x>=bounds.leftLimit-1&&bounds.y>=bounds.topLimit-1&&bounds.right<=bounds.rightLimit+1&&bounds.bottom<=bounds.bottomLimit+1,topic+' SVG labels fit: '+JSON.stringify(bounds));
  }
  await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);assert.deepEqual(layoutIssues,[],'five choice questions should fit one A4');
  }finally{await browser.close()}

@@ -99,7 +99,7 @@ function renderScienceMaterial(li,material){
  li.classList.add('science-question');const figure=document.createElement('figure');figure.className='science-material';
  const caption=document.createElement('figcaption');caption.textContent=material.title;figure.append(caption);
  if(material.kind==='diagram'){
-  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 330 175');svg.setAttribute('role','img');svg.setAttribute('aria-label',material.title+' · 위치 관계를 나타낸 모형이며 실제 비율과 다를 수 있습니다.');
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox',material.viewBox||'0 0 330 175');svg.setAttribute('role','img');svg.setAttribute('aria-label',material.title+' · 위치 관계를 나타낸 모형이며 실제 비율과 다를 수 있습니다.');
   svg.innerHTML=material.body;svg.setAttribute('aria-label',material.title+' · '+svg.textContent+' · 위치 관계를 나타낸 모형입니다.');figure.append(svg);
  }else{
   const table=document.createElement('table'),head=document.createElement('thead'),header=document.createElement('tr');

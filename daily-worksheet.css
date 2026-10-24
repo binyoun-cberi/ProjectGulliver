@@ -290,3 +290,8 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
 .print-paper .science-material{margin:1mm 0}
 .print-paper .science-material th,.print-paper .science-material td{padding:.8mm 1.5mm}
 .print-paper .science-evidence .inline-answer{margin-top:5px}
+.print-paper:has(.science-evidence) h2{margin:14px 0 10px}
+.print-paper:has(.science-evidence) .student-line{padding-bottom:10px}
+.print-paper .science-evidence>li{line-height:1.35}
+.print-paper .science-material table{line-height:1.35}
+.print-paper .print-question-list.science-evidence{row-gap:2mm}
