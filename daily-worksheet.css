@@ -36,3 +36,5 @@ button,select{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-vi
 @media print{.result-answer{visibility:hidden!important}body.print-answers .result-answer{visibility:visible!important;color:#1268b2!important}.teacher-qr{display:none!important}body.print-answers .teacher-qr:not([hidden]){display:block!important}body.print-answers .paper-topline::after{content:'교사용 정답';font-size:11px;color:#1268b2}}
 @media print{.inline-answer,.show-inline-answers .inline-answer{display:none!important}body.print-answers .inline-answer{display:block!important}}
 @media print{.teacher-qr svg{width:62px;height:62px;margin:0 auto}.teacher-qr span{display:none}.teacher-qr{align-self:center}}
+.history-photo{margin:10px 0;break-inside:avoid}.history-photo img{display:block;width:100%;max-width:320px;height:170px;object-fit:contain;background:#fff}.history-photo figcaption{font-size:10px;line-height:1.4;margin-top:4px;color:#555}.history-photo a{color:inherit}.history-photo + .question-detail{letter-spacing:normal}
+@media print{.history-photo img{height:42mm;max-width:80mm}.history-photo figcaption{font-size:8pt}.history-photo a{color:#000;text-decoration:none}}

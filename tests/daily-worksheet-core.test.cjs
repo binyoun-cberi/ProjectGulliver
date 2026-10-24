@@ -2,6 +2,18 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {SUBJECTS,generate,types,units}=require('../daily-worksheet-core.js');
 
+test('science and English contextual reading yields twenty distinct sourced-by-context exercises per grade band',()=>{
+ for(const [subject,topic,grades] of [['science','plant-observation',[3,4]],['science','ecosystem',[5,6]],['english','short-reading',[3,4]],['english','message-reading',[5,6]]]){
+  for(const grade of grades)for(const seed of [1,42,2026]){
+   const options={subject,topic,grade,count:20,seed},sheet=generate(options);
+   assert.deepEqual(sheet,generate(options));
+   assert.equal(new Set(sheet.items.map(q=>q.detail)).size,20);
+   for(const q of sheet.items){assert.ok(q.detail&&q.explanation);assert.equal(q.choices.length,3);assert.ok(q.choices.includes(q.answer))}
+  }
+  for(const grade of [3,4,5,6].filter(g=>!grades.includes(g)))assert.throws(()=>generate({subject,topic,grade,count:5}));
+ }
+});
+
 test('social expansion keeps at least 29 themed prompts and offers history answers without initials',()=>{
  const lower=['map-symbol','natural','human','cultural','family','community-rules','local-gov','transport'];
  const upper=['korea-geography','democracy','rights','government','market','world-geography','international','environment','contemporary'];
@@ -366,5 +378,15 @@ test('grade 1 to 3 place-value and time questions have consistent answers',()=>{
    if(grade===2){const [hours,minutes]=q.prompt.match(/\d+/g).map(Number);assert.equal(q.answer,`${hours*60+minutes}분`)}
    if(grade===3){const [hours,minutes,elapsed]=q.prompt.match(/\d+/g).map(Number);const [endHour,endMinute]=q.answer.match(/\d+/g).map(Number);assert.equal(endHour*60+endMinute,hours*60+minutes+elapsed)}
   }
+ }
+});
+
+test('heritage photo sheets keep unique photos and answers with local credited assets',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ for(const grade of [5,6])for(const seed of [1,42,2026])for(const count of [5,10,15,20]){
+  const sheet=generate({subject:'social',grade,topic:'history-photo',type:'photo-identify',count,seed});
+  assert.equal(new Set(sheet.items.map(q=>q.answer)).size,count);
+  assert.equal(new Set(sheet.items.map(q=>q.photo.src)).size,count);
+  for(const q of sheet.items){assert.ok(fs.existsSync(path.join(__dirname,'..',q.photo.src)));assert.match(q.photo.license,/제1유형/);assert.match(q.photo.sourceUrl,/^https:\/\/www\.heritage\.go\.kr\/heri\/cul\/imgHeritage.do\?/);assert.ok(q.detail&&q.explanation);assert.ok(!q.photo.src.includes(q.answer))}
  }
 });
