@@ -2,6 +2,18 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {SUBJECTS,generate,types,units}=require('../daily-worksheet-core.js');
 
+test('science and English contextual reading yields twenty distinct sourced-by-context exercises per grade band',()=>{
+ for(const [subject,topic,grades] of [['science','plant-observation',[3,4]],['science','ecosystem',[5,6]],['english','short-reading',[3,4]],['english','message-reading',[5,6]]]){
+  for(const grade of grades)for(const seed of [1,42,2026]){
+   const options={subject,topic,grade,count:20,seed},sheet=generate(options);
+   assert.deepEqual(sheet,generate(options));
+   assert.equal(new Set(sheet.items.map(q=>q.detail)).size,20);
+   for(const q of sheet.items){assert.ok(q.detail&&q.explanation);assert.equal(q.choices.length,3);assert.ok(q.choices.includes(q.answer))}
+  }
+  for(const grade of [3,4,5,6].filter(g=>!grades.includes(g)))assert.throws(()=>generate({subject,topic,grade,count:5}));
+ }
+});
+
 test('social expansion keeps at least 29 themed prompts and offers history answers without initials',()=>{
  const lower=['map-symbol','natural','human','cultural','family','community-rules','local-gov','transport'];
  const upper=['korea-geography','democracy','rights','government','market','world-geography','international','environment','contemporary'];

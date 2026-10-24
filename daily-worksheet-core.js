@@ -4,8 +4,8 @@ const SUBJECTS={
  korean:{name:'국어',grades:[1,2,3,4,5,6],topics:[['opposite','반대말 찾기',1],['spacing','바른 띄어쓰기',2],['reading','글 읽고 답하기',1],['mainidea','짧은 글의 중심 내용',1,2],['vocabulary','문장 속 낱말의 뜻',3],['idiom','관용 표현과 속담',3],['hanja','한자어의 뜻',5],['reading-set','한 글을 읽고 여러 문제 풀기',1]]},
  math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['math-mix','유형 골라 섞기',1],['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['hundreds','세 자리 수 덧셈',3,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3],['mixed','자연수의 혼합 계산',5,5],['decimal','소수의 계산',5,6]]},
  social:{name:'사회',grades:[3,4,5,6],topics:[['direction','방향과 위치',3],['community','우리 사회의 일',3],['economy','생산과 소비',4],['past','생활 속 옛 모습',3,4],['local','지역의 변화',3,4],['map-symbol','지도와 공간',3,4],['natural','자연환경과 생활',3,4],['human','인문환경과 생활',3,4],['cultural','지역의 문화유산',3,4],['family','가족과 생활 변화',3,4],['community-rules','공동체와 규칙',3,4],['local-gov','지역의 공공 기관',3,4],['transport','교통과 지역 간 교류',3,4],['prehistoric','선사와 고조선',5],['ancient','삼국·가야의 유적',5],['goryeo','고려',5],['joseon','조선',5],['modern','일제 강점기·광복·전쟁',5],['history-mix','시대 골라 섞기',5],['history-review','한국사 종합',5],['korea-geography','우리 국토와 인구',5],['democracy','민주주의와 참여',5],['rights','인권과 헌법',5],['government','국가기관과 법',5],['market','경제생활과 시장',5],['world-geography','세계의 지리와 문화',5],['international','세계의 교류와 갈등',5],['environment','환경과 지속가능성',5],['contemporary','광복 이후의 대한민국',5]]},
- science:{name:'과학',grades:[3,4,5,6],topics:[['living','생물과 비생물',3],['matter','물질의 상태',3],['weather','날씨 관찰 도구',5]]},
- english:{name:'영어',grades:[3,4,5,6],topics:[['words','기본 낱말',3],['sentence','문장 만들기',3],['conversation','상황에 맞는 대답',3]]}
+ science:{name:'과학',grades:[3,4,5,6],topics:[['living','생물과 비생물',3],['matter','물질의 상태',3],['plant-observation','식물의 한살이 관찰',3,4],['weather','날씨 관찰 도구',5],['ecosystem','생태계 자료 읽기',5]]},
+ english:{name:'영어',grades:[3,4,5,6],topics:[['words','기본 낱말',3],['sentence','문장 만들기',3],['conversation','상황에 맞는 대답',3],['short-reading','짧은 글 읽기',3,4],['message-reading','안내문·메시지 읽기',5]]}
 };
 // Semester labels are a browsing aid based on common unit names; textbook order varies.
 const MATH_UNITS={
@@ -486,6 +486,51 @@ const WEATHER=[
  ['운동장 바람의 방향을 알고 싶을 때','풍향계'],['비 오는 날 강수량을 조사할 때','우량계'],['현재 공기의 온도를 재고 싶을 때','온도계'],['태풍이 올 때 바람의 빠르기를 재고 싶을 때','풍속계'],
  ['어제와 오늘의 기온을 비교하고 싶을 때','온도계'],['빗물이 얼마나 모였는지 재고 싶을 때','우량계'],['바람이 불어오는 쪽을 관찰할 때','풍향계'],['바람의 세기를 수치로 비교하고 싶을 때','풍속계']
 ];
+// Original classroom scenarios. Each row: context, question, correct answer, distractors, reason.
+const PLANT_OBSERVATION=[
+ ['강낭콩 씨앗을 젖은 솜 위에 두었더니 며칠 뒤 씨껍질이 갈라졌다.','가장 먼저 관찰할 변화는?','뿌리가 나온다',['꽃이 핀다','열매가 열린다'],'싹이 틀 때 먼저 어린뿌리가 나온다.'],
+ ['한 화분은 햇빛이 드는 창가, 다른 화분은 어두운 상자에 두었다. 물과 흙은 같다.','비교하려는 조건은?','빛',['물','흙'],'두 화분에서 다르게 한 조건은 빛이다.'],
+ ['같은 콩을 심은 두 화분 중 하나에만 물을 주었다.','비교하려는 조건은?','물',['빛','화분 크기'],'다른 조건을 같게 하고 물의 유무만 바꾸었다.'],
+ ['씨앗을 심은 뒤 날짜마다 싹의 길이를 자로 재었다.','변화를 기록하기에 알맞은 것은?','날짜별 싹의 길이',['씨앗 봉투의 색','화분을 산 가격'],'날짜와 길이를 함께 기록해야 자란 정도를 비교할 수 있다.'],
+ ['싹이 자라 첫 번째 잎이 펼쳐졌다.','관찰 기록에 알맞은 것은?','잎 두 장이 펼쳐졌다',['식물이 행복하다','곧 열매가 열릴 것이다'],'관찰 기록에는 실제로 본 모습을 쓴다.'],
+ ['같은 날 심은 씨앗의 싹이 서로 다른 날 나왔다.','알맞은 결론은?','씨앗마다 싹트는 날이 다를 수 있다',['모든 씨앗은 같은 날 싹튼다','늦게 나온 싹은 자라지 않는다'],'실제 관찰 결과로는 싹트는 시기가 다름을 알 수 있다.'],
+ ['꽃이 지고 꽃이 있던 자리에 작은 열매가 생겼다.','다음에 살펴볼 부분은?','열매 속 씨앗',['뿌리의 색만','화분의 무늬'],'열매 안에 새 씨앗이 생기는지 살펴본다.'],
+ ['씨앗에서 싹이 나고 자라 꽃과 열매가 생겼다.','한살이의 순서로 알맞은 것은?','씨앗 → 싹 → 꽃 → 열매',['꽃 → 씨앗 → 싹 → 열매','열매 → 꽃 → 싹 → 씨앗'],'관찰한 성장 순서가 씨앗에서 열매로 이어진다.'],
+ ['봉숭아 열매가 익어 터지며 씨앗이 주변으로 튀었다.','관찰로 알 수 있는 것은?','씨앗이 퍼지는 방법',['뿌리가 물을 흡수하는 양','잎이 만든 양분의 무게'],'터지는 열매는 씨앗을 주변에 퍼뜨린다.'],
+ ['해바라기의 키를 매주 같은 요일에 쟀다. 1주 8cm, 2주 13cm, 3주 18cm였다.','2주에서 3주 사이 얼마나 자랐나요?','5cm',['10cm','18cm'],'18cm에서 13cm를 빼면 5cm이다.'],
+ ['화분 A와 B를 비교할 때 A에는 콩 2개, B에는 콩 20개를 심고 빛도 다르게 했다.','빛의 영향을 알아보기 어려운 까닭은?','씨앗 수와 빛을 함께 바꾸었다',['물을 똑같이 주었다','같은 종류의 콩을 썼다'],'한 번에 여러 조건을 바꾸면 원인을 구별하기 어렵다.'],
+ ['관찰한 잎의 길이는 월요일 3cm, 금요일 5cm였다.','기록에 근거한 설명은?','잎이 2cm 자랐다',['잎이 5cm 줄었다','꽃이 두 송이 피었다'],'길이가 3cm에서 5cm로 늘었다.'],
+ ['민들레 꽃이 진 뒤 솜털이 달린 씨앗이 생겼다.','솜털이 도와주는 일은?','바람을 타고 퍼지기',['흙을 더 단단하게 하기','꽃의 색 바꾸기'],'솜털이 씨앗을 바람에 실어 보낸다.'],
+ ['식물의 뿌리가 흙 속으로 뻗었다.','뿌리의 역할로 알맞은 것은?','물을 흡수한다',['씨앗을 멀리 날린다','꽃가루를 만든다'],'뿌리는 흙 속의 물을 흡수한다.'],
+ ['두 식물을 비교했더니 하나는 넓은 잎, 다른 하나는 가늘고 긴 잎이었다.','관찰 결과에 알맞은 말은?','잎의 모양이 다르다',['뿌리가 같은 길이다','둘 다 꽃이 피지 않는다'],'제시된 정보는 잎의 모양 차이이다.'],
+ ['싹의 길이를 눈대중으로만 기록하다가 자를 사용했다.','자로 재면 좋은 점은?','길이를 수치로 비교할 수 있다',['싹이 더 빨리 자란다','물주기가 필요 없어진다'],'같은 단위로 측정하면 변화량을 비교할 수 있다.'],
+ ['같은 조건에서 씨앗 10개를 심었더니 8개에서 싹이 나왔다.','기록에 맞는 말은?','8개에서 싹이 났다',['10개 모두 싹이 났다','2개에서 꽃이 피었다'],'실제 싹튼 수는 8개이다.'],
+ ['화분의 흙이 마른 날과 젖은 날의 잎 모습을 비교한다.','함께 적으면 좋은 것은?','흙의 상태와 잎의 모습',['화분의 가격만','관찰자의 신발 색'],'비교할 조건과 관찰한 결과를 함께 적는다.'],
+ ['식물이 자란 뒤 꽃이 피고 씨앗이 생겼다.','씨앗이 하는 일은?','새 식물로 자랄 수 있다',['돌을 흙으로 바꾼다','화분을 만든다'],'씨앗은 알맞은 조건에서 싹터 새 식물로 자란다.'],
+ ['강낭콩의 자라는 모습을 같은 자리에서 매일 사진으로 남겼다.','사진을 모아 확인할 수 있는 것은?','시간에 따른 모습의 변화',['정확한 흙의 무게','씨앗의 가격 변화'],'같은 자리의 사진을 비교하면 성장 과정을 볼 수 있다.']
+];
+const ECOSYSTEM_EVIDENCE=[
+ ['풀 → 메뚜기 → 개구리 → 뱀','메뚜기를 먹는 생물은?','개구리',['풀','메뚜기'],'화살표 다음에 있는 개구리가 메뚜기를 먹는다.'],
+ ['풀 → 토끼 → 여우','먹이 관계에서 생산자는?','풀',['토끼','여우'],'풀은 빛을 이용해 스스로 양분을 만든다.'],
+ ['풀 → 메뚜기 → 개구리','메뚜기가 크게 줄면 개구리는?','먹이가 줄 수 있다',['먹이가 늘어난다','풀을 바로 먹게 된다'],'개구리의 먹이인 메뚜기가 줄어든다.'],
+ ['낙엽 위에서 버섯이 자라고 낙엽이 점차 분해된다.','버섯의 역할은?','죽은 생물을 분해한다',['빛으로 양분을 만든다','동물을 사냥한다'],'버섯 같은 분해자는 죽은 생물을 분해한다.'],
+ ['연못에 물풀, 물벼룩, 작은 물고기, 새가 산다.','생물 요소에 해당하는 것은?','물벼룩',['물','햇빛'],'물벼룩은 살아 있는 생물이다.'],
+ ['숲의 햇빛, 흙, 나무, 다람쥐를 조사했다.','비생물 요소는?','햇빛',['나무','다람쥐'],'햇빛은 살아 있지 않은 환경 요소이다.'],
+ ['같은 화분의 식물 두 개 중 한 개만 어두운 곳에 두었다.','알아보려는 환경 요인은?','빛',['공기','씨앗 종류'],'빛의 조건만 다르게 설정했다.'],
+ ['하천의 물이 마르자 물고기가 사는 곳이 줄었다.','이 변화의 직접적인 원인은?','물의 감소',['햇빛의 증가','돌의 색 변화'],'물이라는 비생물 요소가 줄어 서식지가 달라졌다.'],
+ ['풀 → 쥐 → 올빼미','쥐가 줄면 올빼미는 어떤 영향을 받나요?','먹이를 구하기 어려워진다',['먹이가 반드시 늘어난다','풀로 양분을 만든다'],'올빼미의 먹이인 쥐가 줄어든다.'],
+ ['나무 열매를 새가 먹고, 새가 씨앗을 다른 곳에 떨어뜨렸다.','새가 열매를 먹는 일이 나무에 주는 영향은?','씨앗이 퍼질 수 있다',['나무가 물을 못 마신다','나무가 바로 죽는다'],'새의 이동을 통해 씨앗이 다른 곳으로 옮겨진다.'],
+ ['숲 바닥의 죽은 잎이 시간이 지나 부스러져 흙과 섞였다.','이 과정과 관련 깊은 생물은?','분해자',['생산자만','포식자만'],'분해자는 죽은 잎 같은 생물의 흔적을 분해한다.'],
+ ['연못의 물풀이 줄어들어 물풀을 먹는 달팽이도 줄었다.','자료로 알 수 있는 관계는?','먹이의 양이 소비자에게 영향을 준다',['달팽이가 물풀을 만든다','물풀은 달팽이를 먹는다'],'달팽이의 먹이가 줄어 수가 줄었다.'],
+ ['숲에서 나무가 많이 베이자 새의 둥지가 줄었다.','새에게 부족해진 것은?','살 곳',['돌의 무게','달의 모양'],'나무는 새의 서식 장소가 된다.'],
+ ['꽃에서 꿀을 먹은 벌이 다른 꽃으로 날아갔다.','벌이 꽃에 도움을 줄 수 있는 일은?','꽃가루를 옮긴다',['뿌리를 자른다','햇빛을 없앤다'],'벌이 이동하면서 꽃가루를 옮길 수 있다.'],
+ ['토끼 5마리, 여우 2마리가 관찰되었다. 다음 해에는 토끼 2마리, 여우 1마리였다.','확인할 수 있는 사실은?','두 생물 모두 관찰 수가 줄었다',['여우만 늘었다','토끼 수가 변하지 않았다'],'제시된 두 생물의 관찰 수가 모두 감소했다.'],
+ ['사막에서는 선인장이 물을 저장하고, 낙타는 물을 아껴 쓴다.','공통으로 관계있는 환경 요인은?','물의 부족',['눈의 양','바닷물의 흐름'],'두 사례 모두 물이 적은 환경과 관련된다.'],
+ ['낮에 빛을 받은 풀을 메뚜기가 먹었다.','먹이 관계의 출발점에 가까운 것은?','빛을 이용하는 풀',['메뚜기만','죽은 나뭇잎만'],'풀은 빛으로 스스로 양분을 만든다.'],
+ ['벌레를 먹던 개구리가 줄면 벌레가 늘어날 가능성이 있다.','그렇게 예상하는 이유는?','벌레를 먹는 개구리가 줄었다',['벌레가 풀을 만든다','개구리가 햇빛을 만든다'],'벌레를 먹는 생물이 감소했기 때문이다.'],
+ ['숲의 나무, 돌, 곤충을 관찰했다.','생물과 비생물로 바르게 나눈 것은?','나무·곤충은 생물, 돌은 비생물',['돌·나무는 생물, 곤충은 비생물','모두 비생물'],'나무와 곤충은 살아 있고 돌은 비생물이다.'],
+ ['먹이 그물에서 메뚜기를 새와 개구리가 모두 먹는다.','메뚜기와 연결된 소비자는?','새와 개구리',['풀과 햇빛','물과 돌'],'새와 개구리 모두 메뚜기를 먹는다.']
+];
 const WORDS=[['apple','사과'],['book','책'],['school','학교'],['water','물'],['friend','친구'],['family','가족'],['cat','고양이'],['dog','개'],['sun','태양'],['moon','달'],['tree','나무'],['flower','꽃'],['milk','우유'],['pencil','연필'],['chair','의자'],['table','탁자'],['happy','행복한'],['small','작은'],['big','큰'],['blue','파란색'],['red','빨간색'],['yellow','노란색'],['morning','아침'],['night','밤']];
 const SENTENCES=[
  ['나는 사과를 좋아해요.','I like apples.','I / like / apples.'],['이것은 내 책이에요.','This is my book.','This / is / my / book.'],
@@ -511,6 +556,50 @@ const CONVERSATIONS=[
  ['What do you want?','I want water.',['I want water.','I am seven.','It is Friday.']],
  ['Thank you.','You are welcome.',['You are welcome.','I am sorry.','Good night.']],
  ['Good morning!','Good morning!',['Good morning!','Good night!','Goodbye!']]
+];
+const SHORT_READING=[
+ ['I have a red bag.','가방의 색은?','red',['blue','green'],'red bag은 빨간 가방이라는 뜻이다.'],
+ ['This is my cat, Mimi.','미미는 어떤 동물인가요?','cat',['dog','bird'],'my cat, Mimi에서 고양이임을 알 수 있다.'],
+ ['I like apples.','좋아하는 과일은?','apples',['bananas','oranges'],'I like apples에서 좋아하는 과일을 찾는다.'],
+ ['It is sunny today.','오늘의 날씨는?','sunny',['rainy','snowy'],'sunny는 맑은 날씨를 나타낸다.'],
+ ['The book is on the desk.','책이 있는 곳은?','on the desk',['under the desk','in the bag'],'on the desk는 책상 위를 뜻한다.'],
+ ['I go to school on Monday.','학교에 가는 요일은?','Monday',['Friday','Sunday'],'문장에서 on Monday를 찾는다.'],
+ ['My dog is small.','강아지는 어떤가요?','small',['big','long'],'small은 작다는 뜻이다.'],
+ ['I drink water after lunch.','점심 뒤 마시는 것은?','water',['milk','juice'],'drink water라고 쓰여 있다.'],
+ ['My sister is ten years old.','누가 열 살인가요?','sister',['brother','mother'],'My sister가 ten years old이다.'],
+ ['There are three pencils.','연필은 몇 자루인가요?','three',['two','four'],'three pencils에서 수를 확인한다.'],
+ ['The ball is under the chair.','공의 위치는?','under the chair',['on the chair','next to the chair'],'under the chair는 의자 아래이다.'],
+ ['I can swim, but I cannot skate.','할 수 있는 것은?','swim',['skate','fly'],'can swim과 cannot skate를 구별한다.'],
+ ['This flower is yellow.','꽃의 색은?','yellow',['purple','white'],'yellow는 노란색이다.'],
+ ['We play soccer at the park.','축구를 하는 곳은?','the park',['the library','the kitchen'],'at the park가 장소를 알려 준다.'],
+ ['I eat breakfast at seven.','아침을 먹는 시각은?','seven',['six','eight'],'at seven이 시각이다.'],
+ ['Today is Friday. Tomorrow is Saturday.','내일은 무슨 요일인가요?','Saturday',['Thursday','Sunday'],'Tomorrow is Saturday라고 쓰여 있다.'],
+ ['The rabbit has long ears.','토끼의 귀는 어떤가요?','long',['short','small'],'long ears는 긴 귀이다.'],
+ ['My favorite color is blue.','가장 좋아하는 색은?','blue',['red','pink'],'favorite color is blue라고 한다.'],
+ ['I have two brothers.','남자 형제는 몇 명인가요?','two',['one','three'],'two brothers에서 수를 확인한다.'],
+ ['Please open the window.','부탁하는 행동은?','open the window',['close the door','wash hands'],'open the window는 창문 열기이다.']
+];
+const MESSAGE_READING=[
+ ['Library opens at 9 a.m. It closes at 5 p.m.','도서관이 문을 여는 시각은?','9 a.m.',['5 p.m.','7 a.m.'],'opens at 9 a.m.을 확인한다.'],
+ ['Art Club meets on Wednesday in Room 3.','미술 동아리는 어디에서 모이나요?','Room 3',['Room 2','the gym'],'in Room 3이 모임 장소이다.'],
+ ['To: Mina / Please bring your umbrella. It may rain.','미나가 챙길 것은?','an umbrella',['a hat','a ball'],'bring your umbrella라고 부탁한다.'],
+ ['The museum is closed on Monday. It opens on Tuesday.','박물관에 갈 수 있는 날은?','Tuesday',['Monday','Sunday'],'Tuesday에는 열고 Monday에는 닫는다.'],
+ ['Sports Day: Friday, 10 a.m., school playground.','운동회 장소는?','school playground',['library','classroom'],'school playground가 장소이다.'],
+ ['Jin: I will be late. Please start dinner at six.','저녁을 시작할 시각은?','six',['five','seven'],'start dinner at six를 확인한다.'],
+ ['The bus leaves at 8:30. Please come by 8:20.','늦지 않으려면 언제까지 와야 하나요?','8:20',['8:30','8:40'],'come by 8:20이라고 안내한다.'],
+ ['No food in the computer room. Water is okay outside.','컴퓨터실에서 하면 안 되는 일은?','eat food',['use a computer','read a sign'],'No food가 금지 사항이다.'],
+ ['School lunch today: rice, soup, and an apple.','점심에 나오는 과일은?','an apple',['a banana','an orange'],'메뉴에 an apple이 있다.'],
+ ['Please return your book by June 10.','책을 돌려줄 기한은?','June 10',['June 1','July 10'],'return your book by June 10을 확인한다.'],
+ ['Dear Amy, meet me at the park after school. — Ben','방과 후 만날 장소는?','the park',['the store','the station'],'at the park가 만날 장소이다.'],
+ ['Science fair: Bring one small plant. Do not bring animals.','준비할 것은?','a small plant',['a rabbit','a fish'],'Bring one small plant라고 적혀 있다.'],
+ ['The game starts at two. Tickets are free for children.','어린이의 입장권 가격은?','free',['two dollars','five dollars'],'free for children은 어린이 무료라는 뜻이다.'],
+ ['We will clean the classroom before lunch. Bring a cloth.','가져올 물건은?','a cloth',['a cup','a pencil'],'Bring a cloth라고 안내한다.'],
+ ['The blue train goes to the beach. The red train goes to the zoo.','동물원으로 가는 기차는?','the red train',['the blue train','the green train'],'red train goes to the zoo라고 쓰여 있다.'],
+ ['Mom: The keys are on the table, not in the bag.','열쇠가 있는 곳은?','on the table',['in the bag','under the bed'],'on the table을 확인하고 not in the bag과 구별한다.'],
+ ['English class moves from Room 4 to Room 7 today.','오늘 영어 수업 교실은?','Room 7',['Room 4','Room 6'],'moves from Room 4 to Room 7은 7호실로 변경된다는 뜻이다.'],
+ ['Bring a jacket. The morning is cold, but the afternoon is warm.','겉옷이 필요한 까닭은?','the morning is cold',['the afternoon is hot','it is raining'],'아침이 춥다고 안내한다.'],
+ ['The shop opens at ten on Saturday and at nine on Sunday.','일요일 개점 시각은?','nine',['ten','eleven'],'at nine on Sunday라고 쓰여 있다.'],
+ ['Picnic: Meet at the school gate at 8 a.m. Bring water.','소풍 출발 전 모일 곳은?','the school gate',['the park gate','the bus stop'],'Meet at the school gate가 모이는 곳이다.']
 ];
 function rng(seed){let state=(Number(seed)>>>0)||1;return()=>{state=(state+0x6D2B79F5)|0;let t=Math.imul(state^(state>>>15),1|state);t=(t+Math.imul(t^(t>>>7),61|t))^t;return ((t^(t>>>14))>>>0)/4294967296}}
 function pick(list,r){return list[Math.floor(r()*list.length)]}
@@ -1004,10 +1093,12 @@ function item(subject,topic,grade,r,difficulty,variant){
   const [scenario,answer]=pick(ECONOMY,r);return choice(`다음은 생산과 소비 중 무엇에 해당하나요?  ${scenario}`,answer,['생산','소비'],r);
  }
  if(subject==='science'){
+  if(topic==='plant-observation'||topic==='ecosystem'){const [detail,prompt,answer,wrong,explanation]=pick(topic==='plant-observation'?PLANT_OBSERVATION:ECOSYSTEM_EVIDENCE,r);return{...choice(prompt,answer,[answer,...wrong],r,detail),explanation}}
   if(topic==='living'){const [thing,answer]=pick(LIVING,r);return choice(`‘${thing}’은(는) 생물인가요, 비생물인가요?`,answer,['생물','비생물'],r)}
   if(topic==='matter'){const [thing,answer]=pick(MATTER,r);return choice(`실온에서 ‘${thing}’의 상태는 무엇인가요?`,answer,['고체','액체','기체'],r)}
   const [task,answer]=pick(WEATHER,r);return choice(`'${task}'에 알맞은 관찰 도구는 무엇인가요?`,answer,['온도계','우량계','풍향계','풍속계'],r);
  }
+ if(topic==='short-reading'||topic==='message-reading'){const [detail,prompt,answer,wrong,explanation]=pick(topic==='short-reading'?SHORT_READING:MESSAGE_READING,r);return{...choice(prompt,answer,[answer,...wrong],r,detail),explanation}}
  if(topic==='words'){const [word,answer]=pick(WORDS,r);return choice(`‘${word}’의 뜻을 고르세요.`,answer,[answer,...shuffle(WORDS.map(v=>v[1]).filter(v=>v!==answer),r).slice(0,3)],r)}
  if(topic==='sentence'){const [meaning,answer,words]=pick(SENTENCES,r);return{prompt:`‘${meaning}’에 맞게 낱말을 배열해 영어 문장을 쓰세요.`,answer,choices:[],detail:words}}
  const [question,answer,options]=pick(CONVERSATIONS,r);return choice(`다음 말에 알맞은 대답을 고르세요.  “${question}”`,answer,options,r);
