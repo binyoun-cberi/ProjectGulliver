@@ -421,7 +421,7 @@ function confirmResult(){
   renderMetrics();setNotice("이번 버스 좌석을 확정했습니다. 다음 배정에서 같은 자리와 같은 짝을 줄이는 데 사용합니다.","good");Gulliver.toast("버스 자리표를 기록했습니다.")
 }
 function resetSeats(){if(!window.confirm("좌석 사용 설정과 결과를 초기화할까요?"))return;state.disabled=Array(ROWS*COLS).fill(false);state.assignment=Array(ROWS*COLS).fill(null);applyBackRowSetting();save();renderAll()}
-function enterPresentation(){if(!auditBusResult().ok){Gulliver.toast("모든 학생을 필수 조건에 맞게 배치한 뒤 발표해 주세요.");return}document.body.classList.add("presentation");$("exitPresentationBtn").style.display="inline-flex"}
+function enterPresentation(){if(!state.students.length||!state.assignment.some(Boolean)||!auditBusResult().ok){Gulliver.toast("모든 학생을 필수 조건에 맞게 배치한 뒤 발표해 주세요.");return}document.body.classList.add("presentation");$("exitPresentationBtn").style.display="inline-flex"}
 function exitPresentation(){document.body.classList.remove("presentation");$("exitPresentationBtn").style.display="none"}
 
 $("namesInput").addEventListener("change",refreshFromInput);
@@ -454,12 +454,12 @@ window.GulliverTeacherLiveSnapshot=()=>{
 };
 window.GulliverTeacherDisplay?.register({kind:'bus',getSnapshot(){
  const names=new Map(state.students.map(s=>[String(s.id),String(s.name||'')]));
- return{kind:'bus',ready:auditBusResult().ok,rows:ROWS,
+ return{kind:'bus',ready:state.students.length>0&&state.assignment.some(Boolean)&&auditBusResult().ok,rows:ROWS,
   seats:state.assignment.map((id,index)=>state.disabled[index]?null:(id?names.get(String(id))||'':''))};
 }});
 document.body.classList.add('gt-v62-bus');
 GulliverTeacherClassroomFlow.mount({container:document.querySelector('.app'),title:'버스 자리 배정',description:'분리·동석·앞자리 조건은 교사 화면에 남겨요.',onResult(){
- if(!auditBusResult().ok){Gulliver.toast('모든 학생의 자리를 조건에 맞게 배치해 주세요.');return false;}
+ if(!state.students.length||!state.assignment.some(Boolean)||!auditBusResult().ok){Gulliver.toast('모든 학생의 자리를 조건에 맞게 배치해 주세요.');return false;}
 }});
 Gulliver.mountShell({title:"버스 좌석 배치",icon:"🚌"});
 })();
