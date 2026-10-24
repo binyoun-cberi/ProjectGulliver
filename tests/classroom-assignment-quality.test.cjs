@@ -75,7 +75,8 @@
    await page.locator('#startBtn').click();
    assert.equal(await page.locator('#slotScreen.active').count(),0);
    await page.locator('[data-del-avoid="0"]').click();
-   await page.locator('#conditionPreview').getByText(/사전 확인 완료/).waitFor();
+   const afterRemove=await page.locator('#conditionPreview').textContent();
+   assert.match(afterRemove,/사전 확인 완료/,'condition preview after removing separation pair: '+afterRemove);
    await page.locator('#startBtn').click();
    await page.locator('#slotScreen.active').waitFor();
    await page.locator('#revealAllBtn').click();
