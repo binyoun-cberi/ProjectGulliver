@@ -377,7 +377,20 @@
             .top-section { grid-template-columns: 1fr; }
             .center-panel { order: -1; } /* 중앙 패널을 위로 */
         }
-    </style>
+    
+.praise-goal-tools{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:6px}
+.praise-goal-tools label{font-size:13px;font-weight:800;color:#345f53}
+.praise-goal-tools input{width:90px!important;min-width:65px;text-align:center;padding:8px;border:1px solid #cde3d8;border-radius:10px}
+.praise-goal-tools button{padding:9px 11px;border-radius:10px;background:#e3f5e9;color:#1c6852;font-weight:800}
+.praise-status{font-size:13px;text-align:center;line-height:1.5;color:#27604e;min-height:22px;margin:8px 0}
+.praise-reason-main{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:1;border:none;background:transparent;color:inherit;text-align:left;font:inherit;min-height:53px;padding:9px}
+.reason-btn{display:flex;align-items:center}
+.reason-btn:focus-within{outline:3px solid #218c71;outline-offset:2px}
+.praise-empty-history{grid-column:1/-1;text-align:center;padding:24px;color:#64748b}
+#undoPraiseBtn:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:600px){.praise-goal-tools{justify-content:center}.reason-btn{min-height:55px}}
+@media(prefers-reduced-motion:reduce){.liquid,.history-item{transition:none!important}}
+</style>
   <script src="gulliver-shared.js?v=20261020-ui"></script>
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
@@ -418,7 +431,12 @@
             <div class="card center-panel">
                 <input type="text" id="globalStudentName" class="target-student-input" placeholder="👉 점수를 받을 학생 이름 입력" autocomplete="off" data-classroom-names>
                 
-                <div class="thermometer-wrapper">
+                <div class="praise-goal-tools" aria-label="학급 공동 목표 설정">
+  <label for="goalTempInput">학급 목표 점수</label><input id="goalTempInput" type="number" min="10" max="500" step="10" value="100" />
+  <button id="applyGoalBtn" type="button">목표 적용</button>
+</div>
+<div id="praiseStatus" class="praise-status" role="status" aria-live="polite">함께 목표를 향해 가요.</div>
+<div class="thermometer-wrapper">
                     <div class="thermometer-scale">
                         <span style="bottom: 100%">100</span>
                         <span style="bottom: 80%">80</span>
@@ -446,6 +464,7 @@
                     <button class="btn-outline" onclick="toggleBGM()" id="musicBtn">
                         <i class="material-icons-rounded">music_off</i> BGM 켜기
                     </button>
+                    <button class="btn-outline" id="undoPraiseBtn" type="button" disabled>↶ 직전 기록 취소</button>
                     <button class="btn-outline" onclick="resetAll()">
                         <i class="material-icons-rounded">refresh</i> 전체 초기화
                     </button>
@@ -528,9 +547,20 @@
         // Initialize
         function init() {
             const savedState = localStorage.getItem('classDashboardStateV2');
-            if (savedState) {
-                state = JSON.parse(savedState);
+            if(savedState){
+                try{
+                    const old=JSON.parse(savedState);
+                    if(old&&typeof old==='object'){
+                        state={...state,...old};
+                        state.records=Array.isArray(old.records)?old.records.filter(Boolean).slice(0,5000):[];
+                        state.plusReasons=Array.isArray(old.plusReasons)?old.plusReasons:defaultPlus.map(x=>({...x}));
+                        state.minusReasons=Array.isArray(old.minusReasons)?old.minusReasons:defaultMinus.map(x=>({...x}));
+                        state.goalTemp=Math.max(10,Math.min(500,Number(old.goalTemp)||100));
+                        state.currentTemp=Math.max(0,Math.min(state.goalTemp,Number(old.currentTemp)||0));
+                    }
+                }catch{document.getElementById('praiseStatus').textContent='저장된 이전 기록을 읽지 못했습니다. 기록을 덮어쓰기 전 확인해 주세요.';}
             }
+            document.getElementById('goalTempInput').value=state.goalTemp;
             updateUI();
         }
 
@@ -541,43 +571,22 @@
 
         // --- 이유(버튼) 관리 기능 ---
         function renderReasons() {
-            // Plus 렌더링
-            plusReasonList.innerHTML = '';
-            state.plusReasons.forEach(reason => {
-                const btn = document.createElement('div');
-                btn.className = 'reason-btn reason-plus';
-                // 전체 버튼 영역을 클릭할 수 있도록 수정
-                btn.onclick = () => processClickRecord(reason.text, reason.amount, 'up');
-                btn.innerHTML = `
-                    <div class="reason-content" style="flex:1;">
-                        <span class="reason-title">${reason.text}</span>
-                        <span class="reason-score">+${reason.amount}점</span>
-                    </div>
-                    <button class="btn-delete" onclick="event.stopPropagation(); deleteReason('plus', ${reason.id})" title="삭제">
-                        <i class="material-icons-rounded" style="font-size: 1.2rem;">close</i>
-                    </button>
-                `;
-                plusReasonList.appendChild(btn);
-            });
-
-            // Minus 렌더링
-            minusReasonList.innerHTML = '';
-            state.minusReasons.forEach(reason => {
-                const btn = document.createElement('div');
-                btn.className = 'reason-btn reason-minus';
-                // 전체 버튼 영역을 클릭할 수 있도록 수정
-                btn.onclick = () => processClickRecord(reason.text, reason.amount, 'down');
-                btn.innerHTML = `
-                    <div class="reason-content" style="flex:1;">
-                        <span class="reason-title">${reason.text}</span>
-                        <span class="reason-score">-${reason.amount}점</span>
-                    </div>
-                    <button class="btn-delete" onclick="event.stopPropagation(); deleteReason('minus', ${reason.id})" title="삭제">
-                        <i class="material-icons-rounded" style="font-size: 1.2rem;">close</i>
-                    </button>
-                `;
-                minusReasonList.appendChild(btn);
-            });
+            for(const [kind,host] of [['plus',plusReasonList],['minus',minusReasonList]]){
+                host.replaceChildren();
+                const type=kind==='plus'?'up':'down',list=kind==='plus'?state.plusReasons:state.minusReasons;
+                for(const reason of list){
+                    const row=document.createElement('div');
+                    row.className='reason-btn reason-'+kind;
+                    const main=document.createElement('button');
+                    main.type='button';main.className='praise-reason-main';
+                    const label=document.createElement('span');label.className='reason-title';label.textContent=String(reason.text||'');
+                    const score=document.createElement('span');score.className='reason-score';score.textContent=(kind==='plus'?'+':'-')+Number(reason.amount||0)+'점';
+                    main.append(label,score);main.onclick=()=>processClickRecord(reason.text,Number(reason.amount),type);
+                    const del=document.createElement('button');del.type='button';del.className='btn-delete';del.title='이유 삭제';
+                    del.textContent='×';del.onclick=()=>deleteReason(kind,reason.id);
+                    row.append(main,del);host.append(row);
+                }
+            }
         }
 
         function addReason(type) {
@@ -588,9 +597,9 @@
             const amount = parseInt(amountInput.value);
 
             if(!text) { alert("이유를 입력해주세요!"); return; }
-            if(isNaN(amount) || amount <= 0) { alert("올바른 점수를 입력해주세요!"); return; }
+            if(!Number.isInteger(amount)||amount<1||amount>100){alert('점수는 1~100 사이로 입력해 주세요.');return;}
 
-            const newReason = { id: Date.now(), text: text, amount: amount };
+            const newReason = { id: 'reason_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), text: text.slice(0,80), amount };
 
             if(type === 'plus') state.plusReasons.push(newReason);
             else state.minusReasons.push(newReason);
@@ -604,11 +613,8 @@
 
         function deleteReason(type, id) {
             if(confirm("이 항목을 삭제하시겠습니까?")) {
-                if(type === 'plus') {
-                    state.plusReasons = state.plusReasons.filter(r => r.id !== id);
-                } else {
-                    state.minusReasons = state.minusReasons.filter(r => r.id !== id);
-                }
+                if(type === 'plus')state.plusReasons=state.plusReasons.filter(r=>String(r.id)!==String(id));
+                else state.minusReasons=state.minusReasons.filter(r=>String(r.id)!==String(id));
                 saveState();
                 renderReasons();
             }
@@ -623,8 +629,10 @@
                 return;
             }
 
+            const beforeTemp=state.currentTemp;
             const newRecord = {
-                id: Date.now(),
+                id: 'praise_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+                previousTemp: beforeTemp,
                 type: type,
                 amount: amount,
                 student: student,
@@ -646,13 +654,11 @@
             if (state.currentTemp < 0) state.currentTemp = 0;
             if (state.currentTemp > state.goalTemp) state.currentTemp = state.goalTemp;
 
-            if (state.currentTemp === state.goalTemp && type === 'up') {
-                triggerGoalEffect();
-            }
+            if(beforeTemp<state.goalTemp&&state.currentTemp===state.goalTemp&&type==='up')triggerGoalEffect();
 
             saveState();
             updateUI();
-            
+            document.getElementById('praiseStatus').textContent=student+' 학생 · '+(type==='up'?'칭찬':'기록')+' '+(type==='up'?'+':'-')+amount+'점 · 현재 '+state.currentTemp+'점';
             // 이름 입력칸 깜빡임 효과 (성공 피드백)
             globalStudentInput.style.backgroundColor = type === 'up' ? '#D1FAE5' : '#FEE2E2';
             setTimeout(() => { globalStudentInput.style.backgroundColor = '#EEF2FF'; }, 300);
@@ -664,6 +670,8 @@
             renderThermometer();
             renderHistory();
             renderMVP();
+            document.getElementById('undoPraiseBtn').disabled=state.records.length===0;
+            document.getElementById('goalTempInput').value=state.goalTemp;
         }
 
         function renderThermometer() {
@@ -703,54 +711,43 @@
         }
 
         // --- 누가기록 및 정렬 ---
-        function renderHistory() {
-            historyGrid.innerHTML = '';
-            
-            if (state.records.length === 0) {
-                historyGrid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: #9CA3AF;">아직 기록이 없습니다. 상단에서 칭찬/차감을 시작해보세요!</div>';
-                return;
+        function renderHistory(){
+            historyGrid.replaceChildren();
+            if(!state.records.length){
+                const empty=document.createElement('div');
+                empty.textContent='아직 기록이 없어요. 칭찬 이유를 선택해 학급 목표를 함께 채워 보세요.';
+                empty.className='praise-empty-history';historyGrid.append(empty);return;
             }
-
-            // 정렬 로직 적용
-            let sortedRecords = [...state.records];
-            const sortMode = sortSelect.value;
-
-            if (sortMode === 'oldest') {
-                sortedRecords.reverse();
-            } else if (sortMode === 'scoreDesc') {
-                sortedRecords.sort((a, b) => {
-                    let aVal = a.type === 'up' ? a.amount : -a.amount;
-                    let bVal = b.type === 'up' ? b.amount : -b.amount;
-                    return bVal - aVal;
-                });
-            } else if (sortMode === 'scoreAsc') {
-                sortedRecords.sort((a, b) => {
-                    let aVal = a.type === 'up' ? a.amount : -a.amount;
-                    let bVal = b.type === 'up' ? b.amount : -b.amount;
-                    return aVal - bVal;
-                });
+            const records=[...state.records];
+            if(sortSelect.value==='oldest')records.reverse();
+            else if(sortSelect.value==='scoreDesc')records.sort((a,b)=>(b.type==='up'?b.amount:-b.amount)-(a.type==='up'?a.amount:-a.amount));
+            else if(sortSelect.value==='scoreAsc')records.sort((a,b)=>(a.type==='up'?a.amount:-a.amount)-(b.type==='up'?b.amount:-b.amount));
+            for(const record of records){
+                const item=document.createElement('div');item.className='history-item';
+                const info=document.createElement('div');info.className='history-info';
+                for(const [cl,text] of [['history-title',String(record.student||'학생')+' 학생'],['history-reason',String(record.reason||'')],['history-date',String(record.date||'')]]){
+                    const span=document.createElement('div');span.className=cl;span.textContent=text;info.append(span);
+                }
+                const amount=document.createElement('div');
+                amount.className='history-score '+(record.type==='up'?'score-up':'score-down');
+                amount.textContent=(record.type==='up'?'+':'-')+Number(record.amount||0);
+                item.append(info,amount);historyGrid.append(item);
             }
-            // latest는 기본값이므로 처리 안함
-
-            sortedRecords.forEach(record => {
-                const item = document.createElement('div');
-                item.className = 'history-item';
-                
-                const isUp = record.type === 'up';
-                const sign = isUp ? '+' : '-';
-                const scoreClass = isUp ? 'score-up' : 'score-down';
-
-                item.innerHTML = `
-                    <div class="history-info">
-                        <div class="history-title">${record.student} 학생</div>
-                        <div class="history-reason">${record.reason}</div>
-                        <div class="history-date">${record.date}</div>
-                    </div>
-                    <div class="history-score ${scoreClass}">${sign}${record.amount}</div>
-                `;
-                historyGrid.appendChild(item);
-            });
         }
+        function undoLastPraise(){
+            const last=state.records.shift();if(!last)return;
+            if(Number.isFinite(Number(last.previousTemp)))state.currentTemp=Math.max(0,Math.min(state.goalTemp,Number(last.previousTemp)));
+            else state.currentTemp=Math.max(0,Math.min(state.goalTemp,state.currentTemp+(last.type==='up'?-1:1)*Number(last.amount||0)));
+            saveState();updateUI();
+            document.getElementById('praiseStatus').textContent='직전 기록 1건을 되돌렸어요.';
+        }
+        document.getElementById('undoPraiseBtn').onclick=undoLastPraise;
+        document.getElementById('applyGoalBtn').onclick=()=>{
+            const next=Number(document.getElementById('goalTempInput').value);
+            if(!Number.isInteger(next)||next<10||next>500){alert('학급 목표는 10~500점 사이로 설정해 주세요.');return;}
+            state.goalTemp=next;state.currentTemp=Math.min(state.currentTemp,next);saveState();updateUI();
+            document.getElementById('praiseStatus').textContent='학급 공동 목표를 '+next+'점으로 바꿨어요.';
+        };
 
         function resetAll() {
             if (confirm("정말로 모든 기록과 온도를 초기화하시겠습니까?\n(등록해둔 이유 목록은 유지됩니다)")) {
@@ -765,11 +762,11 @@
         // --- 효과 (Confetti & Sound) ---
         function triggerGoalEffect() {
             setTimeout(() => {
-                confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, colors: ['#4F46E5', '#10B981', '#F59E0B', '#EF4444'] });
+                if(typeof confetti==='function'&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches)confetti({particleCount:70,spread:75,origin:{y:.6}});
                 playSound(400, 'square', 0.1);
                 setTimeout(() => playSound(600, 'square', 0.1), 150);
                 setTimeout(() => playSound(800, 'square', 0.4), 300);
-                setTimeout(() => alert("🎉 대단해요! 목표 온도를 달성했습니다! 🎉"), 500);
+                document.getElementById('praiseStatus').textContent='우리 반 목표 달성! 함께 해낸 순간이에요.';
             }, 300);
         }
 
@@ -785,9 +782,11 @@
             isPlaying = !isPlaying;
         }
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let audioCtx=null;
         function playSound(frequency, type, duration) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            try{
+            if(!audioCtx){const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;audioCtx=new Audio();}
+            if(audioCtx.state==='suspended')audioCtx.resume();
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             oscillator.type = type;
@@ -798,6 +797,7 @@
             gainNode.connect(audioCtx.destination);
             oscillator.start();
             oscillator.stop(audioCtx.currentTime + duration);
+            }catch{}
         }
 
         // Start

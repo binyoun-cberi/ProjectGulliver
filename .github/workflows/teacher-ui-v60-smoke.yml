@@ -12,7 +12,23 @@ on:
       - 'tests/gulliver-teacher-classroom-v62.test.cjs'
       - 'tests/time-tools*.test.cjs'
       - 'time-tools-*.js'
+      - 'flash-quiz-quality.js'
+      - 'flash-quiz-polish.css'
+      - 'tests/classroom-tools-round2.test.cjs'
+      - 'classroom-allocation-audit.js'
+      - 'tests/classroom-assignment-quality.test.cjs'
+      - 'manitto-solver.js'
+      - 'classroom-bus-audit.js'
+      - 'tests/classroom-tools-round4.test.cjs'
+      - 'classroom-catch-rules.js'
+      - 'tournament-maker.js'
+      - 'tests/classroom-tools-round5.test.cjs'
+      - 'tests/teacher-tools-final-wave.test.cjs'
+      - 'data-standards.js'
       - 'time-tools-*.css'
+      - 'lesson-notice-flow.css'
+      - 'tests/classroom-tools-improvements.test.cjs'
+      - 'classroom-workspace.js'
       - '.github/workflows/teacher-ui-v60-smoke.yml'
       - 'tools-catalog.js'
       - '*.html'
@@ -32,10 +48,24 @@ jobs:
           node --check gulliver-teacher-display.js
           node --check gulliver-teacher-display-view.js
           node --check gulliver-teacher-v62.js
+          node --check flash-quiz-quality.js
+          node --check tests/classroom-tools-round2.test.cjs
+          node --check classroom-allocation-audit.js
+          node --check tests/classroom-assignment-quality.test.cjs
+          node --check manitto-solver.js
+          node --check classroom-bus-audit.js
+          node --check tests/classroom-tools-round4.test.cjs
+          node --check classroom-catch-rules.js
+          node --check tournament-maker.js
+          node --check tests/classroom-tools-round5.test.cjs
+          node --check tests/teacher-tools-final-wave.test.cjs
+          node --check data-standards.js
+          node --check data-sentence.js
           node --check time-tools-hourglass.js
           node --check time-tools-core.js
           node --check time-tools-ui.js
           node --check tests/time-tools.test.cjs
+          node --check tests/classroom-tools-improvements.test.cjs
           node --check tests/time-tools-browser.test.cjs
           node --check tests/gulliver-teacher-ui.test.cjs
           node --check tests/gulliver-teacher-display.test.cjs
@@ -43,7 +73,7 @@ jobs:
       - name: Install browser driver
         run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
       - name: Exercise teacher tools and privacy in Chrome
-        run: node --test tests/gulliver-teacher-ui.test.cjs tests/gulliver-teacher-display.test.cjs tests/gulliver-teacher-classroom-v62.test.cjs tests/time-tools.test.cjs tests/time-tools-browser.test.cjs
+        run: node --test tests/gulliver-teacher-ui.test.cjs tests/gulliver-teacher-display.test.cjs tests/gulliver-teacher-classroom-v62.test.cjs tests/time-tools.test.cjs tests/time-tools-browser.test.cjs tests/classroom-tools-improvements.test.cjs tests/classroom-workspace.test.cjs tests/classroom-tools-round2.test.cjs tests/classroom-assignment-quality.test.cjs tests/classroom-tools-round4.test.cjs tests/classroom-tools-round5.test.cjs tests/teacher-tools-final-wave.test.cjs
       - name: Save desktop and mobile timer previews
         if: always()
         uses: actions/upload-artifact@v4
