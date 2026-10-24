@@ -96,3 +96,43 @@ body.print-answers .print-paper .result-answer{visibility:visible!important}
   .print-paper .reading-text p{font-size:12px;line-height:1.6}
   .print-paper .reading-question{padding-bottom:6px!important;margin-bottom:4px}
 }
+
+
+/* Few questions: use the entire printable sheet for the student's work, not a tiny block at the top. */
+.print-paper.roomy-page .print-question-list.compact-questions,
+.print-paper.roomy-page .print-question-list.calculation-grid{
+  grid-auto-rows:var(--roomy-row-height)!important;
+  align-content:start;
+}
+.print-paper.roomy-calculations .print-question-list.calculation-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-auto-flow:row!important;
+}
+.print-paper.roomy-page .print-question-list:not(.compact-questions):not(.calculation-grid)>li{
+  box-sizing:border-box;
+  min-height:var(--roomy-row-height);
+  padding-bottom:12px!important;
+}
+.print-paper.roomy-page .print-question-list.compact-questions>li,
+.print-paper.roomy-page .print-question-list.calculation-grid>li{
+  min-height:0;
+  box-sizing:border-box;
+}
+.print-paper.roomy-page .print-question-list>li{position:relative}
+.print-paper.roomy-calculations .calculation-grid>li::after{
+  content:"";
+  position:absolute;
+  bottom:10px;left:10%;right:10%;
+  border-bottom:1px dotted #b4c1c0;
+}
+.print-paper.roomy-page .print-question-list:not(.compact-questions):not(.calculation-grid)>li:not(:has(.choice-list))::after{
+  content:"";
+  display:block;
+  border-bottom:1px dotted #bbc9c3;
+  margin-top:10px;
+  width:88%;
+}
+@media print{
+  body:not(.print-answers) .print-paper .paper-standard,
+  body:not(.print-answers) .print-paper .reading-standard{display:none!important}
+}
