@@ -191,3 +191,5 @@ body:not(.print-answers) .print-paper .reading-standard{display:none!important}
 .print-paper .photo-questions .choice-list li{padding:1px 0}
 .print-paper .photo-questions .inline-answer{font-size:11px;line-height:1.4;margin-top:5px}
 .print-paper .photo-questions .answer-explanation{font-size:10px;line-height:1.4}
+
+body.print-answers .print-paper .print-question-list.photo-small{grid-template-columns:repeat(3,minmax(0,1fr))}
