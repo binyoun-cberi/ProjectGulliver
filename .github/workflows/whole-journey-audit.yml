@@ -2,26 +2,25 @@ name: Classroom full journey QA
 on:
   pull_request:
     paths:
-      - 'tests/whole-journey-audit.e2e.cjs'
-      - '.github/workflows/whole-journey-audit.yml'
       - 'workspace-home.js'
-      - 'unified-library.js'
-      - 'lesson-app.js'
-      - 'studio-app.js'
+      - 'classroom-workspace.js'
+      - 'index.html'
+      - 'tests/clasheet-first-start.test.cjs'
+      - '.github/workflows/whole-journey-audit.yml'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   teacher-journey:
     runs-on: ubuntu-latest
-    timeout-minutes: 7
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: Verify JavaScript and relevant unit tests
+      - name: Verify current classroom workspace
         run: |
-          node --check tests/whole-journey-audit.e2e.cjs
-          node --test tests/unified-library.test.cjs tests/lesson-v53.test.cjs tests/home-v54.test.cjs
+          node --check classroom-workspace.js
+          node --check workspace-home.js
       - name: Install pinned browser driver
         run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
-      - name: Exercise actual saved projects across home, library and lesson
-        run: node --test tests/whole-journey-audit.e2e.cjs
+      - name: Exercise current saved activities and home navigation
+        run: node --test tests/classroom-workspace.test.cjs tests/clasheet-first-start.test.cjs

@@ -3,19 +3,11 @@ on:
   pull_request:
     paths:
       - 'index.html'
-      - '뚝딱 제작실.html'
-      - '내 보관함.html'
-      - 'lesson.html'
-      - 'gulliver-ui-v56.css'
-      - 'gulliver-app-shell.js'
-      - 'gulliver-design.css'
-      - 'tests/unified-interface.e2e.cjs'
       - 'workspace-home.js'
-      - 'studio-app.js'
-      - 'studio-experience.js'
-      - 'lesson-app.js'
-      - 'unified-library.js'
-      - 'tests/ui-v56*'
+      - 'gulliver-app-shell.js'
+      - 'gulliver-teacher-shell.js'
+      - 'gulliver-design.css'
+      - 'tests/clasheet-first-start.test.cjs'
       - '.github/workflows/ui-v56-smoke.yml'
   workflow_dispatch:
 permissions:
@@ -26,27 +18,13 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: Validate UI, terminology and scripts
+      - name: Check current UI shell and first-use flow
         run: |
           node --check gulliver-app-shell.js
-          node --check studio-app.js
-          node --check studio-experience.js
-          node --check lesson-app.js
+          node --check gulliver-teacher-shell.js
           node --check workspace-home.js
-          node --check unified-library.js
-          node --check tests/ui-v56.e2e.cjs
-          node --test tests/ui-v56.test.cjs tests/home-v54.test.cjs tests/lesson-v53.test.cjs
+          node --check tests/clasheet-first-start.test.cjs
       - name: Install browser driver
         run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
-      - name: Inspect four page sizes and save-safe navigation in Chrome
-        run: node --test --test-concurrency=1 tests/ui-v56.e2e.cjs tests/unified-interface.e2e.cjs
-      - name: Upload wide/phone review screens
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: 5-6-visual-review
-          path: |
-            test-artifacts/ui-v56-*.png
-            test-artifacts/unified-interface-*.png
-          if-no-files-found: ignore
-          retention-days: 7
+      - name: Verify real current homepage and tool routes
+        run: node --test tests/clasheet-branding.test.cjs tests/gulliver-teacher-ui.test.cjs tests/clasheet-first-start.test.cjs
