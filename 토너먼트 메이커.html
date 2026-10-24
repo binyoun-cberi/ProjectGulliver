@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>토너먼트 메이커 | 뚝딱교실</title>
   <link rel="icon" type="image/png" href="logo.png">
-  <script src="gulliver-shared.js?v=20261012-organized2"></script>
+  <script src="gulliver-shared.js?v=20261020-ui"></script>
   <style>
     :root{
       --bg:#f7f5ef;--paper:#fffefa;--ink:#172033;--muted:#687386;--line:#e6dfd2;
@@ -116,7 +116,16 @@
     }
     @media(max-width:520px){.app{width:min(100% - 16px,1500px)}.hero{padding:20px}.setup,.bracket-card{padding:14px}.arena{padding:14px}.fighter{padding:20px 12px}.arena-head{align-items:flex-start;flex-direction:column}.mode-tabs{grid-template-columns:1fr}.btn{min-height:44px}}
     @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
-  </style>
+  .tournament-progress{color:#506e6a;font-size:12px;font-weight:850;line-height:1.55;margin-top:5px}
+.slot:focus-visible,.win-btn:focus-visible,#copyBracketBtn:focus-visible{outline:3px solid #147f68;outline-offset:2px}
+#copyBracketBtn:disabled{opacity:.4;cursor:default}
+@media(prefers-reduced-motion:reduce){.confetti,.countdown.show{animation:none!important}html{scroll-behavior:auto!important}}
+</style>
+<link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
+<script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
+<script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<script src="gulliver-app-shell.js?v=20261020-1"></script>
 </head>
 <body>
   <main class="app">
@@ -187,7 +196,7 @@
         <section class="arena-card">
           <div class="arena-head">
             <div>
-              <div class="eyebrow" id="roundEyebrow">READY</div>
+              <div class="eyebrow" id="roundEyebrow">READY</div><div id="tournamentProgress" class="tournament-progress" role="status">아직 시작 전</div>
               <div class="arena-title" id="arenaTitle">대진표를 만들어 주세요</div>
             </div>
             <div id="championInline"></div>
@@ -199,13 +208,14 @@
           <div class="match-tools">
             <button class="btn" id="countdownBtn" type="button" disabled>3 · 2 · 1 시작</button>
             <button class="btn" id="undoBtn" type="button" disabled>↶ 승패 되돌리기</button>
+            <button class="btn" id="copyBracketBtn" type="button" disabled>결과 복사</button>
             <button class="btn" id="exitPresentationBtn" type="button" hidden>교사 화면으로</button>
           </div>
         </section>
 
         <section class="bracket-card">
           <div class="section-title">
-            <div><h2>전체 대진표</h2><p id="bracketSummary">승자를 누르면 다음 라운드로 자동 진출합니다.</p></div>
+            <div><h2>전체 대진표</h2><p id="bracketSummary" role="status" aria-live="polite">승자를 누르면 다음 라운드로 자동 진출합니다.</p></div>
           </div>
           <div class="bracket-scroll"><div class="bracket" id="bracket"></div></div>
         </section>

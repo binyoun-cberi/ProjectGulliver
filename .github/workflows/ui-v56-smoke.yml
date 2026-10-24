@@ -1,0 +1,30 @@
+name: 5.6 unified UI and navigation
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'workspace-home.js'
+      - 'gulliver-app-shell.js'
+      - 'gulliver-teacher-shell.js'
+      - 'gulliver-design.css'
+      - 'tests/clasheet-first-start.test.cjs'
+      - '.github/workflows/ui-v56-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  consistent-workspaces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Check current UI shell and first-use flow
+        run: |
+          node --check gulliver-app-shell.js
+          node --check gulliver-teacher-shell.js
+          node --check workspace-home.js
+          node --check tests/clasheet-first-start.test.cjs
+      - name: Install browser driver
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
+      - name: Verify real current homepage and tool routes
+        run: node --test tests/clasheet-branding.test.cjs tests/gulliver-teacher-ui.test.cjs tests/clasheet-first-start.test.cjs

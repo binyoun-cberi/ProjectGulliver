@@ -1,0 +1,70 @@
+/* 5.4: a genuinely fluid home. Keep the hero centered, allow the work area to grow. */
+:root{--home-content-max:1720px}
+.main{max-width:none;min-width:0}
+.main>.welcome,.main>.topbar,.main>.workspace-switch,.main>#content,.main>.storage-note{
+  width:100%;max-width:var(--home-content-max);margin-left:auto;margin-right:auto
+}
+.home-view .main{max-width:none;padding-inline:clamp(22px,2.4vw,52px)}
+.home-view .main::before{
+  width:100%;inset:0 0 auto;
+  background:linear-gradient(110deg,#bdf1ee 0%,#e6efff 48%,#f0dafa 100%);
+  mask-image:linear-gradient(#000 0%,transparent 100%)
+}
+.home-view #content{width:100%;max-width:var(--home-content-max);min-width:0}
+.home-view .welcome{max-width:900px}
+.home-view .topbar{max-width:900px}
+.home-view .section,.home-view .home-block{max-width:none;min-width:0}
+.home-view .home-block{margin-top:36px}
+.home-view .home-design{width:100%}
+/* Five subjects are the primary creation actions. */
+.home-view .format-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+.home-view .format-tile{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:18px 10px;min-height:152px;
+  border:1px solid #ede8f5;background:#fff;border-radius:18px;
+  box-shadow:0 5px 18px #39275d08;text-decoration:none
+}
+.home-view .format-symbol{
+  width:65px;height:65px;flex:none;border-radius:20px;font-size:32px;
+  box-shadow:0 5px 15px #1b16331b
+}
+.home-view .format-copy{display:grid;gap:5px;min-width:0;align-content:center;text-align:center}
+.home-view .format-copy strong{font-size:14px;letter-spacing:-.03em}
+.home-view .format-copy small{font-size:11px;line-height:1.45;max-width:100%;overflow-wrap:anywhere}
+/* The four classroom tools should use the available row, too. */
+.home-view .home-tool-list{grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.home-view .home-tool-list .tool-row{min-width:0}
+@media(min-width:1750px){
+ .home-view .format-tile{
+   flex-direction:row;justify-content:flex-start;min-height:111px;
+   gap:13px;padding:16px;text-align:left
+ }
+ .home-view .format-symbol{width:60px;height:60px;font-size:29px;border-radius:18px}
+ .home-view .format-copy{text-align:left;gap:5px}
+ .home-view .format-copy strong{font-size:14px}
+}
+@media(max-width:1399px){
+ .home-view .format-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+ .home-view .format-tile{min-height:142px}
+ .home-view .home-tool-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:800px){
+ .home-view .main{padding-inline:20px}
+ .home-view .format-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+ .home-view .format-tile{min-height:125px;padding:11px 7px;gap:8px}
+ .home-view .format-symbol{width:53px;height:53px;border-radius:16px;font-size:27px}
+ .home-view .format-copy strong{font-size:12px}
+ .home-view .format-copy small{font-size:10px}
+}
+@media(max-width:480px){
+ .home-view .main{padding-inline:16px}
+ .home-view .format-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .home-view .format-tile{padding:11px 4px;min-height:104px;gap:7px;border-radius:14px}
+ .home-view .format-symbol{width:47px;height:47px;border-radius:14px;font-size:24px}
+ .home-view .format-copy strong{font-size:11px;line-height:1.35}
+ .home-view .format-copy small{display:none}
+ .home-view .home-tool-list{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+ .home-view .format-tile{transition:none}
+}

@@ -1,0 +1,29 @@
+name: Clasheet local media shelf
+on:
+  pull_request:
+    paths:
+      - '내 미디어.html'
+      - 'clasheet-local-media*.js'
+      - '뚝딱영상.html'
+      - 'tools-catalog.js'
+      - 'tests/clasheet-local-media.test.cjs'
+      - '.github/workflows/clasheet-media-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  media-shelf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Verify media and catalog JavaScript
+        run: |
+          node --check clasheet-local-media.js
+          node --check clasheet-local-media-core.js
+          node --check tools-catalog.js
+          node --check tests/clasheet-local-media.test.cjs
+      - name: Install Chrome browser driver
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
+      - name: Run local media upload and stage editor regression
+        run: node --test tests/clasheet-local-media.test.cjs tests/clasheet-branding.test.cjs

@@ -1,0 +1,146 @@
+/* Shared application chrome and teacher controls. Student content is not themed here. */
+:root {
+  --gx-brand:#247b6b; --gx-brand-hover:#176a5b; --gx-soft:#e8f5ef;
+  --gx-ink:#28354e; --gx-muted:#627086; --gx-line:#e2e6ef;
+  --gx-background:#f5f9f6; --gx-surface:#fff; --gx-danger:#b4233c;
+  --gx-radius:12px; --gx-header-height:72px; --gx-content:1560px;
+}
+body.gx-app {
+  --brand:var(--gx-brand); --gt-brand:var(--gx-brand); --ink:var(--gx-ink);
+  --gt-ink:var(--gx-ink); --muted:var(--gx-muted); --gt-muted:var(--gx-muted);
+  --line:var(--gx-line); --gt-line:var(--gx-line); --soft:var(--gx-soft);
+  --gt-soft:var(--gx-soft); --bg:var(--gx-background); --back:var(--gx-background);
+  padding-top:var(--gx-header-height)!important;
+  background:var(--gx-background); color:var(--gx-ink);
+  font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+body.gx-app.gt-teacher-tool:not(.student-view):not(.presentation){padding-top:var(--gx-header-height)!important}
+.gx-app [hidden]{display:none!important}
+.gx-app>.gx-header.gulliver-shell {
+  box-sizing:border-box;position:fixed;inset:0 0 auto;width:100%;max-width:none;
+  transform:none;z-index:1000;margin:0;border-bottom:1px solid var(--gx-line);
+  padding:0;border-radius:0;display:block;height:auto;min-height:0;
+  background:var(--gx-surface);color:var(--gx-ink);font:inherit;box-shadow:none;
+}
+.gx-header .gx-header-inner {
+  box-sizing:border-box;display:flex;align-items:center;gap:24px;
+  min-height:var(--gx-header-height);max-width:var(--gx-content);margin:auto;padding:10px 24px;
+}
+.gx-header .gx-brand {
+  display:inline-flex;align-items:center;gap:9px;flex:none;min-height:44px;color:var(--gx-ink);
+  text-decoration:none;font-size:17px;font-weight:900;letter-spacing:-.04em;white-space:nowrap;
+}
+.gx-header .gx-brand img{display:block;width:30px;height:30px;border-radius:8px}
+.gx-header .gx-nav {
+  display:flex;align-items:center;gap:4px;flex:1;min-width:0;width:auto;max-width:none;
+  margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;
+}
+.gx-header .gx-nav a {
+  display:flex;align-items:center;justify-content:center;min-height:40px;box-sizing:border-box;
+  padding:9px 13px;border:1px solid transparent;border-radius:10px;
+  color:var(--gx-muted);background:transparent;text-decoration:none;line-height:1.4;
+  font-family:inherit;font-size:13px;font-weight:750;white-space:nowrap;
+}
+.gx-header .gx-nav a:hover{background:#ecf6f1;color:var(--gx-brand-hover)}
+.gx-header .gx-nav a[aria-current=page]{background:var(--gx-soft);color:var(--gx-brand-hover);border-color:transparent}
+.gx-header .gx-header-actions{display:flex;align-items:center;gap:7px;flex:none}
+.gx-header .gx-header-actions:empty{display:none}
+.gx-header .activity-current{display:none}
+.gx-header .gt-action {
+  display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 11px;
+  box-sizing:border-box;border:1px solid var(--gx-line);border-radius:10px;
+  background:var(--gx-surface);color:var(--gx-ink);font:750 12px/1.4 "Pretendard",system-ui,sans-serif;
+  cursor:pointer;white-space:nowrap;list-style:none;
+}
+.gx-header .gt-open-display,.gx-header .gt-open-display[data-open=true]{background:var(--gx-soft);border-color:#bcded2;color:var(--gx-brand-hover)}
+.gx-header .gt-help{position:relative;margin:0;padding:0;border:0;border-radius:0;background:transparent}
+.gx-header .gt-action:hover{transform:none;background:#ecf6f1}
+.gx-header .gt-help-panel{top:calc(100% + 12px);right:0;z-index:2}
+.gx-header .gx-skip{position:absolute;left:16px;top:-100px;padding:12px 18px;background:var(--gx-brand);color:white;border-radius:10px;text-decoration:none}
+.gx-header .gx-skip:focus{top:8px}
+.gx-work-target{scroll-margin-top:calc(var(--gx-header-height) + 16px)}
+.gx-app :is(.gx-button,.gx-input,.gx-header a,.gx-header summary):focus-visible{outline:3px solid #ac96e8;outline-offset:3px}
+
+/* All opted-in teacher controls use the same size and action semantics. */
+.gx-app .gx-button {
+  box-sizing:border-box;min-height:40px;border:1px solid var(--gx-line);border-radius:10px;
+  padding:9px 14px;background:var(--gx-surface);color:var(--gx-ink);box-shadow:none;
+  font-family:inherit;font-size:13px;font-weight:750;line-height:1.4;letter-spacing:0;cursor:pointer;
+  text-decoration:none;transition:background .12s ease,border-color .12s ease;
+}
+.gx-app .gx-button:hover{background:#f4f2fa;border-color:#c6b8e7;filter:none}
+.gx-app .gx-button.gx-primary{background:var(--gx-brand);border-color:var(--gx-brand);color:white}
+.gx-app .gx-button.gx-primary:hover{background:var(--gx-brand-hover);border-color:var(--gx-brand-hover)}
+.gx-app .gx-button.gx-danger{background:#fff;color:var(--gx-danger);border-color:#efcbd3}
+.gx-app .gx-button.gx-danger:hover{background:#fff1f3;border-color:#dba4b0}
+.gx-app .gx-button:disabled{opacity:.5;cursor:not-allowed}
+.gx-app .gx-button[aria-pressed=true],.gx-app .gx-button[aria-selected=true]{background:var(--gx-soft);color:var(--gx-brand-hover);border-color:#cbbbeb}
+.gx-app .gx-input {
+  box-sizing:border-box;min-height:42px;max-width:100%;padding:9px 12px;
+  border:1px solid #ccd3e1;border-radius:10px;background:var(--gx-surface);color:var(--gx-ink);
+  font:inherit;font-size:13px;line-height:1.5;box-shadow:none;
+}
+.gx-app textarea.gx-input{resize:vertical}
+.gx-app .gx-page-heading{background:transparent;box-shadow:none;border:0;border-radius:0;text-align:left}
+.gx-app .gx-page-heading :is(h1,h2){font-family:inherit;font-size:28px;font-weight:850;line-height:1.3;letter-spacing:-.04em;color:var(--gx-ink);margin:0 0 8px}
+.gx-app .gx-page-heading p{color:var(--gx-muted);font-size:13px;line-height:1.65}
+.gx-app .gx-tabs{display:flex;gap:4px;flex-wrap:wrap;padding:5px;border:1px solid var(--gx-line);border-radius:var(--gx-radius);background:#fff;box-shadow:none}
+.gx-app .gx-tabs>button{flex:1;min-height:40px;padding:9px 13px;border:0;border-radius:9px;background:transparent;color:var(--gx-muted);font:750 13px/1.4 "Pretendard",system-ui,sans-serif;cursor:pointer}
+.gx-app .gx-tabs>button:is(.active,[aria-selected=true]){background:var(--gx-soft);color:var(--gx-brand-hover);box-shadow:none}
+.gx-app:not(.presentation):not(.student-view):not(.running) :is(.gt-v61-flow,.gt-v62-flow){
+  padding:16px 20px;border:1px solid var(--gx-line);border-radius:var(--gx-radius);
+  background:var(--gx-surface);box-shadow:none;color:var(--gx-ink);
+}
+.gx-app .gt-v62-eyebrow{display:none}
+.gx-app .gt-v62-info strong{font-size:18px;line-height:1.4;letter-spacing:-.025em}
+.gx-app:not(.gt-v62-result) .gt-v62-info strong{display:none}
+/* The header owns student-window launch; local flow bars only operate this tool. */
+.gx-app .gt-v62-student,.gx-app .gt-v61-flow [data-gx-display-duplicate]{display:none!important}
+
+/* Home navigation now contains only local views, not a second site menu. */
+.gx-app[data-gx-page=home] .sidebar{top:var(--gx-header-height);padding-top:22px}
+.gx-app[data-gx-page=home] .main{padding-top:26px}
+.gx-app[data-gx-page=home] .main:before{display:none}
+.gx-app[data-gx-page=home] .welcome{max-width:none;margin-bottom:22px}
+.gx-app[data-gx-page=home] .welcome h1{color:var(--gx-ink);font-size:28px}
+.gx-app[data-gx-page=home] .topbar{max-width:none;margin:0 0 26px}
+.gx-app[data-gx-page=home] .search{min-height:44px;border:1px solid var(--gx-line);border-radius:var(--gx-radius);box-shadow:none}
+.gx-app[data-gx-page=home] .search input{min-height:0;border:0;padding:0;background:transparent}
+.gx-app .gx-local-heading{color:var(--gx-muted);font-size:12px;font-weight:800;padding:0 12px}
+.gx-app[data-gx-page=home] .sidebar .brand{display:none}
+.gx-app[data-gx-page=home] .home-block,.gx-app[data-gx-page=home] .section{max-width:none}
+.gx-app[data-gx-page=home] .home-bottom-bar{display:none}
+.gx-app[data-gx-page=classroom]>main{max-width:var(--gx-content);margin-top:26px}
+.gx-app[data-gx-page=classroom] :is(.panel,.stat,.backup){border-color:var(--gx-line);box-shadow:none}
+.gx-app[data-gx-page=classroom] .panel{border-radius:var(--gx-radius);background:var(--gx-surface)}
+.gx-app[data-gx-page=classroom] .tabs{border-color:var(--gx-line)}
+
+.gx-app[data-gx-page=tool]>:is(main.app,.page,.app),.gx-app[data-gx-page=tool]>.dashboard-container{max-width:var(--gx-content)}
+.gx-app[data-gx-page=tool] :is(.settings,.panel.settings,.settings-panel){border-color:var(--gx-line);border-radius:var(--gx-radius);box-shadow:none;background:var(--gx-surface)}
+.gx-app[data-gx-page=tool] :is(.settings .block,.setup .block,.app>section.panel){border-color:var(--gx-line);border-radius:var(--gx-radius);box-shadow:none;background:var(--gx-surface)}
+.gx-app.with-gulliver-shell #app{padding-top:0}
+
+/* Student displays and print have no application navigation. */
+body.gx-app:is(.student-view,.presentation,.running){padding-top:0!important}
+.gx-app:is(.student-view,.presentation,.running)>.gx-header{display:none!important}
+.gx-embedded>.gx-header{display:none!important}
+@media(max-width:1100px){
+  .gx-header .gx-header-inner{gap:12px;padding:10px 16px}
+  .gx-header .gx-nav a{padding:9px 10px}
+  .gx-header .gt-help{display:none}
+}
+@media(max-width:760px){
+  :root{--gx-header-height:104px}
+  .gx-header .gx-header-inner{display:grid;grid-template-columns:1fr auto;gap:5px 10px;padding:8px 12px;min-height:104px}
+  .gx-header .gx-brand{font-size:16px}
+  .gx-header .gx-nav{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;gap:2px}
+  .gx-header .gx-nav a{font-size:12px;min-height:38px;padding:8px 2px}
+  .gx-header .gx-header-actions{grid-column:2;grid-row:1;min-width:0}
+  .gx-header [data-gt-fullscreen]{display:none}
+  .gx-header .gt-action{font-size:11px;min-height:36px;padding:7px 9px}
+  .gx-app .gx-page-heading :is(h1,h2),.gx-app[data-gx-page=home] .welcome h1{font-size:24px}
+  .gx-app[data-gx-page=home] .main{padding:20px 16px 36px}
+  .gx-app[data-gx-page=home] .sidebar{top:var(--gx-header-height)}
+}
+@media(prefers-reduced-motion:reduce){.gx-app .gx-button{transition:none}}
+@media print{body.gx-app{padding-top:0!important;background:white}.gx-app>.gx-header{display:none!important}}

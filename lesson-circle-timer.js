@@ -506,6 +506,7 @@ function phaseBanner(phase){
 function startTimer(playStartSound=true){
   const total=totalSeconds();
   if(!total||getElapsed()>=total)return;
+  setTeacherPhase(true);
   ensureAudio();
   state.elapsedAtStart=state.elapsed;state.runStartedAt=performance.now();state.running=true;state.finishShown=false;
   const phase=phaseAt(state.elapsed);state.lastPhaseId=phase?.key||null;state.warnedSegmentKey=null;
@@ -688,7 +689,27 @@ function setStudentView(on){
   setTimeout(fitTimerSize,80);
   if(on)showToast('학생 화면입니다. Esc 또는 오른쪽 위 버튼으로 돌아올 수 있어요.');
 }
+function setTeacherPhase(running){
+  const executing=Boolean(running);
+  app.classList.toggle('v61-executing',executing);
+  // Running on the teacher monitor is distinct from showing this window to students.
+  document.body.classList.toggle('gt-executing',executing);
+  $('#v61TimerStep').textContent=executing?'② 실행하기':'① 준비하기';
+  $('#v61TimerHeading').textContent=executing?'수업이 진행 중이에요':'오늘의 수업 시간표';
+  $('#v61TimerPrepare').classList.toggle('hidden',!executing);
+  $('#v61TimerStart').classList.toggle('hidden',executing);
+  mainTitle.readOnly=executing;
+  if(!executing){state.panelCollapsed=false;app.classList.remove('panel-collapsed');}
+  requestAnimationFrame(fitTimerSize);
+}
 document.querySelector('.presets').addEventListener('click',(event)=>{const button=event.target.closest('[data-preset]');if(button)applyPreset(button.dataset.preset);});
+$('#v61TimerStart').addEventListener('click',()=>{
+  if(!totalSeconds()){showToast('시간표에 활동을 하나 이상 넣어 주세요.');return;}
+  if(getElapsed()>=totalSeconds())resetNow();
+  startTimer();
+});
+$('#v61TimerPrepare').addEventListener('click',()=>{pauseTimer(false);setTeacherPhase(false);});
+$('#v61TimerStudent').addEventListener('click',()=>window.GulliverTeacherDisplay?.open());
 $('#btnStudentView').addEventListener('click',()=>setStudentView(true));
 $('#btnExitStudentView').addEventListener('click',()=>setStudentView(false));
 btnSound.addEventListener('click',()=>{state.soundOn=!state.soundOn;updateSoundButton();if(state.soundOn){ensureAudio();soundStart();}saveSettings();});
@@ -743,7 +764,7 @@ document.addEventListener('keydown',(event)=>{
   else if(key==='n'){skipPhase();}
   else if(key==='r'){requestReset();}
   else if(key==='f'){$('#btnFullscreen').click();}
-  else if(key==='s'){$('#btnTogglePanel').click();}
+  else if(key==='s'){if(app.classList.contains('v61-executing'))$('#v61TimerPrepare').click();else $('#btnTogglePanel').click();}
 });
 
 loadSettings();
@@ -760,6 +781,26 @@ ClassroomWorkspace.mount({kind:'timer',title:()=>mainTitle.value,
     pauseTimer(false);state.events=sanitizeEvents(data.events);mainTitle.value=String(data.title||'새 수업').slice(0,60);
     state.soundOn=data.soundOn!==false;state.panelCollapsed=Boolean(data.panelCollapsed);state.zoom=clamp(Number(data.zoom)||1,.68,1.28);
     app.classList.toggle('panel-collapsed',state.panelCollapsed);updateSoundButton();resetNow();saveSettings();requestAnimationFrame(fitTimerSize);
+  }
+});
+window.GulliverTeacherLiveSnapshot=()=>({kind:'timer',title:mainTitle.value,events:state.events.map(({name,note,durationSec,color})=>({name,note,durationSec,color}))});
+window.GulliverTeacherDisplay?.register({
+  kind:'timer',
+  getSnapshot(){
+    const total=totalSeconds(),elapsed=clamp(getElapsed(),0,total),phase=phaseAt(elapsed);
+    const active=phase?.kind==='activity'?phase.event:null;
+    const next=phase?.nextEvent||state.events[(phase?.index??-1)+1];
+    return{
+      kind:'timer',title:mainTitle.value||'오늘의 수업',
+      phase:elapsed>=total&&total?'수업 종료':phase?.kind==='transition'?'전환 시간':active?.name||'수업 준비',
+      note:phase?.kind==='transition'?(next?.name||'다음 활동')+' 준비':active?.note||'',
+      phaseRemaining:phase?.remaining||0,totalRemaining:Math.max(0,total-elapsed),total,
+      progress:total?elapsed/total*100:0,color:active?.color||'#6958dc',
+      currentIndex:phase?.index??-1,
+      next:next?'다음: '+next.name:'다음: 수업 마무리',
+      status:elapsed>=total&&total?'종료':state.running?'진행 중':elapsed?'일시정지':'준비',
+      events:state.events.map(({name,durationSec})=>({name,durationSec}))
+    };
   }
 });
 if(!new URLSearchParams(location.search).has('activity')&&!new URLSearchParams(location.search).has('template')&&!new URLSearchParams(location.search).has('new'))checkRuntimeRecovery();

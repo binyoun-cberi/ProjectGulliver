@@ -254,6 +254,7 @@
       body.gulliver-tool.student-view{padding-top:0!important}
       body.gulliver-tool.presentation .gulliver-shell{display:none}
       @media print{.gulliver-shell{display:none!important}body.gulliver-tool{padding-top:0!important}}
+
       .gulliver-shell{position:fixed;z-index:99999;top:8px;left:50%;transform:translateX(-50%);width:min(1180px,calc(100% - 24px));font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
       .gulliver-shell-inner{min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px 8px 14px;border:1px solid rgba(148,163,184,.22);border-radius:16px;background:rgba(255,255,255,.94);box-shadow:0 8px 24px rgba(15,23,42,.07);backdrop-filter:blur(12px)}
       .gulliver-shell-left,.gulliver-shell-actions{display:flex;align-items:center;gap:8px;min-width:0}
@@ -288,6 +289,15 @@
   window.addEventListener('gulliver:classroom-change',connectStudentNames);
   window.addEventListener('storage',event=>{if(event.key===KEYS.classroom)connectStudentNames()});
   function mountShell(options={}){
+    if(window.GulliverAppShell){
+      connectStudentNames();
+      if(window.GulliverAppShell.embedded()){
+        return;
+      }
+      window.GulliverAppShell.mount(options);
+      if(options.track!==false)trackTool({name:options.title||document.title,href:location.pathname.split('/').pop()||'index.html',icon:options.icon||'🧰'});
+      return;
+    }
     if(document.querySelector('.gulliver-shell')) return;
     injectStyles();
     document.body.style.setProperty('--gulliver-original-top',getComputedStyle(document.body).paddingTop);
@@ -296,7 +306,7 @@
     const wrap=document.createElement('div');wrap.className='gulliver-shell';
     wrap.innerHTML=`<div class="gulliver-shell-inner">
       <div class="gulliver-shell-left">
-        <a class="gulliver-shell-brand" href="index.html">🧰 뚝딱교실</a>
+        <a class="gulliver-shell-brand" href="index.html">클라시트</a>
         <span class="gulliver-shell-sep">/</span>
         <span class="gulliver-shell-title"></span>
       </div>

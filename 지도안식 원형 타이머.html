@@ -222,6 +222,16 @@ body.student-view .main{padding:8px}
 body.student-view .stage{padding:66px 10px 12px}
 body.student-view .student-title,body.student-view .student-exit{display:block}
 body.student-view .timer-shell{filter:drop-shadow(0 24px 34px rgba(30,45,78,.18))}
+/* 6.1 teacher execution keeps playback controls, but removes all timetable editors. */
+body.presentation #app{padding-top:0}
+#app.v61-executing{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr)!important}
+#app.v61-executing .settings{display:none!important}
+#app.v61-executing #btnTogglePanel{display:none}
+.gt-v61-timer-flow{margin:10px 0 4px;position:relative;z-index:6;padding:12px 16px;flex-wrap:wrap}
+.gt-v61-timer-flow h2{font-size:17px}
+#app.v61-executing .gt-v61-timer-flow{background:#fff;box-shadow:0 4px 14px #39316c0a}
+body.student-view .gt-v61-timer-flow{display:none!important}
+@media(max-width:720px){.gt-v61-timer-flow{padding:9px 12px;gap:8px;margin:6px 0 2px}.gt-v61-timer-flow p{display:none}}
 .icon-mini{width:30px;height:30px;border:0;border-radius:9px;background:#f1f4f8;color:#778399;font-weight:950;display:grid;place-items:center}
 .icon-mini:hover{background:#e7ebf2;color:#45526a}.icon-mini.delete:hover{background:#fff0f1;color:#d8373f}
 .icon-mini:disabled{opacity:.25}
@@ -281,9 +291,20 @@ body.student-view .timer-shell{filter:drop-shadow(0 24px 34px rgba(30,45,78,.18)
   .main{padding-top:8px;padding-bottom:8px}.topbar{min-height:42px}.title-input{font-size:29px}.control-btn{width:52px;height:52px}.control-btn.main-action{width:64px;height:64px}.controls-wrap{gap:4px}.keyboard-help{display:none}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Touch-friendly schedule editing only inside the canvas-hosted runtime. */
+@media(max-width:720px){
+}
 </style>
-  <script src="gulliver-shared.js?v=20261013-workspace1"></script>
-<script src="classroom-workspace.js?v=20261013-workspace1"></script>
+  <script src="gulliver-shared.js?v=20261020-ui"></script>
+<script src="classroom-workspace.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
+<link rel="stylesheet" href="gulliver-teacher-v61.css?v=20261019-v61">
+<script src="gulliver-teacher-display.js?v=20261019-dual1"></script>
+<script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
+<script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<script src="gulliver-app-shell.js?v=20261020-1"></script>
 </head>
 <body>
 <div id="app">
@@ -293,11 +314,20 @@ body.student-view .timer-shell{filter:drop-shadow(0 24px 34px rgba(30,45,78,.18)
       <input id="mainTitle" class="title-input" type="text" maxlength="60" value="수학 연산 시간" placeholder="수업 제목을 입력하세요" autocomplete="off">
       <div class="toolbar">
         <button id="btnSound" class="tool-btn active" type="button" aria-label="알림음 켜기 또는 끄기" title="알림음">♪</button>
-        <button id="btnStudentView" class="tool-btn wide" type="button" aria-label="학생 화면" title="학생 화면"><b>◉</b><span>학생 화면</span></button>
+        <button id="btnStudentView" class="tool-btn wide" type="button" aria-label="이 창으로 학생에게 보여주기" title="이 창으로 학생에게 보여주기"><b>◉</b><span>이 창으로 보기</span></button>
         <button id="btnFullscreen" class="tool-btn" type="button" aria-label="전체 화면 전환" title="전체 화면">⛶</button>
         <button id="btnTogglePanel" class="tool-btn wide" type="button" aria-label="설정 패널 접기 또는 펴기" title="설정 패널">
           <b>☰</b><span>시간표 설정</span>
         </button>
+      </div>
+    </div>
+
+    <div class="gt-v61-flow gt-v61-timer-flow" id="v61TimerFlow">
+      <div><span class="gt-v61-eyebrow" id="v61TimerStep">① 준비하기</span><h2 id="v61TimerHeading">오늘의 수업 시간표</h2><p id="v61TimerHelp">오른쪽에서 활동과 시간을 정한 뒤 실행하세요. 학생창은 두 번째 모니터로 옮길 수 있어요.</p></div>
+      <div class="gt-v61-flow-actions">
+        <button id="v61TimerPrepare" type="button" class="gt-v61-button hidden">← 시간표 수정</button>
+        <button id="v61TimerStudent" type="button" class="gt-v61-button" data-gx-display-duplicate>학생 화면 열기</button>
+        <button id="v61TimerStart" type="button" class="gt-v61-button gt-v61-button--primary">② 수업 시작</button>
       </div>
     </div>
 
@@ -406,7 +436,7 @@ body.student-view .timer-shell{filter:drop-shadow(0 24px 34px rgba(30,45,78,.18)
 </div>
 
 
-<script src="gulliver-shared.js?v=20261013-workspace1"></script>
-<script src="lesson-circle-timer.js?v=20261013-workspace1"></script>
+<script src="gulliver-shared.js?v=20261020-ui"></script>
+<script src="lesson-circle-timer.js?v=20261020-ui"></script>
 </body>
 </html>

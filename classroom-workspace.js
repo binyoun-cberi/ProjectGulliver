@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   const KEY='gulliver.activities.v1';
-  const KINDS={timer:{name:'수업 흐름 타이머',icon:'🕘',href:'지도안식 원형 타이머.html'},quiz:{name:'낱말카드·퀴즈',icon:'🗂️',href:'플래시퀴즈메이커.html'},seating:{name:'교실 자리표',icon:'🎒',href:'자리 배정 프로그램.html'}};
+  const KINDS={timer:{name:'수업 흐름 타이머',icon:'🕘',href:'시간 도구.html'},quiz:{name:'낱말카드·퀴즈',icon:'🗂️',href:'플래시퀴즈메이커.html'},seating:{name:'교실 자리표',icon:'🎒',href:'자리 배정 프로그램.html'}};
   const uid=()=>window.crypto?.randomUUID?.()||'a_'+Date.now().toString(36)+Math.random().toString(36).slice(2);
   const copy=v=>JSON.parse(JSON.stringify(v));
   const clean=(v,max=80)=>String(v??'').trim().slice(0,max);
@@ -32,23 +32,23 @@
     {id:'seating20',kind:'seating',title:'기본 교실 자리표',desc:'5열 × 4줄 · 우리 반 명단으로 시작',payload:{cols:5,rows:4,layout:'individual',useClassroom:true}}
   ];
   function importBundle(value){
-    if(value?.version!==1||!Array.isArray(value.activities)||!Array.isArray(value.folders))throw Error('뚝딱교실 활동 백업 파일을 선택해 주세요.');
+    if(value?.version!==1||!Array.isArray(value.activities)||!Array.isArray(value.folders))throw Error('클라시트 활동 백업 파일을 선택해 주세요.');
     const data=read(),folderMap=new Map();
     value.folders.slice(0,200).forEach(f=>{if(!clean(f?.name,40))return;let target=data.folders.find(x=>x.name===clean(f.name,40));if(!target){target={id:uid(),name:clean(f.name,40)};data.folders.push(target)}folderMap.set(f.id,target.id)});
     let count=0;
     value.activities.slice(0,500).forEach(a=>{if(!a||!KINDS[a.kind]||!a.payload||typeof a.payload!=='object')return;const now=Date.now();data.activities.push({id:uid(),kind:a.kind,title:clean(a.title)||KINDS[a.kind].name,folderId:folderMap.get(a.folderId)||'',payload:copy(a.payload),createdAt:now,updatedAt:now,archived:Boolean(a.archived)});count++});
     write(data);return count;
   }
-  function download(){const blob=new Blob([JSON.stringify(read(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='뚝딱교실_내활동_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+  function download(){const blob=new Blob([JSON.stringify(read(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='클라시트_내활동_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
   function mount(adapter){
     let current=null;const params=new URLSearchParams(location.search),requested=params.get('activity'),preset=params.get('template');
-    const shell=document.querySelector('.gulliver-shell-actions');
-    const button=document.createElement('button');button.className='gulliver-shell-btn';button.type='button';button.textContent='활동 저장';
+    const shell=window.GulliverAppShell?.mount()?.actions||document.querySelector('.gulliver-shell-actions');
+    const button=document.createElement('button');button.className='gulliver-shell-btn gt-action';button.type='button';button.textContent='활동 저장';
     const status=document.createElement('span');status.className='activity-current';
     let css=document.getElementById('activity-ui-style');if(!css){css=document.createElement('style');css.id='activity-ui-style';css.textContent='.activity-current{font:700 12px system-ui;color:#68758d;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.activity-save-dialog{border:1px solid #e1e4ec;border-radius:20px;padding:24px;width:min(440px,calc(100% - 24px));color:#25334a;box-shadow:0 20px 90px #25334a33;font-family:system-ui,sans-serif}.activity-save-dialog::backdrop{background:#18243c55}.activity-save-dialog h2{margin:0 0 8px}.activity-save-dialog p{font-size:13px;line-height:1.6;color:#69768c}.activity-save-dialog label{display:grid;gap:7px;font-size:13px;margin:16px 0}.activity-save-dialog input,.activity-save-dialog select{font:inherit;padding:11px;width:100%;border:1px solid #dce1ea;border-radius:10px}.activity-save-dialog .activity-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:20px}.activity-save-dialog button{font:700 13px system-ui;border:1px solid #dce1ea;border-radius:10px;padding:10px 14px;cursor:pointer;background:white;color:#35445c}.activity-save-dialog .primary{background:#635bff;color:white;border-color:#635bff}@media(max-width:700px){.activity-current{display:none}.gulliver-shell-btn{padding:8px 7px!important}.gulliver-shell-brand{font-size:11px!important}.gulliver-shell-actions{gap:4px!important}}';document.head.appendChild(css)}
     const dialog=document.createElement('dialog');dialog.className='activity-save-dialog';dialog.innerHTML='<h2>내 활동에 저장</h2><p>이름을 붙이면 홈에서 다시 열거나 복제할 수 있어요. 활동은 현재 브라우저에 저장됩니다.</p><form><label>활동 이름<input name="title" required maxlength="80" autocomplete="off"></label><label>폴더<select name="folder"></select></label><div class="activity-actions"><button type="button" data-cancel>취소</button><button type="button" data-copy>새 활동으로 저장</button><button class="primary" type="submit">저장</button></div></form>';document.body.appendChild(dialog);
     const form=dialog.querySelector('form'),title=form.elements.title,select=form.elements.folder,copyButton=dialog.querySelector('[data-copy]');
-    const updateStatus=()=>{status.textContent=current?.title||'';status.title=current?.title||'';button.textContent=current?'활동 저장':'내 활동에 저장'};
+    const updateStatus=()=>{status.textContent=current?.title||'';status.title=current?.title||'';button.textContent='활동 저장'};
     function load(payload){adapter.apply(copy(payload));}
     try{
       if(requested){const a=get(requested);if(!a||a.kind!==adapter.kind)throw Error('이 활동을 찾을 수 없습니다. 같은 브라우저의 내 활동에서 다시 열어 주세요.');load(a.payload);current=a}
@@ -56,7 +56,7 @@
       else if(params.get('new')==='1'){load(adapter.blank());}
     }catch(error){Gulliver.toast(error.message)}
     updateStatus();
-    if(shell){shell.prepend(status,button)}else{const bar=document.createElement('div');bar.style.cssText='position:fixed;right:16px;top:12px;z-index:99999';bar.append(status,button);document.body.appendChild(bar)}
+    if(shell){shell.prepend(status,button)}else if(!window.GulliverAppShell?.embedded()){ const bar=document.createElement('div');bar.style.cssText='position:fixed;right:16px;top:12px;z-index:99999';bar.append(status,button);document.body.appendChild(bar)}
     button.onclick=()=>{
       title.value=current?.title||adapter.suggestedTitle||adapter.title?.()||KINDS[adapter.kind].name;
       select.replaceChildren();const base=document.createElement('option');base.value='';base.textContent='미분류';select.appendChild(base);read().folders.forEach(f=>{const o=document.createElement('option');o.value=f.id;o.textContent=f.name;select.appendChild(o)});select.value=current?.folderId||'';copyButton.hidden=!current;dialog.showModal();title.focus();title.select();

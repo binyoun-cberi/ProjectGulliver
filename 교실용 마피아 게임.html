@@ -586,7 +586,12 @@
       }
     }
   </style>
-  <script src="gulliver-shared.js?v=20261012-organized2"></script>
+  <script src="gulliver-shared.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
+<script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
+<script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<script src="gulliver-app-shell.js?v=20261020-1"></script>
 </head>
 <body>
   <div class="screen-flash" id="flash"></div>
@@ -733,7 +738,7 @@
         createdAt: new Date().toISOString(),
         setup: {
           title: "교실용 마피아 게임",
-          password: "1234",
+          password: "",
           revealSeconds: 4,
           discussionSeconds: 180,
           voteSeconds: 90,
@@ -907,7 +912,7 @@
         callback();
         return;
       }
-      const input = prompt("교사 비밀번호를 입력하세요. 기본값은 1234입니다.");
+      const input=prompt('교사 전용 확인 번호를 입력해 주세요.');
       if (input === null) return;
       if (input === state.setup.password) {
         safeStorageSet("session", SESSION_KEY, "yes");
@@ -1051,8 +1056,9 @@
                 <input value="${escapeHtml(state.setup.title)}" oninput="setSetup('title', this.value)" />
               </div>
               <div>
-                <label>교사 비밀번호</label>
-                <input value="${escapeHtml(state.setup.password)}" oninput="setSetup('password', this.value)" />
+                <label>교사 전용 확인 번호 (4자리 이상)</label>
+                <input type="password" autocomplete="off" minlength="4" maxlength="32" value="${escapeHtml(state.setup.password)}" oninput="setSetup('password', this.value)" />
+                <p class="hint">반드시 기본값과 다른 확인 번호를 설정하세요. 같은 브라우저의 저장 자료에 게임 정보가 남을 수 있으므로 진짜 보안 수단은 아닙니다.</p>
               </div>
               <div>
                 <label>역할 확인 방식</label>
@@ -1089,6 +1095,7 @@
             </div>
           </details>
 
+          <p class="privacy-note">역할·비밀번호·투표 기록은 현재 브라우저에 저장됩니다. 역할 확인은 교사가 지켜보며 한 명씩 진행하고, 학생과 공유하는 기기에서는 게임 후 기록을 지워 주세요.</p>
           <div class="row" style="justify-content:flex-end;margin-top:16px;">
             <button class="primary" onclick="startGame()">역할 배정하고 시작</button>
           </div>
@@ -1250,6 +1257,10 @@
     }
 
     function startGame() {
+      if(!state.setup.password||String(state.setup.password).length<4||state.setup.password==='1234'){
+        alert('고급 설정에서 기본값이 아닌 교사 전용 확인 번호를 4자리 이상 설정해 주세요.');
+        return;
+      }
       const ok = prepareNewAssignment();
       if (!ok) return;
       state.phase = "reveal";
@@ -1278,9 +1289,14 @@
         alert("마피아는 최소 1명이어야 합니다.");
         return false;
       }
-      if (totalRoles > names.length) {
-        alert("마피아, 경찰, 교사 제작 직업 수가 학생 수보다 많습니다.");
-        return false;
+      if(totalRoles>names.length){
+        alert('설정한 직업 수가 학생 수보다 많아요. 인원을 조정해 주세요.');return false;
+      }
+      if(state.baseCounts.mafia>=Math.ceil(names.length/2)){
+        alert('처음부터 마피아 수가 나머지 편 이상이라 게임이 바로 끝납니다. 마피아 수를 줄여 주세요.');return false;
+      }
+      if(new Set(names).size!==names.length){
+        alert('학생 이름이 중복돼 있어요. 동명이인은 번호를 붙여 구분해 주세요.');return false;
       }
 
       const roleIds = [];
@@ -1378,6 +1394,8 @@
     }
 
     function goNight() {
+      if(state.phase!=='reveal'||state.students.some(s=>!s.checked)){alert('모든 학생이 자신의 역할을 확인한 뒤 밤을 시작해 주세요.');return;}
+      hideRoleModal();
       state.phase = "night";
       state.night = { attackTargetId: "", policeTargetId: "", policeResult: "", protectTargetId: "", summary: "", memo: "" };
       log(`${state.round}라운드 밤이 시작되었습니다.`);
@@ -1527,9 +1545,10 @@
 
     function resolveNight() {
       unlockTeacher(() => {
-        const attack = byId(state.night.attackTargetId);
-        const policeTarget = byId(state.night.policeTargetId);
-        const protectedTarget = byId(state.night.protectTargetId);
+        const attack=byId(state.night.attackTargetId);
+        const validAttack=attack?.alive?attack:null;
+        const policeTarget=byId(state.night.policeTargetId);
+        const protectedTarget=byId(state.night.protectTargetId)?.alive?byId(state.night.protectTargetId):null;
         const doctorAlive = getAlive().some(s => s.roleId === "doctor");
 
         if (policeTarget && getAlive().some(s => s.roleId === "police")) {
@@ -1539,16 +1558,16 @@
           state.night.policeResult = "";
         }
 
-        if (!attack) {
-          state.night.summary = "밤이 지났지만 아무도 탈락하지 않았습니다.";
-        } else if (doctorAlive && protectedTarget && attack.id === protectedTarget.id) {
+        if(!validAttack){
+          state.night.summary="밤이 지났지만 아무도 탈락하지 않았습니다.";
+        } else if(doctorAlive&&protectedTarget&&validAttack.id===protectedTarget.id){
           state.night.summary = "밤사이 공격이 있었지만 의사가 지켜냈습니다. 아무도 탈락하지 않았습니다.";
         } else {
-          attack.alive = false;
-          attack.eliminatedRound = state.round;
-          attack.eliminatedBy = "night";
-          const roleText = state.setup.revealEliminatedRole ? ` (${roleDef(attack.roleId).name})` : "";
-          state.night.summary = `${attack.name}이(가) 밤에 탈락했습니다.${roleText}`;
+          validAttack.alive=false;
+          validAttack.eliminatedRound=state.round;
+          validAttack.eliminatedBy='night';
+          const roleText=state.setup.revealEliminatedRole?` (${roleDef(validAttack.roleId).name})`:'';
+          state.night.summary=`${validAttack.name} 학생이 밤에 탈락했습니다.${roleText}`;
         }
 
         log(`밤 결과: ${state.night.summary}`);
@@ -2102,7 +2121,10 @@
       holdRoleBtn.addEventListener("pointerup", hideHeldRole);
       holdRoleBtn.addEventListener("pointercancel", hideHeldRole);
       holdRoleBtn.addEventListener("pointerleave", hideHeldRole);
-      window.addEventListener("blur", () => setRoleRevealVisible(false));
+      window.addEventListener("blur", () => {setRoleRevealVisible(false);closeTeacherPanel();});
+      document.addEventListener('visibilitychange',()=>{
+        if(document.hidden){setRoleRevealVisible(false);closeTeacherPanel();pauseTimer();}
+      });
     }
 
     document.addEventListener("keydown", (e) => {

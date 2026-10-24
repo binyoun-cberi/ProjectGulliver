@@ -1331,7 +1331,12 @@
             .setting-option { min-height: auto; }
         }
     </style>
-  <script src="gulliver-shared.js?v=20261012-organized2"></script>
+  <script src="gulliver-shared.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
+<script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
+<script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<script src="gulliver-app-shell.js?v=20261020-1"></script>
 </head>
 <body>
 
@@ -1433,6 +1438,9 @@
             <p id="engine-status" class="text-xs text-yellow-300 text-center mt-2 min-h-[1rem]"></p>
         </div>
 
+        <div id="directed-result-notice" role="status" class="hidden absolute left-1/2 top-2 z-40 -translate-x-1/2 max-w-[92%] rounded-xl border border-yellow-400 bg-gray-950 bg-opacity-90 text-yellow-200 font-bold text-xs md:text-sm py-2 px-4 text-center pointer-events-none">
+            교사 지정 결과가 포함된 연출 모드 · 무작위 추첨이 아닙니다.
+        </div>
         <div id="hud" class="absolute inset-0 pointer-events-none hidden">
             <div id="leaderboard-panel" class="absolute top-4 left-4 glass-panel p-3 md:p-4 rounded-xl w-40 md:w-48 pointer-events-auto">
                 <h3 class="text-yellow-400 font-bold mb-2 border-b border-gray-600 pb-1 text-sm md:text-base">🏆 현재 순위</h3>
@@ -1463,7 +1471,8 @@
     <script src="vendor/matter.min.js"></script>
     <script>
         // --- 교사 지정 결과 관련 로직 ---
-        let cheatData = {}; 
+        let cheatData = {};
+        const escapeDisplay=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); 
         
         const titleEl = document.getElementById('main-title');
         const debugPanel = document.getElementById('debug-panel');
@@ -1497,7 +1506,7 @@
                     cheatData[name] = res; 
                 }
             });
-            console.log("교사 지정 결과:", cheatData);
+            // 교사 지정 결과를 브라우저 콘솔에 노출하지 않습니다.
         }
 
         // --- 오디오 시스템 ---
@@ -1835,7 +1844,7 @@
             const x = fallbackX ?? marble.body.position.x;
             const physical = getSlotByX(x);
             if (!useOneMarblePerSlot) return physical;
-            if (physical && !physical.occupied) return physical;
+            if (physical && !physical.occupied && (!physical.reservedFor||physical.reservedFor===marble.name)) return physical;
             return getNearestFreeSlot(x);
         }
 
@@ -2481,9 +2490,11 @@
             useCloseRace = document.getElementById('close-race').checked;
             saveGameConfig();
 
-            let namesInput = document.getElementById('names-input').value.split('\n').filter(n => n.trim() !== '');
-            const slotsInput = document.getElementById('slots-input').value.split('\n').filter(n => n.trim() !== '');
+            let namesInput=document.getElementById('names-input').value.split('\n').map(n=>n.trim()).filter(Boolean);
+            const slotsInput=document.getElementById('slots-input').value.split('\n').map(n=>n.trim()).filter(Boolean);
+            if(new Set(namesInput).size!==namesInput.length){alert('이름이 중복돼 있어 결과를 정확히 구분할 수 없어요. 동명이인은 번호 등을 붙여 구분해 주세요.');return;}
 
+            if(namesInput.length>80||slotsInput.length>80){alert('안정적인 화면을 위해 학생과 결과 슬롯은 각각 최대 80개까지 입력해 주세요.');return;}
             if (namesInput.length === 0 || slotsInput.length === 0) {
                 alert("학생 명단과 슬롯을 1개 이상 입력해주세요.");
                 return;
@@ -2518,6 +2529,10 @@
                 }
             }
 
+            const isDirected=Object.keys(cheatData).length>0;
+            if(isDirected&&!window.confirm('교사 지정 결과가 '+Object.keys(cheatData).length+'건 있어요. 이 레이스는 무작위 추첨이 아니며 진행 화면에도 표시됩니다. 계속할까요?'))return;
+            const notice=document.getElementById('directed-result-notice');
+            notice.classList.toggle('hidden',!isDirected);
             for (let i = namesInput.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [namesInput[i], namesInput[j]] = [namesInput[j], namesInput[i]];
@@ -2573,6 +2588,7 @@
         }
 
         function resetGame() {
+            document.getElementById('directed-result-notice').classList.add('hidden');
             if (runner) {
                 Runner.stop(runner);
                 runner = null;
@@ -2606,7 +2622,7 @@
                 li.innerHTML = `
                     <span class="font-bold w-8 md:w-12 text-gray-300 text-center">${rankStr}</span>
                     <div class="w-3 h-3 rounded-full shadow-md border border-gray-600 shrink-0" style="background-color: ${m.color}"></div>
-                    <span class="text-white font-medium truncate flex-1">${m.name}</span>
+                    <span class="text-white font-medium truncate flex-1">${escapeDisplay(m.name)}</span>
                 `;
                 listEl.appendChild(li);
             });
@@ -2855,8 +2871,8 @@
                 <div class="text-gray-400 font-bold text-[10px] md:text-xs w-4 text-center">${results.length}</div>
                 <div class="w-3 h-3 md:w-4 md:h-4 rounded-full shadow-inner shrink-0" style="background-color: ${marble.color}"></div>
                 <div class="flex-1 flex justify-between items-center overflow-hidden">
-                    <div class="text-white font-bold text-xs md:text-sm tracking-wide truncate pr-2">${marble.name}</div>
-                    <div class="text-yellow-300 text-[10px] md:text-xs font-bold bg-black bg-opacity-30 px-1.5 py-0.5 md:px-2 md:py-1 rounded shrink-0">${resultText}</div>
+                    <div class="text-white font-bold text-xs md:text-sm tracking-wide truncate pr-2">${escapeDisplay(marble.name)}</div>
+                    <div class="text-yellow-300 text-[10px] md:text-xs font-bold bg-black bg-opacity-30 px-1.5 py-0.5 md:px-2 md:py-1 rounded shrink-0">${escapeDisplay(resultText)}</div>
                 </div>
             `;
             logDiv.appendChild(logItem);
@@ -2916,13 +2932,21 @@
                     <div class="text-xl md:text-2xl font-bold text-gray-500 w-6 md:w-8 text-center">${index + 1}</div>
                     <div class="w-5 h-5 md:w-6 md:h-6 rounded-full shadow-md shrink-0" style="background-color: ${res.marble.color}"></div>
                     <div class="flex-1 overflow-hidden">
-                        <div class="text-white font-bold text-lg md:text-xl truncate">${res.marble.name}</div>
+                        <div class="text-white font-bold text-lg md:text-xl truncate">${escapeDisplay(res.marble.name)}</div>
                     </div>
-                    <div class="text-yellow-400 font-extrabold text-base md:text-xl whitespace-nowrap shrink-0">${res.text}</div>
+                    <div class="text-yellow-400 font-extrabold text-base md:text-xl whitespace-nowrap shrink-0">${escapeDisplay(res.text)}</div>
                 `;
                 resultList.appendChild(item);
             });
             
+            // Preserve only actual outcomes, never configuration guesses or unfinished students.
+            try {
+                localStorage.setItem('gulliver.roulette.lastResults.v1',JSON.stringify({
+                    version:1,completed:results.length===marbles.length,purpose:gamePurpose,
+                    results:results.slice(0,80).map(res=>({name:String(res.marble.name).slice(0,42),result:String(res.text).slice(0,65)})),
+                    createdAt:Date.now()
+                }));
+            } catch (e) { console.warn('룰렛 결과 저장 실패',e); }
             const unfinished = marbles.filter(m => !m.finished);
             unfinished.forEach(m => {
                 const item = document.createElement('div');
@@ -2931,7 +2955,7 @@
                     <div class="text-xl md:text-2xl font-bold text-gray-600 w-6 md:w-8 text-center">-</div>
                     <div class="w-5 h-5 md:w-6 md:h-6 rounded-full shadow-md grayscale shrink-0" style="background-color: ${m.color}"></div>
                     <div class="flex-1 overflow-hidden">
-                        <div class="text-gray-400 font-bold text-lg md:text-xl truncate">${m.name}</div>
+                        <div class="text-gray-400 font-bold text-lg md:text-xl truncate">${escapeDisplay(m.name)}</div>
                     </div>
                     <div class="text-red-400 font-extrabold text-sm md:text-lg whitespace-nowrap shrink-0">시간 초과</div>
                 `;

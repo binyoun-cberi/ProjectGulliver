@@ -33,9 +33,60 @@ textarea,input[type=text],input[type=number],select{width:100%;border:1px solid 
 @media print{
   body{background:#fff}.topbar,main,.toast,.modal-back{display:none!important}.print-area{display:block!important;padding:0 12mm;color:#111}.print-title{text-align:center;font-size:24pt;margin:0 0 8mm}.print-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid #777;border-left:1px solid #777}.print-cell{min-height:28mm;padding:6mm;border-right:1px solid #777;border-bottom:1px solid #777;display:flex;align-items:center;justify-content:center;text-align:center;font-size:15pt;break-inside:avoid}.print-cell.back{font-weight:700}.print-list-row{display:grid;grid-template-columns:55px 1fr 1fr;border-bottom:1px solid #aaa;break-inside:avoid}.print-list-row>div{padding:4mm;border-right:1px solid #bbb}.print-list-row:first-child{border-top:1px solid #aaa}.print-list-row>div:first-child{border-left:1px solid #bbb;text-align:center}
 }
+
+/* Keep wide card tables inside their panel, rather than expanding the mobile viewport. */
+.grid>.panel{min-width:0}
+.table-wrap{max-width:100%}
+@media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:520px){
+  #tableWrap{max-height:none;border:0;overflow:visible}
+  #tableWrap table{display:block;min-width:0;width:100%}
+  #tableWrap thead{display:none}
+  #tableWrap tbody{display:grid;gap:10px}
+  #tableWrap tr{display:grid;grid-template-columns:38px minmax(0,1fr);grid-template-rows:auto auto auto;
+     gap:3px 7px;border:1px solid #e1e4f0;border-radius:12px;padding:9px;background:#fff}
+  #tableWrap td,#tableWrap th{display:block;width:auto;min-width:0;border:0;padding:2px}
+  #tableWrap td:first-child{grid-column:1;grid-row:1/3;align-self:center;color:#6a5ab2;font-weight:900}
+  #tableWrap td:nth-child(2){grid-column:2;grid-row:1}
+  #tableWrap td:nth-child(3){grid-column:2;grid-row:2}
+  #tableWrap td:nth-child(4){grid-column:2;grid-row:3;text-align:right}
+  #tableWrap td:nth-child(2)::before{content:'문제·앞면';display:block;font-size:11px;color:#5b667a;font-weight:750;margin-bottom:2px}
+  #tableWrap td:nth-child(3)::before{content:'정답·뒷면';display:block;font-size:11px;color:#5b667a;font-weight:750;margin-bottom:2px}
+  #tableWrap .cell-input{width:100%;min-height:43px;padding:10px!important;border:1px solid #e2e6f0!important;border-radius:9px}
+  #tableWrap td:last-child button{min-height:43px}
+}
+/* 6.1: game content and teacher navigation never share the presentation canvas. */
+body.v61-running .topbar{display:none!important}
+body.v61-running main{max-width:1490px;padding-top:clamp(16px,2.5vw,32px)}
+body.v61-running #view-flash .flash-wrap{max-width:1050px}
+body.v61-running .flash-card{height:min(61vh,620px);min-height:310px}
+body.v61-running #view-quiz .quiz-shell{max-width:1100px}
+body.v61-running .quiz-card{padding:clamp(24px,3vw,44px)}
+body.v61-running .question{font-size:clamp(30px,5.3vw,70px)}
+body.v61-running .choice{min-height:clamp(76px,10vh,118px);font-size:clamp(19px,2vw,27px)}
+body.v61-running #view-match .match-shell{max-width:1330px}
+body.v61-running .match-item{font-size:clamp(17px,1.8vw,25px);min-height:68px}
+body.v61-running .gt-v61-runbar{position:sticky;top:0;z-index:21}
+body.v61-running.student-view .gt-v61-runbar{display:none!important}
+body.v61-running.student-view main{padding-top:clamp(10px,1.5vw,22px)}
+body.v61-running.student-view .study-toolbar,body.v61-running.student-view .game-toolbar,body.v61-running.student-view .study-actions,body.v61-running.student-view .stat-pills{display:none!important}
+body.v61-running.student-view .modal-actions{display:none!important}
+#v61SoloExit{display:none;position:fixed;z-index:99;right:16px;bottom:16px;opacity:.4;box-shadow:0 9px 28px #26324730}
+#v61SoloExit:hover,#v61SoloExit:focus-visible{opacity:1}
+body.v61-running.student-view #v61SoloExit{display:inline-flex}
+@media(max-width:520px){body.v61-running .choice{font-size:18px;min-height:70px}body.v61-running .match-item{font-size:13px;min-height:54px}}
 </style>
-  <script src="gulliver-shared.js?v=20261013-workspace1"></script>
-<script src="classroom-workspace.js?v=20261013-workspace1"></script>
+  <script src="gulliver-shared.js?v=20261020-ui"></script>
+<script src="classroom-workspace.js?v=20261020-ui"></script>
+<script src="flash-quiz-quality.js?v=20261024-1"></script>
+<link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
+<link rel="stylesheet" href="gulliver-teacher-v61.css?v=20261019-v61">
+<script src="gulliver-teacher-display.js?v=20261019-v61"></script>
+<script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
+<script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<link rel="stylesheet" href="flash-quiz-polish.css?v=20261024-1">
+<script src="gulliver-app-shell.js?v=20261020-1"></script>
 </head>
 <body>
 <header class="topbar">
@@ -54,8 +105,29 @@ textarea,input[type=text],input[type=number],select{width:100%;border:1px solid 
   </div>
 </header>
 
+<div id="v61Runbar" class="gt-v61-runbar hidden" aria-label="교사용 실행 도구">
+  <div><div class="gt-v61-run-title" id="v61RunTitle">낱말카드</div><div class="gt-v61-run-desc">교사용 진행 버튼입니다. 학생용 창에는 나타나지 않아요.</div></div>
+  <div class="gt-v61-flow-actions">
+    <button id="v61ToPrep" type="button" class="gt-v61-button">← 카드 준비로</button>
+    <button id="v61OpenStudent" type="button" class="gt-v61-button" data-gx-display-duplicate>학생 화면 열기</button>
+    <button id="v61PresentSolo" type="button" class="gt-v61-button gt-v61-button--primary">⛶ 이 창으로 보여주기</button>
+  </div>
+</div>
+
 <main>
 <section id="view-manage" class="view">
+  <div class="gt-v61-flow" style="margin-bottom:18px" id="v61Prepare">
+    <div>
+      <span class="gt-v61-eyebrow">① 준비하기</span>
+      <h2>오늘의 낱말카드를 준비해요</h2>
+      <p id="v61DeckSummary">카드를 만들거나 불러온 뒤 실행할 활동을 선택하세요.</p>
+    </div>
+    <div class="gt-v61-flow-actions">
+      <button type="button" class="gt-v61-button gt-v61-button--primary" data-v61-start="flash">② 낱말카드 시작</button>
+      <button type="button" class="gt-v61-button" data-v61-start="quiz">4지선다 퀴즈</button>
+      <button type="button" class="gt-v61-button" data-v61-start="match">짝 맞추기</button>
+    </div>
+  </div>
   <div class="grid">
     <div class="panel">
       <h2>카드 만들기</h2>
@@ -65,7 +137,7 @@ textarea,input[type=text],input[type=number],select{width:100%;border:1px solid 
         <button id="addBulkBtn" class="btn btn-primary grow">＋ 입력 내용 추가</button>
         <button id="clearInputBtn" class="btn btn-neutral">지우기</button>
       </div>
-      <p id="parseHint" class="hint">탭, 쉼표, 세미콜론, |, →, =&gt;, 양쪽에 공백이 있는 하이픈을 인식합니다.</p>
+      <p id="parseHint" class="hint" role="status">탭, 쉼표, 세미콜론, |, →, =&gt;, 양쪽에 공백이 있는 하이픈을 인식합니다.</p>
       <div class="divider"></div>
       <h2 style="font-size:17px">카드 한 장 추가</h2>
       <label class="label" for="singleFront">앞면</label><input id="singleFront" type="text" maxlength="500" placeholder="단어 또는 문제">
@@ -140,10 +212,11 @@ textarea,input[type=text],input[type=number],select{width:100%;border:1px solid 
       <div class="toolbar-group"><select id="quizDirection" style="width:auto"><option value="front">앞면 → 뒷면</option><option value="back">뒷면 → 앞면</option></select><button id="quizRestartBtn" class="btn btn-primary btn-sm">새 퀴즈</button></div>
       <div class="toolbar-group"><span id="quizScore" class="count">점수 0</span><span id="quizStreak" class="count">연속 0</span></div>
     </div>
+    <p id="quizQualityNotice" class="quiz-quality-notice" role="status" aria-live="polite"></p>
     <div id="quizEmpty" class="panel empty hidden">4지선다 퀴즈에는 카드가 최소 4장 필요합니다.</div>
     <div id="quizContent" class="quiz-card">
       <div class="question-kicker" id="questionNum">문제 1</div>
-      <div id="quizQuestion" class="question"></div>
+      <div id="quizQuestion" class="question" tabindex="-1"></div>
       <div id="choiceList" class="choices"></div>
       <div id="quizFeedback" class="quiz-feedback" aria-live="polite"></div>
       <div class="quiz-footer"><span id="quizProgressText">0 / 0</span><button id="nextQuizBtn" class="btn btn-primary hidden">다음 문제 →</button></div>
@@ -167,6 +240,8 @@ textarea,input[type=text],input[type=number],select{width:100%;border:1px solid 
 </section>
 </main>
 
+<button id="v61SoloExit" type="button" class="gt-v61-button">← 준비 화면으로</button>
+
 <div id="modalBack" class="modal-back hidden" role="dialog" aria-modal="true">
   <div class="modal"><div id="modalIcon" class="modal-icon">🏆</div><h3 id="modalTitle">완료!</h3><p id="modalText"></p><div class="modal-actions"><button id="modalSecondary" class="btn btn-neutral">닫기</button><button id="modalPrimary" class="btn btn-primary">다시 하기</button></div></div>
 </div>
@@ -182,7 +257,7 @@ const sampleCards=[
  {front:'Education',back:'교육'},{front:'Innovation',back:'혁신'},{front:'Curiosity',back:'호기심'},
  {front:'Environment',back:'환경'},{front:'Responsibility',back:'책임'},{front:'Cooperation',back:'협력'}
 ];
-const state={cards:[],known:new Set(),sound:true,currentTab:'manage',studyMode:'all',studyOrder:[],studyIndex:0,flipped:false,quiz:null,match:null};
+const state={cards:[],known:new Set(),sound:true,currentTab:'manage',studyMode:'all',studyOrder:[],studyIndex:0,flipped:false,quiz:null,match:null,seededSample:false};
 let saveTimer=0,audioCtx=null,toastTimer=0,modalAction=null;
 
 function uid(){return (window.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2));}
@@ -190,15 +265,15 @@ function cleanText(v,max=1000){return String(v??'').replace(/\r/g,'').trim().sli
 function sanitizeCard(c){const front=cleanText(c?.front??c?.word,500),back=cleanText(c?.back??c?.meaning,1000);return front&&back?{id:cleanText(c.id,120)||uid(),front,back}:null}
 function load(){
  try{
-   const raw=localStorage.getItem(STORAGE); if(raw){const d=JSON.parse(raw);state.cards=(Array.isArray(d.cards)?d.cards:[]).map(sanitizeCard).filter(Boolean);state.known=new Set((Array.isArray(d.known)?d.known:[]).filter(id=>state.cards.some(c=>c.id===id)));state.sound=d.sound!==false;return}
+   const raw=localStorage.getItem(STORAGE); if(raw){const d=JSON.parse(raw);state.cards=(Array.isArray(d.cards)?d.cards:[]).map(sanitizeCard).filter(Boolean);state.seededSample=d.seededSample===true;state.known=new Set((Array.isArray(d.known)?d.known:[]).filter(id=>state.cards.some(c=>c.id===id)));state.sound=d.sound!==false;return}
  }catch(e){console.warn('저장 데이터 복구 실패',e)}
  try{
    const old=JSON.parse(localStorage.getItem(OLD_STORAGE)||'null');
    if(Array.isArray(old)){state.cards=old.map(sanitizeCard).filter(Boolean);save();return}
  }catch(e){}
- state.cards=sampleCards.map(c=>({...c,id:uid()}));save();
+ state.cards=sampleCards.map(c=>({...c,id:uid()}));state.seededSample=true;save();
 }
-function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(STORAGE,JSON.stringify({cards:state.cards,known:[...state.known],sound:state.sound}))}catch(e){toast('브라우저 저장 공간이 부족합니다. JSON으로 백업해 주세요.')}},80)}
+function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(STORAGE,JSON.stringify({cards:state.cards,known:[...state.known],sound:state.sound,seededSample:state.seededSample}))}catch(e){toast('브라우저 저장 공간이 부족합니다. JSON으로 백업해 주세요.')}},80)}
 function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),1900)}
 function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
 function formatTime(sec,tenths=false){sec=Math.max(0,sec);const m=Math.floor(sec/60),s=Math.floor(sec%60);return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}${tenths?'.'+Math.floor((sec%1)*10):''}`}
@@ -209,8 +284,18 @@ function beep(type){if(!state.sound)return;initAudio();if(!audioCtx)return;const
 
 function switchTab(name){
  if(state.currentTab==='match'&&name!=='match')stopMatch();
+ if(!['manage','flash','quiz','match'].includes(name))name='manage';
+ if(name==='manage')setSoloPresentation(false);
  state.currentTab=name;$$('.view').forEach(v=>v.classList.add('hidden'));$(`#view-${name}`).classList.remove('hidden');$$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+ const running=name!=='manage';document.body.classList.toggle('v61-running',running);document.body.classList.toggle('gt-executing',running);
+ $('#v61Runbar').classList.toggle('hidden',!running);
+ $('#v61RunTitle').textContent={flash:'낱말카드 학습',quiz:'4지선다 퀴즈',match:'짝 맞추기'}[name]||'낱말카드';
  if(name==='manage')renderCards(); if(name==='flash')initStudy(false); if(name==='quiz')initQuiz(); if(name==='match')initMatch();
+}
+function setSoloPresentation(on){
+ document.body.classList.toggle('student-view',Boolean(on));
+ if(on){document.documentElement.requestFullscreen?.().catch(()=>toast('전체화면이 차단됐어요. F11 키를 이용할 수 있어요.'));}
+ else if(document.fullscreenElement){document.exitFullscreen?.().catch(()=>{});}
 }
 
 function splitLine(line){
@@ -219,11 +304,13 @@ function splitLine(line){
  return null;
 }
 function parseText(text){const out=[],bad=[];String(text).split(/\n/).forEach((raw,i)=>{const line=raw.trim();if(!line)return;const p=splitLine(line);if(!p){bad.push(i+1);return}const front=cleanText(p[0],500),back=cleanText(p[1],1000);if(front&&back)out.push({front,back});else bad.push(i+1)});return {out,bad}}
-function addCards(items){const existing=new Set(state.cards.map(c=>normalize(c.front)+'\0'+normalize(c.back)));let added=0,dupes=0;items.forEach(c=>{const key=normalize(c.front)+'\0'+normalize(c.back);if(existing.has(key)){dupes++;return}state.cards.push({id:uid(),front:c.front,back:c.back});existing.add(key);added++});save();renderCards();return {added,dupes}}
+function addCards(items){const existing=new Set(state.cards.map(c=>normalize(c.front)+'\0'+normalize(c.back)));let added=0,dupes=0;items.forEach(c=>{const key=normalize(c.front)+'\0'+normalize(c.back);if(existing.has(key)){dupes++;return}state.cards.push({id:uid(),front:c.front,back:c.back});existing.add(key);added++});if(added)state.seededSample=false;save();renderCards();return {added,dupes}}
 
 function renderCards(){
  const q=normalize($('#searchInput').value);const rows=q?state.cards.filter(c=>normalize(c.front+' '+c.back).includes(q)):state.cards;
  $('#cardCount').textContent=`${state.cards.length}개${q?` · 검색 ${rows.length}개`:''}`;const body=$('#cardBody');body.textContent='';$('#manageEmpty').classList.toggle('hidden',rows.length>0);$('table').classList.toggle('hidden',rows.length===0);
+ $('#v61DeckSummary').textContent=`준비된 카드 ${state.cards.length}장 · 카드가 없으면 아래에서 새로 만들거나 파일을 불러오세요.`;
+ $$('#v61Prepare [data-v61-start]').forEach(button=>{const minimum=button.dataset.v61Start==='quiz'?4:button.dataset.v61Start==='match'?2:1;button.disabled=state.cards.length<minimum;button.title=button.disabled?`카드가 ${minimum}장 이상 필요해요.`:'';});
  rows.forEach((card,idx)=>{
   const tr=document.createElement('tr'),num=document.createElement('td');num.textContent=String(idx+1);
   const ftd=document.createElement('td'),btd=document.createElement('td'),atd=document.createElement('td');
@@ -261,17 +348,48 @@ function markKnown(yes){const deck=getStudyDeck();if(!deck.length)return;const i
 function toggleFlip(){if($('#flashContent').classList.contains('hidden'))return;state.flipped=!state.flipped;$('#flashCard').classList.toggle('flipped',state.flipped);beep('tap')}
 function speak(side){const deck=getStudyDeck();if(!deck.length||!('speechSynthesis' in window)){toast('이 브라우저는 읽어주기를 지원하지 않습니다.');return}const text=side==='front'?deck[state.studyIndex].front:deck[state.studyIndex].back;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=/^[\x00-\x7F\s]+$/.test(text)?'en-US':'ko-KR';u.rate=.9;window.speechSynthesis.speak(u)}
 
-function initQuiz(){
- const dir=$('#quizDirection').value,answerKey=dir==='front'?'back':'front';
- const distinct=new Set(state.cards.map(c=>normalize(c[answerKey]))).size;
- const enough=state.cards.length>=4&&distinct>=4;
- $('#quizEmpty').textContent=state.cards.length<4?'4지선다 퀴즈에는 카드가 최소 4장 필요합니다.':'서로 다른 정답이 4개 이상 있어야 퀴즈를 만들 수 있습니다.';
- $('#quizEmpty').classList.toggle('hidden',enough);$('#quizContent').classList.toggle('hidden',!enough);if(!enough){state.quiz=null;return}
- const order=shuffle(state.cards.map(c=>c.id));state.quiz={order,index:0,score:0,streak:0,answered:false};renderQuiz()
-}
-function renderQuiz(){const q=state.quiz;if(!q)return;const dir=$('#quizDirection').value,c=state.cards.find(x=>x.id===q.order[q.index]);if(!c){initQuiz();return}q.answered=false;const answer=dir==='front'?c.back:c.front,question=dir==='front'?c.front:c.back;const seen=new Set(),others=shuffle(state.cards.filter(x=>x.id!==c.id).map(x=>dir==='front'?x.back:x.front).filter(v=>{const key=normalize(v);if(key===normalize(answer)||seen.has(key))return false;seen.add(key);return true})).slice(0,3);if(others.length<3){initQuiz();return}const choices=shuffle([answer,...others]);$('#quizQuestion').textContent=question;$('#questionNum').textContent=`문제 ${q.index+1}`;$('#quizProgressText').textContent=`${q.index+1} / ${q.order.length}`;$('#quizScore').textContent=`점수 ${q.score}`;$('#quizStreak').textContent=`연속 ${q.streak}`;$('#quizFeedback').textContent='';$('#nextQuizBtn').classList.add('hidden');const list=$('#choiceList');list.textContent='';choices.forEach((text,i)=>{const b=document.createElement('button');b.className='choice';b.textContent=`${i+1}. ${text}`;b.dataset.value=text;b.addEventListener('click',()=>answerQuiz(b,answer));list.append(b)})}
+
+ function initQuiz(){
+  const direction=$('#quizDirection').value;
+  const prepared=window.FlashQuizQuality.prepare(state.cards,direction);
+  const excluded=prepared.conflicting.length;
+  const ready=prepared.eligible.length>=4&&prepared.uniqueAnswers>=4;
+  $('#quizQualityNotice').textContent=excluded?
+    `같은 문제가 서로 다른 정답을 가진 항목 ${excluded}개는 혼동을 막기 위해 제외했어요. 카드 관리에서 수정할 수 있어요.`:
+    '각 정답은 서로 다른 카드의 답에서 가져와요. 비슷한 낱말을 함께 넣으면 더 좋은 퀴즈가 돼요.';
+  $('#quizEmpty').textContent=ready?'':`퀴즈에는 서로 다른 문제와 정답이 각각 4개 이상 필요해요. 현재 ${prepared.eligible.length}문제 · 서로 다른 정답 ${prepared.uniqueAnswers}개`;
+  $('#quizEmpty').classList.toggle('hidden',ready);
+  $('#quizContent').classList.toggle('hidden',!ready);
+  if(!ready){state.quiz=null;return}
+  const deck=shuffle([...prepared.eligible]);
+  state.quiz={deck,order:deck.map(c=>c.id),index:0,score:0,streak:0,answered:false,done:false,direction};
+  renderQuiz();
+ }
+ function renderQuiz(){
+  const q=state.quiz;if(!q)return;
+  const dir=q.direction,c=q.deck[q.index];
+  if(!c){initQuiz();return}
+  const answer=dir==='front'?c.back:c.front,question=dir==='front'?c.front:c.back;
+  const choices=window.FlashQuizQuality.options(c,q.deck,dir);
+  if(choices.length!==4){$('#quizEmpty').textContent='4개의 서로 다른 답을 만들 수 없어요. 카드의 내용을 확인해 주세요.';$('#quizEmpty').classList.remove('hidden');$('#quizContent').classList.add('hidden');state.quiz=null;return}
+  q.answered=false;
+  $('#quizQuestion').textContent=question;
+  $('#questionNum').textContent=`문제 ${q.index+1}`;
+  $('#quizProgressText').textContent=`${q.index+1} / ${q.order.length}`;
+  $('#quizScore').textContent=`점수 ${q.score}`;$('#quizStreak').textContent=`연속 ${q.streak}`;
+  $('#quizFeedback').textContent='';
+  $('#nextQuizBtn').classList.add('hidden');
+  const list=$('#choiceList');list.replaceChildren();
+  choices.forEach((value,i)=>{
+   const b=document.createElement('button');b.type='button';b.className='choice';
+   b.textContent=`${i+1}. ${value}`;b.dataset.value=value;
+   b.setAttribute('aria-label',`${i+1}번 ${value}`);
+   b.addEventListener('click',()=>answerQuiz(b,answer));list.append(b);
+  });
+ }
+
 function answerQuiz(btn,answer){const q=state.quiz;if(!q||q.answered)return;q.answered=true;const correct=btn.dataset.value===answer;$$('.choice').forEach(b=>{b.disabled=true;if(b.dataset.value===answer)b.classList.add('correct')});if(correct){q.streak++;q.score+=100+Math.min(q.streak,10)*10;$('#quizFeedback').textContent='정답입니다!';$('#quizFeedback').style.color='var(--good)';beep('good')}else{q.streak=0;btn.classList.add('wrong');$('#quizFeedback').textContent=`정답: ${answer}`;$('#quizFeedback').style.color='var(--bad)';beep('bad')}$('#quizScore').textContent=`점수 ${q.score}`;$('#quizStreak').textContent=`연속 ${q.streak}`;$('#nextQuizBtn').classList.remove('hidden')}
-function nextQuiz(){const q=state.quiz;if(!q)return;q.index++;if(q.index>=q.order.length){beep('done');showModal('🎉','퀴즈 완료!',`${q.order.length}문제 중 최종 점수는 ${q.score.toLocaleString()}점입니다.`,'다시 하기',initQuiz);return}renderQuiz()}
+function nextQuiz(){const q=state.quiz;if(!q)return;q.index++;if(q.index>=q.order.length){q.done=true;beep('done');showModal('🎉','퀴즈 완료!',`${q.order.length}문제 중 최종 점수는 ${q.score.toLocaleString()}점입니다.`,'다시 하기',initQuiz);return}renderQuiz()}
 
 function stopMatch(){const m=state.match;if(!m)return;if(m.raf)cancelAnimationFrame(m.raf);m.raf=0;m.running=false;document.removeEventListener('pointermove',matchPointerMove);document.removeEventListener('pointerup',matchPointerUp)}
 function initMatch(){
@@ -298,20 +416,32 @@ function showConfirm(icon,title,text,primary,action){showModal(icon,title,text,p
 function closeModal(){modalAction=null;$('#modalBack').classList.add('hidden')}
 
 $$('.tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+$$('#v61Prepare [data-v61-start]').forEach(button=>button.addEventListener('click',()=>switchTab(button.dataset.v61Start)));
+$('#v61ToPrep').addEventListener('click',()=>switchTab('manage'));
+$('#v61OpenStudent').addEventListener('click',()=>window.GulliverTeacherDisplay?.open());
+$('#v61PresentSolo').addEventListener('click',()=>setSoloPresentation(true));
+$('#v61SoloExit').addEventListener('click',()=>switchTab('manage'));
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('student-view'))setSoloPresentation(false)});
 $('#soundBtn').addEventListener('click',()=>{state.sound=!state.sound;$('#soundBtn').textContent=state.sound?'♪':'×';save();toast(state.sound?'효과음을 켰습니다.':'효과음을 껐습니다.')});
 $('#fullBtn').addEventListener('click',()=>{document.fullscreenElement?document.exitFullscreen?.():document.documentElement.requestFullscreen?.()});
 $('#addBulkBtn').addEventListener('click',()=>{const p=parseText($('#bulkInput').value);if(!p.out.length){toast('구분자를 확인해 주세요.');return}const r=addCards(p.out);$('#bulkInput').value='';toast(`${r.added}장 추가${r.dupes?` · 중복 ${r.dupes}장 제외`:''}${p.bad.length?` · ${p.bad.length}줄 미인식`:''}`)});
-$('#clearInputBtn').addEventListener('click',()=>$('#bulkInput').value='');
+$('#clearInputBtn').addEventListener('click',()=>{$('#bulkInput').value='';$('#parseHint').textContent='탭·쉼표·| 등으로 한 줄에 한 쌍씩 입력하세요.';});
+$('#bulkInput').addEventListener('input',()=>{
+ const parsed=parseText($('#bulkInput').value);
+ $('#parseHint').textContent=parsed.out.length?
+   `미리 확인: ${parsed.out.length}장 인식${parsed.bad.length?` · ${parsed.bad.length}줄은 구분자를 확인해 주세요.`:' · 추가할 수 있어요.'}`:
+   '앞면과 뒷면을 탭·쉼표·| 등으로 구분해 주세요.';
+});
 $('#singleAddBtn').addEventListener('click',()=>{const front=cleanText($('#singleFront').value,500),back=cleanText($('#singleBack').value,1000);if(!front||!back){toast('앞면과 뒷면을 모두 입력해 주세요.');return}const r=addCards([{front,back}]);if(r.added){$('#singleFront').value=$('#singleBack').value='';$('#singleFront').focus()}else toast('같은 카드가 이미 있습니다.')});
 $('#cardBody').addEventListener('change',e=>{if(e.target.matches('.cell-input'))updateCard(e.target.dataset.id,e.target.dataset.field,e.target.value)});$('#cardBody').addEventListener('click',e=>{const b=e.target.closest('[data-delete]');if(b)deleteCard(b.dataset.delete)});
 $('#searchInput').addEventListener('input',renderCards);$('#clearAllBtn').addEventListener('click',clearAll);$('#sampleBtn').addEventListener('click',()=>{const r=addCards(sampleCards);toast(`${r.added}장의 예시 카드를 추가했습니다.`)});$('#sortBtn').addEventListener('click',()=>{state.cards.sort((a,b)=>a.front.localeCompare(b.front,'ko'));save();renderCards()});$('#shuffleListBtn').addEventListener('click',()=>{shuffle(state.cards);save();renderCards()});
 $('#exportJsonBtn').addEventListener('click',exportJson);$('#exportCsvBtn').addEventListener('click',exportCsv);$('#importBtn').addEventListener('click',()=>$('#importFile').click());$('#importFile').addEventListener('change',e=>{if(e.target.files[0])importFile(e.target.files[0])});$('#printBtn').addEventListener('click',preparePrint);
-$('#flashCard').addEventListener('click',e=>{if(!e.target.closest('.speak'))toggleFlip()});$('#flashCard').addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='Enter'){e.preventDefault();toggleFlip()}});$('#speakFront').addEventListener('click',e=>{e.stopPropagation();speak('front')});$('#speakBack').addEventListener('click',e=>{e.stopPropagation();speak('back')});$('#prevBtn').addEventListener('click',()=>moveStudy(-1));$('#nextBtn').addEventListener('click',()=>moveStudy(1));$('#knownBtn').addEventListener('click',()=>markKnown(true));$('#againBtn').addEventListener('click',()=>markKnown(false));
+$('#flashCard').addEventListener('click',e=>{if(!e.target.closest('.speak'))toggleFlip()});$('#flashCard').addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='Enter'){e.preventDefault();e.stopPropagation();toggleFlip()}});$('#speakFront').addEventListener('click',e=>{e.stopPropagation();speak('front')});$('#speakBack').addEventListener('click',e=>{e.stopPropagation();speak('back')});$('#prevBtn').addEventListener('click',()=>moveStudy(-1));$('#nextBtn').addEventListener('click',()=>moveStudy(1));$('#knownBtn').addEventListener('click',()=>markKnown(true));$('#againBtn').addEventListener('click',()=>markKnown(false));
 $('#studyModeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.studyMode=b.dataset.mode;$$('#studyModeSeg button').forEach(x=>x.classList.toggle('active',x===b));state.studyOrder=[];state.studyIndex=0;renderStudy()});$('#shuffleStudyBtn').addEventListener('click',()=>{state.studyOrder=shuffle(getStudyDeck().map(c=>c.id));state.studyIndex=0;state.flipped=false;renderStudy();toast('카드 순서를 섞었습니다.')});$('#resetKnownBtn').addEventListener('click',()=>{state.known.clear();save();renderStudy();toast('학습 표시를 초기화했습니다.')});
 $('#quizRestartBtn').addEventListener('click',initQuiz);$('#quizDirection').addEventListener('change',initQuiz);$('#nextQuizBtn').addEventListener('click',nextQuiz);$('#matchRestartBtn').addEventListener('click',initMatch);$('#pairCount').addEventListener('change',initMatch);
 $('#modalSecondary').addEventListener('click',closeModal);$('#modalPrimary').addEventListener('click',()=>{const fn=modalAction;closeModal();fn?.()});$('#modalBack').addEventListener('click',e=>{if(e.target===$('#modalBack'))closeModal()});
 window.addEventListener('resize',()=>{if(state.currentTab==='match')resizeMatchCanvas()});document.addEventListener('visibilitychange',()=>{const m=state.match;if(state.currentTab!=='match'||!m)return;if(document.hidden&&m.running){m.elapsed=(performance.now()-m.start)/1000;if(m.raf)cancelAnimationFrame(m.raf);m.raf=0;m.running=false;m.pausedHidden=true;document.removeEventListener('pointermove',matchPointerMove);document.removeEventListener('pointerup',matchPointerUp)}else if(!document.hidden&&m.pausedHidden){m.pausedHidden=false;m.start=performance.now()-m.elapsed*1000;m.running=true;document.addEventListener('pointermove',matchPointerMove,{passive:false});document.addEventListener('pointerup',matchPointerUp);tickMatch()}});
-document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;if(state.currentTab==='flash'){if(e.code==='Space'){e.preventDefault();toggleFlip()}else if(e.code==='ArrowRight')moveStudy(1);else if(e.code==='ArrowLeft')moveStudy(-1)}else if(state.currentTab==='quiz'&&!state.quiz?.answered&&/^[1-4]$/.test(e.key)){const b=$$('.choice')[Number(e.key)-1];b?.click()}else if(state.currentTab==='quiz'&&state.quiz?.answered&&(e.code==='Space'||e.code==='Enter')){e.preventDefault();nextQuiz()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('student-view')){setSoloPresentation(false);return}if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;if(state.currentTab==='flash'){if(e.code==='Space'){e.preventDefault();toggleFlip()}else if(e.code==='ArrowRight')moveStudy(1);else if(e.code==='ArrowLeft')moveStudy(-1)}else if(state.currentTab==='quiz'&&!state.quiz?.answered&&/^[1-4]$/.test(e.key)){const b=$$('.choice')[Number(e.key)-1];b?.click()}else if(state.currentTab==='quiz'&&state.quiz?.answered&&(e.code==='Space'||e.code==='Enter')){e.preventDefault();nextQuiz()}});
 
 load();$('#soundBtn').textContent=state.sound?'♪':'×';renderCards();switchTab('manage');
 Gulliver.mountShell({title:'낱말카드·퀴즈',icon:'🗂️'});
@@ -321,10 +451,36 @@ ClassroomWorkspace.mount({kind:'quiz',title:()=> '나의 낱말카드',
   apply(data){
     if(!Array.isArray(data.cards))throw Error('낱말카드 형식을 확인해 주세요.');
     const cards=data.cards.slice(0,2000).map(sanitizeCard).filter(Boolean);
-    stopMatch();state.cards=cards;state.known=new Set((Array.isArray(data.known)?data.known:[]).filter(id=>cards.some(c=>c.id===id)));state.sound=data.sound!==false;
+    stopMatch();state.cards=cards;state.seededSample=false;state.known=new Set((Array.isArray(data.known)?data.known:[]).filter(id=>cards.some(c=>c.id===id)));state.sound=data.sound!==false;
     state.studyOrder=[];state.studyIndex=0;state.flipped=false;state.quiz=null;state.match=null;
     $('#soundBtn').textContent=state.sound?'♪':'×';save();renderCards();switchTab(['manage','flash','quiz','match'].includes(data.currentTab)?data.currentTab:'manage');
   }
+});
+window.GulliverTeacherLiveSnapshot=()=>({kind:'quiz',cards:state.cards.map(({front,back})=>({front,back})),sampleOnly:state.seededSample});
+window.GulliverTeacherDisplay?.register({
+ kind:'flashquiz',
+ getSnapshot(){
+  const base={kind:'flashquiz',mode:state.currentTab,count:state.cards.length};
+  if(state.currentTab==='flash'){
+   const deck=getStudyDeck(),card=deck[state.studyIndex];
+   return {...base,index:deck.length?state.studyIndex+1:0,total:deck.length,front:card?.front||'',...(state.flipped?{back:card?.back||''}:{}),flipped:state.flipped};
+  }
+  if(state.currentTab==='quiz'){
+   const q=state.quiz;if(!q)return {...base,empty:true};
+   if(q.done)return {...base,done:true,total:q.order.length,score:q.score};
+   return {...base,question:$('#quizQuestion').textContent,index:q.index+1,total:q.order.length,score:q.score,streak:q.streak,
+    answered:q.answered,feedback:q.answered?$('#quizFeedback').textContent:'',
+    choices:$$('#choiceList .choice').map(button=>({text:button.textContent,correct:q.answered&&button.classList.contains('correct'),wrong:q.answered&&button.classList.contains('wrong')}))};
+  }
+  if(state.currentTab==='match'){
+   const m=state.match;if(!m)return {...base,empty:true};
+   return {...base,time:formatTime(m.running?(performance.now()-m.start)/1000:m.elapsed,true),mistakes:m.mistakes,remaining:m.left.length-m.matched.size,
+    left:m.left.map(card=>({text:card.text,matched:m.matched.has(card.id)})),
+    right:m.right.map(card=>({text:card.text,matched:m.matched.has(card.id)})),
+    links:m.lines.map(line=>{const id=line.a?.dataset.id;return {left:m.left.findIndex(card=>card.id===id),right:m.right.findIndex(card=>card.id===id)};}).filter(link=>link.left>=0&&link.right>=0)};
+  }
+  return base;
+ }
 });
 })();
 </script>

@@ -20,27 +20,39 @@ on:
     paths:
       - '뚝딱 제작실.html'
       - 'studio-*.js'
+      - 'media-*.js'
+      - 'media-editors-v52.css'
+      - 'lesson*.js'
+      - 'lesson*.html'
+      - 'lesson*.css'
+      - 'video-ttak.js'
+      - 'music-ttak.js'
       - 'doan-*.js'
       - 'balpyo-*.js'
       - 'munseo-*.js'
       - '*뚝딱.html'
-      - 'tools-catalog.js'
-      - 'index.html'
-      - 'tests/**'
+      - 'tests/studio-*'
+      - 'tests/lesson-*'
+      - 'tests/media-*'
+      - 'tests/work-*'
       - '.github/workflows/studio-checks.yml'
       - 'scripts/install-artcraft-media-web.sh'
       - '.github/workflows/vendor-artcraft-media.yml'
   pull_request:
     paths:
+      - 'lesson*.js'
+      - 'lesson*.html'
+      - 'lesson*.css'
       - '뚝딱 제작실.html'
       - 'studio-*.js'
       - 'doan-*.js'
       - 'balpyo-*.js'
       - 'munseo-*.js'
       - '*뚝딱.html'
-      - 'tools-catalog.js'
-      - 'index.html'
-      - 'tests/**'
+      - 'tests/studio-*'
+      - 'tests/lesson-*'
+      - 'tests/media-*'
+      - 'tests/work-*'
       - '.github/workflows/studio-checks.yml'
       - 'scripts/install-artcraft-media-web.sh'
       - '.github/workflows/vendor-artcraft-media.yml'
@@ -50,7 +62,33 @@ permissions:
   contents: read
 
 jobs:
+  studio-source-check:
+    runs-on: ubuntu-latest
+    outputs:
+      present: ${{ steps.inventory.outputs.present }}
+      media: ${{ steps.inventory.outputs.media }}
+    steps:
+      - name: Checkout source inventory
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Verify legacy studio source is actually available
+        id: inventory
+        run: |
+          if [[ -f studio-core.js && -f lesson-core.js && -f tests/studio-browser.e2e.cjs ]]; then
+            echo 'present=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'present=false' >> "$GITHUB_OUTPUT"
+            echo '::notice::Legacy studio source is absent on this branch. Studio integration and browser suites are skipped, not marked as passing.'
+          fi
+          if [[ -f scripts/install-artcraft-media-web.sh && -f tests/studio-official-media.test.cjs ]]; then
+            echo 'media=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'media=false' >> "$GITHUB_OUTPUT"
+            echo '::notice::Official studio media installer is absent; obsolete media release suite is skipped.'
+          fi
+
   integration:
+    needs: studio-source-check
+    if: needs.studio-source-check.outputs.present == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -58,12 +96,22 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Verify JavaScript syntax
         run: |
+          node --check lesson-core.js
+          node --check lesson-app.js
+          node --check tests/lesson-v53.e2e.cjs
           node --check studio-core.js
           node --check studio-unified-core.js
           node --check studio-unified-editor.js
+          node --check tests/studio-v40b.e2e.cjs
+          node --check tests/studio-v40c.e2e.cjs
+          node --check tests/studio-mixed-workflows.e2e.cjs
+          node --check tests/studio-ux-audit.e2e.cjs
           node --check studio-unified-timeline.js
           node --check studio-unified-clips.js
           node --check studio-canvas-easy-media.js
+          node --check studio-unified-multitrack.js
+          node --check studio-unified-multitrack-export.js
+          node --check studio-unified-waveform.js
           node --check studio-unified-video.js
           node --check studio-storage.js
           node --check studio-official-project-core.js
@@ -77,9 +125,24 @@ jobs:
           node --check studio-storage-ui.js
           node --check studio-media-core.js
           node --check studio-canvas-shell.js
+          node --check studio-canvas-quick-edit.js
+          node --check tests/studio-canvas-quick-edit.e2e.cjs
+          node --check studio-teacher-core.js
+          node --check studio-teacher-source.js
+          node --check studio-teacher-next.js
+          node --check tests/studio-teacher-linked.e2e.cjs
+          node --check tests/studio-teacher-bus-tournament.e2e.cjs
+          node --check tests/studio-teacher-all.e2e.cjs
+          node --check tests/studio-teacher-embedded.e2e.cjs
+          node --check studio-teacher-tools.js
+          node --check studio-teacher-snapshots.js
+          node --check studio-teacher-live.js
+          node --check studio-presentation-tools.js
           node --check music-core.js
           node --check music-ttak.js
           node --check video-ttak.js
+          node --check media-timeline.js
+          node --check tests/media-v52.e2e.cjs
           node --check studio-official-media.js
           node --check doan-core.js
           node --check doan-ttak.js
@@ -92,6 +155,8 @@ jobs:
         run: node --test tests/*.test.cjs
 
   browser-e2e:
+    needs: studio-source-check
+    if: needs.studio-source-check.outputs.present == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
@@ -113,7 +178,7 @@ jobs:
           fc-match :lang=ko
 
       - name: Exercise real Chromium local storage, file imports and exports
-        run: node --test tests/studio-browser.e2e.cjs tests/studio-transfer.e2e.cjs tests/studio-library.e2e.cjs tests/studio-media.e2e.cjs tests/studio-visible-home.e2e.cjs tests/studio-v22.e2e.cjs tests/studio-cross-media.e2e.cjs tests/studio-official-library.e2e.cjs tests/studio-v24.e2e.cjs tests/studio-v30.e2e.cjs tests/studio-v31.e2e.cjs tests/studio-v32.e2e.cjs tests/studio-v33.e2e.cjs tests/studio-canvas-shell.e2e.cjs tests/studio-unified-entry.e2e.cjs tests/studio-native-clips.e2e.cjs tests/studio-easy-media.e2e.cjs
+        run: node --test --test-concurrency=1 tests/studio-browser.e2e.cjs tests/studio-transfer.e2e.cjs tests/studio-library.e2e.cjs tests/studio-media.e2e.cjs tests/media-v52.e2e.cjs tests/lesson-v53.e2e.cjs tests/studio-visible-home.e2e.cjs tests/studio-v22.e2e.cjs tests/studio-cross-media.e2e.cjs tests/studio-official-library.e2e.cjs tests/studio-v24.e2e.cjs tests/studio-v30.e2e.cjs tests/studio-v31.e2e.cjs tests/studio-v32.e2e.cjs tests/studio-v33.e2e.cjs tests/studio-canvas-shell.e2e.cjs tests/studio-canvas-quick-edit.e2e.cjs tests/studio-unified-entry.e2e.cjs tests/studio-native-clips.e2e.cjs tests/studio-easy-media.e2e.cjs tests/studio-multitrack-v34.e2e.cjs tests/studio-multitrack-v35-export.e2e.cjs tests/studio-multitrack-v35-touch.e2e.cjs tests/studio-multitrack-v36-export.e2e.cjs tests/studio-teacher-tools.e2e.cjs tests/studio-teacher-live.e2e.cjs tests/studio-teacher-all.e2e.cjs tests/studio-teacher-linked.e2e.cjs tests/studio-teacher-bus-tournament.e2e.cjs tests/studio-teacher-embedded.e2e.cjs tests/studio-presentation-tools.e2e.cjs tests/studio-v40a.e2e.cjs tests/studio-v40b.e2e.cjs tests/studio-v40c.e2e.cjs tests/studio-mixed-workflows.e2e.cjs tests/studio-ux-audit.e2e.cjs tests/studio-activity.e2e.cjs tests/studio-classroom-activities.e2e.cjs tests/work-storage.e2e.cjs tests/work-space.e2e.cjs tests/work-surface.e2e.cjs tests/lesson-presentation.e2e.cjs
 
       - name: Keep canvas screenshots for visual review
         if: always()
@@ -125,6 +190,8 @@ jobs:
           retention-days: 3
 
   official-media-release:
+    needs: studio-source-check
+    if: needs.studio-source-check.outputs.media == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:

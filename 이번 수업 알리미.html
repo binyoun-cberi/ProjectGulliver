@@ -22,10 +22,63 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         .theme-transition { transition: all 0.5s ease-in-out; }
+        /* Tailwind loading is optional: keep the teaching layout operable offline. */
+        body.v61-lesson{display:flex;height:100dvh;min-height:0;max-height:100dvh;box-sizing:border-box;overflow:hidden}
+        .v61-lesson #presentation-area{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;position:relative;padding:24px;overflow:hidden}
+        .v61-lesson #board{width:100%;max-width:1200px;aspect-ratio:16/9;border-radius:28px;padding:clamp(12px,2vw,40px);background-color:#fff;position:relative;overflow:hidden;box-shadow:0 20px 50px #1c28402b}
+        .v61-lesson #board>div:last-child{position:relative;z-index:1;display:flex;flex-direction:column;height:100%}
+        .v61-lesson #control-panel{flex:0 0 400px;width:400px;max-height:100%;background:#fff;display:flex;flex-direction:column;overflow:hidden;border-left:1px solid #e2e8f0}
+        .v61-lesson #control-panel>div:last-child{flex:1;overflow:auto}
+        .v61-lesson #control-panel.hidden{display:none!important}
+        .v61-lesson #btn-fullscreen{position:absolute;right:20px;bottom:18px;border:0;border-radius:999px;padding:12px 18px;background:#263247;color:#fff;font-size:14px;font-weight:850;cursor:pointer;z-index:5}
+        .v61-lesson #v61LessonExit{display:none;position:fixed;right:16px;top:15px;z-index:90;opacity:.2}
+        .v61-lesson.student-view #btn-fullscreen{display:none!important}
+        .v61-lesson.student-view #v61LessonExit{display:inline-flex}
+        .v61-lesson #v61LessonExit:hover,.v61-lesson #v61LessonExit:focus-visible{opacity:1}
+        .v61-lesson.student-view #presentation-area{width:100%;padding:clamp(8px,1.3vw,20px)}
+        .v61-lesson.student-view #board{max-width:1600px;max-height:96vh}
+        .v61-lesson #board > div:last-child > div:first-child{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+        .v61-lesson #badge-subject,.v61-lesson #border-page{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:30px;font-weight:900}
+        .v61-lesson #badge-subject{background-color:#6553d4;color:#fff}
+        .v61-lesson #badge-subject.bg-orange-500{background-color:#f97316}
+        .v61-lesson #badge-subject.bg-blue-500{background-color:#3b82f6}
+        .v61-lesson #badge-subject.bg-emerald-600{background-color:#059669}
+        .v61-lesson #badge-subject.bg-purple-600{background-color:#9333ea}
+        .v61-lesson #badge-subject.bg-amber-500{background-color:#f59e0b}
+        .v61-lesson #badge-subject.bg-rose-500{background-color:#f43f5e}
+        .v61-lesson #badge-subject.bg-cyan-600{background-color:#0891b2}
+        .v61-lesson #badge-subject.bg-fuchsia-500{background-color:#d946ef}
+        .v61-lesson #badge-subject.bg-violet-500{background-color:#8b5cf6}
+        .v61-lesson #board > div:last-child > div:nth-child(2){text-align:center;margin-bottom:12px}
+        .v61-lesson #display-unit{font-size:clamp(13px,1.8vw,24px);font-weight:750}
+        .v61-lesson #display-topic{font-size:clamp(21px,3vw,45px);font-weight:900;line-height:1.2;overflow-wrap:anywhere}
+        .v61-lesson #bg-objective{padding:clamp(8px,1.5vw,20px);border-radius:18px;text-align:center;margin-bottom:12px;background-color:#ffffffb8}
+        .v61-lesson #display-objective{font-size:clamp(14px,2vw,28px);overflow-wrap:anywhere}
+        .v61-lesson #board > div:last-child > div:nth-child(4){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;flex:1;min-height:0;margin-bottom:12px}
+        .v61-lesson #bg-act1,.v61-lesson #bg-act2,.v61-lesson #bg-act3{border-radius:18px;border:1px solid #e2e8f0;padding:clamp(8px,1.5vw,20px);overflow:hidden}
+        .v61-lesson #bg-wrapup{display:flex;align-items:center;gap:12px;padding:clamp(8px,1.3vw,16px);border-radius:16px}
+        .v61-lesson #control-panel .gt-v61-flow h2{font-size:18px}
+        .v61-lesson #control-panel input,.v61-lesson #control-panel select,.v61-lesson #control-panel textarea{max-width:100%;border:1px solid #cbd5e1;border-radius:9px;background:#f8fafc;padding:10px;color:#334155;font:inherit}
+        .v61-lesson #control-panel label{font-size:13px;font-weight:850;color:#475569}
+        @media(max-width:790px){
+          body.v61-lesson:not(.student-view){flex-direction:column}
+          .v61-lesson:not(.student-view) #presentation-area{flex:0 0 42%;padding:12px}
+          .v61-lesson:not(.student-view) #board{height:100%;width:auto;max-width:100%;padding:12px;border-radius:15px}
+          .v61-lesson:not(.student-view) #control-panel{width:100%;flex:1;min-height:0;border-left:0;border-top:1px solid #e2e8f0}
+          .v61-lesson #btn-fullscreen{right:10px;bottom:10px;padding:8px 12px;font-size:12px}
+        }
     </style>
-  <script src="gulliver-shared.js?v=20261012-organized2"></script>
+  <script src="gulliver-shared.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
+<link rel="stylesheet" href="gulliver-teacher-v61.css?v=20261019-v61">
+<script src="gulliver-teacher-display.js?v=20261019-dual1"></script>
+<script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
+<script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<link rel="stylesheet" href="lesson-notice-flow.css?v=20261024-a1">
+<script src="gulliver-app-shell.js?v=20261020-1"></script>
 </head>
-<body class="flex h-screen w-screen overflow-hidden text-gray-800">
+<body class="v61-lesson flex h-screen w-screen overflow-hidden text-gray-800">
 
     <!-- 왼쪽: 메인 프레젠테이션 화면 -->
     <main id="presentation-area" class="flex-1 flex items-center justify-center p-8 bg-gray-100 relative theme-transition">
@@ -35,6 +88,7 @@
             <div id="deco-1" class="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-20 theme-transition"></div>
             <div id="deco-2" class="absolute -bottom-32 -left-20 w-96 h-96 rounded-full opacity-20 theme-transition"></div>
 
+            <span id="lessonStageBadge" aria-live="polite">전체 수업</span>
             <div class="relative z-10 flex flex-col h-full">
                 <!-- 상단: 과목 뱃지 & 쪽수 -->
                 <div class="flex justify-between items-center mb-4 flex-shrink-0">
@@ -106,9 +160,10 @@
         </div>
 
         <button id="btn-fullscreen" onclick="toggleFullscreen()" class="absolute bottom-6 right-6 bg-gray-800 text-white px-5 py-3 rounded-full shadow-lg hover:bg-gray-700 flex items-center gap-2 transition font-bold z-50">
-            <i class="ph-bold ph-corners-out text-xl"></i> 수업 시작 (전체화면)
+            <i class="ph-bold ph-corners-out text-xl"></i> 이 창으로 보여주기
         </button>
     </main>
+    <button id="v61LessonExit" class="gt-v61-button" type="button" onclick="toggleFullscreen()">← 편집 화면으로 (Esc)</button>
 
     <!-- 오른쪽: 컨트롤 패널 -->
     <aside id="control-panel" class="w-[400px] bg-white border-l border-gray-200 shadow-2xl flex flex-col h-full z-20">
@@ -118,6 +173,33 @@
         </div>
         
         <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-5">
+            <div class="gt-v61-flow" style="display:block;padding:15px" id="v61LessonFlow">
+                <span class="gt-v61-eyebrow">① 준비하기</span>
+                <h2>학생에게 보여줄 수업 안내</h2>
+                <p>내용을 입력하면 왼쪽 안내판에 바로 반영돼요. 두 모니터라면 학생창을 열어 다른 화면으로 옮기세요.</p>
+                <div class="gt-v61-flow-actions" style="margin-top:13px;justify-content:stretch">
+                    <button id="v61LessonStudent" type="button" class="gt-v61-button" style="flex:1" data-gx-display-duplicate>학생 화면 열기</button>
+                    <button id="v61LessonPresent" type="button" class="gt-v61-button gt-v61-button--primary" style="flex:1">② 이 창으로 실행</button>
+                </div>
+            </div>
+            <section class="lesson-stage-panel" aria-label="수업 진행 단계">
+                <h3>수업 진행 화면</h3>
+                <p>전체 안내를 띄우거나 지금 진행하는 활동만 크게 보여줄 수 있어요.</p>
+                <div id="lessonStageTabs" class="lesson-stage-tabs" role="group" aria-label="학생에게 보여줄 단계">
+                  <button type="button" data-stage="all" aria-pressed="true">전체</button>
+                  <button type="button" data-stage="intro">도입</button>
+                  <button type="button" data-stage="act1">활동 1</button>
+                  <button type="button" data-stage="act2">활동 2</button>
+                  <button type="button" data-stage="act3">활동 3</button>
+                  <button type="button" data-stage="wrapup">정리</button>
+                </div>
+                <div class="lesson-stage-actions">
+                  <button id="lessonStagePrevious" type="button">← 이전</button>
+                  <span id="lessonStageStatus" role="status">전체 수업</span>
+                  <button id="lessonStageNext" type="button">다음 →</button>
+                </div>
+                <a class="lesson-time-link" href="시간 도구.html" target="_blank" rel="noopener">시간 도구 열기 ↗</a>
+            </section>
             <div>
                 <label class="block text-sm font-bold text-gray-600 mb-1">과목 선택 (테마 변경)</label>
                 <select id="input-subject" class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-lg cursor-pointer">
@@ -310,6 +392,75 @@
             elements[`in_${id}`].addEventListener('input', updateBoard);
         });
 
+        // A stage is separate from the saved lesson contents: simply changing
+        // slides must never mark the preloaded example as a customized lesson.
+        const lessonStageKey='gulliver.lessonNotice.stage.v1';
+        const lessonStages=['all','intro','act1','act2','act3','wrapup'];
+        const lessonStageNames={all:'전체 수업',intro:'도입 · 학습 목표',act1:'활동 1',act2:'활동 2',act3:'활동 3',wrapup:'정리'};
+        let lessonStage='all';
+        try{
+          const savedStage=localStorage.getItem(lessonStageKey);
+          if(lessonStages.includes(savedStage))lessonStage=savedStage;
+        }catch{}
+        function setLessonStage(stage){
+          if(!lessonStages.includes(stage))return;
+          lessonStage=stage;
+          document.getElementById('board').dataset.lessonStage=stage;
+          document.getElementById('lessonStageBadge').textContent=lessonStageNames[stage];
+          document.getElementById('lessonStageStatus').textContent=lessonStageNames[stage];
+          for(const button of document.querySelectorAll('#lessonStageTabs [data-stage]')){
+            button.setAttribute('aria-pressed',String(button.dataset.stage===stage));
+          }
+          document.getElementById('lessonStagePrevious').disabled=stage===lessonStages[0];
+          document.getElementById('lessonStageNext').disabled=stage===lessonStages.at(-1);
+          try{localStorage.setItem(lessonStageKey,stage)}catch{}
+          window.GulliverTeacherDisplay?.refresh();
+        }
+        function moveLessonStage(direction){
+          const index=lessonStages.indexOf(lessonStage);
+          setLessonStage(lessonStages[Math.max(0,Math.min(lessonStages.length-1,index+direction))]);
+        }
+        document.getElementById('lessonStageTabs').addEventListener('click',event=>{
+          const button=event.target.closest('[data-stage]');
+          if(button)setLessonStage(button.dataset.stage);
+        });
+        document.getElementById('lessonStagePrevious').onclick=()=>moveLessonStage(-1);
+        document.getElementById('lessonStageNext').onclick=()=>moveLessonStage(1);
+        document.addEventListener('keydown',event=>{
+          if(!document.body.classList.contains('student-view'))return;
+          if(event.altKey||event.ctrlKey||event.metaKey)return;
+          if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
+          if(event.key==='ArrowRight'||event.key==='PageDown'){event.preventDefault();moveLessonStage(1);}
+          if(event.key==='ArrowLeft'||event.key==='PageUp'){event.preventDefault();moveLessonStage(-1);}
+        });
+
+        // Preserve only the teacher's actual edits, not the preloaded example lesson.
+        const lessonStorageKey='gulliver.lessonNotice.v1';
+        let lessonCustomized=false;
+        try{
+            const saved=JSON.parse(localStorage.getItem(lessonStorageKey)||'null');
+            if(saved&&saved.customized===true&&saved.fields&&typeof saved.fields==='object'){
+                inputs.forEach(id=>{if(typeof saved.fields[id]==='string')elements['in_'+id].value=saved.fields[id].slice(0,500)});
+                lessonCustomized=true;
+            }
+        }catch{}
+        function lessonCapture(){
+            const fields=Object.fromEntries(inputs.map(id=>[id,elements['in_'+id].value]));
+            return{kind:'lesson',...fields,sampleOnly:!lessonCustomized,stage:lessonStage};
+        }
+        inputs.forEach(id=>elements['in_'+id].addEventListener('input',()=>{
+            lessonCustomized=true;
+            try{localStorage.setItem(lessonStorageKey,JSON.stringify({version:1,customized:true,fields:Object.fromEntries(inputs.map(key=>[key,elements['in_'+key].value]))}))}catch{}
+        }));
+        window.GulliverTeacherLiveSnapshot=lessonCapture;
+        window.GulliverTeacherDisplay?.register({
+            kind: 'lesson',
+            getSnapshot() {
+                const {subject, unit, page, topic, objective, act1, act2, act3, wrapup,stage} = lessonCapture();
+                return {kind: 'lesson', subject, unit, page, topic, objective, act1, act2, act3, wrapup,stage};
+            }
+        });
+
         // 전체화면 및 프레젠테이션 모드 전환
         let isFullscreen = false;
         function toggleFullscreen() {
@@ -319,7 +470,7 @@
 
             if (!isFullscreen) {
                 controlPanel.classList.add('hidden');
-                btnFullscreen.innerHTML = '<i class="ph-bold ph-corners-in text-xl"></i> 수정하기 (전체화면 종료)';
+                btnFullscreen.innerHTML = '<i class="ph-bold ph-corners-in text-xl"></i> 수정하기';
                 
                 if (document.documentElement.requestFullscreen) {
                     document.documentElement.requestFullscreen().catch(err => {
@@ -331,7 +482,7 @@
                 board.classList.add('max-w-[1600px]', 'w-[90vw]');
             } else {
                 controlPanel.classList.remove('hidden');
-                btnFullscreen.innerHTML = '<i class="ph-bold ph-corners-out text-xl"></i> 수업 시작 (전체화면)';
+                btnFullscreen.innerHTML = '<i class="ph-bold ph-corners-out text-xl"></i> 이 창으로 보여주기';
                 
                 if (document.fullscreenElement && document.exitFullscreen) {
                     document.exitFullscreen().catch(err => console.warn(err));
@@ -341,13 +492,19 @@
                 board.classList.add('max-w-[1200px]');
             }
             isFullscreen = !isFullscreen;
+            document.body.classList.toggle('student-view',isFullscreen);
         }
+
+        document.getElementById('v61LessonStudent').addEventListener('click',()=>window.GulliverTeacherDisplay?.open());
+        document.getElementById('v61LessonPresent').addEventListener('click',toggleFullscreen);
+        document.addEventListener('keydown',event=>{if(event.key==='Escape'&&isFullscreen&&!document.fullscreenElement)toggleFullscreen()});
 
         document.addEventListener('fullscreenchange', () => {
             if (!document.fullscreenElement && isFullscreen) toggleFullscreen();
         });
 
         // 초기화 실행
+        setLessonStage(lessonStage);
         injectStyleControls(); // 툴바 삽입
         updateBoard();         // 기본 정보/테마 삽입
         applyTextStyles();     // 기본 폰트 사이즈/정렬 적용

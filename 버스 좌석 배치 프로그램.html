@@ -32,7 +32,16 @@ textarea,input,select{width:100%;border:1px solid #dce3e1;background:#fff;border
 body.presentation .settings,body.presentation .head,body.presentation .bus-toolbar .teacher-only,body.presentation .metrics,body.presentation .result-tools,body.presentation .notice{display:none!important}body.presentation{padding-top:10px}body.presentation .layout{display:block}body.presentation .bus-panel{box-shadow:none;background:transparent;border:0;padding:0}body.presentation .bus{transform:scale(1.12);transform-origin:top center;margin-top:24px}
 @media(max-width:980px){.layout{grid-template-columns:320px minmax(0,1fr)}.settings{position:static;max-height:none}.metrics{grid-template-columns:1fr 1fr}}@media(max-width:760px){body{padding:70px 8px 28px}.layout{grid-template-columns:1fr}.settings{order:1}.bus-panel{order:0}.head{align-items:flex-start;flex-direction:column}.pair-form,.fixed-form{grid-template-columns:1fr 1fr}.pair-form .btn,.fixed-form .btn{grid-column:1/-1}.bus{min-width:420px}.bus-row{grid-template-columns:60px 60px 38px 60px 60px}.seat{width:60px;height:60px}.metrics{grid-template-columns:1fr 1fr}}
 </style>
-<script src="gulliver-shared.js?v=20261012-organized2"></script>
+<script src="gulliver-shared.js?v=20261020-ui"></script>
+<script src="classroom-bus-audit.js?v=20261024-1"></script>
+<link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
+<script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
+<script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-teacher-v62.css?v=20261019-v62">
+<script src="gulliver-teacher-display.js?v=20261019-v62"></script>
+<script src="gulliver-teacher-v62.js?v=20261020-ui"></script>
+<link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<script src="gulliver-app-shell.js?v=20261020-1"></script>
 </head>
 <body>
 <div class="app">
@@ -81,6 +90,7 @@ body.presentation .settings,body.presentation .head,body.presentation .bus-toolb
 
       <button class="btn primary" id="generateBtn" style="width:100%;padding:12px">✨ 좋은 자리 배치 찾기</button>
       <div class="toolbar" style="margin-top:7px"><button class="btn green" id="confirmBtn" style="flex:1">✓ 이번 버스 자리 확정</button><button class="btn danger" id="clearHistoryBtn">기록 지우기</button></div>
+      <div id="busSafetyNote" class="notice" role="note">승차 전 실제 버스 좌석·통로·비상구·인솔자 위치를 확인하고, 좌석별 안전벨트 및 보호가 필요한 학생의 위치를 현장에서 점검하세요. 이 도구의 10열 × 4석은 편성용 예시이며 차량 안전 검사를 대신하지 않습니다.</div>
       <div class="notice" id="notice">우리 반 명단을 불러오거나 학생 이름을 입력하세요.</div>
     </aside>
 
@@ -175,6 +185,13 @@ function samePairSeats(a,b){return a>=0&&b>=0&&pairMateIndex(a)===b}
 function pairIsDisabled(i){const mate=pairMateIndex(i);return state.disabled[i]||state.disabled[mate]}
 function fixedSeatEntries(){return Object.entries(state.fixedSeats).map(([id,seat])=>({id:String(id),seat:Number(seat)})).filter(x=>studentById(x.id)&&!state.disabled[x.seat])}
 function setNotice(text,type=""){$("notice").textContent=text;$("notice").className="notice"+(type?" "+type:"")}
+function auditBusResult(arr=state.assignment){
+  return GulliverBusAudit.validateBusPlacement({
+    students:state.students,assignment:arr,disabled:state.disabled,fixedSeats:state.fixedSeats,
+    avoidPairs:state.avoidPairs,togetherPairs:state.togetherPairs,
+    sharedAvoidPairs:sharedRelations.filter(r=>(r.tags||[]).includes('avoid')).map(r=>[r.a,r.b])
+  });
+}
 function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function historyPenalty(arr){
   if(!state.historyMode)return 0;let p=0;const hist=getHistory();
@@ -290,6 +307,8 @@ function optimize(){
 function validate(){
   if(!state.students.length)return"학생 명단이 없습니다.";
   const active=activeSeats();if(state.students.length>active.length)return"학생 "+state.students.length+"명인데 사용할 수 있는 좌석은 "+active.length+"개입니다.";
+  const setup=GulliverBusAudit.validateBusRules(state);
+  if(!setup.ok)return setup.issues[0];
   const fixed=fixedSeatEntries(),seatSet=new Set();for(const x of fixed){if(seatSet.has(x.seat))return"같은 좌석에 학생 두 명이 고정되어 있습니다.";seatSet.add(x.seat)}
   for(const [a,b] of state.togetherPairs){
     if(state.avoidPairs.some(p=>pairKey(p[0],p[1])===pairKey(a,b)))return"같이 앉히기와 떨어뜨리기 조건이 서로 충돌합니다.";
@@ -309,6 +328,8 @@ function generate(){
   parseStudents();refreshShared();state.sameGender=$("sameGenderMode").checked;state.historyMode=$("historyMode").checked;state.backRowDisabled=$("backRowDisabled").checked;applyBackRowSetting();save();
   const err=validate();if(err){setNotice(err,"bad");renderAll();return}
   const result=optimize();if(!result){setNotice("현재 조건으로 자리를 만들지 못했습니다.","bad");return}
+  const audit=auditBusResult(result.arr);
+  if(!audit.ok){setNotice('완전한 자리 배치를 만들지 못했어요. '+audit.issues.slice(0,2).join(' · ')+' 조건을 일부 조정해 주세요.','bad');return;}
   state.assignment=result.arr;selectedStudentId=null;save();renderAll();
   const hard=result.ev.manualViolations+result.ev.sharedHardViolations+result.ev.togetherMiss;
   const parts=[];if(hard)parts.push("필수 관계 조건 일부 미충족");if(result.ev.frontMiss)parts.push("앞자리 우선 일부 미충족");if(state.sameGender&&result.ev.genderMismatch)parts.push("동성 짝 일부 미충족");if(result.ev.singletons)parts.push("혼자 앉는 짝자리 "+result.ev.singletons+"곳");
@@ -336,9 +357,16 @@ function onSeatClick(i){
     if(selectedStudentId&&selectedStudentId!==id){
       const a=state.assignment.findIndex(x=>String(x)===String(selectedStudentId)),b=i,sa=studentById(selectedStudentId),sb=studentById(id);
       if(Number(state.fixedSeats[sa.id])===a||Number(state.fixedSeats[sb.id])===b){Gulliver.toast("고정 좌석 학생은 교환할 수 없습니다.");selectedStudentId=null;renderAll();return}
-      [state.assignment[a],state.assignment[b]]=[state.assignment[b],state.assignment[a]];selectedStudentId=null;save();renderAll();
-      const ev=evaluate(state.assignment),hard=ev.manualViolations+ev.sharedHardViolations+ev.togetherMiss;
-      setNotice(hard?"두 학생을 바꿨지만 필수 관계 조건이 깨졌습니다. 다시 교환하거나 재배치해 주세요.":"두 학생의 자리를 서로 바꿨습니다.",hard?"bad":"good");return
+      [state.assignment[a],state.assignment[b]]=[state.assignment[b],state.assignment[a]];
+      const audit=auditBusResult();
+      if(!audit.ok){
+        [state.assignment[a],state.assignment[b]]=[state.assignment[b],state.assignment[a]];
+        selectedStudentId=null;renderAll();
+        setNotice('교환하지 않았어요. '+audit.issues[0],'bad');return;
+      }
+      selectedStudentId=null;save();renderAll();
+      const ev=evaluate(state.assignment);
+      setNotice(ev.frontMiss?'교환했어요. 앞자리 우선이 충족되지 않은 학생 '+ev.frontMiss+'명을 다시 확인하세요.':'두 학생을 교환했어요. 필수 조건은 유지됩니다.',ev.frontMiss?'bad':'good');return
     }
     selectedStudentId=selectedStudentId===id?null:id;renderAll();return
   }
@@ -382,6 +410,8 @@ function loadClassroom(){
 }
 function confirmResult(){
   if(!state.assignment.some(Boolean)){setNotice("먼저 자리를 배치해 주세요.","bad");return}
+  const audit=auditBusResult();
+  if(!audit.ok){setNotice('확정할 수 없어요. '+audit.issues.slice(0,3).join(' · '),'bad');return}
   const ev=evaluate(state.assignment);
   if(ev.manualViolations||ev.sharedHardViolations||ev.togetherMiss){setNotice("떨어뜨리기 또는 같이 앉히기 필수 조건이 깨져 있어 확정할 수 없습니다.","bad");return}
   for(const {id,seat} of fixedSeatEntries()){if(String(state.assignment[seat]||"")!==id){setNotice("고정 좌석 조건이 깨져 있어 확정할 수 없습니다.","bad");return}}
@@ -391,7 +421,7 @@ function confirmResult(){
   renderMetrics();setNotice("이번 버스 좌석을 확정했습니다. 다음 배정에서 같은 자리와 같은 짝을 줄이는 데 사용합니다.","good");Gulliver.toast("버스 자리표를 기록했습니다.")
 }
 function resetSeats(){if(!window.confirm("좌석 사용 설정과 결과를 초기화할까요?"))return;state.disabled=Array(ROWS*COLS).fill(false);state.assignment=Array(ROWS*COLS).fill(null);applyBackRowSetting();save();renderAll()}
-function enterPresentation(){if(!state.assignment.some(Boolean)){Gulliver.toast("먼저 자리를 배치해 주세요.");return}document.body.classList.add("presentation");$("exitPresentationBtn").style.display="inline-flex"}
+function enterPresentation(){if(!state.students.length||!state.assignment.some(Boolean)||!auditBusResult().ok){Gulliver.toast("모든 학생을 필수 조건에 맞게 배치한 뒤 발표해 주세요.");return}document.body.classList.add("presentation");$("exitPresentationBtn").style.display="inline-flex"}
 function exitPresentation(){document.body.classList.remove("presentation");$("exitPresentationBtn").style.display="none"}
 
 $("namesInput").addEventListener("change",refreshFromInput);
@@ -408,6 +438,29 @@ $("generateBtn").onclick=generate;$("confirmBtn").onclick=confirmResult;$("clear
 $("resetSeatsBtn").onclick=resetSeats;$("cancelSelectBtn").onclick=()=>{selectedStudentId=null;renderAll()};$("presentationBtn").onclick=enterPresentation;$("exitPresentationBtn").onclick=exitPresentation;$("printBtn").onclick=()=>window.print();
 
 load();applyBackRowSetting();$("namesInput").value=state.students.map(s=>s.name+(s.gender==="M"?"(남)":s.gender==="F"?"(여)":"")).join("\n");parseStudents();refreshShared();save();renderAll();
+window.GulliverTeacherLiveSnapshot=()=>{
+ const last=getHistory()[0],seats=state.assignment.map(id=>id?String(id):null),
+  ids=new Set(state.students.map(student=>String(student.id))),
+  occupied=seats.filter(Boolean),
+  same=Boolean(last)&&Array.isArray(last.seats)&&last.seats.length===40
+   &&seats.every((id,i)=>String(id||'')===String(last.seats[i]||''));
+ const confirmed=same&&auditBusResult().ok&&occupied.length===state.students.length
+  &&new Set(occupied).size===ids.size
+  &&occupied.every(id=>ids.has(id))
+  &&seats.every((id,i)=>!id||!state.disabled[i]);
+ return{kind:'bus',confirmed,
+  students:state.students.map(student=>({id:String(student.id),name:student.name})),
+  seats,disabled:state.disabled.map(Boolean)};
+};
+window.GulliverTeacherDisplay?.register({kind:'bus',getSnapshot(){
+ const names=new Map(state.students.map(s=>[String(s.id),String(s.name||'')]));
+ return{kind:'bus',ready:state.students.length>0&&state.assignment.some(Boolean)&&auditBusResult().ok,rows:ROWS,
+  seats:state.assignment.map((id,index)=>state.disabled[index]?null:(id?names.get(String(id))||'':''))};
+}});
+document.body.classList.add('gt-v62-bus');
+GulliverTeacherClassroomFlow.mount({container:document.querySelector('.app'),title:'버스 자리 배정',description:'분리·동석·앞자리 조건은 교사 화면에 남겨요.',onResult(){
+ if(!state.students.length||!state.assignment.some(Boolean)||!auditBusResult().ok){Gulliver.toast('모든 학생의 자리를 조건에 맞게 배치해 주세요.');return false;}
+}});
 Gulliver.mountShell({title:"버스 좌석 배치",icon:"🚌"});
 })();
 </script>
