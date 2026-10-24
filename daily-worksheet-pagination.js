@@ -110,13 +110,14 @@ function packGreedy(host,units,source){
  return {ok:true,pages:pages.length,issue:''};
 }
 // Contiguous partitions preserve reading sets and source order. Fit checks use actual DOM geometry.
-function balancedPlan(units,fits){
+function balancedPlan(units,fits,nearEven=false){
  const n=units.length,prefix=[0];for(const u of units)prefix.push(prefix.at(-1)+u.length);
  for(let pages=1;pages<=n;pages++){
   const target=prefix[n]/pages,dp=Array.from({length:pages+1},()=>Array(n+1).fill(null));dp[0][0]={cost:0,ends:[]};
   for(let p=1;p<=pages;p++)for(let end=p;end<=n;end++)for(let start=p-1;start<end;start++){
    const prior=dp[p-1][start];if(!prior||!fits(start,end,p===1))continue;
-   const count=prefix[end]-prefix[start],cost=prior.cost+(count-target)**2;
+   const count=prefix[end]-prefix[start];if(nearEven&&(count<Math.ceil(target-1)||count>Math.floor(target+1)))continue;
+   const cost=prior.cost+(count-target)**2;
    if(!dp[p][end]||cost<dp[p][end].cost)dp[p][end]={cost,ends:[...prior.ends,end]};
   }
   if(dp[pages][n]){let start=0;return dp[pages][n].ends.map(end=>{const range=[start,end];start=end;return range})}
@@ -142,13 +143,14 @@ function widenShortSheet(page){
  if(!canFit(page)){if(listStyle===null)list.removeAttribute('style');else list.setAttribute('style',listStyle);items.forEach((item,i)=>{if(originals[i]===null)item.removeAttribute('style');else item.setAttribute('style',originals[i])});return}
  page.article.classList.add('spread-page');
 }
+function questionsAreScience(source){return source.querySelector('#questions')?.classList.contains('science-evidence')||false}
 function pack(host,originalUnits,source){
  const cache=new Map();
  function measure(entries,first){const page=makePage(first?0:1,source);host.append(page.article);const ok=put(page,entries);page.article.remove();return ok}
  // Only split a passage group if it cannot fit intact even on a continuation sheet.
  const units=originalUnits.flatMap((unit,index)=>measure(unit,false)&&(index>0||measure(unit,true))?[unit]:unit.map(entry=>[entry]));
  const fits=(start,end,first)=>{const key=[start,end,first].join(':');if(!cache.has(key))cache.set(key,measure(units.slice(start,end).flat(),first));return cache.get(key)};
- const plan=balancedPlan(units,fits);
+ const plan=balancedPlan(units,fits,questionsAreScience(source));
  if(!plan)return packGreedy(host,originalUnits,source);
  const counts=[];
  for(const [i,[start,end]] of plan.entries()){
@@ -192,5 +194,6 @@ const api=Object.freeze({compose,getResult:()=>({...lastResult})});
 if(typeof window!=='undefined')window.DailyWorksheetA4=api;
 if(typeof module==='object'&&module.exports)module.exports={balancedPlan};
 })();
+
 
 

@@ -482,3 +482,9 @@ test('long science sheets distribute evidence rows instead of front-loading sour
  const C=require('../daily-worksheet-core');for(const [topic,,grade] of C.SUBJECTS.science.topics)for(const count of [15,20])for(const seed of [1,42,1337]){
  const sheet=C.generate({subject:'science',topic,grade,count,seed}),middle=Math.ceil(count/2),front=sheet.items.slice(0,middle).filter(q=>q.scienceMaterial).length,back=sheet.items.slice(middle).filter(q=>q.scienceMaterial).length;assert.ok(front>=2&&back>=2,topic);assert.ok(Math.abs(front-back)<=2,topic);assert.ok(sheet.items[0].scienceMaterial);assert.equal(new Set(sheet.items.map(q=>q.scienceId)).size,count);
  }});
+
+test('science pagination uses another page when the minimum-page split is badly uneven',()=>{
+ const {balancedPlan}=require('../daily-worksheet-pagination'),units=Array.from({length:20},()=>[{}]),fits=(start,end,first)=>end-start<=(first?8:12);
+ assert.deepEqual(balancedPlan(units,fits).map(([a,b])=>b-a),[8,12]);
+ const balanced=balancedPlan(units,fits,true).map(([a,b])=>b-a);assert.equal(balanced.reduce((a,b)=>a+b,0),20);assert.equal(balanced.length,3);assert.ok(Math.max(...balanced)-Math.min(...balanced)<=1);
+});
