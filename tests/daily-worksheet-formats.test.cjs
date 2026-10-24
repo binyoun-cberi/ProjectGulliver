@@ -90,6 +90,7 @@ test('browser dropdown and actual A4 student/teacher layouts reflect the selecte
   await page.selectOption('#unit','k4-vocabulary');
   await page.selectOption('#topic','vocabulary');
   assert.equal(await page.locator('#responseSetting').isVisible(),true);
+  assert.equal(await page.locator('#topicSetting').isVisible(),true,'show actual multiple learning content choices');
   assert.equal(await page.locator('#typeSetting').isVisible(),false,'word banks are not response formats');
   assert.deepEqual(await page.locator('#responseFormat option').evaluateAll(nodes=>nodes.map(x=>x.textContent)),['객관식 (보기 고르기)','OX형','단답형','서술형']);
   for(const mode of ['ox','short','essay','choice']){
@@ -110,6 +111,7 @@ test('browser dropdown and actual A4 student/teacher layouts reflect the selecte
   assert.equal(await page.locator('#responseSetting').isVisible(),false);
   assert.equal(await page.locator('#typeSetting').isVisible(),true);
   await page.locator('input[name="subject"][value="english"]').check();
+  assert.equal(await page.locator('#unitSetting').isVisible(),false,'do not show an empty unit selector for English');
   await page.selectOption('#grade','3');
   await page.selectOption('#topic','sentence');
   assert.deepEqual(await page.locator('#responseFormat option').evaluateAll(nodes=>nodes.map(x=>x.value)),['short']);
