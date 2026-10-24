@@ -75,6 +75,7 @@
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
 <script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
 <link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
+<link rel="stylesheet" href="lesson-notice-flow.css?v=20261024-a1">
 <script src="gulliver-app-shell.js?v=20261020-1"></script>
 </head>
 <body class="v61-lesson flex h-screen w-screen overflow-hidden text-gray-800">
@@ -88,6 +89,7 @@
             <div id="deco-2" class="absolute -bottom-32 -left-20 w-96 h-96 rounded-full opacity-20 theme-transition"></div>
 
             <div class="relative z-10 flex flex-col h-full">
+                <span id="lessonStageBadge" aria-live="polite">전체 수업</span>
                 <!-- 상단: 과목 뱃지 & 쪽수 -->
                 <div class="flex justify-between items-center mb-4 flex-shrink-0">
                     <div id="badge-subject" class="flex items-center gap-2 px-6 py-2 rounded-full text-2xl font-title text-white shadow-md theme-transition">
@@ -180,6 +182,24 @@
                     <button id="v61LessonPresent" type="button" class="gt-v61-button gt-v61-button--primary" style="flex:1">② 이 창으로 실행</button>
                 </div>
             </div>
+            <section class="lesson-stage-panel" aria-label="수업 진행 단계">
+                <h3>수업 진행 화면</h3>
+                <p>전체 안내를 띄우거나 지금 진행하는 활동만 크게 보여줄 수 있어요.</p>
+                <div id="lessonStageTabs" class="lesson-stage-tabs" role="group" aria-label="학생에게 보여줄 단계">
+                  <button type="button" data-stage="all" aria-pressed="true">전체</button>
+                  <button type="button" data-stage="intro">도입</button>
+                  <button type="button" data-stage="act1">활동 1</button>
+                  <button type="button" data-stage="act2">활동 2</button>
+                  <button type="button" data-stage="act3">활동 3</button>
+                  <button type="button" data-stage="wrapup">정리</button>
+                </div>
+                <div class="lesson-stage-actions">
+                  <button id="lessonStagePrevious" type="button">← 이전</button>
+                  <span id="lessonStageStatus" role="status">전체 수업</span>
+                  <button id="lessonStageNext" type="button">다음 →</button>
+                </div>
+                <a class="lesson-time-link" href="시간 도구.html" target="_blank" rel="noopener">시간 도구 열기 ↗</a>
+            </section>
             <div>
                 <label class="block text-sm font-bold text-gray-600 mb-1">과목 선택 (테마 변경)</label>
                 <select id="input-subject" class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-lg cursor-pointer">
@@ -372,6 +392,48 @@
             elements[`in_${id}`].addEventListener('input', updateBoard);
         });
 
+        // A stage is separate from the saved lesson contents: simply changing
+        // slides must never mark the preloaded example as a customized lesson.
+        const lessonStageKey='gulliver.lessonNotice.stage.v1';
+        const lessonStages=['all','intro','act1','act2','act3','wrapup'];
+        const lessonStageNames={all:'전체 수업',intro:'도입 · 학습 목표',act1:'활동 1',act2:'활동 2',act3:'활동 3',wrapup:'정리'};
+        let lessonStage='all';
+        try{
+          const savedStage=localStorage.getItem(lessonStageKey);
+          if(lessonStages.includes(savedStage))lessonStage=savedStage;
+        }catch{}
+        function setLessonStage(stage){
+          if(!lessonStages.includes(stage))return;
+          lessonStage=stage;
+          document.getElementById('board').dataset.lessonStage=stage;
+          document.getElementById('lessonStageBadge').textContent=lessonStageNames[stage];
+          document.getElementById('lessonStageStatus').textContent=lessonStageNames[stage];
+          for(const button of document.querySelectorAll('#lessonStageTabs [data-stage]')){
+            button.setAttribute('aria-pressed',String(button.dataset.stage===stage));
+          }
+          document.getElementById('lessonStagePrevious').disabled=stage===lessonStages[0];
+          document.getElementById('lessonStageNext').disabled=stage===lessonStages.at(-1);
+          try{localStorage.setItem(lessonStageKey,stage)}catch{}
+          window.GulliverTeacherDisplay?.refresh();
+        }
+        function moveLessonStage(direction){
+          const index=lessonStages.indexOf(lessonStage);
+          setLessonStage(lessonStages[Math.max(0,Math.min(lessonStages.length-1,index+direction))]);
+        }
+        document.getElementById('lessonStageTabs').addEventListener('click',event=>{
+          const button=event.target.closest('[data-stage]');
+          if(button)setLessonStage(button.dataset.stage);
+        });
+        document.getElementById('lessonStagePrevious').onclick=()=>moveLessonStage(-1);
+        document.getElementById('lessonStageNext').onclick=()=>moveLessonStage(1);
+        document.addEventListener('keydown',event=>{
+          if(!document.body.classList.contains('student-view'))return;
+          if(event.altKey||event.ctrlKey||event.metaKey)return;
+          if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
+          if(event.key==='ArrowRight'||event.key==='PageDown'){event.preventDefault();moveLessonStage(1);}
+          if(event.key==='ArrowLeft'||event.key==='PageUp'){event.preventDefault();moveLessonStage(-1);}
+        });
+
         // Preserve only the teacher's actual edits, not the preloaded example lesson.
         const lessonStorageKey='gulliver.lessonNotice.v1';
         let lessonCustomized=false;
@@ -384,7 +446,7 @@
         }catch{}
         function lessonCapture(){
             const fields=Object.fromEntries(inputs.map(id=>[id,elements['in_'+id].value]));
-            return{kind:'lesson',...fields,sampleOnly:!lessonCustomized};
+            return{kind:'lesson',...fields,sampleOnly:!lessonCustomized,stage:lessonStage};
         }
         inputs.forEach(id=>elements['in_'+id].addEventListener('input',()=>{
             lessonCustomized=true;
@@ -394,8 +456,8 @@
         window.GulliverTeacherDisplay?.register({
             kind: 'lesson',
             getSnapshot() {
-                const {subject, unit, page, topic, objective, act1, act2, act3, wrapup} = lessonCapture();
-                return {kind: 'lesson', subject, unit, page, topic, objective, act1, act2, act3, wrapup};
+                const {subject, unit, page, topic, objective, act1, act2, act3, wrapup,stage} = lessonCapture();
+                return {kind: 'lesson', subject, unit, page, topic, objective, act1, act2, act3, wrapup,stage};
             }
         });
 
@@ -442,6 +504,7 @@
         });
 
         // 초기화 실행
+        setLessonStage(lessonStage);
         injectStyleControls(); // 툴바 삽입
         updateBoard();         // 기본 정보/테마 삽입
         applyTextStyles();     // 기본 폰트 사이즈/정렬 적용
