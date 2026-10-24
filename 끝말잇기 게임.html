@@ -485,6 +485,7 @@
     let staticDictionaryReady = false;
     let dictionaryInitPromise = null;
     let inputCheckSeq = 0;
+    let submitInFlight = false;
     let audioCtx = null;
     let state = makeInitialState();
 
@@ -608,6 +609,7 @@
     }
 
     function startGame(){
+      ++inputCheckSeq;submitInFlight=false;els.submitBtn.disabled=false;els.acceptBtn.disabled=false;
       const names = parseNames(els.namesInput.value);
       if(names.length < 2){ alert('학생 이름을 2명 이상 입력해 주세요.'); return; }
       stopTimer();
@@ -646,7 +648,8 @@
     }
 
     function chooseNext(withSnapshot=true){
-      if(!state.running || state.ended) return;
+      if(!state.running||state.ended)return;
+      ++inputCheckSeq;
       if(withSnapshot) saveSnapshot();
       stopTimer();
       state.paused = false;
@@ -701,9 +704,14 @@
     }
 
     async function submitWord(manual=false){
-      if(!state.running || state.ended) return;
-      const word = cleanWord(els.wordInput.value);
-      const result = await validateWord(word, true);
+      if(!state.running || state.ended || state.paused || submitInFlight)return;
+      const word=cleanWord(els.wordInput.value);
+      const turn=state.currentId,round=state.round,last=state.lastWord;
+      submitInFlight=true;els.submitBtn.disabled=true;els.acceptBtn.disabled=true;
+      let result;
+      try{result=manual?{ok:true}:await validateWord(word,true);}
+      finally{submitInFlight=false;els.submitBtn.disabled=false;els.acceptBtn.disabled=false;}
+      if(!state.running||state.ended||state.paused||state.currentId!==turn||state.round!==round||state.lastWord!==last||cleanWord(els.wordInput.value)!==word)return;
       if(!manual && !result.ok){
         state.lastPendingWord = word;
         showJudge(result.message, result.level || 'no');
@@ -757,7 +765,7 @@
     }
 
     function wrongTurn(reason='다시 말하기'){
-      if(!state.running || state.ended) return;
+      if(!state.running||state.ended||state.paused)return;
       saveSnapshot();
       const team = currentTeam();
       if(state.mode === 'team'){
@@ -773,16 +781,18 @@
     }
 
     function skipTurn(){
-      if(!state.running || state.ended) return;
+      if(!state.running||state.ended||state.paused)return;
       saveSnapshot();
       showJudge('차례를 넘겼습니다. 하트는 줄지 않습니다.', 'wait');
       chooseNext(false);
     }
 
     function manualMissionSuccess(){
-      if(!state.running || state.ended) return;
-      const latest = state.records[state.records.length-1];
-      if(!latest || latest.start){ showJudge('먼저 단어를 통과시킨 뒤 미션 성공을 눌러 주세요.', 'wait'); return; }
+      if(!state.running||state.ended||state.paused)return;
+      const latest=state.records[state.records.length-1];
+      if(!latest||latest.start||latest.mission||!els.missionOn.checked){
+        showJudge('현재 단어에 추가할 미션 보너스가 없어요. 한 단어에는 한 번만 추가할 수 있어요.','wait');return;
+      }
       saveSnapshot();
       const team = latest.team || currentTeam();
       if(state.mode === 'team'){
@@ -858,10 +868,10 @@
     }
     function stopTimer(){ if(state.timerId){ clearInterval(state.timerId); state.timerId = null; } }
     function togglePause(){
-      if(!state.running || !els.timerOn.checked) return;
+      if(!state.running)return;
       state.paused = !state.paused;
-      if(state.paused){ stopTimer(); els.pauseBtn.textContent = '▶ 다시 시작'; }
-      else { stopTimer(); state.timerEndsAt = Date.now() + state.secondsLeft*1000; runTimerLoop(); els.pauseBtn.textContent = '⏸ 일시정지'; }
+      if(state.paused){stopTimer();els.pauseBtn.textContent='▶ 다시 시작';}
+      else {stopTimer();if(els.timerOn.checked){state.timerEndsAt=Date.now()+state.secondsLeft*1000;runTimerLoop();}els.pauseBtn.textContent='⏸ 일시정지';}
       render();
     }
 
@@ -1006,8 +1016,8 @@
       localStorage.setItem('wordChainSimpleSettings', JSON.stringify({names:els.namesInput.value, mode:els.gameMode.value, timer:els.timerSeconds.value, target:els.targetWords.value, hearts:els.heartsInput.value, timerOn:els.timerOn.checked, dictionaryOn:els.dictionaryOn.checked, initialLaw:els.initialLaw.checked, missionOn:els.missionOn.checked, soundOn:els.soundOn.checked}));
     }
     function loadSettings(){
-      const data = JSON.parse(localStorage.getItem('wordChainSimpleSettings') || 'null');
-      if(!data) return;
+      let data=null;try{data=JSON.parse(localStorage.getItem('wordChainSimpleSettings')||'null');}catch{showJudge('이전에 저장한 설정을 읽을 수 없어요.','wait');}
+      if(!data||typeof data!=='object')return;
       els.namesInput.value = data.names || '';
       els.gameMode.value = data.mode || 'coop';
       els.timerSeconds.value = data.timer || 20;
