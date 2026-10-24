@@ -268,3 +268,10 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
 .print-paper .science-material figcaption,.print-paper .science-material table{font-size:9pt}
 .print-paper .science-material th,.print-paper .science-material td{padding:1.3mm 2mm}
 .print-paper .science-note{font-size:8pt}
+
+.print-paper .print-question-list.science-evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4mm 7mm;list-style:decimal outside;padding-left:7mm}
+.print-paper .science-evidence>li{min-width:0;padding-left:2px;box-sizing:border-box}
+.print-paper .science-evidence .choice-list{grid-template-columns:1fr;font-size:11px;line-height:1.4;gap:1px;margin-top:5px}
+.print-paper .science-evidence .choice-list>li{padding:1px 0}
+.print-paper .science-evidence .answer-explanation{font-size:10px;line-height:1.5}
+.large-print .print-paper .print-question-list.science-evidence{grid-template-columns:1fr}
