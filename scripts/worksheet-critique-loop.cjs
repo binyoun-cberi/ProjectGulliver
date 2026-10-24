@@ -165,6 +165,12 @@ if (require.main === module) {
   fs.writeFileSync(path.join(fsOut,'review.md'),markdown(r));
   console.log('Worksheet critique: '+r.examined+'/'+r.cases+' sheets, '+r.questions+' questions, '+
     r.errors.length+' invariant errors; qualitative warnings only appear in report');
-  if (r.errors.length) process.exitCode=1;
+  if (r.errors.length) {
+    const frequencies={};
+    for(const issue of r.errors)frequencies[issue.problem]=(frequencies[issue.problem]||0)+1;
+    console.error('Worksheet critique errors by category: '+JSON.stringify(frequencies));
+    console.error('First failures: '+JSON.stringify(r.errors.slice(0,20)));
+    process.exitCode=1;
+  }
 }
 module.exports={qualityRisks,optionsFor,buildCases,review,markdown};
