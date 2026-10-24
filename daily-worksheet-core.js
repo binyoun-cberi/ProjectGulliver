@@ -2,7 +2,7 @@
 'use strict';
 const SUBJECTS={
  korean:{name:'국어',grades:[1,2,3,4,5,6],topics:[['opposite','반대말 찾기',1],['spacing','바른 띄어쓰기',2],['reading','글 읽고 답하기',1],['mainidea','짧은 글의 중심 내용',1,2],['vocabulary','문장 속 낱말의 뜻',3],['idiom','관용 표현과 속담',3],['hanja','한자어의 뜻',5],['reading-set','한 글을 읽고 여러 문제 풀기',1]]},
- math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['math-mix','유형 골라 섞기',1],['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['hundreds','세 자리 수 덧셈',3,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3],['mixed','자연수의 혼합 계산',5,5],['decimal','소수의 계산',5,6]]},
+ math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['math-mix','유형 골라 섞기',1],['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['shape','도형의 성질',1],['measurement','길이와 들이',2],['data-reading','표와 자료 읽기',3],['hundreds','세 자리 수 덧셈',3,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3],['mixed','자연수의 혼합 계산',5,5],['decimal','소수의 계산',5,6]]},
  social:{name:'사회',grades:[3,4,5,6],topics:[['direction','방향과 위치',3],['community','우리 사회의 일',3],['economy','생산과 소비',4],['past','생활 속 옛 모습',3,4],['local','지역의 변화',3,4],['map-symbol','지도와 공간',3,4],['natural','자연환경과 생활',3,4],['human','인문환경과 생활',3,4],['cultural','지역의 문화유산',3,4],['family','가족과 생활 변화',3,4],['community-rules','공동체와 규칙',3,4],['local-gov','지역의 공공 기관',3,4],['transport','교통과 지역 간 교류',3,4],['prehistoric','선사와 고조선',5],['ancient','삼국·가야의 유적',5],['goryeo','고려',5],['joseon','조선',5],['modern','일제 강점기·광복·전쟁',5],['history-mix','시대 골라 섞기',5],['history-review','한국사 종합',5],['korea-geography','우리 국토와 인구',5],['democracy','민주주의와 참여',5],['rights','인권과 헌법',5],['government','국가기관과 법',5],['market','경제생활과 시장',5],['world-geography','세계의 지리와 문화',5],['international','세계의 교류와 갈등',5],['environment','환경과 지속가능성',5],['contemporary','광복 이후의 대한민국',5]]},
  science:{name:'과학',grades:[3,4,5,6],topics:[['living','생물과 비생물',3],['matter','물질의 상태',3],['plant-observation','식물의 한살이 관찰',3,4],['weather','날씨 관찰 도구',5],['ecosystem','생태계 자료 읽기',5]]},
  english:{name:'영어',grades:[3,4,5,6],topics:[['words','기본 낱말',3],['sentence','문장 만들기',3],['conversation','상황에 맞는 대답',3],['short-reading','짧은 글 읽기',3,4],['message-reading','안내문·메시지 읽기',5]]}
@@ -1054,6 +1054,27 @@ function item(subject,topic,grade,r,difficulty,variant){
   const [passage,questions]=pick(READING_PASSAGES,r),[question,answer,options]=pick(questions,r);return choice(question,answer,options,r,passage);
  }
  if(subject==='math'){
+  if(topic==='shape'){
+   const n=pick(grade<=2?[3,4]:[3,4,5,6],r),name={3:'삼각형',4:'사각형',5:'오각형',6:'육각형'}[n],mode=int(0,3,r);
+   if(mode===0){const context=pick(['종이에서 찾은','막대로 만든','모눈종이에 그린','점들을 이어 그린','칠판에 그린'],r);return{prompt:`${context} 도형의 이름을 쓰세요.`,shapeSides:n,answer:name,choices:[],explanation:`그림의 변과 꼭짓점이 각각 ${n}개인 다각형은 ${name}입니다.`}}
+   if(mode===1){const count=int(2,7,r);return{prompt:`서로 닿지 않는 ${name} ${count}개를 그렸습니다. 꼭짓점은 모두 몇 개인가요?`,answer:String(count*n),choices:[],explanation:`도형 하나에 ${n}개씩이므로 ${n}×${count}=${count*n}개입니다.`}}
+   if(mode===2){const count=int(2,6,r);return{prompt:`${name} ${count}개를 그렸습니다. 각 도형의 꼭짓점은 몇 개인가요?`,answer:String(n),choices:[],explanation:`개수와 관계없이 ${name} 하나의 꼭짓점 수는 ${n}개입니다.`}}
+   const missing=int(1,n-1,r);return{prompt:`${name}의 변 ${missing}개를 그렸습니다. 완성하려면 변을 몇 개 더 그려야 하나요?`,answer:String(n-missing),choices:[],explanation:`전체 ${n}개에서 ${missing}개를 뺍니다.`};
+  }
+  if(topic==='measurement'){
+   const a=int(3,grade<=2?80:90,r),b=int(1,grade<=2?20:40,r),unit=grade<=2?'cm':grade<=4?'m':'L',thing=grade<=2?'리본':grade<=4?'줄':'물통의 물',mode=int(0,3,r);
+   if(mode===0)return{prompt:`${thing} ${a+b}${unit}에서 ${b}${unit}를 ${grade<=4?'사용했습니다':'덜어 냈습니다'}. 남은 양은?`,answer:`${a}${unit}`,choices:[],explanation:`${a+b}-${b}=${a}${unit}입니다.`};
+   if(mode===1)return{prompt:`${a}${unit}와 ${b}${unit} 중 더 큰 양은?`,answer:`${Math.max(a,b)}${unit}`,choices:[],explanation:'같은 단위의 수를 비교합니다.'};
+   if(mode===2)return{prompt:`${a}${unit}에 ${b}${unit}를 더하면?`,answer:`${a+b}${unit}`,choices:[],explanation:`${a}+${b}=${a+b}${unit}입니다.`};
+   return{prompt:`${a}${unit}와 ${b}${unit}의 차이는?`,answer:`${Math.abs(a-b)}${unit}`,choices:[],explanation:'큰 양에서 작은 양을 뺍니다.'};
+  }
+  if(topic==='data-reading'){
+   const a=int(2,20,r),b=int(2,20,r),c=int(2,20,r),detail=`사과 ${a}개 · 배 ${b}개 · 귤 ${c}개`,mode=int(0,3,r);
+   if(mode===0){const max=Math.max(a,b,c);return{prompt:'표에서 가장 많은 항목을 모두 쓰세요.',detail,answer:[['사과',a],['배',b],['귤',c]].filter(([,v])=>v===max).map(([label])=>label).join('와 '),choices:[],explanation:'가장 큰 값과 같은 항목을 모두 찾습니다.'}}
+   if(mode===1)return{prompt:'표에 나온 과일은 모두 몇 개인가요?',detail,answer:String(a+b+c),choices:[],explanation:`${a}+${b}+${c}=${a+b+c}개입니다.`};
+   if(mode===2)return{prompt:'사과와 배는 몇 개 차이인가요?',detail,answer:String(Math.abs(a-b)),choices:[],explanation:`${Math.max(a,b)}-${Math.min(a,b)}=${Math.abs(a-b)}개입니다.`};
+   return{prompt:'귤은 사과보다 몇 개 더 많거나 적나요? 차이를 쓰세요.',detail,answer:String(Math.abs(c-a)),choices:[],explanation:`${Math.max(c,a)}-${Math.min(c,a)}=${Math.abs(c-a)}개입니다.`};
+  }
   if(topic==='addition')return arithmetic(grade,difficulty,r);
   if(topic==='hundreds'){
    const hundreds=int(1,8,r),tens=int(0,9,r),ones=variant==='ones'?int(0,9,r):0,a=hundreds*100+tens*10+ones;
