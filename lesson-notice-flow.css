@@ -22,6 +22,7 @@ body.v61-lesson{--lesson-accent:#147864;font-family:"Pretendard","Apple SD Gothi
 .lesson-time-link{display:inline-flex;text-decoration:none;justify-content:center;align-items:center;min-height:39px;border-radius:10px;color:#16705a;background:#e1f4eb;font-size:13px;font-weight:850}
 .lesson-time-link:focus-visible,.lesson-stage-panel button:focus-visible{outline:3px solid #76beae;outline-offset:2px}
 .v61-lesson #board[data-lesson-stage="intro"] #bg-act1,.v61-lesson #board[data-lesson-stage="intro"] #bg-act2,.v61-lesson #board[data-lesson-stage="intro"] #bg-act3,.v61-lesson #board[data-lesson-stage="intro"] #bg-wrapup{display:none!important}
+.v61-lesson #board[data-lesson-stage="intro"]>div:last-child>div:nth-child(4){display:none!important}
 .v61-lesson #board[data-lesson-stage="intro"] #bg-objective{flex:1;min-height:35%;justify-content:center}
 .v61-lesson #board[data-lesson-stage="intro"] #display-objective{font-size:clamp(20px,3.6vw,47px)!important;line-height:1.45}
 .v61-lesson #board[data-lesson-stage="act1"] #bg-objective,.v61-lesson #board[data-lesson-stage="act2"] #bg-objective,.v61-lesson #board[data-lesson-stage="act3"] #bg-objective,.v61-lesson #board[data-lesson-stage^="act"] #bg-wrapup{display:none!important}
