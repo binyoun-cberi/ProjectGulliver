@@ -38,3 +38,61 @@ button,select{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-vi
 @media print{.teacher-qr svg{width:62px;height:62px;margin:0 auto}.teacher-qr span{display:none}.teacher-qr{align-self:center}}
 .history-photo{margin:10px 0;break-inside:avoid}.history-photo img{display:block;width:100%;max-width:320px;height:170px;object-fit:contain;background:#fff}.history-photo figcaption{font-size:10px;line-height:1.4;margin-top:4px;color:#555}.history-photo a{color:inherit}.history-photo + .question-detail{letter-spacing:normal}
 @media print{.history-photo img{height:42mm;max-width:80mm}.history-photo figcaption{font-size:8pt}.history-photo a{color:#000;text-decoration:none}}
+
+
+/* A4-native pagination: each question is measured before being placed on a page. */
+.print-pages{display:none}
+.print-pages.is-measuring{display:block;position:absolute;left:-12000px;top:0;visibility:hidden;width:186mm;z-index:-1}
+.print-pages .print-paper{
+  width:186mm!important;height:273mm!important;min-height:273mm!important;max-width:186mm!important;
+  box-sizing:border-box;position:relative;margin:0;padding:0 0 12mm!important;
+  box-shadow:none;overflow:visible;background:white;
+}
+.print-paper .print-question-list{margin:5mm 0 0;padding-left:7mm}
+.print-paper .print-question-list>li{padding-bottom:10px;break-inside:avoid;page-break-inside:avoid}
+.print-paper .print-page-footer{position:absolute;bottom:1mm;left:0;right:0;margin:0;border-top:1px solid #d6dfdb;padding-top:2mm;text-align:right;color:#5e6c69;font-size:10px}
+.print-paper .print-continuation-title{font-size:17px;margin:10px 0 7px}
+.print-paper .reading-next-page{break-before:auto!important;page-break-before:auto!important}
+.print-paper .calculation-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:30mm;grid-auto-flow:row;gap:2mm 3mm;list-style:none;margin:5mm 0 0;padding:0}
+.print-paper .calculation-grid>li{position:relative;min-width:0;padding:5mm 1mm 1mm 4mm!important}
+.print-paper .calculation-grid .vertical-operation{font-size:23px;letter-spacing:.06em}
+.print-paper .calculation-grid .calculation-number{width:20px;height:20px}
+.print-paper .compact-questions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2.8mm 7mm;list-style:decimal outside;margin:5mm 0 0;padding-left:7mm}
+.print-paper .compact-questions>li{min-width:0;margin:0;padding:0 0 3px 2px!important;font-size:12px;line-height:1.24}
+.print-paper .compact-questions .choice-list{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:5px;gap:2px 4px;font-size:11px;line-height:1.3}
+.print-paper .compact-questions .choice-list li{padding:0;min-width:0}
+.print-paper .compact-questions .question-detail{font-size:11px;padding:5px 7px;margin-top:5px;line-height:1.3}
+.print-paper .compact-questions .answer-blank{margin-top:8px}
+.print-paper .compact-questions .inline-answer{margin-top:5px;font-size:11px;line-height:1.25}
+.print-paper .compact-questions .answer-explanation{font-size:10px}
+.print-paper .paper-instruction{margin:8px 0 0}
+.print-paper .paper-standard{margin:0 0 6px}
+.print-paper .teacher-qr{display:none}
+body.print-answers .print-paper .teacher-qr:not([hidden]){display:block}
+.print-paper .inline-answer{display:none!important}
+body.print-answers .print-paper .inline-answer{display:block!important}
+.print-paper .result-answer{visibility:hidden!important}
+body.print-answers .print-paper .result-answer{visibility:visible!important}
+.large-print .print-paper .compact-questions>li{font-size:15px;line-height:1.3}
+.large-print .print-paper .compact-questions .choice-list{font-size:14px}
+.large-print .print-paper .calculation-grid{grid-auto-rows:33mm}
+.large-print .print-paper .calculation-grid .vertical-operation{font-size:26px}
+@media print{
+  #questionSheet{display:none!important}
+  .paper-stack{display:block!important;gap:0!important}
+  .print-pages,.print-pages.is-measuring{display:block!important;position:static!important;left:auto!important;visibility:visible!important;width:186mm!important;z-index:auto!important}
+  .print-pages .print-paper{break-after:page;page-break-after:always;break-inside:avoid-page;page-break-inside:avoid}
+  .print-pages .print-paper:last-child{break-after:auto;page-break-after:auto}
+  .print-paper .inline-answer{display:none!important}
+  body.print-answers .print-paper .inline-answer{display:block!important}
+  .print-paper .result-answer{visibility:hidden!important}
+  body.print-answers .print-paper .result-answer{visibility:visible!important}
+  .print-paper .teacher-qr{display:none!important}
+  body.print-answers .print-paper .teacher-qr:not([hidden]){display:block!important}
+  body.print-answers .print-paper .paper-topline::after{content:'교사용 정답';color:#1268b2;font-size:10px}
+  .print-paper .history-photo img{height:35mm;max-width:75mm}
+  .print-paper .history-photo{margin:5px 0}
+  .print-paper .reading-text{margin:0 0 12px -10px;padding:12px 14px}
+  .print-paper .reading-text p{font-size:12px;line-height:1.6}
+  .print-paper .reading-question{padding-bottom:6px!important;margin-bottom:4px}
+}
