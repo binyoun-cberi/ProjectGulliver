@@ -257,11 +257,11 @@
             config.title = state.title || config.title;
             config.options = (state.options || []).map(o => ({ ...o, id: coerceId(o.id) }));
             if (!config.options.some(o => o.id === selectedOptionId)) selectedOptionId = config.options[0]?.id ?? null;
-            const maxSeat = Math.max(0, ...(state.students || []).map(s => Number(s.id)).filter(Number.isFinite));
+            const maxSeat = Math.max(0, ...(state.students || []).map(s => Number(s.id)).filter(n=>Number.isSafeInteger(n)&&n>=0&&n<=200));
             const names = Array(Math.max(config.students.length, maxSeat + 1)).fill('');
             (state.students || []).forEach((s, i) => {
-                const idx = Number.isFinite(Number(s.id)) ? Number(s.id) : i;
-                names[idx] = s.name;
+                const id=Number(s.id),idx=Number.isSafeInteger(id)&&id>=0&&id<=200?id:i;
+                if(idx<=200)names[idx]=String(s.name||'').slice(0,60);
             });
             config.students = names;
             votes = {};
@@ -300,7 +300,11 @@
                 try { applyOnlineState(JSON.parse(event.data)); } catch {}
             };
             ws.onclose = () => {
-                if (onlineRoom) onlineReconnectTimer = setTimeout(connectTeacherSocket, 1600);
+                if(ws!==onlineSocket)return;
+                if(onlineRoom){
+                    document.getElementById('online-status').textContent='연결 복구 중 · 마지막으로 받은 집계입니다.';
+                    onlineReconnectTimer=setTimeout(connectTeacherSocket,1600);
+                }
             };
         }
 
@@ -312,11 +316,14 @@
                 const state = await onlineFetch('/api/rooms/' + onlineRoom.code + '/state');
                 applyOnlineState(state);
                 connectTeacherSocket();
-            } catch {
-                onlineRoom = null;
-                onlineState = null;
-                localStorage.removeItem(ONLINE_SESSION_KEY);
-                renderOnlinePanel();
+            } catch(error) {
+                if([401,403,404,410].includes(error?.status)){
+                    onlineRoom=null;onlineState=null;localStorage.removeItem(ONLINE_SESSION_KEY);renderOnlinePanel();
+                }else{
+                    onlineState=null;renderOnlinePanel();
+                    document.getElementById('online-status').textContent='네트워크 연결 중단 · 잠시 후 재연결을 시도합니다.';
+                    clearTimeout(onlineReconnectTimer);onlineReconnectTimer=setTimeout(restoreOnlineRoom,4000);
+                }
             }
         }
 
@@ -385,22 +392,25 @@
             onlineRoom = null;
             onlineState = null;
             localStorage.removeItem(ONLINE_SESSION_KEY);
+            localStorage.removeItem('gulliver.vote.onlineSummary.v1');
             renderOnlinePanel();
             Gulliver.toast('온라인 방 연결을 해제했습니다.');
         }
 
         // 로컬스토리지에서 데이터 불러오기
-        if(localStorage.getItem('vote_board_v2')) {
-            const saved = JSON.parse(localStorage.getItem('vote_board_v2'));
-            config = { ...config, ...saved }; // 새 속성 호환되도록 병합
-            if(localStorage.getItem('vote_board_v2_votes')) {
-                votes = JSON.parse(localStorage.getItem('vote_board_v2_votes'));
+        try{
+            const saved=JSON.parse(localStorage.getItem('vote_board_v2')||'null');
+            if(saved&&typeof saved==='object'){
+                config={...config,...saved};
+                config.cols=Math.max(1,Math.min(15,Number(config.cols)||6));
+                config.rows=Math.max(1,Math.min(15,Number(config.rows)||5));
+                config.students=Array.isArray(config.students)?config.students.slice(0,225).map(v=>String(v||'').slice(0,60)):[];
+                config.options=Array.isArray(config.options)?config.options.filter(o=>o&&['string','number'].includes(typeof o.id)).slice(0,8).map(o=>({id:coerceId(o.id),name:String(o.name||'빈 선택지').slice(0,90),colorId:Number(o.colorId)||1})):[];
+                const oldVotes=JSON.parse(localStorage.getItem('vote_board_v2_votes')||'{}');
+                votes=oldVotes&&typeof oldVotes==='object'&&!Array.isArray(oldVotes)?oldVotes:{};
+                if(!config.options.some(o=>String(o.id)===String(selectedOptionId)))selectedOptionId=config.options[0]?.id??null;
             }
-            // 불러올 때 선택된 옵션이 유효한지 확인
-            if(!config.options.find(o => o.id === selectedOptionId)) {
-                selectedOptionId = config.options[0]?.id || null;
-            }
-        }
+        }catch(e){console.warn('이전 투표 자료를 확인해 주세요.',e)}
 
         function saveToLocal() {
             localStorage.setItem('vote_board_v2', JSON.stringify(config));
@@ -444,18 +454,16 @@
             renderRight();
         }
 
-        // 더블클릭하여 학생 이름 수정 (인라인 인풋)
-        function editStudentName(index, el) {
-            const currentName = config.students[index] || "";
-            // 기존 내용을 인풋 태그로 변경
-            el.innerHTML = `<input type="text" class="edit-input text-xl py-1" value="${currentName}" 
-                onblur="saveStudentName(${index}, this)" 
-                onkeydown="if(event.key==='Enter') this.blur()"
-                oncontextmenu="event.stopPropagation()">`;
-            
-            const input = el.querySelector('input');
-            input.focus();
-            input.select();
+        // Editing uses an actual input element; names never enter HTML markup.
+        function makeEditInput(owner,value,classes,onSave,onCancel){
+ const input=document.createElement('input');input.type='text';input.className=classes;input.value=String(value||'');input.maxLength=90;
+ input.onblur=()=>onSave(input);input.onkeydown=e=>{if(e.key==='Enter')input.blur();else if(e.key==='Escape'){input.onblur=null;onCancel()}};
+ input.onclick=e=>e.stopPropagation();input.oncontextmenu=e=>e.stopPropagation();
+ owner.replaceChildren(input);input.focus();input.select();
+}
+        function editStudentName(index,el){
+            if(onlineRoom){Gulliver.toast('온라인 방 연결 중에는 명단을 수정할 수 없어요.');return;}
+            makeEditInput(el,config.students[index]||'','edit-input text-xl py-1',input=>saveStudentName(index,input),renderLeft);
         }
 
         function saveStudentName(index, inputEl) {
@@ -491,24 +499,14 @@
                     if(opt) theme = COLORS.find(c => c.id === opt.colorId);
                 }
                 
-                // 자리 기본 스타일
-                seat.className = `aspect-[4/3] rounded-3xl border-2 p-2 flex flex-col items-center justify-center transition-all cursor-pointer select-none pop-anim relative group shadow-sm`;
-                
-                if (theme) {
-                    // 색칠된 자리
-                    seat.classList.add(...theme.bg.split(' '), ...theme.border.split(' '), ...theme.text.split(' '));
-                    seat.innerHTML = `
-                        <span class="absolute top-2 left-2 text-[11px] font-sans font-bold opacity-40">${i+1}</span>
-                        <span class="text-xl lg:text-2xl tracking-wide z-10 w-full text-center leading-tight px-1 break-keep">${studentName || "빈자리"}</span>
-                    `;
-                } else {
-                    // 빈 자리 (색칠 안됨)
-                    seat.classList.add('bg-white', 'border-slate-200', 'text-slate-600', 'hover:border-indigo-300', 'hover:shadow-md');
-                    seat.innerHTML = `
-                        <span class="absolute top-2 left-2 text-[11px] font-sans font-bold text-slate-300">${i+1}</span>
-                        <span class="text-xl lg:text-2xl tracking-wide w-full text-center leading-tight px-1 break-keep ${studentName ? '' : 'text-slate-300'}">${studentName || "빈자리"}</span>
-                    `;
-                }
+                seat.className='aspect-[4/3] rounded-3xl border-2 p-2 flex flex-col items-center justify-center transition-all cursor-pointer select-none pop-anim relative group shadow-sm';
+                if(theme)seat.classList.add(...theme.bg.split(' '),...theme.border.split(' '),...theme.text.split(' '));
+                else seat.classList.add('bg-white','border-slate-200','text-slate-600','hover:border-indigo-300','hover:shadow-md');
+                const number=document.createElement('span');number.className='absolute top-2 left-2 text-[11px] font-sans font-bold opacity-40';number.textContent=String(i+1);
+                const label=document.createElement('span');label.className='text-xl lg:text-2xl tracking-wide z-10 w-full text-center leading-tight px-1 break-keep';label.textContent=studentName||'빈자리';
+                seat.append(number,label);
+                seat.setAttribute('role','button');seat.tabIndex=0;seat.setAttribute('aria-label',(studentName||'빈자리')+' · '+(votedOptId?'투표 기록 있음':'선택 전'));
+                seat.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();handleSeatClick(i)}};
 
                 // 이벤트 바인딩 (클릭: 투표, 우클릭: 수정)
                 seat.onclick = () => handleSeatClick(i);
@@ -527,19 +525,11 @@
         // 2. 투표 모달 (오른쪽 영역) 관련 로직
         // ==========================================
 
-        // 제목 수정
-        function editTitle(e, el) {
-            e.preventDefault();
-            if(el.querySelector('input')) return;
-            const currentTitle = config.title;
-            el.innerHTML = `<input type="text" class="edit-input text-3xl lg:text-4xl py-1 px-4" value="${currentTitle}" 
-                onblur="saveTitle(this)" 
-                onkeydown="if(event.key==='Enter') this.blur()"
-                oncontextmenu="event.stopPropagation()">`;
-            
-            const input = el.querySelector('input');
-            input.focus();
-            input.select();
+        // Keyboard-safe text editor, without interpolating text into markup.
+        function editTitle(e,el){
+            e.preventDefault();if(el.querySelector('input'))return;
+            if(onlineRoom){Gulliver.toast('온라인 방에서는 제목을 수정할 수 없어요.');return;}
+            makeEditInput(el,config.title,'edit-input text-3xl lg:text-4xl py-1 px-4',saveTitle,renderRight);
         }
 
         function saveTitle(inputEl) {
@@ -553,20 +543,11 @@
             saveToLocal();
         }
 
-        // 선택지 이름 수정
-        function editOptionName(e, optId, el) {
-            e.preventDefault();
-            if(el.querySelector('input')) return;
-            const opt = config.options.find(o => o.id === optId);
-            el.innerHTML = `<input type="text" class="edit-input text-2xl py-1 w-full text-left px-2" value="${opt.name}" 
-                onblur="saveOptionName(${optId}, this)" 
-                onkeydown="if(event.key==='Enter') this.blur()"
-                onclick="event.stopPropagation()"
-                oncontextmenu="event.stopPropagation()">`; // 인풋 클릭/우클릭 시 이벤트 방지
-            
-            const input = el.querySelector('input');
-            input.focus();
-            input.select();
+        function editOptionName(e,optId,el){
+            e.preventDefault();if(el.querySelector('input'))return;
+            if(onlineRoom){Gulliver.toast('온라인 방에서는 선택지를 수정할 수 없어요.');return;}
+            const opt=config.options.find(o=>o.id===optId);if(!opt)return;
+            makeEditInput(el,opt.name,'edit-input text-2xl py-1 w-full text-left px-2',input=>saveOptionName(optId,input),renderRight);
         }
 
         function saveOptionName(optId, inputEl) {
@@ -677,7 +658,7 @@
                     <!-- 2. 항목 이름 (우클릭 수정) -->
                     <div class="ml-4 flex-1 text-2xl md:text-3xl text-slate-700 truncate select-none h-full flex items-center" 
                          oncontextmenu="editOptionName(event, ${opt.id}, this)">
-                        ${opt.name}
+                        <span class="vote-option-safe-name"></span>
                     </div>
 
                     <!-- 3. 투표 수량 및 삭제 버튼 -->
@@ -692,6 +673,7 @@
                     </div>
                 `;
                 
+                const nameNode=row.querySelector(".vote-option-safe-name");if(nameNode)nameNode.textContent=String(opt.name||"");
                 listContainer.appendChild(row);
             });
         }
