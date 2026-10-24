@@ -562,8 +562,15 @@ function scienceQuestions(topic,size,random){
  const target=Math.min(size,Math.ceil(size*.8),new Set(bank.filter(q=>q.material).map(q=>scienceGoal(q,topic))).size);
  while(selected.filter(q=>q.material).length<target){const q=pool.find(q=>q.material&&eligible(q));if(!q)break;take(q)}
  // Prefer a different objective over an arbitrary table quota or a repeated computation.
- while(selected.length<size){let q=pool.find(eligible);if(!q){const remaining=pool.filter(q=>!used.has(q.id)&&!sources.has(q.stimulusId||q.id));remaining.sort((a,b)=>(goals.get(scienceGoal(a,topic))||0)-(goals.get(scienceGoal(b,topic))||0));q=remaining[0]}if(!q)throw Error('과학 문항 수를 줄여 주세요.');take(q)}
- return selected.map(q=>({...choice(q.prompt,q.answer,[q.answer,...q.wrong],random,q.detail||''),scienceId:q.id,scienceGoal:scienceGoal(q,topic),scienceSource:q.stimulusId||q.id,scienceFamily:q.material?(/실험|조건|방법|먼저|고칠/.test(q.prompt)?'inquiry':/판단|추측|원인|알 수|설명/.test(q.prompt)?'reason':'data'):q.family,explanation:q.explanation,...(q.material?{scienceMaterial:q.material}:{})}));
+ while(selected.length<size){let q=pool.find(q=>!q.material&&eligible(q))||pool.find(eligible);if(!q){const remaining=pool.filter(q=>!used.has(q.id)&&!sources.has(q.stimulusId||q.id));remaining.sort((a,b)=>(goals.get(scienceGoal(a,topic))||0)-(goals.get(scienceGoal(b,topic))||0));q=remaining[0]}if(!q)throw Error('과학 문항 수를 줄여 주세요.');take(q)}
+ // Pair evidence tasks in a row, then spread those rows through long sheets.
+ // Keeping all source-heavy tasks at the front can produce a 6/14 page split.
+ let ordered=selected;
+ if(size>10){const evidence=selected.filter(q=>q.material),text=selected.filter(q=>!q.material),slots=Array(size).fill(null),pairs=Math.ceil(evidence.length/2),rows=Math.ceil(size/2);
+  let next=0;for(let i=0;i<pairs;i++){const row=Math.floor(i*rows/pairs),width=i===0&&evidence.length%2?1:2;for(let j=0;j<width;j++){const q=evidence[next++];if(q)slots[row*2+j]=q}}
+  ordered=slots.map(q=>q||text.shift());
+ }
+ return ordered.map(q=>({...choice(q.prompt,q.answer,[q.answer,...q.wrong],random,q.detail||''),scienceId:q.id,scienceGoal:scienceGoal(q,topic),scienceSource:q.stimulusId||q.id,scienceFamily:q.material?(/실험|조건|방법|먼저|고칠/.test(q.prompt)?'inquiry':/판단|추측|원인|알 수|설명/.test(q.prompt)?'reason':'data'):q.family,explanation:q.explanation,...(q.material?{scienceMaterial:q.material}:{})}));
 }
 
 const WORDS=[['apple','사과'],['book','책'],['school','학교'],['water','물'],['friend','친구'],['family','가족'],['cat','고양이'],['dog','개'],['sun','태양'],['moon','달'],['tree','나무'],['flower','꽃'],['milk','우유'],['pencil','연필'],['chair','의자'],['table','탁자'],['happy','행복한'],['small','작은'],['big','큰'],['blue','파란색'],['red','빨간색'],['yellow','노란색'],['morning','아침'],['night','밤']];

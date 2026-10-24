@@ -477,3 +477,8 @@ test('every offered science grade and format yields complete reproducible contex
  }
  const attached=C.generate({subject:'science',topic:'living',grade:3,count:10,seed:parseInt('1ABXN0Z',36)});assert.equal(new Set(attached.items.map(q=>q.scienceGoal)).size,10);assert.ok(attached.items.filter(q=>q.scienceMaterial).length>=8);
  });
+
+test('long science sheets distribute evidence rows instead of front-loading sources',()=>{
+ const C=require('../daily-worksheet-core');for(const [topic,,grade] of C.SUBJECTS.science.topics)for(const count of [15,20])for(const seed of [1,42,1337]){
+ const sheet=C.generate({subject:'science',topic,grade,count,seed}),middle=Math.ceil(count/2),front=sheet.items.slice(0,middle).filter(q=>q.scienceMaterial).length,back=sheet.items.slice(middle).filter(q=>q.scienceMaterial).length;assert.ok(front>=2&&back>=2,topic);assert.ok(Math.abs(front-back)<=2,topic);assert.ok(sheet.items[0].scienceMaterial);assert.equal(new Set(sheet.items.map(q=>q.scienceId)).size,count);
+ }});

@@ -207,3 +207,13 @@ test('legacy science screenshot cases use contextual questions with evidence in 
  }finally{await browser.close()}
 });
 
+
+ test('twenty science tasks keep balanced pages with evidence distributed across the sheet',{skip:(!chrome||!chromium)&&'Chrome required',timeout:150000},async()=>{
+ const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--allow-file-access-from-files']});
+ try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),base=pathToFileURL(path.resolve('문제지 만들기.html')).href,issues=[];
+ for(const [topic,,grade] of C.SUBJECTS.science.topics){await page.goto(base+'?'+new URLSearchParams({subject:'science',topic,grade,count:20,seed:42}),{waitUntil:'load'});await page.evaluate(()=>document.fonts.ready);await page.emulateMedia({media:'print'});
+ for(const teacher of [false,true]){await page.evaluate(t=>document.body.classList.toggle('print-answers',t),teacher);const packed=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(packed.ok,topic);if(Math.max(...packed.counts)-Math.min(...packed.counts)>2)issues.push(topic+'/'+teacher+': '+JSON.stringify(packed));if(topic==='ecosystem')await page.pdf({path:`test-artifacts/worksheet-science-ecosystem-20-${teacher?'teacher':'student'}-balanced.pdf`,format:'A4',printBackground:true});}
+ await page.evaluate(()=>document.body.classList.remove('print-answers'));await page.emulateMedia({media:'screen'});
+ }assert.deepEqual(issues,[]);
+ }finally{await browser.close()}
+ });
