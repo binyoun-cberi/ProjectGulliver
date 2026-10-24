@@ -130,7 +130,7 @@ test('worksheet subject navigation and horizontal settings work on desktop and m
  await page.locator('.gx-worksheet-picker summary').click();assert.equal(await page.locator('.gx-subject-menu a').count(),5);await page.locator('[data-worksheet-subject="english"]').click();
  assert.equal(await page.locator('#filterSubjectTitle').textContent(),'영어 문제지 설정');assert.equal(await page.locator('.gx-worksheet-picker').getAttribute('open'),null);
  await page.selectOption('#grade','5');await page.selectOption('#topic','message-reading');await page.selectOption('#count','20');await page.locator('button.daily-primary').click();
- assert.equal(await page.locator('#questions>li').count(),20);assert.match(await page.locator('#paperTitle').textContent(),/영어/);assert.match(await page.locator('#filterSelectionSummary').textContent(),/20문항/);
+ assert.equal(await page.locator('#questions>li').count(),20);assert.match(await page.locator('#questionSheet #paperTitle').textContent(),/영어/);assert.match(await page.locator('#filterSelectionSummary').textContent(),/20문항/);
  await page.locator('.gx-worksheet-picker summary').click();await page.keyboard.press('Escape');assert.equal(await page.locator('.gx-worksheet-picker').getAttribute('open'),null);
  await page.screenshot({path:'test-artifacts/worksheet-horizontal-desktop.png',fullPage:true});
  await page.setViewportSize({width:390,height:844});await page.evaluate(()=>scrollTo(0,0));await page.locator('.gx-worksheet-picker summary').click();await page.locator('[data-worksheet-subject="science"]').click();
