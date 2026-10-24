@@ -89,19 +89,19 @@ button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,inpu
 <main class="tt-app">
   <header class="tt-hero"><div><h1>시간 도구</h1><p>수업에 맞게 기능과 화면 모양을 골라 사용하세요.</p></div>
     <button class="tt-student" id="ttStudent" type="button">학생 화면 열기 ↗</button></header>
-  <nav id="ttModes" class="tt-modes" aria-label="시간 도구 종류">
-    <button type="button" data-mode="clock">현재 시각</button>
-    <button type="button" data-mode="timer">타이머</button>
-    <button type="button" data-mode="stopwatch">스톱워치</button>
-    <button type="button" data-mode="lesson">수업 흐름</button>
-    <button type="button" data-mode="period">교시별 타이머</button>
-    <button type="button" data-mode="learn">시계 읽기</button>
+  <nav id="ttModes" class="tt-modes" role="tablist" aria-label="시간 도구 종류">
+    <button type="button" role="tab" aria-selected="false" data-mode="clock">현재 시각</button>
+    <button type="button" role="tab" aria-selected="false" data-mode="timer">타이머</button>
+    <button type="button" role="tab" aria-selected="false" data-mode="stopwatch">스톱워치</button>
+    <button type="button" role="tab" aria-selected="false" data-mode="lesson">수업 흐름</button>
+    <button type="button" role="tab" aria-selected="false" data-mode="period">교시별 타이머</button>
+    <button type="button" role="tab" aria-selected="false" data-mode="learn">시계 읽기</button>
   </nav>
   <div class="tt-grid">
     <section class="tt-card" aria-label="시간 표시와 조작">
       <div class="tt-styles" id="ttStyles"><span>표시 스타일</span></div>
       <div class="tt-view-meta"><span id="ttCurrentMode" class="tt-view-name">타이머</span><span id="ttLiveState" class="tt-live-state" role="status" aria-live="off">준비</span></div>
-      <div class="tt-stage"><div class="tt-display-face" id="ttFace" role="timer" aria-live="off"></div></div>
+      <div class="tt-stage"><div class="tt-display-face" id="ttFace" role="group" aria-label="시간 표시" aria-live="off"></div></div>
       <div class="tt-actions" id="ttControls">
         <button class="tt-btn tt-btn--primary" id="ttStart" type="button" aria-keyshortcuts="Space">▶ 시작</button>
         <button class="tt-btn" id="ttReset" type="button" aria-keyshortcuts="R">↺ 초기화</button>
