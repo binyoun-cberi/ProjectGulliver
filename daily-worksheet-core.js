@@ -1,9 +1,10 @@
 (function(root,factory){'use strict';const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;root.DailyWorksheetCore=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
 const HISTORY_PHOTOS=typeof module==='object'&&module.exports?require('./data/history-photo-bank.js'):globalThis.HistoryPhotoBank;
+const COLUMN=typeof module==='object'&&module.exports?require('./column-math.js'):globalThis.ColumnMath;
 const SUBJECTS={
  korean:{name:'국어',grades:[1,2,3,4,5,6],topics:[['opposite','반대말 찾기',1],['spacing','바른 띄어쓰기',2],['reading','글 읽고 답하기',1],['mainidea','짧은 글의 중심 내용',1,2],['vocabulary','문장 속 낱말의 뜻',3],['idiom','관용 표현과 속담',3],['hanja','한자어의 뜻',5],['reading-set','한 글을 읽고 여러 문제 풀기',1]]},
- math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['math-mix','유형 골라 섞기',1],['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['shape','도형의 성질',1],['measurement','길이와 들이',2],['data-reading','표와 자료 읽기',3],['hundreds','세 자리 수 덧셈',3,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3],['mixed','자연수의 혼합 계산',5,5],['decimal','소수의 계산',5,6]]},
+ math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['column','세로셈 연습',2],['math-mix','유형 골라 섞기',1],['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['shape','도형의 성질',1],['measurement','길이와 들이',2],['data-reading','표와 자료 읽기',3],['hundreds','세 자리 수 덧셈',3,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3],['mixed','자연수의 혼합 계산',5,5],['decimal','소수의 계산',5,6]]},
  social:{name:'사회',grades:[3,4,5,6],topics:[['history-photo','사진으로 보는 역사',5],['direction','방향과 위치',3],['community','우리 사회의 일',3],['economy','생산과 소비',4],['past','생활 속 옛 모습',3,4],['local','지역의 변화',3,4],['map-symbol','지도와 공간',3,4],['natural','자연환경과 생활',3,4],['human','인문환경과 생활',3,4],['cultural','지역의 문화유산',3,4],['family','가족과 생활 변화',3,4],['community-rules','공동체와 규칙',3,4],['local-gov','지역의 공공 기관',3,4],['transport','교통과 지역 간 교류',3,4],['prehistoric','선사와 고조선',5],['ancient','삼국·가야의 유적',5],['goryeo','고려',5],['joseon','조선',5],['modern','일제 강점기·광복·전쟁',5],['history-mix','시대 골라 섞기',5],['history-review','한국사 종합',5],['korea-geography','우리 국토와 인구',5],['democracy','민주주의와 참여',5],['rights','인권과 헌법',5],['government','국가기관과 법',5],['market','경제생활과 시장',5],['world-geography','세계의 지리와 문화',5],['international','세계의 교류와 갈등',5],['environment','환경과 지속가능성',5],['contemporary','광복 이후의 대한민국',5]]},
  science:{name:'과학',grades:[3,4,5,6],topics:[['living','생물과 비생물',3],['matter','물질의 상태',3],['plant-observation','식물의 한살이 관찰',3,4],['weather','날씨 관찰 도구',5],['ecosystem','생태계 자료 읽기',5]]},
  english:{name:'영어',grades:[3,4,5,6],topics:[['words','기본 낱말',3],['sentence','문장 만들기',3],['conversation','상황에 맞는 대답',3],['short-reading','짧은 글 읽기',3,4],['message-reading','안내문·메시지 읽기',5]]}
@@ -63,7 +64,8 @@ for(const grade of [3,4,5,6])KOREAN_UNITS[grade]=[
  {id:`k${grade}-vocabulary`,label:grade<=4?'어휘 · 낱말의 의미 관계 [4국04-01]':'어휘 · 문맥에 맞는 낱말 쓰기',topics:['vocabulary','idiom',...(grade>=5?['hanja']:[])],types:[['vocabulary-context','문장 속 낱말의 뜻','vocabulary'],['idiom-context','관용 표현·속담의 뜻','idiom'],...(grade>=5?[['hanja-meaning','한자어의 뜻과 쓰임','hanja']]:[])]},
  {id:`k${grade}-reading`,label:grade<=4?'읽기 · 중심 생각과 이야기 흐름 [4국02-02·4국05-01]':'읽기 · 구조·추론과 작품 감상 [6국02-01·02·6국05-03]',topics:['reading-set'],types:[['reading-set-five','문학·비문학 함께 읽기','reading-set'],['reading-set-literary','문학 작품 읽기','reading-set'],['reading-set-nonfiction','비문학 글 읽기','reading-set'],['reading-set-brief','기초 짧은 글 읽기','reading-set']]}
 ];
-function units(subject,grade){return subject==='math'?(MATH_UNITS[grade]||[]):subject==='social'?(SOCIAL_UNITS[grade]||[]):subject==='korean'?(KOREAN_UNITS[grade]||[]):[]}
+const COLUMN_TYPES=[['column-mul2','두 자리 수 × 한 자리 수','column'],['column-mul3','세 자리 수 × 한 자리 수','column'],['column-div3','세 자리 수 ÷ 한 자리 수','column'],['column-add3','세 자리 수 + 세 자리 수','column'],['column-sub3','세 자리 수 − 세 자리 수','column']];
+function units(subject,grade){return subject==='math'?[...(MATH_UNITS[grade]||[]),...(Number(grade)>=2?[{id:'column-practice',label:'세로셈 연습',topics:['column'],types:Number(grade)===2?COLUMN_TYPES.filter(t=>['column-mul2','column-add3','column-sub3'].includes(t[0])):COLUMN_TYPES}]:[])]:subject==='social'?(SOCIAL_UNITS[grade]||[]):subject==='korean'?(KOREAN_UNITS[grade]||[]):[]}
 function types(subject,grade,topic,unitId){return units(subject,grade).filter(unit=>!unitId||unit.id===unitId).flatMap(unit=>unit.types.filter(entry=>entry[2]===topic).map(([id,label])=>[id,label]))}
 // Verified against the 2022 mathematics curriculum (MOE notice 2022-33, appendix 8).
 // These are practice links, not a claim that a sheet assesses the entire standard.
@@ -1181,7 +1183,13 @@ function convertAnswerFormat(items,subject,topic,responseFormat,seed){
   throw Error('선택한 문제 유형을 확인해 주세요.');
  });
 }
-function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basic',variant='tens',type='',eras=[],mathTypes=[],responseFormat=''}){
+function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basic',variant='tens',type='',eras=[],mathTypes=[],responseFormat='',columnMode='any',columnPlaces=false}){
+ if(subject==='math'&&topic==='column'){
+  if(!SUBJECTS.math.grades.includes(Number(grade))||!types(subject,Number(grade),topic).some(([id])=>id===type))throw Error('학년과 세로셈 유형을 확인해 주세요.');
+  const op={'column-mul2':'×','column-mul3':'×','column-div3':'÷','column-add3':'+','column-sub3':'−'}[type];
+  const items=COLUMN.generate({op,digits:type==='column-mul2'?2:3,mode:columnMode,count:Number(count),seed}).map(q=>({prompt:`${q.a} ${q.op} ${q.b} =`,answer:String(q.answer),choices:[],column:q}));
+  return {subject,topic,type,grade:Number(grade),count:Number(count),seed:Number(seed)>>>0,difficulty:'basic',variant:'tens',title:grade+'학년 수학 · 세로셈 연습',columnMode,columnPlaces:Boolean(columnPlaces),alignment:null,items};
+ }
  const info=SUBJECTS[subject],year=Number(grade),size=Number(count),selected=types(subject,year,topic).find(entry=>entry[0]===type),dense=subject==='math'&&(selected? /^(add-|sub-|small-|two-|times-)/.test(type)&&type!=='times-missing':['addition','hundreds','multiplication'].includes(topic));
  const mixed=topic==='history-mix',mathMixed=topic==='math-mix',chosen=mixed?eras:[],selectedMath=mathMixed?mathTypes:[],allowedMath=mathMixed?new Set(mathMixOptions(year).map(([id])=>id)):null;
  if(responseFormat&&(!answerFormats(subject,topic).some(([id])=>id===responseFormat)||subject==='math'))throw Error('이 학습 내용에서는 선택한 문제 유형을 사용할 수 없어요.');
@@ -1192,6 +1200,7 @@ function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basi
  const finalized=convertAnswerFormat(items,subject,topic,responseFormat,seed);
  return{subject,topic,type,responseFormat:responseFormat||'',eras:mixed?[...chosen]:[],mathTypes:mathMixed?[...selectedMath]:[],grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:year+'학년 '+info.name+' · '+(mixed?'선택한 시대 역사':mathMixed?'선택한 유형 혼합 연습':subject!=='math'?info.topics.find(t=>t[0]===topic)[1]:selected?selected[1]:info.topics.find(t=>t[0]===topic)[1]),alignment:['mixed','decimal','history-mix','math-mix'].includes(topic)?null:alignment(subject,topic,year),items:finalized};
 }
-function supportedCounts(options){return [5,10,15,20].filter(count=>{try{generate({...options,count,seed:42});return true}catch{return false}})}
+function supportedCounts(options){return (options.subject==='math'&&options.topic==='column'?[6,8,10,12]:[5,10,15,20]).filter(count=>{try{generate({...options,count,seed:42});return true}catch{return false}})}
 return{SUBJECTS,generate,supportedCounts,alignment,units,types,answerFormats,answerFormatFor};
 });
+

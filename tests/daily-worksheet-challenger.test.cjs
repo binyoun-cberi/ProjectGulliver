@@ -70,7 +70,7 @@ test('unreviewed curriculum links remain visibly unaligned instead of inventing 
   }
 });
 
-test('every offered grade and question type supports twenty distinct exercises', () => {
+test('every offered type supports its full count, with twelve for grid arithmetic and twenty otherwise', () => {
   for (const [subject, info] of Object.entries(SUBJECTS)) for (const grade of info.grades) {
     for (const [topic, , from, to = 6] of info.topics) {
       if (grade < from || grade > to) continue;
@@ -78,13 +78,14 @@ test('every offered grade and question type supports twenty distinct exercises',
       for (const type of types.length ? types : ['']) {
         const options = {subject, grade, topic, type,
           eras: ['prehistoric','ancient','goryeo','joseon','modern'],
-          mathTypes: units('math', grade).flatMap(unit => unit.types.map(([id]) => id)).filter(id => id !== 'math-mix-worksheet')};
-        assert.ok(supportedCounts(options).includes(20), `${subject}/${grade}/${topic}/${type} 20 unavailable`);
+          mathTypes: units('math', grade).filter(unit=>unit.id!=='column-practice').flatMap(unit => unit.types.map(([id]) => id)).filter(id => id !== 'math-mix-worksheet')};
+        const count=topic==='column'?12:20;
+        assert.ok(supportedCounts(options).includes(count), `${subject}/${grade}/${topic}/${type} 20 unavailable`);
         for (const seed of [7,42,20261024]) {
-          const sheet = generate({...options, count:20, seed});
-          assert.equal(sheet.items.length,20);
+          const sheet = generate({...options, count, seed});
+          assert.equal(sheet.items.length,count);
           const signatures = sheet.items.map(q => [q.prompt,q.detail,q.right,...(q.orderChoices||[]),q.answer].join('|'));
-          assert.equal(new Set(signatures).size,20,`${subject}/${grade}/${topic}/${type}/${seed}`);
+          assert.equal(new Set(signatures).size,count,`${subject}/${grade}/${topic}/${type}/${seed}`);
         }
       }
     }
@@ -99,3 +100,4 @@ test('count availability reflects actual selected history eras and math types', 
  assert.deepEqual(supportedCounts({...math,mathTypes:[]}),[]);
  assert.ok(supportedCounts({...math,mathTypes:['add-carry-one','sub-borrow-one']}).includes(20));
 });
+
