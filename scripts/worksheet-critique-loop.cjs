@@ -90,7 +90,7 @@ function review(C, {full = false} = {}) {
     const all = signatures.get(key);
     for (const [i, q] of sheet.items.entries()) {
       const prompt=String(q.prompt || '').trim(), answer=String(q.answer ?? '').trim();
-      const signature=[prompt,String(q.detail||''),String(q.right||''),...(q.orderChoices||[]),answer].join('|');
+      const signature=[prompt,String(q.detail||''),String(q.right||''),...(q.orderChoices||[]),String(q.oxProposal||''),String(q.originalAnswer||''),answer].join('|');
       if (!prompt || !answer) result.errors.push({key,seed:options.seed,index:i+1,problem:'문제 또는 정답 없음'});
       if (seen.has(signature)) result.errors.push({key,seed:options.seed,index:i+1,problem:'동일 문제지 내 중복'});
       seen.add(signature); all.add(signature);
