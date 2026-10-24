@@ -885,8 +885,21 @@ const SOCIAL_LEGACY_NOTES={
  ]
 };
 function evidenceSource(key){if(!key)return '';const [age,id]=HISTORY_REFS[key];return `https://contents.history.go.kr/mobile/eh/view.do?code=eh_age_${age}&levelId=eh_${id}_0010`}
+const SOCIAL_EVIDENCE_STEMS={
+ past:[
+  '옛사람들의 생활 모습을 보여 주는 근거는 무엇인가요?',
+  '옛 물건이나 기록에서 확인할 수 있는 설명을 고르세요.',
+  '자료의 내용에 비추어 가장 타당한 설명은 무엇인가요?'
+ ],
+ local:[
+  '옛날과 오늘의 자료를 비교하면 무엇이 달라졌나요?',
+  '두 시기의 모습을 비교해 알 수 있는 변화는 무엇인가요?',
+  '지역의 변화에 관한 설명 중 자료와 일치하는 것은 무엇인가요?'
+ ]
+};
 function socialEvidence(topic,r){const cards=SOCIAL_EVIDENCE[topic].cards,extra=[...SOCIAL_EXTRA[topic],...SOCIAL_VARIETY[topic]],index=int(0,cards.length+extra.length-1,r),note=SOCIAL_LEGACY_NOTES[topic][index],row=index<cards.length?[...cards[index],note[1],note[0]]:extra[index-cards.length],[detail,answer,wrong1,wrong2,key,reason]=row,source=evidenceSource(key);
- return {...choice('자료에서 알 수 있는 것을 고르세요.',answer,[answer,wrong1,wrong2],r,detail),explanation:reason,source,sourceLabel:source?'국사편찬위원회 · 해당 자료 보기':'교실용 재구성 자료'};
+ const prompts=SOCIAL_EVIDENCE_STEMS[topic],prompt=prompts?prompts[index%prompts.length]:'자료에서 확인할 수 있는 설명은 무엇인가요?';
+ return {...choice(prompt,answer,[answer,wrong1,wrong2],r,detail),explanation:reason,source,sourceLabel:source?'국사편찬위원회 · 해당 자료 보기':'교실용 재구성 자료'};
 }
 // Each row is a verified question, answer, and two plausible alternatives. The
 // quiz asks for historical knowledge; it never invents a passage or a false source.
