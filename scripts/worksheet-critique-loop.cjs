@@ -96,6 +96,15 @@ function review(C, {full = false} = {}) {
       seen.add(signature); all.add(signature);
       if (q.choices?.length && (!q.choices.includes(q.answer) || new Set(q.choices).size !== q.choices.length))
         result.errors.push({key,seed:options.seed,index:i+1,problem:'선택지 및 정답 불일치'});
+      const format=options.responseFormat||q.responseFormat||'';
+      if (['ox','short','essay'].includes(format) && /(?:고르세요|선택하세요)/.test(prompt))
+        result.errors.push({key,seed:options.seed,index:i+1,problem:'답안 형식과 지시문 불일치'});
+      if (format==='ox' && (!q.oxProposal || !['O','X'].includes(answer)))
+        result.errors.push({key,seed:options.seed,index:i+1,problem:'OX 제시문 또는 정답 누락'});
+      if (['short','essay'].includes(format) && q.choices?.length)
+        result.errors.push({key,seed:options.seed,index:i+1,problem:'쓰기 문항에 선택지 노출'});
+      if (format==='essay' && !String(q.modelExplanation||'').trim())
+        result.errors.push({key,seed:options.seed,index:i+1,problem:'서술형 교사용 풀이 누락'});
       for (const flag of qualityRisks(q, options.subject)) {
         result.warningCounts[flag]=(result.warningCounts[flag]||0)+1;
         if (result.samples.length < 120) result.samples.push({

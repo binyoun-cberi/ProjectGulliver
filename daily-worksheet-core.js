@@ -585,18 +585,21 @@ const SENTENCES=[
  ['나는 강아지를 좋아해요.','I like dogs.','I / like / dogs.'],['이것은 내 연필이에요.','This is my pencil.','This / is / my / pencil.']
 ];
 const CONVERSATIONS=[
- ['How are you?','I am fine.',['I am fine.','It is a book.','It is blue.']],['What is your name?','My name is Mina.',['My name is Mina.','I am ten.','It is sunny.']],
- ['What color is it?','It is blue.',['It is blue.','I am hungry.','It is a dog.']],['Do you like apples?','Yes, I do.',['Yes, I do.','It is red.','My name is Mina.']],
- ['Where is the library?','It is next to the school.',['It is next to the school.','It is a pencil.','I like milk.']],
- ['How old are you?','I am ten years old.',['I am ten years old.','I am fine.','It is ten o’clock.']],
- ['What time is it?','It is three o’clock.',['It is three o’clock.','It is a chair.','I am three.']],
- ['Can you swim?','Yes, I can.',['Yes, I can.','Yes, it is.','Yes, I do.']],['What is this?','It is a pencil.',['It is a pencil.','I am happy.','It is Monday.']],
- ['How is the weather?','It is sunny.',['It is sunny.','I am seven.','It is a book.']],
- ['What day is it today?','It is Monday.',['It is Monday.','It is a pencil.','I am ten.']],
- ['Are you hungry?','Yes, I am.',['Yes, I am.','Yes, I do.','Yes, it is.']],
- ['Where is my book?','It is on the desk.',['It is on the desk.','It is sunny.','I am fine.']],
- ['What do you want?','I want water.',['I want water.','I am seven.','It is Friday.']],
- ['Thank you.','You are welcome.',['You are welcome.','I am sorry.','Good night.']],
+ ['How are you?','I am fine.',['I am fine.','I am ten years old.','My name is Mina.']],
+ ['What is your name?','My name is Mina.',['My name is Mina.','I am ten years old.','My favorite color is blue.']],
+ ['What color is it?','It is blue.',['It is blue.','It is red.','It is green.'],'파란 풍선을 가리키며 색을 묻습니다.'],
+ ['Do you like apples?','Yes, I do.',['Yes, I do.','No, I do not.','Yes, I am.'],'사과를 좋아한다고 대답하는 상황입니다.'],
+ ['Where is the library?','It is next to the school.',['It is next to the school.','It is behind the hospital.','It is across from the park.'],'도서관이 학교 옆에 있다고 알려 줍니다.'],
+ ['How old are you?','I am ten years old.',['I am ten years old.','I am ten o’clock.','I have ten books.'],'열 살이라고 대답합니다.'],
+ ['What time is it?','It is three o’clock.',['It is three o’clock.','It is two o’clock.','It is four o’clock.'],'시계가 세 시를 가리킵니다.'],
+ ['Can you swim?','Yes, I can.',['Yes, I can.','Yes, I do.','Yes, it is.'],'수영할 수 있다고 대답합니다.'],
+ ['What is this?','It is a pencil.',['It is a pencil.','It is a pen.','It is an eraser.'],'연필을 가리키며 물어봅니다.'],
+ ['How is the weather?','It is sunny.',['It is sunny.','It is rainy.','It is cloudy.'],'오늘은 맑은 날씨입니다.'],
+ ['What day is it today?','It is Monday.',['It is Monday.','It is Tuesday.','It is Friday.'],'달력에 오늘이 월요일로 표시되어 있습니다.'],
+ ['Are you hungry?','Yes, I am.',['Yes, I am.','Yes, I do.','Yes, it is.'],'배가 고프다고 대답합니다.'],
+ ['Where is my book?','It is on the desk.',['It is on the desk.','It is under the desk.','It is in the bag.'],'책이 책상 위에 놓여 있습니다.'],
+ ['What do you want?','I want water.',['I want water.','I want orange juice.','I want an apple.'],'물을 마시고 싶다고 대답합니다.'],
+ ['Thank you.','You are welcome.',['You are welcome.','I am sorry.','Excuse me.']],
  ['Good morning!','Good morning!',['Good morning!','Good night!','Goodbye!']]
 ];
 const SHORT_READING=[
@@ -882,8 +885,21 @@ const SOCIAL_LEGACY_NOTES={
  ]
 };
 function evidenceSource(key){if(!key)return '';const [age,id]=HISTORY_REFS[key];return `https://contents.history.go.kr/mobile/eh/view.do?code=eh_age_${age}&levelId=eh_${id}_0010`}
+const SOCIAL_EVIDENCE_STEMS={
+ past:[
+  '옛사람들의 생활 모습을 보여 주는 근거는 무엇인가요?',
+  '옛 물건이나 기록에서 확인할 수 있는 설명을 고르세요.',
+  '자료의 내용에 비추어 가장 타당한 설명은 무엇인가요?'
+ ],
+ local:[
+  '옛날과 오늘의 자료를 비교하면 무엇이 달라졌나요?',
+  '두 시기의 모습을 비교해 알 수 있는 변화는 무엇인가요?',
+  '지역의 변화에 관한 설명 중 자료와 일치하는 것은 무엇인가요?'
+ ]
+};
 function socialEvidence(topic,r){const cards=SOCIAL_EVIDENCE[topic].cards,extra=[...SOCIAL_EXTRA[topic],...SOCIAL_VARIETY[topic]],index=int(0,cards.length+extra.length-1,r),note=SOCIAL_LEGACY_NOTES[topic][index],row=index<cards.length?[...cards[index],note[1],note[0]]:extra[index-cards.length],[detail,answer,wrong1,wrong2,key,reason]=row,source=evidenceSource(key);
- return {...choice('자료에서 알 수 있는 것을 고르세요.',answer,[answer,wrong1,wrong2],r,detail),explanation:reason,source,sourceLabel:source?'국사편찬위원회 · 해당 자료 보기':'교실용 재구성 자료'};
+ const prompts=SOCIAL_EVIDENCE_STEMS[topic],prompt=prompts?prompts[index%prompts.length]:'자료에서 확인할 수 있는 설명은 무엇인가요?';
+ return {...choice(prompt,answer,[answer,wrong1,wrong2],r,detail),explanation:reason,source,sourceLabel:source?'국사편찬위원회 · 해당 자료 보기':'교실용 재구성 자료'};
 }
 // Each row is a verified question, answer, and two plausible alternatives. The
 // quiz asks for historical knowledge; it never invents a passage or a false source.
@@ -1155,7 +1171,7 @@ function item(subject,topic,grade,r,difficulty,variant){
  if(topic==='short-reading'||topic==='message-reading'){const [detail,prompt,answer,wrong,explanation]=pick(topic==='short-reading'?SHORT_READING:MESSAGE_READING,r);return{...choice(prompt,answer,[answer,...wrong],r,detail),explanation}}
  if(topic==='words'){const [word,answer]=pick(WORDS,r);return choice(`‘${word}’의 뜻을 고르세요.`,answer,[answer,...shuffle(WORDS.map(v=>v[1]).filter(v=>v!==answer),r).slice(0,3)],r)}
  if(topic==='sentence'){const [meaning,answer,words]=pick(SENTENCES,r);return{prompt:`‘${meaning}’에 맞게 낱말을 배열해 영어 문장을 쓰세요.`,answer,choices:[],detail:words}}
- const [question,answer,options]=pick(CONVERSATIONS,r);return choice(`다음 말에 알맞은 대답을 고르세요.  “${question}”`,answer,options,r);
+ const [question,answer,options,context]=pick(CONVERSATIONS,r);return choice(`${context?context+'  ':''}다음 말에 알맞은 대답을 고르세요. “${question}”`,answer,options,r);
 }
 
 /* An answer format is different from the topic/content bank. Preserve legacy
@@ -1179,9 +1195,12 @@ function answerFormatFor(type,subject,topic){
  return 'choice';
 }
 function asWritingPrompt(prompt){
- return String(prompt).replace(/고르세요\.?$/,'쓰세요.').replace(/선택하세요\.?$/,'쓰세요.')
+ return String(prompt).replace(/(?:고르세요|선택하세요)(?=\.|\?|!|\s|$)/g,'쓰세요')
  .replace(/알맞은 것을 쓰세요\.?$/,'알맞은 답을 쓰세요.')
  .replace(/보기에서 /g,'').replace(/보기 중 /g,'');
+}
+function asOxPrompt(prompt){
+ return String(prompt).replace(/(?:고르세요|선택하세요)(?=\.|\?|!|\s|$)/g,'생각해 보세요');
 }
 function convertAnswerFormat(items,subject,topic,responseFormat,seed){
  if(!responseFormat||responseFormat==='activity'||responseFormat==='choice')return items;
@@ -1193,7 +1212,7 @@ function convertAnswerFormat(items,subject,topic,responseFormat,seed){
    if(!wrong.length)throw Error('이 학습 내용에서는 OX 문제를 만들 수 없어요. 다른 유형을 골라 주세요.');
    const correct=(index+((Number(seed)>>>0)%2))%2===0,proposal=correct?item.answer:pick(wrong,rngForFormat);
    return {...common,originalAnswer:item.answer,oxProposal:proposal,format:'ox',
-     prompt:original+'  다음에 제시된 답이 맞으면 O, 틀리면 X를 표시하세요.',
+     prompt:asOxPrompt(original)+'  다음에 제시된 답이 맞으면 O, 틀리면 X를 표시하세요.',
      answer:correct?'O':'X',choices:['O','X']};
   }
   if(responseFormat==='short'){
@@ -1211,7 +1230,7 @@ function convertAnswerFormat(items,subject,topic,responseFormat,seed){
        :'글이나 자료에서 근거를 찾아, 그렇게 생각한 까닭을 한두 문장으로 설명해 보세요.'
       :'배운 내용과 연결해 그렇게 생각한 까닭을 한두 문장으로 설명해 보세요.';
     return {...common,format:'essay',choices:[],
-      prompt:asWritingPrompt(original)+' 답을 쓰고, '+instruction,
+      prompt:asWritingPrompt(original)+' '+instruction,
       modelExplanation:item.explanation||('예시 답: '+item.answer+'. 설명한 이유를 학습 내용과 대조해 확인해 주세요.')};
    }
   throw Error('선택한 문제 유형을 확인해 주세요.');
