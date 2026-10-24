@@ -73,6 +73,7 @@
     localStorage.removeItem(KEYS.profiles);
     localStorage.removeItem(KEYS.relations);
     localStorage.removeItem(KEYS.operations);
+    localStorage.removeItem('gulliver.classroomDaily.v1');
     window.dispatchEvent(new CustomEvent('gulliver:classroom-change',{detail:defaultClassroom()}));
   }
   const clamp=(n,min,max)=>Math.max(min,Math.min(max,Number(n)||min));
@@ -206,11 +207,12 @@
     localStorage.setItem(KEYS.relations,JSON.stringify(map));
   }
   function exportClassroomBundle(){
-    return {version:2,classroom:getClassroom(),profiles:getProfiles(),relations:getRelations(true),operations:getOperations(200)};
+    return {version:2,classroom:getClassroom(),profiles:getProfiles(),relations:getRelations(true),operations:getOperations(200),daily:safeParse(localStorage.getItem('gulliver.classroomDaily.v1'),{})};
   }
   function importClassroomBundle(data){
     if(data&&data.classroom){
       const room=saveClassroom(data.classroom);
+      localStorage.setItem('gulliver.classroomDaily.v1',JSON.stringify(data.daily&&typeof data.daily==='object'&&!Array.isArray(data.daily)?data.daily:{}));
       saveProfiles(data.profiles||{});
       saveRelations(data.relations||[]);
       if(Array.isArray(data.operations))localStorage.setItem(KEYS.operations,JSON.stringify(data.operations.slice(0,200)));
