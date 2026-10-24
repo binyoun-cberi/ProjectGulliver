@@ -1121,7 +1121,7 @@ function item(subject,topic,grade,r,difficulty,variant){
   const [scenario,answer]=pick(ECONOMY,r);return choice(`다음은 생산과 소비 중 무엇에 해당하나요?  ${scenario}`,answer,['생산','소비'],r);
  }
  if(subject==='science'){
-  if(SCIENCE.banks[topic]){const q=pick(SCIENCE.banks[topic],r);return {...choice(q.prompt,q.answer,[q.answer,...q.wrong],r),scienceId:q.id,explanation:q.explanation}}
+  if(SCIENCE.banks[topic]){const q=pick(SCIENCE.banks[topic].filter(q=>!q.material),r);return {...choice(q.prompt,q.answer,[q.answer,...q.wrong],r),scienceId:q.id,explanation:q.explanation}}
   if(topic==='plant-observation'||topic==='ecosystem'){const [detail,prompt,answer,wrong,explanation]=pick(topic==='plant-observation'?PLANT_OBSERVATION:ECOSYSTEM_EVIDENCE,r);return{...choice(prompt,answer,[answer,...wrong],r,detail),explanation}}
   if(topic==='living'){const [thing,answer]=pick(LIVING,r);return choice(`‘${thing}’은(는) 생물인가요, 비생물인가요?`,answer,['생물','비생물'],r)}
   if(topic==='matter'){const [thing,answer]=pick(MATTER,r);return choice(`실온에서 ‘${thing}’의 상태는 무엇인가요?`,answer,['고체','액체','기체'],r)}
@@ -1232,12 +1232,14 @@ function generateSingle({subject,topic,grade,count=10,seed=Date.now(),difficulty
  const random=rng(seed),eraOrder=mixed?shuffle(chosen,random):[],mathOrder=mathMixed?shuffle(selectedMath,random):[],items=topic==='history-review'?historyReview(type,size,random):topic==='reading-set'?readingSet(size,year,random,type):[],seen=new Set(),seenAnswers=new Set(),seenPassages=new Set(),uniqueHistoryAnswers=subject==='social'&&(mixed||Boolean(HISTORY_QUIZ[topic]))&&!type.endsWith('-ox');let attempts=0;
  while(items.length<size&&attempts++<3000){const skill=mathMixed?mathOrder[items.length%mathOrder.length]:null,candidate=mathMixed?{...typedMath(skill,random),skill}:mixed?historyQuiz(eraOrder[items.length%eraOrder.length],type,random):subject==='social'&&HISTORY_QUIZ[topic]?historyQuiz(topic,type,random):subject==='social'&&SOCIAL_THEME_QUESTIONS[topic]?socialTheme(topic,random):subject==='social'&&SOCIAL_EVIDENCE[topic]?socialEvidence(topic,random):subject==='korean'&&['vocabulary','idiom','hanja'].includes(topic)?koreanPractice(topic,year,random):selected&&subject==='math'?typedMath(type,random):item(subject,topic,year,random,difficulty,variant),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||uniqueHistoryAnswers&&seenAnswers.has(candidate.answer)||subject==='social'&&!HISTORY_QUIZ[topic]&&SOCIAL_EVIDENCE[topic]&&seenPassages.has(candidate.detail)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);seenAnswers.add(candidate.answer);if(subject==='social'&&!HISTORY_QUIZ[topic]&&SOCIAL_EVIDENCE[topic]||topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
  if(items.length<size)throw Error('이 유형에서는 서로 다른 문제를 충분히 만들지 못했어요. 문항 수를 줄여 주세요.');
+ if(subject==='science'&&SCIENCE.banks[topic]){const evidence=shuffle(SCIENCE.banks[topic].filter(q=>q.material),random).slice(0,2).map(q=>({...choice(q.prompt,q.answer,[q.answer,...q.wrong],random),scienceId:q.id,explanation:q.explanation,scienceMaterial:q.material}));items.splice(0,evidence.length,...evidence)}
  const finalized=convertAnswerFormat(items,subject,topic,responseFormat,seed);
  return{subject,topic,type,responseFormat:responseFormat||'',eras:mixed?[...chosen]:[],mathTypes:mathMixed?[...selectedMath]:[],grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:year+'학년 '+info.name+' · '+(mixed?'선택한 시대 역사':mathMixed?'선택한 유형 혼합 연습':subject!=='math'?info.topics.find(t=>t[0]===topic)[1]:selected?selected[1]:info.topics.find(t=>t[0]===topic)[1]),alignment:['mixed','decimal','history-mix','math-mix'].includes(topic)?null:alignment(subject,topic,year),items:finalized};
 }
 function supportedCounts(options){return (options.subject==='math'&&options.topic==='column'?[6,8,10,12]:[5,10,15,20]).filter(count=>{try{generate({...options,count,seed:42});return true}catch{return false}})}
 return{SUBJECTS,generate,mixOptions,supportedCounts,alignment,units,types,answerFormats,answerFormatFor};
 });
+
 
 
 
