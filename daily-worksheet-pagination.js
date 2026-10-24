@@ -41,12 +41,43 @@ function canFit(page){
 function put(page,items){
  const clones=items.map(({node,index})=>{
   const clone=node.cloneNode(true);clone.value=index+1;clone.dataset.question=String(index+1);
-  clone.classList.remove('reading-next-page');return clone;
+  clone.classList.remove('reading-next-page');
+  // Standards mappings and research process belong in teacher controls, not the child's worksheet.
+  if(!document.body.classList.contains('print-answers'))clone.querySelectorAll('.answer-source,.reading-standard').forEach(el=>el.remove());
+  return clone;
  });
  page.list.append(...clones);
  if(canFit(page)){page.count+=clones.length;return true}
  clones.forEach(n=>n.remove());
  return false;
+}
+function widenShortSheet(page){
+ // Short, self-contained tasks should fill the paper with room for working.
+ // Long passages, sources, illustrations and crowded teacher keys stay natural-sized.
+ const items=[...page.list.children],total=items.length;
+ if(total<1||total>10||items.some(item=>
+   item.querySelector('.reading-text,.history-photo,svg,.history-match,.order-choices')||
+   item.classList.contains('reading-question')||item.classList.contains('history-question')
+ ))return;
+ const list=page.list;
+ const calculation=list.classList.contains('calculation-grid');
+ const grid=calculation||list.classList.contains('compact-questions');
+ page.article.classList.add('roomy-page');
+ if(calculation&&total<=10)page.article.classList.add('roomy-calculations');
+ // Determine the available writing area from the actual page, including headers.
+ const top=list.getBoundingClientRect().top;
+ const bottom=page.article.getBoundingClientRect().bottom-17*MM_PX;
+ const rows=grid?Math.ceil(total/(calculation&&total>10?4:2)):total;
+ const available=bottom-top;
+ // Use most of the page, but retain comfortable gutters and bottom margin.
+ const height=Math.floor(available*.89/rows);
+ if(height<40){page.article.classList.remove('roomy-page','roomy-calculations');return}
+ page.article.style.setProperty('--roomy-row-height',height+'px');
+ if(!canFit(page)){
+  // Never trade correct A4 printing for a full-looking page.
+  page.article.classList.remove('roomy-page','roomy-calculations');
+  page.article.style.removeProperty('--roomy-row-height');
+ }
 }
 function pack(host,units,source){
  const pages=[];let page;
@@ -71,6 +102,7 @@ function pack(host,units,source){
   for(const entry of unit)if(!putSingle(entry))return {ok:false,issue:`${entry.index+1}번 문제가 A4 한 장보다 길어요. 지문이나 글자 크기를 조정해 주세요.`,pages:pages.length};
  }
  for(const [i,p] of pages.entries()){
+  widenShortSheet(p);
   p.article.dataset.page=String(i+1);
   p.article.querySelector('.print-page-footer').textContent=($('sheetNumber')?.textContent||'문제지')+' · '+(i+1)+' / '+pages.length+'쪽';
  }
