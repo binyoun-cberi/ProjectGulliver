@@ -47,7 +47,7 @@ test('sample science distractors no longer assume physical impossibilities',()=>
  assert.ok(water);
  assert.equal(water.answer,'서로 다른 층을 이룬다');
  assert.ok(water.wrong.every(x=>!/새로운 금속|모두 증발/.test(x)));
- const temperature=bank.find(x=>x.prompt.includes('뜨거운 물과 차가운 물을 각각 컵에'));
+ const temperature=bank.find(x=>x.prompt.includes('따뜻한 물과 차가운 물을 각각 컵에'));
  assert.ok(temperature);
  assert.equal(temperature.answer,'둘 다 실내 온도에 가까워진다');
 });
