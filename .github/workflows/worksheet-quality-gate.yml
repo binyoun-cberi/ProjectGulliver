@@ -14,6 +14,7 @@ on:
       - 'scripts/worksheet-pr-contract.cjs'
       - 'scripts/worksheet-critique-loop.cjs'
       - 'tests/worksheet-critique-loop.test.cjs'
+      - 'tests/worksheet-critique-revisions.test.cjs'
       - 'docs/worksheet-critique-loop.md'
       - 'docs/worksheet-2022-alignment.md'
       - 'docs/worksheet-quality-process.md'
@@ -34,6 +35,7 @@ on:
       - 'scripts/worksheet-pr-contract.cjs'
       - 'scripts/worksheet-critique-loop.cjs'
       - 'tests/worksheet-critique-loop.test.cjs'
+      - 'tests/worksheet-critique-revisions.test.cjs'
       - 'docs/worksheet-critique-loop.md'
       - 'docs/worksheet-2022-alignment.md'
       - 'docs/worksheet-quality-process.md'
@@ -77,8 +79,8 @@ jobs:
       - name: Collect structured critique candidates across subjects
         run: |
           node --check scripts/worksheet-critique-loop.cjs
-          node --test tests/worksheet-critique-loop.test.cjs
-          node scripts/worksheet-critique-loop.cjs
+          node --test tests/worksheet-critique-loop.test.cjs tests/worksheet-critique-revisions.test.cjs
+          node scripts/worksheet-critique-loop.cjs --full
       - name: Attach pedagogical critique evidence for human review
         if: always()
         uses: actions/upload-artifact@v4
