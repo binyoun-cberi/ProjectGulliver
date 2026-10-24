@@ -1149,8 +1149,8 @@ function answerFormatFor(type,subject,topic){
  return 'choice';
 }
 function asWritingPrompt(prompt){
- return String(prompt).replace(/고르세요\\.?$/,'쓰세요.').replace(/선택하세요\\.?$/,'쓰세요.')
- .replace(/알맞은 것을 쓰세요\\.?$/,'알맞은 답을 쓰세요.')
+ return String(prompt).replace(/고르세요\.?$/,'쓰세요.').replace(/선택하세요\.?$/,'쓰세요.')
+ .replace(/알맞은 것을 쓰세요\.?$/,'알맞은 답을 쓰세요.')
  .replace(/보기에서 /g,'').replace(/보기 중 /g,'');
 }
 function convertAnswerFormat(items,subject,topic,responseFormat,seed){
