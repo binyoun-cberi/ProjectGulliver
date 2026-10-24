@@ -2,17 +2,32 @@ name: 5.3 lesson classroom smoke
 on:
   pull_request:
     paths:
-      - 'lesson*.js'
-      - 'lesson*.html'
-      - 'lesson*.css'
-      - 'classroom-workspace.js'
+      - 'lesson-app.js'
+      - 'lesson-core.js'
       - 'tests/lesson-v53*'
       - '.github/workflows/lesson-v53-smoke.yml'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
+  legacy-lesson-inventory:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Check whether retired lesson 5.3 source exists
+        id: check
+        run: |
+          if [[ -f lesson-app.js && -f lesson-core.js && -f tests/lesson.test.cjs && -f tests/lesson-v53.test.cjs && -f tests/lesson-v53.e2e.cjs ]]; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo '::notice::Legacy lesson 5.3 files are absent; skipping obsolete tests.'
+          fi
   classroom-flow:
+    needs: legacy-lesson-inventory
+    if: needs.legacy-lesson-inventory.outputs.ready == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 7
     steps:

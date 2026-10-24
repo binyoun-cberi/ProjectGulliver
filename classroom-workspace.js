@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   const KEY='gulliver.activities.v1';
-  const KINDS={timer:{name:'수업 흐름 타이머',icon:'🕘',href:'지도안식 원형 타이머.html'},quiz:{name:'낱말카드·퀴즈',icon:'🗂️',href:'플래시퀴즈메이커.html'},seating:{name:'교실 자리표',icon:'🎒',href:'자리 배정 프로그램.html'}};
+  const KINDS={timer:{name:'수업 흐름 타이머',icon:'🕘',href:'시간 도구.html'},quiz:{name:'낱말카드·퀴즈',icon:'🗂️',href:'플래시퀴즈메이커.html'},seating:{name:'교실 자리표',icon:'🎒',href:'자리 배정 프로그램.html'}};
   const uid=()=>window.crypto?.randomUUID?.()||'a_'+Date.now().toString(36)+Math.random().toString(36).slice(2);
   const copy=v=>JSON.parse(JSON.stringify(v));
   const clean=(v,max=80)=>String(v??'').trim().slice(0,max);

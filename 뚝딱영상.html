@@ -72,22 +72,58 @@
   <script>
     const key = 'dd_video_board_v2';
     const $ = id => document.getElementById(id);
-    let videos = JSON.parse(localStorage.getItem(key) || '[]');
+    let videos = [];
+    try { const saved=JSON.parse(localStorage.getItem(key)||'[]');videos=Array.isArray(saved)?saved:[]; } catch { videos=[]; }
     function save() { localStorage.setItem(key, JSON.stringify(videos)); }
     function normalize(t) { return String(t||'').toLowerCase().replace(/\s+/g,''); }
-    function getVideoId(url) {
-      const s = String(url||'').trim();
-      const patterns = [/youtu\.be\/([\w-]{11})/, /youtube\.com\/watch\?v=([\w-]{11})/, /youtube\.com\/shorts\/([\w-]{11})/, /youtube\.com\/embed\/([\w-]{11})/];
-      for (const p of patterns) { const m = s.match(p); if (m) return m[1]; }
-      try { const u = new URL(s); return u.searchParams.get('v') || ''; } catch(e) { return ''; }
+    function getVideoId(url){
+  try{
+    const u=new URL(String(url||'').trim());
+    if(!['http:','https:'].includes(u.protocol)||u.username||u.password)return '';
+    const host=u.hostname.toLowerCase();let id='';
+    if(host==='youtu.be')id=u.pathname.slice(1).split('/')[0];
+    else if(['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com','www.youtube-nocookie.com','youtube-nocookie.com'].includes(host)){
+      const parts=u.pathname.split('/').filter(Boolean);
+      id=parts[0]==='watch'?(u.searchParams.get('v')||''):['shorts','embed','live'].includes(parts[0])?(parts[1]||''):'';
     }
+    return /^[a-zA-Z0-9_-]{11}$/.test(id)?id:'';
+  }catch{return '';}
+}
     function thumb(id) { return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : ''; }
     function collectTags() { return [...new Set(videos.flatMap(v => v.tags || []))].sort(); }
-    function renderTagFilter() {
-      const current = $('tagFilter').value;
-      $('tagFilter').innerHTML = '<option value="">태그 전체</option>' + collectTags().map(t=>`<option value="${t}">#${t}</option>`).join('');
-      $('tagFilter').value = current;
-    }
+    function renderTagFilter(){
+ const filter=$('tagFilter'),current=filter.value;
+ filter.replaceChildren(new Option('태그 전체',''));
+ for(const tag of collectTags())filter.add(new Option('#'+tag,tag));
+ filter.value=current;
+}
+    function safeVideoCards(list){
+  const host=$('videoCards');host.replaceChildren();
+  const node=(tag,className,text)=>{
+    const x=document.createElement(tag);
+    if(className)x.className=className;
+    if(text!==undefined)x.textContent=String(text);
+    return x;
+  };
+  for(const v of list){
+    const videoId=getVideoId(v.url);
+    const card=node('article','card video-card'),image=node('img','thumb'),detail=node('div');
+    if(videoId){
+      image.src=thumb(videoId);image.loading='lazy';image.alt=String(v.title||'영상')+' 썸네일';
+      image.onerror=()=>{image.hidden=true};
+    }else image.hidden=true;
+    const tags=node('div','tagrow');
+    for(const name of [v.grade||'대상 미지정',v.subject||'분류 없음',...(Array.isArray(v.tags)?v.tags:[]).map(t=>'#'+t)])
+      tags.append(node('span','tag',name));
+    detail.append(tags,node('h3','',v.title||'제목 없음'),node('p','',v.memo||'메모 없음'));
+    const actions=node('div','card-actions'),open=node('a','btn btn-primary','영상 열기');
+    open.href=videoId?'https://www.youtube.com/watch?v='+videoId:'#';
+    open.hidden=!videoId;open.target='_blank';open.rel='noopener noreferrer';
+    const copy=node('button','btn btn-ghost','링크 복사');copy.type='button';copy.onclick=()=>copyLink(v.id);
+    const del=node('button','btn btn-danger','삭제');del.type='button';del.onclick=()=>deleteVideo(v.id);
+    actions.append(open,copy,del);detail.append(actions);card.append(image,detail);host.append(card);
+  }
+}
     function render() {
       renderTagFilter();
       const kw = normalize($('videoSearch').value), tag = $('tagFilter').value;
@@ -97,26 +133,13 @@
       });
       $('videoCount').textContent = `${list.length}개 영상`;
       $('videoEmpty').style.display = list.length ? 'none' : 'block';
-      $('videoCards').innerHTML = list.map(v => `
-        <article class="card video-card">
-          <img class="thumb" src="${thumb(v.videoId)}" alt="${v.title} 썸네일" onerror="this.style.display='none'">
-          <div>
-            <div class="tagrow"><span class="tag">${v.grade || '대상 미지정'}</span><span class="tag">${v.subject || '분류 없음'}</span>${(v.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('')}</div>
-            <h3>${v.title}</h3>
-            <p>${v.memo || '메모 없음'}</p>
-            <div class="card-actions">
-              <a class="btn btn-primary" href="${v.url}" target="_blank" rel="noopener">영상 열기</a>
-              <button class="btn btn-ghost" onclick="copyLink('${v.id}')" type="button">링크 복사</button>
-              <button class="btn btn-danger" onclick="deleteVideo('${v.id}')" type="button">삭제</button>
-            </div>
-          </div>
-        </article>`).join('');
+      safeVideoCards(list);
     }
     function upsertMany(items, mode) {
       const clean = (items||[]).map(v => ({
         id: v.id || crypto.randomUUID(), title: v.title || '제목 없음', url: v.url || '', videoId: v.videoId || getVideoId(v.url),
         subject: v.subject || '', grade: v.grade || '', tags: Array.isArray(v.tags) ? v.tags : String(v.tags||'').split(',').map(x=>x.trim()).filter(Boolean), memo: v.memo || '', createdAt: v.createdAt || new Date().toISOString()
-      })).filter(v=>v.url);
+      })).filter(v=>getVideoId(v.url));
       videos = mode === 'replace' ? [] : videos;
       const map = new Map(videos.map(v => [v.videoId || v.url, v]));
       clean.forEach(v => map.set(v.videoId || v.url, v));
@@ -132,7 +155,7 @@
     });
     $('exportBtn').addEventListener('click', () => {
       const blob = new Blob([JSON.stringify({type:'dd-video-backup', version:2, exportedAt:new Date().toISOString(), videos}, null, 2)], {type:'application/json'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `뚝딱영상_백업_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href);
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `뚝딱영상_백업_${new Date().toISOString().slice(0,10)}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
     });
     $('importFile').addEventListener('change', async (e) => {
       const file = e.target.files[0]; if (!file) return;
@@ -147,7 +170,7 @@
     });
     $('clearAllBtn').addEventListener('click', () => { if (confirm('저장된 영상을 모두 삭제할까요?')) { videos=[]; save(); render(); } });
     window.copyLink = async (id) => { const v = videos.find(x=>x.id===id); if (!v) return; try { await navigator.clipboard.writeText(v.url); alert('링크를 복사했습니다.'); } catch(e) { prompt('아래 링크를 복사하세요.', v.url); } };
-    window.deleteVideo = (id) => { videos = videos.filter(v=>v.id!==id); save(); render(); };
+    window.deleteVideo = (id) => { if(!confirm('이 영상 자료를 삭제할까요?'))return;videos = videos.filter(v=>v.id!==id); save(); render(); };
     $('videoSearch').addEventListener('input', render); $('tagFilter').addEventListener('input', render); render();
   </script>
 </body>
