@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   // Keep the release number aligned with package.json when publishing a new site release.
-  const release = Object.freeze({version:'1.1.0', date:'2026-10-24', changes:['과학 문제 검수와 그림·표 보강', '여러 단원 선택과 단원별 문항 수 설정', 'A4 인쇄 배치와 교사용 풀이 개선', '탑바에서 사이트 버전 확인']});
+  const release = Object.freeze({version:'1.2.0', date:'2026-10-24', changes:['과학 17개 영역에 자료 해석 문항 104개 추가', '관찰 그림·비교표·그래프를 읽는 문제지', '같은 학습 목표의 반복과 정답 노출 개선']});
   const file = decodeURIComponent(location.pathname.split('/').pop() || 'index.html');
   const sections = [
     ['home', '홈', 'index.html'], ['worksheet', '문제지', '문제지 만들기.html'], ['tools', '교사 도구', 'index.html?view=tools'],
@@ -136,4 +136,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, {once:true});
   else init();
 })();
+
 

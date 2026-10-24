@@ -174,20 +174,20 @@ test('all new science topics are selectable, compose A4, and mix across domains'
 
 test('all 17 science topics preserve diagrams and tables in student and teacher PDFs',{skip:(!chrome||!chromium)&&'Chrome required',timeout:150000},async()=>{
  const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--allow-file-access-from-files']});
- try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));const base=pathToFileURL(path.resolve('문제지 만들기.html')).href,B=require('../science-expansion.js');
+ try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],layoutIssues=[];page.on('pageerror',e=>errors.push(e.message));const base=pathToFileURL(path.resolve('문제지 만들기.html')).href,B=require('../science-expansion.js');
  for(const [topic,,grade] of C.SUBJECTS.science.topics){
  await page.goto(base+'?'+new URLSearchParams({subject:'science',grade,topic,count:5,seed:42}),{waitUntil:'load'});await page.evaluate(()=>document.fonts.ready);
- assert.equal(await page.locator('#questions .science-material svg').count(),1,topic);assert.equal(await page.locator('#questions .science-material table').count(),1,topic);
+ assert.equal(await page.locator('#questions .science-material svg').count()>=1,true,topic);assert.ok(await page.locator('#questions .science-material table').count()>=1,topic);
  for(const teacher of [false,true]){
  await page.evaluate(t=>document.body.classList.toggle('print-answers',t),teacher);await page.emulateMedia({media:'print'});
- const packed=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(packed.ok,topic+': '+packed.issue);assert.equal(packed.pages,1,topic+' '+(teacher?'teacher':'student')+' five choice questions should fit one A4');
- const result=await page.evaluate(()=>({pages:[...document.querySelectorAll('.print-paper')].length,diagrams:document.querySelectorAll('.print-paper .science-material svg').length,tables:document.querySelectorAll('.print-paper .science-material table').length}));assert.equal(result.diagrams,1);assert.equal(result.tables,1);
+ const packed=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(packed.ok,topic+': '+packed.issue);if(packed.pages!==1){const diagnostic=await page.evaluate(()=>{const host=document.querySelector('#printPages'),a=host.firstElementChild.cloneNode(true),list=a.querySelector('ol');a.className='paper print-paper';list.removeAttribute('style');list.replaceChildren(...[...document.querySelector('#questions').children].map(x=>x.cloneNode(true)));host.classList.add('is-measuring');host.append(a);const bounds=a.getBoundingClientRect(),result={scroll:a.scrollHeight,client:a.clientHeight,height:bounds.height,items:[...list.children].map(x=>{const r=x.getBoundingClientRect();return {top:r.top-bounds.top,bottom:r.bottom-bounds.top,height:r.height}})};a.remove();host.classList.remove('is-measuring');return result});layoutIssues.push(topic+'/'+(teacher?'teacher':'student')+': '+JSON.stringify({...packed,diagnostic}));}
+ const result=await page.evaluate(()=>({pages:[...document.querySelectorAll('.print-paper')].length,diagrams:document.querySelectorAll('.print-paper .science-material svg').length,tables:document.querySelectorAll('.print-paper .science-material table').length}));assert.ok(result.diagrams>=1);assert.ok(result.tables>=1);
  await page.pdf({path:`test-artifacts/worksheet-science-${topic}-${teacher?'teacher':'student'}.pdf`,format:'A4',printBackground:true});
  }
  await page.emulateMedia({media:'screen'});await page.evaluate(()=>document.body.classList.remove('print-answers'));
- const bounds=await page.locator('#questions .science-material svg').evaluate(svg=>{const b=svg.getBBox();return {x:b.x,y:b.y,right:b.x+b.width,bottom:b.y+b.height}});assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.right<=331&&bounds.bottom<=176,topic+' SVG labels fit: '+JSON.stringify(bounds));
+ const bounds=await page.locator('#questions .science-material svg').evaluate(svg=>{const b=svg.getBBox(),v=svg.viewBox.baseVal;return {x:b.x,y:b.y,right:b.x+b.width,bottom:b.y+b.height,leftLimit:v.x,topLimit:v.y,rightLimit:v.x+v.width,bottomLimit:v.y+v.height}});assert.ok(bounds.x>=bounds.leftLimit-1&&bounds.y>=bounds.topLimit-1&&bounds.right<=bounds.rightLimit+1&&bounds.bottom<=bounds.bottomLimit+1,topic+' SVG labels fit: '+JSON.stringify(bounds));
  }
- await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
+ await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);assert.deepEqual(layoutIssues,[],'five choice questions should fit one A4');
  }finally{await browser.close()}
 });
 
@@ -197,12 +197,23 @@ test('legacy science screenshot cases use contextual questions with evidence in 
  try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));const base=pathToFileURL(path.resolve('문제지 만들기.html')).href;
  for(const topic of ['living','matter','weather'])for(const format of ['choice','ox','short','essay']){
  await page.goto(base+'?'+new URLSearchParams({subject:'science',grade:topic==='weather'?5:3,topic,count:10,seed:1337,format}),{waitUntil:'load'});
- assert.equal(await page.locator('#questions>li').count(),10);assert.equal(await page.locator('#questions .science-material').count(),2);
+ assert.equal(await page.locator('#questions>li').count(),10);assert.equal(await page.locator('#questions .science-material').count()>=6,true);
  assert.doesNotMatch(await page.locator('#questions').textContent(),/은\(는\)|이\(가\)|생물인가요, 비생물인가요/);
  if(format==='essay')assert.equal(await page.locator('#questions .essay-writing').count(),10);
  for(const teacher of [false,true]){await page.evaluate(t=>document.body.classList.toggle('print-answers',t),teacher);const packed=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(packed.ok,topic+'/'+format+': '+packed.issue)}
  }
- await page.goto(base+'?'+new URLSearchParams({subject:'science',grade:3,topic:'living',count:10,seed:1337}),{waitUntil:'load'});await page.emulateMedia({media:'print'});await page.evaluate(()=>window.DailyWorksheetA4.compose());await page.pdf({path:'test-artifacts/worksheet-science-living-10-audited.pdf',format:'A4',printBackground:true});
+ await page.goto(base+'?'+new URLSearchParams({subject:'science',grade:3,topic:'living',count:10,seed:parseInt('1ABXN0Z',36)}),{waitUntil:'load'});await page.emulateMedia({media:'print'});await page.evaluate(()=>window.DailyWorksheetA4.compose());await page.pdf({path:'test-artifacts/worksheet-science-living-10-audited.pdf',format:'A4',printBackground:true});
  await page.emulateMedia({media:'screen'});await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
  }finally{await browser.close()}
 });
+
+
+ test('twenty science tasks keep balanced pages with evidence distributed across the sheet',{skip:(!chrome||!chromium)&&'Chrome required',timeout:150000},async()=>{
+ const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--allow-file-access-from-files']});
+ try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),base=pathToFileURL(path.resolve('문제지 만들기.html')).href,issues=[];
+ for(const [topic,,grade] of C.SUBJECTS.science.topics){await page.goto(base+'?'+new URLSearchParams({subject:'science',topic,grade,count:20,seed:42}),{waitUntil:'load'});await page.evaluate(()=>document.fonts.ready);await page.emulateMedia({media:'print'});
+ for(const teacher of [false,true]){await page.evaluate(t=>document.body.classList.toggle('print-answers',t),teacher);const packed=await page.evaluate(()=>{const p=window.DailyWorksheetA4.compose();p.fill=[...document.querySelectorAll('.print-paper')].map(a=>{const l=a.querySelector('ol'),top=l.getBoundingClientRect().top,bottom=Math.max(...[...l.children].map(x=>x.getBoundingClientRect().bottom));return (bottom-top)/(a.getBoundingClientRect().bottom-17*96/25.4-top)});return p});assert.ok(packed.ok,topic);if(Math.max(...packed.counts)-Math.min(...packed.counts)>2||packed.fill.some(x=>x<.85))issues.push(topic+'/'+teacher+': '+JSON.stringify(packed));if(topic==='ecosystem')await page.pdf({path:`test-artifacts/worksheet-science-ecosystem-20-${teacher?'teacher':'student'}-balanced.pdf`,format:'A4',printBackground:true});}
+ await page.evaluate(()=>document.body.classList.remove('print-answers'));await page.emulateMedia({media:'screen'});
+ }assert.deepEqual(issues,[]);
+ }finally{await browser.close()}
+ });

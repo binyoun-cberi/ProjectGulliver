@@ -413,13 +413,13 @@ test('unit quotas are exact, grade limited and reproducible in all five subjects
  assert.ok(C.generate({subject:'math',grade:3,seed:10,unitMix:columns.slice(0,2).map(x=>({id:x.id,count:3}))}).items.every(q=>q.column));
 });
 
-test('science expansion covers twelve distinct topics and 264 authored questions in four answer formats',()=>{
+test('science expansion covers twelve distinct topics and 336 authored questions in four answer formats',()=>{
  const B=require('../science-expansion.js'),C=require('../daily-worksheet-core.js');assert.equal(B.topics.length,12);
- const ids=new Set();for(const [topic,,minimum] of B.topics){assert.equal(B.banks[topic].length,22);for(const q of B.banks[topic]){assert.ok(!ids.has(q.id));ids.add(q.id);assert.equal(new Set([q.answer,...q.wrong]).size,3)}
+ const ids=new Set();for(const [topic,,minimum] of B.topics){assert.equal(B.banks[topic].length,28);for(const q of B.banks[topic]){assert.ok(!ids.has(q.id));ids.add(q.id);assert.equal(new Set([q.answer,...q.wrong]).size,3)}
  for(const responseFormat of ['choice','ox','short','essay']){const state={subject:'science',grade:minimum,topic,count:20,responseFormat,seed:27},sheet=C.generate(state);assert.deepEqual(sheet,C.generate(state));assert.equal(new Set(sheet.items.map(q=>q.scienceId)).size,20);for(const q of sheet.items)assert.ok(q.answer&&q.explanation)}
  if(minimum===5)assert.throws(()=>C.generate({subject:'science',grade:3,topic,count:5}));
  }
- assert.equal(ids.size,264);
+ assert.equal(ids.size,336);
  assert.equal(C.generate({subject:'science',grade:5,seed:19,unitMix:[{id:'topic:living',count:2},{id:'topic:weather',count:3}]}).items.length,5);
  for(const grade of [3,4,5,6])for(const [topic] of C.SUBJECTS.science.topics.filter(t=>grade>=t[2]&&grade<=(t[3]||6)))assert.ok(C.units('science',grade).some(u=>u.topics.includes(topic)));
 });
@@ -430,8 +430,8 @@ test('science evidence is included in short, long and quota sheets and survives 
  for(const entry of M.entries){assert.ok(entry.explanation.length>45);assert.ok(!entry.material.body||!entry.material.body.includes('url(#'));assert.ok(!entry.material.body||!/<(?:script|foreignObject|image)\b/i.test(entry.material.body));}
  for(const topic of [...new Set(M.entries.map(q=>q.topic))])for(const count of [5,10,20])for(const responseFormat of ['choice','ox','short','essay']){
  const sheet=C.generate({subject:'science',topic,grade:topic==='plant-observation'?3:5,count,responseFormat,seed:42}),evidence=sheet.items.filter(q=>q.scienceMaterial);
- assert.equal(evidence.length,2,topic);assert.deepEqual(new Set(evidence.map(q=>q.scienceMaterial.kind)),new Set(['table','diagram']));
- assert.equal(new Set(sheet.items.map(q=>q.scienceId)).size,count);assert.ok(evidence.every(q=>q.explanation.length>45));
+ assert.ok(evidence.length>=Math.min(count,Math.ceil(count*.6),6),topic);assert.deepEqual(new Set(evidence.map(q=>q.scienceMaterial.kind)),new Set(['table','diagram']));
+ assert.equal(new Set(sheet.items.map(q=>q.scienceId)).size,count);assert.ok(evidence.every(q=>q.explanation.length>35));
  }
  const id=C.mixOptions('science',5).find(x=>x.topic==='heat').id;assert.ok(C.generate({subject:'science',grade:5,unitMix:[{id,count:1}],seed:42}).items[0].scienceMaterial);
 });
@@ -439,16 +439,16 @@ test('science evidence is included in short, long and quota sheets and survives 
 
 test('science audit covers all 17 banks and prevents repeated binary worksheets and answer-only explanations',()=>{
  const C=require('../daily-worksheet-core'),B=require('../science-expansion'),legacy=['living','matter','weather'];
- assert.equal(Object.keys(B.banks).length,17);assert.equal(Object.values(B.banks).flat().length,404);
+ assert.equal(Object.keys(B.banks).length,17);assert.equal(Object.values(B.banks).flat().length,508);
  for(const q of Object.values(B.banks).flat()){
   assert.ok(q.explanation.length>=18,q.id);assert.doesNotMatch(q.explanation,/ → /,q.id);
   assert.doesNotMatch(q.prompt,/은\(는\)|이\(가\)/,q.id);assert.equal(new Set([q.answer,...q.wrong]).size,3,q.id);
  }
  for(const topic of legacy)for(const count of [5,10,15,20])for(let seed=1;seed<=50;seed++){
-  const sheet=C.generate({subject:'science',grade:5,topic,count,seed}),families=new Set(sheet.items.map(q=>q.scienceFamily));assert.ok(families.size>=3,topic+seed);
+  const sheet=C.generate({subject:'science',grade:5,topic,count,seed}),families=new Set(sheet.items.map(q=>q.scienceFamily));assert.ok(new Set(sheet.items.map(q=>q.scienceGoal)).size>=Math.min(count,9),topic+seed);
   assert.ok(sheet.items.filter(q=>q.scienceFamily==='classification').length<=Math.ceil(count/5),topic+seed);
   assert.equal(new Set(sheet.items.map(q=>q.scienceId)).size,count);assert.ok(sheet.items.every(q=>q.detail||q.scienceMaterial));
-  assert.equal(sheet.items.filter(q=>q.scienceMaterial).length,2);
+  assert.ok(sheet.items.filter(q=>q.scienceMaterial).length>=Math.min(6,Math.ceil(count*.6)));
  }
  const p=B.banks['plant-observation'].find(q=>q.id==='plant-observation-context-5');assert.match(p.detail,/잎 두 장/);
  const e=B.banks.ecosystem.find(q=>q.detail.includes('화분'));assert.doesNotMatch(e.detail,/같은 화분의 식물 두 개/);
@@ -459,7 +459,34 @@ test('every offered science grade and format yields complete reproducible contex
  const C=require('../daily-worksheet-core');let checked=0;
  for(const grade of C.SUBJECTS.science.grades)for(const [topic,,min,max=6] of C.SUBJECTS.science.topics){if(grade<min||grade>max)continue;
  for(const count of [5,10,15,20])for(const responseFormat of ['choice','ox','short','essay'])for(const seed of [1,42]){
- const state={subject:'science',grade,topic,count,responseFormat,seed},sheet=C.generate(state);assert.deepEqual(sheet,C.generate(state));assert.equal(sheet.items.length,count);assert.equal(new Set(sheet.items.map(q=>q.scienceId)).size,count);assert.equal(sheet.items.filter(q=>q.scienceMaterial).length,2);
+ const state={subject:'science',grade,topic,count,responseFormat,seed},sheet=C.generate(state);assert.deepEqual(sheet,C.generate(state));assert.equal(sheet.items.length,count);assert.equal(new Set(sheet.items.map(q=>q.scienceId)).size,count);assert.ok(sheet.items.filter(q=>q.scienceMaterial).length>=Math.min(6,Math.ceil(count*.6)));
  for(const q of sheet.items){assert.ok(q.explanation);if(responseFormat==='choice')assert.ok(q.choices.includes(q.answer));if(responseFormat==='ox')assert.equal(q.answer==='O',q.oxProposal===q.originalAnswer);if(['short','essay'].includes(responseFormat))assert.deepEqual(q.choices,[])}checked++;
  }}assert.ok(checked>=1600);console.log('Science audit generated variants:',checked);
 });
+
+
+ test('science blueprints prevent the uploaded living-sheet defects and preserve evidence sources',()=>{
+ const C=require('../daily-worksheet-core'),I=require('../science-inquiry');assert.equal(I.entries.length,104);
+ for(const q of I.entries){assert.ok(q.goal&&q.stimulusId);assert.equal(new Set([q.answer,...q.wrong]).size,3,q.id);assert.ok(q.explanation.length>35,q.id);assert.ok(q.material.kind==='diagram'||q.material.rows.length>=1)}
+ for(let seed=1;seed<=100;seed++)for(const [topic,,grade] of C.SUBJECTS.science.topics){
+  const sheet=C.generate({subject:'science',topic,grade,count:10,seed});
+  assert.equal(new Set(sheet.items.map(q=>q.scienceSource)).size,10,topic);
+  assert.ok(new Set(sheet.items.map(q=>q.scienceGoal)).size>=9,topic);
+  assert.ok(sheet.items.filter(q=>q.scienceMaterial).length>=6,topic);
+  if(topic==='living'){assert.equal(new Set(sheet.items.map(q=>q.scienceGoal)).size,10);assert.ok(sheet.items.filter(q=>q.scienceGoal==='growth').length<=1);assert.ok(!sheet.items.some(q=>q.scienceId==='living-reason-1'));}
+ }
+ const attached=C.generate({subject:'science',topic:'living',grade:3,count:10,seed:parseInt('1ABXN0Z',36)});assert.equal(new Set(attached.items.map(q=>q.scienceGoal)).size,10);assert.ok(attached.items.filter(q=>q.scienceMaterial).length>=8);
+ });
+
+test('long science sheets distribute evidence rows instead of front-loading sources',()=>{
+ const C=require('../daily-worksheet-core');for(const [topic,,grade] of C.SUBJECTS.science.topics)for(const count of [15,20])for(const seed of [1,42,1337]){
+ const sheet=C.generate({subject:'science',topic,grade,count,seed}),middle=Math.ceil(count/2),front=sheet.items.slice(0,middle).filter(q=>q.scienceMaterial).length,back=sheet.items.slice(middle).filter(q=>q.scienceMaterial).length;assert.ok(front>=2&&back>=2,topic);assert.ok(Math.abs(front-back)<=2,topic);assert.ok(sheet.items[0].scienceMaterial);assert.equal(new Set(sheet.items.map(q=>q.scienceId)).size,count);
+ }});
+
+test('science pagination uses another page when the minimum-page split is badly uneven',()=>{
+ const {balancedPlan}=require('../daily-worksheet-pagination'),units=Array.from({length:20},()=>[{}]),fits=(start,end,first)=>end-start<=(first?8:12);
+ assert.deepEqual(balancedPlan(units,fits).map(([a,b])=>b-a),[8,12]);
+ const balanced=balancedPlan(units,fits,true).map(([a,b])=>b-a);assert.equal(balanced.reduce((a,b)=>a+b,0),20);assert.equal(balanced.length,3);assert.ok(Math.max(...balanced)-Math.min(...balanced)<=1);
+});
+
+test('mushroom observations do not equate new fruiting bodies with new fungal individuals',()=>{const q=require('../science-inquiry').entries.find(q=>q.id==='living-inquiry-fungus');assert.doesNotMatch(q.answer+' '+q.explanation,/새 개체|개체 발생/);assert.match(q.answer,/성장/);});

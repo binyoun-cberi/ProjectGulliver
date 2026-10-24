@@ -274,9 +274,12 @@ const legacy=typeof module==='object'&&module.exports?require('./science-legacy.
 Object.assign(banks,legacy.banks);
 const materials=typeof module==='object'&&module.exports?require('./science-materials.js'):globalThis.ScienceMaterials;
 for(const {topic,...question} of materials.entries)(banks[topic]||=([])).push(question);
+const inquiry=typeof module==='object'&&module.exports?require('./science-inquiry.js'):globalThis.ScienceInquiry;
+for(const {topic,...question} of inquiry.entries)(banks[topic]||=[]).push(question);
 const review=typeof module==='object'&&module.exports?require('./science-review.js'):globalThis.ScienceReview;
 review.apply(banks);
 return {topics,banks,review:review.apply};
 });
+
 
 
