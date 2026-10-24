@@ -54,7 +54,7 @@ test('13: revised science evidence questions preserve final answers and specific
   ['electricity','electricity-2','회로가 끊어져','스위치를 열자'],
   ['electricity','electricity-6','함께 꺼진다','직렬로 연결'],
   ['environment-energy','environment-energy-8','서식지에 영향','하천에 놓아주려'],
-  ['environment-energy','environment-energy-18','재활용에 도움이','플라스틱 용기'],
+  ['environment-energy','environment-energy-18','오염시키면','플라스틱 용기'],
   ['light-sound','light-sound-16','전달 매질','진공'],
   ['weather-process','weather-process-14','지구 자전','기압 차이']
  ];
