@@ -16,6 +16,7 @@ on:
       - 'tests/worksheet-critique-loop.test.cjs'
       - 'tests/worksheet-critique-revisions.test.cjs'
       - 'tests/worksheet-five-more-rounds.test.cjs'
+      - 'tests/worksheet-critique-rounds-11-15.test.cjs'
       - 'column-math.js'
       - 'docs/worksheet-critique-loop.md'
       - 'docs/worksheet-2022-alignment.md'
@@ -39,6 +40,7 @@ on:
       - 'tests/worksheet-critique-loop.test.cjs'
       - 'tests/worksheet-critique-revisions.test.cjs'
       - 'tests/worksheet-five-more-rounds.test.cjs'
+      - 'tests/worksheet-critique-rounds-11-15.test.cjs'
       - 'column-math.js'
       - 'docs/worksheet-critique-loop.md'
       - 'docs/worksheet-2022-alignment.md'
@@ -84,8 +86,9 @@ jobs:
         run: |
           node --check scripts/worksheet-critique-loop.cjs
           node --check tests/worksheet-five-more-rounds.test.cjs
+          node --check tests/worksheet-critique-rounds-11-15.test.cjs
           node --check column-math.js
-          node --test tests/worksheet-critique-loop.test.cjs tests/worksheet-critique-revisions.test.cjs tests/worksheet-five-more-rounds.test.cjs
+          node --test tests/worksheet-critique-loop.test.cjs tests/worksheet-critique-revisions.test.cjs tests/worksheet-five-more-rounds.test.cjs tests/worksheet-critique-rounds-11-15.test.cjs
           node scripts/worksheet-critique-loop.cjs --full
       - name: Attach pedagogical critique evidence for human review
         if: always()

@@ -19,6 +19,12 @@ function qualityRisks(question, subject) {
     question.passage || question.image || question.photo || question.material || question.table ||
     question.orderChoices?.length || question.right);
   if (cue.test(prompt) && !hasMaterial) flags.push('자료 맥락 확인');
+  if (subject === 'korean' && /(?:이 글|글에서|본문에서|지문에서)/.test(prompt) && !hasMaterial)
+    flags.push('독해 지문 누락 의심');
+  if (subject === 'social' && /(?:옛날|과거|옛 사진|옛 기록|옛 지도)/.test(detail) &&
+      !/(?:오늘|현재|지금|요즘|현대)/.test(detail) &&
+      /(?:현재|오늘|지금|요즘).*?(?:다르|달라|변하)/.test(answer))
+    flags.push('자료 범위를 넘은 시대 비교 의심');
   if (subject !== 'math' && answer.length >= 3 && detail.includes(answer) &&
       /(?:무엇|어느|어떤|알맞|고르|쓰세요)/.test(prompt)) flags.push('자료에 정답 노출 의심');
   if (choices.length >= 3 && choices.filter(x => x !== answer && absolute.test(x)).length >= 2)
@@ -105,6 +111,9 @@ function review(C, {full = false} = {}) {
         result.errors.push({key,seed:options.seed,index:i+1,problem:'쓰기 문항에 선택지 노출'});
       if (format==='essay' && !String(q.modelExplanation||'').trim())
         result.errors.push({key,seed:options.seed,index:i+1,problem:'서술형 교사용 풀이 누락'});
+      if (options.subject==='korean' && options.topic==='reading-set' && format==='essay' &&
+          (!q.readingGroup || !/글이나 자료에서 근거를 찾아/.test(prompt)))
+        result.errors.push({key,seed:options.seed,index:i+1,problem:'독해 서술형 근거 지시 누락'});
       for (const flag of qualityRisks(q, options.subject)) {
         result.warningCounts[flag]=(result.warningCounts[flag]||0)+1;
         if (result.samples.length < 120) result.samples.push({

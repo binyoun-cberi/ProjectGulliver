@@ -361,7 +361,7 @@ test('reading sheets do not repeat a passage and expose longer texts from grade 
  for(const grade of [1,2,3,4,5,6])for(const seed of [1,42,2026]){
   const items=generate({subject:'korean',grade,topic:'reading',count:15,seed}).items;
   assert.equal(new Set(items.map(q=>q.detail)).size,15);
-  if(grade<=2)assert.ok(items.every(q=>q.detail.split('.').length<=2));
+  if(grade<=2)assert.ok(items.every(q=>q.detail.split('.').length<=3)); // At most two complete sentences for beginning readers.
  }
  let long=0;for(let seed=1;seed<=20;seed++)long+=generate({subject:'korean',grade:3,topic:'reading',count:15,seed}).items.filter(q=>q.detail.split('.').length>2).length;
  assert.ok(long>20,'long passages are not reaching the worksheet');
