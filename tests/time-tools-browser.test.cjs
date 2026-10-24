@@ -41,6 +41,29 @@
       await page.locator('#ttStart').click();
       await student.waitForFunction(()=>document.querySelector('.tt-student-number')?.textContent!=='01:00',{timeout:8000});
       await page.locator('#ttStart').click();
+      // Hourglass reflects time remaining, does not reset its stream on each tick,
+      // and projects exactly the same sand level to the student window.
+      await page.locator('#ttStyles [data-style="sand"]').click();
+      await page.locator('#ttFace .tt-hourglass').waitFor();
+      await student.locator('.tt-student-sand-layout .tt-hourglass').waitFor();
+      const initialTop=await page.locator('.tt-hourglass [data-part="upper-sand"]').getAttribute('d');
+      const initialProgress=Number(await page.locator('.tt-hourglass').getAttribute('data-progress'));
+      await page.evaluate(()=>{window.__firstHourglass=document.querySelector('#ttFace .tt-hourglass');});
+      await page.locator('#ttStart').click();
+      await page.waitForFunction(min=>{
+        const node=document.querySelector('#ttFace .tt-hourglass');
+        return node && Number(node.dataset.progress)>=min+2;
+      },initialProgress,{timeout:10000});
+      assert.equal(await page.evaluate(()=>window.__firstHourglass===document.querySelector('#ttFace .tt-hourglass')),true);
+      assert.notEqual(await page.locator('.tt-hourglass [data-part="upper-sand"]').getAttribute('d'),initialTop);
+      await student.locator('.tt-hourglass[data-running="true"]').waitFor();
+      const projection=await student.locator('.tt-hourglass').getAttribute('data-progress');
+      assert.ok(Math.abs(Number(projection)-Number(await page.locator('.tt-hourglass').getAttribute('data-progress')))<=2);
+      await page.locator('#ttStart').click();
+      await student.locator('.tt-hourglass[data-running="false"]').waitFor();
+      fs.mkdirSync('test-artifacts',{recursive:true});
+      await page.screenshot({path:'test-artifacts/time-tools-hourglass-teacher.png'});
+      await student.screenshot({path:'test-artifacts/time-tools-hourglass-student.png'});
       await page.locator('[data-mode="clock"]').click();
       await student.locator('.tt-student-analog').waitFor();
       await page.locator('[data-mode="learn"]').click();
@@ -61,6 +84,12 @@
       await student.locator('.tt-student-track').waitFor();
       assert.equal(await student.locator('#ttPeriodSettings,#ttPeriodRows').count(),0);
       assert.equal(await student.locator('#ttEvents,#ttRecords,#ttStudentName').count(),0);
+      await page.setViewportSize({width:390,height:844});
+      await page.locator('[data-mode="timer"]').click();
+      assert.equal(await page.locator('#ttModes [role="tab"]').count(),6);
+      const widths=await page.evaluate(()=>({view:document.documentElement.clientWidth,body:document.body.scrollWidth}));
+      assert.ok(widths.body<=widths.view+2,'mobile viewport overflow: '+JSON.stringify(widths));
+      await page.screenshot({path:'test-artifacts/time-tools-mobile.png'});
       await student.close();
     }finally{
       await browser?.close();

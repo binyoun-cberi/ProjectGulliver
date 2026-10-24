@@ -8,6 +8,14 @@
   const engine=core.createEngine(core.migrate(safeRead(key),safeRead('lessonCircleTimerV3'),safeRead('classUniversalClock.v2')));
   const modeLabels={clock:'현재 시각',timer:'타이머',stopwatch:'스톱워치',lesson:'수업 흐름',period:'교시별 타이머',learn:'시계 읽기'};
   const styleLabels={ring:'원형',digital:'디지털',analog:'아날로그',bar:'막대형',sand:'모래시계'};
+  const descriptions={
+    clock:'현재 시각을 아날로그 또는 디지털 시계로 크게 보여줘요.',
+    timer:'남은 시간을 설정하고 시작하세요. 진행 중 스타일을 변경해도 시간이 유지돼요.',
+    stopwatch:'미션을 시작하고 학생별 기록을 모아 비교해 보세요.',
+    lesson:'한 교시의 도입·활동·정리 시간을 연결해 보여줘요.',
+    period:'학교 시간표를 저장하면 수업·쉬는 시간·점심시간을 자동으로 안내해요.',
+    learn:'시침과 분침을 설정하고 정답을 가린 채 시계 읽기를 연습해요.'
+  };
   let lastRecordMode='',lastStatus='',lastRunning=false,lastMode='',lastStyle='',lastPersist=0;
   const el=(tag,cls,text)=>{
     const node=document.createElement(tag);
@@ -45,13 +53,27 @@
     return svg;
   }
   function paintFace(s){
-    const face=$('ttFace');face.replaceChildren();
+    const face=$('ttFace');
     const label=s.phase||modeLabels[s.mode];
     const main=s.mode==='clock'?`${String(s.hour).padStart(2,'0')}:${String(s.minute).padStart(2,'0')}:${String(s.second).padStart(2,'0')}`:
       s.mode==='learn'?(s.reveal?`${String(s.hour).padStart(2,'0')}:${String(s.minute).padStart(2,'0')}`:'몇 시일까요?'):
       core.format(s.timeMs,s.mode==='stopwatch');
     const status=s.mode==='period'?(s.note||'')+' · 다음: '+(s.next||'오늘 수업 마무리'):s.mode==='lesson'?(s.note||s.next):s.mode==='timer'?`${core.format(s.totalMs)} 중 ${core.format(s.elapsedMs)} 지남`:s.mode==='stopwatch'?'시작을 누르면 시간이 흘러요.':s.mode==='clock'?'컴퓨터의 현재 시각':s.reveal?'정답을 확인했어요.':'시침과 분침을 읽어 보세요.';
     const progress=Math.min(100,Math.max(0,Number(s.progress)||0));
+    // Keep the SVG mounted between ticks: restarting it every 250ms used to make
+    // falling grains flicker or appear frozen.
+    const existing=face.querySelector('.tt-hourglass');
+    if(s.style==='sand' && face.dataset.renderMode===s.mode && existing?.updateHourglass){
+      existing.updateHourglass(progress,s.running);
+      const value=face.querySelector('.tt-number');
+      const caption=face.querySelector('.tt-face-sub');
+      if(value && value.textContent!==main)value.textContent=main;
+      if(caption && caption.textContent!==s.status)caption.textContent=s.status;
+      $('ttStart').textContent=s.running?'Ⅱ 일시정지':'▶ 시작';
+      return;
+    }
+    face.replaceChildren();
+    face.dataset.renderMode=s.mode;
     function appendStrip(){
       if(s.mode==='period'){
         const strip=el('div','tt-period-strip');
@@ -89,7 +111,12 @@
       box.append(el('div','tt-face-label',label),el('div','tt-number',main),el('div','tt-face-sub',status));
       face.append(box);
     }else if(s.style==='sand'){
-      face.append(el('div','tt-face-label',label),el('div','tt-sand',progress>=100?'⌛':'⏳'),el('div','tt-number',main),el('div','tt-face-sub',status));
+      const layout=el('div','tt-sand-layout');
+      const visual=window.TimeToolsHourglass?.create(progress,s.running);
+      if(visual)layout.append(visual);
+      const information=el('div','tt-sand-copy');
+      information.append(el('div','tt-face-label',label),el('div','tt-number',main),el('div','tt-face-sub',s.status));
+      layout.append(information);face.append(layout);
     }else{
       face.append(el('div','tt-face-label',label),el('div','tt-number',main));
       const track=el('div','tt-track');const fill=el('div');fill.style.width=progress+'%';fill.style.background=s.color;track.append(fill);face.append(track,el('div','tt-face-sub',status));
@@ -207,6 +234,10 @@
     $('ttMinute').value=Math.floor(t/60);$('ttSecond').value=Math.round(t%60);
     $('ttHour').value=engine.data.learn.hour;$('ttLearnMinute').value=engine.data.learn.minute;
     $('ttSound').checked=engine.data.soundOn;
+    $('ttModeDescription').textContent=descriptions[mode];
+    const seconds=engine.data.time.timer.durationMs/1000;
+    for(const b of $('ttPresets').querySelectorAll('[data-seconds]'))
+      b.setAttribute('aria-pressed',String(Number(b.dataset.seconds)===seconds));
     if(mode==='lesson')renderEvents();
     if(mode==='period')renderPeriodRows();
     if(['timer','stopwatch'].includes(mode))renderRecords();
@@ -215,6 +246,13 @@
   function render(){
     const s=engine.snapshot();
     if(s.mode!==lastMode)syncMode();
+    $('ttCurrentMode').textContent=modeLabels[s.mode];
+    if($('ttLiveState').textContent!==s.status)$('ttLiveState').textContent=s.status;
+    $('ttLiveState').dataset.state=s.status;
+    $('ttReveal').textContent=engine.data.learn.reveal?'정답 가리기':'정답 보기';
+    const connected=window.GulliverTeacherDisplay?.connected?.()===true;
+    $('ttStudent').textContent=connected?'학생 화면 보기 ↗':'학생 화면 열기 ↗';
+    $('ttStudent').setAttribute('aria-label',connected?'연결된 학생 화면 열기':'새 학생 화면 열기');
     if(s.style!==lastStyle){renderStyles();lastStyle=s.style;}
     paintFace(s);
     if(lastRunning&&!s.running&&(s.mode==='timer'||s.mode==='lesson')&&s.remainingMs===0){
@@ -237,6 +275,16 @@
   $('ttModes').addEventListener('click',event=>{
     const b=event.target.closest('button[data-mode]');if(!b)return;
     changed(()=>engine.switchMode(b.dataset.mode));syncMode();
+  });
+  $('ttModes').addEventListener('keydown',event=>{
+    if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+    const tabs=[...$('ttModes').querySelectorAll('[role="tab"]')];
+    const current=tabs.indexOf(document.activeElement);
+    if(current<0)return;
+    event.preventDefault();
+    const next=event.key==='Home'?0:event.key==='End'?tabs.length-1:
+      (current+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+    tabs[next].focus();tabs[next].click();
   });
   $('ttStart').onclick=()=>changed(()=>engine.toggle());
   $('ttReset').onclick=()=>{if(!confirm('현재 시계를 처음부터 다시 시작할까요?'))return;changed(()=>engine.reset());};
@@ -328,6 +376,7 @@
     const wasRunning=engine.data.running;
     render();
     if(wasRunning&&!engine.data.running)persist();
-    if(Date.now()-lastPersist>=1000){lastPersist=Date.now();persist();}
+    // Start/pause and changes already save the running timestamp. No 1s storage
+    // writes are needed while the clock merely repaints its numbers.
   },250);
 })();

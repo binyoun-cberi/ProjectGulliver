@@ -4,6 +4,7 @@
   const assert=require('node:assert/strict');
   const fs=require('node:fs');
   const core=require('../time-tools-core.js');
+  const hourglass=require('../time-tools-hourglass.js');
   test('default clock options are safe and timer begins at five minutes',()=>{
     let now=1000;
     const engine=core.createEngine({},()=>now);
@@ -189,6 +190,33 @@
     assert.doesNotMatch(JSON.stringify(snap),/records|studentName|teacherNote/);
     assert.equal(core.validatePeriods([{start:'24:01',durationMin:40}]).ok,false);
     assert.equal(core.validatePeriods([{start:'23:50',durationMin:30}]).ok,false);
+  });
+
+
+  test('hourglass geometry tracks actual countdown consumption without emoji placeholders',()=>{
+    const start=hourglass.geometry(0),half=hourglass.geometry(50),end=hourglass.geometry(100);
+    assert.ok(start.upperLevel < half.upperLevel && half.upperLevel < end.upperLevel);
+    assert.ok(start.lowerLevel > half.lowerLevel && half.lowerLevel > end.lowerLevel);
+    assert.deepEqual(hourglass.geometry(-50),start);
+    assert.deepEqual(hourglass.geometry(200),end);
+    assert.equal(hourglass.clamp(NaN),0);
+    const teacher=fs.readFileSync('time-tools-ui.js','utf8');
+    const student=fs.readFileSync('gulliver-teacher-display-view.js','utf8');
+    assert.match(teacher,/TimeToolsHourglass\?\.create/);
+    assert.match(student,/TimeToolsHourglass\?\.create/);
+    assert.doesNotMatch(teacher,/progress>=100\?'⌛':'⏳'/);
+    assert.doesNotMatch(student,/progress>=100\?'⌛':'⏳'/);
+  });
+  test('clock interface provides six keyboard tabs, named status and reduced-motion support',()=>{
+    const html=fs.readFileSync('시간 도구.html','utf8');
+    const css=fs.readFileSync('time-tools-ux.css','utf8');
+    assert.equal((html.match(/role="tab"/g)||[]).length,6);
+    assert.match(html,/id="ttCurrentMode"/);
+    assert.match(html,/id="ttLiveState"/);
+    assert.match(html,/time-tools-hourglass\.js\?v=/);
+    assert.match(html,/time-tools-ux\.css\?v=/);
+    assert.match(css,/prefers-reduced-motion/);
+    assert.match(css,/tt-student-sand-layout/);
   });
 
   test('unified entry and second-screen rendering are wired without deleting old tool files',()=>{
