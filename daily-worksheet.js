@@ -40,6 +40,20 @@ function syncMathTypes(preferred){const mixed=subject==='math'&&$('topic').value
  for(const unit of groups){const group=document.createElement('div');group.className='math-type-group';const heading=document.createElement('strong');heading.textContent=unit.label;group.append(heading);
   for(const [id,label] of unit.types){const row=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=id;input.checked=prior.length?prior.includes(id):index<3;row.append(input,document.createTextNode(' '+label));group.append(row);index++}options.append(group)}
 }
+function mixPlan(){return [...$('unitMixRows').children].map(row=>({id:row.querySelector('select').value,count:Number(row.querySelector('input').value)}))}
+function addMixRow(value){
+ const options=C.mixOptions(subject,Number($('grade').value)),used=new Set(mixPlan().map(row=>row.id));
+ const row=document.createElement('div');row.className='unit-mix-row';
+ const label=document.createElement('label');label.textContent='단원 / 세부 유형';const select=document.createElement('select');select.name='mixUnit';
+ for(const entry of options){let group=[...select.children].find(group=>group.label===entry.unit);if(!group){group=document.createElement('optgroup');group.label=entry.unit;select.append(group)}option(group,entry.id,entry.label)}
+ select.value=value?.id||options.find(entry=>!used.has(entry.id))?.id||options[0]?.id||'';label.append(select);
+ const amount=document.createElement('label');amount.textContent='문항 수';const input=document.createElement('input');input.type='number';input.name='mixCount';input.min='1';input.max='20';input.step='1';input.value=String(value?.count??5);amount.append(input);
+ const remove=document.createElement('button');remove.type='button';remove.textContent='삭제';remove.setAttribute('aria-label','이 단원 삭제');remove.onclick=()=>{row.remove();updateMixTotal();updateFilterSummary()};
+ row.append(label,amount,remove);$('unitMixRows').append(row);updateMixTotal();
+}
+function updateMixTotal(){const plan=mixPlan(),total=plan.reduce((n,row)=>n+row.count,0);$('unitMixTotal').textContent=plan.length+'개 유형 · 총 '+total+'문항';const active=$('unitMixEnabled').checked;form.classList.toggle('unit-mix-active',active);$('count').disabled=active;$('addUnitMix').disabled=plan.length>=20}
+function resetMix(){ $('unitMixEnabled').checked=false;$('unitMixRows').replaceChildren();addMixRow();updateMixTotal() }
+$('addUnitMix').onclick=()=>{addMixRow();updateFilterSummary()};
 function denseAvailable(){if(subject!=='math')return false;if(!$('typeSetting').hidden)return /^(add-|sub-|small-|two-|times-)/.test($('type').value)&&$('type').value!=='times-missing';return ['addition','hundreds','multiplication'].includes($('topic').value)}
 function syncCount(preferred){
  const column=subject==='math'&&$('topic').value==='column';$('columnSettings').hidden=!column;$('columnSettings').disabled=!column;$('columnModeLabel').textContent=$('type').value==='column-div3'?'나머지':$('type').value==='column-sub3'?'받아내림':'받아올림';
@@ -63,6 +77,9 @@ $('historyEraSetting').querySelectorAll('input').forEach(input=>{input.checked=p
 if(['any','yes','no'].includes(params.get('columnMode'))) $('columnMode').value=params.get('columnMode');$('columnPlaces').checked=params.get('columnPlaces')==='1';
 syncMathTypes(params.has('mathTypes')?params.get('mathTypes').split(','):null);syncCount(initialCount);
 $('largePrint').checked=params.get('large')==='1';
+resetMix();
+if(params.has('unitMix'))try{const plan=JSON.parse(params.get('unitMix'));if(Array.isArray(plan)&&plan.length&&plan.length<=20){$('unitMixRows').replaceChildren();plan.forEach(addMixRow);$('unitMixEnabled').checked=true;$('unitMixSettings').open=true;updateMixTotal()}}catch{}
+
 function appendMathText(node,value){const parts=String(value).split(/(\d+\/\d+)/g);for(const part of parts){const match=part.match(/^(\d+)\/(\d+)$/);if(!match){node.append(document.createTextNode(part));continue}const fraction=document.createElement('span'),top=document.createElement('span'),bottom=document.createElement('span');fraction.className='stacked-fraction';fraction.setAttribute('role','img');fraction.setAttribute('aria-label',`${match[2]}분의 ${match[1]}`);top.textContent=match[1];bottom.textContent=match[2];fraction.append(top,bottom);node.append(fraction)}}
 function setPreview(open){answersVisible=open;document.body.classList.toggle('show-inline-answers',open);$('toggleAnswers').textContent=open?'정답 닫기':'정답 보기';$('toggleAnswers').setAttribute('aria-expanded',String(open));
  for(const li of $('questions').children){if(li.classList.contains('calculation-item'))li.setAttribute('aria-label',li.dataset.prompt+(open?' 정답: '+li.dataset.answer:''));else li.querySelector('.inline-answer')?.setAttribute('aria-hidden',String(!open))}
@@ -81,7 +98,7 @@ function renderColumn(li,item,index,places){
 function render(sheet){
 current=sheet;
 const simpleOperation=item=>/^(\d+) ([+×−]) (\d+) =$/.test(item.prompt);
-const column=sheet.topic==='column';
+const column=sheet.topic==='column'||sheet.items.every(item=>item.column);
 const mathVertical=!column&&sheet.subject==='math'&&sheet.items.length>=5&&sheet.items.every(simpleOperation);
 const dense=mathVertical&&(sheet.type?/^(add-|sub-|small-|two-|times-)/.test(sheet.type)&&sheet.type!=='times-missing':['addition','hundreds','multiplication'].includes(sheet.topic));
 const compact=!column&&!dense&&sheet.responseFormat!=='essay'&&sheet.items.length>=5&&sheet.items.every(item=>
@@ -97,7 +114,7 @@ const compact=!column&&!dense&&sheet.responseFormat!=='essay'&&sheet.items.lengt
  $('paperStandard').hidden=!sheet.alignment;if(sheet.alignment)$('paperStandard').textContent=`교사용 수업 참고 · ${sheet.alignment.code} · ${sheet.alignment.scope}`;
  sheet.items.forEach((item,index)=>{
   const li=document.createElement('li');if(item.format==='essay')li.classList.add('essay-question');if(item.format==='ox')li.classList.add('ox-question');li.dataset.prompt=`${index+1}번. ${item.prompt}`;li.dataset.answer=item.answer;
-  if(column){renderColumn(li,item,index,sheet.columnPlaces);}
+  if(item.column){renderColumn(li,item,index,sheet.columnPlaces);}
   else if(dense){
    const match=item.prompt.match(/^(\d+) ([+×−]) (\d+) =$/);
    if(!match)throw Error('세로셈으로 표시할 수 없는 문제가 있습니다.');
@@ -142,19 +159,20 @@ const compact=!column&&!dense&&sheet.responseFormat!=='essay'&&sheet.items.lengt
      else if(measured&&!measured.ok)$('sheetStatus').textContent=measured.issue;
    }
  });
- const url=new URL(location.href);url.search=new URLSearchParams({subject:sheet.subject,grade:String(sheet.grade),unit:$('unit').value,topic:sheet.topic,...(sheet.type?{type:sheet.type}:{}),...(column?{columnMode:sheet.columnMode,columnPlaces:sheet.columnPlaces?'1':'0'}:{}),...(sheet.responseFormat?{format:sheet.responseFormat}:{}),...(sheet.topic==='history-mix'?{eras:sheet.eras.join(',')}:{}),...(sheet.topic==='math-mix'?{mathTypes:sheet.mathTypes.join(',')}:{}),difficulty:sheet.difficulty,count:String(sheet.count),seed:String(sheet.seed),...(sheet.topic==='hundreds'&&!sheet.type?{variant:sheet.variant}:{}),...($('largePrint').checked?{large:'1'}:{})}).toString();history.replaceState(null,'',url.href);
+ const url=new URL(location.href);url.search=new URLSearchParams({subject:sheet.subject,grade:String(sheet.grade),unit:$('unit').value,topic:sheet.topic,...(sheet.unitMix?{unitMix:JSON.stringify(sheet.unitMix.map(({id,count})=>({id,count})))}:{}),...(sheet.type?{type:sheet.type}:{}),...(sheet.topic==='column'?{columnMode:sheet.columnMode,columnPlaces:sheet.columnPlaces?'1':'0'}:{}),...(sheet.responseFormat?{format:sheet.responseFormat}:{}),...(sheet.topic==='history-mix'?{eras:sheet.eras.join(',')}:{}),...(sheet.topic==='math-mix'?{mathTypes:sheet.mathTypes.join(',')}:{}),difficulty:sheet.difficulty,count:String(sheet.count),seed:String(sheet.seed),...(sheet.topic==='hundreds'&&!sheet.type?{variant:sheet.variant}:{}),...($('largePrint').checked?{large:'1'}:{})}).toString();history.replaceState(null,'',url.href);
  const qr=$('answerQr'),code=$('answerQrCode');code.replaceChildren();qr.hidden=true;
  if(/^https?:$/.test(url.protocol)&&typeof window.qrcode==='function')try{const generator=window.qrcode(0,'M');generator.addData(url.href,'Byte');generator.make();code.innerHTML=generator.createSvgTag(2,4);qr.hidden=false}catch(error){console.warn('문제지 QR을 생성할 수 없습니다.',error)}
 }
-function make(newSeed){try{const state={subject,grade:Number($('grade').value),topic:$('topic').value,type:contentType(),eras:selectedEras(),mathTypes:selectedMathTypes(),difficulty:$('difficulty').value,variant:$('variant').value,count:Number($('count').value),columnMode:$('columnMode').value,columnPlaces:$('columnPlaces').checked,seed:newSeed,responseFormat:subject==='math'?'':$('responseFormat').value};render(C.generate(state))}catch(error){console.warn('문제지 만들기:',error);$('sheetStatus').textContent='선택한 조건으로 문제를 만들지 못했어요. 문제 유형이나 문항 수를 바꾸어 다시 시도해 주세요.';$('sheetMeta').textContent=''}}
+function make(newSeed){try{const state={subject,grade:Number($('grade').value),topic:$('topic').value,type:contentType(),eras:selectedEras(),mathTypes:selectedMathTypes(),difficulty:$('difficulty').value,variant:$('variant').value,count:Number($('count').value),columnMode:$('columnMode').value,columnPlaces:$('columnPlaces').checked,seed:newSeed,responseFormat:subject==='math'?'':$('responseFormat').value};if($('unitMixEnabled').checked)state.unitMix=mixPlan();render(C.generate(state))}catch(error){console.warn('문제지 만들기:',error);$('sheetStatus').textContent=error.message||'선택한 조건으로 문제를 만들지 못했어요.';$('sheetMeta').textContent=''}}
 function updateFilterSummary(){
  const name=C.SUBJECTS[subject].name;$('filterSubjectTitle').textContent=name+' 문제지 설정';
  const labels=[$('grade').selectedOptions[0]?.textContent,$('typeSetting').hidden?$('topic').selectedOptions[0]?.textContent:$('type').selectedOptions[0]?.textContent,$('count').value+'문항'];
- $('filterSelectionSummary').textContent=labels.filter(Boolean).join(' · ');
+ $('filterSelectionSummary').textContent=$('unitMixEnabled').checked?name+' · 여러 단원 · '+$('unitMixTotal').textContent:labels.filter(Boolean).join(' · ');
  document.querySelectorAll('[data-worksheet-subject]').forEach(link=>{if(link.dataset.worksheetSubject===subject)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current')});
 }
 window.addEventListener('gulliver:worksheet-subject',e=>{const input=[...form.querySelectorAll('input[name="subject"]')].find(input=>input.value===e.detail?.subject);if(!input)return;input.checked=true;input.dispatchEvent(new Event('change',{bubbles:true}));form.scrollIntoView({block:'start',behavior:'smooth'})});
-form.addEventListener('change',e=>{const name=e.target.name;if(name==='subject'){subject=e.target.value;syncGrades($('grade').value);syncHistoryEras();syncMathTypes([])}else if(name==='grade'){syncUnits(null);syncHistoryEras();syncMathTypes([])}else if(name==='unit'){syncTopics();syncHistoryEras();syncMathTypes()}else if(name==='topic'){syncTypes();syncHistoryEras();syncMathTypes()}if(['subject','grade','unit','topic','type'].includes(name))syncDifficulty();if(name!=='count'&&name!=='largePrint')syncCount(Number($('count').value));updateFilterSummary();if(name!=='largePrint')$('sheetStatus').textContent='조건을 골랐어요. ‘문제지 만들기’를 눌러 반영하세요.'});
+form.addEventListener('change',e=>{const name=e.target.name;if(name==='subject'){subject=e.target.value;syncGrades($('grade').value);syncHistoryEras();syncMathTypes([])}else if(name==='grade'){syncUnits(null);syncHistoryEras();syncMathTypes([])}else if(name==='unit'){syncTopics();syncHistoryEras();syncMathTypes()}else if(name==='topic'){syncTypes();syncHistoryEras();syncMathTypes()}if(['subject','grade','unit','topic','type'].includes(name))syncDifficulty();if(['subject','grade'].includes(name))resetMix();updateMixTotal();if(name!=='count'&&name!=='largePrint')syncCount(Number($('count').value));updateFilterSummary();if(name!=='largePrint')$('sheetStatus').textContent='조건을 골랐어요. ‘문제지 만들기’를 눌러 반영하세요.'});
+form.addEventListener('input',e=>{if(e.target.name==='mixCount'){updateMixTotal();updateFilterSummary();$('sheetStatus').textContent='문항 수를 바꿨어요. 문제지 만들기를 눌러 반영하세요.'}});
 form.addEventListener('submit',e=>{e.preventDefault();make(seed())});$('regenerate').onclick=()=>make(seed());
 $('toggleAnswers').onclick=()=>setPreview(!answersVisible);
 async function print(withAnswers){
@@ -183,5 +201,6 @@ window.addEventListener('afterprint',()=>document.body.classList.remove('print-a
 updateFilterSummary();
 make(Number.isFinite(Number(params.get('seed')))&&params.has('seed')?Number(params.get('seed')):seed());
 })();
+
 
 

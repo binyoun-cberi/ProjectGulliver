@@ -392,3 +392,23 @@ test('heritage photo sheets keep unique photos and answers with local credited a
  }
 });
 
+
+
+test('unit quotas are exact, grade limited and reproducible in all five subjects',()=>{
+ const C=require('../daily-worksheet-core.js');
+ for(const subject of Object.keys(C.SUBJECTS)){
+  const grade=5,entries=C.mixOptions(subject,grade).filter(x=>x.topic!=='column').slice(0,2),unitMix=entries.map((entry,i)=>({id:entry.id,count:i?7:3}));
+  const state={subject,grade,unitMix,seed:123},sheet=C.generate(state);
+  assert.equal(sheet.items.length,10);assert.deepEqual(sheet,C.generate(state));
+  assert.deepEqual(sheet.unitMix.map(x=>x.count),[3,7]);
+  for(let i=0;i<entries.length;i++)assert.ok(sheet.items.slice(i?3:0,i?10:3).every(q=>q.sourceTopic===entries[i].topic));
+  assert.throws(()=>C.generate({...state,unitMix:[unitMix[0],unitMix[0]]}));
+  for(const count of [0,-1,1.5,21])assert.throws(()=>C.generate({...state,unitMix:[{id:entries[0].id,count}]}));
+ }
+ assert.throws(()=>C.generate({subject:'science',grade:3,unitMix:[{id:'topic:ecosystem',count:2}]}));
+ const options=C.mixOptions('korean',4),reading=options.find(x=>x.topic==='reading-set'),words=options.find(x=>x.topic==='vocabulary');
+ const sheet=C.generate({subject:'korean',grade:4,seed:15,unitMix:[{id:reading.id,count:2},{id:words.id,count:3}]});
+ assert.ok(sheet.items[0].readingPassage);assert.equal(sheet.items.length,5);
+ const columns=C.mixOptions('math',3).filter(x=>x.topic==='column');
+ assert.ok(C.generate({subject:'math',grade:3,seed:10,unitMix:columns.slice(0,2).map(x=>({id:x.id,count:3}))}).items.every(q=>q.column));
+});

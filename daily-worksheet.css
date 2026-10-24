@@ -237,3 +237,20 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
  .horizontal-worksheet .daily-settings .scope-note{order:6}
 }
 @media screen{.horizontal-worksheet .filter-submit .daily-primary{color:#fff;border-color:#247b6b}}
+
+
+@media screen{
+ .unit-mix-settings{order:4;grid-column:1/-1;border:1px solid var(--line,#d7dfda);border-radius:12px;background:#f8faf8}
+ .unit-mix-settings>summary{padding:14px 16px;cursor:pointer;font-weight:700}
+ .unit-mix-body{padding:0 16px 16px}.unit-mix-body>p{font-size:.85rem;color:#536358}
+ .unit-mix-row{display:grid;grid-template-columns:minmax(0,1fr) 100px auto;align-items:end;gap:10px;margin:10px 0}
+ .unit-mix-row label{display:grid;gap:5px;min-width:0}.unit-mix-row select,.unit-mix-row input{width:100%;min-width:0;box-sizing:border-box;padding:10px}
+ .unit-mix-row button,#addUnitMix{padding:10px 14px;border:1px solid #cbd6cf;border-radius:8px;background:white;cursor:pointer}
+ #unitMixTotal{display:inline-block;margin:10px;font-weight:700}
+ @media(max-width:600px){.unit-mix-row{grid-template-columns:minmax(0,1fr) 76px}.unit-mix-row>label:first-child{grid-column:1/-1}.unit-mix-row button{justify-self:start}}
+}
+
+/* Mixed text and grid exercises retain a writable, bounded column area. */
+#questions:not(.column-questions) .column-cells,.print-paper .print-question-list:not(.column-questions) .column-cells{width:50mm;max-width:100%}
+
+@media screen{.unit-mix-active :is(#unitSetting,#topicSetting,#typeSetting,#mathTypeSetting,#historyEraSetting,#curriculumNote,#difficultySetting,#variantSetting),.unit-mix-active label:has(>#count){display:none!important}}

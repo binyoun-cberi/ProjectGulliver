@@ -138,3 +138,25 @@ test('worksheet subject navigation and horizontal settings work on desktop and m
  rect=await geometry();assert.ok(rect.output.y>=rect.settings.bottom);await page.screenshot({path:'test-artifacts/worksheet-horizontal-mobile.png',fullPage:true});assert.deepEqual(errors,[]);
  }finally{await browser.close()}
 });
+
+test('collapsible unit quotas generate exact counts, survive reload and print on mobile',{skip:(!chrome||!chromium)&&'Chrome required',timeout:90000},async()=>{
+ const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--allow-file-access-from-files']});
+ try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(pathToFileURL(path.resolve('문제지 만들기.html')).href,{waitUntil:'load'});
+ assert.equal(await page.locator('#unitMixSettings').getAttribute('open'),null);
+ await page.locator('#unitMixSettings summary').click();await page.locator('#unitMixEnabled').check();await page.locator('#addUnitMix').click();
+ const rows=page.locator('.unit-mix-row');await rows.nth(0).locator('input').fill('3');await rows.nth(1).locator('input').fill('7');
+ await page.locator('button.daily-primary').click();assert.equal(await page.locator('#questions>li').count(),10);assert.match(await page.locator('#questionSheet #paperTitle').textContent(),/여러 단원/);
+ assert.equal(await page.locator('#count').isDisabled(),true);const url=page.url();assert.ok(url.includes('unitMix='));
+ await page.reload();assert.equal(await rows.count(),2);assert.equal(await rows.nth(1).locator('input').inputValue(),'7');assert.equal(await page.locator('#questions>li').count(),10);
+ const packed=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(packed.ok,packed.issue);
+ await page.emulateMedia({media:'print'});await page.pdf({path:'test-artifacts/worksheet-unit-mix-student.pdf',format:'A4',printBackground:true});
+ await page.evaluate(()=>{document.body.classList.add('print-answers');window.DailyWorksheetA4.compose()});await page.pdf({path:'test-artifacts/worksheet-unit-mix-teacher.pdf',format:'A4',printBackground:true});
+ await page.emulateMedia({media:'screen'});await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ await page.screenshot({path:'test-artifacts/worksheet-unit-mix-mobile.png',fullPage:true});
+ await rows.nth(1).locator('button').click();assert.equal(await rows.count(),1);
+ const columnUrl=await page.evaluate(()=>{const C=window.DailyWorksheetCore,options=C.mixOptions('math',3),plan=[options.find(x=>x.topic==='column'),options.find(x=>x.topic==='multiplication')].map(x=>({id:x.id,count:3}));const url=new URL(location.href);url.search=new URLSearchParams({subject:'math',grade:'3',unitMix:JSON.stringify(plan),seed:'99'});return url.href});
+ await page.goto(columnUrl,{waitUntil:'load'});assert.equal(await page.locator('#questions>li').count(),6);assert.equal(await page.locator('#questions .column-cells').count(),3);
+ const mixedPack=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(mixedPack.ok,mixedPack.issue);assert.deepEqual(errors,[]);
+ }finally{await browser.close()}
+});
