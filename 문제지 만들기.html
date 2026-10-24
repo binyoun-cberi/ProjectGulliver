@@ -1,6 +1,6 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>문제지 만들기 | 클라시트</title><link rel="icon" type="image/svg+xml" href="clasheet-mark.svg?v=20261023-1">
-<link rel="stylesheet" href="gulliver-design.css?v=20261024-subject-nav1"><link rel="stylesheet" href="daily-worksheet.css?v=20261024-horizontal1">
+<link rel="stylesheet" href="gulliver-design.css?v=20261024-subject-nav1"><link rel="stylesheet" href="daily-worksheet.css?v=20261024-unitmix1">
 <script src="gulliver-app-shell.js?v=20261024-subject-nav1"></script><link rel="stylesheet" href="daily-column-math.css?v=20261024-integrated1"></head><body>
 <main class="daily-layout horizontal-worksheet" id="gulliverWork">
  <header class="daily-intro"><div><span class="eyebrow">클라시트 · 문제지 만들기</span><h1>수업에 맞는 문제지를 만들어 보세요</h1><p>과목을 고르고 아래에서 조건을 선택하세요. 완성한 문제지는 바로 살펴보고 인쇄할 수 있어요.</p></div><a href="index.html?view=tools" class="quiet-link">교사 도구 보기 →</a></header>
@@ -11,13 +11,14 @@
    <label id="variantSetting" hidden>세 자리 수 덧셈 유형<select id="variant" name="variant"><option value="tens">A · 일의 자리가 0인 덧셈</option><option value="ones">B · 일의 자리까지 덧셈</option></select></label>
    <fieldset id="columnSettings" hidden><legend>세로셈 설정</legend><label><span id="columnModeLabel">받아올림</span><select id="columnMode" name="columnMode"><option value="any">섞어서</option><option value="no">없음</option><option value="yes">있음</option></select></label><label class="print-option"><input id="columnPlaces" name="columnPlaces" type="checkbox"> 천·백·십·일 자리 표시</label></fieldset><label>문항 수<select id="count" name="count"><option value="6" hidden>6문항</option><option value="8" hidden>8문항</option><option value="12" hidden>12문항</option><option value="5">5문항</option><option value="10" selected>10문항</option><option value="15">15문항</option><option value="20">20문항</option></select></label>
    <label class="print-option"><input id="largePrint" name="largePrint" type="checkbox"> 큰 글씨로 인쇄</label>
-   <div class="filter-submit"><span id="filterSelectionSummary" aria-live="polite"></span><button class="daily-primary" type="submit">이 조건으로 문제지 만들기</button></div><p class="scope-note">교과서마다 단원 순서가 다를 수 있으니, 수업 전에 문제 내용을 살펴봐 주세요.</p>
+   <details id="unitMixSettings" class="unit-mix-settings"><summary>여러 단원 섞기 · 단원별 문항 수 상세 설정</summary><div class="unit-mix-body"><label class="print-option"><input type="checkbox" id="unitMixEnabled" name="unitMixEnabled"> 여러 단원에서 문제 뽑기</label><p>단원과 세부 유형을 골라 문항 수를 정하세요. 같은 유형은 한 번만 선택할 수 있어요. 유형별 1~20문항(세로셈 최대 12), 총 40문항까지 만들 수 있습니다.</p><div id="unitMixRows"></div><button type="button" id="addUnitMix">단원 추가</button><output id="unitMixTotal" aria-live="polite"></output></div></details><div class="filter-submit"><span id="filterSelectionSummary" aria-live="polite"></span><button class="daily-primary" type="submit">이 조건으로 문제지 만들기</button></div><p class="scope-note">교과서마다 단원 순서가 다를 수 있으니, 수업 전에 문제 내용을 살펴봐 주세요.</p>
   </form>
   <section class="daily-output" aria-label="생성한 문제지"><div class="output-actions"><div><span class="filter-step">2 · 미리보기와 인쇄</span><strong id="sheetStatus">문제지를 준비하고 있어요.</strong><small id="sheetMeta"></small></div><div class="output-buttons"><button id="regenerate" type="button">↻ 다른 문제로 바꾸기</button><button id="toggleAnswers" type="button" aria-expanded="false" aria-controls="questionSheet">정답 보기</button><button id="printOnly" type="button">학생용 문제지 인쇄</button><button id="printWithAnswers" type="button">교사용 정답·풀이 인쇄</button></div></div>
    <div class="paper-stack"><article class="paper" id="questionSheet"><div class="paper-topline">클라시트 <span>차근차근 풀어 보세요</span></div><div class="answer-heading"><h2 id="paperTitle"></h2><div class="answer-qr teacher-qr" id="answerQr" hidden><div id="answerQrCode"></div><span>교사용 · 같은 문제지 다시 열기</span></div></div><p class="paper-standard" id="paperStandard" hidden></p><div class="student-line"><span>이름: <i></i></span><span>날짜: <i></i></span></div><p class="paper-instruction" id="paperInstruction" hidden></p><ol id="questions"></ol><footer id="sheetNumber"></footer></article></div>
   </section>
  </div>
-</main><script src="vendor/qrcode.js"></script><script src="data/history-photo-bank.js"></script><script src="column-math.js?v=20261024-integrated1"></script><script src="daily-worksheet-core.js?v=20261024-integrated1"></script><script src="daily-worksheet-pagination.js?v=20261024-balanced1"></script><script src="daily-worksheet.js?v=20261024-horizontal1"></script></body></html>
+</main><script src="vendor/qrcode.js"></script><script src="data/history-photo-bank.js"></script><script src="column-math.js?v=20261024-integrated1"></script><script src="daily-worksheet-core.js?v=20261024-unitmix1"></script><script src="daily-worksheet-pagination.js?v=20261024-balanced1"></script><script src="daily-worksheet.js?v=20261024-unitmix1"></script></body></html>
+
 
 
 

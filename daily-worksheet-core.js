@@ -1183,7 +1183,39 @@ function convertAnswerFormat(items,subject,topic,responseFormat,seed){
   throw Error('선택한 문제 유형을 확인해 주세요.');
  });
 }
-function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basic',variant='tens',type='',eras=[],mathTypes=[],responseFormat='',columnMode='any',columnPlaces=false}){
+// Unit quotas use the existing generators so answer formats and seeded output stay consistent.
+function mixOptions(subject,grade){
+ const excluded=new Set(['math-mix','history-mix','history-review']);
+ const grouped=units(subject,Number(grade)).flatMap(unit=>unit.types.filter(entry=>!excluded.has(entry[2])).map(([type,label,topic])=>({id:unit.id+':'+type,unit:unit.label,label,topic,type})));
+ const covered=new Set(grouped.map(row=>row.topic));
+ return [...grouped,...(SUBJECTS[subject]?.topics||[]).filter(t=>available(t,Number(grade))&&!excluded.has(t[0])&&!covered.has(t[0])).map(([topic,label])=>({id:'topic:'+topic,unit:'기본 학습 내용',label,topic,type:''}))];
+}
+function generate(options){
+ if(!options.unitMix)return generateSingle(options);
+ const {subject,grade,seed=Date.now(),unitMix}=options,availableOptions=mixOptions(subject,grade);
+ if(!Array.isArray(unitMix)||!unitMix.length||unitMix.length>20)throw Error('섞을 단원을 선택해 주세요.');
+ const total=unitMix.reduce((n,row)=>n+Number(row.count),0),ids=new Set();
+ if(!Number.isInteger(total)||total<1||total>40)throw Error('전체 문항 수는 1~40문항으로 정해 주세요.');
+ const items=[],plan=[];
+ unitMix.forEach((row,index)=>{
+  const entry=availableOptions.find(option=>option.id===row.id),amount=Number(row.count);
+  if(!entry||ids.has(row.id)||!Number.isInteger(amount)||amount<1||amount>20)throw Error('단원과 문항 수를 확인해 주세요.');
+  ids.add(row.id);
+  const base={...options,unitMix:undefined,topic:entry.topic,type:entry.type,seed:((Number(seed)>>>0)+Math.imul(index+1,2654435761))>>>0,responseFormat:subject==='math'?'':options.responseFormat||''};
+  let sheet;
+  if(entry.topic==='column'&&amount>12)throw Error('세로셈은 유형마다 12문항까지 선택할 수 있어요.');
+  if(base.responseFormat&&!answerFormats(subject,entry.topic).some(([id])=>id===base.responseFormat))base.responseFormat=answerFormats(subject,entry.topic)[0]?.[0]||'';
+  for(const size of entry.topic==='column'?[6,8,10,12]:[5,10,15,20]){
+   if(size<amount)continue;
+   try{sheet=generateSingle({...base,count:size});break}catch(error){if(size===20)throw error}
+  }
+  if(!sheet)throw Error(entry.label+'의 문항 수를 줄여 주세요.');
+  items.push(...sheet.items.slice(0,amount).map(item=>({...item,sourceTopic:entry.topic,sourceUnit:entry.label,...(item.readingGroup?{readingGroup:index+':'+item.readingGroup}:{})})));
+  plan.push({id:row.id,count:amount,label:entry.label});
+ });
+ return {subject,grade:Number(grade),topic:'unit-mix',type:'',count:total,seed:Number(seed)>>>0,difficulty:options.difficulty||'basic',variant:'tens',responseFormat:options.responseFormat||'',columnPlaces:Boolean(options.columnPlaces),unitMix:plan,title:grade+'학년 '+SUBJECTS[subject].name+' · 여러 단원 모아 풀기',alignment:null,items};
+}
+function generateSingle({subject,topic,grade,count=10,seed=Date.now(),difficulty='basic',variant='tens',type='',eras=[],mathTypes=[],responseFormat='',columnMode='any',columnPlaces=false}){
  if(subject==='math'&&topic==='column'){
   if(!SUBJECTS.math.grades.includes(Number(grade))||!types(subject,Number(grade),topic).some(([id])=>id===type))throw Error('학년과 세로셈 유형을 확인해 주세요.');
   const op={'column-mul2':'×','column-mul3':'×','column-div3':'÷','column-add3':'+','column-sub3':'−'}[type];
@@ -1201,6 +1233,7 @@ function generate({subject,topic,grade,count=10,seed=Date.now(),difficulty='basi
  return{subject,topic,type,responseFormat:responseFormat||'',eras:mixed?[...chosen]:[],mathTypes:mathMixed?[...selectedMath]:[],grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:year+'학년 '+info.name+' · '+(mixed?'선택한 시대 역사':mathMixed?'선택한 유형 혼합 연습':subject!=='math'?info.topics.find(t=>t[0]===topic)[1]:selected?selected[1]:info.topics.find(t=>t[0]===topic)[1]),alignment:['mixed','decimal','history-mix','math-mix'].includes(topic)?null:alignment(subject,topic,year),items:finalized};
 }
 function supportedCounts(options){return (options.subject==='math'&&options.topic==='column'?[6,8,10,12]:[5,10,15,20]).filter(count=>{try{generate({...options,count,seed:42});return true}catch{return false}})}
-return{SUBJECTS,generate,supportedCounts,alignment,units,types,answerFormats,answerFormatFor};
+return{SUBJECTS,generate,mixOptions,supportedCounts,alignment,units,types,answerFormats,answerFormatFor};
 });
+
 
