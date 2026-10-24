@@ -28,12 +28,13 @@ input,textarea,select{width:100%;border:1px solid #dfe4eb;border-radius:11px;pad
 <script src="gulliver-shared.js?v=20261020-ui"></script>
 <link rel="stylesheet" href="gulliver-design.css?v=20261020-1">
 <script src="gulliver-app-shell.js?v=20261020-1"></script>
+<link rel="stylesheet" href="classroom-today.css?v=20261024-ui2">
 </head>
 <body>
 <main>
   <section class="hero">
     <h1>👥 우리 반</h1>
-    <p>명단뿐 아니라 자리·모둠·역할 배정에서 공통으로 참고할 교사용 운영 정보를 한곳에서 관리합니다.</p>
+    <p>오늘의 출결과 관찰 기록을 남기고, 학생들의 관계를 함께 살펴보세요.</p>
     <span class="privacy">🔒 이 정보는 이 기기의 브라우저에 저장됩니다. 학생 화면에는 표시되지 않습니다.</span>
   </section>
 
@@ -210,5 +211,5 @@ $('#fileInput').onchange=async e=>{const file=e.target.files[0];if(!file)return;
 window.addEventListener('gulliver:classroom-meta-change',()=>{renderAllCountsOnly();renderRelations();renderHistory()});
 renderAll();
 </script>
-<link rel="stylesheet" href="classroom-today.css"><script src="classroom-today.js"></script><script src="classroom-storage.js"></script></body>
+<script src="classroom-today.js"></script><script src="classroom-storage.js"></script></body>
 </html>
