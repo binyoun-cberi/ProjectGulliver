@@ -152,3 +152,15 @@ body.print-answers .print-paper .result-answer{visibility:visible!important}
  .paper .essay-writing{background:repeating-linear-gradient(to bottom,transparent 0,transparent 28px,#a9b7b7 29px,#a9b7b7 30px)!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
  .paper .ox-statement{background:#fff}
 }
+
+/* Give the two workspace panels stable areas; auxiliary content cannot displace them. */
+@media screen{
+ .daily-workspace{grid-template-areas:'settings output'}
+ .daily-workspace>#sheetForm{grid-area:settings;align-self:start;box-sizing:border-box;width:100%;max-height:calc(100dvh - 112px);overflow:auto;overscroll-behavior:contain}
+ .daily-workspace>.daily-output{grid-area:output;width:100%;min-width:0}
+ .daily-workspace>.column-math-link{display:none}
+ @media(max-width:900px){
+  .daily-workspace{grid-template-areas:'settings' 'output';grid-template-columns:minmax(0,1fr)}
+  .daily-workspace>#sheetForm{position:static;max-height:none;overflow:visible}
+ }
+}

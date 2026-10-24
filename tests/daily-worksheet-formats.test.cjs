@@ -118,3 +118,18 @@ test('browser dropdown and actual A4 student/teacher layouts reflect the selecte
   assert.deepEqual(errors,[]);
  }finally{await browser.close()}
 });
+
+
+test('workspace keeps settings left and full preview right across extra links, scrolling and mobile',{skip:(!chrome||!chromium)&&'Chrome required',timeout:90000},async()=>{
+ const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--allow-file-access-from-files']});
+ try{const page=await browser.newPage({viewport:{width:1824,height:1266}});
+ await page.goto(pathToFileURL(path.resolve('문제지 만들기.html')).href,{waitUntil:'load'});
+ async function bounds(){return page.evaluate(()=>{const settings=document.querySelector('#sheetForm').getBoundingClientRect(),output=document.querySelector('.daily-output').getBoundingClientRect();return {settings:{x:settings.x,y:settings.y,width:settings.width,right:settings.right},output:{x:output.x,y:output.y,width:output.width}}})}
+ let rect=await bounds();assert.ok(rect.settings.width<=330,'settings remain a narrow sidebar');assert.ok(rect.output.width>=650,'worksheet keeps enough width');assert.ok(rect.settings.right<rect.output.x,'settings must stay left of preview');
+ await page.evaluate(()=>{const link=document.createElement('a');link.className='column-math-link';link.textContent='세로셈';document.querySelector('.daily-workspace').prepend(link)});
+ rect=await bounds();assert.ok(rect.settings.right<rect.output.x);assert.ok(rect.output.width>=650);
+ await page.evaluate(()=>scrollTo(0,300));rect=await bounds();assert.ok(rect.settings.right<rect.output.x,'sticky scrolling cannot swap columns');
+ await page.setViewportSize({width:390,height:844});await page.evaluate(()=>scrollTo(0,0));rect=await bounds();assert.ok(rect.output.y>rect.settings.y,'mobile stacks preview below settings');
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'mobile page has no horizontal overflow');
+ }finally{await browser.close()}
+});
