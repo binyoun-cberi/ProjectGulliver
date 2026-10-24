@@ -1,6 +1,8 @@
 /* One site frame for worksheets and classroom tools. */
 (() => {
   'use strict';
+  // Keep the release number aligned with package.json when publishing a new site release.
+  const release = Object.freeze({version:'1.1.0', date:'2026-10-24', changes:['과학 문제 검수와 그림·표 보강', '여러 단원 선택과 단원별 문항 수 설정', 'A4 인쇄 배치와 교사용 풀이 개선', '탑바에서 사이트 버전 확인']});
   const file = decodeURIComponent(location.pathname.split('/').pop() || 'index.html');
   const sections = [
     ['home', '홈', 'index.html'], ['worksheet', '문제지', '문제지 만들기.html'], ['tools', '교사 도구', 'index.html?view=tools'],
@@ -20,6 +22,19 @@
     if (cls) node.className = cls;
     if (text !== undefined) node.textContent = text;
     return node;
+  }
+  function releaseBadge() {
+    const details=element('details','gx-release'),summary=element('summary','gx-release-label','v'+release.version);
+    summary.setAttribute('aria-label','사이트 버전 '+release.version+' · 최근 변경 내용');
+    summary.title='현재 화면의 사이트 버전과 최근 변경 내용';
+    const panel=element('section','gx-release-panel');panel.setAttribute('aria-label','사이트 버전 정보');
+    panel.append(element('strong','','클라시트 v'+release.version));
+    const date=element('time','','업데이트 · '+release.date.replaceAll('-','.'));date.dateTime=release.date;panel.append(date);
+    const heading=element('p','','최근 변경 내용'),list=element('ul');for(const change of release.changes)list.append(element('li','',change));panel.append(heading,list);details.append(summary,panel);
+    details.addEventListener('toggle',()=>{if(details.open)shell?.querySelectorAll('.gx-worksheet-picker[open]').forEach(picker=>{picker.open=false})});
+    details.addEventListener('keydown',e=>{if(e.key==='Escape'){details.open=false;summary.focus()}});
+    document.addEventListener('click',e=>{if(!details.contains(e.target))details.open=false});
+    return details;
   }
   function mount(options = {}) {
     if (!document.body || embedded()) return null;
@@ -45,6 +60,7 @@
         for(const [value,name] of subjects){const link=element('a','',name);link.href=href+'?subject='+value;link.dataset.worksheetSubject=value;
           link.onclick=e=>{if(file==='문제지 만들기.html'&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){e.preventDefault();picker.open=false;window.dispatchEvent(new CustomEvent('gulliver:worksheet-subject',{detail:{subject:value}}));summary.focus();}};menu.append(link)}
         picker.append(summary,menu);nav.append(picker);
+        picker.addEventListener('toggle',()=>{if(picker.open)shell?.querySelectorAll('.gx-release[open]').forEach(badge=>{badge.open=false})});
         document.addEventListener('click',e=>{if(!picker.contains(e.target))picker.open=false});
         picker.addEventListener('keydown',e=>{if(e.key==='Escape'){picker.open=false;summary.focus()}});
         continue;
@@ -54,7 +70,7 @@
       nav.append(a);
     }
     actions = element('div', 'gx-header-actions');
-    inner.append(brand, nav, actions); shell.append(inner);
+    inner.append(brand, nav, actions, releaseBadge()); shell.append(inner);
     const skip = element('a', 'gx-skip', '작업 영역으로 건너뛰기'); skip.href = '#gulliverWork'; shell.prepend(skip);
     document.body.prepend(shell);
     const work = document.querySelector('main, .page, .dashboard-container, .app, .workspace');
@@ -120,3 +136,4 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, {once:true});
   else init();
 })();
+
