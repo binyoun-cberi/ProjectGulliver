@@ -12,6 +12,9 @@ on:
       - 'tests/worksheet-balanced-pages.test.cjs'
       - 'tests/worksheet-pdf-review.cjs'
       - 'scripts/worksheet-pr-contract.cjs'
+      - 'scripts/worksheet-critique-loop.cjs'
+      - 'tests/worksheet-critique-loop.test.cjs'
+      - 'docs/worksheet-critique-loop.md'
       - 'docs/worksheet-2022-alignment.md'
       - 'docs/worksheet-quality-process.md'
       - '.github/PULL_REQUEST_TEMPLATE/worksheet-quality.md'
@@ -29,6 +32,9 @@ on:
       - 'tests/worksheet-balanced-pages.test.cjs'
       - 'tests/worksheet-pdf-review.cjs'
       - 'scripts/worksheet-pr-contract.cjs'
+      - 'scripts/worksheet-critique-loop.cjs'
+      - 'tests/worksheet-critique-loop.test.cjs'
+      - 'docs/worksheet-critique-loop.md'
       - 'docs/worksheet-2022-alignment.md'
       - 'docs/worksheet-quality-process.md'
       - '.github/workflows/worksheet-quality-gate.yml'
@@ -68,6 +74,19 @@ jobs:
           node --check tests/daily-worksheet-browser.e2e.cjs
       - name: Run existing regressions and independent seeded challenger
         run: node --test tests/worksheet-balanced-pages.test.cjs tests/daily-worksheet-core.test.cjs tests/daily-worksheet-challenger.test.cjs tests/worksheet-pr-contract.test.cjs
+      - name: Collect structured critique candidates across subjects
+        run: |
+          node --check scripts/worksheet-critique-loop.cjs
+          node --test tests/worksheet-critique-loop.test.cjs
+          node scripts/worksheet-critique-loop.cjs
+      - name: Attach pedagogical critique evidence for human review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worksheet-critique-review
+          path: test-artifacts/worksheet-critique
+          if-no-files-found: ignore
+          retention-days: 7
 
   classroom-browser-proof:
     runs-on: ubuntu-latest
