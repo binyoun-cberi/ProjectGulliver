@@ -5,6 +5,10 @@ const {pathToFileURL}=require('node:url');
 let chromium;try{({chromium}=require('playwright-core'));}catch{}
 const chrome=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/google-chrome-stable','/usr/bin/chromium','/opt/google/chrome/chrome'].find(p=>p&&fs.existsSync(p));
 const fixtures=[
+ {subject:'math',grade:3,unit:'general',topic:'shape',type:'',count:5,seed:17},
+ {subject:'math',grade:3,unit:'column-practice',topic:'column',type:'column-mul3',count:6,seed:18},
+ {subject:'math',grade:3,unit:'column-practice',topic:'column',type:'column-div3',count:12,seed:19},
+ {subject:'social',grade:5,unit:'s5-photos',topic:'history-photo',type:'photo-identify',count:5,seed:741},
  {subject:'math',grade:3,unit:'g3-add',topic:'hundreds',type:'add-carry-two',count:5,seed:343},
  {subject:'math',grade:3,unit:'g3-add',topic:'hundreds',type:'add-carry-two',count:10,seed:344},
  {subject:'math',grade:3,unit:'g3-add',topic:'hundreds',type:'add-carry-two',count:20,seed:345},
@@ -107,3 +111,28 @@ test('teacher copy, large-print reading passages and student copy each paginate 
  }finally{await browser.close()}
 });
 })();
+
+
+// Equal-height exercises reproduce the former 13/7 split independently of question-bank wording.
+{
+ const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+ const {pathToFileURL}=require('node:url');let chromium;try{({chromium}=require('playwright-core'))}catch{}
+ const chrome=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/google-chrome-stable','/usr/bin/chromium'].find(p=>p&&fs.existsSync(p));
+ test('measured two-page worksheet balances 20 questions and fills five-question illustration sheets',{skip:(!chrome||!chromium)&&'Chrome required',timeout:90000},async()=>{
+  const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--allow-file-access-from-files']});
+  try{const page=await browser.newPage({viewport:{width:1440,height:1100}});
+   await page.goto(pathToFileURL(path.resolve('문제지 만들기.html')).href+'?subject=math&grade=3&unit=general&topic=shape&count=5&seed=17');
+   const result=await page.evaluate(()=>{
+    const list=document.getElementById('questions');list.className='';list.replaceChildren();
+    for(let i=0;i<20;i++){const li=document.createElement('li');li.textContent=(i+1)+'번 문제';li.style.cssText='min-height:64px;box-sizing:border-box';list.append(li)}
+    const packed=DailyWorksheetA4.compose();return packed;
+   });assert.equal(result.ok,true,result.issue);assert.deepEqual(result.counts,[10,10]);
+   const spread=await page.evaluate(()=>{
+    const list=document.getElementById('questions');list.replaceChildren();
+    for(let i=0;i<5;i++){const li=document.createElement('li');li.innerHTML='<svg width="80" height="50" aria-label="도형"><rect width="70" height="40"/></svg><p>도형을 살펴보고 설명을 쓰세요.</p>';list.append(li)}
+    const packed=DailyWorksheetA4.compose(),host=document.getElementById('printPages');host.classList.add('is-measuring');const paper=host.querySelector('.print-paper'),ol=paper.querySelector('ol'),last=ol.lastElementChild;
+    const share=(last.getBoundingClientRect().bottom-ol.getBoundingClientRect().top)/(paper.getBoundingClientRect().bottom-ol.getBoundingClientRect().top);host.classList.remove('is-measuring');return {...packed,share};
+   });assert.equal(spread.ok,true);assert.equal(spread.pages,1);assert.ok(spread.share>.65,'illustrations should leave usable writing space throughout the page');
+  }finally{await browser.close()}
+ });
+}
