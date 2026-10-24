@@ -299,3 +299,5 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
 .science-context{margin:5px 0 7px;font-size:12px;line-height:1.45;font-weight:400;color:#172f38}
 .print-paper .science-context{font-size:9pt;line-height:1.35;margin:1mm 0 1.5mm}
 .large-print .print-paper .science-context{font-size:12pt;line-height:1.5}
+/* Two-digit outside markers need a clear gutter beside the neighbouring question. */
+.print-paper .print-question-list.science-evidence{column-gap:9mm}
