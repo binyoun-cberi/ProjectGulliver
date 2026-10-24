@@ -55,7 +55,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
       assert.equal(await page.locator('.gulliver-shell').count(), 1, tool.href);
       assert.equal(await shell.getByRole('navigation', {name: '클라시트 주요 메뉴'}).locator(':scope > a, :scope > details > summary').count(), 4, tool.href);
       assert.ok(await page.locator('body').evaluate(node => node.classList.contains('gt-teacher-tool')));
-      assert.equal(await shell.locator('.gx-release-label').textContent(),'v1.1.0');
+      assert.equal(await shell.locator('.gx-release-label').textContent(),'v1.2.0');
       const status = await shell.locator('.gt-help-panel p').textContent();
       assert.match(status, /저장 방식이 달라요/, tool.href);
       assert.doesNotMatch(await shell.textContent(), /자동 저장됨|비밀번호|역할 배정 결과/);
@@ -107,4 +107,5 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     server.kill('SIGTERM');
   }
 });
+
 

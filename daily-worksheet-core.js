@@ -535,13 +535,37 @@ for(const [topic,rows] of [['plant-observation',PLANT_OBSERVATION],['ecosystem',
  SCIENCE.banks[topic]=rows.map(([detail,prompt,answer,wrong,explanation],i)=>({id:topic+'-context-'+(i+1),detail:detail.includes('→')?'화살표는 먹이에서 먹는 생물 쪽을 가리킵니다. '+detail:detail,prompt,answer,wrong,explanation})).concat(materials);
 }
 SCIENCE.review(SCIENCE.banks);
-function scienceQuestions(topic,size,random){
- const bank=SCIENCE.banks[topic],groups=new Map(),selected=shuffle(bank.filter(q=>q.material),random).slice(0,2),used=new Set(selected.map(q=>q.id));
- for(const q of shuffle(bank.filter(q=>!q.material),random)){if(!groups.has(q.family))groups.set(q.family,[]);groups.get(q.family).push(q)}
- const families=shuffle([...groups.keys()],random);
- while(selected.length<size){let added=false;for(const family of families){const candidate=groups.get(family).find(q=>!used.has(q.id));if(!candidate)continue;selected.push(candidate);used.add(candidate.id);added=true;if(selected.length===size)break}if(!added)throw Error('과학 문항 수를 줄여 주세요.')}
- return selected.map(q=>({...choice(q.prompt,q.answer,[q.answer,...q.wrong],random,q.detail||''),scienceId:q.id,scienceFamily:q.material?'data':q.family,explanation:q.explanation,...(q.material?{scienceMaterial:q.material}:{})}));
+// Goals describe the reasoning, not the individual record ID. Known paraphrases share a goal.
+const SCIENCE_MATERIAL_GOALS={matter:['container','powder-grain'],living:['response','growth'],animals:['life-cycle','germination'],
+ 'human-body':['digestion-route','pulse'],'mixture-separation':['sieve-size','filter-limit'],solution:['ratio','conservation'],heat:['direction','insulation'],
+ electricity:['circuit','coil-turns'],'light-sound':['shadow-cause','loudness'], 'force-motion':['lever','speed-equal-time'],
+ 'earth-water':['deposition','infiltration'],space:['rotation','shadow-altitude'],'weather-process':['sea-land-day','rain-total'],
+ 'environment-energy':['food-chain','diversity-count'],weather:['wind-name','tool-purpose'],'plant-observation':['stage-order','germination'],ecosystem:['food-competition','population-trend']};
+const LIVING_GOALS={classification:['classification','reproduction','fungus','movement','movement'],observation:['growth','observation-inference','observation-inference','reproduction','record-method'],reason:['photosynthesis','multiple-traits','classification','color','multiple-traits'],inquiry:['measurement','movement','care','tools','measurement'],data:['growth','growth','observation-inference','reproduction','growth'],application:['needs','observation-inference','needs','care','observation-inference']};
+function scienceGoal(q,topic){
+ if(q.goal)return q.goal;
+ const materialIndex=SCIENCE.banks[topic].filter(x=>x.material&&!x.id.includes('-inquiry-')).findIndex(x=>x.id===q.id);
+ if(materialIndex>=0)return SCIENCE_MATERIAL_GOALS[topic][materialIndex];
+ if(topic==='ecosystem'&&q.id.includes('-context-'))return ['food-direction','producer','food-shortage','decomposer','abiotic','abiotic','light-control','habitat-water','food-shortage','seed-dispersal','decomposer','food-dependence','habitat-trees','pollination','population-trend','adaptation','producer','predator','classification','food-competition'][Number(q.id.split('-').pop())-1];
+ if(topic==='living'){const match=q.id.match(/living-(\w+)-(\d+)/);return LIVING_GOALS[match[1]][Number(match[2])-1]}
+ const text=q.prompt+' '+q.answer;
+ const concepts=[['growth',/키|몸길이|자란|자라는/],['measurement',/기준점|단위|눈높이/],['life-cycle',/번데기|한살이/],['body-parts',/곤충|다리 수/],['digestion-route',/식도|음식물.*이동/],['conservation',/질량/],['ratio',/진하기|진하다|묽어/],['saturation',/더 녹기|최대/],['direction',/높은 쪽에서 낮은|열은 주로/],['conduction',/숟가락|금속.*전달/],['insulation',/보온|열의 이동을 줄/],['convection',/대류/],['rotation',/낮과 밤|자전/],['wind-name',/북풍|남풍|서풍|동풍/],['filter-limit',/거름종이.*소금|소금.*통과/],['sieve-size',/체 위|체 아래|알갱이 크기/],['diversity-count',/종류 수|다양/],['lever',/받침점|시소/],['pole',/같은 극|다른 극/],['friction',/마찰/],['pitch',/높낮이|팽팽/],['loudness',/소리.*크기|작은 소리/]];
+ return concepts.find(([,pattern])=>pattern.test(text))?.[0]||q.family;
 }
+function scienceQuestions(topic,size,random){
+ // Photosynthesis and plant life-cycle recall belong to other units. No answer-copy context.
+ const bank=SCIENCE.banks[topic].filter(q=>q.id!=='living-reason-1'&&!(topic==='living'&&scienceGoal(q,topic)==='care'));
+ const pool=shuffle(bank,random),selected=[],used=new Set(),goals=new Map(),sources=new Set();
+ const take=q=>{selected.push(q);used.add(q.id);const goal=scienceGoal(q,topic);goals.set(goal,(goals.get(goal)||0)+1);sources.add(q.stimulusId||q.id)};
+ const eligible=q=>!used.has(q.id)&&!sources.has(q.stimulusId||q.id)&&!goals.has(scienceGoal(q,topic));
+ for(const kind of ['diagram','table']){const q=pool.find(q=>q.material?.kind===kind&&eligible(q));if(q&&selected.length<size)take(q)}
+ const target=Math.min(size,Math.ceil(size*.8),new Set(bank.filter(q=>q.material).map(q=>scienceGoal(q,topic))).size);
+ while(selected.filter(q=>q.material).length<target){const q=pool.find(q=>q.material&&eligible(q));if(!q)break;take(q)}
+ // Prefer a different objective over an arbitrary table quota or a repeated computation.
+ while(selected.length<size){let q=pool.find(eligible);if(!q){const remaining=pool.filter(q=>!used.has(q.id)&&!sources.has(q.stimulusId||q.id));remaining.sort((a,b)=>(goals.get(scienceGoal(a,topic))||0)-(goals.get(scienceGoal(b,topic))||0));q=remaining[0]}if(!q)throw Error('과학 문항 수를 줄여 주세요.');take(q)}
+ return selected.map(q=>({...choice(q.prompt,q.answer,[q.answer,...q.wrong],random,q.detail||''),scienceId:q.id,scienceGoal:scienceGoal(q,topic),scienceSource:q.stimulusId||q.id,scienceFamily:q.material?(/실험|조건|방법|먼저|고칠/.test(q.prompt)?'inquiry':/판단|추측|원인|알 수|설명/.test(q.prompt)?'reason':'data'):q.family,explanation:q.explanation,...(q.material?{scienceMaterial:q.material}:{})}));
+}
+
 const WORDS=[['apple','사과'],['book','책'],['school','학교'],['water','물'],['friend','친구'],['family','가족'],['cat','고양이'],['dog','개'],['sun','태양'],['moon','달'],['tree','나무'],['flower','꽃'],['milk','우유'],['pencil','연필'],['chair','의자'],['table','탁자'],['happy','행복한'],['small','작은'],['big','큰'],['blue','파란색'],['red','빨간색'],['yellow','노란색'],['morning','아침'],['night','밤']];
 const SENTENCES=[
  ['나는 사과를 좋아해요.','I like apples.','I / like / apples.'],['이것은 내 책이에요.','This is my book.','This / is / my / book.'],
@@ -1233,6 +1257,7 @@ function generateSingle({subject,topic,grade,count=10,seed=Date.now(),difficulty
 function supportedCounts(options){return (options.subject==='math'&&options.topic==='column'?[6,8,10,12]:[5,10,15,20]).filter(count=>{try{generate({...options,count,seed:42});return true}catch{return false}})}
 return{SUBJECTS,generate,mixOptions,supportedCounts,alignment,units,types,answerFormats,answerFormatFor};
 });
+
 
 
 

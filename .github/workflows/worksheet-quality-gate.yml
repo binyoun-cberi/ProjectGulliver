@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'daily-worksheet-*.js'
+      - 'science-*.js'
       - 'daily-worksheet.css'
       - '문제지 만들기.html'
       - 'data-standards.js'
@@ -19,6 +20,7 @@ on:
     branches: [main]
     paths:
       - 'daily-worksheet-*.js'
+      - 'science-*.js'
       - 'daily-worksheet.css'
       - '문제지 만들기.html'
       - 'data-standards.js'
@@ -53,6 +55,8 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Check worksheet and verification syntax
         run: |
+          node --check science-inquiry.js
+          node --check science-materials.js
           node --check daily-worksheet-core.js
           node --check daily-worksheet.js
           node --check tests/daily-worksheet-formats.test.cjs
@@ -89,3 +93,4 @@ jobs:
           path: test-artifacts/worksheet-*
           if-no-files-found: ignore
           retention-days: 7
+
