@@ -9,6 +9,7 @@ on:
       - 'tests/daily-worksheet-*'
       - 'tests/worksheet-pr-contract.test.cjs'
       - 'tests/worksheet-balanced-pages.test.cjs'
+      - 'tests/worksheet-pdf-review.cjs'
       - 'scripts/worksheet-pr-contract.cjs'
       - 'docs/worksheet-2022-alignment.md'
       - 'docs/worksheet-quality-process.md'
@@ -24,6 +25,7 @@ on:
       - 'tests/daily-worksheet-*'
       - 'tests/worksheet-pr-contract.test.cjs'
       - 'tests/worksheet-balanced-pages.test.cjs'
+      - 'tests/worksheet-pdf-review.cjs'
       - 'scripts/worksheet-pr-contract.cjs'
       - 'docs/worksheet-2022-alignment.md'
       - 'docs/worksheet-quality-process.md'
@@ -72,6 +74,8 @@ jobs:
         run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
       - name: Prove complete A4 pages across five subjects, student/teacher versions and big print
         run: node --test --test-concurrency=1 tests/daily-worksheet-browser.e2e.cjs tests/daily-worksheet-a4.test.cjs tests/daily-worksheet-formats.test.cjs
+      - name: Export all subject student and teacher PDFs for visual review
+        run: node tests/worksheet-pdf-review.cjs
       - name: Attach screenshots and printable PDFs for review
         if: always()
         uses: actions/upload-artifact@v4
