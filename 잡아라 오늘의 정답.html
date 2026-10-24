@@ -178,8 +178,15 @@
       .setup{grid-template-columns:1fr}.hero{min-height:auto}.settings{max-height:none}.game{grid-template-columns:1fr;grid-template-rows:1fr auto}.side{border-left:0;border-top:6px solid #1e293b;max-height:44vh}.score-grid{grid-template-columns:repeat(4,1fr)}.timer-card .value{font-size:30px}.class-title .main{font-size:24px}.history{max-height:100px}.stage-wrap{height:58vh}.app{min-height:100vh;margin:0;border-radius:0;width:100vw}.game{min-height:100vh}}
     @media(max-width:640px){
       .hero,.settings{padding:16px}.grid2,.grid3,.preset-grid{grid-template-columns:1fr}.score-grid{grid-template-columns:1fr 1fr}.side{max-height:48vh}.stage-wrap{height:52vh}h1{font-size:38px}.student-title{font-size:25px}.big-start{font-size:22px;padding:16px}.class-title .main{font-size:22px}.toast{font-size:17px;min-width:190px}.motion-guide span{font-size:11px}.side-actions{grid-template-columns:1fr 1fr}}
-  </style>
+  .catch-rules-status{margin:10px 0;padding:10px 12px;border-radius:12px;background:#ecf8ef;border:1px solid #cce4d7;color:#1f6753;font-size:13px;font-weight:800;line-height:1.5}
+.catch-rules-status[data-valid="false"]{background:#fff3ed;border-color:#fec9b3;color:#9d4729}
+#btnStart:disabled{opacity:.45;cursor:not-allowed}
+#gameCanvas{touch-action:none}
+#btnPause:focus-visible,#btnStart:focus-visible{outline:3px solid #3f8c6c;outline-offset:4px}
+@media(prefers-reduced-motion:reduce){.result-modal,.toast{transition:none!important}}
+</style>
   <script src="gulliver-shared.js?v=20261020-ui"></script>
+<script src="classroom-catch-rules.js?v=20261024-1"></script>
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
 <script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
@@ -202,6 +209,7 @@
             <div id="previewTargets" class="chips"></div>
             <div class="preview-title" style="margin-top:12px">피해야 할 것</div>
             <div id="previewAvoids" class="chips"></div>
+            <p id="catchRulesStatus" class="catch-rules-status" role="status" aria-live="polite">정답과 오답 분류를 확인해요.</p>
             <button id="btnStart" class="big-start">수업 게임 시작하기</button>
             <div id="cameraStatus" class="camera-note">카메라 권한은 게임 시작 버튼을 누른 뒤 요청됩니다. 카메라가 안 되면 자동으로 터치 모드로 진행할 수 있습니다.</div>
           </div>
@@ -408,7 +416,7 @@
     },
     safety: {
       title:'안전한 행동을 잡아라!', desc:'안전한 행동은 잡고, 위험한 행동은 피하세요.',
-      targets:['손 씻기','횡단보도','안전벨트','119','천천히 걷기'], avoids:['불장난','무단횡단','콘센트','칼 장난','뛰어가기']
+      targets:['손 씻기','횡단보도에서 신호 지키기','안전벨트 매기','위험할 때 119 신고하기','복도에서 천천히 걷기'], avoids:['불장난','무단횡단','젖은 손으로 콘센트 만지기','칼로 장난하기','복도에서 뛰기']
     },
     spelling: {
       title:'맞춤법 경찰!', desc:'바른 맞춤법만 잡고, 틀린 표현은 피하세요.',
@@ -416,7 +424,7 @@
     },
     englishColor: {
       title:'Blue를 잡아라!', desc:'blue와 파란색을 뜻하는 카드만 잡으세요.',
-      targets:['blue','파란색','💙','하늘'], avoids:['red','yellow','green','빨간색','초록색']
+      targets:['blue','파란색','💙','파랑'], avoids:['red','yellow','green','빨간색','초록색']
     },
     shape: {
       title:'사각형을 잡아라!', desc:'사각형은 잡고, 사각형이 아닌 도형은 피하세요.',
@@ -449,6 +457,7 @@
   let bestCombo = 0;
   let missed = 0;
   let flash = 0;
+  let cameraMotionCooldown = 0;
 
   function parseItems(text){
     return text.split(/[\n,]+/).map(s => s.trim()).filter(Boolean).slice(0, 24);
@@ -512,6 +521,10 @@
   }
   function updatePreview(){
     const c = getConfig();
+    const audit=ClassroomCatchRules.validateCatchCards(parseItems(el.targetInput.value),parseItems(el.avoidInput.value));
+    $('catchRulesStatus').textContent=audit.ok?'카드 분류 확인 완료 · 잡을 카드 '+c.targets.length+'개 · 피할 카드 '+c.avoids.length+'개':audit.error;
+    $('catchRulesStatus').dataset.valid=String(audit.ok);
+    el.btnStart.disabled=!audit.ok;
     el.previewTitle.textContent = c.title;
     el.previewDesc.textContent = c.desc;
     renderChips(el.previewTargets, c.targets, 'chip good');
@@ -596,7 +609,7 @@
     renderChips(el.playTargets, config.targets, 'mini good');
     renderChips(el.playAvoids, config.avoids, 'mini bad');
     el.history.innerHTML = '<div>게임을 시작합니다. 정답 카드를 몸으로 잡아보세요.</div>';
-    el.motionGuide.classList.toggle('hidden', !config.cameraMode);
+    el.motionGuide.classList.toggle('hidden', !cameraReady);
   }
   function log(text){
     const div = document.createElement('div');
@@ -612,6 +625,9 @@
   }
 
   async function startGame(){
+    const audit=ClassroomCatchRules.validateCatchCards(parseItems(el.targetInput.value),parseItems(el.avoidInput.value));
+    if(!audit.ok){updatePreview();el.btnStart.focus();return;}
+    if(running)endGame(false);
     config = getConfig();
     initAudio();
     await ensureCamera();
@@ -626,7 +642,7 @@
     score = 0; hits = 0; wrongs = 0; combo = 0; bestCombo = 0; missed = 0;
     timeLeft = config.duration;
     spawnTimer = 500;
-    flash = 0;
+    flash = 0;cameraMotionCooldown=0;previousFrame=null;
     running = true; paused = false;
     lastTime = performance.now();
     setupPlayUI();
@@ -676,6 +692,7 @@
   }
 
   function spawnObject(){
+    if(objects.length>=14)return;
     const isTarget = Math.random() < Math.max(.48, .72 - config.spawnLevel*.035);
     const list = isTarget ? config.targets : config.avoids;
     const text = rand(list);
@@ -686,7 +703,7 @@
     const margin = Math.max(55, w/2 + 12);
     objects.push({
       text, type:isTarget ? 'target' : 'avoid',
-      x: margin + Math.random() * Math.max(10, cw() - margin*2),
+      x: clamp(margin+Math.random()*Math.max(0,cw()-margin*2),w/2+3,Math.max(w/2+3,cw()-w/2-3)),
       y: -70,
       w,h,
       r: Math.max(w,h)*.52,
@@ -764,16 +781,11 @@
   }
 
   function checkMotionCollisions(motions){
+    if(cameraMotionCooldown>0)return;
     for(const obj of objects){
-      if(obj.hit) continue;
-      const minX = obj.x - obj.r, maxX = obj.x + obj.r, minY = obj.y - obj.r, maxY = obj.y + obj.r;
-      let count = 0;
-      for(let i=0;i<motions.length;i+=2){
-        const p = motions[i];
-        if(p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY){
-          count++;
-          if(count >= 2){ trigger(obj,'motion'); break; }
-        }
+      if(obj.hit)continue;
+      if(ClassroomCatchRules.validMotionHit(obj,motions,cw(),ch())){
+        trigger(obj,'motion');cameraMotionCooldown=240;break;
       }
     }
   }
@@ -795,6 +807,7 @@
 
   function update(dt){
     if(!running || paused) return;
+    cameraMotionCooldown=Math.max(0,cameraMotionCooldown-dt*1000);
     timeLeft -= dt;
     if(timeLeft <= 0){ timeLeft = 0; updateStats(); endGame(true); return; }
     if(timeLeft <= 3 && Math.ceil(timeLeft) !== Math.ceil(timeLeft + dt)) sound('tick');
@@ -1007,15 +1020,18 @@
   $('btnLoad').addEventListener('click', loadSelected);
   $('btnDelete').addEventListener('click', deleteSelected);
 
-  canvas.addEventListener('mousedown', e => handleTouch(e.clientX, e.clientY));
-  canvas.addEventListener('touchstart', e => {
-    e.preventDefault();
-    for(const t of e.changedTouches) handleTouch(t.clientX, t.clientY);
-  }, { passive:false });
+  canvas.addEventListener('pointerdown', e => {
+    if(e.pointerType!=='mouse')e.preventDefault();
+    handleTouch(e.clientX,e.clientY);
+  });
   window.addEventListener('resize', resizeCanvas);
   window.addEventListener('keydown', e => {
-    if(e.key === 'Escape' && running) endGame(true);
-    if(e.key === ' ' && running){ e.preventDefault(); togglePause(); }
+    if(['INPUT','TEXTAREA','SELECT','BUTTON'].includes(document.activeElement?.tagName))return;
+    if(e.key==='Escape'&&running)endGame(true);
+    if(e.key===' '&&running){e.preventDefault();togglePause();}
+  });
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden&&running&&!paused)togglePause();
   });
   window.addEventListener('beforeunload', stopCamera);
 
