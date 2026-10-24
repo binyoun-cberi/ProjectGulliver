@@ -77,10 +77,11 @@ test('every listed unit type produces distinct, reproducible exercises with corr
   if(topic==='math-mix')continue;
   const dense=/^(add-|sub-|small-|two-|times-)/.test(type)&&type!=='times-missing';
   for(const seed of [1,42,2026]){
-   const options={subject:'math',grade,topic,type,count:dense?20:15,seed};
+   const options={subject:'math',grade,topic,type,count:topic==='column'?12:dense?20:15,seed};
    const sheet=generate(options);assert.equal(sheet.items.length,options.count,`${grade}/${type}/${seed}`);
    assert.deepEqual(sheet,generate(options));assert.equal(new Set(sheet.items.map(q=>q.prompt)).size,options.count);
    for(const q of sheet.items){
+    if(q.column){const c=q.column;if(c.op==='÷'){const [quotient,remainder=0]=q.answer.split(' 나머지 ').map(Number);assert.equal(c.a,c.b*quotient+remainder);assert.ok(remainder<c.b)}else assert.equal(Number(q.answer),c.op==='×'?c.a*c.b:c.op==='+'?c.a+c.b:c.a-c.b);continue}
     if(type==='times-missing'){const [,factor,product]=q.prompt.match(/^□ × (\d+) = (\d+)$/);assert.equal(Number(q.answer)*Number(factor),Number(product));continue}
     if(type.startsWith('mix-')){const expression=q.prompt.slice(0,-2).replaceAll('×','*').replaceAll('÷','/').replaceAll('−','-');assert.equal(Number(q.answer),Function(`return ${expression}`)());continue}
     const [,a,operator,b]=q.prompt.match(/^([\d./]+) ([+−×÷]) ([\d./]+) =$/)||[];
@@ -97,7 +98,7 @@ test('five subjects expose only supported grades and topics, with complete uniqu
  assert.deepEqual(Object.keys(SUBJECTS),['korean','math','social','science','english']);
  for(const [subject,info] of Object.entries(SUBJECTS))for(const grade of info.grades)for(const [topic,,fromGrade,toGrade=6] of info.topics){
   if(grade<fromGrade||grade>toGrade)continue;
-  if(['mixed','decimal','history-review','history-mix','math-mix','reading-set'].includes(topic))continue;
+  if(['column','mixed','decimal','history-review','history-mix','math-mix','reading-set'].includes(topic))continue;
   const dense=subject==='math'&&['addition','hundreds','multiplication'].includes(topic);
   for(const difficulty of ['basic','challenge'])for(const count of [5,10,15,...(dense?[20]:[])])for(const seed of [1,42,2026]){
    const sheet=generate({subject,topic,grade,count,seed,difficulty});
@@ -390,3 +391,4 @@ test('heritage photo sheets keep unique photos and answers with local credited a
   for(const q of sheet.items){assert.ok(fs.existsSync(path.join(__dirname,'..',q.photo.src)));assert.match(q.photo.license,/제1유형/);assert.match(q.photo.sourceUrl,/^https:\/\/www\.heritage\.go\.kr\/heri\/cul\/imgHeritage.do\?/);assert.ok(q.detail&&q.explanation);assert.ok(!q.photo.src.includes(q.answer))}
  }
 });
+
