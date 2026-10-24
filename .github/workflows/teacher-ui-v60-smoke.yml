@@ -12,6 +12,9 @@ on:
       - 'tests/gulliver-teacher-classroom-v62.test.cjs'
       - 'tests/time-tools*.test.cjs'
       - 'time-tools-*.js'
+      - 'flash-quiz-quality.js'
+      - 'flash-quiz-polish.css'
+      - 'tests/classroom-tools-round2.test.cjs'
       - 'time-tools-*.css'
       - 'lesson-notice-flow.css'
       - 'tests/classroom-tools-improvements.test.cjs'
@@ -35,6 +38,8 @@ jobs:
           node --check gulliver-teacher-display.js
           node --check gulliver-teacher-display-view.js
           node --check gulliver-teacher-v62.js
+          node --check flash-quiz-quality.js
+          node --check tests/classroom-tools-round2.test.cjs
           node --check time-tools-hourglass.js
           node --check time-tools-core.js
           node --check time-tools-ui.js
@@ -47,7 +52,7 @@ jobs:
       - name: Install browser driver
         run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
       - name: Exercise teacher tools and privacy in Chrome
-        run: node --test tests/gulliver-teacher-ui.test.cjs tests/gulliver-teacher-display.test.cjs tests/gulliver-teacher-classroom-v62.test.cjs tests/time-tools.test.cjs tests/time-tools-browser.test.cjs tests/classroom-tools-improvements.test.cjs tests/classroom-workspace.test.cjs
+        run: node --test tests/gulliver-teacher-ui.test.cjs tests/gulliver-teacher-display.test.cjs tests/gulliver-teacher-classroom-v62.test.cjs tests/time-tools.test.cjs tests/time-tools-browser.test.cjs tests/classroom-tools-improvements.test.cjs tests/classroom-workspace.test.cjs tests/classroom-tools-round2.test.cjs
       - name: Save desktop and mobile timer previews
         if: always()
         uses: actions/upload-artifact@v4

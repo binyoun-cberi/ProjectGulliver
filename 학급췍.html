@@ -45,6 +45,16 @@
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
         }
+
+    .check-pending{margin:-12px 0 20px;padding:14px 17px;border:1px solid #d9e9e1;border-radius:15px;background:#f2faf5;line-height:1.55}
+    .check-pending strong{font-size:14px;color:#205e50}
+    .check-pending p{font-size:13px;color:#475f59;margin:6px 0 0;overflow-wrap:anywhere}
+    .check-undo{border:1px solid #b5d8c5;color:#125e4d;border-radius:12px;background:#e9f7ef;padding:10px 14px;font-size:14px;font-weight:800;white-space:nowrap;min-height:44px}
+    .check-undo:disabled{opacity:.4;cursor:not-allowed}
+    #desk-grid .desk{font:inherit;min-height:112px;line-height:1.4;touch-action:manipulation;text-align:center}
+    #desk-grid .desk:focus-visible,.check-undo:focus-visible{outline:3px solid #0c9479;outline-offset:3px}
+    @media(max-width:520px){#desk-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#desk-grid .desk{padding:12px 7px;min-height:88px}.check-pending{margin:-8px 0 14px}header .gt-v62-check-edit{flex-wrap:wrap}}
+    @media(prefers-reduced-motion:reduce){#desk-grid .desk{transition:none!important}}
     </style>
     <script src="gulliver-shared.js?v=20261020-ui"></script>
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
@@ -68,6 +78,7 @@
             </div>
             
             <div class="flex gap-2 gt-v62-check-edit">
+                <button id="undoChecklistBtn" type="button" disabled aria-label="최근 체크 되돌리기" class="check-undo">↶ 체크 취소</button>
                 <button onclick="resetCurrentTheme()" class="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm font-medium text-sm flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                     전체 초기화
@@ -89,6 +100,11 @@
         <div class="w-full bg-slate-200 rounded-full h-2.5 mb-8">
             <div id="progress-bar" class="bg-emerald-500 h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
         </div>
+
+        <section class="check-pending" aria-label="교사용 미확인 학생 목록">
+          <strong id="pendingTitle">아직 체크하지 않은 학생</strong>
+          <p id="pendingNames">학생 명단을 불러오면 이곳에서 확인할 수 있어요.</p>
+        </section>
 
         <!-- 자리 배치도 (체크리스트) -->
         <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4 sm:gap-6" id="desk-grid">
@@ -124,6 +140,7 @@
         const DEFAULT_STUDENT_COUNT = 25;
         const DEFAULT_THEMES = ['독서록', '수학 익힘책', '우유 급식', '안내장'];
 
+        let lastCheckChange = null;
         let state = {
             studentCount: DEFAULT_STUDENT_COUNT,
             themes: [...DEFAULT_THEMES],
@@ -178,6 +195,7 @@
                 const isActive = state.currentTheme === theme;
                 const btn = document.createElement('button');
                 
+                btn.setAttribute("aria-pressed",String(isActive));
                 // 미니멀하고 세련된 탭 스타일링
                 btn.className = `px-5 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all duration-200 ${
                     isActive 
@@ -245,48 +263,56 @@
             }
         }
 
-        // 자리 배치도(그리드) 렌더링
-        function renderGrid() {
-            const container = document.getElementById('desk-grid');
-            container.innerHTML = '';
-            
-            const currentData = state.data[state.currentTheme];
 
-            for (let i = 1; i <= state.studentCount; i++) {
-                const isChecked = currentData[i];
-                
-                const desk = document.createElement('div');
-                desk.className = `desk cursor-pointer flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all duration-200 relative overflow-hidden group ${
-                    isChecked 
-                    ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/30' 
-                    : 'bg-white border-slate-200 text-slate-400 hover:border-emerald-200 hover:bg-emerald-50'
-                }`;
-                
-                // 번호
-                const num = document.createElement('span');
-                const studentName = state.studentNames[i-1] || '';
-                num.className = `${studentName ? 'text-lg' : 'text-3xl'} font-black mb-1 ${isChecked ? 'text-white' : 'text-slate-800'} text-center break-keep`;
-                num.textContent = studentName || i;
-                
-                // 상태 텍스트
-                const status = document.createElement('span');
-                status.className = `text-sm font-semibold tracking-wide ${isChecked ? 'text-emerald-100' : 'text-slate-400'}`;
-                status.textContent = isChecked ? '제출 완료' : '미제출';
-
-                // 클릭 이벤트
-                desk.onclick = () => {
-                    state.data[state.currentTheme][i] = !isChecked;
-                    saveState();
-                    renderGrid(); // 다시 렌더링 (리액트처럼 전체 렌더링 방식으로 단순화)
-                };
-
-                desk.appendChild(num);
-                desk.appendChild(status);
-                container.appendChild(desk);
-            }
-            
-            updateProgress();
-        }
+  function updateDeskAppearance(desk,index){
+    const isChecked=Boolean(state.data[state.currentTheme]?.[index]);
+    desk.className=`desk cursor-pointer flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all duration-200 relative overflow-hidden group ${isChecked?'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/30':'bg-white border-slate-200 text-slate-600 hover:border-emerald-200 hover:bg-emerald-50'}`;
+    desk.setAttribute('aria-pressed',String(isChecked));
+    const name=state.studentNames[index-1]||String(index);
+    desk.setAttribute('aria-label',name+' · '+(isChecked?'제출 완료':'미제출')+' · 누르면 상태 변경');
+    const label=desk.querySelector('.desk-status');
+    if(label){label.textContent=isChecked?'제출 완료':'미제출';label.className='desk-status text-sm font-semibold tracking-wide '+(isChecked?'text-emerald-100':'text-slate-500');}
+    const title=desk.querySelector('.desk-name');
+    if(title)title.className='desk-name font-black mb-1 text-center break-keep '+(state.studentNames[index-1]?'text-lg':'text-3xl')+' '+(isChecked?'text-white':'text-slate-900');
+  }
+  function updateUndo(){
+    const button=document.getElementById('undoChecklistBtn');
+    button.disabled=!lastCheckChange||lastCheckChange.theme!==state.currentTheme;
+    button.title=button.disabled?'되돌릴 체크가 없어요.':'직전 체크 1개를 되돌립니다.';
+  }
+  function toggleDesk(index){
+    const current=Boolean(state.data[state.currentTheme][index]);
+    lastCheckChange={theme:state.currentTheme,index,previous:current};
+    state.data[state.currentTheme][index]=!current;
+    saveState();updateUndo();
+    const button=document.querySelector(`#desk-grid .desk[data-index="${index}"]`);
+    if(button)updateDeskAppearance(button,index);
+  }
+  function undoLastCheck(){
+    if(!lastCheckChange||lastCheckChange.theme!==state.currentTheme)return;
+    const {index,previous}=lastCheckChange;
+    state.data[state.currentTheme][index]=previous;
+    lastCheckChange=null;saveState();updateUndo();
+    const button=document.querySelector(`#desk-grid .desk[data-index="${index}"]`);
+    if(button){updateDeskAppearance(button,index);button.focus();}
+  }
+  document.getElementById('undoChecklistBtn').addEventListener('click',undoLastCheck);
+  function renderGrid(){
+    const container=document.getElementById('desk-grid');
+    container.replaceChildren();
+    for(let i=1;i<=state.studentCount;i++){
+      const desk=document.createElement('button');
+      desk.type='button';desk.dataset.index=String(i);
+      const num=document.createElement('span');num.className='desk-name';
+      num.textContent=state.studentNames[i-1]||String(i);
+      const status=document.createElement('span');status.className='desk-status';
+      desk.append(num,status);
+      desk.onclick=()=>toggleDesk(i);
+      updateDeskAppearance(desk,i);
+      container.append(desk);
+    }
+    updateProgress();updateUndo();
+  }
 
         // 진행률 업데이트
         function updateProgress() {
@@ -301,6 +327,11 @@
             
             document.getElementById('progress-text').textContent = `현재 ${checkedCount}명 제출 완료 (${percentage}%)`;
             document.getElementById('progress-bar').style.width = `${percentage}%`;
+            const pending=[];
+            for(let i=1;i<=state.studentCount;i++)if(!currentData[i])pending.push(state.studentNames[i-1]||String(i)+'번');
+            document.getElementById('pendingTitle').textContent=`아직 체크하지 않은 학생 · ${pending.length}명`;
+            document.getElementById('pendingNames').textContent=pending.length?pending.join(' · '):'모두 확인했어요.';
+
         }
 
         // 현재 테마 초기화
