@@ -427,7 +427,7 @@ test('science expansion covers twelve distinct topics and 264 authored questions
 
 test('science evidence is included in short, long and quota sheets and survives response conversion',()=>{
  const C=require('../daily-worksheet-core'),M=require('../science-materials');assert.equal(M.entries.length,24);
- for(const entry of M.entries){assert.ok(entry.explanation.length>45);assert.ok(!entry.material.body||!/<(?:script|foreignObject|image)\b/i.test(entry.material.body));}
+ for(const entry of M.entries){assert.ok(entry.explanation.length>45);assert.ok(!entry.material.body||!entry.material.body.includes('url(#'));assert.ok(!entry.material.body||!/<(?:script|foreignObject|image)\b/i.test(entry.material.body));}
  for(const topic of [...new Set(M.entries.map(q=>q.topic))])for(const count of [5,10,20])for(const responseFormat of ['choice','ox','short','essay']){
  const sheet=C.generate({subject:'science',topic,grade:5,count,responseFormat,seed:42}),evidence=sheet.items.filter(q=>q.scienceMaterial);
  assert.equal(evidence.length,2,topic);assert.deepEqual(new Set(evidence.map(q=>q.scienceMaterial.kind)),new Set(['table','diagram']));

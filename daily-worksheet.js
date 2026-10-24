@@ -100,7 +100,7 @@ function renderScienceMaterial(li,material){
  const caption=document.createElement('figcaption');caption.textContent=material.title;figure.append(caption);
  if(material.kind==='diagram'){
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 330 175');svg.setAttribute('role','img');svg.setAttribute('aria-label',material.title+' · 위치 관계를 나타낸 모형이며 실제 비율과 다를 수 있습니다.');
-  svg.innerHTML='<defs><marker id="science-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#344d56"/></marker></defs>'+material.body;svg.setAttribute('aria-label',material.title+' · '+svg.textContent+' · 위치 관계를 나타낸 모형입니다.');figure.append(svg);
+  svg.innerHTML=material.body;svg.setAttribute('aria-label',material.title+' · '+svg.textContent+' · 위치 관계를 나타낸 모형입니다.');figure.append(svg);
  }else{
   const table=document.createElement('table'),head=document.createElement('thead'),header=document.createElement('tr');
   for(const value of material.headers){const th=document.createElement('th');th.scope='col';th.textContent=value;header.append(th)}head.append(header);table.append(head);const body=document.createElement('tbody');
