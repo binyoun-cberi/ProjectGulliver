@@ -49,7 +49,7 @@ test('12: early Korean reading uses situation, causal evidence and teacher expla
 
 test('13: revised science evidence questions preserve final answers and specific explanations',()=>{
  const cases=[
-  ['mixture-separation','mixture-separation-17','고형물 일부','하수 처리 모형'],
+  ['mixture-separation','mixture-separation-17','일부 고형물','하수 처리 모형'],
   ['mixture-separation','mixture-separation-18','튀거나 흘러넘치는','유리 막대를 타고'],
   ['electricity','electricity-2','회로가 끊어져','스위치를 열자'],
   ['electricity','electricity-6','함께 꺼진다','직렬로 연결'],
