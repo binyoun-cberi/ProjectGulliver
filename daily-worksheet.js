@@ -47,7 +47,7 @@ function setPreview(open){answersVisible=open;document.body.classList.toggle('sh
 }
 function render(sheet){
 current=sheet;
-const simpleOperation=item=>/^(\\d+) ([+×−]) (\\d+) =$/.test(item.prompt);
+const simpleOperation=item=>/^(\d+) ([+×−]) (\d+) =$/.test(item.prompt);
 const mathVertical=sheet.subject==='math'&&sheet.items.length>=5&&sheet.items.every(simpleOperation);
 const dense=mathVertical&&(sheet.type?/^(add-|sub-|small-|two-|times-)/.test(sheet.type)&&sheet.type!=='times-missing':['addition','hundreds','multiplication'].includes(sheet.topic));
 const compact=!dense&&sheet.items.length>=5&&sheet.items.every(item=>
@@ -98,7 +98,7 @@ const compact=!dense&&sheet.items.length>=5&&sheet.items.every(item=>
  requestAnimationFrame(()=>{
    if(current===sheet){
      const measured=window.DailyWorksheetA4?.compose();
-     if(measured?.ok)$('sheetMeta').textContent=$('sheetMeta').textContent.replace(/ · A4 \\d+쪽 예상$/,'')+' · A4 '+measured.pages+'쪽 예상';
+     if(measured?.ok)$('sheetMeta').textContent=$('sheetMeta').textContent.replace(/ · A4 \d+쪽 예상$/,'')+' · A4 '+measured.pages+'쪽 예상';
      else if(measured&&!measured.ok)$('sheetStatus').textContent=measured.issue;
    }
  });
