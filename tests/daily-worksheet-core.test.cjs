@@ -380,3 +380,13 @@ test('grade 1 to 3 place-value and time questions have consistent answers',()=>{
   }
  }
 });
+
+test('heritage photo sheets keep unique photos and answers with local credited assets',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ for(const grade of [5,6])for(const seed of [1,42,2026])for(const count of [5,10,15,20]){
+  const sheet=generate({subject:'social',grade,topic:'history-photo',type:'photo-identify',count,seed});
+  assert.equal(new Set(sheet.items.map(q=>q.answer)).size,count);
+  assert.equal(new Set(sheet.items.map(q=>q.photo.src)).size,count);
+  for(const q of sheet.items){assert.ok(fs.existsSync(path.join(__dirname,'..',q.photo.src)));assert.match(q.photo.license,/제1유형/);assert.match(q.photo.sourceUrl,/^https:\/\/www\.heritage\.go\.kr\/heri\/cul\/imgHeritage.do\?/);assert.ok(q.detail&&q.explanation);assert.ok(!q.photo.src.includes(q.answer))}
+ }
+});
