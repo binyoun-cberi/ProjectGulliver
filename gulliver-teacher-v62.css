@@ -2,7 +2,7 @@
 .gt-v62-flow{display:flex;align-items:center;justify-content:space-between;gap:18px;min-width:0;margin:0 0 17px;padding:15px 20px;border:1px solid #dcdcf2;border-radius:19px;background:linear-gradient(120deg,#fff,#f3f2ff);box-shadow:0 7px 22px #29275c0c;color:#293349;font-family:'Pretendard','Apple SD Gothic Neo',system-ui,sans-serif}
 .gt-v62-info{min-width:0;flex:1}.gt-v62-eyebrow{display:block;margin-bottom:3px;font-size:11px;font-weight:900;letter-spacing:.02em;color:#6455ba}.gt-v62-info strong{display:block;font-size:clamp(17px,1.7vw,22px);font-weight:950;line-height:1.35}.gt-v62-info p{margin:4px 0 0;font-size:12px;color:#68778e;line-height:1.5;font-weight:700}
 .gt-v62-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px}.gt-v62-button{min-height:44px;padding:10px 14px;border:1px solid #dcdcf0;border-radius:12px;background:#fff;color:#4e4977;font-size:13px;font-weight:900;font-family:inherit;white-space:nowrap;cursor:pointer}.gt-v62-button[aria-pressed='true']{background:#5e50c9;color:#fff;border-color:#5e50c9}.gt-v62-student{color:#047857;background:#edfdf5;border-color:#c2eed8}.gt-v62-button[hidden]{display:none!important}.gt-v62-button:focus-visible{outline:3px solid #a5b4fc;outline-offset:2px}
-body.gulliver-studio-embed .gt-v62-flow,body.presentation .gt-v62-flow{display:none!important}
+body.presentation .gt-v62-flow{display:none!important}
 /* Keep private relationships, scores and editing controls in the teacher workspace. */
 body.gt-v62-result.gt-v62-seating .settings,body.gt-v62-result.gt-v62-bus .settings{display:none!important}
 body.gt-v62-result.gt-v62-seating .layout,body.gt-v62-result.gt-v62-bus .layout{display:block!important}

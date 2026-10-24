@@ -1,7 +1,7 @@
 /* Teacher tools 6.0.1: send only opt-in, student-safe state to a second window. */
 (() => {
   'use strict';
-  const KINDS = new Set(['timer', 'lesson', 'seating', 'manitto', 'flashquiz', 'bus', 'groups', 'roles', 'check', 'vote', 'praise', 'canvas']);
+  const KINDS = new Set(['timer', 'lesson', 'seating', 'manitto', 'flashquiz', 'bus', 'groups', 'roles', 'check', 'vote', 'praise']);
   const CHANNEL_PREFIX = 'gulliver.student-display.v1.';
   let adapter = null;
   let channel = null;
@@ -10,6 +10,8 @@
   let session = '';
   let lastState = '';
   let lastSent = 0;
+  let messageSequence = 0;
+  let lastError = '';
 
   const announce = () => window.dispatchEvent(new Event('gulliver:student-display-change'));
   const notice = message => {
@@ -27,7 +29,7 @@
 
   function connected() { return Boolean(studentWindow && !studentWindow.closed && channel); }
   function send(type, payload) {
-    if (channel) channel.postMessage({version: 1, token: session, kind: adapter.kind, type, payload});
+    if (channel) channel.postMessage({version: 1, token: session, kind: adapter.kind, sequence: ++messageSequence, type, payload});
   }
   function publish(force = false) {
     if (!connected()) { stop(); return; }
@@ -35,7 +37,8 @@
       const snapshot = adapter.getSnapshot();
       if (!snapshot || snapshot.kind !== adapter.kind) throw Error('학생용 내용의 종류가 일치하지 않아요.');
       const serialized = JSON.stringify(snapshot);
-      if (serialized.length > (adapter.kind==='canvas'?8000000:40000)) throw Error('학생 화면 내용이 너무 커요.');
+      if (serialized.length > 40000) throw Error('학생 화면 내용이 너무 커요.');
+      if (lastError) { lastError = ''; adapter.onRecovery?.(); }
       const now = Date.now();
       if (force || serialized !== lastState || now - lastSent > 3000) {
         lastState = serialized;
@@ -43,7 +46,8 @@
         send('state', snapshot);
       }
     } catch (error) {
-      send('error', {message: '교사 화면에서 학생용 자료를 확인해 주세요.'});
+      const detail = String(error?.message || '학생용 자료를 확인해 주세요.');
+      if (lastError !== detail) { lastError = detail; send('error', {message: '학생 화면을 갱신하지 못했어요. 자료 크기나 내용을 확인해 주세요.'}); adapter.onError?.(detail); }
       console.warn('학생 화면 갱신 실패', error);
     }
   }
@@ -58,6 +62,8 @@
     studentWindow = null;
     session = '';
     lastState = '';
+    lastError = '';
+    messageSequence = 0;
     announce();
   }
   function open() {
@@ -85,7 +91,12 @@
         publish(true);
       }
     };
-    studentWindow = window.open(url.href, 'gulliver-student-' + adapter.kind + '-' + session, 'width=1280,height=800');
+    // Lesson runs keep one named student window so ending and restarting a lesson
+    // reuses the already-visible classroom display instead of leaving a stale one.
+    const windowName = typeof adapter.windowName === 'string' && /^[A-Za-z][A-Za-z0-9_-]{0,63}$/.test(adapter.windowName)
+      ? adapter.windowName
+      : 'gulliver-student-' + adapter.kind + '-' + session;
+    studentWindow = window.open(url.href, windowName, 'width=1280,height=800');
     if (!studentWindow) {
       stop();
       notice('학생 화면 창이 차단됐어요. 팝업을 허용하고 다시 눌러 주세요.');
@@ -102,5 +113,5 @@
     if (interval) clearInterval(interval);
     channel?.close();
   });
-  window.GulliverTeacherDisplay = Object.freeze({register, open, connected, supported: () => Boolean(adapter)});
+  window.GulliverTeacherDisplay = Object.freeze({register, open, connected, refresh: () => publish(true), stop, supported: () => Boolean(adapter)});
 })();

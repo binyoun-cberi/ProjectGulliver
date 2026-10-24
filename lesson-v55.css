@@ -1,9 +1,0 @@
-/* 5.5: the same save-state language across lesson and studio. */
-.lesson-save-state{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;
- background:#ecf8f0;color:#236e50;border:1px solid #cae8d3;padding:7px 10px;border-radius:10px;white-space:nowrap}
-.lesson-save-state::before{content:'●';font-size:7px}
-.lesson-save-state[data-state=pending]{background:#f4f0ff;color:#6551a4;border-color:#e2d9ff}
-.lesson-save-state[data-state=saving]{background:#e9f1fc;color:#2c5e9a;border-color:#d2dff5}
-.lesson-save-state[data-state=error]{background:#fff0ed;color:#a83f3f;border-color:#f7cdc4}
-.lesson-save-state[data-state=error]::before{content:'!';font-size:12px}
-@media(max-width:750px){.lesson-save-state{font-size:10px;padding:5px 7px}.bar .actions{gap:5px}}

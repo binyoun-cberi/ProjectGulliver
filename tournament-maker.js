@@ -8,7 +8,7 @@ const ui={
   example:$('exampleBtn'),seedCount:$('seedCount'),shuffle:$('shuffleInput'),sizeInfo:$('bracketSizeInfo'),
   generate:$('generateBtn'),reset:$('resetBtn'),presentation:$('presentationBtn'),exitPresentation:$('exitPresentationBtn'),
   arena:$('arena'),arenaTitle:$('arenaTitle'),roundEyebrow:$('roundEyebrow'),countdown:$('countdown'),
-  countdownBtn:$('countdownBtn'),undo:$('undoBtn'),bracket:$('bracket'),summary:$('bracketSummary'),
+  countdownBtn:$('countdownBtn'),undo:$('undoBtn'),copy:$('copyBracketBtn'),progress:$('tournamentProgress'),bracket:$('bracket'),summary:$('bracketSummary'),
   championInline:$('championInline'),dialog:$('championDialog'),championTitle:$('championTitle'),
   championName:$('championName'),closeChampion:$('closeChampionBtn')
 };
@@ -171,6 +171,10 @@ function buildFirstRound(participants,seedCount){
 function createBracket(){
   const names=parseEntries();
   if(names.length<2){Gulliver.toast('참가자를 2명 이상 입력해 주세요.');ui.entries.focus();return}
+  if(state.bracket&&!confirm('진행 중인 대진과 승패 기록을 새로 만들까요? 기존 참가자와 결과는 지워집니다.'))return;
+  const duplicate=names.find((name,i)=>names.slice(0,i).includes(name));
+  if(duplicate&&!confirm('동명이인 또는 중복 참가자 "'+duplicate+'"가 있어요. 각각 별도의 참가자로 진행할까요?'))return;
+  if(countdownTimer!==null){clearInterval(countdownTimer);countdownTimer=null;}
   const participants=names.map(name=>({id:uid(),name:name.slice(0,40)}));
   let seedCount=Math.min(Number(ui.seedCount.value)||0,participants.length);
   if(seedCount===4&&participants.length<4)seedCount=2;
@@ -214,6 +218,8 @@ function chooseWinner(roundIndex,matchIndex,participantId){
   const match=b.rounds[roundIndex]?.matches?.[matchIndex];if(!match)return;
   const sides=currentSides(roundIndex,matchIndex);
   if(!sides.ready||!sides.a||!sides.b||![sides.a,sides.b].includes(participantId))return;
+  if(match.winnerId===participantId)return;
+  if(match.resolved&&match.winnerId&&!confirm('이미 정한 승자를 변경할까요? 이후 라운드 결과도 바뀔 수 있어요.'))return;
   state.history.push(winnerSnapshot());if(state.history.length>30)state.history.shift();
   match.winnerId=participantId;match.resolved=true;
   recalculate();saveState();renderAll();
@@ -311,7 +317,17 @@ function fighterHtml(p,side,r,m){
   return '<div class="fighter"><div class="eyebrow">PLAYER '+side+'</div><div class="fighter-name">'+escapeHtml(p?.name||'')+'</div><small>승리하면 다음 라운드로 진출</small><button class="win-btn" type="button" data-arena-win="'+p.id+'">🏆 승리</button></div>';
 }
 function renderControls(){
+  const b=state.bracket;
   ui.undo.disabled=!state.history.length;
+  ui.copy.disabled=!b;
+  if(!b)ui.progress.textContent='아직 시작 전';
+  else{
+    const all=b.rounds.flatMap(round=>round.matches);
+    const played=all.filter(m=>m.resolved&&m.currentA&&m.currentB);
+    const remaining=all.filter(m=>!m.resolved).length;
+    ui.progress.textContent=b.championId?'모든 경기 종료 · 우승자 결정':
+      '진행한 경기 '+played.length+'회 · 남은 경기 '+remaining+'회';
+  }
   ui.presentation.textContent=document.body.classList.contains('presentation')?'🖥️ 교사 화면':'📺 학생 화면';
   ui.exitPresentation.hidden=!document.body.classList.contains('presentation');
 }
@@ -377,6 +393,7 @@ function showChampion(){
   launchConfetti();
 }
 function launchConfetti(){
+  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
   const colors=['#6d5dfc','#e6a72f','#1fa97a','#e75d64','#4b90e2'];
   for(let i=0;i<70;i++){
     const el=document.createElement('i');el.className='confetti';
@@ -386,6 +403,24 @@ function launchConfetti(){
     document.body.appendChild(el);setTimeout(()=>el.remove(),3200);
   }
 }
+function copyResults(){
+  const b=state.bracket;if(!b)return;
+  const lines=[(b.title||state.title)+' · 경기 기록'];
+  b.rounds.forEach((round,ri)=>{
+    lines.push('\n'+displayRoundName(b,ri));
+    round.matches.forEach((match,i)=>{
+      const sides=currentSides(ri,i);
+      const a=participantById(sides.a)?.name||'대기',other=participantById(sides.b)?.name||'부전승';
+      const winner=participantById(match.winnerId)?.name||'미정';
+      lines.push((i+1)+'경기 · '+a+' / '+other+' → '+winner);
+    });
+  });
+  if(b.championId)lines.push('\n우승: '+(participantById(b.championId)?.name||''));
+  const output=lines.join('\n');
+  if(navigator.clipboard?.writeText){
+    navigator.clipboard.writeText(output).then(()=>Gulliver.toast('대진 결과를 복사했어요.')).catch(()=>window.prompt('경기 기록을 복사하세요.',output));
+  }else window.prompt('경기 기록을 복사하세요.',output);
+}
 function resetBracket(){
   if(state.bracket&&!confirm('현재 대진과 경기 결과를 지울까요? 참가자 목록은 남겨둡니다.'))return;
   state.bracket=null;state.history=[];saveState();renderAll();
@@ -394,7 +429,7 @@ ui.modeTabs.addEventListener('click',e=>{const btn=e.target.closest('[data-mode]
 ui.entries.addEventListener('input',()=>{updateEntryMeta();saveState()});
 ui.title.addEventListener('input',saveState);ui.seedCount.addEventListener('change',()=>{updateEntryMeta();saveState()});ui.shuffle.addEventListener('change',saveState);
 ui.loadClassroom.addEventListener('click',loadClassroom);ui.makeTeams.addEventListener('click',makeRandomTeams);ui.example.addEventListener('click',loadExample);
-ui.generate.addEventListener('click',createBracket);ui.undo.addEventListener('click',undo);ui.reset.addEventListener('click',resetBracket);
+ui.generate.addEventListener('click',createBracket);ui.undo.addEventListener('click',undo);ui.reset.addEventListener('click',resetBracket);ui.copy.addEventListener('click',copyResults);
 ui.presentation.addEventListener('click',togglePresentation);ui.exitPresentation.addEventListener('click',togglePresentation);
 ui.countdownBtn.addEventListener('click',runCountdown);ui.closeChampion.addEventListener('click',()=>ui.dialog.close());
 ui.dialog.addEventListener('cancel',()=>{});

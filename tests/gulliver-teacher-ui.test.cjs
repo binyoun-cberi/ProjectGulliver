@@ -9,13 +9,13 @@ try { ({chromium} = require('playwright-core')); } catch { /* browser smoke runs
 
 const catalog = {window: {}};
 vm.runInNewContext(fs.readFileSync('tools-catalog.js', 'utf8'), catalog);
-const teacherTools = catalog.window.ClassroomTools.slice(8);
+const teacherTools = catalog.window.ClassroomTools;
 const base = 'http://127.0.0.1:8956/';
 const bundledBrowser = Boolean(chromium && fs.existsSync(chromium.executablePath()));
 const systemChrome = ['/opt/google/chrome/chrome', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable'].some(file => fs.existsSync(file));
 
-test('6.0 assets are connected to each of 21 teacher apps only once', () => {
-  assert.equal(teacherTools.length, 21);
+test('shared UI assets are connected to every cataloged teacher app exactly once', () => {
+  assert.equal(teacherTools.length, 20);
   for (const tool of teacherTools) {
     const html = fs.readFileSync(tool.href, 'utf8');
     for (const asset of ['gulliver-teacher-ui.css', 'gulliver-teacher-components.js', 'gulliver-teacher-shell.js']) {
@@ -53,7 +53,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
       const shell = page.locator('.gt-shell');
       await shell.waitFor({state: 'attached'});
       assert.equal(await page.locator('.gulliver-shell').count(), 1, tool.href);
-      assert.equal(await shell.getByRole('navigation', {name: '뚝딱교실 주요 메뉴'}).locator('a').count(), 4, tool.href);
+      assert.equal(await shell.getByRole('navigation', {name: '클라시트 주요 메뉴'}).locator('a').count(), 4, tool.href);
       assert.ok(await page.locator('body').evaluate(node => node.classList.contains('gt-teacher-tool')));
       const status = await shell.locator('.gt-help-panel p').textContent();
       assert.match(status, /저장 방식이 달라요/, tool.href);
@@ -67,10 +67,10 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.equal(await page.locator('.gt-shell').isVisible(), true);
     assert.ok(await page.evaluate(() => window.GulliverTeacherComponents));
     const actionLabels = await page.evaluate(() => {
-      const actions = GulliverTeacherComponents.createResultActions({onCanvas() {}, onPrint() {}, privateResult: true});
+      const actions = GulliverTeacherComponents.createResultActions({onPrint() {}});
       return [...actions.querySelectorAll('button')].map(button => button.textContent);
     });
-    assert.deepEqual(actionLabels, ['인쇄'], 'private assignment exposed canvas action');
+    assert.deepEqual(actionLabels, ['인쇄']);
     const save = await page.evaluate(() => {
       const status = GulliverTeacherComponents.createSaveStatus();
       const initial = status.textContent;

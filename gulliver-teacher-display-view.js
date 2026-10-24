@@ -5,13 +5,15 @@
   const query = new URLSearchParams(location.search);
   const kind = query.get('kind') || '';
   const token = query.get('session') || '';
-  const allowed = new Set(['timer', 'lesson', 'seating', 'manitto', 'flashquiz', 'bus', 'groups', 'roles', 'check', 'vote', 'praise', 'canvas']);
+  const allowed = new Set(['timer', 'lesson', 'seating', 'manitto', 'flashquiz', 'bus', 'groups', 'roles', 'check', 'vote', 'praise']);
   const stage = document.getElementById('displayStage');
   const connection = document.getElementById('displayConnection');
   const full = document.getElementById('displayFullscreen');
+  const announcement = document.getElementById('displayAnnouncement');
   let channel = null;
   let lastSeen = 0;
   let lastState = null;
+  let lastSequence = 0;
   let selectedManitto = '';
 
   const element = (tag, className = '', content = '') => {
@@ -41,7 +43,119 @@
     channel?.postMessage({version: 1, token, kind, type, payload});
   }
 
+  function renderUnifiedTime(data){
+    const mode=['clock','timer','stopwatch','lesson','period','learn'].includes(data.mode)?data.mode:'timer';
+    const styles={clock:['analog','digital'],timer:['ring','digital','bar','sand'],stopwatch:['digital','ring','bar'],lesson:['ring','bar','digital'],period:['ring','bar','digital'],learn:['analog','digital']};
+    const style=styles[mode].includes(data.style)?data.style:styles[mode][0];
+    const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number(v)||0));
+    const hour=clamp(data.hour,0,23),minute=clamp(data.minute,0,59),second=clamp(data.second,0,59);
+    const format=(ms,centiseconds)=>{
+      const n=clamp(ms,0,86400000),t=centiseconds?Math.floor(n/1000):Math.ceil(n/1000);
+      const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;
+      const result=h?`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      return centiseconds?`${result}.${String(Math.floor(n%1000/10)).padStart(2,'0')}`:result;
+    };
+    const labels={clock:'현재 시각',timer:'타이머',stopwatch:'스톱워치',lesson:'수업 흐름',period:'교시별 타이머',learn:'시계 읽기'};
+    const progress=clamp(data.progress,0,100);
+    const color=/^#[0-9a-f]{6}$/i.test(data.color||'')?data.color:'#556be9';
+    const shownTime=mode==='clock'?`${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:${String(second).padStart(2,'0')}`:
+      mode==='learn'?(data.reveal?`${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`:'몇 시일까요?'):
+      format(data.timeMs,mode==='stopwatch');
+    // Preserve the hourglass element across synchronized ticks so its animated
+    // falling stream stays continuous on a classroom display.
+    const previous=stage.querySelector('.tt-display-card[data-time-mode="timer"][data-time-style="sand"]');
+    if(mode==='timer'&&style==='sand'&&previous){
+      const glass=previous.querySelector('.tt-hourglass');
+      if(glass?.updateHourglass){
+        glass.updateHourglass(progress,Boolean(data.running));
+        const value=previous.querySelector('.tt-student-number');
+        const status=previous.querySelector('.tt-student-sub');
+        if(value&&value.textContent!==shownTime)value.textContent=shownTime;
+        if(status&&status.textContent!==String(data.status||''))status.textContent=String(data.status||'');
+        return;
+      }
+    }
+    const card=element('section','display-card tt-display-card');
+    card.dataset.timeMode=mode;
+    card.dataset.timeStyle=style;
+    const head=element('div','display-eyebrow',labels[mode]);
+    const title=element('h1','display-title',safeText(mode==='lesson'?data.title:labels[mode]));
+    const center=element('div','tt-student-face');
+    const label=element('div','tt-student-label',safeText(data.phase,labels[mode]));
+    const number=element('div','tt-student-number',shownTime);
+    const sub=element('div','tt-student-sub',mode==='period'?safeText(data.note)+(data.next?' · 다음: '+safeText(data.next):''):mode==='lesson'?safeText(data.note):mode==='learn'?(data.reveal?'정답을 확인했어요.':'시곗바늘을 보고 시간을 말해 보세요.'):mode==='clock'?'':safeText(data.status));
+    function clockSvg(){
+      const ns='http://www.w3.org/2000/svg';
+      const svg=document.createElementNS(ns,'svg');
+      svg.setAttribute('class','tt-student-analog');svg.setAttribute('viewBox','0 0 300 300');svg.setAttribute('role','img');
+      svg.setAttribute('aria-label',`${hour}시 ${minute}분`);
+      const item=(tag,attrs,text)=>{
+        const node=document.createElementNS(ns,tag);for(const [name,val] of Object.entries(attrs))node.setAttribute(name,String(val));
+        if(text!==undefined)node.textContent=String(text);svg.append(node);return node;
+      };
+      item('circle',{cx:150,cy:150,r:143,fill:'#fff',stroke:'#c3cde4','stroke-width':4});
+      for(let h=1;h<=12;h++){
+        const r=h*Math.PI/6;
+        item('text',{x:150+114*Math.sin(r),y:157-114*Math.cos(r),'text-anchor':'middle','font-size':23,'font-weight':800,fill:'#2e405d'},h);
+      }
+      function hand(angle,length,color,width){
+        const r=angle*Math.PI/180;
+        item('line',{x1:150,y1:150,x2:150+length*Math.sin(r),y2:150-length*Math.cos(r),stroke:color,'stroke-width':width,'stroke-linecap':'round'});
+      }
+      hand(((hour%12)+minute/60)*30,76,'#263852',9);
+      hand((minute+(mode==='clock'?second:0)/60)*6,105,'#556be9',6);
+      if(mode==='clock')hand(second*6,114,'#dc6570',2);
+      item('circle',{cx:150,cy:150,r:6,fill:'#263852'});
+      return svg;
+    }
+    if(style==='analog'){
+      center.append(clockSvg());
+      if(mode==='clock'||data.reveal)center.append(number);
+      else center.append(sub);
+    }else if(style==='ring'){
+      const ring=element('div','tt-student-ring');
+      ring.style.background=`conic-gradient(${color} ${progress}%,#e0e5f2 ${progress}%)`;
+      const inside=element('div','tt-student-ring-inside');
+      inside.append(label,number,sub);ring.append(inside);center.append(ring);
+    }else if(style==='digital'){
+      const box=element('div','tt-student-digital');box.append(label,number,sub);center.append(box);
+    }else if(style==='sand'){
+      const sand=element('div','tt-student-sand-layout');
+      const visual=window.TimeToolsHourglass?.create(progress,Boolean(data.running));
+      if(visual)sand.append(visual);
+      const text=element('div','tt-student-sand-copy');
+      text.append(label,number,sub);sand.append(text);center.append(sand);
+    }else{
+      const bar=element('div','tt-student-track'),fill=element('div','tt-student-track-fill');
+      fill.style.width=progress+'%';fill.style.background=color;bar.append(fill);
+      center.append(label,number,bar,sub);
+    }
+    card.append(head,title,center);
+    if(mode==='period'){
+      const strip=element('div','tt-student-events');
+      (Array.isArray(data.periods)?data.periods:[]).slice(0,12).forEach((item,index)=>{
+        const active=index===data.currentIndex&&data.periodStatus==='class';
+        const pill=element('span','tt-student-event'+(active?' active':''),safeText(item.name,`교시 ${index+1}`));
+        strip.append(pill);
+      });
+      card.append(strip);
+      card.append(element('p','tt-student-remaining',safeText(data.note)+(data.next?' · 다음: '+safeText(data.next):'')));
+    }
+    if(mode==='lesson'){
+      card.append(element('p','tt-student-remaining',`수업 전체 ${format(data.remainingMs)} 남음`));
+      const strip=element('div','tt-student-events');
+      (Array.isArray(data.events)?data.events:[]).slice(0,30).forEach((event,index)=>{
+        const pill=element('span','tt-student-event'+(index===data.currentIndex?' active':''),safeText(event.name,`활동 ${index+1}`));
+        strip.append(pill);
+      });
+      card.append(strip);
+      card.append(element('p','tt-student-remaining',`다음: ${safeText(data.next,'수업 마무리')}`));
+    }
+    stage.replaceChildren(card);
+  }
+
   function renderTimer(data) {
+    if (data?.unified === true) { renderUnifiedTime(data); return; }
     const card = element('section', 'display-card');
     const eyebrow = element('div', 'display-eyebrow', '수업 흐름 타이머');
     const title = element('h1', 'display-title', safeText(data.title, '오늘의 수업'));
@@ -75,24 +189,37 @@
     stage.replaceChildren(card);
   }
 
-  function renderLesson(data) {
-    const card = element('section', 'display-card lesson-card');
-    card.dataset.subject = safeText(data.subject, '국어');
-    const head = element('div', 'lesson-head');
-    head.append(element('span', 'lesson-subject', safeText(data.subject, '수업')), element('span', 'lesson-page', safeText(data.page)));
-    card.append(head,
-      element('p', 'lesson-unit', safeText(data.unit)),
-      element('h1', 'lesson-topic', safeText(data.topic, '오늘의 수업')));
-    const objective = element('div', 'lesson-objective');
-    objective.append(element('small', '', '🎯 학습 목표'), element('div', '', safeText(data.objective)));
-    card.append(objective);
-    const activities = element('div', 'lesson-activities');
-    ['act1', 'act2', 'act3'].forEach((key, index) => {
-      const item = element('div', 'lesson-activity');
-      item.append(element('span', '', `활동 ${index + 1}`), element('strong', '', safeText(data[key])));
-      activities.append(item);
-    });
-    card.append(activities, element('div', 'lesson-wrapup', `✨ 정리 · ${safeText(data.wrapup)}`));
+  function renderLesson(data){
+    const modes=['all','intro','act1','act2','act3','wrapup'];
+    const stageName={all:'전체 수업',intro:'도입 · 학습 목표',act1:'활동 1',act2:'활동 2',act3:'활동 3',wrapup:'정리'};
+    const current=modes.includes(data.stage)?data.stage:'all';
+    const card=element('section','display-card lesson-card');
+    card.dataset.lessonStage=current;
+    card.dataset.subject=safeText(data.subject,'국어');
+    const head=element('div','lesson-head');
+    head.append(element('span','lesson-subject',safeText(data.subject,'수업')),element('span','lesson-page',safeText(data.page)));
+    card.append(head,element('p','lesson-unit',safeText(data.unit)),element('h1','lesson-topic',safeText(data.topic,'오늘의 수업')));
+    if(current!=='all')card.append(element('span','lesson-stage-label',stageName[current]));
+    if(current==='all'||current==='intro'){
+      const objective=element('div','lesson-objective');
+      objective.append(element('small','','학습 목표'),element('div','',safeText(data.objective)));
+      card.append(objective);
+    }
+    if(current==='all'){
+      const activities=element('div','lesson-activities');
+      ['act1','act2','act3'].forEach((key,index)=>{
+        const item=element('div','lesson-activity');
+        item.append(element('span','',`활동 ${index+1}`),element('strong','',safeText(data[key])));
+        activities.append(item);
+      });
+      card.append(activities);
+    }
+    if(['act1','act2','act3'].includes(current)){
+      const box=element('div','lesson-focus-activity');
+      box.append(element('span','',stageName[current]),element('strong','',safeText(data[current],'함께 활동해요')));
+      card.append(box);
+    }
+    if(current==='all'||current==='wrapup')card.append(element('div','lesson-wrapup',`정리 · ${safeText(data.wrapup)}`));
     stage.replaceChildren(card);
   }
 
@@ -215,7 +342,7 @@
 
   function classroomCard(title, subtitle) {
     const card = element('section', 'display-card classroom-card');
-    card.append(element('div', 'display-eyebrow', '뚝딱교실 · 학급 운영'), element('h1', 'display-title', title));
+    card.append(element('div', 'display-eyebrow', '클라시트 · 학급 운영'), element('h1', 'display-title', title));
     if (subtitle) card.append(element('p', 'classroom-subtitle', subtitle));
     return card;
   }
@@ -311,21 +438,9 @@
     stage.replaceChildren(card);
   }
 
-  function renderCanvas(data) {
-    if(data.hidden){waiting('잠시 기다려 주세요', '선생님이 다음 활동을 준비하고 있어요.');return;}
-    if(data.unsupported){waiting('영상 수업을 준비해 주세요', '이 장면의 영상은 교사 화면에서 재생해 주세요.');return;}
-    if(typeof data.svg!=='string'||data.svg.length>8000000||!data.svg.startsWith('<svg ')){waiting('수업 자료를 기다리고 있어요','교사 화면에서 페이지를 확인해 주세요.');return;}
-    let image=stage.querySelector('.display-canvas-image');
-    if(!image){image=element('img','display-canvas-image');stage.replaceChildren(image);}
-    image.alt=safeText(data.title,'수업 화면');
-    // Render as an image: no scripts, teacher controls, or private activity model.
-    image.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(data.svg);
-  }
-
   function render(data) {
     if (!data || data.kind !== kind) return;
-    if (kind === 'canvas') renderCanvas(data);
-    else if (kind === 'timer') renderTimer(data);
+    if (kind === 'timer') renderTimer(data);
     else if (kind === 'lesson') renderLesson(data);
     else if (kind === 'seating') renderSeating(data);
     else if (kind === 'manitto') renderManitto(data);
@@ -354,6 +469,10 @@
   channel.onmessage = event => {
     const message = event.data;
     if (!message || message.version !== 1 || message.token !== token || message.kind !== kind) return;
+    if (Number.isFinite(message.sequence)) {
+      if (message.sequence <= lastSequence) return;
+      lastSequence = message.sequence;
+    }
     if (message.type === 'state') {
       lastSeen = Date.now();
       lastState = message.payload;
@@ -365,6 +484,9 @@
       setConnection('disconnected', '교사 화면 연결 종료');
       waiting('교사 화면 연결이 종료됐어요', '교사 화면에서 학생 창을 다시 열어 주세요.');
     } else if (message.type === 'error') {
+      lastSeen = Date.now();
+      lastState = null;
+      setConnection('error', '학생 화면 갱신 오류');
       waiting('학생 화면을 갱신할 수 없어요', safeText(message.payload?.message));
     }
   };

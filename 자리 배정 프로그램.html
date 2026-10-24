@@ -145,6 +145,7 @@ body.flipped .seat.selected{transform:rotate(180deg) translateY(3px)}
 }
 </style>
 <script src="gulliver-shared.js?v=20261020-ui"></script>
+<script src="classroom-allocation-audit.js?v=20261024-1"></script>
 <script src="classroom-workspace.js?v=20261020-ui"></script>
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
 <script src="gulliver-teacher-display.js?v=20261019-dual1"></script>
@@ -401,6 +402,12 @@ function studentAllowedInSeat(studentId,index){
   return Boolean(student&&student.gender===required);
 }
 function hasAssignment(){return state.assignment.some(Boolean)}
+function auditCurrentSeats(arr=state.assignment){
+  return ClassroomAllocationAudit.seating({
+    assignment:arr,students:state.students,activeSeats:state.activeSeats,
+    fixedSeats:state.fixedSeats,genderSeats:state.genderSeats
+  });
+}
 function escapeHTML(v){return String(v||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function gridFromSelect(){
   const value=$('seatSize').value;
@@ -843,8 +850,16 @@ function handleSeat(index){
   if(isFixedSeat(index)){Gulliver.toast('📌 지정 자리는 움직일 수 없습니다. 설정에서 먼저 해제해 주세요.');return}
   if(selectedSeat===null){selectedSeat=index;renderBoard();return}
   if(selectedSeat===index){selectedSeat=null;renderBoard();return}
+  const previous=[...state.assignment];
   [state.assignment[selectedSeat],state.assignment[index]]=[state.assignment[index],state.assignment[selectedSeat]];
-  selectedSeat=null;renderBoard();setNotice('자리 두 곳을 교체했습니다. 분리 규칙이나 앞자리 조건이 깨졌는지 아래 점수를 확인하세요.','');
+  const audit=auditCurrentSeats();
+  if(!audit.ok){
+    state.assignment=previous;selectedSeat=null;renderBoard();
+    setNotice('이 자리 교환은 적용할 수 없어요. '+audit.issues[0],'bad');return;
+  }
+  selectedSeat=null;renderBoard();
+  const ev=evaluate(state.assignment);
+  setNotice(ev.ruleViolations||ev.frontMiss?'자리 교체 완료. 분리 규칙 '+ev.ruleViolations+'건, 앞자리 우선 '+ev.frontMiss+'건을 다시 확인해 주세요.':'자리 두 곳을 바꿨어요. 모든 필수 자리 조건을 지켰습니다.',ev.ruleViolations||ev.frontMiss?'bad':'good');
 }
 function clearAssignment(render=true){
   state.assignment=Array(state.cols*state.rows).fill(null);selectedSeat=null;
@@ -943,6 +958,11 @@ function generate(){
   if(duplicateFixedStudents.length){setNotice('같은 학생이 두 개 이상의 지정 자리에 연결되어 있습니다. 지정 자리를 다시 확인해 주세요.','bad');return}
   const beforeHistory=getHistory();
   const result=optimize();
+  const hard=auditCurrentSeats(result.arr);
+  if(!hard.ok){
+    setNotice('자리표를 완성하지 못했습니다. '+hard.issues.slice(0,3).join(' · ')+' 지정석이나 고정 조건을 조정해 주세요.','bad');
+    return;
+  }
   state.assignment=result.arr;
   selectedSeat=null;
   $('resultBadge').textContent=result.ev.penalty===0?'조건 완전 충족':'최적 배치';
@@ -1012,6 +1032,7 @@ function applyLayoutChange(){
 }
 function enterPresentation(){
   if(!hasAssignment()){Gulliver.toast('먼저 자리를 배정해 주세요.');return}
+  const audit=auditCurrentSeats();if(!audit.ok){setNotice(audit.issues[0],'bad');return}
   document.body.classList.add('presentation');
 }
 function exitPresentation(){document.body.classList.remove('presentation')}
@@ -1046,6 +1067,7 @@ $('flipBtn').onclick=toggleFlip;
 $('printBtn').onclick=()=>window.print();
 $('commitHistoryBtn').onclick=()=>{
   if(!hasAssignment()){Gulliver.toast('먼저 자리를 배정해 주세요.');return}
+  const audit=auditCurrentSeats();if(!audit.ok){setNotice('확정하기 전에 '+audit.issues.join(' · '),'bad');return}
   saveHistory();
   if(Gulliver.recordOperation)Gulliver.recordOperation('seating',{studentCount:state.students.length,seats:[...state.assignment],cols:state.cols,rows:state.rows,layout:state.layout});
   Gulliver.toast('이 자리표를 최근 자리 기록에 저장했습니다.');
@@ -1081,7 +1103,7 @@ window.GulliverTeacherDisplay?.register({
   getSnapshot(){
     const names=new Map(state.students.map(student=>[String(student.id),String(student.name||'')]));
     return{
-      kind:'seating',cols:state.cols,rows:state.rows,ready:hasAssignment(),
+      kind:'seating',cols:state.cols,rows:state.rows,ready:hasAssignment()&&auditCurrentSeats().ok,
       flipped:document.body.classList.contains('flipped'),
       seats:state.activeSeats.map((active,index)=>active?(names.get(String(state.assignment[index]))||''):null)
     };
@@ -1089,7 +1111,7 @@ window.GulliverTeacherDisplay?.register({
 });
 document.body.classList.add('gt-v62-seating');
 GulliverTeacherClassroomFlow.mount({container:document.querySelector('.app'),title:'교실 자리 배정',description:'명단·자리 조건은 교사만 확인하고, 학생에게는 완성된 자리표만 공개해요.',onResult(){
-  if(!hasAssignment()){Gulliver.toast('먼저 학생 자리를 배정해 주세요.');return false;}
+  if(!hasAssignment()||!auditCurrentSeats().ok){Gulliver.toast('먼저 모든 학생을 조건에 맞게 배정해 주세요.');return false;}
 }});
 </script>
 </body>

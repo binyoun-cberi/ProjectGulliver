@@ -2,9 +2,10 @@
 (() => {
   'use strict';
   const tools = [
-    ['지도안식 원형 타이머.html', '수업 흐름 타이머', '시간·안내', '🕘'],
+    ['시간 도구.html', '시간 도구', '시간·안내', '🕘'],
+    ['지도안식 원형 타이머.html', '수업 흐름 타이머(이전)', '시간·안내', '🕘'],
     ['토너먼트 메이커.html', '토너먼트 메이커', '게임·이벤트', '🏆'],
-    ['시간 경쟁 시스템.html', '타이머·스톱워치', '시간·안내', '⏱️'],
+    ['시간 경쟁 시스템.html', '타이머·스톱워치(이전)', '시간·안내', '⏱️'],
     ['자리 배정 프로그램.html', '교실 자리 배정', '학급 운영', '🎒'],
     ['QR코드.html', 'QR 코드 도구', '업무·편의', '📱'],
     ['교실용 마피아 게임.html', '교실용 마피아 게임', '게임·이벤트', '🕶️'],
@@ -28,20 +29,10 @@
   const current = tools.find(([file]) => file === pathname);
   if (!current) return;
 
-  function embeddedInCanvas() {
-    if (window.parent === window || new URLSearchParams(location.search).get('studioEmbed') !== '1') return false;
-    try { return window.parent.location.origin === location.origin && Boolean(window.parent.GulliverTeacherLive); }
-    catch { return false; }
-  }
-
   function mount() {
     if (!document.body || document.querySelector('.gt-shell')) return;
     document.body.classList.add('gt-teacher-tool');
     document.body.dataset.gtTool = pathname;
-    if (embeddedInCanvas()) {
-      document.body.classList.add('gulliver-studio-embed');
-      return;
-    }
     const frame = window.GulliverAppShell?.mount({title:current[1]});
     if (!frame) return;
     const {shell, actions} = frame;
@@ -51,7 +42,7 @@
     const panel = document.createElement('div'); panel.className = 'gt-help-panel';
     const panelTitle = document.createElement('strong'); panelTitle.textContent = '도구의 저장 상태';
     const saveStatus = document.createElement('p');
-    saveStatus.textContent = '설정과 결과는 도구마다 저장 방식이 달라요. 기존 도구의 저장 버튼과 안내를 확인해 주세요. 내 보관함에 자동으로 들어간다는 뜻은 아니에요.';
+    saveStatus.textContent = '설정과 결과는 도구마다 저장 방식이 달라요. 각 도구의 저장 버튼과 안내를 확인해 주세요.';
     saveStatus.setAttribute('role', 'status');
     panel.append(panelTitle, saveStatus); help.append(summary, panel);
     const full = document.createElement('button'); full.type = 'button'; full.className = 'gt-action';

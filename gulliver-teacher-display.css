@@ -1,7 +1,7 @@
 :root{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;color:#253248;background:#f3f5fb}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;overflow-x:hidden;background:radial-gradient(circle at 10% 0%,#f2edff 0%,transparent 44%),radial-gradient(circle at 96% 90%,#e8f6ff 0%,transparent 42%),#f3f5fb}
 .display-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px max(20px,calc((100vw - 1540px)/2));background:rgba(255,255,255,.88);border-bottom:1px solid #e5e9f1;min-height:58px}
-.display-brand{font-weight:900;color:#5848c6;white-space:nowrap}.display-brand span{margin-left:8px;color:#6b7387;font-size:13px;font-weight:750}
+.display-brand{display:inline-flex;align-items:center;gap:6px;font-weight:900;color:#176a5b;white-space:nowrap}.display-brand img{display:block;flex:none;border-radius:8px}.display-brand span{margin-left:8px;color:#6b7387;font-size:13px;font-weight:750}
 .display-tools{display:flex;align-items:center;gap:12px}#displayConnection{font-size:12px;font-weight:750;color:#64748b}#displayConnection[data-state="connected"]{color:#047857}#displayConnection[data-state="disconnected"]{color:#b91c1c}
 #displayFullscreen{border:1px solid #dde3ef;background:white;color:#4a426f;border-radius:11px;min-height:38px;padding:7px 13px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer}
 button:focus-visible{outline:3px solid #a5b4fc;outline-offset:3px}.display-stage{min-height:calc(100vh - 96px);padding:clamp(16px,2.5vw,36px);display:grid;align-items:center;justify-items:stretch}
@@ -50,4 +50,27 @@ button:focus-visible{outline:3px solid #a5b4fc;outline-offset:3px}.display-stage
 .praise-score strong{color:#dc7359}.praise-fill{background:linear-gradient(90deg,#fbbf24,#ea6b49)}.classroom-cheer{text-align:center;font-weight:900;font-size:clamp(22px,3vw,44px);color:#b45309;margin:32px auto}
 @media(max-width:680px){.classroom-bus-grid{grid-template-columns:25px repeat(2,minmax(0,1fr)) 30px repeat(2,minmax(0,1fr));gap:4px}.classroom-bus-seat{min-height:47px;font-size:12px;border-radius:7px;padding:4px}.classroom-bus-aisle{font-size:9px}.classroom-group-grid{grid-template-columns:1fr}.classroom-card .display-title{font-size:clamp(28px,6vw,48px)}}
 
-.display-canvas-image{display:block;width:100%;height:calc(100vh - 150px);object-fit:contain;background:#f1f5f9;border-radius:12px}
+.display-toolbar #displayConnection[data-state="error"]{color:#b45309}
+.screen-reader-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+
+/* Unified time tool: public clock styles share one teacher-side time state. */
+.tt-display-card{text-align:center;max-width:1250px}
+.tt-display-card .display-title{margin:8px 0 15px}
+.tt-student-face{min-height:clamp(300px,55vh,670px);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px;background:linear-gradient(145deg,#f4f7ff,#ebf4ff);border:1px solid #dfe9fa;border-radius:28px;padding:clamp(16px,3vw,36px)}
+.tt-student-ring{width:min(60vh,67vw,590px);aspect-ratio:1;padding:clamp(16px,2.4vw,28px);border-radius:50%;display:grid;place-items:center;box-shadow:0 15px 40px #5467a128}
+.tt-student-ring-inside{width:100%;height:100%;border-radius:50%;background:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:15px}
+.tt-student-number{font-size:clamp(55px,10vw,135px);font-variant-numeric:tabular-nums;letter-spacing:-.07em;font-weight:950;line-height:1.05;overflow-wrap:anywhere}
+.tt-student-ring .tt-student-number{font-size:clamp(45px,8vw,98px)}
+.tt-student-label{font-size:clamp(23px,3vw,43px);font-weight:900}
+.tt-student-sub{font-size:clamp(16px,1.7vw,24px);color:#65758e;font-weight:750;overflow-wrap:anywhere}
+.tt-student-digital{width:min(100%,920px);background:#182842;color:#fff;border-radius:26px;min-height:300px;display:flex;justify-content:center;align-items:center;flex-direction:column;gap:20px;padding:32px;box-shadow:0 22px 35px #1b324d25}
+.tt-student-digital .tt-student-sub{color:#c5d6e8}
+.tt-student-track{height:clamp(27px,5vh,55px);width:min(90%,870px);background:#d4deef;border-radius:100px;overflow:hidden}
+.tt-student-track-fill{height:100%;border-radius:100px;transition:width .25s linear}
+.tt-student-sand{font-size:clamp(125px,23vh,250px);line-height:1.05}
+.tt-student-analog{width:min(56vh,68vw,560px);max-width:100%;filter:drop-shadow(0 17px 22px #33466e22)}
+.tt-student-remaining{font-size:clamp(18px,2.1vw,29px);color:#57657c;font-weight:800;margin:18px 0 0}
+.tt-student-events{display:flex;justify-content:center;flex-wrap:wrap;gap:9px;margin:19px auto 0}
+.tt-student-event{padding:10px 15px;border-radius:12px;background:#e8ecf5;color:#6d7890;font-weight:900;font-size:clamp(13px,1.3vw,19px)}
+.tt-student-event.active{background:#dce5ff;color:#3755bf}
+@media(max-width:700px){.tt-student-face{min-height:320px;padding:12px}.tt-student-ring{width:min(78vw,380px)}.tt-student-ring .tt-student-number{font-size:clamp(37px,9vw,73px)}.tt-student-ring .tt-student-label{font-size:20px}.tt-student-ring .tt-student-sub{font-size:13px}.tt-student-digital{min-height:260px;padding:12px}.tt-student-number{font-size:clamp(39px,10vw,70px)}}

@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   const KEY='gulliver.activities.v1';
-  const KINDS={timer:{name:'수업 흐름 타이머',icon:'🕘',href:'지도안식 원형 타이머.html'},quiz:{name:'낱말카드·퀴즈',icon:'🗂️',href:'플래시퀴즈메이커.html'},seating:{name:'교실 자리표',icon:'🎒',href:'자리 배정 프로그램.html'}};
+  const KINDS={timer:{name:'수업 흐름 타이머',icon:'🕘',href:'시간 도구.html'},quiz:{name:'낱말카드·퀴즈',icon:'🗂️',href:'플래시퀴즈메이커.html'},seating:{name:'교실 자리표',icon:'🎒',href:'자리 배정 프로그램.html'}};
   const uid=()=>window.crypto?.randomUUID?.()||'a_'+Date.now().toString(36)+Math.random().toString(36).slice(2);
   const copy=v=>JSON.parse(JSON.stringify(v));
   const clean=(v,max=80)=>String(v??'').trim().slice(0,max);
@@ -32,14 +32,14 @@
     {id:'seating20',kind:'seating',title:'기본 교실 자리표',desc:'5열 × 4줄 · 우리 반 명단으로 시작',payload:{cols:5,rows:4,layout:'individual',useClassroom:true}}
   ];
   function importBundle(value){
-    if(value?.version!==1||!Array.isArray(value.activities)||!Array.isArray(value.folders))throw Error('뚝딱교실 활동 백업 파일을 선택해 주세요.');
+    if(value?.version!==1||!Array.isArray(value.activities)||!Array.isArray(value.folders))throw Error('클라시트 활동 백업 파일을 선택해 주세요.');
     const data=read(),folderMap=new Map();
     value.folders.slice(0,200).forEach(f=>{if(!clean(f?.name,40))return;let target=data.folders.find(x=>x.name===clean(f.name,40));if(!target){target={id:uid(),name:clean(f.name,40)};data.folders.push(target)}folderMap.set(f.id,target.id)});
     let count=0;
     value.activities.slice(0,500).forEach(a=>{if(!a||!KINDS[a.kind]||!a.payload||typeof a.payload!=='object')return;const now=Date.now();data.activities.push({id:uid(),kind:a.kind,title:clean(a.title)||KINDS[a.kind].name,folderId:folderMap.get(a.folderId)||'',payload:copy(a.payload),createdAt:now,updatedAt:now,archived:Boolean(a.archived)});count++});
     write(data);return count;
   }
-  function download(){const blob=new Blob([JSON.stringify(read(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='뚝딱교실_내활동_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+  function download(){const blob=new Blob([JSON.stringify(read(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='클라시트_내활동_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
   function mount(adapter){
     let current=null;const params=new URLSearchParams(location.search),requested=params.get('activity'),preset=params.get('template');
     const shell=window.GulliverAppShell?.mount()?.actions||document.querySelector('.gulliver-shell-actions');

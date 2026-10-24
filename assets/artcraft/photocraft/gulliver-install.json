@@ -1,8 +1,0 @@
-{
-  "product": "PhotoCraft",
-  "source": "storytold/photocraft",
-  "version": "0.7.0",
-  "release_sha256": "dfcbaac00f81f5d05ccffba36a14b320c1b1c7b23a4135fe54877f527e550eec",
-  "locale": "ko",
-  "ui_font": "Nanum Gothic (OFL-1.1)"
-}

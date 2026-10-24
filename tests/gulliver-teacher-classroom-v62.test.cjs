@@ -16,7 +16,7 @@ const kinds = ['seating','bus','groups','roles','check','vote','praise'];
 const base = 'http://127.0.0.1:8958/';
 const browserInstalled = Boolean(chromium && (fs.existsSync(chromium.executablePath()) || ['/opt/google/chrome/chrome','/usr/bin/google-chrome','/usr/bin/google-chrome-stable'].some(fs.existsSync)));
 
-test('6.2 seven classroom tools opt in without changing persistent keys or embedded canvas adapters', () => {
+test('seven classroom tools retain their student display adapters', () => {
   for (const [i, file] of tools.entries()) {
     const html = fs.readFileSync(file,'utf8');
     assert.match(html,/gulliver-teacher-v62\.css/,file);
@@ -41,10 +41,9 @@ test('6.2 seven classroom tools opt in without changing persistent keys or embed
   const viewer = fs.readFileSync('gulliver-teacher-display-view.js','utf8');
   for (const kind of kinds) assert.match(viewer,new RegExp(`kind === ['"]${kind}['"]`));
   assert.doesNotMatch(viewer,/\b(localStorage|sessionStorage|teacherToken|fixedSeats|avoidPairs|excluded|studentNames|votedStudentIds)\b/);
-  assert.match(fs.readFileSync('gulliver-teacher-v62.css','utf8'),/gulliver-studio-embed/);
 });
 
-test('6.2 classroom UI controller keeps teacher settings visible until result mode and honours embedded canvas', () => {
+test('classroom UI controller keeps teacher settings visible until result mode', () => {
   const elements = [];
   function element() {
     const attributes = {}, listeners = {};

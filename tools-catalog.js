@@ -1,21 +1,13 @@
 (function(){const tools=[
-      {name:"뚝딱 제작실",subtitle:"그림·PDF·도안·발표·문서·영상·음악을 한곳에서 제작",href:"뚝딱 제작실.html",category:"자료·기록",icon:"🛠️",accent:"#7547e8",tags:["제작실","그림","PDF","도안","발표","문서","영상","음악","WAV","WebM","HWPX","DOCX","PPTX","수업자료"],situation:"교실 수업자료를 만들고, 기기에 작업을 저장하거나 사진을 재사용할 때"},
-      {name:"영상 뚝딱",subtitle:"FilmCraft 고급 영상 편집과 간편 영상 제작",href:"영상 뚝딱.html",category:"자료·기록",icon:"🎬",accent:"#5d67c8",tags:["영상 편집","FilmCraft","타임라인","동영상","MP4","WebM","자막","수업영상"],situation:"수업 영상에 자막과 사진을 넣거나 동영상의 장면을 편집할 때"},
-      {name:"음악 뚝딱",subtitle:"SoundCraft 고급 오디오 편집과 간편 음악 제작",href:"음악 뚝딱.html",category:"자료·기록",icon:"🎵",accent:"#8a57c8",tags:["음악 만들기","SoundCraft","오디오","DAW","WAV","녹음","리듬","음악 편집"],situation:"수업·활동의 배경음악을 만들거나 오디오를 편집할 때"},
-      {name:"그림 뚝딱",subtitle:"사진과 그림카드를 꾸미는 편집기",href:"그림 뚝딱.html",category:"자료·기록",studioLegacy:true,icon:"🎨",accent:"#2875bb",tags:["사진편집","그림카드","이미지","활동지"],situation:"사진을 자르고 글씨와 그림을 넣어 수업자료를 만들 때"},
-      {name:"PDF 뚝딱",subtitle:"PDF 합치기·추출·나누기·회전, 고급 편집",href:"PDF 뚝딱.html",category:"자료·기록",studioLegacy:true,icon:"📄",accent:"#246c98",tags:["PDF","PDF 합치기","PDF 나누기","학습지","PDF 편집","페이지 추출"],situation:"학습지와 안내문 PDF를 합치거나 필요한 페이지만 골라 저장할 때"},
-      {name:"도안 뚝딱",subtitle:"그림카드·이름표·도형 도안을 만들고 A4 인쇄",href:"도안 뚝딱.html",category:"자료·기록",studioLegacy:true,icon:"✂️",accent:"#6b77ba",tags:["도안","낱말 그림카드","감정카드","이름표","교구","도형","벡터"],situation:"교실 활동지, 이름표, 순서표와 그림카드를 만들어 인쇄할 때"},
-      {name:"발표 뚝딱",subtitle:"수업 슬라이드·퀴즈 제작, PPTX 저장과 발표",href:"발표 뚝딱.html",category:"자료·기록",studioLegacy:true,icon:"📽️",accent:"#486ec2",tags:["발표","슬라이드","파워포인트","PPTX","퀴즈","수업자료","프레젠테이션"],situation:"한글 수업 발표 자료를 만들고 바로 보여 주거나 PPTX로 저장할 때"},
-      {name:"문서 뚝딱",subtitle:"가정통신문·계획서 작성, 한글 HWPX·DOCX 저장",href:"문서 뚝딱.html",category:"자료·기록",studioLegacy:true,icon:"📝",accent:"#286eab",tags:["문서","한글문서","HWPX","워드","DOCX","가정통신문","학급 소식지","수업계획서","관찰기록"],situation:"가정통신문, 안내장, 관찰기록과 수업계획 문서를 작성하고 한글 HWPX로 저장할 때"},
       {
-        name: "수업 흐름 타이머",
-        subtitle: "수업 흐름을 원형 시간표로 보여주는 활동 타이머",
-        href: "지도안식 원형 타이머.html",
+        name: "시간 도구",
+        subtitle: "현재 시각·타이머·스톱워치·수업 흐름·시계 읽기를 한곳에서",
+        href: "시간 도구.html",
         category: "똑똑 수업",
         icon: "🕘",
         accent: "#6d5dfc",
-        tags: ["수업흐름", "활동시간", "원형타이머"],
-        situation: "도입-전개-정리처럼 활동별 시간을 나누어 보여줄 때"
+        tags: ["시계", "시간도구", "타이머", "스톱워치", "시계읽기", "수업흐름"],
+        situation: "수업 시간 안내, 시계 학습, 기록 경쟁까지 한곳에서 운영할 때"
       },
       {
         name: "토너먼트 메이커",
@@ -26,16 +18,6 @@
         accent: "#e6a72f",
         tags: ["토너먼트", "대진표", "월드컵", "학급게임"],
         situation: "가위바위보, 퀴즈, 발표, 체육 경기나 음식·책·인물 월드컵을 진행할 때"
-      },
-      {
-        name: "타이머·스톱워치",
-        subtitle: "스톱워치와 타이머, 기록판을 함께 쓰는 시간 경쟁 도구",
-        href: "시간 경쟁 시스템.html",
-        category: "똑똑 수업",
-        icon: "🏆",
-        accent: "#ff9f43",
-        tags: ["스톱워치", "타이머", "기록판"],
-        situation: "발표, 미션, 문제풀이 시간을 재고 기록할 때"
       },
       {
         name: "교실 자리 배정",
@@ -217,8 +199,7 @@
         situation: "수업용 영상을 모아두고 다음 학년도에도 다시 활용하고 싶을 때"
       }
     ]; const purposes=[
-      "자료·기록","자료·기록","자료·기록","자료·기록","자료·기록","자료·기록","자료·기록","자료·기록",
-      "시간·수업 안내","퀴즈·놀이","시간·수업 안내","뽑기·편성","자료·기록",
+      "시간·수업 안내","퀴즈·놀이","뽑기·편성","자료·기록",
       "퀴즈·놀이","뽑기·편성","퀴즈·놀이","퀴즈·놀이","뽑기·편성",
       "시간·수업 안내","학급 관리","학급 관리","학급 관리","퀴즈·놀이",
       "뽑기·편성","뽑기·편성","뽑기·편성","퀴즈·놀이","자료·기록","자료·기록"
