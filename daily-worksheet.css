@@ -295,3 +295,7 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
 .print-paper .science-evidence>li{line-height:1.35}
 .print-paper .science-material table{line-height:1.35}
 .print-paper .print-question-list.science-evidence{row-gap:2mm}
+
+.science-context{margin:5px 0 7px;font-size:12px;line-height:1.45;font-weight:400;color:#172f38}
+.print-paper .science-context{font-size:9pt;line-height:1.35;margin:1mm 0 1.5mm}
+.large-print .print-paper .science-context{font-size:12pt;line-height:1.5}

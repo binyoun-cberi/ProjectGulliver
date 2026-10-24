@@ -180,14 +180,14 @@ test('all 17 science topics preserve diagrams and tables in student and teacher 
  assert.equal(await page.locator('#questions .science-material svg').count()>=1,true,topic);assert.ok(await page.locator('#questions .science-material table').count()>=1,topic);
  for(const teacher of [false,true]){
  await page.evaluate(t=>document.body.classList.toggle('print-answers',t),teacher);await page.emulateMedia({media:'print'});
- const packed=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(packed.ok,topic+': '+packed.issue);if(packed.pages!==1){const diagnostic=await page.evaluate(()=>{const host=document.querySelector('#printPages'),a=host.firstElementChild.cloneNode(true),list=a.querySelector('ol');a.className='paper print-paper';list.removeAttribute('style');list.replaceChildren(...[...document.querySelector('#questions').children].map(x=>x.cloneNode(true)));host.classList.add('is-measuring');host.append(a);const bounds=a.getBoundingClientRect(),result={scroll:a.scrollHeight,client:a.clientHeight,height:bounds.height,items:[...list.children].map(x=>{const r=x.getBoundingClientRect();return {top:r.top-bounds.top,bottom:r.bottom-bounds.top,height:r.height}})};a.remove();host.classList.remove('is-measuring');return result});layoutIssues.push(topic+'/'+(teacher?'teacher':'student')+': '+JSON.stringify({...packed,diagnostic}));}
+ const packed=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(packed.ok,topic+': '+packed.issue);if((!teacher&&packed.pages!==1)||(teacher&&packed.pages>2)){const diagnostic=await page.evaluate(()=>{const host=document.querySelector('#printPages'),a=host.firstElementChild.cloneNode(true),list=a.querySelector('ol');a.className='paper print-paper';list.removeAttribute('style');list.replaceChildren(...[...document.querySelector('#questions').children].map(x=>x.cloneNode(true)));host.classList.add('is-measuring');host.append(a);const bounds=a.getBoundingClientRect(),result={scroll:a.scrollHeight,client:a.clientHeight,height:bounds.height,items:[...list.children].map(x=>{const r=x.getBoundingClientRect();return {top:r.top-bounds.top,bottom:r.bottom-bounds.top,height:r.height}})};a.remove();host.classList.remove('is-measuring');return result});layoutIssues.push(topic+'/'+(teacher?'teacher':'student')+': '+JSON.stringify({...packed,diagnostic}));}
  const result=await page.evaluate(()=>({pages:[...document.querySelectorAll('.print-paper')].length,diagrams:document.querySelectorAll('.print-paper .science-material svg').length,tables:document.querySelectorAll('.print-paper .science-material table').length}));assert.ok(result.diagrams>=1);assert.ok(result.tables>=1);
  await page.pdf({path:`test-artifacts/worksheet-science-${topic}-${teacher?'teacher':'student'}.pdf`,format:'A4',printBackground:true});
  }
  await page.emulateMedia({media:'screen'});await page.evaluate(()=>document.body.classList.remove('print-answers'));
  const bounds=await page.locator('#questions .science-material svg').evaluate(svg=>{const b=svg.getBBox(),v=svg.viewBox.baseVal;return {x:b.x,y:b.y,right:b.x+b.width,bottom:b.y+b.height,leftLimit:v.x,topLimit:v.y,rightLimit:v.x+v.width,bottomLimit:v.y+v.height}});assert.ok(bounds.x>=bounds.leftLimit-1&&bounds.y>=bounds.topLimit-1&&bounds.right<=bounds.rightLimit+1&&bounds.bottom<=bounds.bottomLimit+1,topic+' SVG labels fit: '+JSON.stringify(bounds));
  }
- await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);assert.deepEqual(layoutIssues,[],'five choice questions should fit one A4');
+ await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);assert.deepEqual(layoutIssues,[],'student five-task sheets fit one A4; full teacher explanations fit at most two');
  }finally{await browser.close()}
 });
 
@@ -217,3 +217,14 @@ test('legacy science screenshot cases use contextual questions with evidence in 
  }assert.deepEqual(issues,[]);
  }finally{await browser.close()}
  });
+
+test('students see the fish observation context before the data in every response format and PDF',{skip:(!chrome||!chromium)&&'Chrome required',timeout:90000},async()=>{
+ const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--allow-file-access-from-files']});try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),base=pathToFileURL(path.resolve('문제지 만들기.html')).href;
+ for(const format of ['choice','ox','short','essay']){await page.goto(base+'?'+new URLSearchParams({subject:'science',grade:3,topic:'living',count:10,seed:parseInt('1ABXN0Z',36),format}),{waitUntil:'load'});await page.evaluate(()=>document.fonts.ready);
+ const fish=page.locator('#questions > li').filter({hasText:'같은 수조의 물고기'});assert.equal(await fish.count(),1);assert.ok(await fish.locator('.science-context').isVisible());assert.match(await fish.textContent(),/알을 낳음/);assert.match(await fish.textContent(),/그 알에서/);
+ assert.ok(await fish.evaluate(li=>Boolean(li.querySelector('.science-context').compareDocumentPosition(li.querySelector('table'))&Node.DOCUMENT_POSITION_FOLLOWING)));
+ for(const teacher of [false,true]){await page.evaluate(t=>document.body.classList.toggle('print-answers',t),teacher);await page.emulateMedia({media:'print'});const packed=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(packed.ok);assert.equal(await page.locator('.print-paper .science-context').filter({hasText:'같은 수조의 물고기'}).count(),1);await page.pdf({path:`test-artifacts/worksheet-science-context-${format}-${teacher?'teacher':'student'}.pdf`,format:'A4',printBackground:true});}
+ await page.evaluate(()=>document.body.classList.remove('print-answers'));await page.emulateMedia({media:'screen'});
+ }await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ }finally{await browser.close()}
+});

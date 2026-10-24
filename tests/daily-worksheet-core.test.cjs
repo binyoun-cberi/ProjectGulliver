@@ -490,3 +490,12 @@ test('science pagination uses another page when the minimum-page split is badly 
 });
 
 test('mushroom observations do not equate new fruiting bodies with new fungal individuals',()=>{const q=require('../science-inquiry').entries.find(q=>q.id==='living-inquiry-fungus');assert.doesNotMatch(q.answer+' '+q.explanation,/새 개체|개체 발생/);assert.match(q.answer,/성장/);});
+
+test('context-dependent science conclusions include evidence and student-facing conditions',()=>{
+ const C=require('../daily-worksheet-core'),I=require('../science-inquiry');const by=id=>I.entries.find(q=>q.id===id);
+ const fish=by('living-inquiry-reproduction');assert.match(fish.material.context,/다른 물고기나 알.*넣지/);assert.ok(fish.material.rows.some(r=>r[1].includes('알을 낳음')));assert.ok(fish.material.rows.some(r=>r[1].includes('그 알에서')));assert.deepEqual([fish.answer,...fish.wrong],['번식','성장','운동']);
+ const checks=[['human-body-inquiry-muscle',/막대는 뼈, 줄은 근육/],['force-motion-inquiry-spring',/무게가 같은 추/],['earth-water-inquiry-infiltration',/그때까지 나온 물/],['space-inquiry-rotation',/전등의 위치는 고정/],['matter-inquiry-volume-loss',/새지 않는.*컵/],['weather-process-inquiry-humidity',/습도만 다르게/]];
+ for(const [id,pattern] of checks)assert.match(by(id).material.context,pattern,id);
+ assert.equal(I.entries.filter(q=>q.material.context).length,33);
+ for(const responseFormat of ['choice','ox','short','essay']){const sheet=C.generate({subject:'science',topic:'living',grade:3,count:10,responseFormat,seed:parseInt('1ABXN0Z',36)}),q=sheet.items.find(q=>q.scienceId===fish.id);assert.ok(q);assert.equal(q.scienceMaterial.context,fish.material.context);assert.ok(q.scienceMaterial.rows.some(r=>r[1].includes('그 알에서')));}
+});
