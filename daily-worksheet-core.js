@@ -1182,9 +1182,12 @@ function answerFormatFor(type,subject,topic){
  return 'choice';
 }
 function asWritingPrompt(prompt){
- return String(prompt).replace(/고르세요\.?$/,'쓰세요.').replace(/선택하세요\.?$/,'쓰세요.')
+ return String(prompt).replace(/(?:고르세요|선택하세요)(?=\.|\?|!|\s|$)/g,'쓰세요')
  .replace(/알맞은 것을 쓰세요\.?$/,'알맞은 답을 쓰세요.')
  .replace(/보기에서 /g,'').replace(/보기 중 /g,'');
+}
+function asOxPrompt(prompt){
+ return String(prompt).replace(/(?:고르세요|선택하세요)(?=\.|\?|!|\s|$)/g,'생각해 보세요');
 }
 function convertAnswerFormat(items,subject,topic,responseFormat,seed){
  if(!responseFormat||responseFormat==='activity'||responseFormat==='choice')return items;
@@ -1196,7 +1199,7 @@ function convertAnswerFormat(items,subject,topic,responseFormat,seed){
    if(!wrong.length)throw Error('이 학습 내용에서는 OX 문제를 만들 수 없어요. 다른 유형을 골라 주세요.');
    const correct=(index+((Number(seed)>>>0)%2))%2===0,proposal=correct?item.answer:pick(wrong,rngForFormat);
    return {...common,originalAnswer:item.answer,oxProposal:proposal,format:'ox',
-     prompt:original+'  다음에 제시된 답이 맞으면 O, 틀리면 X를 표시하세요.',
+     prompt:asOxPrompt(original)+'  다음에 제시된 답이 맞으면 O, 틀리면 X를 표시하세요.',
      answer:correct?'O':'X',choices:['O','X']};
   }
   if(responseFormat==='short'){
@@ -1214,7 +1217,7 @@ function convertAnswerFormat(items,subject,topic,responseFormat,seed){
        :'글이나 자료에서 근거를 찾아, 그렇게 생각한 까닭을 한두 문장으로 설명해 보세요.'
       :'배운 내용과 연결해 그렇게 생각한 까닭을 한두 문장으로 설명해 보세요.';
     return {...common,format:'essay',choices:[],
-      prompt:asWritingPrompt(original)+' 답을 쓰고, '+instruction,
+      prompt:asWritingPrompt(original)+' '+instruction,
       modelExplanation:item.explanation||('예시 답: '+item.answer+'. 설명한 이유를 학습 내용과 대조해 확인해 주세요.')};
    }
   throw Error('선택한 문제 유형을 확인해 주세요.');
