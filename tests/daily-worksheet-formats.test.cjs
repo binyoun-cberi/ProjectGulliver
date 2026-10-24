@@ -160,3 +160,33 @@ test('collapsible unit quotas generate exact counts, survive reload and print on
  const mixedPack=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(mixedPack.ok,mixedPack.issue);assert.deepEqual(errors,[]);
  }finally{await browser.close()}
 });
+
+test('all new science topics are selectable, compose A4, and mix across domains',{skip:(!chrome||!chromium)&&'Chrome required',timeout:120000},async()=>{
+ const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--allow-file-access-from-files']});
+ try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));const base=pathToFileURL(path.resolve('문제지 만들기.html')).href,B=require('../science-expansion.js');
+ for(const [topic,label,grade] of B.topics){await page.goto(base+'?'+new URLSearchParams({subject:'science',grade,topic,count:20,seed:17}),{waitUntil:'load'});assert.equal(await page.locator('#topic').inputValue(),topic);assert.equal(await page.locator('#questions>li').count(),20,label);const pack=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(pack.ok,label+': '+pack.issue);await page.evaluate(()=>document.body.classList.add('print-answers'));assert.ok((await page.evaluate(()=>window.DailyWorksheetA4.compose())).ok,label+' teacher');}
+ const plan=B.topics.map(([id])=>({id:'science-'+id+':'+id+'-practice',count:1}));await page.goto(base+'?'+new URLSearchParams({subject:'science',grade:5,unitMix:JSON.stringify(plan),seed:57}),{waitUntil:'load'});assert.equal(await page.locator('#questions>li').count(),12);
+ await page.emulateMedia({media:'print'});assert.ok((await page.evaluate(()=>window.DailyWorksheetA4.compose())).ok);await page.pdf({path:'test-artifacts/worksheet-science-all-domains.pdf',format:'A4',printBackground:true});
+ await page.setViewportSize({width:390,height:844});await page.emulateMedia({media:'screen'});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
+ }finally{await browser.close()}
+});
+
+
+test('science diagrams and data tables remain intact in actual student and teacher PDFs',{skip:(!chrome||!chromium)&&'Chrome required',timeout:150000},async()=>{
+ const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--allow-file-access-from-files']});
+ try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));const base=pathToFileURL(path.resolve('문제지 만들기.html')).href,B=require('../science-expansion.js');
+ for(const [topic] of B.topics){
+ await page.goto(base+'?'+new URLSearchParams({subject:'science',grade:5,topic,count:5,seed:42}),{waitUntil:'load'});await page.evaluate(()=>document.fonts.ready);
+ assert.equal(await page.locator('#questions .science-material svg').count(),1,topic);assert.equal(await page.locator('#questions .science-material table').count(),1,topic);
+ for(const teacher of [false,true]){
+ await page.evaluate(t=>document.body.classList.toggle('print-answers',t),teacher);await page.emulateMedia({media:'print'});
+ const packed=await page.evaluate(()=>window.DailyWorksheetA4.compose());assert.ok(packed.ok,topic+': '+packed.issue);assert.equal(packed.pages,1,topic+' five choice questions should fit one A4');
+ const result=await page.evaluate(()=>({pages:[...document.querySelectorAll('.print-paper')].length,diagrams:document.querySelectorAll('.print-paper .science-material svg').length,tables:document.querySelectorAll('.print-paper .science-material table').length}));assert.equal(result.diagrams,1);assert.equal(result.tables,1);
+ await page.pdf({path:`test-artifacts/worksheet-science-${topic}-${teacher?'teacher':'student'}.pdf`,format:'A4',printBackground:true});
+ }
+ await page.emulateMedia({media:'screen'});await page.evaluate(()=>document.body.classList.remove('print-answers'));
+ const bounds=await page.locator('#questions .science-material svg').evaluate(svg=>{const b=svg.getBBox();return {x:b.x,y:b.y,right:b.x+b.width,bottom:b.y+b.height}});assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.right<=331&&bounds.bottom<=176,topic+' SVG labels fit: '+JSON.stringify(bounds));
+ }
+ await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
+ }finally{await browser.close()}
+});

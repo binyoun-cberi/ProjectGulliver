@@ -254,3 +254,24 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
 #questions:not(.column-questions) .column-cells,.print-paper .print-question-list:not(.column-questions) .column-cells{width:50mm;max-width:100%}
 
 @media screen{.unit-mix-active :is(#unitSetting,#topicSetting,#typeSetting,#mathTypeSetting,#historyEraSetting,#curriculumNote,#difficultySetting,#variantSetting),.unit-mix-active label:has(>#count){display:none!important}}
+
+
+/* Code-authored science evidence remains legible in grayscale and on A4. */
+.science-material{margin:10px 0;max-width:100%;break-inside:avoid;color:#172f38}
+.science-material figcaption{font-size:12px;font-weight:700;margin-bottom:5px}
+.science-material svg{display:block;width:330px;max-width:100%;height:auto;overflow:visible}
+.science-material svg text{font:13px system-ui,sans-serif}
+.science-material table{border-collapse:collapse;width:100%;max-width:520px;font-size:12px;line-height:1.5;table-layout:fixed}
+.science-material th,.science-material td{border:1px solid #819198;padding:6px 8px;text-align:center;overflow-wrap:anywhere}
+.science-material th{background:#f0f3f4;font-weight:700}.science-note{font-size:11px;line-height:1.5;margin:5px 0 0;color:#394f58}
+.print-paper .science-material{margin:2mm 0}.print-paper .science-material svg{width:82mm;max-width:100%}
+.print-paper .science-material figcaption,.print-paper .science-material table{font-size:9pt}
+.print-paper .science-material th,.print-paper .science-material td{padding:1.3mm 2mm}
+.print-paper .science-note{font-size:8pt}
+
+.print-paper .print-question-list.science-evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4mm 7mm;list-style:decimal outside;padding-left:7mm}
+.print-paper .science-evidence>li{min-width:0;padding-left:2px;box-sizing:border-box}
+.print-paper .science-evidence .choice-list{grid-template-columns:1fr;font-size:11px;line-height:1.4;gap:1px;margin-top:5px}
+.print-paper .science-evidence .choice-list>li{padding:1px 0}
+.print-paper .science-evidence .answer-explanation{font-size:10px;line-height:1.5}
+.large-print .print-paper .print-question-list.science-evidence{grid-template-columns:1fr}

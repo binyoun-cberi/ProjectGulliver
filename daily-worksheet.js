@@ -95,6 +95,19 @@ function renderColumn(li,item,index,places){
  }else{row('','column-work');row(q.a);row(q.op+' '+q.b,'column-operation');row('','column-work');row('','column-result')}
  li.append(grid);const answer=document.createElement('span');answer.className='inline-answer result-answer';answer.textContent='정답: '+item.answer;answer.setAttribute('aria-hidden','true');li.append(answer);
 }
+function renderScienceMaterial(li,material){
+ li.classList.add('science-question');const figure=document.createElement('figure');figure.className='science-material';
+ const caption=document.createElement('figcaption');caption.textContent=material.title;figure.append(caption);
+ if(material.kind==='diagram'){
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 330 175');svg.setAttribute('role','img');svg.setAttribute('aria-label',material.title+' · 위치 관계를 나타낸 모형이며 실제 비율과 다를 수 있습니다.');
+  svg.innerHTML=material.body;svg.setAttribute('aria-label',material.title+' · '+svg.textContent+' · 위치 관계를 나타낸 모형입니다.');figure.append(svg);
+ }else{
+  const table=document.createElement('table'),head=document.createElement('thead'),header=document.createElement('tr');
+  for(const value of material.headers){const th=document.createElement('th');th.scope='col';th.textContent=value;header.append(th)}head.append(header);table.append(head);const body=document.createElement('tbody');
+  for(const values of material.rows){const row=document.createElement('tr');for(const value of values){const cell=document.createElement('td');cell.textContent=value;row.append(cell)}body.append(row)}table.append(body);figure.append(table);
+ }
+ if(material.note){const note=document.createElement('p');note.className='science-note';note.textContent=material.note;figure.append(note)}li.append(figure);
+}
 function render(sheet){
 current=sheet;
 const simpleOperation=item=>/^(\d+) ([+×−]) (\d+) =$/.test(item.prompt);
@@ -102,12 +115,12 @@ const column=sheet.topic==='column'||sheet.items.every(item=>item.column);
 const mathVertical=!column&&sheet.subject==='math'&&sheet.items.length>=5&&sheet.items.every(simpleOperation);
 const dense=mathVertical&&(sheet.type?/^(add-|sub-|small-|two-|times-)/.test(sheet.type)&&sheet.type!=='times-missing':['addition','hundreds','multiplication'].includes(sheet.topic));
 const compact=!column&&!dense&&sheet.responseFormat!=='essay'&&sheet.items.length>=5&&sheet.items.every(item=>
-  !item.readingGroup&&!item.readingPassage&&!item.photo&&!item.shapeSides&&!item.sourceLabel&&
+  !item.scienceMaterial&&!item.readingGroup&&!item.readingPassage&&!item.photo&&!item.shapeSides&&!item.sourceLabel&&
   !['matching','ordering'].includes(item.format)&&
   String(item.prompt||'').length<=100&&String(item.detail||'').length<=85&&
   (!item.choices||item.choices.length<=4&&item.choices.every(choice=>String(choice).length<=62))
 );$('sheetStatus').textContent='문제지가 준비됐어요';$('sheetMeta').textContent=C.SUBJECTS[sheet.subject].name+' · '+sheet.grade+'학년 · '+sheet.items.length+'문제'+(sheet.difficulty==='challenge'?' · 도전 문제':'');$('paperTitle').textContent=sheet.title;$('sheetNumber').textContent='문제지 번호 '+sheet.seed.toString(36).toUpperCase();
- const questions=$('questions');questions.replaceChildren();
+ const questions=$('questions');questions.replaceChildren();questions.classList.toggle('science-evidence',sheet.items.some(item=>item.scienceMaterial));
  questions.classList.toggle('photo-small',sheet.items.length<=6&&sheet.items.every(item=>item.photo));questions.classList.toggle('photo-questions',sheet.items.length>0&&sheet.items.every(item=>item.photo));questions.classList.toggle('column-questions',column);questions.classList.toggle('column-few',column&&sheet.count<=8);questions.classList.toggle('calculation-grid',dense);questions.classList.toggle('compact-questions',compact);$('questionSheet').classList.toggle('dense-paper',dense);
  $('paperInstruction').hidden=!(dense||column);if(column)$('paperInstruction').textContent='칸에 계산 과정을 쓰고 답을 구해 보세요.';if(dense)$('paperInstruction').textContent=sheet.type?'계산해 보세요.':sheet.topic==='hundreds'?'받아올림 없이 덧셈을 하세요.':'계산해 보세요.';
  if(sheet.topic==='hundreds'&&!sheet.type)$('paperTitle').textContent+=' · '+(sheet.variant==='ones'?'B · 일의 자리까지':'A · 일의 자리가 0');
@@ -132,6 +145,7 @@ const compact=!column&&!dense&&sheet.responseFormat!=='essay'&&sheet.items.lengt
    }else{const prompt=document.createElement('strong');if(sheet.subject==='math')appendMathText(prompt,item.prompt);else prompt.textContent=item.prompt;li.append(prompt)}
    if(item.format==='ordering'){const sequence=document.createElement('div');sequence.className='order-choices';item.orderChoices.forEach((event,i)=>{const box=document.createElement('span');box.textContent=`${i+1}  ${event}  □`;sequence.append(box)});li.append(sequence)}
    if(item.shapeSides){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 120 110');svg.setAttribute('width','120');svg.setAttribute('height','110');svg.setAttribute('role','img');svg.setAttribute('aria-label',`변이 ${item.shapeSides}개인 도형`);const polygon=document.createElementNS('http://www.w3.org/2000/svg','polygon');polygon.setAttribute('points',Array.from({length:item.shapeSides},(_,i)=>{const angle=-Math.PI/2+i*2*Math.PI/item.shapeSides;return `${60+42*Math.cos(angle)},${55+42*Math.sin(angle)}`}).join(' '));polygon.setAttribute('fill','#f6f3ff');polygon.setAttribute('stroke','#44318b');polygon.setAttribute('stroke-width','3');svg.append(polygon);li.append(svg)}
+   if(item.scienceMaterial)renderScienceMaterial(li,item.scienceMaterial);
    if(item.photo){const figure=document.createElement('figure');figure.className='history-photo';const photo=document.createElement('img');photo.src=item.photo.src;photo.alt='관찰할 국가유산·자료 사진';photo.loading='eager';const caption=document.createElement('figcaption');const link=document.createElement('a');link.href=item.photo.sourceUrl;link.target='_blank';link.rel='noopener noreferrer';link.textContent=item.photo.credit;caption.append(link);figure.append(photo,caption);li.append(figure)}
    if(item.detail){const detail=document.createElement('p');detail.className='question-detail'+(sheet.topic==='direction'?' map-detail':'');detail.append(document.createTextNode(item.detail));li.append(detail)}
    if(item.format==='ox'){const row=document.createElement('p');row.className='ox-statement';row.textContent='제시된 답: '+item.oxProposal;li.append(row)}
@@ -201,6 +215,7 @@ window.addEventListener('afterprint',()=>document.body.classList.remove('print-a
 updateFilterSummary();
 make(Number.isFinite(Number(params.get('seed')))&&params.has('seed')?Number(params.get('seed')):seed());
 })();
+
 
 
 
