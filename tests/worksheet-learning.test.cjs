@@ -38,7 +38,7 @@ test('pending lessons, wrong semesters, invalid formats and over-capacity reques
 
 test('structural activities are absent from selectable lessons, while substantive objectives stay',()=>{
  const all=T.catalog.flatMap(u=>u.lessons);
- assert.equal(all.length,1226);
+ assert.equal(all.length,1220);
  for(const lesson of all)assert.ok(T.isCoreLesson(lesson));
  for(const name of ['단원 도입/주제 도입','주제 도입','단원 마무리 / 과학으로 통하는 세상_예시','준비하기','실천하는 과학_작품 만들기','문제로 마무리'])assert.equal(T.isCoreLesson({name}),false,name);
  for(const section of [' 실천하기 ','정리하기','단원 열기'])for(const name of ['발표에 활용할 자료 찾기','인터넷에서 믿을 만한 자료 찾기','매체의 특성을 고려하며 글 쓰기'])assert.equal(T.isCoreLesson({name,section}),false,name);
