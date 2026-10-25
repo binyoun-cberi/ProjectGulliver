@@ -174,7 +174,7 @@ function generate(options,C){
  const {subject,grade,semester,unitId,lessonId,count,seed,responseFormat='short'}=options;
  const selected=options.standardCode?lookupStandard(subject,grade,options.standardCode):lookup(subject,grade,semester,unitId,lessonId);if(!selected)throw Error('학년·학기·단원·학습 내용을 다시 골라 주세요.');
  const {unit,lesson,binding:b}=selected;if(!b)throw Error('이 학습 내용의 문제는 준비 중이에요. 다른 학습 내용을 골라 주세요.');
- if(!counts(b,responseFormat).includes(Number(count))||!formats(b).some(([f])=>f===responseFormat))throw Error('선택한 학습 내용의 문제 유형과 문항 수를 확인해 주세요.');
+ if(!Number.isInteger(Number(count))||Number(count)<1||Number(count)>20||Number(count)>capacity(b,responseFormat)||!formats(b).some(([f])=>f===responseFormat))throw Error('선택한 학습 내용의 문제 유형과 문항 수를 확인해 주세요.');
  const r=rng(seed),int=(a,z)=>a+Math.floor(r()*(z-a+1));let items=[];
  if(selected.standard&&!b.pool){const refs=shuffled(selected.standard.refs,r),seen=new Set();let tries=0;while(items.length<Number(count)&&tries++<2000){const ref=refs[(tries-1)%refs.length],q=generate({subject,grade:ref.unit.grade,semester:ref.unit.semester,unitId:ref.unit.id,lessonId:ref.lesson.id,count:1,seed:int(1,4294967295),responseFormat:formats(ref.binding).some(([f])=>f==='choice')?'choice':'short'},C).items[0],key=JSON.stringify([q.prompt,q.detail,q.scienceMaterial]);if(!seen.has(key)){seen.add(key);items.push(q);}}if(items.length!==Number(count))throw Error('겹치지 않는 문제가 부족해요. 문항 수를 줄여 주세요.');}
  else if(b.kind==='evidence'){items=pickEvidence(formatPool(b,responseFormat),Number(count),seed,options.excludeEvidenceIds,options.itemIndexes);}
@@ -211,5 +211,32 @@ const prompt=q.prompt.replace(/알맞은 것은 무엇인가요\?/,'알맞은 �
  const curriculum={...(selected.standard?{standardCode:selected.standard.code,standardStatement:selected.standard.statement}:{}),revision:'2022',semester:Number(semester),unitId,lessonId,unit:unit.name,lesson:lesson.name,practice:b.label,source:unit.source,book:unit.book};
  return {subject,grade:Number(grade),topic:'textbook-learning',type:'',count:Number(count),seed:Number(seed)>>>0,difficulty:'basic',responseFormat,alignment:selected.standard?{code:selected.standard.code,summary:selected.standard.statement,scope:'2022 개정 · 연결된 학습 내용',source:selected.standard.source}:null,title:selected.standard?`${grade}학년 · [${selected.standard.code}]`:`${grade}학년 ${semester}학기 · ${unit.name}`,curriculum,items:items.map(q=>({...q,curriculumLesson:lessonId}))};
 }
-return {catalog,sourceCatalog,isCoreLesson,units,binding,lookup,formats,capacity,counts,generate,standards,lookupStandard};
+function mixOptions(subject,grade,semester){
+ return units(subject,Number(grade),Number(semester)).flatMap(unit=>unit.lessons.map(lesson=>({unit,lesson,binding:binding(unit,lesson)})).filter(x=>x.binding).map(x=>({id:x.lesson.id,unitId:x.unit.id,label:x.unit.name+' · '+x.lesson.name,binding:x.binding})));
+}
+function generateMixed(options,C){
+ const {subject,grade,semester,seed=Date.now(),responseFormat='choice',lessonMix}=options;
+ const available=mixOptions(subject,grade,semester),seen=new Set(),items=[],plan=[],mixedItemIndexes=[];
+ if(!Array.isArray(lessonMix)||!lessonMix.length||lessonMix.length>20)throw Error('섞을 차시를 1~20개 골라 주세요.');
+ if(options.mixedItemIndexes!==undefined&&(!Array.isArray(options.mixedItemIndexes)||options.mixedItemIndexes.length!==lessonMix.length))throw Error('저장된 문항 구성을 확인해 주세요.');
+ const total=lessonMix.reduce((n,row)=>n+Number(row.count),0);
+ if(!Number.isInteger(total)||total<1||total>40)throw Error('전체 문항 수는 1~40문항으로 정해 주세요.');
+ lessonMix.forEach((row,index)=>{
+  const entry=available.find(x=>x.id===row.id),amount=Number(row.count);
+  if(!entry||seen.has(row.id)||!Number.isInteger(amount)||amount<1||amount>20)throw Error('차시와 문항 수를 확인해 주세요. 같은 차시는 한 번만 선택할 수 있어요.');
+  seen.add(row.id);
+  if(!formats(entry.binding).some(([id])=>id===responseFormat))throw Error(entry.label+'에서는 선택한 문제 유형을 지원하지 않아요.');
+  const size=amount;
+  if(size>capacity(entry.binding,responseFormat))throw Error(entry.label+'의 문항 수를 줄여 주세요.');
+  const prior=items.map(q=>q.evidenceId).filter(Boolean);
+  const sheet=generate({subject,grade,semester,unitId:entry.unitId,lessonId:entry.id,count:size,seed:((Number(seed)>>>0)+Math.imul(index+1,2654435761))>>>0,responseFormat,...(options.mixedItemIndexes?.[index]?{itemIndexes:options.mixedItemIndexes[index]}:{}),excludeEvidenceIds:[...(options.excludeEvidenceIds||[]),...prior]},C);
+  mixedItemIndexes.push(sheet.items.every(q=>Number.isInteger(q.poolIndex))?sheet.items.map(q=>q.poolIndex):null);
+  const selected=sheet.items.slice(0,amount);
+  if(selected.some(q=>q.evidenceId&&prior.includes(q.evidenceId)))throw Error('선택한 차시에 겹치는 문제가 있어요. 차시별 문항 수를 줄여 주세요.');
+  items.push(...selected.map(q=>({...q,sourceUnit:entry.label,...(q.readingGroup?{readingGroup:index+':'+q.readingGroup}:{})})));
+  plan.push({id:row.id,count:amount});
+ });
+ return {subject,grade:Number(grade),topic:'textbook-mix',type:'',count:total,seed:Number(seed)>>>0,difficulty:'basic',responseFormat,alignment:null,title:grade+'학년 '+semester+'학기 · 여러 차시 모아 풀기',curriculum:{semester:Number(semester),lesson:'여러 차시 모아 풀기'},lessonMix:plan,mixedItemIndexes,items};
+}
+return {catalog,sourceCatalog,isCoreLesson,units,binding,lookup,formats,capacity,counts,generate,standards,lookupStandard,mixOptions,generateMixed};
 });
