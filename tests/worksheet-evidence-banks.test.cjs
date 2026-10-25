@@ -163,10 +163,10 @@ test('legacy history is reused without changing its bank, with photo rights and 
  assert.throws(()=>T.generate({...options,count:20,responseFormat:'essay'},C),/문항 수/);
  assert.ok(T.generate({...options,count:5,responseFormat:'essay'},C).items.every(q=>!q.knowledgeOnly));
 });
-test('legacy material keeps the original evidence and rationale with reviewed choices',()=>{
+test('legacy material retains provenance while reviewed passages support the answers',()=>{
  const reused=E.banks.flatMap(b=>b.items.filter(q=>q.legacyMaterialId));assert.equal(reused.length,12);
  const before=C.historyEvidenceItems('modern');const copy=C.historyEvidenceItems('modern');copy[0].answer='changed';assert.deepEqual(C.historyEvidenceItems('modern'),before);
- for(const q of reused){const [topic,,index]=q.legacyMaterialId.split('-');const original=C.historyEvidenceItems(topic)[Number(index)];assert.equal(q.answer,original.answer);assert.equal(q.explanation,original.explanation);assert.equal(q.choices.length,3);assert.ok(!q.knowledgeOnly);assert.ok(q.source);}
+ for(const q of reused){const [topic,,index]=q.legacyMaterialId.split('-');const original=C.historyEvidenceItems(topic)[Number(index)];assert.ok(original);assert.equal(q.reviewedMaterial,true);assert.notEqual(q.detail,original.detail);assert.ok(q.explanation.length>15);assert.equal(q.choices.length,3);assert.ok(q.choices.includes(q.answer));assert.ok(!q.knowledgeOnly);assert.ok(q.source);}
  const u=T.catalog.find(u=>u.lessons.some(l=>T.binding(u,l)?.bankId==='joseon-life')),l=u.lessons.find(l=>T.binding(u,l)?.bankId==='joseon-life');const b=T.binding(u,l);assert.equal(b.essayIds.length,2);assert.ok(T.formats(b).some(([f])=>f==='essay'));
  const s=T.generate({subject:'social',grade:5,semester:2,unitId:u.id,lessonId:l.id,count:2,responseFormat:'essay',seed:42},C);assert.ok(s.items.every(q=>q.legacyMaterialId&&q.detail&&q.modelExplanation));
 });
@@ -211,4 +211,13 @@ test('all remaining worksheet social targets are connected to specific three-que
  const maps=E.banks.find(b=>b.id==='social-fill-world-continents-oceans').items;assert.ok(maps.every(q=>q.scienceMaterial.kind==='diagram'&&q.scienceMaterial.body.includes('<path d="M')));assert.deepEqual(maps.map(q=>q.answer),['아시아','대서양','남아메리카']);
  const stat=E.banks.find(b=>b.id==='social-fill-populous-countries').items;assert.match(stat[0].scienceMaterial.title,/2024/);assert.match(stat[0].scienceMaterial.note,/INED/);assert.equal(stat[1].answer,'약 3000만 명');
  const density=E.banks.find(b=>b.id==='social-fill-world-population-density').items;assert.deepEqual(density[0].scienceMaterial.rows,[['싱가포르','8207명'],['몽골','2.3명']]);assert.match(density[0].scienceMaterial.note,/2024/);assert.equal(density[1].answer,'1 km²당 200명');
+});
+test('reviewed history asks about a specific person and uses comparable photo options',()=>{
+ assert.equal(C.historyItems('goryeo')[21].prompt,'고려에서 수선사 결사를 이끈 승려는?');assert.equal(C.historyItems('modern')[21].prompt,'1920년 청산리 전투에서 북로군정서군을 이끈 인물은?');assert.match(C.historyItems('modern')[25].prompt,/서시/);assert.equal(C.historyItems('goryeo')[15].answer,'왕건');assert.match(C.historyItems('ancient')[13].prompt,/발해/);
+ const photos=E.banks.flatMap(b=>b.items).filter(q=>q.legacyPhotoName);assert.equal(photos.length,17);
+ for(const q of photos){assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));if(q.answer!=='고인돌')assert.ok(!q.choices.includes('고인돌'),q.answer);}
+ const p=Object.fromEntries(photos.map(q=>[q.answer,q]));assert.deepEqual(p['측우기'].choices,['측우기','앙부일구','자격루']);assert.deepEqual(p['종묘'].choices,['종묘','사직단','문묘']);assert.match(p['경복궁'].detail,/1395/);
+ const materials=Object.fromEntries(E.banks.flatMap(b=>b.items.filter(q=>q.reviewedMaterial)).map(q=>[q.legacyMaterialId,q]));
+ assert.match(materials['modern-evidence-0'].detail,/1919년 3월 1일/);assert.match(materials['modern-evidence-3'].detail,/1948년 5월 10일/);assert.match(materials['modern-evidence-5'].detail,/1950년 12월 흥남항/);assert.match(materials['modern-evidence-10'].detail,/강점기 후반/);
+ assert.ok(!/사진과 구술 자료가 남아/.test(materials['modern-evidence-6'].detail));assert.match(materials['modern-evidence-6'].answer,/가족/);
 });
