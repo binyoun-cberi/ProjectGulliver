@@ -553,8 +553,11 @@ for(const [id,topic,index,prompt,answer,w1,w2,detail,explanation,source,sourceLa
 (typeof module==='object'&&module.exports?require('./worksheet-history-volume.js'):globalThis.WorksheetHistoryVolume)(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-joseon-volume.js'):globalThis.WorksheetJoseonVolume)(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-social-depth.js'):globalThis.WorksheetSocialDepth)(banks);
+(typeof module==='object'&&module.exports?require('./worksheet-social-geography.js'):globalThis.WorksheetSocialGeography)({bank,banks});
 function find(unit,lesson){
- const b=banks.find(b=>b.subject===unit.subject&&b.grades.includes(unit.grade)&&b.pattern.test(lesson.name)&&!(b.id==='local-problem'&&/지역문제란/.test(lesson.name)));if(!b)return null;
+ const exactLessonName=lesson.name.replace(/^[①-⑳]\s*/, '');
+ const exact=banks.find(b=>b.exactLessonName===exactLessonName&&b.subject===unit.subject&&b.grades.includes(unit.grade));
+ const b=exact||banks.find(b=>b.subject===unit.subject&&b.grades.includes(unit.grade)&&b.pattern.test(lesson.name)&&!(b.id==='local-problem'&&/지역문제란/.test(lesson.name)));if(!b)return null;
  let indexes=null;const n=lesson.name;
  if(b.id==='past-sources')indexes=/오래된 물건/.test(n)?[2]:/일기와 편지/.test(n)?[0]:/사진과 그림/.test(n)?[1,3]:/노래 가사와 신문/.test(n)?[4]:null;
  if(b.id==='transport-types')indexes=/옛날/.test(n)?[0,1]:[2,3,4];
@@ -575,7 +578,7 @@ function find(unit,lesson){
  if(b.id==='korea-season-climate')indexes=/기온의/.test(n)?[1,2]:/강수량의/.test(n)?[3,4]:[0,1,2,3,4];
  if(b.id==='climate-disaster')indexes=/대응/.test(n)?[2,3,4]:[0,1,5];
  if(b.id==='regional-balance')indexes=/원인/.test(n)?[0]:/따른 문제/.test(n)?[1,2]:[3,4];
- if(b.id==='world-terrain-life')indexes=/산지 지역/.test(n)?[0]:/하천 지역/.test(n)?[1]:/해안 지역/.test(n)?[2]:/생활 모습/.test(n)?[0,1,2,3]:[4];
+ if(b.id==='world-terrain-life')indexes=/세계의 다양한 지형 경관/.test(n)?null:/산지 지역/.test(n)?[0]:/하천 지역/.test(n)?[1]:/해안 지역/.test(n)?[2]:/생활 모습/.test(n)?[0,1,2,3]:[4];
  if(b.id==='world-climate-life')indexes=/열대와 건조/.test(n)?[0,1]:/온대 기후/.test(n)?[2]:/냉대와 한대/.test(n)?[3,4]:/고산 기후/.test(n)?[5]:null;
  if(b.id==='economic-growth-effects')indexes=/긍정/.test(n)?[0,1]:/발생한 문제를/.test(n)?[4]:/발생한 문제/.test(n)?[2,3]:[0,1];
  if(b.id==='law-constitution')indexes=/헌법은/.test(n)?[2,3,4]:[0,1];
