@@ -14,7 +14,7 @@ function register({bank}){
   const rows=[],id='science-rework-'+grade+'-'+semester+'-'+list.length;
   for(let i=0;i<caseRows.length;i++){
    const [title,condition,observation,principle,unknown,next]=caseRows[i];
-   if([title,condition,observation,principle,unknown,next].some(v=>typeof v!=='string'||v.length<6))throw Error('Incomplete source '+lesson+' '+title);
+   if([title,condition,observation,principle,unknown,next].some((v,index)=>typeof v!=='string'||v.length<(index===0?2:6)))throw Error('Incomplete source '+lesson+' '+title);
    const detail='[관찰 자료 · '+title+'] '+condition+' '+observation+' 이 관찰은 '+principle+'';
    const answers=[observation,principle,condition,unknown,next];
    for(let j=0;j<5;j++){
