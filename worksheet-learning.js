@@ -157,8 +157,16 @@ function pickEvidence(pool,count,seed,exclude=[],indexes){
  return selected.map(q=>{const item={...q,choices:shuffled(q.choices,cr),poolIndex:pool.indexOf(q)};if(q.passageId){item.readingGroup=q.passageId;if(!seen.has(q.passageId)){item.readingTitle=q.passageTitle;item.readingPassage=q.detail;seen.add(q.passageId);}delete item.detail;}return item;});
 }
 
-function formats(b){return !b?[]:b.kind==='writing'?[['essay','서술형']]:b.essayIds&&!b.essayIds.length?[['choice','객관식'],['short','단답형']]:['math','fraction','decimal','table','division','numbers','speed'].includes(b.kind)?[['short','단답형']]:[['choice','객관식'],['short','단답형'],['essay','서술형']]}
-function counts(b,responseFormat){if(!b)return [];const max=responseFormat==='essay'&&b.essayIds?b.essayIds.length:['science','evidence'].includes(b.kind)?b.ids.length:b.kind==='emotion'?emotions.length:b.kind==='writing'?6:b.kind==='table'?9:b.kind==='economy'?12:20;return [1,2,3,4,5,6,8,10,15,20].filter(n=>n<=max)}
+function historyPool(b){return b?.kind==='evidence'?evidencePool(b).filter(q=>q.historyVolume):[];}
+function formatPool(b,format){return evidencePool(b).filter(q=>format==='essay'?!q.knowledgeOnly:format==='cloze'?q.historyVolume&&q.explanation?.includes(q.answer):['ox','correction'].includes(format)?q.historyVolume&&q.choices?.some(c=>c!==q.answer):true);}
+function formats(b){
+ if(!b)return [];
+ const base=b.kind==='writing'?[['essay','서술형']]:b.essayIds&&!b.essayIds.length?[['choice','객관식'],['short','단답형']]:['math','fraction','decimal','table','division','numbers','speed'].includes(b.kind)?[['short','단답형']]:[['choice','객관식'],['short','단답형'],['essay','서술형']];
+ if(historyPool(b).length){base.push(['ox','역사 OX'],['cloze','빈칸 완성'],['correction','틀린 답 고치기']);}
+ return base;
+}
+function capacity(b,format){if(!b)return 0;return b.kind==='evidence'?formatPool(b,format).length:format==='essay'&&b.essayIds?b.essayIds.length:b.kind==='science'?b.ids.length:b.kind==='emotion'?emotions.length:b.kind==='writing'?6:b.kind==='table'?9:b.kind==='economy'?12:20;}
+function counts(b,responseFormat){return [1,2,3,4,5,6,8,10,15,20].filter(n=>n<=capacity(b,responseFormat));}
 function rng(seed){let n=(Number(seed)>>>0)||1;return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296}}
 function shuffled(a,r){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function generate(options,C){
@@ -168,7 +176,7 @@ function generate(options,C){
  if(!counts(b,responseFormat).includes(Number(count))||!formats(b).some(([f])=>f===responseFormat))throw Error('선택한 학습 내용의 문제 유형과 문항 수를 확인해 주세요.');
  const r=rng(seed),int=(a,z)=>a+Math.floor(r()*(z-a+1));let items=[];
  if(selected.standard&&!b.pool){const refs=shuffled(selected.standard.refs,r),seen=new Set();let tries=0;while(items.length<Number(count)&&tries++<2000){const ref=refs[(tries-1)%refs.length],q=generate({subject,grade:ref.unit.grade,semester:ref.unit.semester,unitId:ref.unit.id,lessonId:ref.lesson.id,count:1,seed:int(1,4294967295),responseFormat:formats(ref.binding).some(([f])=>f==='choice')?'choice':'short'},C).items[0],key=JSON.stringify([q.prompt,q.detail,q.scienceMaterial]);if(!seen.has(key)){seen.add(key);items.push(q);}}if(items.length!==Number(count))throw Error('겹치지 않는 문제가 부족해요. 문항 수를 줄여 주세요.');}
- else if(b.kind==='evidence'){items=pickEvidence(evidencePool(b).filter(q=>responseFormat!=='essay'||!q.knowledgeOnly),Number(count),seed,options.excludeEvidenceIds,options.itemIndexes);}
+ else if(b.kind==='evidence'){items=pickEvidence(formatPool(b,responseFormat),Number(count),seed,options.excludeEvidenceIds,options.itemIndexes);}
  else if(b.kind==='math'){
   const s=C.generate({subject:'math',grade,topic:b.topic,type:b.type,count:[5,10,15,20].find(n=>n>=Number(count)),seed});items=s.items.slice(0,Number(count)).map(q=>({...q,explanation:q.explanation||(b.topic==='hundreds'||b.topic==='addition'?'같은 자리끼리 계산합니다. '+q.prompt+' '+q.answer:b.topic==='fraction'?'분모를 확인하고 분자를 계산한 뒤 약분합니다. '+q.prompt+' '+q.answer:'연산 순서와 식을 확인하여 계산합니다. '+q.prompt+' '+q.answer)}));
  }else if(b.kind==='science'){
@@ -191,9 +199,16 @@ function generate(options,C){
   if(b.kind==='economy'){const goods=shuffled(['빵','가방','의자','옷','공책','도자기'],r)[0],object=goods+((goods.charCodeAt(goods.length-1)-0xAC00)%28?'을':'를'),prod=r()<.5;q={prompt:'다음 사례는 생산과 소비 중 무엇에 해당하나요?',detail:prod?`가게에 팔 ${object} 만들었습니다.`:`필요한 ${object} 사서 사용했습니다.`,answer:prod?'생산':'소비',choices:shuffled(['생산','소비'],r),explanation:prod?'판매할 물건을 만드는 것은 생산 활동입니다.':'필요한 물건을 사서 사용하는 것은 소비 활동입니다.'}}
   if(!q)throw Error('연결된 문제 유형을 확인해 주세요.');const key=JSON.stringify([q.prompt,q.detail,q.scienceMaterial]);if(seen.has(key))continue;seen.add(key);items.push(q);
  }if(items.length!==Number(count))throw Error('겹치지 않는 문제가 부족해요. 문항 수를 줄여 주세요.');}
- items=items.map(q=>{if(responseFormat==='choice')return q;const prompt=q.prompt.replace(/알맞은 것은 무엇인가요\?/,'알맞은 답을 쓰세요.').replace(/중 무엇에 해당하나요\?/,'중 어디에 해당하는지 쓰세요.');if(responseFormat==='essay')return {...q,prompt:b.kind==='writing'?q.prompt:prompt+' 글이나 자료에서 근거를 찾아 까닭도 설명해 보세요.',choices:[],format:'essay',modelExplanation:q.explanation};return {...q,prompt,choices:[],format:'short'}});
+ const fr=rng(Number(seed)^0x42a7e19b),truth=shuffled(items.map((_,i)=>i%2===0),fr);
+ items=items.map((q,index)=>{if(responseFormat==='choice')return q;
+  if(responseFormat==='cloze')return {...q,format:'cloze',prompt:'빈칸에 알맞은 말을 쓰세요.',detail:q.explanation.split(q.answer).join('〔                 〕'),choices:[]};
+  if(['ox','correction'].includes(responseFormat)){
+   const wrong=q.choices.filter(c=>c!==q.answer),correct=responseFormat==='ox'&&truth[index],proposal=correct?q.answer:wrong[Math.floor(fr()*wrong.length)];
+   return {...q,format:responseFormat,originalAnswer:q.answer,oxProposal:proposal,prompt:q.prompt+' '+(responseFormat==='ox'?'제시된 답이 맞으면 O, 틀리면 X를 쓰세요.':'제시된 틀린 답을 바르게 고쳐 쓰세요.'),answer:responseFormat==='ox'?(correct?'O':'X'):q.answer,choices:[],explanation:(responseFormat==='ox'?'바른 답: '+q.answer+'. ':'')+q.explanation};
+  }
+const prompt=q.prompt.replace(/알맞은 것은 무엇인가요\?/,'알맞은 답을 쓰세요.').replace(/중 무엇에 해당하나요\?/,'중 어디에 해당하는지 쓰세요.');if(responseFormat==='essay')return {...q,prompt:b.kind==='writing'?q.prompt:prompt+' 글이나 자료에서 근거를 찾아 까닭도 설명해 보세요.',choices:[],format:'essay',modelExplanation:q.explanation};return {...q,prompt,choices:[],format:'short'}});
  const curriculum={...(selected.standard?{standardCode:selected.standard.code,standardStatement:selected.standard.statement}:{}),revision:'2022',semester:Number(semester),unitId,lessonId,unit:unit.name,lesson:lesson.name,practice:b.label,source:unit.source,book:unit.book};
  return {subject,grade:Number(grade),topic:'textbook-learning',type:'',count:Number(count),seed:Number(seed)>>>0,difficulty:'basic',responseFormat,alignment:selected.standard?{code:selected.standard.code,summary:selected.standard.statement,scope:'2022 개정 · 연결된 학습 내용',source:selected.standard.source}:null,title:selected.standard?`${grade}학년 · [${selected.standard.code}]`:`${grade}학년 ${semester}학기 · ${unit.name}`,curriculum,items:items.map(q=>({...q,curriculumLesson:lessonId}))};
 }
-return {catalog,sourceCatalog,isCoreLesson,units,binding,lookup,formats,counts,generate,standards,lookupStandard};
+return {catalog,sourceCatalog,isCoreLesson,units,binding,lookup,formats,capacity,counts,generate,standards,lookupStandard};
 });
