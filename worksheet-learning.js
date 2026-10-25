@@ -1,11 +1,19 @@
 (function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./data/worksheet-textbooks.js'):root.WorksheetTextbooks,typeof module==='object'&&module.exports?require('./science-expansion.js'):root.ScienceExpansion,typeof module==='object'&&module.exports?require('./worksheet-evidence-banks.js'):root.WorksheetEvidence);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetLearning=api;})(globalThis,(sourceCatalog,science,evidence)=>{
 'use strict';
-// Keep the source index intact, but expose only teachable content in the editor.
-// Match structural headings, not verbs inside real learning objectives.
+// Preserve source titles; exclude bookend corners and reviewed live performances.
+// A section label or an activity verb alone never overrides a concrete objective.
+const performanceTitles=new Set([
+ '바른 자세로 발표하기','자신이 경험한 일이 잘 드러나게 발표하기','자신의 경험 발표하기',
+ '글쓴이의 생각에 대한 자신의 생각 발표하기','작품에서 느낀 재미나 감동 발표하기',
+ '글과 그림을 활용하여 발표하기','친구들 앞에서 자신 있게 발표하기','자료를 활용하여 발표하기',
+ '연극하기','온라인 전시회를 열어 복합양식 매체 자료 감상하기',
+ '바람직한 매체 사용 알림 활동 하기','바람직한 매체 사용 알림 활동 결과 공유하기'
+]);
 function isCoreLesson(lesson){
- const name=lesson.name.trim(),section=(lesson.section||'').trim();
- if(/^(?:단원 열기|단원 도입|주제 도입|실천하기|살천하기|정리하기|마무리하기)$/.test(section))return false;
+ const name=lesson.name.trim();
+ if(performanceTitles.has(name))return false;
  return !/^(?:단원 열기|단원 도입|주제 도입|단원 마무리|실력 쑥쑥 단원 마무리|실천하는 과학|과학 속으로|생각 폴짝)(?:$|[\s/_])/.test(name)
+  && !/^수학이랑 (?:확인해요|만들어요)(?:$|\s|[（(])/.test(name)
   && !/^(?:준비하기|정리하기|마무리하기|실천하기|배울 내용 살펴보기|배운 내용 실천하기|함께하는 수학|해결하는 수학|문제로 마무리)$/.test(name);
 }
 const catalog=sourceCatalog.map(unit=>({...unit,lessons:unit.lessons.filter(isCoreLesson)})).filter(unit=>unit.lessons.length);
@@ -38,7 +46,8 @@ const emotions=[
 ];
 function units(subject,grade,semester){return catalog.filter(u=>u.subject===subject&&u.grade===Number(grade)&&u.semester===Number(semester))}
 function binding(unit,lesson){
- const n=lesson.name;if(/단원 도입|단원 마무리|준비하기|마무리하기|배울 내용|배운 내용|실천하기|함께하는 수학|해결하는 수학|문제로 마무리|실천하는 과학|과학 속으로|생각 폴짝/.test(n))return null;
+ if(!isCoreLesson(lesson))return null;
+ const n=lesson.name;
  const extra=evidence.find(unit,lesson);if(extra)return {kind:'evidence',bankId:extra.id,ids:extra.items.map(q=>q.evidenceId),label:extra.label};
  if(unit.subject==='math'){
   const g=unit.grade;
