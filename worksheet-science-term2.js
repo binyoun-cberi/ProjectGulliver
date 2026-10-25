@@ -6,7 +6,13 @@ function register({bank}){
  for(const [unitName,lessonName,label,cases] of GROUPS){
   if(cases.length!==5)throw Error('과학 사례는 다섯 개여야 합니다: '+lessonName);
   const cols=['관찰할 수 있는 사실','자료에서 확인되는 결론','원인이나 조건','자료만으로는 알기 어려운 것','추가로 확인할 방법'];
-  const question=['「%s」 자료에 직접 나타난 관찰 사실은 무엇인가요?','「%s」 관찰 결과에 맞는 설명은 무엇인가요?','「%s」 이런 결과가 나타난 까닭 또는 조건은 무엇인가요?','「%s」 제시된 자료만으로 확정할 수 없는 것은 무엇인가요?','「%s」 이 실험이나 관찰을 이어 나가는 방법은 무엇인가요?'];
+  const question=[
+   ['「%s」 자료에서 관찰한 사실은 무엇인가요?','「%s」에서 확인한 결과는 무엇인가요?','「%s」의 기록에서 직접 알 수 있는 것은 무엇인가요?','「%s」에서 나타난 변화는 무엇인가요?','「%s」의 관찰 내용으로 알맞은 것은 무엇인가요?'],
+   ['「%s」 관찰을 가장 잘 설명한 것은 무엇인가요?','「%s」의 결과를 어떻게 해석할 수 있나요?','「%s」 자료로 뒷받침되는 결론은 무엇인가요?','「%s」와 관련된 과학적 설명은 무엇인가요?','「%s」의 결과에 맞는 결론은 무엇인가요?'],
+   ['「%s」의 관찰에서 중요한 조건은 무엇인가요?','「%s」 결과가 나타난 까닭은 무엇인가요?','「%s」에 영향을 준 조건은 무엇인가요?','「%s」의 변화와 관련된 이유는 무엇인가요?','「%s」 자료에서 살펴볼 원인이나 조건은 무엇인가요?'],
+   ['「%s」의 기록만으로 알 수 없는 것은 무엇인가요?','「%s」 자료에 없는 정보는 무엇인가요?','「%s」에서 추가 조사 없이 판단할 수 없는 것은 무엇인가요?','「%s」로는 아직 확인할 수 없는 점은 무엇인가요?','「%s」의 자료만으로 결론 내리기 어려운 것은 무엇인가요?'],
+   ['「%s」의 결과를 더 알아보려면 어떻게 해야 하나요?','「%s」에 이어서 할 탐구로 알맞은 것은 무엇인가요?','「%s」의 결과를 확인할 다음 활동은 무엇인가요?','「%s」와 관련하여 추가로 살펴볼 방법은 무엇인가요?','「%s」 자료를 보완할 방법은 무엇인가요?']
+  ];
   const rows=[];
   for(let i=0;i<cases.length;i++){
    const [title,detail,...answers]=cases[i];
@@ -15,7 +21,7 @@ function register({bank}){
     const correct=answers[j],wrong=[...new Set(cases.filter((_,k)=>i!==k).map(row=>row[j+2]).filter(v=>v!==correct))].slice(0,2);
     if(wrong.length<2)throw Error('오답이 부족해요: '+lessonName+' '+title+' '+j);
     const explanation=[ '관찰된 기록은 ', '이 자료가 뒷받침하는 해석은 ', '이 사례에서 중요하게 작용한 조건은 ', '이 자료만으로는 확인할 수 없는 것은 ', '추가 확인에 적절한 방법은 '][j];
-    rows.push([question[j].replace('%s',title),correct,...wrong,detail,explanation+'‘'+correct+'’입니다.']);
+    rows.push([question[j][i].replace('%s',title),correct,...wrong,detail,explanation+'‘'+correct+'’입니다.']);
    }
   }
   const id='science-term2-'+unitName.replace(/\s/g,'')+'-'+bankList.length;
