@@ -25,6 +25,12 @@ const history=load('?subject=social&grade=5&semester=2'),ht=history.WorksheetLea
 change(history,'textSemester','2');change(history,'textUnit',hu.id);change(history,'textLesson',hl.id);change(history,'textFormat','choice');change(history,'count','20');submit(history);
 assert.equal(history.document.querySelectorAll('#questions > li').length,20);assert.ok(history.document.querySelector('.history-photo img'));assert.match(history.document.querySelector('.history-photo figcaption').textContent,/공공누리/);
 change(history,'textFormat','essay');assert.ok(![...history.document.querySelector('#count').options].some(o=>o.value==='20'));submit(history);assert.ok(history.document.querySelectorAll('#questions > li').length);assert.equal(history.document.querySelectorAll('.choice-list').length,0);
+const picture=load('?subject=social&grade=3&semester=1'),pt=picture.WorksheetLearning,pu=pt.catalog.find(u=>u.subject==='social'&&u.grade===3&&u.semester===1&&u.lessons.some(l=>/사진과 그림/.test(l.name))),pl=pu.lessons.find(l=>/사진과 그림/.test(l.name));
+change(picture,'textUnit',pu.id);change(picture,'textLesson',pl.id);change(picture,'count','2');submit(picture);
+assert.equal(picture.document.querySelectorAll('.science-material svg .waiting-person').length,6);assert.doesNotMatch(picture.document.querySelector('#questions').textContent,/사진 관찰 메모|학습을 위해 만든 예시/);
+const pictureReplay=load(picture.location.search);assert.equal(pictureReplay.document.querySelector('.science-material svg').innerHTML,picture.document.querySelector('.science-material svg').innerHTML);
+const coast=load('?subject=social&grade=5&semester=1'),ct=coast.WorksheetLearning,cu=ct.catalog.find(u=>u.subject==='social'&&u.grade===5&&u.semester===1&&u.lessons.some(l=>/우리나라 해안의 모습/.test(l.name))),cl=cu.lessons.find(l=>/우리나라 해안의 모습/.test(l.name));
+change(coast,'textUnit',cu.id);change(coast,'textLesson',cl.id);change(coast,'count','1');submit(coast);assert.ok(coast.document.querySelector('.science-material svg'));assert.match(coast.document.querySelector('.science-material svg').textContent,/밀물 때.*썰물 때/);assert.doesNotMatch(coast.document.querySelector('#questions').textContent,/관찰 메모/);
 console.log('PASS: textbook generation, table rendering, saved URL replay, semester pending, stale-print clearing, mode switch, English, legacy URL');
 
 });

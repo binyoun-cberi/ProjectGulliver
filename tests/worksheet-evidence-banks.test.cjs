@@ -6,8 +6,8 @@ test('original banks contain complete, independent evidence questions',()=>{
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(b.id+q.evidenceId));ids.add(b.id+q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
-  assert.ok(q.knowledgeOnly&&q.source||q.detail?.length>15||q.scienceMaterial?.rows.length);assert.ok(q.explanation.length>10);
-  if(q.scienceMaterial){assert.equal(q.scienceMaterial.kind,'table');for(const row of q.scienceMaterial.rows)assert.equal(row.length,q.scienceMaterial.headers.length);}
+  assert.ok(q.knowledgeOnly&&q.source||q.detail?.length>15||q.scienceMaterial?.rows?.length||q.scienceMaterial?.body);assert.ok(q.explanation.length>10);
+  if(q.scienceMaterial){const m=q.scienceMaterial;if(m.kind==='diagram'){assert.ok(m.body);assert.ok(m.viewBox);}else{assert.equal(m.kind,'table');for(const row of m.rows)assert.equal(row.length,m.headers.length);}}
  }
 });
 test('all authored banks are reachable from an actual lesson; specific past sources never borrow other evidence types',()=>{
@@ -120,8 +120,8 @@ test('civics expansion separates rights cases, constitutional principles and pub
  }
  assert.equal(targets.length,15);
  const assembly=E.banks.find(b=>b.id==='assembly-role').items,government=E.banks.find(b=>b.id==='government-role').items,court=E.banks.find(b=>b.id==='court-role').items;
- assert.match(assembly[1].answer,/심의.*확정/);assert.match(assembly[1].detail,/정부가 예산안을 편성/);
- assert.equal(government[1].answer,'정부');assert.match(government[1].detail,/편성해 국회에 제출/);
+ assert.match(assembly[1].answer,/심의.*확정/);assert.match(assembly[1].detail,/정부는.*예산안을 국회에 제출/);
+ assert.equal(government[1].answer,'정부');assert.match(government[1].detail,/편성한 뒤 국회에 제출/);
  assert.match(court[2].answer,/압력 없이 법에 따라/);assert.match(court[2].explanation,/마음대로 판단한다는 뜻이 아닙/);
 });
 test('early history evidence stays within each era and distinguishes traces from general claims',()=>{
@@ -134,7 +134,7 @@ test('early history evidence stays within each era and distinguishes traces from
  assert.deepEqual(reached.sort(),added.sort());
  const bronze=E.banks.find(b=>b.id==='bronze-age').items;assert.match(bronze[1].answer,/함께 쓰/);assert.match(bronze[1].explanation,/즉시 모두 대체/);
  const go=E.banks.find(b=>b.id==='gojoseon').items;assert.match(go[2].explanation,/일부 기록.*알려지지 않은/);
- const wall=E.banks.find(b=>b.id==='goguryeo').items[0];assert.match(wall.detail,/실제 그림은 제시하지/);
+ const wall=E.banks.find(b=>b.id==='goguryeo').items[0];assert.match(wall.detail,/무덤 안 벽과 천장/);assert.doesNotMatch(wall.detail,/실제 그림|제시하지/);
  const baekje=E.banks.find(b=>b.id==='baekje').items[0];assert.equal(baekje.answer,'한성 → 웅진 → 사비');
  const balhae=E.banks.find(b=>b.id==='balhae').items[3];const years=balhae.scienceMaterial.rows.map(r=>parseInt(r[1]));assert.ok(years[0]<years[1]);assert.match(balhae.answer,/고구려 멸망 → 발해 건국/);
 });
@@ -190,5 +190,13 @@ test('industrialization separates historical sequence, production share and live
  const process=E.banks.find(b=>b.id==='korea-industrialization').items,life=E.banks.find(b=>b.id==='industrialization-life').items;
  assert.deepEqual(process[0].scienceMaterial.rows.map(r=>r[0]),['1960년대','1970년대']);
  const shares=process[3].scienceMaterial;assert.match(shares.title,/가상/);for(const c of [1,2])assert.equal(shares.rows.reduce((sum,r)=>sum+parseInt(r[c]),0),100);assert.match(process[3].explanation,/전체 생산액과 종사자 수가 없어/);assert.match(process[5].explanation,/완전히 교체/);
- for(const i of [1,2,5])assert.match(life[i].detail,/가상/);assert.match(life[3].scienceMaterial.title,/가상/);assert.match(life[4].detail,/긴 노동 시간/);assert.match(life[5].explanation,/실제 인물.*아닙니다/);
+ for(const i of [1,2])assert.match(life[i].detail,/가상/);assert.match(life[3].scienceMaterial.title,/가상/);assert.match(life[4].detail,/긴 노동 시간/);assert.equal(life[5].scienceMaterial.rows.length,2);assert.match(life[5].explanation,/임금.*주택 부족/);
+});
+test('social passages stand alone and visual questions carry the actual drawing',()=>{
+ const social=E.banks.filter(b=>b.subject==='social').flatMap(b=>b.items);
+ for(const q of social){assert.doesNotMatch(q.detail||'',/메모:|사진 대신|실제 그림은 제시하지/);assert.doesNotMatch(q.scienceMaterial?.note||'',/학습을 위해 만든 예시 자료/);}
+ const bus=social.find(q=>q.evidenceId==='past-sources-2');assert.match(bus.prompt,/그림/);assert.equal((bus.scienceMaterial.body.match(/class="waiting-person"/g)||[]).length,6);assert.match(bus.scienceMaterial.body,/버스/);assert.equal(bus.detail,undefined);
+ for(const id of ['korea-landforms-1','korea-landforms-4']){const q=social.find(q=>q.evidenceId===id);assert.equal(q.scienceMaterial.kind,'diagram');assert.ok(!q.detail);}
+ const tide=social.find(q=>q.evidenceId==='korea-landforms-4');assert.match(tide.scienceMaterial.body,/밀물 때/);assert.match(tide.scienceMaterial.body,/썰물 때/);assert.match(tide.answer,/밀물.*썰물/);
+ const passage=social.find(q=>q.evidenceId==='goguryeo-2');assert.match(passage.detail,/활을 겨누는/);assert.equal(passage.answer,'말을 타고 활을 쏘며 사냥했다');
 });
