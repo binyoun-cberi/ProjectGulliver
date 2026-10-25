@@ -15,7 +15,7 @@ function activate({bank,banks}){
     const choices=contexts.filter((_,j)=>j!==i).map(c=>c[q+2]);
     const wrong=[...new Set(choices.filter(x=>x&&x!==answer))].slice(0,2);
     if(wrong.length<2)throw Error('오답 부족: '+id+' '+i+' '+q);
-    rows.push([prompts[q],answer,...wrong,passage,desc[q]+' '+answer]);
+    rows.push(['「'+title+'」 '+prompts[q],answer,...wrong,passage,desc[q]+' '+answer]);
    }
   }
   // Keep the existing broad evidence banks reachable for the opening lessons.
