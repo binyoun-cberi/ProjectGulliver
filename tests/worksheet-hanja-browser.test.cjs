@@ -3,7 +3,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),path=requ
 let chromium;try{({chromium}=require('playwright-core'));}catch{}
 const chrome=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/google-chrome-stable','/usr/bin/chromium','/opt/google/chrome/chrome'].find(p=>p&&fs.existsSync(p));
 test('hanja tracing prints whole A4 exercises, survives reload and subject switches, and fits mobile',{timeout:120000,skip:!chromium||!chrome},async()=>{
- const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--allow-file-access-from-files','--single-process','--no-zygote','--disable-gpu']});
+ const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--allow-file-access-from-files','--disable-gpu']});
  try{
  if(process.env.WORKSHEET_QA_DIR)fs.mkdirSync(process.env.WORKSHEET_QA_DIR,{recursive:true});
  const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
