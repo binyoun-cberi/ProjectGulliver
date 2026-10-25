@@ -48,7 +48,7 @@ test('new social lessons use only evidence for their specific target and retain 
   if(b.id==='communication-types')assert.deepEqual(ids,/옛날/.test(l.name)?['communication-types-2','communication-types-3']:/오늘날/.test(l.name)?['communication-types-4','communication-types-5']:['communication-types-1']);
   if(b.id==='trade-reason'){const original=/무역이란/.test(l.name)?['trade-reason-1','trade-reason-5']:/이유/.test(l.name)?['trade-reason-2']:['trade-reason-3','trade-reason-4'];if(/무역이란/.test(l.name)){for(const id of original)assert.ok(ids.includes(id));assert.ok(ids.some(id=>id.startsWith('social-world-economy-trade-definition-')));}else assert.deepEqual(ids,original);}
  }
- assert.equal(reached.size,15);
+ assert.equal(reached.size,13); // Two original lessons now use exact independent world-economy banks.
  const population=E.banks.find(b=>b.id==='population-distribution').items;
  for(const q of population)assert.match(q.scienceMaterial.note,/통계청.*2024년.*2025.*표 4/);
  assert.equal(population[0].scienceMaterial.rows.reduce((n,r)=>n+parseFloat(r[1]),0),100);
@@ -85,7 +85,7 @@ test('sixth grade expansion separates economic, media and global problem evidenc
   if(b.id==='global-problems'&&/겪고/.test(l.name)){for(const id of ['global-problems-1','global-problems-2'])assert.ok(ids.includes(id));assert.ok(ids.some(id=>id.startsWith('social-world-economy-global-challenges-')));}
   if(b.id==='economic-work'&&/기업은/.test(l.name))assert.deepEqual(ids,['economic-work-2','economic-work-5']);
  }
- assert.equal(targets.length,17);
+ assert.equal(targets.length,13); // Four original target lessons now use exact world-geography/economy banks.
  const q=E.banks.find(b=>b.id==='sustainable-future').items[2];const amounts=q.scienceMaterial.rows.map(r=>parseInt(r[1]));assert.equal(amounts[1]-amounts[0],5);assert.match(q.explanation,/5 L.*모든 가정/);
  const media=E.banks.find(b=>b.id==='media-judgment').items[2];assert.match(media.explanation,/서로 다른 관점/);
  const world=E.banks.find(b=>b.id==='world-spatial-tools').items[1];assert.match(world.explanation,/왜곡이 생길 수/);
