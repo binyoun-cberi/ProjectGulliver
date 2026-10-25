@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,80);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName).length,0),335);
+ assert.equal(E.banks.length,82);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),335);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(b.id+q.evidenceId));ids.add(b.id+q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
@@ -150,7 +150,7 @@ test('Silla unification and Goryeo lessons keep periods, activities and event or
  const culture=E.banks.find(b=>b.id==='goryeo-culture').items;assert.match(culture[0].answer,/다른 색 흙/);assert.match(culture[2].answer,/낱글자 활자를 조합/);
 });
 test('legacy history is reused without changing its bank, with photo rights and separate essay capacity',()=>{
- assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),489);
+ assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),501);
  const original=C.historyItems('goryeo');const copy=C.historyItems('goryeo');copy[0].answer='changed';copy[0].choices[0]='changed';assert.deepEqual(C.historyItems('goryeo'),original);
  const used=E.banks.flatMap(b=>b.items.filter(q=>q.legacyHistoryId));assert.equal(used.length,137);assert.equal(new Set(used.map(q=>q.legacyHistoryId)).size,137);
  for(const b of E.banks){const known=b.items.filter(q=>q.legacyHistoryId);assert.equal(new Set(known.map(q=>q.answer.replace(/\s/g,''))).size,known.length);
@@ -162,4 +162,11 @@ test('legacy history is reused without changing its bank, with photo rights and 
  assert.ok(T.generate({...options,count:20,responseFormat:'choice'},C).items.some(q=>q.photo));
  assert.throws(()=>T.generate({...options,count:20,responseFormat:'essay'},C),/문항 수/);
  assert.ok(T.generate({...options,count:5,responseFormat:'essay'},C).items.every(q=>!q.knowledgeOnly));
+});
+test('legacy material keeps the original evidence and rationale with reviewed choices',()=>{
+ const reused=E.banks.flatMap(b=>b.items.filter(q=>q.legacyMaterialId));assert.equal(reused.length,12);
+ const before=C.historyEvidenceItems('modern');const copy=C.historyEvidenceItems('modern');copy[0].answer='changed';assert.deepEqual(C.historyEvidenceItems('modern'),before);
+ for(const q of reused){const [topic,,index]=q.legacyMaterialId.split('-');const original=C.historyEvidenceItems(topic)[Number(index)];assert.equal(q.answer,original.answer);assert.equal(q.explanation,original.explanation);assert.equal(q.choices.length,3);assert.ok(!q.knowledgeOnly);assert.ok(q.source);}
+ const u=T.catalog.find(u=>u.lessons.some(l=>T.binding(u,l)?.bankId==='joseon-life')),l=u.lessons.find(l=>T.binding(u,l)?.bankId==='joseon-life');const b=T.binding(u,l);assert.equal(b.essayIds.length,2);assert.ok(T.formats(b).some(([f])=>f==='essay'));
+ const s=T.generate({subject:'social',grade:5,semester:2,unitId:u.id,lessonId:l.id,count:2,responseFormat:'essay',seed:42},C);assert.ok(s.items.every(q=>q.legacyMaterialId&&q.detail&&q.modelExplanation));
 });

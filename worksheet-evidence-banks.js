@@ -460,6 +460,28 @@ for(const [id,[topic,indexes]] of Object.entries(historyReuse)){
  }
 }
 
+// Reuse the old passage, answer and rationale; replace reviewed weak distractors.
+bank('joseon-life','social',[5],/조선 사람들의 생활 모습/,'조선의 교육·시장·생활 기록',[]);
+bank('colonial-life','social',[5],/일제의 식민 통치 아래 사람들의 생활/,'통치 정책과 생활 자료를 함께 읽기',[]);
+const materialReuse=[
+ ['joseon-foundation','joseon',0,'향교 자료에서 알 수 있는 것은 무엇인가요?','무역항의 선박 출입을 확인할 수 있습니다.','군사 훈련의 진행 방식을 확인할 수 있습니다.'],
+ ['joseon-science','joseon',2,'훈민정음 해례를 살피는 목적은 무엇인가요?','전쟁 때 군대의 이동 경로를 조사할 수 있습니다.','시장에서 거래한 물건의 가격을 조사할 수 있습니다.'],
+ ['joseon-life','joseon',3,'실록을 활용하는 방법은 무엇인가요?','한 사건의 기록을 모든 백성의 의견으로 봅니다.','작성 시기를 확인하지 않고 현재의 일로 읽습니다.'],
+ ['joseon-late-culture','joseon',4,'풍속화 자료에서 살필 수 있는 것은 무엇인가요?','그림 속 모든 인물의 실제 이름을 확정할 수 있습니다.','그림 한 점으로 모든 고을의 생활이 같았다고 봅니다.'],
+ ['joseon-life','joseon',5,'장시에서 이루어진 활동은 무엇인가요?','관리 선발 시험의 답안을 작성했습니다.','유교 의례를 치르는 교육 시설만 운영했습니다.'],
+ ['independence-1919','modern',0,'선언서가 알려 주는 것은 무엇인가요?','모든 참가자의 이후 직업을 알 수 있습니다.','독립 이후의 모든 제도를 확정할 수 있습니다.'],
+ ['independence-1919','modern',1,'여러 지역의 참여 기록에서 알 수 있는 것은 무엇인가요?','전국의 모든 사람이 같은 날 같은 장소에 모였습니다.','각 지역의 운동 방식과 참가자 수가 모두 같았습니다.'],
+ ['independence-struggle','modern',2,'독립운동가의 편지를 읽는 방법은 무엇인가요?','한 사람의 편지를 모든 사람의 의견으로 여깁니다.','작성 시기와 관계없이 오늘의 상황으로 해석합니다.'],
+ ['republic-founding','modern',3,'정부 수립 기록을 활용하는 목적은 무엇인가요?','고려가 후삼국을 통일한 과정을 조사합니다.','신라와 당의 전쟁 경과를 조사합니다.'],
+ ['korean-war','modern',5,'피란 기록을 통해 살펴볼 것은 무엇인가요?','모든 가족이 같은 곳으로 이동했다고 확정합니다.','기록 한 편으로 모든 전투의 승패를 판단합니다.'],
+ ['korean-war','modern',6,'사진과 구술 자료를 함께 이용하는 방법은 무엇인가요?','한 가족의 경험을 모든 가족의 경험으로 봅니다.','서로 다른 설명은 작성 시기를 확인하지 않고 지웁니다.'],
+ ['colonial-life','modern',10,'통치 정책이 생활에 미친 영향을 알아보는 방법은 무엇인가요?','정책 이름만 보고 모든 주민의 경험을 같다고 정합니다.','생활 자료의 시기를 확인하지 않고 어느 때나 같다고 봅니다.']
+];
+for(const [id,topic,index,prompt,w1,w2] of materialReuse){const b=banks.find(b=>b.id===id),q=core.historyEvidenceItems(topic)[index];if(!q)throw Error('Missing historical passage: '+topic+'/'+index);
+ const detail=q.detail.replace('사진과 구술 자료가 남아 있습니다.','사진의 내용을 적은 설명과 구술 자료가 남아 있습니다.');
+ b.items.push({...q,evidenceId:'material-'+q.id,legacyMaterialId:q.id,prompt,detail,choices:[q.answer,w1,w2]});
+}
+
 function find(unit,lesson){
  const b=banks.find(b=>b.subject===unit.subject&&b.grades.includes(unit.grade)&&b.pattern.test(lesson.name));if(!b)return null;
  let indexes=null;const n=lesson.name;
