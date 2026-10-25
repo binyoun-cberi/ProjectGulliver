@@ -4,6 +4,10 @@ on:
     paths:
       - 'daily-worksheet-*.js'
       - 'science-*.js'
+      - 'worksheet-science-term2.js'
+      - 'worksheet-evidence-banks.js'
+      - 'tests/worksheet-science-term2.test.cjs'
+      - 'tests/worksheet-evidence-banks.test.cjs'
       - 'daily-worksheet.css'
       - '문제지 만들기.html'
       - '받아쓰기.html'
@@ -31,6 +35,10 @@ on:
     paths:
       - 'daily-worksheet-*.js'
       - 'science-*.js'
+      - 'worksheet-science-term2.js'
+      - 'worksheet-evidence-banks.js'
+      - 'tests/worksheet-science-term2.test.cjs'
+      - 'tests/worksheet-evidence-banks.test.cjs'
       - 'daily-worksheet.css'
       - '문제지 만들기.html'
       - '받아쓰기.html'
@@ -76,6 +84,8 @@ jobs:
       - name: Check worksheet and verification syntax
         run: |
           node --check science-inquiry.js
+          node --check worksheet-science-term2.js
+          node --check tests/worksheet-science-term2.test.cjs
           node --check science-materials.js
           node --check daily-worksheet-core.js
           node --check daily-worksheet.js
@@ -88,6 +98,10 @@ jobs:
           node --check tests/daily-worksheet-browser.e2e.cjs
       - name: Run existing regressions and independent seeded challenger
         run: node --test tests/worksheet-balanced-pages.test.cjs tests/daily-worksheet-core.test.cjs tests/daily-worksheet-challenger.test.cjs tests/worksheet-pr-contract.test.cjs tests/worksheet-dictation.test.cjs
+      - name: Verify textbook science lesson coverage and unique evidence
+        run: |
+          node --test tests/worksheet-science-term2.test.cjs tests/worksheet-evidence-banks.test.cjs tests/worksheet-learning.test.cjs
+          node scripts/science-lesson-coverage.cjs
       - name: Collect structured critique candidates across subjects
         run: |
           node --check scripts/worksheet-critique-loop.cjs
