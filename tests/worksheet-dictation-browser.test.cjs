@@ -42,7 +42,7 @@ test('dictation audio controls, grade selection, hidden answers, six A4 student/
  }finally{await browser.close();}
 });
 test('English dictation offers grades 3-6, English-only speech, translations and A4 student/teacher output',{timeout:120000,skip:!chromium||!chrome},async()=>{
- const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--allow-file-access-from-files','--single-process','--no-zygote','--disable-gpu']});
+ const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--allow-file-access-from-files',...(process.env.CI?[]:['--single-process','--no-zygote']),'--disable-gpu']});
  try{const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{window.__spoken=[];Object.defineProperty(window,'speechSynthesis',{value:{getVoices:()=>[{lang:'en-US',name:'Test English',voiceURI:'en'},{lang:'ko-KR',name:'Test Korean',voiceURI:'ko'}],cancel:()=>{},resume:()=>{},addEventListener:()=>{},speak:u=>window.__spoken.push(u)}});window.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};});
   const base=pathToFileURL(path.resolve('받아쓰기.html')).href;

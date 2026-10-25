@@ -1,14 +1,14 @@
 const fs=require('fs'),path=require('path'),assert=require('node:assert/strict'),{test}=require('node:test');
 let JSDOM;try{({JSDOM}=require(process.env.WORKSHEET_JSDOM||'jsdom'))}catch{}
-test('textbook settings preserve generation, reload, pending states, English and legacy URLs',{skip:!JSDOM&&'Set WORKSHEET_JSDOM to a jsdom module to run the DOM integration check'},()=>{
+test('textbook settings preserve generation, reload, semester coverage, English and legacy URLs',{skip:!JSDOM&&'Set WORKSHEET_JSDOM to a jsdom module to run the DOM integration check'},()=>{
 const root=path.resolve(__dirname,'..');const raw=fs.readFileSync(path.join(root,'문제지 만들기.html'),'utf8');
 const scripts=[...raw.matchAll(/<script src="([^"]+)"/g)].map(x=>x[1].split('?')[0]).filter(x=>x!=='gulliver-app-shell.js');
 function load(search=''){const dom=new JSDOM(raw.replace(/<script[\s\S]*?<\/script>/g,''),{runScripts:'outside-only',url:'https://clasheet.test/worksheet'+search});const w=dom.window;w.requestAnimationFrame=()=>0;w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};for(const s of scripts)w.eval(fs.readFileSync(path.join(root,s),'utf8'));return w;}
 function change(w,id,value){const e=w.document.getElementById(id);e.value=value;e.dispatchEvent(new w.Event('change',{bubbles:true}));}
 function submit(w){w.document.getElementById('sheetForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));}
-let w=load('?subject=science&grade=6');let d=w.document;assert.equal(d.querySelector('#learningMode').value,'textbook');assert.equal(d.querySelectorAll('#questions > li').length,10);assert.ok(d.querySelector('.science-material'));assert.ok(w.location.search.includes('lesson='));let saved=w.location.search;let w2=load(saved);assert.equal(w2.document.querySelector('#questions').textContent,d.querySelector('#questions').textContent);
-change(w,'textSemester','2');assert.equal(d.querySelectorAll('#questions > li').length,0);assert.equal(d.querySelector('#printOnly').disabled,true);assert.match(d.querySelector('#textPractice').textContent,/준비 중/);
-change(w,'textSemester','1');submit(w);assert.equal(d.querySelectorAll('#questions > li').length,5);
+let w=load('?subject=science&grade=6');let d=w.document;assert.equal(d.querySelector('#learningMode').value,'textbook');assert.equal(d.querySelectorAll('#questions > li').length,10);assert.doesNotMatch(d.querySelector('#questions').textContent,/undefined/);assert.ok(w.location.search.includes('lesson='));let saved=w.location.search;let w2=load(saved);assert.equal(w2.document.querySelector('#questions').textContent,d.querySelector('#questions').textContent);
+change(w,'textSemester','2');assert.equal(d.querySelectorAll('#questions > li').length,0);assert.equal(d.querySelector('#printOnly').disabled,true);assert.match(d.querySelector('#textPractice').textContent,/문제.*개/);
+change(w,'textSemester','1');submit(w);assert.equal(d.querySelectorAll('#questions > li').length,10);
 change(w,'learningMode','practice');assert.equal(d.querySelector('#textbookControls').hidden,true);assert.equal(d.querySelector('#count').disabled,false);submit(w);assert.ok(d.querySelectorAll('#questions > li').length);
 change(w,'learningMode','textbook');assert.equal(d.querySelector('#unitSetting').hidden,true);
 const english=d.querySelector('input[name=subject][value=english]');english.checked=true;english.dispatchEvent(new w.Event('change',{bubbles:true}));submit(w);assert.ok(d.querySelectorAll('#questions > li').length);
@@ -41,6 +41,6 @@ history.document.querySelector('[data-mode=standard]').click();change(history,'t
 assert.equal(history.document.querySelector('#learningMode').value,'standard');assert.match(history.document.querySelector('#selectedStandard').textContent,/고려 시대/);assert.doesNotMatch(history.document.querySelector('#paperStandard').textContent,/undefined/);assert.equal(history.document.querySelector('#textSemester').closest('label').hidden,true);
 const beforePick=new URLSearchParams(history.location.search).get('pick').split(',');history.document.querySelector('#regenerate').click();const afterPick=new URLSearchParams(history.location.search).get('pick').split(',');assert.equal(afterPick.length,20);assert.ok(afterPick.every(i=>!beforePick.includes(i)));const standardReplay=load(history.location.search);assert.equal(standardReplay.document.querySelector('#questions').innerHTML,history.document.querySelector('#questions').innerHTML);assert.equal(standardReplay.document.querySelector('#textStandard').value,'6사04-03');
 history.document.querySelector('[data-mode=textbook]').click();assert.equal(history.document.querySelector('#textSemester').closest('label').hidden,false);assert.equal(history.document.querySelector('.standard-control').hidden,true);
-console.log('PASS: textbook generation, table rendering, saved URL replay, semester pending, stale-print clearing, mode switch, English, legacy URL');
+console.log('PASS: textbook generation, table rendering, saved URL replay, semester coverage, stale-print clearing, mode switch, English, legacy URL');
 
 });

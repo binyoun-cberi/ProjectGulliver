@@ -16,7 +16,7 @@ const sets=[
 test('unit/topic concerns WHAT to teach; a different list controls HOW to answer',()=>{
  for(const set of sets){
   const formats=C.answerFormats(set.subject,set.topic);
-  assert.deepEqual(formats.map(([f])=>f),['choice','ox','short','essay'],set.subject+'/'+set.topic);
+  assert.deepEqual(formats.map(([f])=>f),['choice','ox','short','essay',...(['prehistoric','history-mix'].includes(set.topic)?['initial']:[])],set.subject+'/'+set.topic);
  }
  assert.deepEqual(C.answerFormats('math','addition'),[]);
  assert.deepEqual(C.answerFormats('english','sentence').map(x=>x[0]),['short']);
