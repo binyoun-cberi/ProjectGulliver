@@ -50,7 +50,7 @@ test('new social lessons use only evidence for their specific target and retain 
  }
  assert.equal(reached.size,13); // Two original lessons now use exact independent world-economy banks.
  const population=E.banks.find(b=>b.id==='population-distribution').items;
- for(const q of population)assert.match(q.scienceMaterial.note,/통계청.*2024년.*2025.*표 4/);
+ for(const q of population.slice(0,5))assert.match(q.scienceMaterial.note,/통계청.*2024년.*2025.*표 4/); // The original statistics remain intact; authored contextual cases follow.
  assert.equal(population[0].scienceMaterial.rows.reduce((n,r)=>n+parseFloat(r[1]),0),100);
  assert.equal(population[2].scienceMaterial.rows.reduce((n,r)=>n+parseFloat(r[1]),0),100);
  assert.match(population[3].explanation,/원인.*보여 주지는/);assert.match(population[4].explanation,/면적도 필요/);
