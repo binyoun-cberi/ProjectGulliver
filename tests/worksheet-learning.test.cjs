@@ -30,7 +30,7 @@ test('pending lessons, wrong semesters, invalid formats and over-capacity reques
  const o={subject:u.subject,grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:5,seed:42};
  assert.throws(()=>T.generate(o,C),/준비 중/);
  assert.throws(()=>T.generate({...o,semester:u.semester===1?2:1},C),/다시 골라/);
- const v=T.catalog.find(u=>u.lessons.some(l=>T.binding(u,l)?.kind==='science')),w=v.lessons.find(l=>T.binding(v,l)?.kind==='science');
+ const v=T.catalog.find(u=>u.lessons.some(l=>{const b=T.binding(u,l);return b?.kind==='evidence'&&T.capacity(b,'choice')<20})),w=v.lessons.find(l=>{const b=T.binding(v,l);return b?.kind==='evidence'&&T.capacity(b,'choice')<20});
  const ready={subject:v.subject,grade:v.grade,semester:v.semester,unitId:v.id,lessonId:w.id,count:20,seed:42,responseFormat:'choice'};
  assert.throws(()=>T.generate(ready,C),/문항 수/);assert.throws(()=>T.generate({...ready,count:1,responseFormat:'ox'},C),/문제 유형/);
 });
