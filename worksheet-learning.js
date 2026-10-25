@@ -1,4 +1,4 @@
-(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./data/worksheet-textbooks.js'):root.WorksheetTextbooks,typeof module==='object'&&module.exports?require('./science-expansion.js'):root.ScienceExpansion,typeof module==='object'&&module.exports?require('./worksheet-evidence-banks.js'):root.WorksheetEvidence,typeof module==='object'&&module.exports?require('./data/worksheet-standards.js'):root.WorksheetStandards,typeof module==='object'&&module.exports?require('./worksheet-korean-readings.js'):root.WorksheetKoreanReadings);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetLearning=api;})(globalThis,(sourceCatalog,science,evidence,standardCatalog,korean)=>{
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./data/worksheet-textbooks.js'):root.WorksheetTextbooks,typeof module==='object'&&module.exports?require('./science-expansion.js'):root.ScienceExpansion,typeof module==='object'&&module.exports?require('./worksheet-evidence-banks.js'):root.WorksheetEvidence,typeof module==='object'&&module.exports?require('./data/worksheet-standards.js'):root.WorksheetStandards,typeof module==='object'&&module.exports?require('./worksheet-korean-readings.js'):root.WorksheetKoreanReadings,typeof module==='object'&&module.exports?require('./daily-worksheet-core.js'):root.DailyWorksheetCore);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetLearning=api;})(globalThis,(sourceCatalog,science,evidence,standardCatalog,korean,core)=>{
 'use strict';
 // Preserve source titles; exclude bookend corners and reviewed live performances.
 // Keep paper-answerable reading, writing and calculation; omit tasks requiring
@@ -159,11 +159,11 @@ function pickEvidence(pool,count,seed,exclude=[],indexes){
 }
 
 function historyPool(b){return b?.kind==='evidence'?evidencePool(b).filter(q=>q.historyVolume):[];}
-function formatPool(b,format){return evidencePool(b).filter(q=>format==='essay'?!q.knowledgeOnly:format==='cloze'?q.historyVolume&&q.explanation?.includes(q.answer):['ox','correction'].includes(format)?q.historyVolume&&q.choices?.some(c=>c!==q.answer):true);}
+function formatPool(b,format){return evidencePool(b).filter(q=>format==='initial'?core.initialAnswerAllowed(q.answer):format==='essay'?!q.knowledgeOnly:format==='cloze'?q.historyVolume&&q.explanation?.includes(q.answer):['ox','correction'].includes(format)?q.historyVolume&&q.choices?.some(c=>c!==q.answer):true);}
 function formats(b){
  if(!b)return [];
  const base=b.kind==='writing'?[['essay','서술형']]:b.essayIds&&!b.essayIds.length?[['choice','객관식'],['short','단답형']]:['math','fraction','decimal','table','division','numbers','speed'].includes(b.kind)?[['short','단답형']]:[['choice','객관식'],['short','단답형'],['essay','서술형']];
- if(historyPool(b).length){base.push(['ox','역사 OX'],['cloze','빈칸 완성'],['correction','틀린 답 고치기']);}
+ if(historyPool(b).length){if(formatPool(b,'initial').length)base.push(['initial','초성 힌트형']);base.push(['ox','역사 OX'],['cloze','빈칸 완성'],['correction','틀린 답 고치기']);}
  return base;
 }
 function capacity(b,format){if(!b)return 0;return b.kind==='evidence'?formatPool(b,format).length:format==='essay'&&b.essayIds?b.essayIds.length:b.kind==='science'?b.ids.length:b.kind==='emotion'?emotions.length:b.kind==='writing'?6:b.kind==='table'?9:b.kind==='economy'?12:20;}
@@ -202,6 +202,7 @@ function generate(options,C){
  }if(items.length!==Number(count))throw Error('겹치지 않는 문제가 부족해요. 문항 수를 줄여 주세요.');}
  const fr=rng(Number(seed)^0x42a7e19b),truth=shuffled(items.map((_,i)=>i%2===0),fr);
  items=items.map((q,index)=>{if(responseFormat==='choice')return q;
+  if(responseFormat==='initial')return {...q,format:'short',detail:[q.detail,`초성·빈칸 힌트: ${C.initialHint(q.answer)}`].filter(Boolean).join('\n'),choices:[]};
   if(responseFormat==='cloze')return {...q,format:'cloze',prompt:'빈칸에 알맞은 말을 쓰세요.',detail:q.explanation.split(q.answer).join('〔                 〕'),choices:[]};
   if(['ox','correction'].includes(responseFormat)){
    const wrong=q.choices.filter(c=>c!==q.answer),correct=responseFormat==='ox'&&truth[index],proposal=correct?q.answer:wrong[Math.floor(fr()*wrong.length)];
