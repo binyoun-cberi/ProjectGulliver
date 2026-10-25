@@ -3,7 +3,9 @@
 const HISTORY_PHOTOS=typeof module==='object'&&module.exports?require('./data/history-photo-bank.js'):globalThis.HistoryPhotoBank;
 const COLUMN=typeof module==='object'&&module.exports?require('./column-math.js'):globalThis.ColumnMath;
 const SCIENCE=typeof module==='object'&&module.exports?require('./science-expansion.js'):globalThis.ScienceExpansion;
+const HANJA=typeof module==='object'&&module.exports?require('./worksheet-hanja.js'):globalThis.WorksheetHanja;
 const SUBJECTS={
+ hanja:{name:'한자·사자성어',grades:[1,2,3,4,5,6],topics:[['hanja-trace','한자 따라쓰기',1],['idiom-trace','사자성어 따라쓰기',1]]},
  korean:{name:'국어',grades:[1,2,3,4,5,6],topics:[['opposite','반대말 찾기',1],['spacing','바른 띄어쓰기',2],['reading','글 읽고 답하기',1],['mainidea','짧은 글의 중심 내용',1,2],['vocabulary','문장 속 낱말의 뜻',3],['idiom','관용 표현과 속담',3],['hanja','한자어의 뜻',5],['reading-set','한 글을 읽고 여러 문제 풀기',1]]},
  math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['column','세로셈 연습',2],['math-mix','유형 골라 섞기',1],['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['shape','도형의 성질',1],['measurement','길이와 들이',2],['data-reading','표와 자료 읽기',3],['hundreds','세 자리 수 덧셈',3,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3],['mixed','자연수의 혼합 계산',5,5],['decimal','소수의 계산',5,6]]},
  social:{name:'사회',grades:[3,4,5,6],topics:[['history-photo','사진으로 보는 역사',5],['direction','방향과 위치',3],['community','우리 사회의 일',3],['economy','생산과 소비',4],['past','생활 속 옛 모습',3,4],['local','지역의 변화',3,4],['map-symbol','지도와 공간',3,4],['natural','자연환경과 생활',3,4],['human','인문환경과 생활',3,4],['cultural','지역의 문화유산',3,4],['family','가족과 생활 변화',3,4],['community-rules','공동체와 규칙',3,4],['local-gov','지역의 공공 기관',3,4],['transport','교통과 지역 간 교류',3,4],['prehistoric','선사와 고조선',5],['ancient','삼국·가야의 유적',5],['goryeo','고려',5],['joseon','조선',5],['modern','일제 강점기·광복·전쟁',5],['history-mix','시대 골라 섞기',5],['history-review','한국사 종합',5],['korea-geography','우리 국토와 인구',5],['democracy','민주주의와 참여',5],['rights','인권과 헌법',5],['government','국가기관과 법',5],['market','경제생활과 시장',5],['world-geography','세계의 지리와 문화',5],['international','세계의 교류와 갈등',5],['environment','환경과 지속가능성',5],['contemporary','광복 이후의 대한민국',5]]},
@@ -67,7 +69,7 @@ for(const grade of [3,4,5,6])KOREAN_UNITS[grade]=[
  {id:`k${grade}-reading`,label:grade<=4?'읽기 · 중심 생각과 이야기 흐름 [4국02-02·4국05-01]':'읽기 · 구조·추론과 작품 감상 [6국02-01·02·6국05-03]',topics:['reading-set'],types:[['reading-set-five','문학·비문학 함께 읽기','reading-set'],['reading-set-literary','문학 작품 읽기','reading-set'],['reading-set-nonfiction','비문학 글 읽기','reading-set'],['reading-set-brief','기초 짧은 글 읽기','reading-set']]}
 ];
 const COLUMN_TYPES=[['column-add2','두 자리 수 + 두 자리 수','column'],['column-sub2','두 자리 수 − 두 자리 수','column'],['column-mul2','두 자리 수 × 한 자리 수','column'],['column-mul3','세 자리 수 × 한 자리 수','column'],['column-div3','세 자리 수 ÷ 한 자리 수','column'],['column-add3','세 자리 수 + 세 자리 수','column'],['column-sub3','세 자리 수 − 세 자리 수','column']];
-function units(subject,grade){return subject==='science'?SUBJECTS.science.topics.filter(t=>available(t,Number(grade))).map(([id,label])=>({id:'science-'+id,label,topics:[id],types:[[id+'-practice',label,id]]})):subject==='math'?[...(MATH_UNITS[grade]||[]),...(Number(grade)>=2?[{id:'column-practice',label:'세로셈 연습',topics:['column'],types:Number(grade)===2?COLUMN_TYPES.filter(t=>['column-add2','column-sub2'].includes(t[0])):COLUMN_TYPES}]:[])]:subject==='social'?(SOCIAL_UNITS[grade]||[]):subject==='korean'?(KOREAN_UNITS[grade]||[]):[]}
+function units(subject,grade){return subject==='hanja'?SUBJECTS.hanja.topics.map(([id,label])=>({id,label,topics:[id],types:[[id,label,id]]})):subject==='science'?SUBJECTS.science.topics.filter(t=>available(t,Number(grade))).map(([id,label])=>({id:'science-'+id,label,topics:[id],types:[[id+'-practice',label,id]]})):subject==='math'?[...(MATH_UNITS[grade]||[]),...(Number(grade)>=2?[{id:'column-practice',label:'세로셈 연습',topics:['column'],types:Number(grade)===2?COLUMN_TYPES.filter(t=>['column-add2','column-sub2'].includes(t[0])):COLUMN_TYPES}]:[])]:subject==='social'?(SOCIAL_UNITS[grade]||[]):subject==='korean'?(KOREAN_UNITS[grade]||[]):[]}
 function types(subject,grade,topic,unitId){return units(subject,grade).filter(unit=>!unitId||unit.id===unitId).flatMap(unit=>unit.types.filter(entry=>entry[2]===topic).map(([id,label])=>[id,label]))}
 // Verified against the 2022 mathematics curriculum (MOE notice 2022-33, appendix 8).
 // These are practice links, not a claim that a sheet assesses the entire standard.
@@ -1180,6 +1182,7 @@ const ANSWER_FORMAT_LABELS={
  choice:'객관식 (보기 고르기)',ox:'OX형',short:'단답형',essay:'서술형',activity:'짝 잇기·순서 배열하기'
 };
 function answerFormats(subject,topic){
+ if(subject==='hanja')return [['trace','따라 쓰고 혼자 쓰기'],['blank','본보기 보고 혼자 쓰기']];
  if(subject==='math')return [];
  if(topic==='history-review')return [['activity',ANSWER_FORMAT_LABELS.activity]];
  if(subject==='english'&&topic==='sentence')return [['short',ANSWER_FORMAT_LABELS.short]];
@@ -1188,6 +1191,7 @@ function answerFormats(subject,topic){
  return allowed.map(format=>[format,ANSWER_FORMAT_LABELS[format]]);
 }
 function answerFormatFor(type,subject,topic){
+ if(subject==='hanja')return 'trace';
  if(topic==='history-review')return 'activity';
  if(subject==='english'&&topic==='sentence')return 'short';
  if(/-ox$/.test(type))return 'ox';
@@ -1268,7 +1272,8 @@ function generate(options){
  });
  return {subject,grade:Number(grade),topic:'unit-mix',type:'',count:total,seed:Number(seed)>>>0,difficulty:options.difficulty||'basic',variant:'tens',responseFormat:options.responseFormat||'',columnPlaces:Boolean(options.columnPlaces),unitMix:plan,title:grade+'학년 '+SUBJECTS[subject].name+' · 여러 단원 모아 풀기',alignment:null,items};
 }
-function generateSingle({subject,topic,grade,count=10,seed=Date.now(),difficulty='basic',variant='tens',type='',eras=[],mathTypes=[],responseFormat='',columnMode='any',columnPlaces=false}){
+function generateSingle({subject,topic,grade,count=10,seed=Date.now(),difficulty='basic',variant='tens',type='',eras=[],mathTypes=[],responseFormat='',columnMode='any',columnPlaces=false,hanjaLevel='8',idiomLevel='all'}){
+ if(subject==='hanja')return HANJA.generate({subject,topic,grade,count,seed,responseFormat,hanjaLevel,idiomLevel});
  if(subject==='math'&&topic==='column'){
   if(!SUBJECTS.math.grades.includes(Number(grade))||!types(subject,Number(grade),topic).some(([id])=>id===type))throw Error('학년과 세로셈 유형을 확인해 주세요.');
   const op={'column-mul2':'×','column-mul3':'×','column-div3':'÷','column-add2':'+','column-sub2':'−','column-add3':'+','column-sub3':'−'}[type];

@@ -56,7 +56,7 @@
         const picker=element('details','gx-worksheet-picker'),summary=element('summary','','문제지 ▾');summary.setAttribute('aria-label','문제지 과목 선택');
         if(key===selected)summary.setAttribute('aria-current','page');
         const menu=element('div','gx-subject-menu');menu.setAttribute('aria-label','문제지 과목');
-        const subjects=[['korean','국어'],['math','수학'],['social','사회'],['science','과학'],['english','영어']];
+        const subjects=[['korean','국어'],['math','수학'],['social','사회'],['science','과학'],['english','영어'],['hanja','한자·사자성어']];
         for(const [value,name] of subjects){const link=element('a','',name);link.href=href+'?subject='+value;link.dataset.worksheetSubject=value;
           link.onclick=e=>{if(file==='문제지 만들기.html'&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){e.preventDefault();picker.open=false;window.dispatchEvent(new CustomEvent('gulliver:worksheet-subject',{detail:{subject:value}}));summary.focus();}};menu.append(link)}
         picker.append(summary,menu);nav.append(picker);

@@ -3,6 +3,7 @@ const C=window.DailyWorksheetCore,$=id=>document.getElementById(id),form=$('shee
 let current=null,answersVisible=false;const params=new URLSearchParams(location.search);
 let subject=C.SUBJECTS[params.get('subject')]?params.get('subject'):'math';
 const initialGrade=Number(params.get('grade')),initialTopic=params.get('topic'),initialCount=params.has('count')?Number(params.get('count')):null;
+for(const id of ['hanjaLevel','idiomLevel']){const select=$(id);if([...select.options].some(o=>o.value===params.get(id)))select.value=params.get(id);}
 const seed=()=>{if(globalThis.crypto?.getRandomValues)return crypto.getRandomValues(new Uint32Array(1))[0];return (Date.now()^Math.floor(Math.random()*0xffffffff))>>>0};
 function option(select,value,label){const o=document.createElement('option');o.value=String(value);o.textContent=label;select.append(o)}
 for(const [key,info] of Object.entries(C.SUBJECTS)){
@@ -57,16 +58,18 @@ $('addUnitMix').onclick=()=>{addMixRow();updateFilterSummary()};
 function denseAvailable(){if(subject!=='math')return false;if(!$('typeSetting').hidden)return /^(add-|sub-|small-|two-|times-)/.test($('type').value)&&$('type').value!=='times-missing';return ['addition','hundreds','multiplication'].includes($('topic').value)}
 function syncCount(preferred){
  const column=subject==='math'&&$('topic').value==='column';$('columnSettings').hidden=!column;$('columnSettings').disabled=!column;$('columnModeLabel').textContent=$('type').value==='column-div3'?'나머지':['column-sub2','column-sub3'].includes($('type').value)?'받아내림':'받아올림';
- const dense=denseAvailable(),counts=C.supportedCounts({subject,grade:Number($('grade').value),topic:$('topic').value,
+ const dense=denseAvailable(),counts=C.supportedCounts({subject,grade:Number($('grade').value),topic:$('topic').value,hanjaLevel:$('hanjaLevel').value,idiomLevel:$('idiomLevel').value,
   type:contentType(),eras:selectedEras(),mathTypes:selectedMathTypes(),
   columnMode:$('columnMode').value,columnPlaces:$('columnPlaces').checked,difficulty:$('difficulty').value,variant:$('variant').value,responseFormat:subject==='math'?'':$('responseFormat').value});
  for(const option of $('count').options){option.disabled=!counts.includes(Number(option.value));option.hidden=column?![6,8,10,12].includes(Number(option.value)):[6,8,12].includes(Number(option.value));}
  const prior=Number($('count').value),fallback=column?12:dense?20:10;
  $('count').value=String(counts.includes(Number(preferred))?Number(preferred):counts.includes(prior)?prior:counts.includes(fallback)?fallback:counts[0]||5);
 }
-function syncDifficulty(){const typed=!$('typeSetting').hidden,hundreds=subject==='math'&&$('topic').value==='hundreds'&&!typed,math=subject==='math'&&!hundreds&&!typed;$('difficultySetting').hidden=!math;$('difficulty').disabled=!math;$('variantSetting').hidden=!hundreds;$('variant').disabled=!hundreds;if(!math)$('difficulty').value='basic';
+function syncDifficulty(){
+ $('grade').closest('label').hidden=subject==='hanja';$('hanjaLevelSetting').hidden=subject!=='hanja'||$('topic').value!=='hanja-trace';$('idiomLevelSetting').hidden=subject!=='hanja'||$('topic').value!=='idiom-trace';const typed=!$('typeSetting').hidden,hundreds=subject==='math'&&$('topic').value==='hundreds'&&!typed,math=subject==='math'&&!hundreds&&!typed;$('difficultySetting').hidden=!math;$('difficulty').disabled=!math;$('variantSetting').hidden=!hundreds;$('variant').disabled=!hundreds;if(!math)$('difficulty').value='basic';
  const standard=C.alignment(subject,$('topic').value,Number($('grade').value)),note=$('curriculumNote');note.replaceChildren();
- if(standard){note.append(document.createTextNode(`수업 준비 참고 · ${standard.code} ${standard.summary} · ${standard.scope} `));const link=document.createElement('a');link.href=standard.source;link.target='_blank';link.rel='noopener noreferrer';link.textContent='교육과정 원문 보기';note.append(link)}
+ if(subject==='hanja')note.textContent=$('topic').value==='idiom-trace'?'사자성어는 기초·확장·심화 표현을 골라 연습해요.':'대한검정회 배정 한자를 기준으로 이전 급수의 한자까지 함께 연습해요. 낱글자의 음은 낱말에서 달라질 수 있어요.';
+ else if(standard){note.append(document.createTextNode(`수업 준비 참고 · ${standard.code} ${standard.summary} · ${standard.scope} `));const link=document.createElement('a');link.href=standard.source;link.target='_blank';link.rel='noopener noreferrer';link.textContent='교육과정 원문 보기';note.append(link)}
  else note.textContent='학습 내용과 수업 목표를 확인한 뒤 문제를 사용해 주세요.';
 }
 syncGrades(initialGrade,initialTopic);
@@ -75,6 +78,7 @@ if(['tens','ones'].includes(params.get('variant')))$('variant').value=params.get
 syncDifficulty();
 $('historyEraSetting').querySelectorAll('input').forEach(input=>{input.checked=params.has('eras')?params.get('eras').split(',').includes(input.value):true});syncHistoryEras();
 if(['any','yes','no'].includes(params.get('columnMode'))) $('columnMode').value=params.get('columnMode');$('columnPlaces').checked=params.get('columnPlaces')==='1';
+if(subject==='hanja'&&initialCount===null)$('count').value='5';
 syncMathTypes(params.has('mathTypes')?params.get('mathTypes').split(','):null);syncCount(initialCount);
 $('largePrint').checked=params.get('large')==='1';
 resetMix();
@@ -115,20 +119,22 @@ const simpleOperation=item=>/^(\d+) ([+×−]) (\d+) =$/.test(item.prompt);
 const column=sheet.topic==='column'||sheet.items.every(item=>item.column);
 const mathVertical=!column&&sheet.subject==='math'&&sheet.items.length>=5&&sheet.items.every(simpleOperation);
 const dense=mathVertical&&(sheet.type?/^(add-|sub-|small-|two-|times-)/.test(sheet.type)&&sheet.type!=='times-missing':['addition','hundreds','multiplication'].includes(sheet.topic));
-const compact=!column&&!dense&&sheet.responseFormat!=='essay'&&sheet.items.length>=5&&sheet.items.every(item=>
+const tracing=sheet.subject==='hanja';
+const compact=!tracing&&!column&&!dense&&sheet.responseFormat!=='essay'&&sheet.items.length>=5&&sheet.items.every(item=>
   !item.scienceMaterial&&!item.readingGroup&&!item.readingPassage&&!item.photo&&!item.shapeSides&&!item.sourceLabel&&
   !['matching','ordering'].includes(item.format)&&
   String(item.prompt||'').length<=100&&String(item.detail||'').length<=85&&
   (!item.choices||item.choices.length<=4&&item.choices.every(choice=>String(choice).length<=62))
-);$('sheetStatus').textContent='문제지가 준비됐어요';$('sheetMeta').textContent=C.SUBJECTS[sheet.subject].name+' · '+sheet.grade+'학년 · '+sheet.items.length+'문제'+(sheet.difficulty==='challenge'?' · 도전 문제':'');$('paperTitle').textContent=sheet.title;$('sheetNumber').textContent='문제지 번호 '+sheet.seed.toString(36).toUpperCase();
- const questions=$('questions');questions.replaceChildren();questions.classList.toggle('science-evidence',sheet.items.some(item=>item.scienceMaterial));
+);$('sheetStatus').textContent='문제지가 준비됐어요';$('sheetMeta').textContent=C.SUBJECTS[sheet.subject].name+' · '+(tracing?sheet.scope:sheet.grade+'학년')+' · '+sheet.items.length+'문제'+(sheet.difficulty==='challenge'?' · 도전 문제':'');$('paperTitle').textContent=sheet.title;$('sheetNumber').textContent='문제지 번호 '+sheet.seed.toString(36).toUpperCase();
+ const questions=$('questions');questions.replaceChildren();questions.classList.toggle('tracing-questions',tracing);questions.classList.toggle('idiom-tracing',tracing&&sheet.topic==='idiom-trace');questions.classList.toggle('science-evidence',sheet.items.some(item=>item.scienceMaterial));
  questions.classList.toggle('photo-small',sheet.items.length<=6&&sheet.items.every(item=>item.photo));questions.classList.toggle('photo-questions',sheet.items.length>0&&sheet.items.every(item=>item.photo));questions.classList.toggle('column-questions',column);questions.classList.toggle('column-few',column&&sheet.count<=8);questions.classList.toggle('calculation-grid',dense);questions.classList.toggle('compact-questions',compact);$('questionSheet').classList.toggle('dense-paper',dense);
- $('paperInstruction').hidden=!(dense||column||sheet.subject==='science');if(sheet.subject==='science')$('paperInstruction').textContent='표와 그림은 학습용 예시 자료입니다. 자료를 살펴보고 답하세요.';if(column)$('paperInstruction').textContent='칸에 계산 과정을 쓰고 답을 구해 보세요.';if(dense)$('paperInstruction').textContent=sheet.type?'계산해 보세요.':sheet.topic==='hundreds'?'받아올림 없이 덧셈을 하세요.':'계산해 보세요.';
+ $('paperInstruction').hidden=!(tracing||dense||column||sheet.subject==='science');if(tracing)$('paperInstruction').textContent=sheet.responseFormat==='blank'?'뜻과 음을 읽고 본보기를 보며 빈칸에 써 보세요.':'뜻과 음을 읽고 흐린 글씨를 따라 쓴 뒤 빈칸에 혼자 써 보세요.';if(sheet.subject==='science')$('paperInstruction').textContent='표와 그림은 학습용 예시 자료입니다. 자료를 살펴보고 답하세요.';if(column)$('paperInstruction').textContent='칸에 계산 과정을 쓰고 답을 구해 보세요.';if(dense)$('paperInstruction').textContent=sheet.type?'계산해 보세요.':sheet.topic==='hundreds'?'받아올림 없이 덧셈을 하세요.':'계산해 보세요.';
  if(sheet.topic==='hundreds'&&!sheet.type)$('paperTitle').textContent+=' · '+(sheet.variant==='ones'?'B · 일의 자리까지':'A · 일의 자리가 0');
  $('paperStandard').hidden=!sheet.alignment;if(sheet.alignment)$('paperStandard').textContent=`교사용 수업 참고 · ${sheet.alignment.code} · ${sheet.alignment.scope}`;
  sheet.items.forEach((item,index)=>{
   const li=document.createElement('li');if(item.format==='essay')li.classList.add('essay-question');if(item.format==='ox')li.classList.add('ox-question');li.dataset.prompt=`${index+1}번. ${item.prompt}`;li.dataset.answer=item.answer;
-  if(item.column){renderColumn(li,item,index,sheet.columnPlaces);}
+  if(item.tracing){window.WorksheetHanjaUI.render(li,item,index);}
+  else if(item.column){renderColumn(li,item,index,sheet.columnPlaces);}
   else if(dense){
    const match=item.prompt.match(/^(\d+) ([+×−]) (\d+) =$/);
    if(!match)throw Error('세로셈으로 표시할 수 없는 문제가 있습니다.');
@@ -174,14 +180,15 @@ const compact=!column&&!dense&&sheet.responseFormat!=='essay'&&sheet.items.lengt
      else if(measured&&!measured.ok)$('sheetStatus').textContent=measured.issue;
    }
  });
- const url=new URL(location.href);url.search=new URLSearchParams({subject:sheet.subject,grade:String(sheet.grade),unit:$('unit').value,topic:sheet.topic,...(sheet.unitMix?{unitMix:JSON.stringify(sheet.unitMix.map(({id,count})=>({id,count})))}:{}),...(sheet.type?{type:sheet.type}:{}),...(sheet.topic==='column'?{columnMode:sheet.columnMode,columnPlaces:sheet.columnPlaces?'1':'0'}:{}),...(sheet.responseFormat?{format:sheet.responseFormat}:{}),...(sheet.topic==='history-mix'?{eras:sheet.eras.join(',')}:{}),...(sheet.topic==='math-mix'?{mathTypes:sheet.mathTypes.join(',')}:{}),difficulty:sheet.difficulty,count:String(sheet.count),seed:String(sheet.seed),...(sheet.topic==='hundreds'&&!sheet.type?{variant:sheet.variant}:{}),...($('largePrint').checked?{large:'1'}:{})}).toString();history.replaceState(null,'',url.href);
+ const url=new URL(location.href);url.search=new URLSearchParams({subject:sheet.subject,...(tracing?(sheet.topic==='hanja-trace'?{hanjaLevel:sheet.hanjaLevel}:{idiomLevel:sheet.idiomLevel}):{grade:String(sheet.grade)}),unit:$('unit').value,topic:sheet.topic,...(sheet.unitMix?{unitMix:JSON.stringify(sheet.unitMix.map(({id,count})=>({id,count})))}:{}),...(sheet.type?{type:sheet.type}:{}),...(sheet.topic==='column'?{columnMode:sheet.columnMode,columnPlaces:sheet.columnPlaces?'1':'0'}:{}),...(sheet.responseFormat?{format:sheet.responseFormat}:{}),...(sheet.topic==='history-mix'?{eras:sheet.eras.join(',')}:{}),...(sheet.topic==='math-mix'?{mathTypes:sheet.mathTypes.join(',')}:{}),difficulty:sheet.difficulty,count:String(sheet.count),seed:String(sheet.seed),...(sheet.topic==='hundreds'&&!sheet.type?{variant:sheet.variant}:{}),...($('largePrint').checked?{large:'1'}:{})}).toString();history.replaceState(null,'',url.href);
  const qr=$('answerQr'),code=$('answerQrCode');code.replaceChildren();qr.hidden=true;
  if(/^https?:$/.test(url.protocol)&&typeof window.qrcode==='function')try{const generator=window.qrcode(0,'M');generator.addData(url.href,'Byte');generator.make();code.innerHTML=generator.createSvgTag(2,4);qr.hidden=false}catch(error){console.warn('문제지 QR을 생성할 수 없습니다.',error)}
 }
-function make(newSeed){try{const state={subject,grade:Number($('grade').value),topic:$('topic').value,type:contentType(),eras:selectedEras(),mathTypes:selectedMathTypes(),difficulty:$('difficulty').value,variant:$('variant').value,count:Number($('count').value),columnMode:$('columnMode').value,columnPlaces:$('columnPlaces').checked,seed:newSeed,responseFormat:subject==='math'?'':$('responseFormat').value};if($('unitMixEnabled').checked)state.unitMix=mixPlan();render(C.generate(state))}catch(error){console.warn('문제지 만들기:',error);$('sheetStatus').textContent=error.message||'선택한 조건으로 문제를 만들지 못했어요.';$('sheetMeta').textContent=''}}
+function make(newSeed){try{const state={subject,hanjaLevel:$('hanjaLevel').value,idiomLevel:$('idiomLevel').value,grade:Number($('grade').value),topic:$('topic').value,type:contentType(),eras:selectedEras(),mathTypes:selectedMathTypes(),difficulty:$('difficulty').value,variant:$('variant').value,count:Number($('count').value),columnMode:$('columnMode').value,columnPlaces:$('columnPlaces').checked,seed:newSeed,responseFormat:subject==='math'?'':$('responseFormat').value};if($('unitMixEnabled').checked)state.unitMix=mixPlan();render(C.generate(state))}catch(error){console.warn('문제지 만들기:',error);$('sheetStatus').textContent=error.message||'선택한 조건으로 문제를 만들지 못했어요.';$('sheetMeta').textContent=''}}
 function updateFilterSummary(){
+ $('unitMixSettings').hidden=subject==='hanja';$('responseSetting').firstChild.textContent=subject==='hanja'?'연습 방법':'문제 유형';
  const name=C.SUBJECTS[subject].name;$('filterSubjectTitle').textContent=name+' 문제지 설정';
- const labels=[$('grade').selectedOptions[0]?.textContent,$('typeSetting').hidden?$('topic').selectedOptions[0]?.textContent:$('type').selectedOptions[0]?.textContent,$('count').value+'문항'];
+ const labels=[subject==='hanja'?($('topic').value==='hanja-trace'?$('hanjaLevel').selectedOptions[0]?.textContent:$('idiomLevel').selectedOptions[0]?.textContent):$('grade').selectedOptions[0]?.textContent,$('typeSetting').hidden?$('topic').selectedOptions[0]?.textContent:$('type').selectedOptions[0]?.textContent,$('count').value+'문항'];
  $('filterSelectionSummary').textContent=$('unitMixEnabled').checked?name+' · 여러 단원 · '+$('unitMixTotal').textContent:labels.filter(Boolean).join(' · ');
  document.querySelectorAll('[data-worksheet-subject]').forEach(link=>{if(link.dataset.worksheetSubject===subject)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current')});
 }

@@ -55,7 +55,7 @@ function widenLegacyShortSheet(page){
  // Short, self-contained tasks should fill the paper with room for working.
  // Long passages, sources, illustrations and crowded teacher keys stay natural-sized.
  const items=[...page.list.children],total=items.length;
- if(page.list.matches('.column-questions,.science-evidence'))return;
+ if(page.list.matches('.column-questions,.science-evidence,.tracing-questions'))return;
  if(total<1||total>10||items.some(item=>
    item.querySelector('.reading-text,.history-photo,svg,.history-match,.order-choices')||
    item.classList.contains('reading-question')||item.classList.contains('history-question')
