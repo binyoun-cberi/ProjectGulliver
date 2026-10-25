@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const T=require('../worksheet-learning'),E=require('../worksheet-evidence-banks'),C=require('../daily-worksheet-core');
-const banks=E.banks.filter(b=>b.items.some(q=>q.historyVolume));
+const banks=E.banks.filter(b=>b.items.some(q=>q.historyVolume&&!q.joseonVolume));
 function options(bankId){for(const u of T.catalog)for(const l of u.lessons)if(T.binding(u,l)?.bankId===bankId)return {subject:u.subject,grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:20,responseFormat:'choice'};throw Error(bankId);}
 test('13 history targets each support at least two full twenty-question sheets',()=>{
  assert.equal(banks.length,13);assert.equal(banks.flatMap(b=>b.items.filter(q=>q.historyVolume)).length,485);

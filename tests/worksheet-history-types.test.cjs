@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const T=require('../worksheet-learning'),C=require('../daily-worksheet-core'),E=require('../worksheet-evidence-banks');
 function options(bankId){for(const u of T.catalog)for(const l of u.lessons)if(T.binding(u,l)?.bankId===bankId)return {subject:u.subject,grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:20,seed:73};throw Error(bankId);}
-test('all thirteen history topics generate twenty OX, cloze and correction tasks with valid answers and saved replay',()=>{
+test('all twenty-one history topics generate twenty OX, cloze and correction tasks with valid answers and saved replay',()=>{
  for(const bank of E.banks.filter(b=>b.items.some(q=>q.historyVolume)))for(const responseFormat of ['ox','cloze','correction'])for(const seed of [3,73]){
   const o={...options(bank.id),seed,responseFormat},s=T.generate(o,C);assert.equal(s.items.length,20);assert.equal(new Set(s.items.map(q=>q.evidenceId)).size,20);
   assert.deepEqual(T.generate({...o,itemIndexes:s.items.map(q=>q.poolIndex)},C),s);
