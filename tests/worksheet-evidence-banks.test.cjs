@@ -46,7 +46,7 @@ test('new social lessons use only evidence for their specific target and retain 
   if(b.id==='transport-types')assert.deepEqual(ids,/옛날/.test(l.name)?['transport-types-1','transport-types-2']:['transport-types-3','transport-types-4','transport-types-5']);
   if(b.id==='transport-change')assert.deepEqual(ids,/불편/.test(l.name)?['transport-change-4','transport-change-5']:['transport-change-1','transport-change-2','transport-change-3']);
   if(b.id==='communication-types')assert.deepEqual(ids,/옛날/.test(l.name)?['communication-types-2','communication-types-3']:/오늘날/.test(l.name)?['communication-types-4','communication-types-5']:['communication-types-1']);
-  if(b.id==='trade-reason')assert.deepEqual(ids,/무역이란/.test(l.name)?['trade-reason-1','trade-reason-5']:/이유/.test(l.name)?['trade-reason-2']:['trade-reason-3','trade-reason-4']);
+  if(b.id==='trade-reason'){const original=/무역이란/.test(l.name)?['trade-reason-1','trade-reason-5']:/이유/.test(l.name)?['trade-reason-2']:['trade-reason-3','trade-reason-4'];if(/무역이란/.test(l.name)){for(const id of original)assert.ok(ids.includes(id));assert.ok(ids.some(id=>id.startsWith('social-world-economy-trade-definition-')));}else assert.deepEqual(ids,original);}
  }
  assert.equal(reached.size,15);
  const population=E.banks.find(b=>b.id==='population-distribution').items;
@@ -82,7 +82,7 @@ test('sixth grade expansion separates economic, media and global problem evidenc
   if(b.id==='media-judgment')assert.deepEqual(ids,/비판적/.test(l.name)?['media-judgment-1','media-judgment-2','media-judgment-3']:['media-judgment-4','media-judgment-5']);
   if(b.id==='world-spatial-tools'&&/디지털/.test(l.name))assert.deepEqual(ids,['world-spatial-tools-3','world-spatial-tools-4']);
   if(b.id==='world-spatial-tools'&&/활용/.test(l.name))assert.deepEqual(ids,['world-spatial-tools-5']);
-  if(b.id==='global-problems'&&/겪고/.test(l.name))assert.deepEqual(ids,['global-problems-1','global-problems-2']);
+  if(b.id==='global-problems'&&/겪고/.test(l.name)){for(const id of ['global-problems-1','global-problems-2'])assert.ok(ids.includes(id));assert.ok(ids.some(id=>id.startsWith('social-world-economy-global-challenges-')));}
   if(b.id==='economic-work'&&/기업은/.test(l.name))assert.deepEqual(ids,['economic-work-2','economic-work-5']);
  }
  assert.equal(targets.length,17);
@@ -102,7 +102,8 @@ test('geography expansion separates climate elements, landforms, regional causes
   if(b.id==='korea-landforms'&&/해안/.test(l.name))assert.deepEqual(ids,['korea-landforms-4']);
   if(b.id==='economic-growth-effects'&&/문제를 합리적/.test(l.name))assert.deepEqual(ids,['economic-growth-effects-5']);
  }
- assert.equal(targets.length,28);
+ assert.equal(targets.length,16); // 12 original targets now resolve to more precise, lesson-specific geography/economy banks.
+ const geo=T.catalog.filter(u=>u.subject==='social'&&u.grade===6&&u.semester===2).flatMap(u=>u.lessons.map(l=>T.binding(u,l))).filter(b=>b?.bankId?.startsWith('social-geo-'));assert.equal(geo.length,9);
  const climate=E.banks.find(b=>b.id==='korea-season-climate').items;assert.match(climate[3].scienceMaterial.note,/기상청.*1991~2020/);assert.match(climate[3].explanation,/54%/);assert.match(climate[4].explanation,/모든 지역의 모든 날/);
  const pop=E.banks.find(b=>b.id==='population-structure').items[2];assert.match(pop.explanation,/전체.*인구도/);
  const warming=E.banks.find(b=>b.id==='climate-disaster').items[1];assert.equal(parseInt(warming.scienceMaterial.rows[1][1])-parseInt(warming.scienceMaterial.rows[0][1]),1);assert.match(warming.explanation,/해마다.*제시되지/);
