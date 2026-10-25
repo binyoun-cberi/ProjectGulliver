@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>학년별 받아쓰기 | 클라시트</title><link rel="icon" type="image/svg+xml" href="clasheet-mark.svg">
+<link rel="stylesheet" href="gulliver-design.css?v=1.2.0"><link rel="stylesheet" href="worksheet-dictation.css?v=20261025-1">
+<script src="gulliver-app-shell.js?v=20261025-dictation1" defer></script>
+<script src="worksheet-dictation-data.js?v=20261025-1" defer></script><script src="worksheet-dictation-player.js?v=20261025-1" defer></script><script src="worksheet-dictation-ui.js?v=20261025-1" defer></script>
+</head><body><main id="gulliverWork" class="dictation-layout">
+ <header class="dictation-intro"><div><p class="eyebrow">클라시트 · 국어</p><h1>열 문장, 차근차근 받아쓰기</h1><p>한 문장을 듣고 쓸 시간을 가진 뒤, 다음 문장으로 넘어가요.</p></div><a id="backToKorean" href="문제지 만들기.html?subject=korean">국어 문제지로 돌아가기 →</a></header>
+ <div class="dictation-workspace">
+  <section class="dictation-settings" aria-label="받아쓰기 설정">
+   <h2>학년과 읽기 설정</h2>
+   <label for="dictGrade">학년</label><select id="dictGrade"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="4">4학년</option><option value="5">5학년</option><option value="6">6학년</option></select>
+   <p id="gradeFocus" class="dictation-note"></p><p id="poolInfo" class="dictation-note"></p>
+   <button id="newDictation" type="button">↻ 다른 10문장 뽑기</button>
+   <div class="dictation-setting-grid">
+    <label>문장마다 읽는 횟수<select id="dictRepeats"><option value="1">1번</option><option value="2">2번</option><option value="3" selected>3번</option></select></label>
+    <label>읽기 속도<select id="dictRate"><option value="0.65">아주 천천히</option><option value="0.85" selected>천천히</option><option value="1">보통</option></select></label>
+    <label>반복 사이 쉬는 시간<select id="dictRepeatGap"><option value="5">5초</option><option value="10" selected>10초</option><option value="15">15초</option><option value="20">20초</option><option value="30">30초</option></select></label>
+    <label>다음 문장까지 쓰는 시간<select id="dictNextGap"><option value="10">10초</option><option value="15">15초</option><option value="20" selected>20초</option><option value="30">30초</option><option value="45">45초</option><option value="60">60초</option></select></label>
+   </div>
+   <label for="dictVoice">한국어 음성</label><select id="dictVoice"><option value="">기본 한국어 음성</option></select><p id="voiceNote" class="dictation-note">음성과 기기 소리를 확인한 뒤 시작해 주세요.</p>
+   <p class="dictation-note">문장을 다 읽은 뒤부터 쉬는 시간을 셉니다. 화면을 벗어나면 일시정지해요. 다시 이어서 시작할 때에는 읽던 문장을 처음부터 들려줘요.</p>
+  </section>
+  <section class="dictation-output" aria-label="받아쓰기 진행과 문제지">
+   <p id="dictNotice" role="status" hidden></p>
+   <section class="dictation-player" aria-label="음성 읽기">
+    <div class="dictation-progress"><span id="dictPosition">1 / 10 문장</span><span id="dictRound">읽기 전</span></div>
+    <progress id="dictProgress" max="10" value="0" aria-label="다 읽은 문장 수"></progress>
+    <p id="dictStatus" role="status" aria-live="polite">학생용 문제지를 준비하고 시작을 눌러 주세요.</p><p id="dictCountdown" aria-live="off"></p>
+    <div class="dictation-controls"><button id="dictStart" type="button" class="dictation-primary">시작</button><button id="dictPause" type="button" disabled>일시정지</button><button id="dictStop" type="button">처음으로</button></div>
+    <div class="dictation-controls secondary"><button id="dictPrevious" type="button">이전 문장</button><button id="dictReplay" type="button">이 문장 처음부터 읽기</button><button id="dictNext" type="button">다음 문장</button></div>
+   </section>
+   <div class="dictation-print-actions"><button id="dictPrintStudent" type="button">학생용 10문장 쓰기 인쇄</button><button id="dictPrintTeacher" type="button">교사용 정답 인쇄</button></div>
+   <details id="dictTeacher" class="dictation-teacher"><summary>교사용 문장 확인 · 정답이 보입니다</summary><p>수업 전에 문장과 띄어쓰기를 확인해 주세요. 마침표와 쉼표는 문장에 맞게 쓰되 음성으로 따로 읽지 않습니다.</p><ol id="dictAnswerList"></ol></details>
+   <article id="dictPaper" class="dictation-paper"><div class="dictation-paper-top"><strong>클라시트</strong><span id="dictCopyLabel">듣고 바르게 써 보세요</span></div><h2 id="dictPaperTitle">1학년 받아쓰기</h2><div class="dictation-student"><span>이름: __________________</span><span>날짜: __________________</span></div><p class="dictation-instruction">문장을 듣고 띄어쓰기에 유의해 바르게 써 보세요.</p><ol id="dictWritingList"></ol><footer id="dictSheetNumber"></footer></article>
+  </section>
+ </div>
+</main></body></html>

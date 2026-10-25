@@ -1,9 +1,10 @@
 (()=>{'use strict';
 const T=window.WorksheetLearning,C=window.DailyWorksheetCore,E=window.WorksheetEditor,$=id=>document.getElementById(id),form=$('sheetForm');
-const query=new URLSearchParams(E.initialSearch),legacy=!!query.get('topic')&&!query.has('lesson')&&!query.has('standard');
+const query=new URLSearchParams(E.initialSearch),legacy=(!!query.get('topic')||query.has('unitMix'))&&!query.has('lesson')&&!query.has('standard');
 const box=document.createElement('section');box.className='textbook-flow';box.setAttribute('aria-label','문제지 학습 범위');
 box.innerHTML=`<div class="learning-mode-bar"><div class="learning-tabs" role="group" aria-label="만들기 기준"><button type="button" data-mode="textbook">차시별</button><button type="button" data-mode="standard">성취기준별</button><button type="button" data-mode="practice">종합 연습</button></div><select id="learningMode" aria-label="학습 범위" hidden><option value="textbook">차시별</option><option value="standard">성취기준별</option><option value="practice">기존 연습</option></select><span id="textPractice" aria-live="polite"></span></div><div id="textbookControls"><label class="semester-control">학기<select id="textSemester"><option value="1">1학기</option><option value="2">2학기</option></select></label><label class="unit-control">단원<select id="textUnit"></select></label><label class="lesson-control">차시<select id="textLesson"></select></label><label class="standard-control" hidden>성취기준<select id="textStandard"></select><span id="selectedStandard"></span></label><label class="format-control">유형<select id="textFormat"></select></label><details class="learning-source"><summary>출처·연결 범위</summary><p id="textCoverage"></p><a id="textSource" target="_blank" rel="noopener noreferrer">원문 보기</a><p>연결된 문제만 제공합니다. 도입·마무리, 제작·발표·검색 활동은 차시 목록에서 제외했습니다.</p></details></div>`;
 $('grade').closest('label').after(box);$('grade').closest('label').classList.add('grade-control');$('count').closest('label').classList.add('count-control');
+const dictationLink=document.createElement('a');dictationLink.className='dictation-link';dictationLink.textContent='받아쓰기 · 음성 읽기';box.querySelector('.learning-tabs').append(dictationLink);
 const hiddenIds=['unitSetting','topicSetting','historyEraSetting','mathTypeSetting','typeSetting','responseSetting','difficultySetting','variantSetting','columnSettings','unitMixSettings','curriculumNote'];
 let active=false,subject='',chosen=null,displayedSeed=null,lastIds=[],lastKey='';
 const priorCounts=new WeakMap();form.addEventListener('change',e=>{if(active)priorCounts.set(e,$('count').value);},true);
@@ -45,6 +46,7 @@ function make(seed,{replay=false,preserve=false}={}){
 let lastIndexes;
 function sync(initial=false){
  subject=form.querySelector('input[name="subject"]:checked').value;active=subject!=='english'&&$('learningMode').value!=='practice';
+ dictationLink.hidden=subject!=='korean';dictationLink.href='받아쓰기.html?grade='+$('grade').value;
  form.classList.toggle('compact-learning',active);box.hidden=subject==='english';$('textbookControls').hidden=!active;
  for(const button of box.querySelectorAll('[data-mode]'))button.setAttribute('aria-pressed',String(button.dataset.mode===$('learningMode').value));
  for(const cls of ['semester-control','unit-control','lesson-control'])box.querySelector('.'+cls).hidden=standardMode();box.querySelector('.standard-control').hidden=!standardMode();
