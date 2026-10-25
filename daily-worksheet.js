@@ -83,6 +83,7 @@ if(params.has('unitMix'))try{const plan=JSON.parse(params.get('unitMix'));if(Arr
 function appendMathText(node,value){const parts=String(value).split(/(\d+\/\d+)/g);for(const part of parts){const match=part.match(/^(\d+)\/(\d+)$/);if(!match){node.append(document.createTextNode(part));continue}const fraction=document.createElement('span'),top=document.createElement('span'),bottom=document.createElement('span');fraction.className='stacked-fraction';fraction.setAttribute('role','img');fraction.setAttribute('aria-label',`${match[2]}분의 ${match[1]}`);top.textContent=match[1];bottom.textContent=match[2];fraction.append(top,bottom);node.append(fraction)}}
 function setPreview(open){answersVisible=open;document.body.classList.toggle('show-inline-answers',open);$('toggleAnswers').textContent=open?'정답 닫기':'정답 보기';$('toggleAnswers').setAttribute('aria-expanded',String(open));
  for(const li of $('questions').children){if(li.classList.contains('calculation-item'))li.setAttribute('aria-label',li.dataset.prompt+(open?' 정답: '+li.dataset.answer:''));else li.querySelector('.inline-answer')?.setAttribute('aria-hidden',String(!open))}
+ window.DailyWorksheetA4?.refreshPreview();
 }
 function renderColumn(li,item,index,places){
  li.classList.add('column-question');const q=item.column;
@@ -211,8 +212,8 @@ document.body.classList.toggle('large-print',$('largePrint').checked);
 $('printOnly').onclick=()=>print(false);$('printWithAnswers').onclick=()=>print(true);
 document.addEventListener('DOMContentLoaded',updateFilterSummary,{once:true});
 window.addEventListener('beforeprint',()=>{if(current)window.DailyWorksheetA4?.compose()});
-window.addEventListener('afterprint',()=>document.body.classList.remove('print-answers'));
-window.WorksheetEditor={render,initialSearch:params.toString(),clear(){current=null;$('questions').replaceChildren();$('paperTitle').textContent='단원과 학습 내용을 골라 주세요.';$('sheetNumber').textContent='';$('answerQr').hidden=true;$('paperStandard').hidden=true;$('paperInstruction').hidden=true;}};
+window.addEventListener('afterprint',()=>{document.body.classList.remove('print-answers');window.DailyWorksheetA4?.refreshPreview()});
+window.WorksheetEditor={render,initialSearch:params.toString(),clear(){current=null;$('questions').replaceChildren();$('paperTitle').textContent='단원과 학습 내용을 골라 주세요.';$('sheetNumber').textContent='';$('answerQr').hidden=true;$('paperStandard').hidden=true;$('paperInstruction').hidden=true;window.DailyWorksheetA4?.refreshPreview();}};
 updateFilterSummary();
 make(Number.isFinite(Number(params.get('seed')))&&params.has('seed')?Number(params.get('seed')):seed());
 })();

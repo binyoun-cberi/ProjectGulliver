@@ -63,20 +63,23 @@ function widenLegacyShortSheet(page){
  const list=page.list;
  const calculation=list.classList.contains('calculation-grid');
  const grid=calculation||list.classList.contains('compact-questions');
+ const linear=!calculation&&grid&&total<=5&&items.every(item=>!item.querySelector('.choice-list,.question-detail')&&/\d\s*[+×−÷]/.test(item.dataset.prompt||''));
+ if(linear)page.article.classList.add('roomy-linear');
  page.article.classList.add('roomy-page');
  if(calculation&&total<=10)page.article.classList.add('roomy-calculations');
  // Determine the available writing area from the actual page, including headers.
  const top=list.getBoundingClientRect().top;
  const bottom=page.article.getBoundingClientRect().bottom-17*MM_PX;
- const rows=grid?Math.ceil(total/(calculation&&total>10?4:2)):total;
+ const rows=linear?total:grid?Math.ceil(total/(calculation&&total>10?4:2)):total;
  const available=bottom-top;
  // Use most of the page, but retain comfortable gutters and bottom margin.
- const height=Math.floor(available*.89/rows);
- if(height<40){page.article.classList.remove('roomy-page','roomy-calculations');return}
+ const gap=grid?(parseFloat(getComputedStyle(list).rowGap)||0):0;
+ const height=Math.floor((available*.96-gap*(rows-1))/rows);
+ if(height<40){page.article.classList.remove('roomy-page','roomy-calculations','roomy-linear');return}
  page.article.style.setProperty('--roomy-row-height',height+'px');
  if(!canFit(page)){
   // Never trade correct A4 printing for a full-looking page.
-  page.article.classList.remove('roomy-page','roomy-calculations');
+  page.article.classList.remove('roomy-page','roomy-calculations','roomy-linear');
   page.article.style.removeProperty('--roomy-row-height');
  }
 }
@@ -143,6 +146,29 @@ function widenShortSheet(page){
  if(!canFit(page)){if(listStyle===null)list.removeAttribute('style');else list.setAttribute('style',listStyle);items.forEach((item,i)=>{if(originals[i]===null)item.removeAttribute('style');else item.setAttribute('style',originals[i])});return}
  page.article.classList.add('spread-page');
 }
+// The source preview is a separate DOM tree from the measured print pages.
+// Give short sheets visible working space there as well; mobile remains compact.
+function refreshPreview(){
+ if(window.matchMedia?.('print')?.matches)return;
+ const {source,questions}=resolve();if(!source||!questions)return;
+ source.classList.remove('roomy-preview');
+ for(const name of ['--preview-row-height','--preview-rows','--preview-columns'])source.style.removeProperty(name);
+ const items=[...questions.children];
+ if(!lastResult.ok||lastResult.pages!==1||source.getBoundingClientRect().width<550||!items.length||items.length>10||
+   items.some(q=>q.matches('.reading-question,.essay-question')||q.querySelector('.science-material,.history-photo,svg,.history-match,.order-choices')))return;
+ const style=getComputedStyle(questions),grid=style.display==='grid',rows=[];
+ for(const item of items){const y=item.getBoundingClientRect().top;let row=rows.find(r=>Math.abs(r.y-y)<2);if(!row){row={y,items:[]};rows.push(row)}row.items.push(item);}
+ const footer=source.querySelector('footer'),sourceStyle=getComputedStyle(source);
+ const bottom=source.getBoundingClientRect().bottom-(parseFloat(sourceStyle.paddingBottom)||0)-
+   (footer?footer.getBoundingClientRect().height+(parseFloat(getComputedStyle(footer).marginTop)||0):0)-8;
+ const gap=grid?(parseFloat(style.rowGap)||0):0;
+ const height=Math.floor((bottom-questions.getBoundingClientRect().top-gap*(rows.length-1))/rows.length);
+ if(height<Math.max(...items.map(q=>q.getBoundingClientRect().height))+20)return;
+ source.style.setProperty('--preview-row-height',height+'px');source.style.setProperty('--preview-rows',rows.length);
+ source.style.setProperty('--preview-columns',grid?style.gridTemplateColumns:'minmax(0,1fr)');source.classList.add('roomy-preview');
+ // If a font or answer change needs more room, keep the natural layout.
+ if(questions.getBoundingClientRect().bottom>bottom+1||footer&&footer.getBoundingClientRect().bottom>source.getBoundingClientRect().bottom-(parseFloat(sourceStyle.paddingBottom)||0)+1)source.classList.remove('roomy-preview');
+}
 function questionsAreScience(source){return source.querySelector('#questions')?.classList.contains('science-evidence')||false}
 function pack(host,originalUnits,source){
  const cache=new Map();
@@ -188,9 +214,10 @@ function compose(){
   lastResult=pack(host,units,source);
   if(!lastResult.ok){host.replaceChildren();}
   return lastResult;
- }finally{host.classList.remove('is-measuring')}
+ }finally{host.classList.remove('is-measuring');refreshPreview()}
 }
-const api=Object.freeze({compose,getResult:()=>({...lastResult})});
+if(typeof window!=='undefined')window.addEventListener('resize',refreshPreview);
+const api=Object.freeze({compose,refreshPreview,getResult:()=>({...lastResult})});
 if(typeof window!=='undefined')window.DailyWorksheetA4=api;
 if(typeof module==='object'&&module.exports)module.exports={balancedPlan};
 })();
