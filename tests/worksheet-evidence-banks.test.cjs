@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,47);assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),238);
+ assert.equal(E.banks.length,55);assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),278);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(q.evidenceId));ids.add(q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
@@ -106,4 +106,21 @@ test('geography expansion separates climate elements, landforms, regional causes
  const climate=E.banks.find(b=>b.id==='korea-season-climate').items;assert.match(climate[3].scienceMaterial.note,/기상청.*1991~2020/);assert.match(climate[3].explanation,/54%/);assert.match(climate[4].explanation,/모든 지역의 모든 날/);
  const pop=E.banks.find(b=>b.id==='population-structure').items[2];assert.match(pop.explanation,/전체.*인구도/);
  const warming=E.banks.find(b=>b.id==='climate-disaster').items[1];assert.equal(parseInt(warming.scienceMaterial.rows[1][1])-parseInt(warming.scienceMaterial.rows[0][1]),1);assert.match(warming.explanation,/해마다.*제시되지/);
+});
+test('civics expansion separates rights cases, constitutional principles and public roles',()=>{
+ const added=['law-constitution','rights-cases','rights-support','power-division','assembly-role','government-role','court-role','election-principles'];
+ const targets=[];for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||!added.includes(b.id))continue;targets.push(l.id);assert.equal(u.subject,'social');
+  const ids=b.items.map(q=>q.evidenceId);
+  if(b.id==='law-constitution')assert.deepEqual(ids,/헌법은/.test(l.name)?['law-constitution-3','law-constitution-4','law-constitution-5']:['law-constitution-1','law-constitution-2']);
+  if(b.id==='rights-cases')assert.deepEqual(ids,/보장/.test(l.name)?['rights-cases-1','rights-cases-2']:['rights-cases-3','rights-cases-4','rights-cases-5']);
+  if(b.id==='rights-support'&&/우리 사회/.test(l.name))assert.deepEqual(ids,['rights-support-2','rights-support-3']);
+  if(b.id==='election-principles'&&/공정한/.test(l.name))assert.deepEqual(ids,['election-principles-3','election-principles-4']);
+  if(b.id==='election-principles'&&/참여/.test(l.name))assert.deepEqual(ids,['election-principles-5']);
+  if(b.id==='assembly-role')assert.equal(u.grade,6);if(b.id==='rights-cases')assert.equal(u.grade,5);
+ }
+ assert.equal(targets.length,15);
+ const assembly=E.banks.find(b=>b.id==='assembly-role').items,government=E.banks.find(b=>b.id==='government-role').items,court=E.banks.find(b=>b.id==='court-role').items;
+ assert.match(assembly[1].answer,/심의.*확정/);assert.match(assembly[1].detail,/정부가 예산안을 편성/);
+ assert.equal(government[1].answer,'정부');assert.match(government[1].detail,/편성해 국회에 제출/);
+ assert.match(court[2].answer,/압력 없이 법에 따라/);assert.match(court[2].explanation,/마음대로 판단한다는 뜻이 아닙/);
 });
