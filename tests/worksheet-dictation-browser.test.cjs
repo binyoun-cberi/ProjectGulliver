@@ -18,10 +18,11 @@ test('dictation audio controls, grade selection, hidden answers, six A4 student/
   await page.selectOption('#dictGrade','6');assert.equal(await page.locator('#dictStart').isEnabled(),true);await page.evaluate(()=>__spoken[1].onend());assert.match(await page.locator('#dictStatus').textContent(),/준비/);
   await page.click('#dictTeacher summary');await page.click('#dictStart');assert.equal(await page.locator('#dictTeacher').evaluate(e=>e.open),false);await page.click('#dictStop');
   for(let grade=1;grade<=6;grade++){
-   await page.goto(base.href+`?grade=${grade}&seed=42`);await page.waitForSelector('#dictWritingList>li');
+   await page.goto(base.href+`?grade=${grade}&seed=42&topic=${grade===6?'first-semester':'all'}`);await page.waitForSelector('#dictWritingList>li');
    if(process.env.WORKSHEET_FONT_CSS){await page.addStyleTag({url:pathToFileURL(process.env.WORKSHEET_FONT_CSS).href});await page.addStyleTag({content:'body{font-family:"Noto Sans KR",sans-serif!important}'});await page.evaluate(()=>document.fonts.ready);}
    const original=await page.locator('#dictAnswerList').textContent();assert.equal(await page.locator('#dictWritingList>li').count(),10);assert.equal(await page.locator('#dictTeacher').evaluate(e=>e.open),false);assert.equal(await page.locator('#dictWritingList .dictation-answer:visible').count(),0);
    const saved=page.url();await page.click('#newDictation');assert.notEqual(await page.locator('#dictAnswerList').textContent(),original);await page.goto(saved);assert.equal(await page.locator('#dictAnswerList').textContent(),original);
+   if(grade===6){assert.equal(await page.locator('#dictTopic').inputValue(),'first-semester');assert.match(await page.locator('#newDictation').textContent(),/순서/);assert.equal(await page.locator('.dictation-word-focus').count(),10);}
    if(process.env.WORKSHEET_FONT_CSS){await page.addStyleTag({url:pathToFileURL(process.env.WORKSHEET_FONT_CSS).href});await page.addStyleTag({content:'body{font-family:"Noto Sans KR",sans-serif!important}'});await page.evaluate(()=>document.fonts.ready);}
    if(process.env.WORKSHEET_QA_DIR&&[1,6].includes(grade))await page.screenshot({path:path.join(process.env.WORKSHEET_QA_DIR,`dictation-${grade}-desktop.png`),fullPage:true});
    await page.emulateMedia({media:'print'});

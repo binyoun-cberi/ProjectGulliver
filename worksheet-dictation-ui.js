@@ -6,8 +6,10 @@ try{preference=JSON.parse(localStorage.getItem('clasheet-dictation-settings')||'
 const controls={repeats:'dictRepeats',rate:'dictRate',repeatGap:'dictRepeatGap',nextGap:'dictNextGap'};
 for(const [key,id] of Object.entries(controls)){const v=query.get(key)??preference[key];if([...$(id).options].some(o=>o.value===String(v)))$(id).value=String(v);}
 if(/^[1-6]$/.test(query.get('grade')))$('dictGrade').value=query.get('grade');else if(/^[1-6]$/.test(String(preference.grade)))$('dictGrade').value=String(preference.grade);
+for(const t of D.topics(Number($('dictGrade').value))){if(t.id==='all')continue;$('dictTopic').append(new Option(t.label,t.id));}
+const initialTopic=query.get('topic')??preference.topic;if([...$('dictTopic').options].some(o=>o.value===initialTopic))$('dictTopic').value=initialTopic;
 function settings(){return Object.fromEntries(Object.entries(controls).map(([key,id])=>[key,Number($(id).value)]));}
-function save(){const options={...settings(),grade:Number($('dictGrade').value)};try{localStorage.setItem('clasheet-dictation-settings',JSON.stringify(options));}catch{}if(!sheet)return;const url=new URL(location.href);url.search=new URLSearchParams({...options,seed:sheet.seed,items:sheet.items.map(q=>q.id).join(',')});history.replaceState(null,'',url);}
+function save(){const options={...settings(),grade:Number($('dictGrade').value),topic:$('dictTopic').value};try{localStorage.setItem('clasheet-dictation-settings',JSON.stringify(options));}catch{}if(!sheet)return;const url=new URL(location.href);url.search=new URLSearchParams({...options,seed:sheet.seed,items:sheet.items.map(q=>q.id).join(',')});history.replaceState(null,'',url);}
 function stateChanged(s){
  const active=['speaking','waiting'].includes(s.state),unavailable=!synth||!window.SpeechSynthesisUtterance||voiceMissing;
  $('dictPosition').textContent=`${s.index+1} / ${s.total||10} 문장`;
@@ -26,14 +28,16 @@ function stateChanged(s){
 const player=window.WorksheetDictationPlayer.create({synth,Utterance:window.SpeechSynthesisUtterance,onChange:stateChanged});
 function reloadPlayer(){player.load(sheet.items,{...settings(),voice:voices.find(v=>v.voiceURI===$('dictVoice').value)||null});}
 function render(){
- $('gradeFocus').textContent=sheet.focus;$('poolInfo').textContent=`${sheet.grade}학년 전용 문장 ${D.bank(sheet.grade).length}개 중 10문장`;
+ const size=D.bank(sheet.grade,sheet.topic).length;
+ $('gradeFocus').textContent=sheet.focus;$('poolInfo').textContent=`${sheet.grade}학년 · ${sheet.topicLabel} · ${size===10?'10문장 한 묶음':size+'개 중 10문장'}`;
+ $('newDictation').textContent=size===10?'↻ 이 주제의 10문장 순서 바꾸기':'↻ 다른 10문장 뽑기';
  $('backToKorean').href=`문제지 만들기.html?subject=korean&grade=${sheet.grade}`;
- $('dictPaperTitle').textContent=`${sheet.grade}학년 받아쓰기 · 10문장`;$('dictSheetNumber').textContent=`문제지 번호 ${sheet.seed.toString(36).toUpperCase()}`;
+ $('dictPaperTitle').textContent=`${sheet.grade}학년 받아쓰기 · 10문장`;$('dictSheetNumber').textContent=`${sheet.topicLabel} · 문제지 번호 ${sheet.seed.toString(36).toUpperCase()}`;
  $('dictWritingList').replaceChildren();$('dictAnswerList').replaceChildren();$('dictTeacher').open=false;
- for(const q of sheet.items){const li=document.createElement('li'),lines=document.createElement('div'),answer=document.createElement('p');lines.className='dictation-lines';lines.setAttribute('aria-hidden','true');answer.className='dictation-answer';answer.textContent=q.text;li.append(lines,answer);$('dictWritingList').append(li);const check=document.createElement('li');check.textContent=q.text;$('dictAnswerList').append(check);}
+ for(const q of sheet.items){const li=document.createElement('li'),lines=document.createElement('div'),answer=document.createElement('p');lines.className='dictation-lines';lines.setAttribute('aria-hidden','true');answer.className='dictation-answer';answer.textContent=q.text;li.append(lines,answer);$('dictWritingList').append(li);const check=document.createElement('li'),sentence=document.createElement('span'),note=document.createElement('small');sentence.textContent=q.text;note.className='dictation-word-focus';note.textContent=D.topics(sheet.grade).find(t=>t.id===q.topic).label+' · '+q.focus;check.append(sentence,note);$('dictAnswerList').append(check);}
  reloadPlayer();save();
 }
-function draw(){$('dictNotice').hidden=true;const seed=window.crypto?.getRandomValues?crypto.getRandomValues(new Uint32Array(1))[0]:Date.now();sheet=D.generate({grade:Number($('dictGrade').value),seed,excludeIds:sheet?.grade===Number($('dictGrade').value)?sheet.items.map(q=>q.id):[]});render();}
+function draw(){$('dictNotice').hidden=true;const seed=window.crypto?.getRandomValues?crypto.getRandomValues(new Uint32Array(1))[0]:Date.now();sheet=D.generate({grade:Number($('dictGrade').value),topic:$('dictTopic').value,seed,excludeIds:sheet?.grade===Number($('dictGrade').value)?sheet.items.map(q=>q.id):[]});render();}
 function refreshVoices(){
  let all=[];try{all=synth?.getVoices()||[];}catch{}
  voices=all.filter(v=>/^ko(?:[-_]|$)/i.test(v.lang));voiceMissing=all.length>0&&!voices.length;
@@ -42,10 +46,10 @@ function refreshVoices(){
  $('voiceNote').textContent=voiceMissing?'기기의 음성 설정에서 한국어 음성을 추가한 뒤 다시 열어 주세요.':voices.length?'선택한 한국어 음성으로 읽어요. 시작 전 기기 소리를 확인해 주세요.':'기본 한국어 음성으로 시작합니다. 소리가 나지 않으면 기기의 한국어 음성 설정을 확인해 주세요.';
  if(sheet&&!['speaking','waiting','paused'].includes(player.snapshot().state))reloadPlayer();else stateChanged(player.snapshot());
 }
-try{sheet=D.generate({grade:Number($('dictGrade').value),seed:query.has('seed')?Number(query.get('seed')):Date.now(),...(query.has('items')?{itemIds:query.get('items').split(',')}:{})});render();}
+try{sheet=D.generate({grade:Number($('dictGrade').value),topic:$('dictTopic').value,seed:query.has('seed')?Number(query.get('seed')):Date.now(),...(query.has('items')?{itemIds:query.get('items').split(',')}:{})});render();}
 catch{draw();$('dictNotice').hidden=false;$('dictNotice').textContent='저장된 문장을 찾지 못해 이 학년의 새 10문장을 준비했어요.';}
 refreshVoices();synth?.addEventListener('voiceschanged',refreshVoices);
-$('dictGrade').onchange=draw;$('newDictation').onclick=draw;
+$('dictGrade').onchange=draw;$('dictTopic').onchange=draw;$('newDictation').onclick=draw;
 for(const id of [...Object.values(controls),'dictVoice'])$(id).onchange=()=>{reloadPlayer();save();};
 $('dictStart').onclick=()=>{if($('dictTeacher').open)$('dictTeacher').open=false;player.start();};
 $('dictPause').onclick=()=>player.pause();$('dictStop').onclick=()=>player.stop();$('dictPrevious').onclick=()=>player.jump(player.snapshot().index-1);$('dictNext').onclick=()=>player.jump(player.snapshot().index+1);$('dictReplay').onclick=()=>{ $('dictTeacher').open=false;player.repeat();};

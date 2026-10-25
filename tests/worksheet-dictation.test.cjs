@@ -8,10 +8,11 @@ function harness(){
  function tick(ms){const end=time+ms;while(true){const next=[...timers].filter(([,t])=>t.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!next)break;time=next[1].at;timers.delete(next[0]);next[1].fn();}time=end;}
  return {p,spoken,tick,timers,end:()=>spoken.at(-1).onend(),get canceled(){return canceled;}};
 }
-test('six separate grade pools increase sentence complexity and replay ten unique sentences',()=>{
+test('six grade pools use separate complete sentences and preserve ten-item draws and replay',()=>{
  const all=new Set();let previous=0;
  for(let grade=1;grade<=6;grade++){
-  const bank=D.bank(grade);assert.equal(bank.length,30);const average=bank.reduce((n,q)=>n+q.text.length,0)/bank.length;assert.ok(average>previous);previous=average;
+  const bank=D.bank(grade);assert.equal(bank.length,110);const average=bank.reduce((n,q)=>n+q.text.length,0)/bank.length;
+  if(grade<=4){assert.ok(average>previous);previous=average;}else assert.ok(average>25,'upper grades also practice difficult words in shorter sentences');
   for(const q of bank){assert.ok(!all.has(q.text));all.add(q.text);assert.match(q.text,/[.!?]$/);assert.match(q.id,new RegExp('^g'+grade+'-'));}
   const first=D.generate({grade,seed:42}),second=D.generate({grade,seed:43,excludeIds:first.items.map(q=>q.id)});
   assert.equal(first.items.length,10);assert.equal(new Set(first.items.map(q=>q.id)).size,10);assert.ok(second.items.every(q=>!first.items.some(x=>x.id===q.id)));
@@ -27,6 +28,20 @@ test('ten sentences play exactly three times each, with separate waits starting 
   h.end();if(i===29)break;const wait=i%3===2?10000:5000;h.tick(wait-1);assert.equal(h.spoken.length,i+1);h.tick(1);assert.equal(h.spoken.length,i+2);
  }
  assert.equal(h.p.snapshot().state,'complete');h.tick(60000);assert.equal(h.spoken.length,30);assert.equal(h.timers.size,0);
+});
+test('all 48 grade/topic sets yield ten complete sentences and enforce topic/grade boundaries',()=>{
+ for(let grade=1;grade<=6;grade++){
+  const basic=D.bank(grade,'basic');assert.equal(basic.length,30);assert.deepEqual(basic.map(q=>q.id),Array.from({length:30},(_,i)=>`g${grade}-${i+1}`));
+  const themes=D.topics(grade).filter(t=>!['all','basic'].includes(t.id));assert.equal(themes.length,8);
+  for(const t of themes){
+   assert.equal(t.count,10);const sheet=D.generate({grade,topic:t.id,seed:42});assert.equal(sheet.items.length,10);
+   assert.ok(sheet.items.every(q=>q.topic===t.id&&q.focus&&/[.!?]$/.test(q.text)));
+   assert.deepEqual(D.generate({grade,topic:t.id,seed:42,itemIds:sheet.items.map(q=>q.id)}),sheet);
+   const other=D.bank(grade,'basic').slice(0,10).map(q=>q.id);assert.throws(()=>D.generate({grade,topic:t.id,itemIds:other}),/저장된/);
+  }
+  assert.throws(()=>D.bank(grade,'unknown'),/주제/);
+ }
+ const gradeSix=D.bank(6).map(q=>q.text).join(' ');for(const word of ['맞혔','맞추','쫓아','좇느라','지향','지양','간간이','금세'])assert.ok(gradeSix.includes(word),word);
 });
 test('pause preserves a remaining wait and canceled callbacks cannot advance the run',()=>{
  const h=harness();h.p.load(D.bank(1).slice(0,10),{repeatGap:10});h.p.start();const old=h.spoken[0];h.end();h.tick(3000);h.p.pause();assert.equal(h.p.snapshot().remaining,7);h.tick(20000);assert.equal(h.spoken.length,1);

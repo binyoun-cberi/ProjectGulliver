@@ -1,15 +1,16 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>학년별 받아쓰기 | 클라시트</title><link rel="icon" type="image/svg+xml" href="clasheet-mark.svg">
-<link rel="stylesheet" href="gulliver-design.css?v=1.2.0"><link rel="stylesheet" href="worksheet-dictation.css?v=20261025-1">
+<link rel="stylesheet" href="gulliver-design.css?v=1.2.0"><link rel="stylesheet" href="worksheet-dictation.css?v=20261025-topics1">
 <script src="gulliver-app-shell.js?v=20261025-dictation1" defer></script>
-<script src="worksheet-dictation-data.js?v=20261025-1" defer></script><script src="worksheet-dictation-player.js?v=20261025-1" defer></script><script src="worksheet-dictation-ui.js?v=20261025-1" defer></script>
+<script src="worksheet-dictation-topics.js?v=20261025-topics1" defer></script><script src="worksheet-dictation-data.js?v=20261025-topics1" defer></script><script src="worksheet-dictation-player.js?v=20261025-1" defer></script><script src="worksheet-dictation-ui.js?v=20261025-topics1" defer></script>
 </head><body><main id="gulliverWork" class="dictation-layout">
  <header class="dictation-intro"><div><p class="eyebrow">클라시트 · 국어</p><h1>열 문장, 차근차근 받아쓰기</h1><p>한 문장을 듣고 쓸 시간을 가진 뒤, 다음 문장으로 넘어가요.</p></div><a id="backToKorean" href="문제지 만들기.html?subject=korean">국어 문제지로 돌아가기 →</a></header>
  <div class="dictation-workspace">
   <section class="dictation-settings" aria-label="받아쓰기 설정">
    <h2>학년과 읽기 설정</h2>
    <label for="dictGrade">학년</label><select id="dictGrade"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="4">4학년</option><option value="5">5학년</option><option value="6">6학년</option></select>
+   <label for="dictTopic">주제</label><select id="dictTopic"><option value="all">모든 주제</option></select>
    <p id="gradeFocus" class="dictation-note"></p><p id="poolInfo" class="dictation-note"></p>
    <button id="newDictation" type="button">↻ 다른 10문장 뽑기</button>
    <div class="dictation-setting-grid">
