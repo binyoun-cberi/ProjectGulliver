@@ -10,6 +10,9 @@ on:
       - 'tests/worksheet-evidence-banks.test.cjs'
       - 'daily-worksheet.css'
       - '문제지 만들기.html'
+      - '받아쓰기.html'
+      - 'worksheet-dictation*'
+      - 'tests/worksheet-dictation*'
       - 'data-standards.js'
       - 'tests/daily-worksheet-*'
       - 'tests/worksheet-pr-contract.test.cjs'
@@ -38,6 +41,9 @@ on:
       - 'tests/worksheet-evidence-banks.test.cjs'
       - 'daily-worksheet.css'
       - '문제지 만들기.html'
+      - '받아쓰기.html'
+      - 'worksheet-dictation*'
+      - 'tests/worksheet-dictation*'
       - 'data-standards.js'
       - 'tests/daily-worksheet-*'
       - 'tests/worksheet-pr-contract.test.cjs'
@@ -91,7 +97,7 @@ jobs:
           node --check tests/worksheet-pr-contract.test.cjs
           node --check tests/daily-worksheet-browser.e2e.cjs
       - name: Run existing regressions and independent seeded challenger
-        run: node --test tests/worksheet-balanced-pages.test.cjs tests/daily-worksheet-core.test.cjs tests/daily-worksheet-challenger.test.cjs tests/worksheet-pr-contract.test.cjs
+        run: node --test tests/worksheet-balanced-pages.test.cjs tests/daily-worksheet-core.test.cjs tests/daily-worksheet-challenger.test.cjs tests/worksheet-pr-contract.test.cjs tests/worksheet-dictation.test.cjs
       - name: Verify textbook science lesson coverage and unique evidence
         run: |
           node --test tests/worksheet-science-term2.test.cjs tests/worksheet-evidence-banks.test.cjs tests/worksheet-learning.test.cjs
@@ -126,7 +132,7 @@ jobs:
       - name: Install pinned Playwright browser driver (use runner's Chrome)
         run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
       - name: Prove complete A4 pages across five subjects, student/teacher versions and big print
-        run: node --test --test-concurrency=1 tests/daily-worksheet-browser.e2e.cjs tests/daily-worksheet-a4.test.cjs tests/daily-worksheet-formats.test.cjs
+        run: node --test --test-concurrency=1 tests/daily-worksheet-browser.e2e.cjs tests/daily-worksheet-a4.test.cjs tests/daily-worksheet-formats.test.cjs tests/worksheet-dictation-browser.test.cjs
       - name: Export all subject student and teacher PDFs for visual review
         run: node tests/worksheet-pdf-review.cjs
       - name: Attach screenshots and printable PDFs for review

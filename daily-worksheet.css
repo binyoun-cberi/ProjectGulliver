@@ -377,3 +377,5 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
 .print-paper.roomy-linear .print-question-list.compact-questions>li{position:relative;font-size:14px;line-height:1.45}
 .print-paper.roomy-linear .answer-blank{position:absolute;bottom:14px;left:2px;right:8px;width:auto;margin:0}
 .print-paper.roomy-linear .print-question-list>li::after{content:"";position:absolute;bottom:42px;left:2px;right:8px;border-bottom:1px dotted #d5dfda}
+
+.learning-tabs{flex-wrap:wrap;max-width:100%}.learning-tabs .dictation-link{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:650;color:#176a5b;background:#e8f5ef;text-decoration:none;white-space:nowrap}.learning-tabs .dictation-link[hidden]{display:none}

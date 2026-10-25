@@ -8,7 +8,7 @@
     ['home', '홈', 'index.html'], ['worksheet', '문제지', '문제지 만들기.html'], ['tools', '교사 도구', 'index.html?view=tools'],
     ['classroom', '우리 반', '우리반.html']
   ];
-  const principal = {'index.html':'home', '문제지 만들기.html':'worksheet', '우리반.html':'classroom'};
+  const principal = {'index.html':'home', '문제지 만들기.html':'worksheet', '받아쓰기.html':'worksheet', '우리반.html':'classroom'};
   let shell, actions;
   function embedded() {
     if (window.parent === window) return false;
@@ -59,6 +59,7 @@
         const subjects=[['korean','국어'],['math','수학'],['social','사회'],['science','과학'],['english','영어']];
         for(const [value,name] of subjects){const link=element('a','',name);link.href=href+'?subject='+value;link.dataset.worksheetSubject=value;
           link.onclick=e=>{if(file==='문제지 만들기.html'&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){e.preventDefault();picker.open=false;window.dispatchEvent(new CustomEvent('gulliver:worksheet-subject',{detail:{subject:value}}));summary.focus();}};menu.append(link)}
+        const dictation=element('a','','국어 받아쓰기');dictation.href='받아쓰기.html';menu.append(dictation);
         picker.append(summary,menu);nav.append(picker);
         picker.addEventListener('toggle',()=>{if(picker.open)shell?.querySelectorAll('.gx-release[open]').forEach(badge=>{badge.open=false})});
         document.addEventListener('click',e=>{if(!picker.contains(e.target))picker.open=false});
