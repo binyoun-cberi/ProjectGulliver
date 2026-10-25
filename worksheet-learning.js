@@ -1,4 +1,4 @@
-(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./data/worksheet-textbooks.js'):root.WorksheetTextbooks,typeof module==='object'&&module.exports?require('./science-expansion.js'):root.ScienceExpansion,typeof module==='object'&&module.exports?require('./worksheet-evidence-banks.js'):root.WorksheetEvidence);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetLearning=api;})(globalThis,(sourceCatalog,science,evidence)=>{
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./data/worksheet-textbooks.js'):root.WorksheetTextbooks,typeof module==='object'&&module.exports?require('./science-expansion.js'):root.ScienceExpansion,typeof module==='object'&&module.exports?require('./worksheet-evidence-banks.js'):root.WorksheetEvidence,typeof module==='object'&&module.exports?require('./data/worksheet-standards.js'):root.WorksheetStandards);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetLearning=api;})(globalThis,(sourceCatalog,science,evidence,standardCatalog)=>{
 'use strict';
 // Preserve source titles; exclude bookend corners and reviewed live performances.
 // Keep paper-answerable reading, writing and calculation; omit tasks requiring
@@ -95,17 +95,80 @@ function binding(unit,lesson){
  return null;
 }
 function lookup(subject,grade,semester,unitId,lessonId){const unit=units(subject,grade,semester).find(u=>u.id===unitId),lesson=unit?.lessons.find(l=>l.id===lessonId);return unit&&lesson?{unit,lesson,binding:binding(unit,lesson)}:null}
+
+// Explicit curriculum links; a standard never borrows a neighbouring criterion.
+const standardBanks={
+ '6사04-01':['paleolithic','neolithic','bronze-age','gojoseon'],
+ '6사04-02':['goguryeo','baekje','silla-gaya','silla-unification','balhae'],
+ '6사04-03':['goryeo-founding','goryeo-society','goryeo-defense','goryeo-culture'],
+ '6사05-01':['joseon-foundation','joseon-life'],
+ '6사05-02':['joseon-late-culture','joseon-opening','modern-daily-change'],
+ '6사06-01':['sovereignty-resistance','independence-1919','independence-struggle','colonial-life'],
+ '6사06-02':['liberation','korean-war'],
+ '4사02-01':['timeline','social-fill-personal-history'],
+ '4사02-02':['past-sources','social-fill-building-history'],
+ '4사04-01':['customs','social-fill-old-games'],
+ '4사04-02':['transport-change'],'4사04-03':['communication-change'],
+ '4사05-01':['map-legend','map-scale','map-height','map-purpose'],
+ '4사05-02':['geographic-info','social-fill-region-location'],
+ '4사06-01':['social-fill-heritage-types','social-fill-heritage-meaning','social-fill-heritage-value','social-fill-heritage-preservation'],
+ '6사01-01':['korea-landforms'],
+ '6사01-02':['social-fill-dokdo-location','social-fill-dokdo-value','social-fill-dokdo-records'],
+ '6사02-01':['korea-season-climate','climate-disaster'],
+ '6사02-02':['population-distribution','regional-balance'],
+ '2국02-03':['main-content'],'4국02-02':['main-content'],'4국02-04':['fact-opinion'],
+ '4과10-01':['water-states'],'4과10-02':['evaporation','condensation']
+};
+function standardForBinding(b){
+ if(b.kind==='science')return {'animals':'6과11-02','human-body':'6과04-02','space':b.ids.some(id=>['space-3','space-4'].includes(id))?'6과12-03':'6과12-02','solution':b.ids.includes('solution-10')?'6과03-02':'6과03-01','mixture-separation':'6과05-01'}[b.topic];
+ if(b.kind==='speed')return '6과10-02';
+ if(b.kind==='emotion')return '2국02-04';
+ if(b.kind==='numbers')return '2수01-03';
+ if(b.kind==='math')return b.topic==='mixed'?'6수01-01':b.topic==='multiplication'?'4수01-04':b.topic==='fraction'?'4수01-15':'4수01-03';
+ if(b.kind==='fraction')return b.op==='÷'?'6수01-11':b.op==='×'?'6수01-09':b.same?'4수01-15':'6수01-08';
+ if(b.kind==='decimal')return '4수01-16';return null;
+}
+function standards(subject,grade){
+ return standardCatalog.filter(s=>s.subject===subject&&s.grades.includes(Number(grade))).map(s=>{
+  const bankIds=standardBanks[s.code]||[],pool=evidence.banks.filter(b=>bankIds.includes(b.id)&&b.subject===subject).flatMap(b=>b.items);
+  const refs=catalog.filter(u=>u.subject===subject&&s.grades.includes(u.grade)).flatMap(unit=>unit.lessons.map(lesson=>({unit,lesson,binding:binding(unit,lesson)}))).filter(x=>x.binding&&standardForBinding(x.binding)===s.code);
+  for(const ref of refs.filter(x=>x.binding.kind==='science'))for(const id of ref.binding.ids){const q=science.banks[ref.binding.topic].find(q=>q.id===id);if(q&&!pool.some(x=>x.evidenceId==='standard-'+id))pool.push({evidenceId:'standard-'+id,prompt:q.prompt,answer:q.answer,choices:[q.answer,...q.wrong],explanation:q.explanation,...(q.material?{scienceMaterial:q.material}:{})});}
+  if(!pool.length&&!refs.length)return null;
+  const b=pool.length?{kind:'evidence',pool,ids:pool.map(q=>q.evidenceId),essayIds:pool.filter(q=>!q.knowledgeOnly).map(q=>q.evidenceId),label:s.statement}:refs[0].binding;
+  return {...s,refs,binding:b,coverage:pool.length?evidence.banks.filter(b=>bankIds.includes(b.id)).map(b=>b.label):[...new Set(refs.map(x=>x.binding.label))]};
+ }).filter(Boolean);
+}
+function lookupStandard(subject,grade,code){const s=standards(subject,grade).find(s=>s.code===code);return s?{standard:s,unit:{name:'['+s.code+'] '+s.statement,source:s.source,book:'2022 개정 교육과정'},lesson:{name:s.statement,id:s.code},binding:s.binding}:null;}
+function evidencePool(b){return b.pool||evidence.banks.find(row=>row.id===b.bankId).items.filter(q=>b.ids.includes(q.evidenceId));}
+function pickEvidence(pool,count,seed,exclude=[],indexes){
+ const r=rng(seed),excluded=new Set(exclude),groups=new Map(),seenQuestions=new Set();
+ const questionKey=q=>JSON.stringify([q.prompt,q.historyVolume?null:q.photo?.src||q.detail||q.scienceMaterial]);
+ // Keep the five questions for one reading together, with old material still in the draw.
+ for(const q of shuffled(pool,r)){const key=q.passageId||'single-'+q.evidenceId;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(q);}
+ let bundles=shuffled([...groups.values()],r);bundles.sort((a,b)=>Number(a.some(q=>excluded.has(q.evidenceId)))-Number(b.some(q=>excluded.has(q.evidenceId))));
+ let selected=[];
+ for(const group of bundles){const fresh=[];for(const q of group){const k=questionKey(q);if(!excluded.has(q.evidenceId)&&!seenQuestions.has(k)&&fresh.length<count-selected.length){fresh.push(q);seenQuestions.add(k);}}selected.push(...fresh);if(selected.length===count)break;}
+ if(selected.length<count){const rest=shuffled(pool.filter(q=>!selected.includes(q)),r);rest.sort((a,b)=>Number(excluded.has(a.evidenceId))-Number(excluded.has(b.evidenceId)));for(const q of rest){const k=questionKey(q);if(!seenQuestions.has(k)){selected.push(q);seenQuestions.add(k);}if(selected.length===count)break;}}
+ if(selected.length!==count)throw Error('겹치지 않는 문제가 부족해요. 문항 수를 줄여 주세요.');
+ if(indexes!==undefined){if(!Array.isArray(indexes)||indexes.length!==count||new Set(indexes).size!==count||indexes.some(i=>!Number.isInteger(i)||i<0||i>=pool.length))throw Error('저장된 문항 구성을 확인해 주세요.');selected=indexes.map(i=>pool[i]);}
+ const regrouped=new Map();for(const q of selected){const key=q.passageId||q.evidenceId;if(!regrouped.has(key))regrouped.set(key,[]);regrouped.get(key).push(q);}selected=[...regrouped.values()].flat();
+ // Separate the choice shuffle from the draw so a saved selection always replays exactly.
+ const cr=rng(Number(seed)^0x9e3779b9),seen=new Set();
+ return selected.map(q=>{const item={...q,choices:shuffled(q.choices,cr),poolIndex:pool.indexOf(q)};if(q.passageId){item.readingGroup=q.passageId;if(!seen.has(q.passageId)){item.readingTitle=q.passageTitle;item.readingPassage=q.detail;seen.add(q.passageId);}delete item.detail;}return item;});
+}
+
 function formats(b){return !b?[]:b.kind==='writing'?[['essay','서술형']]:b.essayIds&&!b.essayIds.length?[['choice','객관식'],['short','단답형']]:['math','fraction','decimal','table','division','numbers','speed'].includes(b.kind)?[['short','단답형']]:[['choice','객관식'],['short','단답형'],['essay','서술형']]}
 function counts(b,responseFormat){if(!b)return [];const max=responseFormat==='essay'&&b.essayIds?b.essayIds.length:['science','evidence'].includes(b.kind)?b.ids.length:b.kind==='emotion'?emotions.length:b.kind==='writing'?6:b.kind==='table'?9:b.kind==='economy'?12:20;return [1,2,3,4,5,6,8,10,15,20].filter(n=>n<=max)}
 function rng(seed){let n=(Number(seed)>>>0)||1;return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296}}
 function shuffled(a,r){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function generate(options,C){
  const {subject,grade,semester,unitId,lessonId,count,seed,responseFormat='short'}=options;
- const selected=lookup(subject,grade,semester,unitId,lessonId);if(!selected)throw Error('학년·학기·단원·학습 내용을 다시 골라 주세요.');
+ const selected=options.standardCode?lookupStandard(subject,grade,options.standardCode):lookup(subject,grade,semester,unitId,lessonId);if(!selected)throw Error('학년·학기·단원·학습 내용을 다시 골라 주세요.');
  const {unit,lesson,binding:b}=selected;if(!b)throw Error('이 학습 내용의 문제는 준비 중이에요. 다른 학습 내용을 골라 주세요.');
  if(!counts(b,responseFormat).includes(Number(count))||!formats(b).some(([f])=>f===responseFormat))throw Error('선택한 학습 내용의 문제 유형과 문항 수를 확인해 주세요.');
  const r=rng(seed),int=(a,z)=>a+Math.floor(r()*(z-a+1));let items=[];
- if(b.kind==='evidence'){const bank=evidence.banks.find(row=>row.id===b.bankId);items=shuffled(bank.items.filter(q=>(responseFormat==='essay'&&b.essayIds?b.essayIds:b.ids).includes(q.evidenceId)),r).slice(0,Number(count)).map(q=>({...q,choices:shuffled(q.choices,r)}));}
+ if(selected.standard&&!b.pool){const refs=shuffled(selected.standard.refs,r),seen=new Set();let tries=0;while(items.length<Number(count)&&tries++<2000){const ref=refs[(tries-1)%refs.length],q=generate({subject,grade:ref.unit.grade,semester:ref.unit.semester,unitId:ref.unit.id,lessonId:ref.lesson.id,count:1,seed:int(1,4294967295),responseFormat:formats(ref.binding).some(([f])=>f==='choice')?'choice':'short'},C).items[0],key=JSON.stringify([q.prompt,q.detail,q.scienceMaterial]);if(!seen.has(key)){seen.add(key);items.push(q);}}if(items.length!==Number(count))throw Error('겹치지 않는 문제가 부족해요. 문항 수를 줄여 주세요.');}
+ else if(b.kind==='evidence'){items=pickEvidence(evidencePool(b).filter(q=>responseFormat!=='essay'||!q.knowledgeOnly),Number(count),seed,options.excludeEvidenceIds,options.itemIndexes);}
  else if(b.kind==='math'){
   const s=C.generate({subject:'math',grade,topic:b.topic,type:b.type,count:[5,10,15,20].find(n=>n>=Number(count)),seed});items=s.items.slice(0,Number(count)).map(q=>({...q,explanation:q.explanation||(b.topic==='hundreds'||b.topic==='addition'?'같은 자리끼리 계산합니다. '+q.prompt+' '+q.answer:b.topic==='fraction'?'분모를 확인하고 분자를 계산한 뒤 약분합니다. '+q.prompt+' '+q.answer:'연산 순서와 식을 확인하여 계산합니다. '+q.prompt+' '+q.answer)}));
  }else if(b.kind==='science'){
@@ -129,8 +192,8 @@ function generate(options,C){
   if(!q)throw Error('연결된 문제 유형을 확인해 주세요.');const key=JSON.stringify([q.prompt,q.detail,q.scienceMaterial]);if(seen.has(key))continue;seen.add(key);items.push(q);
  }if(items.length!==Number(count))throw Error('겹치지 않는 문제가 부족해요. 문항 수를 줄여 주세요.');}
  items=items.map(q=>{if(responseFormat==='choice')return q;const prompt=q.prompt.replace(/알맞은 것은 무엇인가요\?/,'알맞은 답을 쓰세요.').replace(/중 무엇에 해당하나요\?/,'중 어디에 해당하는지 쓰세요.');if(responseFormat==='essay')return {...q,prompt:b.kind==='writing'?q.prompt:prompt+' 글이나 자료에서 근거를 찾아 까닭도 설명해 보세요.',choices:[],format:'essay',modelExplanation:q.explanation};return {...q,prompt,choices:[],format:'short'}});
- const curriculum={revision:'2022',semester:Number(semester),unitId,lessonId,unit:unit.name,lesson:lesson.name,practice:b.label,source:unit.source,book:unit.book};
- return {subject,grade:Number(grade),topic:'textbook-learning',type:'',count:Number(count),seed:Number(seed)>>>0,difficulty:'basic',responseFormat,alignment:null,title:`${grade}학년 ${semester}학기 · ${unit.name}`,curriculum,items:items.map(q=>({...q,curriculumLesson:lessonId}))};
+ const curriculum={...(selected.standard?{standardCode:selected.standard.code,standardStatement:selected.standard.statement}:{}),revision:'2022',semester:Number(semester),unitId,lessonId,unit:unit.name,lesson:lesson.name,practice:b.label,source:unit.source,book:unit.book};
+ return {subject,grade:Number(grade),topic:'textbook-learning',type:'',count:Number(count),seed:Number(seed)>>>0,difficulty:'basic',responseFormat,alignment:selected.standard?{code:selected.standard.code,summary:selected.standard.statement,scope:'2022 개정 · 연결된 학습 내용',source:selected.standard.source}:null,title:selected.standard?`${grade}학년 · [${selected.standard.code}]`:`${grade}학년 ${semester}학기 · ${unit.name}`,curriculum,items:items.map(q=>({...q,curriculumLesson:lessonId}))};
 }
-return {catalog,sourceCatalog,isCoreLesson,units,binding,lookup,formats,counts,generate};
+return {catalog,sourceCatalog,isCoreLesson,units,binding,lookup,formats,counts,generate,standards,lookupStandard};
 });

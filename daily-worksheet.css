@@ -306,3 +306,56 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
 #textbookControls details { font-size:.85rem; line-height:1.6; }
 .textbook-flow [hidden], #textbookControls[hidden] { display:none!important; }
 @media print { .textbook-flow { display:none!important; } }
+
+/* Compact lesson/standard controls leave the worksheet as the main surface. */
+@media screen {
+ .horizontal-worksheet .daily-intro{margin-bottom:12px;align-items:center}
+ .horizontal-worksheet .daily-intro h1{font-size:23px;margin:4px 0}
+ .horizontal-worksheet .daily-intro p{font-size:13px}
+ .horizontal-worksheet .daily-workspace{gap:18px}
+ .horizontal-worksheet .daily-workspace>#sheetForm.compact-learning{grid-template-columns:repeat(12,minmax(0,1fr));gap:10px 12px;padding:14px 18px}
+ .compact-learning .filter-heading,.compact-learning .scope-note{display:none!important}
+ .compact-learning .textbook-flow,.compact-learning #textbookControls{display:contents}
+ .compact-learning .learning-mode-bar{grid-column:1/-1;order:0;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:2px}
+ .learning-tabs{display:inline-flex;gap:3px;padding:3px;background:#edf2ef;border-radius:9px}
+ .learning-tabs button{border:0;background:transparent;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:700;color:#627168;cursor:pointer}
+ .learning-tabs button[aria-pressed=true]{color:#176956;background:white;box-shadow:0 1px 4px #183d271c}
+ .learning-tabs button:focus-visible{outline:2px solid #247b6b;outline-offset:2px}
+ .compact-learning #textPractice{padding:0;background:none;font-size:12px;color:#607166}
+ .compact-learning label{font-size:12px;gap:4px;min-width:0}
+ .compact-learning select{font-size:13px;height:37px;min-height:37px;padding:6px 28px 6px 9px;width:100%;max-width:100%;text-overflow:ellipsis}
+ .compact-learning .grade-control{grid-column:1;order:1!important}
+ .compact-learning .semester-control{grid-column:2;order:1}
+ .compact-learning .unit-control{grid-column:3/span 4;order:1}
+ .compact-learning .lesson-control{grid-column:7/span 6;order:1}
+ .compact-learning .standard-control{grid-column:2/span 11;order:1}
+ .compact-learning .format-control{grid-column:1/span 2;order:2}
+ .compact-learning .count-control{grid-column:3/span 2;order:2!important}
+ .horizontal-worksheet .compact-learning>label.print-option{grid-column:5/span 3;order:2;align-self:end;height:37px;margin:0;display:flex;align-items:center;gap:6px}
+ .horizontal-worksheet .compact-learning .filter-submit{grid-column:9/span 4;order:2;padding:0;border:0;align-self:end}
+ .compact-learning .filter-submit>span{display:none}
+ .compact-learning .filter-submit .daily-primary{min-width:0;width:100%;min-height:37px;font-size:13px;padding:7px 12px}
+ .compact-learning .learning-source{grid-column:1/-1;order:3;font-size:11px;color:#68766c;line-height:1.6;margin:0}
+ .learning-source summary{cursor:pointer;width:fit-content}
+ .learning-source p{margin:6px 0;max-width:1050px}
+ .horizontal-worksheet .compact-learning [hidden]{display:none!important}
+ @media(max-width:1000px){
+  .compact-learning .grade-control{grid-column:1/span 2}.compact-learning .semester-control{grid-column:3/span 2}
+  .compact-learning .unit-control{grid-column:5/span 8}.compact-learning .lesson-control{grid-column:1/-1}
+  .compact-learning .standard-control{grid-column:3/span 10}
+ }
+ @media(max-width:600px){
+  .horizontal-worksheet .daily-workspace>#sheetForm.compact-learning{padding:12px;gap:9px}
+  .compact-learning .learning-mode-bar{align-items:start;flex-wrap:wrap;gap:6px}
+  .compact-learning #textPractice{font-size:11px}
+  .learning-tabs button{padding:6px 12px}
+  .compact-learning .grade-control{grid-column:1/span 6}.compact-learning .semester-control{grid-column:7/span 6}
+  .compact-learning .unit-control,.compact-learning .lesson-control,.compact-learning .standard-control{grid-column:1/-1}
+  .compact-learning .format-control{grid-column:1/span 6}.compact-learning .count-control{grid-column:7/span 6}
+  .horizontal-worksheet .compact-learning>label.print-option{grid-column:1/span 5}
+  .horizontal-worksheet .compact-learning .filter-submit{grid-column:6/span 7;display:block}
+  .horizontal-worksheet .daily-intro h1{font-size:20px}
+ }
+}
+
+@media screen{.compact-learning #selectedStandard{font-size:12px;line-height:1.5;color:#56685e;font-weight:400}.horizontal-worksheet .compact-learning .filter-submit .daily-primary:hover,.horizontal-worksheet .compact-learning .filter-submit .daily-primary:focus-visible{background:#196653;color:#fff}}
