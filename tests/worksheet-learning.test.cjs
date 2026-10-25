@@ -15,7 +15,7 @@ test('every enabled learning target generates exactly its requested count and fo
  const coverage={};
  for(const u of T.catalog)for(const l of u.lessons){
   const b=T.binding(u,l);if(!b)continue;coverage[u.subject]=(coverage[u.subject]||0)+1;
-  for(const count of T.counts(b))for(const [responseFormat] of T.formats(b))for(const seed of [7,42]){
+  for(const [responseFormat] of T.formats(b))for(const count of T.counts(b,responseFormat))for(const seed of [7,42]){
    const o={subject:u.subject,grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count,seed,responseFormat};
    const s=T.generate(o,C);assert.deepEqual(s,T.generate(o,C));assert.equal(s.items.length,count);
    assert.equal(new Set(s.items.map(q=>JSON.stringify([q.prompt,q.detail,q.scienceMaterial]))).size,count);

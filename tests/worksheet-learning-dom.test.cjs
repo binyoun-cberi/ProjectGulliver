@@ -21,6 +21,10 @@ change(society,'textSemester','2');change(society,'textUnit',au.id);change(socie
 assert.equal(society.document.querySelectorAll('#questions > li').length,5);assert.ok(society.document.querySelector('.science-material table'));assert.match(society.document.querySelector('#questions').textContent,/가상 마을/);
 const savedSocial=load(society.location.search);assert.equal(savedSocial.document.querySelector('#questions').textContent,society.document.querySelector('#questions').textContent);
 change(society,'textFormat','essay');submit(society);assert.equal(society.document.querySelectorAll('.choice-list').length,0);assert.match(society.document.querySelector('#questions').textContent,/근거/);
+const history=load('?subject=social&grade=5&semester=2'),ht=history.WorksheetLearning,hu=ht.catalog.find(u=>u.lessons.some(l=>ht.binding(u,l)?.bankId==='goryeo-culture')),hl=hu.lessons.find(l=>ht.binding(hu,l)?.bankId==='goryeo-culture');
+change(history,'textSemester','2');change(history,'textUnit',hu.id);change(history,'textLesson',hl.id);change(history,'textFormat','choice');change(history,'count','20');submit(history);
+assert.equal(history.document.querySelectorAll('#questions > li').length,20);assert.ok(history.document.querySelector('.history-photo img'));assert.match(history.document.querySelector('.history-photo figcaption').textContent,/공공누리/);
+change(history,'textFormat','essay');assert.ok(![...history.document.querySelector('#count').options].some(o=>o.value==='20'));submit(history);assert.ok(history.document.querySelectorAll('#questions > li').length);assert.equal(history.document.querySelectorAll('.choice-list').length,0);
 console.log('PASS: textbook generation, table rendering, saved URL replay, semester pending, stale-print clearing, mode switch, English, legacy URL');
 
 });

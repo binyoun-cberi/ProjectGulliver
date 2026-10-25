@@ -11,7 +11,7 @@ function selected(){return T.lookup(subject,Number($('grade').value),Number($('t
 function clear(message){displayedSeed=null;E.clear();$('sheetStatus').textContent=message;$('sheetMeta').textContent='';for(const id of ['regenerate','toggleAnswers','printOnly','printWithAnswers'])$(id).disabled=true;}
 function summary(){if(!active)return;$('filterSelectionSummary').textContent=`${$('grade').value}학년 ${$('textSemester').value}학기 · ${chosen?.unit.name||'단원 선택'} · ${$('count').value}문항`;}
 function counts(){
- chosen=selected();const b=chosen?.binding,prior=$('count').value,available=T.counts(b);$('count').replaceChildren();
+ chosen=selected();const b=chosen?.binding,prior=$('count').value,available=T.counts(b,$('textFormat').value);$('count').replaceChildren();
  for(const n of available)option($('count'),String(n),n+'문항');if(available.includes(Number(prior)))$('count').value=prior;else if(available.includes(5))$('count').value='5';
  $('count').disabled=!b;$('textFormat').disabled=!b;form.querySelector('button[type="submit"]').disabled=!b;
  $('textPractice').textContent=b?b.label+' · 선택한 차시와 연결한 연습이에요.': '이 학습 내용의 문제는 준비 중이에요. 다른 학습 내용을 골라 주세요.';
@@ -61,5 +61,5 @@ form.addEventListener('change',e=>{
  // lesson's bounded choices afterwards; never reuse the legacy bank capacity.
  if(e.target.id!=='largePrint')counts();summary();
 });
-sync(true);if(active){if(T.counts(chosen?.binding).includes(Number(query.get('count'))))$('count').value=query.get('count');if(query.has('lesson')&&query.get('lesson')!==selected()?.lesson.id)clear('저장된 단원과 학습 내용을 찾지 못했어요. 다시 골라 주세요.');else if(chosen?.binding)make(query.has('seed')?Number(query.get('seed')):Date.now());}
+sync(true);if(active){if(T.counts(chosen?.binding,$('textFormat').value).includes(Number(query.get('count'))))$('count').value=query.get('count');if(query.has('lesson')&&query.get('lesson')!==selected()?.lesson.id)clear('저장된 단원과 학습 내용을 찾지 못했어요. 다시 골라 주세요.');else if(chosen?.binding)make(query.has('seed')?Number(query.get('seed')):Date.now());}
 })();

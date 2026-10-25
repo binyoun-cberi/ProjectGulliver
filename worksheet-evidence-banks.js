@@ -1,4 +1,4 @@
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetEvidence=api;})(globalThis,()=>{
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./daily-worksheet-core.js'):root.DailyWorksheetCore,typeof module==='object'&&module.exports?require('./data/history-photo-bank.js'):root.HistoryPhotoBank);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetEvidence=api;})(globalThis,(core,photos)=>{
 'use strict';
 // Original classroom cases. Each item has its own evidence, distractors and
 // rationale. No textbook passage, photograph or ready-made test is reproduced.
@@ -418,6 +418,47 @@ bank('goryeo-culture','social',[5],/고려의 문화를/,'고려청자·인쇄�
  ['금속활자 인쇄의 특징은 무엇인가요?','낱글자 활자를 조합하여 다른 글도 인쇄할 수 있다','책의 모든 글자를 붓으로만 한 번씩 써야 한다','돌 도구로 곡식의 이삭을 거둔다','인쇄 기술 설명: 금속으로 낱글자 모양을 만들고 필요한 순서로 배열해 인쇄한다. 글의 내용에 따라 활자의 배열을 바꿀 수 있다.','낱글자를 배열해 인쇄하고 다른 글에 다시 조합할 수 있는 점이 활자 인쇄의 특징입니다.'],
  ['기술 발달을 살피는 데 알맞은 자료는 무엇인가요?','유물의 제작 흔적과 인쇄·제작에 관한 기록','유물을 소개한 안내판의 크기만','박물관 관람객의 오늘 옷차림만','탐구 목적: 고려 사람들이 도자기와 인쇄물을 어떻게 만들었는지 알아보려 한다.','제작 흔적과 관련 기록이 실제 기술과 제작 과정을 이해하는 근거가 됩니다.'],
  ['자료를 바르게 비교한 것은 무엇인가요?','청자는 도자 기술, 금속활자는 인쇄 기술을 살피는 근거이다','두 유물은 모두 청동기 농사의 도구이다','두 유물은 모든 주민이 같은 교육을 받았음을 확정한다',table('고려 문화 자료',['자료','특징'],[['청자','흙·유약·무늬를 활용한 도자기'],['금속활자','글자를 배열해 인쇄하는 도구']]),'각 유물의 재료·쓰임을 구별하면 서로 다른 기술 분야를 살필 수 있습니다.']]);
+
+// Reviewed per-lesson references into the existing core bank, never an era fallback.
+const historyReuse={
+ paleolithic:['prehistoric',[16,18,25,28]],neolithic:['prehistoric',[3,4,7,8,11,13,17,19,30,31,41,42]],
+ 'bronze-age':['prehistoric',[2,5,9,12,33,36,38]],gojoseon:['prehistoric',[0,1,6,14,37]],
+ goguryeo:['ancient',[0,8,10,17,18,23,33,38]],baekje:['ancient',[1,5,11,16,20,29,30,31,32]],
+ 'silla-gaya':['ancient',[2,3,4,9,14,21,34,36]],balhae:['ancient',[26,40,41]],
+ 'silla-unification':['ancient',[12,15,24]],'goryeo-founding':['goryeo',[0,1,7,28]],
+ 'goryeo-society':['goryeo',[13,17,26,29,38]],'goryeo-defense':['goryeo',[4,6,18,19,25,30,31,32,33,39,41]],
+ 'goryeo-culture':['goryeo',[2,3,5,10,11,12,20,21,35,36,40]]
+};
+function reuseBank(id,grade,pattern,label,topic,indexes){bank(id,'social',[grade],pattern,label,[]);historyReuse[id]=[topic,indexes]}
+reuseBank('joseon-foundation',5,/유교를 바탕으로 건국된 조선/,'조선의 건국·수도·통치 제도','joseon',[0,1,8,28,29]);
+reuseBank('joseon-science',5,/조선 전기의 과학 기술과 문화/,'훈민정음과 과학 기구','joseon',[2,3,4,5,6,12,15,30,31,32,33]);
+reuseBank('joseon-wars',5,/조선은 임진왜란과 병자호란/,'임진왜란·병자호란의 인물과 대응','joseon',[11,34,35,36]);
+reuseBank('joseon-late-culture',5,/조선 후기 새롭게 발달한 문화/,'조선 후기 지도·풍속화·실학','joseon',[14,40,41,42]);
+reuseBank('sovereignty-resistance',5,/을사늑약 이후 나라를 지키기/,'국권 침탈에 맞선 의병·의거·국채 보상','modern',[16,17,18]);
+reuseBank('independence-1919',5,/3[∙·]1 운동과 대한민국 임시 정부/,'3·1 운동과 임시 정부','modern',[2,3,9,10,38]);
+reuseBank('independence-struggle',5,/일제에 맞서 나라를 되찾기/,'독립군·의열 활동·우리말 지키기','modern',[19,20,21,22,23,24,25,36]);
+reuseBank('liberation',5,/8[∙·]15 광복으로 달라진/,'광복과 분단의 기본 사실','modern',[4,39]);
+reuseBank('republic-founding',5,/대한민국 정부 수립 과정/,'광복과 대한민국 정부 수립 순서','modern',[5,14]);
+reuseBank('korean-war',5,/6[∙·]25 전쟁으로 달라진|6[∙·]25 전쟁의 피해/,'전쟁·피란·정전','modern',[12,13,40]);
+reuseBank('democratic-april',6,/국민이 지킨 민주주의/,'4·19 혁명의 계기','modern',[41]);
+reuseBank('democratic-june',6,/국민이 되찾은 민주주의/,'6월 민주 항쟁과 대통령 직선제','modern',[42]);
+const photoLinks={
+ 'bronze-age':['고인돌'],baekje:['백제 금동대향로'],'silla-gaya':['첨성대','천마도'],
+ 'goryeo-culture':['팔만대장경','직지','삼국사기','삼국유사'],
+ 'joseon-foundation':['경복궁','경국대전','종묘','사직단'],
+ 'joseon-science':['측우기','앙부일구','천상열차분야지도'],'joseon-late-culture':['인왕제색도','세한도']
+};
+for(const [id,[topic,indexes]] of Object.entries(historyReuse)){
+ const b=banks.find(b=>b.id===id),inventory=core.historyItems(topic),seen=new Set();
+ for(const index of indexes){const q=inventory[index];if(!q)throw Error('Missing legacy history reference: '+topic+'/'+index);
+  const key=q.answer.replace(/\s/g,'');if(seen.has(key))continue;seen.add(key);
+  b.items.push({...q,evidenceId:'legacy-'+q.id,legacyHistoryId:q.id,knowledgeOnly:true,detail:''});
+ }
+ for(const name of photoLinks[id]||[]){const p=photos.find(p=>p.name===name);if(!p)throw Error('Missing history photo: '+name);
+  const wrong=photos.filter(p=>p.name!==name).slice(0,2).map(p=>p.name);
+  b.items.push({evidenceId:'photo-'+name,legacyPhotoName:name,prompt:'사진과 설명에 해당하는 국가유산·자료의 이름은 무엇인가요?',answer:name,choices:[name,...wrong],detail:p.clue,photo:{src:p.src,credit:p.credit,sourceUrl:p.sourceUrl,license:p.license},explanation:p.clue,source:p.sourceUrl,sourceLabel:p.credit});
+ }
+}
 
 function find(unit,lesson){
  const b=banks.find(b=>b.subject===unit.subject&&b.grades.includes(unit.grade)&&b.pattern.test(lesson.name));if(!b)return null;

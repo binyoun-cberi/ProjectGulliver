@@ -2,11 +2,11 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,68);assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),335);
+ assert.equal(E.banks.length,80);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName).length,0),335);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
-  assert.ok(!ids.has(q.evidenceId));ids.add(q.evidenceId);
+  assert.ok(!ids.has(b.id+q.evidenceId));ids.add(b.id+q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
-  assert.ok(q.detail?.length>15||q.scienceMaterial?.rows.length);assert.ok(q.explanation.length>20);
+  assert.ok(q.knowledgeOnly&&q.source||q.detail?.length>15||q.scienceMaterial?.rows.length);assert.ok(q.explanation.length>10);
   if(q.scienceMaterial){assert.equal(q.scienceMaterial.kind,'table');for(const row of q.scienceMaterial.rows)assert.equal(row.length,q.scienceMaterial.headers.length);}
  }
 });
@@ -32,8 +32,8 @@ test('numeric answers and the limits of inference have evidence in the displayed
 });
 test('essay conversion preserves source evidence and rationale without claiming an unshown picture',()=>{
  const before=JSON.stringify(E.banks);
- for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||T.binding(u,l)?.kind!=='evidence')continue;
-  const s=T.generate({subject:u.subject,grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:Math.min(5,b.items.length),responseFormat:'essay',seed:42},C);
+ for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||T.binding(u,l)?.kind!=='evidence'||!T.formats(T.binding(u,l)).some(([f])=>f==='essay'))continue;
+  const s=T.generate({subject:u.subject,grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:Math.min(5,T.binding(u,l).essayIds?.length??b.items.length),responseFormat:'essay',seed:42},C);
   for(const q of s.items){assert.match(q.prompt,/근거/);assert.equal(q.modelExplanation,q.explanation);assert.equal(q.choices.length,0);assert.ok(q.detail||q.scienceMaterial);}
  }
  assert.equal(JSON.stringify(E.banks),before);
@@ -128,7 +128,7 @@ test('early history evidence stays within each era and distinguishes traces from
  const added=['paleolithic','neolithic','bronze-age','gojoseon','goguryeo','baekje','silla-gaya','balhae'];
  const reached=[];for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||!added.includes(b.id))continue;assert.equal(u.grade,5);assert.equal(u.semester,2);reached.push(b.id);
   const sheet=T.generate({subject:u.subject,grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:4,responseFormat:'choice',seed:42},C);
-  assert.equal(sheet.items.length,4);assert.ok(sheet.items.every(q=>q.evidenceId.startsWith(b.id+'-')));
+  assert.equal(sheet.items.length,4);assert.ok(sheet.items.every(q=>b.items.some(item=>item.evidenceId===q.evidenceId)));
   assert.equal(E.find({...u,grade:4},l),null);
  }
  assert.deepEqual(reached.sort(),added.sort());
@@ -141,11 +141,25 @@ test('early history evidence stays within each era and distinguishes traces from
 test('Silla unification and Goryeo lessons keep periods, activities and event order distinct',()=>{
  const added=['silla-unification','goryeo-founding','goryeo-society','goryeo-defense','goryeo-culture'];
  const reached=[];for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||!added.includes(b.id))continue;reached.push(b.id);assert.equal(u.grade,5);assert.equal(u.semester,2);
-  const sheet=T.generate({subject:u.subject,grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:5,responseFormat:'choice',seed:42},C);assert.equal(sheet.items.length,5);assert.ok(sheet.items.every(q=>q.evidenceId.startsWith(b.id+'-')));
+  const sheet=T.generate({subject:u.subject,grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:5,responseFormat:'choice',seed:42},C);assert.equal(sheet.items.length,5);assert.ok(sheet.items.every(q=>b.items.some(item=>item.evidenceId===q.evidenceId)));
  }
  assert.deepEqual(reached.sort(),added.sort());
  const unification=E.banks.find(b=>b.id==='silla-unification').items;const years=unification[0].scienceMaterial.rows.map(r=>parseInt(r[1]));assert.deepEqual(years,[660,668,676]);assert.match(unification[3].answer,/모든 영역까지.*것은 아니다/);
  const founding=E.banks.find(b=>b.id==='goryeo-founding').items[0];assert.deepEqual(founding.scienceMaterial.rows.map(r=>parseInt(r[1])),[918,936]);
  const defense=E.banks.find(b=>b.id==='goryeo-defense').items;assert.match(defense[0].answer,/협상/);assert.match(defense[1].answer,/강감찬.*거란/);assert.match(defense[3].answer,/주민들의 피해/);
  const culture=E.banks.find(b=>b.id==='goryeo-culture').items;assert.match(culture[0].answer,/다른 색 흙/);assert.match(culture[2].answer,/낱글자 활자를 조합/);
+});
+test('legacy history is reused without changing its bank, with photo rights and separate essay capacity',()=>{
+ assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),489);
+ const original=C.historyItems('goryeo');const copy=C.historyItems('goryeo');copy[0].answer='changed';copy[0].choices[0]='changed';assert.deepEqual(C.historyItems('goryeo'),original);
+ const used=E.banks.flatMap(b=>b.items.filter(q=>q.legacyHistoryId));assert.equal(used.length,137);assert.equal(new Set(used.map(q=>q.legacyHistoryId)).size,137);
+ for(const b of E.banks){const known=b.items.filter(q=>q.legacyHistoryId);assert.equal(new Set(known.map(q=>q.answer.replace(/\s/g,''))).size,known.length);
+  for(const q of known){const [topic,index]=q.legacyHistoryId.split('-');assert.equal(q.prompt,C.historyItems(topic)[Number(index)].prompt);assert.equal(q.answer,C.historyItems(topic)[Number(index)].answer);}
+ }
+ const photos=E.banks.flatMap(b=>b.items.filter(q=>q.photo));assert.equal(photos.length,17);for(const q of photos){assert.match(q.photo.license,/공공누리/);assert.ok(q.photo.credit);assert.ok(require('fs').existsSync(require('path').resolve(__dirname,'..',q.photo.src)));}
+ const u=T.catalog.find(u=>u.lessons.some(l=>T.binding(u,l)?.bankId==='goryeo-culture')),l=u.lessons.find(l=>T.binding(u,l)?.bankId==='goryeo-culture'),b=T.binding(u,l);assert.equal(Math.max(...T.counts(b)),20);assert.ok(Math.max(...T.counts(b,'essay'))<20);
+ const options={subject:'social',grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,seed:42};
+ assert.ok(T.generate({...options,count:20,responseFormat:'choice'},C).items.some(q=>q.photo));
+ assert.throws(()=>T.generate({...options,count:20,responseFormat:'essay'},C),/문항 수/);
+ assert.ok(T.generate({...options,count:5,responseFormat:'essay'},C).items.every(q=>!q.knowledgeOnly));
 });

@@ -55,7 +55,7 @@ function units(subject,grade,semester){return catalog.filter(u=>u.subject===subj
 function binding(unit,lesson){
  if(!isCoreLesson(lesson))return null;
  const n=lesson.name;
- const extra=evidence.find(unit,lesson);if(extra)return {kind:'evidence',bankId:extra.id,ids:extra.items.map(q=>q.evidenceId),label:extra.label};
+ const extra=evidence.find(unit,lesson);if(extra)return {kind:'evidence',bankId:extra.id,ids:extra.items.map(q=>q.evidenceId),essayIds:extra.items.filter(q=>!q.knowledgeOnly).map(q=>q.evidenceId),label:extra.label};
  if(unit.subject==='math'){
   const g=unit.grade;
   if(g===3&&/세 자리 수의 덧셈/.test(n))return {kind:'math',topic:'hundreds',type:'add-ones-none',label:'세 자리 수 덧셈 · 받아올림 없는 계산'};
@@ -94,17 +94,17 @@ function binding(unit,lesson){
  return null;
 }
 function lookup(subject,grade,semester,unitId,lessonId){const unit=units(subject,grade,semester).find(u=>u.id===unitId),lesson=unit?.lessons.find(l=>l.id===lessonId);return unit&&lesson?{unit,lesson,binding:binding(unit,lesson)}:null}
-function formats(b){return !b?[]:b.kind==='writing'?[['essay','서술형']]:['math','fraction','decimal','table','division','numbers','speed'].includes(b.kind)?[['short','단답형']]:[['choice','객관식'],['short','단답형'],['essay','서술형']]}
-function counts(b){if(!b)return [];const max=['science','evidence'].includes(b.kind)?b.ids.length:b.kind==='emotion'?emotions.length:b.kind==='writing'?6:b.kind==='table'?9:b.kind==='economy'?12:20;return [1,2,3,4,5,6,8,10,15,20].filter(n=>n<=max)}
+function formats(b){return !b?[]:b.kind==='writing'?[['essay','서술형']]:b.essayIds&&!b.essayIds.length?[['choice','객관식'],['short','단답형']]:['math','fraction','decimal','table','division','numbers','speed'].includes(b.kind)?[['short','단답형']]:[['choice','객관식'],['short','단답형'],['essay','서술형']]}
+function counts(b,responseFormat){if(!b)return [];const max=responseFormat==='essay'&&b.essayIds?b.essayIds.length:['science','evidence'].includes(b.kind)?b.ids.length:b.kind==='emotion'?emotions.length:b.kind==='writing'?6:b.kind==='table'?9:b.kind==='economy'?12:20;return [1,2,3,4,5,6,8,10,15,20].filter(n=>n<=max)}
 function rng(seed){let n=(Number(seed)>>>0)||1;return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296}}
 function shuffled(a,r){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function generate(options,C){
  const {subject,grade,semester,unitId,lessonId,count,seed,responseFormat='short'}=options;
  const selected=lookup(subject,grade,semester,unitId,lessonId);if(!selected)throw Error('학년·학기·단원·학습 내용을 다시 골라 주세요.');
  const {unit,lesson,binding:b}=selected;if(!b)throw Error('이 학습 내용의 문제는 준비 중이에요. 다른 학습 내용을 골라 주세요.');
- if(!counts(b).includes(Number(count))||!formats(b).some(([f])=>f===responseFormat))throw Error('선택한 학습 내용의 문제 유형과 문항 수를 확인해 주세요.');
+ if(!counts(b,responseFormat).includes(Number(count))||!formats(b).some(([f])=>f===responseFormat))throw Error('선택한 학습 내용의 문제 유형과 문항 수를 확인해 주세요.');
  const r=rng(seed),int=(a,z)=>a+Math.floor(r()*(z-a+1));let items=[];
- if(b.kind==='evidence'){const bank=evidence.banks.find(row=>row.id===b.bankId);items=shuffled(bank.items.filter(q=>b.ids.includes(q.evidenceId)),r).slice(0,Number(count)).map(q=>({...q,choices:shuffled(q.choices,r)}));}
+ if(b.kind==='evidence'){const bank=evidence.banks.find(row=>row.id===b.bankId);items=shuffled(bank.items.filter(q=>(responseFormat==='essay'&&b.essayIds?b.essayIds:b.ids).includes(q.evidenceId)),r).slice(0,Number(count)).map(q=>({...q,choices:shuffled(q.choices,r)}));}
  else if(b.kind==='math'){
   const s=C.generate({subject:'math',grade,topic:b.topic,type:b.type,count:[5,10,15,20].find(n=>n>=Number(count)),seed});items=s.items.slice(0,Number(count)).map(q=>({...q,explanation:q.explanation||(b.topic==='hundreds'||b.topic==='addition'?'같은 자리끼리 계산합니다. '+q.prompt+' '+q.answer:b.topic==='fraction'?'분모를 확인하고 분자를 계산한 뒤 약분합니다. '+q.prompt+' '+q.answer:'연산 순서와 식을 확인하여 계산합니다. '+q.prompt+' '+q.answer)}));
  }else if(b.kind==='science'){
