@@ -3,9 +3,13 @@ const DATA={"version":1,"groups":[["market-activities","시장경제에서 이�
 function activate({banks,bank}){
  const expanded=[];
  const oldBanks={ 'market-activities':'economic-work','growth-daily-change':'economic-growth-effects','trade-definition':'trade-reason','world-population-pattern':'social-fill-world-population-pattern','population-environment':'social-fill-population-environment','populous-countries':'social-fill-populous-countries','population-density':'social-fill-world-population-density','global-challenges':'global-problems'};
- const prompts=['이 사례에 드러난 경제활동의 특징은 무엇인가요?','자료에 나타난 사람들이 실제로 한 일은 무엇인가요?','이런 활동이 이루어진 까닭은 무엇인가요?','자료에서 예상하거나 확인한 문제는 무엇인가요?','자료에 나타난 개선 방법이나 대응은 무엇인가요?'];
+ const economyPrompts=['이 사례에 드러난 경제활동의 특징은 무엇인가요?','자료에 나타난 사람들이 실제로 한 일은 무엇인가요?','이런 활동이 이루어진 까닭은 무엇인가요?','자료에서 예상하거나 확인한 문제는 무엇인가요?','자료에 나타난 개선 방법이나 대응은 무엇인가요?'];
+ const populationPrompts=['자료에서 알 수 있는 인구 분포나 구조의 특징은 무엇인가요?','학생들이 인구를 이해하려고 실제로 조사하거나 비교한 것은 무엇인가요?','그런 분포나 조사 방법이 나타난 까닭은 무엇인가요?','인구 자료를 해석할 때 주의할 점은 무엇인가요?','자료에서 제안한 추가 조사나 대응 방법은 무엇인가요?'];
+ const globalPrompts=['사례에서 확인한 지구촌 문제나 협력의 특징은 무엇인가요?','지구촌 문제를 살펴보기 위해 한 활동은 무엇인가요?','해당 문제나 협력이 발생한 까닭은 무엇인가요?','해결 과정에서 예상되거나 확인된 어려움은 무엇인가요?','자료에 나타난 국제적 해결 노력은 무엇인가요?'];
  for(const [id,lessonName,label,cases] of DATA.groups){
   if(cases.length!==5)throw Error('다섯 사례가 필요합니다: '+id);
+  const prompts=id.startsWith('global-')?globalPrompts:['world-population-pattern','population-environment','populous-countries','population-density'].includes(id)?populationPrompts:economyPrompts;
+  const explanations=['이 사례에서 핵심으로 설명하는 내용은 ','자료에 실제로 나타난 활동은 ','이 활동이나 현상이 나타난 까닭은 ','사례에서 드러난 주의점은 ','자료가 제안한 해결이나 조사 방법은 '];
   const rows=[];
   for(let i=0;i<cases.length;i++){
    const [title,passage,...facts]=cases[i];if(facts.length!==5||passage.length<60)throw Error('자료 구성이 올바르지 않음: '+id+' '+i);
@@ -13,7 +17,7 @@ function activate({banks,bank}){
     const answer=facts[j];
     const distractors=[...new Set(cases.filter((_,k)=>k!==i).map(row=>row[j+2]).filter(v=>v&&v!==answer))].slice(0,2);
     if(distractors.length<2)throw Error('오답 후보 부족: '+id+' '+i+' '+j);
-    rows.push(['「'+title+'」 '+prompts[j],answer,...distractors,passage,'자료의 구체적 사실과 관련된 선택지는 다음과 같습니다. '+answer]);
+    rows.push(['「'+title+'」 '+prompts[j],answer,...distractors,passage,explanations[j]+'‘'+answer+'’입니다.']);
    }
   }
   const oldId=oldBanks[id];
