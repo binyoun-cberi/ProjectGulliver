@@ -19,7 +19,7 @@ test('expanded social banks have 20 distinct, evidence-grounded questions and va
  for(const id of ids){
   const b=E.banks.find(x=>x.id===id);
   assert.ok(b,'missing '+id);
-  assert.ok(b.items.length>=20,id);
+  assert.ok(b.items.length>=25,id);
   const prompts=new Set(b.items.map(q=>JSON.stringify([q.prompt,q.detail||q.scienceMaterial])));
   assert.equal(prompts.size,b.items.length,id+' duplicated content');
   for(const q of b.items){
@@ -33,7 +33,7 @@ test('expanded social banks have 20 distinct, evidence-grounded questions and va
   }
  }
  const newlyAuthored=[...questionIds].filter(id=>id.startsWith('social-depth-'));
- assert.equal(newlyAuthored.length,285);
+ assert.equal(newlyAuthored.length,380);
 });
 
 test('all lessons using expanded social banks support 20 real questions without repetition',()=>{
