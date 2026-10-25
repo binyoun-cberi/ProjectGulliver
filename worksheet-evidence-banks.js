@@ -554,6 +554,7 @@ for(const [id,topic,index,prompt,answer,w1,w2,detail,explanation,source,sourceLa
 (typeof module==='object'&&module.exports?require('./worksheet-joseon-volume.js'):globalThis.WorksheetJoseonVolume)(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-social-depth.js'):globalThis.WorksheetSocialDepth)(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-social-geography.js'):globalThis.WorksheetSocialGeography)({bank,banks});
+(typeof module==='object'&&module.exports?require('./worksheet-social-world-economy.js'):globalThis.WorksheetSocialWorldEconomy)({bank,banks});
 function find(unit,lesson){
  const exactLessonName=lesson.name.replace(/^[①-⑳]\s*/, '');
  const exact=banks.find(b=>b.exactLessonName===exactLessonName&&b.subject===unit.subject&&b.grades.includes(unit.grade));
@@ -563,13 +564,13 @@ function find(unit,lesson){
  if(b.id==='transport-types')indexes=/옛날/.test(n)?[0,1]:[2,3,4];
  if(b.id==='transport-change')indexes=/불편/.test(n)?[3,4]:[0,1,2];
  if(b.id==='communication-types')indexes=/옛날/.test(n)?[1,2]:/오늘날/.test(n)?[3,4]:[0];
- if(b.id==='trade-reason')indexes=/무역이란/.test(n)?[0,4]:/이유/.test(n)?[1]:[2,3];
+ if(b.id==='trade-reason')indexes=/무역이란/.test(n)?null:/이유/.test(n)?[1]:[2,3];
  if(b.id==='social-life-change')indexes=/대처/.test(n)?[2,3,4]:[0,1];
  if(b.id==='customs')indexes=/풍습이란/.test(n)?[0]:/세시 풍속/.test(n)?[1,2,4]:/비교/.test(n)?[3]:[1,2];
  if(b.id==='resident-participation')indexes=/누가 관심/.test(n)?[4]:/자치란/.test(n)?[0,1]:/중요성/.test(n)?[1,4]:/참여하는 방법/.test(n)?[0,2]:[3];
  if(b.id==='environment-use')indexes=/변화/.test(n)?[2]:/태도/.test(n)?[3,4]:[0,1];
  if(b.id==='urban-life')indexes=/특색/.test(n)?[1,2]:/도시에 대해/.test(n)?[0]:[3,4];
- if(b.id==='economic-work')indexes=/일하는 사람/.test(n)?[1,3]:/기업은/.test(n)?[1,4]:[0,1,2,3,4];
+ if(b.id==='economic-work')indexes=/시장경제에서 이루어지는 다양한 경제활동/.test(n)?null:/일하는 사람/.test(n)?[1,3]:/기업은/.test(n)?[1,4]:[0,1,2,3,4];
  if(b.id==='media-role')indexes=/미디어란/.test(n)?[0,1]:[2,3,4];
  if(b.id==='media-judgment')indexes=/비판적/.test(n)?[0,1,2]:[3,4];
  if(b.id==='world-spatial-tools')indexes=/지구본과/.test(n)?[0,1]:/디지털/.test(n)?[2,3]:/활용/.test(n)?[4]:[0,1,2,3,4];
@@ -580,7 +581,7 @@ function find(unit,lesson){
  if(b.id==='regional-balance')indexes=/원인/.test(n)?[0]:/따른 문제/.test(n)?[1,2]:[3,4];
  if(b.id==='world-terrain-life')indexes=/세계의 다양한 지형 경관/.test(n)?null:/산지 지역/.test(n)?[0]:/하천 지역/.test(n)?[1]:/해안 지역/.test(n)?[2]:/생활 모습/.test(n)?[0,1,2,3]:[4];
  if(b.id==='world-climate-life')indexes=/열대와 건조/.test(n)?[0,1]:/온대 기후/.test(n)?[2]:/냉대와 한대/.test(n)?[3,4]:/고산 기후/.test(n)?[5]:null;
- if(b.id==='economic-growth-effects')indexes=/긍정/.test(n)?[0,1]:/발생한 문제를/.test(n)?[4]:/발생한 문제/.test(n)?[2,3]:[0,1];
+ if(b.id==='economic-growth-effects')indexes=/경제 성장으로 변화한 우리 생활 모습/.test(n)?null:/긍정/.test(n)?[0,1]:/발생한 문제를/.test(n)?[4]:/발생한 문제/.test(n)?[2,3]:[0,1];
  if(b.id==='law-constitution')indexes=/헌법은/.test(n)?[2,3,4]:[0,1];
  if(b.id==='rights-cases')indexes=/보장/.test(n)?[0,1]:[2,3,4];
  if(b.id==='rights-support')indexes=/법을 지키고/.test(n)?[0]:/우리 사회/.test(n)?[1,2]:[3,4];
