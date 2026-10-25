@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,55);assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),278);
+ assert.equal(E.banks.length,63);assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),310);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(q.evidenceId));ids.add(q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
@@ -123,4 +123,18 @@ test('civics expansion separates rights cases, constitutional principles and pub
  assert.match(assembly[1].answer,/심의.*확정/);assert.match(assembly[1].detail,/정부가 예산안을 편성/);
  assert.equal(government[1].answer,'정부');assert.match(government[1].detail,/편성해 국회에 제출/);
  assert.match(court[2].answer,/압력 없이 법에 따라/);assert.match(court[2].explanation,/마음대로 판단한다는 뜻이 아닙/);
+});
+test('early history evidence stays within each era and distinguishes traces from general claims',()=>{
+ const added=['paleolithic','neolithic','bronze-age','gojoseon','goguryeo','baekje','silla-gaya','balhae'];
+ const reached=[];for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||!added.includes(b.id))continue;assert.equal(u.grade,5);assert.equal(u.semester,2);reached.push(b.id);
+  const sheet=T.generate({subject:u.subject,grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:4,responseFormat:'choice',seed:42},C);
+  assert.equal(sheet.items.length,4);assert.ok(sheet.items.every(q=>q.evidenceId.startsWith(b.id+'-')));
+  assert.equal(E.find({...u,grade:4},l),null);
+ }
+ assert.deepEqual(reached.sort(),added.sort());
+ const bronze=E.banks.find(b=>b.id==='bronze-age').items;assert.match(bronze[1].answer,/함께 쓰/);assert.match(bronze[1].explanation,/즉시 모두 대체/);
+ const go=E.banks.find(b=>b.id==='gojoseon').items;assert.match(go[2].explanation,/일부 기록.*알려지지 않은/);
+ const wall=E.banks.find(b=>b.id==='goguryeo').items[0];assert.match(wall.detail,/실제 그림은 제시하지/);
+ const baekje=E.banks.find(b=>b.id==='baekje').items[0];assert.equal(baekje.answer,'한성 → 웅진 → 사비');
+ const balhae=E.banks.find(b=>b.id==='balhae').items[3];const years=balhae.scienceMaterial.rows.map(r=>parseInt(r[1]));assert.ok(years[0]<years[1]);assert.match(balhae.answer,/고구려 멸망 → 발해 건국/);
 });

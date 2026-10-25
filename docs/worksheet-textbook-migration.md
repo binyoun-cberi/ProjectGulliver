@@ -107,3 +107,16 @@
 - 법원의 역할·독립 설명: 대한민국 법원 사법제도 소개, https://jifi.scourt.go.kr/foreigner/ko/html/judiciary/justice/index.html .
 - 선거 원칙 참고: 중앙선거관리위원회 교육 자료, https://nec.go.kr/common/board/Download.do?bcIdx=149862&cbIdx=1181&streFileNm=f325ab16-4b2a-40cc-a6eb-06fcb4cfdb3a.pdf . 실제 선거 후보자·정당·현안은 다루지 않는다.
 - 관련 단위·DOM 검사 14개 통과. 새 차시 15개의 연결 범위, 예산 편성과 심의·확정의 구별, 법에 따른 독립적 재판, 기존 전체 생성·형식·재현성을 확인했다. 실제 브라우저 인쇄 시각 검증은 남았다.
+
+## 사회 빈 차시 6차 보강: 선사·고대 생활과 문화
+
+- 5학년 2학기 빈 차시 8개에 창작 문항 8묶음·32개를 추가했다. 구석기·신석기·청동기·고조선·고구려·백제·신라와 가야·발해 각각 4문항이다. 삼국 통일과 고려 이후 차시는 아직 준비 중이다.
+- 사회 연결은 130→138개, 준비 중은 83→75개다. 전체 연결은 232개, 준비 중은 994개다. 근거형 은행 전체는 63묶음·310문항이다. PR #133의 법·인권 보강과 합하면 23개 차시·72문항 추가다.
+- 유물 제작·쓰임, 농경과 정착, 돌 농기구와 청동기의 공존, 법 기록에서의 추론, 벽화 해석, 백제 수도 순서와 교류, 신라·가야 비교, 발해 건국과 계승을 다룬다. 실제 유물 사진·벽화 이미지 없이 자료가 있다고 오인하지 않도록 설명 글과 관찰 메모임을 밝힌다.
+- 국사편찬위원회 우리역사넷과 국립박물관·국가유산 자료를 확인했다. 옛 교과서의 선사 시대 시작 연대·인종·언어 계통 설명은 가져오지 않았다. 알려진 법 조항 일부에서 법 전체를 복원하거나 한 유물로 모든 주민의 생활을 확정하지 않는다.
+- 선사 도구: https://daegu.museum.go.kr/kor/sub03_01_01_01.do , https://www.museum.go.kr/MUSEUM/contents/M0201030100.do?showHallId=760&showroomCode=DM0002
+- 고조선: https://contents.history.go.kr/mobile/mid/hm_001_0060?tabId=e , https://contents.history.go.kr/mobile/ta/view.do?levelId=ta_m61_0030_0020
+- 백제: https://modu.museum.go.kr/explore/video/20233 , https://www.heritage.go.kr/heri/html/HtmlPage.do?pageNo=1_1_1_0&pg=%2Funesco%2FHeritage%2FHeritage_12.jsp
+- 신라·가야: https://www.museum.go.kr/MUSEUM/contents/M0201030700.do?showHallId=760&showroomCode=DM0007 , https://gimhae.museum.go.kr/kr/html/sub02/020108.html
+- 발해: https://contents.history.go.kr/mobile/kc/view.do?code=kc_age_10&levelId=kc_i100800 , https://contents.history.go.kr/mobile/ta/view.do?levelId=ta_h71_0040_0010_0050_0020
+- 관련 단위·DOM 검사 15개 통과. 시대·학년·학기 일치, 유물 추론 범위, 수도와 연대 순서, 전체 생성·형식·재현성을 확인했다. 실제 브라우저 인쇄 시각 검증은 남았다.
