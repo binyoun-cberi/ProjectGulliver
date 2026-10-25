@@ -212,6 +212,7 @@ $('printOnly').onclick=()=>print(false);$('printWithAnswers').onclick=()=>print(
 document.addEventListener('DOMContentLoaded',updateFilterSummary,{once:true});
 window.addEventListener('beforeprint',()=>{if(current)window.DailyWorksheetA4?.compose()});
 window.addEventListener('afterprint',()=>document.body.classList.remove('print-answers'));
+window.WorksheetEditor={render,initialSearch:params.toString(),clear(){current=null;$('questions').replaceChildren();$('paperTitle').textContent='단원과 학습 내용을 골라 주세요.';$('sheetNumber').textContent='';$('answerQr').hidden=true;$('paperStandard').hidden=true;$('paperInstruction').hidden=true;}};
 updateFilterSummary();
 make(Number.isFinite(Number(params.get('seed')))&&params.has('seed')?Number(params.get('seed')):seed());
 })();
