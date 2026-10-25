@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,86);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),355);
+ assert.equal(E.banks.length,88);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),367);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(b.id+q.evidenceId));ids.add(b.id+q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
@@ -150,7 +150,7 @@ test('Silla unification and Goryeo lessons keep periods, activities and event or
  const culture=E.banks.find(b=>b.id==='goryeo-culture').items;assert.match(culture[0].answer,/다른 색 흙/);assert.match(culture[2].answer,/낱글자 활자를 조합/);
 });
 test('legacy history is reused without changing its bank, with photo rights and separate essay capacity',()=>{
- assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),523);
+ assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),535);
  const original=C.historyItems('goryeo');const copy=C.historyItems('goryeo');copy[0].answer='changed';copy[0].choices[0]='changed';assert.deepEqual(C.historyItems('goryeo'),original);
  const used=E.banks.flatMap(b=>b.items.filter(q=>q.legacyHistoryId));assert.equal(used.length,139);assert.equal(new Set(used.map(q=>q.legacyHistoryId)).size,139);
  for(const b of E.banks){const known=b.items.filter(q=>q.legacyHistoryId);assert.equal(new Set(known.map(q=>q.answer.replace(/\s/g,''))).size,known.length);
@@ -180,4 +180,15 @@ test('late Joseon and modernization lessons separate policy, chronology, reform 
  const opening=E.banks.find(b=>b.id==='joseon-opening');assert.deepEqual(opening.items[2].scienceMaterial.rows.map(r=>parseInt(r[0])),[1871,1876,1884]);assert.match(opening.items[3].explanation,/재판 권한/);
  const reform=E.banks.find(b=>b.id==='joseon-reforms');assert.match(reform.items[3].explanation,/생활.*다를/);assert.match(reform.items[4].explanation,/실제.*정착/);
  const modern=E.banks.find(b=>b.id==='modern-daily-change');assert.equal(modern.items[1].answer,'인천과 노량진 사이');assert.match(modern.items[4].explanation,/다른 지역/);
+});
+test('industrialization separates historical sequence, production share and lived experiences',()=>{
+ const ids=['korea-industrialization','industrialization-life'],reached=[];
+ for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||!ids.includes(b.id))continue;reached.push(b.id);assert.equal(u.grade,6);assert.equal(u.semester,1);assert.equal(T.lookup('social',6,2,u.id,l.id),null);
+  for(const responseFormat of ['choice','short','essay']){const s=T.generate({subject:'social',grade:6,semester:1,unitId:u.id,lessonId:l.id,count:6,responseFormat,seed:42},C);assert.equal(s.items.length,6);assert.equal(new Set(s.items.map(q=>q.evidenceId)).size,6);assert.ok(s.items.every(q=>q.source&&(q.detail||q.scienceMaterial)));}
+ }
+ assert.deepEqual(reached.sort(),ids.sort());
+ const process=E.banks.find(b=>b.id==='korea-industrialization').items,life=E.banks.find(b=>b.id==='industrialization-life').items;
+ assert.deepEqual(process[0].scienceMaterial.rows.map(r=>r[0]),['1960년대','1970년대']);
+ const shares=process[3].scienceMaterial;assert.match(shares.title,/가상/);for(const c of [1,2])assert.equal(shares.rows.reduce((sum,r)=>sum+parseInt(r[c]),0),100);assert.match(process[3].explanation,/전체 생산액과 종사자 수가 없어/);assert.match(process[5].explanation,/완전히 교체/);
+ for(const i of [1,2,5])assert.match(life[i].detail,/가상/);assert.match(life[3].scienceMaterial.title,/가상/);assert.match(life[4].detail,/긴 노동 시간/);assert.match(life[5].explanation,/실제 인물.*아닙니다/);
 });
