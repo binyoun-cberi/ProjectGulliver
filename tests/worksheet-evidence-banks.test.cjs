@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,130);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),1298);
+ assert.equal(E.banks.length,148);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),2378);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(b.id+q.evidenceId));ids.add(b.id+q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
@@ -201,8 +201,8 @@ test('social passages stand alone and visual questions carry the actual drawing'
  const passage=social.find(q=>q.evidenceId==='goguryeo-2');assert.match(passage.detail,/활을 겨누는/);assert.equal(passage.answer,'말을 타고 활을 쏘며 사냥했다');
 });
 test('all remaining worksheet social targets are connected to specific three-question banks',()=>{
- const added=E.banks.filter(b=>b.completion);assert.equal(added.length,42);assert.equal(added.reduce((n,b)=>n+b.items.length,0),126);
- const seen=new Set();let targets=0;for(const u of T.catalog.filter(u=>u.subject==='social'))for(const l of u.lessons){const b=T.binding(u,l);assert.ok(b,l.name);const e=E.find(u,l);if(!e?.completion)continue;targets++;seen.add(e.id);assert.equal(e.items.length,3);assert.equal(T.lookup('social',u.grade,u.semester===1?2:1,u.id,l.id),null);
+ const added=E.banks.filter(b=>b.completion);assert.equal(added.length,42);assert.equal(added.reduce((n,b)=>n+b.items.length,0),226);
+ const seen=new Set();let targets=0;for(const u of T.catalog.filter(u=>u.subject==='social'))for(const l of u.lessons){const b=T.binding(u,l);assert.ok(b,l.name);const e=E.find(u,l);if(!e?.completion)continue;targets++;seen.add(e.id);assert.equal(e.items.length,e.worldPopulationExpanded?28:3);assert.equal(T.lookup('social',u.grade,u.semester===1?2:1,u.id,l.id),null);
   for(const responseFormat of ['choice','short','essay']){const sheet=T.generate({subject:'social',grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:3,responseFormat,seed:7},C);assert.equal(sheet.items.length,3);assert.ok(sheet.items.every(q=>e.items.some(r=>r.evidenceId===q.evidenceId)));}
  }
  assert.equal(targets,43);assert.equal(seen.size,42);
