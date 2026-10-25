@@ -359,3 +359,21 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
 }
 
 @media screen{.compact-learning #selectedStandard{font-size:12px;line-height:1.5;color:#56685e;font-weight:400}.horizontal-worksheet .compact-learning .filter-submit .daily-primary:hover,.horizontal-worksheet .compact-learning .filter-submit .daily-primary:focus-visible{background:#196653;color:#fff}}
+
+/* Screen preview: distribute a short worksheet over its A4 writing area. */
+@media screen {
+ #questionSheet.roomy-preview #questions{
+  display:grid;grid-template-columns:var(--preview-columns);
+  grid-template-rows:repeat(var(--preview-rows),var(--preview-row-height));grid-auto-rows:auto;
+ }
+ #questionSheet.roomy-preview #questions>li{position:relative;box-sizing:border-box;min-height:0;padding-bottom:34px!important}
+ #questionSheet.roomy-preview #questions>li .answer-blank{position:absolute;bottom:14px;left:0;right:8px;width:auto;margin:0}
+ #questionSheet.roomy-preview #questions>li:not(:has(.choice-list)):not(.calculation-item):not(.column-question)::after{
+  content:"";position:absolute;bottom:42px;left:0;right:8px;border-bottom:1px dotted #d5dfda;
+ }
+}
+
+.print-paper.roomy-linear .print-question-list.compact-questions{grid-template-columns:minmax(0,1fr)!important}
+.print-paper.roomy-linear .print-question-list.compact-questions>li{position:relative;font-size:14px;line-height:1.45}
+.print-paper.roomy-linear .answer-blank{position:absolute;bottom:14px;left:2px;right:8px;width:auto;margin:0}
+.print-paper.roomy-linear .print-question-list>li::after{content:"";position:absolute;bottom:42px;left:2px;right:8px;border-bottom:1px dotted #d5dfda}

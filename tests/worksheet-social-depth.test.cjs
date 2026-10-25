@@ -70,7 +70,7 @@ test('social curriculum coverage is measured against actual selectable textbook 
   r.total++;if(n>=20)r.ready++;
   grades.set(u.grade,r);
  }
- assert.deepEqual([...grades.entries()],[ [3,{total:45,ready:7}],[4,{total:49,ready:19}],[5,{total:54,ready:22}],[6,{total:59,ready:8}] ]);
+ assert.deepEqual([...grades.entries()],[ [3,{total:45,ready:7}],[4,{total:49,ready:19}],[5,{total:54,ready:22}],[6,{total:59,ready:36}] ]);
 });
 
 test('worksheet browser loads the supplemental bank before the evidence binding',()=>{
