@@ -1,7 +1,8 @@
 (function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./data/worksheet-textbooks.js'):root.WorksheetTextbooks,typeof module==='object'&&module.exports?require('./science-expansion.js'):root.ScienceExpansion,typeof module==='object'&&module.exports?require('./worksheet-evidence-banks.js'):root.WorksheetEvidence);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetLearning=api;})(globalThis,(sourceCatalog,science,evidence)=>{
 'use strict';
 // Preserve source titles; exclude bookend corners and reviewed live performances.
-// A section label or an activity verb alone never overrides a concrete objective.
+// Keep paper-answerable reading, writing and calculation; omit tasks requiring
+// external searching, discussion, presentation or physical/digital production.
 const performanceTitles=new Set([
  '바른 자세로 발표하기','자신이 경험한 일이 잘 드러나게 발표하기','자신의 경험 발표하기',
  '글쓴이의 생각에 대한 자신의 생각 발표하기','작품에서 느낀 재미나 감동 발표하기',
@@ -12,6 +13,12 @@ const performanceTitles=new Set([
 function isCoreLesson(lesson){
  const name=lesson.name.trim();
  if(performanceTitles.has(name))return false;
+ const target=name.replace(/^(?:[①-⑳]|\d+\.)\s*/, '');
+ if(/전시회.*열|연극하기|캠페인.*공유|작품.*만들|결과.*공유|조사하여 발표|고쳐 쓰고 공유/.test(target))return false;
+ if(/인터넷에서|발표에 활용할 자료 찾기|정보 검색|정보를 검색|매체.*(?:글 쓰기|소통하기|표현하기)|매체의 특성에 알맞게 글 쓰기|매체 자료 만들기|뉴스 만들기/.test(target))return false;
+ if(/(?:전자석|측정기|규칙|모양|표지판|카드).*만들|칠교판으로.*모양|여러 가지 모양으로 만들어|이야기를 만들어|곱셈표를 만들어/.test(target))return false;
+ if(/놀이\s*(?:하기|를 해)|장터를 계획|식습관.*(?:계획|실천)|활동에 참여|독서 계획|정보 검색.*계획|역사 체험 계획/.test(target))return false;
+ if(/(?:절차에 따라|협력하며|의견을 조정하며).*토의하기|독서 토의|문제 해결을 위한 토의|문제에 대하여 토론하기|지역.*조사해|국가유산을 조사해|사례를 조사해|렌즈를 조사해|안전장치를 조사해|사용되는 예를 조사해|상황 조사하기/.test(target))return false;
  return !/^(?:단원 열기|단원 도입|주제 도입|단원 마무리|실력 쑥쑥 단원 마무리|실천하는 과학|과학 속으로|생각 폴짝)(?:$|[\s/_])/.test(name)
   && !/^수학이랑 (?:확인해요|만들어요)(?:$|\s|[（(])/.test(name)
   && !/^(?:준비하기|정리하기|마무리하기|실천하기|배울 내용 살펴보기|배운 내용 실천하기|함께하는 수학|해결하는 수학|문제로 마무리)$/.test(name);
