@@ -14,6 +14,7 @@ function isCoreLesson(lesson){
  const name=lesson.name.trim();
  if(performanceTitles.has(name))return false;
  const target=name.replace(/^(?:[①-⑳]|\d+\.)\s*/, '');
+ if(['우리가 살기 좋은 곳을 함께 표현해 볼까요','우리 지역의 역사를 체험해 볼까요','우리 지역의 역사를 소개해 볼까요','우리 지역을 소개해 볼까요','우리 국토 곳곳으로 여행을 떠나 볼까요','분단과 관련된 장소를 체험해 볼까요'].includes(target))return false;
  if(/전시회.*열|연극하기|캠페인.*공유|작품.*만들|결과.*공유|조사하여 발표|고쳐 쓰고 공유/.test(target))return false;
  if(/인터넷에서|발표에 활용할 자료 찾기|정보 검색|정보를 검색|매체.*(?:글 쓰기|소통하기|표현하기)|매체의 특성에 알맞게 글 쓰기|매체 자료 만들기|뉴스 만들기/.test(target))return false;
  if(/(?:전자석|측정기|규칙|모양|표지판|카드).*만들|칠교판으로.*모양|여러 가지 모양으로 만들어|이야기를 만들어|곱셈표를 만들어/.test(target))return false;

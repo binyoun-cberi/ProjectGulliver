@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,88);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),367);
+ assert.equal(E.banks.length,130);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),493);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(b.id+q.evidenceId));ids.add(b.id+q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
@@ -150,13 +150,13 @@ test('Silla unification and Goryeo lessons keep periods, activities and event or
  const culture=E.banks.find(b=>b.id==='goryeo-culture').items;assert.match(culture[0].answer,/다른 색 흙/);assert.match(culture[2].answer,/낱글자 활자를 조합/);
 });
 test('legacy history is reused without changing its bank, with photo rights and separate essay capacity',()=>{
- assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),535);
+ assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),661);
  const original=C.historyItems('goryeo');const copy=C.historyItems('goryeo');copy[0].answer='changed';copy[0].choices[0]='changed';assert.deepEqual(C.historyItems('goryeo'),original);
  const used=E.banks.flatMap(b=>b.items.filter(q=>q.legacyHistoryId));assert.equal(used.length,139);assert.equal(new Set(used.map(q=>q.legacyHistoryId)).size,139);
  for(const b of E.banks){const known=b.items.filter(q=>q.legacyHistoryId);assert.equal(new Set(known.map(q=>q.answer.replace(/\s/g,''))).size,known.length);
   for(const q of known){const [topic,index]=q.legacyHistoryId.split('-');assert.equal(q.prompt,C.historyItems(topic)[Number(index)].prompt);assert.equal(q.answer,C.historyItems(topic)[Number(index)].answer);}
  }
- const photos=E.banks.flatMap(b=>b.items.filter(q=>q.photo));assert.equal(photos.length,17);for(const q of photos){assert.match(q.photo.license,/공공누리/);assert.ok(q.photo.credit);assert.ok(require('fs').existsSync(require('path').resolve(__dirname,'..',q.photo.src)));}
+ const photos=E.banks.flatMap(b=>b.items.filter(q=>q.photo));assert.equal(photos.length,18);for(const q of photos){assert.match(q.photo.license,/공공누리/);assert.ok(q.photo.credit);assert.ok(require('fs').existsSync(require('path').resolve(__dirname,'..',q.photo.src)));}
  const u=T.catalog.find(u=>u.lessons.some(l=>T.binding(u,l)?.bankId==='goryeo-culture')),l=u.lessons.find(l=>T.binding(u,l)?.bankId==='goryeo-culture'),b=T.binding(u,l);assert.equal(Math.max(...T.counts(b)),20);assert.ok(Math.max(...T.counts(b,'essay'))<20);
  const options={subject:'social',grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,seed:42};
  assert.ok(T.generate({...options,count:20,responseFormat:'choice'},C).items.some(q=>q.photo));
@@ -199,4 +199,16 @@ test('social passages stand alone and visual questions carry the actual drawing'
  for(const id of ['korea-landforms-1','korea-landforms-4']){const q=social.find(q=>q.evidenceId===id);assert.equal(q.scienceMaterial.kind,'diagram');assert.ok(!q.detail);}
  const tide=social.find(q=>q.evidenceId==='korea-landforms-4');assert.match(tide.scienceMaterial.body,/밀물 때/);assert.match(tide.scienceMaterial.body,/썰물 때/);assert.match(tide.answer,/밀물.*썰물/);
  const passage=social.find(q=>q.evidenceId==='goguryeo-2');assert.match(passage.detail,/활을 겨누는/);assert.equal(passage.answer,'말을 타고 활을 쏘며 사냥했다');
+});
+test('all remaining worksheet social targets are connected to specific three-question banks',()=>{
+ const added=E.banks.filter(b=>b.completion);assert.equal(added.length,42);assert.equal(added.reduce((n,b)=>n+b.items.length,0),126);
+ const seen=new Set();let targets=0;for(const u of T.catalog.filter(u=>u.subject==='social'))for(const l of u.lessons){const b=T.binding(u,l);assert.ok(b,l.name);const e=E.find(u,l);if(!e?.completion)continue;targets++;seen.add(e.id);assert.equal(e.items.length,3);assert.equal(T.lookup('social',u.grade,u.semester===1?2:1,u.id,l.id),null);
+  for(const responseFormat of ['choice','short','essay']){const sheet=T.generate({subject:'social',grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:3,responseFormat,seed:7},C);assert.equal(sheet.items.length,3);assert.ok(sheet.items.every(q=>e.items.some(r=>r.evidenceId===q.evidenceId)));}
+ }
+ assert.equal(targets,43);assert.equal(seen.size,42);
+ const excluded=['우리가 살기 좋은 곳을 함께 표현해 볼까요','우리 지역의 역사를 체험해 볼까요','우리 지역의 역사를 소개해 볼까요','우리 지역을 소개해 볼까요','우리 국토 곳곳으로 여행을 떠나 볼까요','분단과 관련된 장소를 체험해 볼까요'];
+ for(const name of excluded)assert.equal(T.isCoreLesson({name:'① '+name}),false,name);
+ const maps=E.banks.find(b=>b.id==='social-fill-world-continents-oceans').items;assert.ok(maps.every(q=>q.scienceMaterial.kind==='diagram'&&q.scienceMaterial.body.includes('<path d="M')));assert.deepEqual(maps.map(q=>q.answer),['아시아','대서양','남아메리카']);
+ const stat=E.banks.find(b=>b.id==='social-fill-populous-countries').items;assert.match(stat[0].scienceMaterial.title,/2024/);assert.match(stat[0].scienceMaterial.note,/INED/);assert.equal(stat[1].answer,'약 3000만 명');
+ const density=E.banks.find(b=>b.id==='social-fill-world-population-density').items;assert.deepEqual(density[0].scienceMaterial.rows,[['싱가포르','8207명'],['몽골','2.3명']]);assert.match(density[0].scienceMaterial.note,/2024/);assert.equal(density[1].answer,'1 km²당 200명');
 });

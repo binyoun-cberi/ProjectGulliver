@@ -3,7 +3,7 @@
 // Original classroom cases. Each item has its own evidence, distractors and
 // rationale. No textbook passage, photograph or ready-made test is reproduced.
 const banks=[];
-function bank(id,subject,grades,pattern,label,rows){banks.push({id,subject,grades,pattern,label,items:rows.map((r,i)=>({evidenceId:id+'-'+(i+1),prompt:r[0],answer:r[1],choices:[r[1],r[2],r[3]],...(typeof r[4]==='string'?{detail:r[4]}:{scienceMaterial:r[4]}),explanation:r[5]}))})}
+function bank(id,subject,grades,pattern,label,rows){const b={id,subject,grades,pattern,label,items:rows.map((r,i)=>({evidenceId:id+'-'+(i+1),prompt:r[0],answer:r[1],choices:[r[1],r[2],r[3]],...(typeof r[4]==='string'?{detail:r[4]}:r[4]?.photo?r[4]:{scienceMaterial:r[4]}),explanation:r[5]}))};banks.push(b);return b;}
 const diagram=(title,body,viewBox='0 0 360 180')=>({kind:'diagram',title,body,viewBox});
 const table=(title,headers,rows)=>({kind:'table',title,headers,rows,note:''});
 bank('map-legend','social',[4],/기호와 범례/,'기호·범례를 이용한 지도 읽기',[
@@ -543,8 +543,10 @@ for(const [id,topic,index,prompt,w1,w2] of materialReuse){const b=banks.find(b=>
  b.items.push({...q,evidenceId:'material-'+q.id,legacyMaterialId:q.id,prompt,detail,choices:[q.answer,w1,w2]});
 }
 
+(typeof module==='object'&&module.exports?require('./worksheet-social-completion.js'):globalThis.WorksheetSocialCompletion)({bank,table,diagram,photos});
+
 function find(unit,lesson){
- const b=banks.find(b=>b.subject===unit.subject&&b.grades.includes(unit.grade)&&b.pattern.test(lesson.name));if(!b)return null;
+ const b=banks.find(b=>b.subject===unit.subject&&b.grades.includes(unit.grade)&&b.pattern.test(lesson.name)&&!(b.id==='local-problem'&&/지역문제란/.test(lesson.name)));if(!b)return null;
  let indexes=null;const n=lesson.name;
  if(b.id==='past-sources')indexes=/오래된 물건/.test(n)?[2]:/일기와 편지/.test(n)?[0]:/사진과 그림/.test(n)?[1,3]:/노래 가사와 신문/.test(n)?[4]:null;
  if(b.id==='transport-types')indexes=/옛날/.test(n)?[0,1]:[2,3,4];
