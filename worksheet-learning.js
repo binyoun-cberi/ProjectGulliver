@@ -1,5 +1,15 @@
-(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./data/worksheet-textbooks.js'):root.WorksheetTextbooks,typeof module==='object'&&module.exports?require('./science-expansion.js'):root.ScienceExpansion,typeof module==='object'&&module.exports?require('./worksheet-evidence-banks.js'):root.WorksheetEvidence);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetLearning=api;})(globalThis,(catalog,science,evidence)=>{
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./data/worksheet-textbooks.js'):root.WorksheetTextbooks,typeof module==='object'&&module.exports?require('./science-expansion.js'):root.ScienceExpansion,typeof module==='object'&&module.exports?require('./worksheet-evidence-banks.js'):root.WorksheetEvidence);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetLearning=api;})(globalThis,(sourceCatalog,science,evidence)=>{
 'use strict';
+// Keep the source index intact, but expose only teachable content in the editor.
+// Match structural headings, not verbs inside real learning objectives.
+function isCoreLesson(lesson){
+ const name=lesson.name.trim(),section=(lesson.section||'').trim();
+ if(/^(?:단원 열기|단원 도입|주제 도입|실천하기|살천하기|정리하기|마무리하기)$/.test(section))return false;
+ return !/^(?:단원 열기|단원 도입|주제 도입|단원 마무리|실력 쑥쑥 단원 마무리|실천하는 과학|과학 속으로|생각 폴짝)(?:$|[\s/_])/.test(name)
+  && !/^(?:준비하기|정리하기|마무리하기|실천하기|배울 내용 살펴보기|배운 내용 실천하기|함께하는 수학|해결하는 수학|문제로 마무리)$/.test(name);
+}
+const catalog=sourceCatalog.map(unit=>({...unit,lessons:unit.lessons.filter(isCoreLesson)})).filter(unit=>unit.lessons.length);
+
 // Bind only the learning target named by the public lesson heading. Never fill
 // an unmapped lesson with an entire subject bank or a neighbouring grade.
 const scienceRules=[
@@ -105,5 +115,5 @@ function generate(options,C){
  const curriculum={revision:'2022',semester:Number(semester),unitId,lessonId,unit:unit.name,lesson:lesson.name,practice:b.label,source:unit.source,book:unit.book};
  return {subject,grade:Number(grade),topic:'textbook-learning',type:'',count:Number(count),seed:Number(seed)>>>0,difficulty:'basic',responseFormat,alignment:null,title:`${grade}학년 ${semester}학기 · ${unit.name}`,curriculum,items:items.map(q=>({...q,curriculumLesson:lessonId}))};
 }
-return {catalog,units,binding,lookup,formats,counts,generate};
+return {catalog,sourceCatalog,isCoreLesson,units,binding,lookup,formats,counts,generate};
 });
