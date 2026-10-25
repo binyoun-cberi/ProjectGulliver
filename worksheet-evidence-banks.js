@@ -557,9 +557,10 @@ for(const [id,topic,index,prompt,answer,w1,w2,detail,explanation,source,sourceLa
 (typeof module==='object'&&module.exports?require('./worksheet-social-world-economy.js'):globalThis.WorksheetSocialWorldEconomy)({bank,banks});
 (typeof module==='object'&&module.exports?require('./worksheet-science-term2.js'):globalThis.WorksheetScienceTermTwo)({bank});
 (typeof module==='object'&&module.exports?require('./worksheet-science-term1.js'):globalThis.WorksheetScienceTermOne)({bank});
+(typeof module==='object'&&module.exports?require('./worksheet-science-other-grades.js'):globalThis.WorksheetScienceOtherGrades)({bank,banks});
 function find(unit,lesson){
  const exactLessonName=lesson.name.replace(/^(?:[①-⑳]|\d+\.)\s*/, '').trim();
- const exact=banks.find(b=>b.exactLessonName===exactLessonName&&b.subject===unit.subject&&b.grades.includes(unit.grade)&&(!b.exactUnitName||b.exactUnitName===unit.name));
+ const exact=banks.find(b=>b.exactLessonName===exactLessonName&&b.subject===unit.subject&&b.grades.includes(unit.grade)&&(!b.exactUnitName||b.exactUnitName===unit.name)&&(!b.exactSemester||b.exactSemester===unit.semester));
  const b=exact||banks.find(b=>b.subject===unit.subject&&b.grades.includes(unit.grade)&&b.pattern.test(lesson.name)&&!(b.id==='local-problem'&&/지역문제란/.test(lesson.name)));if(!b)return null;
  let indexes=null;const n=lesson.name;
  if(b.id==='past-sources')indexes=/오래된 물건/.test(n)?[2]:/일기와 편지/.test(n)?[0]:/사진과 그림/.test(n)?[1,3]:/노래 가사와 신문/.test(n)?[4]:null;
