@@ -15,6 +15,12 @@ const english=d.querySelector('input[name=subject][value=english]');english.chec
 w=load('?subject=math&grade=3&unit=g3-add&topic=hundreds&type=add-carry-two&count=20');assert.equal(w.document.querySelector('#learningMode').value,'practice');assert.equal(w.document.querySelectorAll('#questions > li').length,20);
 change(w2,'count','1');submit(w2);const replay=load(w2.location.search);assert.equal(replay.document.querySelectorAll('#questions > li').length,1);replay.document.querySelector('#largePrint').checked=true;replay.document.querySelector('#largePrint').dispatchEvent(new replay.Event('change',{bubbles:true}));assert.ok(replay.location.search.includes('lesson='));
 const social=load('?subject=social&grade=4');const st=social.WorksheetLearning;const su=st.catalog.find(u=>u.subject==='social'&&u.grade===4&&u.semester===1&&u.lessons.some(l=>st.binding(u,l)?.bankId==='map-scale'));const sl=su.lessons.find(l=>st.binding(su,l)?.bankId==='map-scale');change(social,'textUnit',su.id);change(social,'textLesson',sl.id);change(social,'count','5');submit(social);assert.equal(social.document.querySelectorAll('#questions > li').length,5);assert.ok(social.document.querySelector('.science-material table'));assert.equal(social.document.querySelectorAll('.choice-list').length,5);
+const society=load('?subject=social&grade=3&semester=2');
+const at=society.WorksheetLearning,au=at.catalog.find(u=>u.subject==='social'&&u.grade===3&&u.semester===2&&u.lessons.some(l=>at.binding(u,l)?.bankId==='aging-birth')),al=au.lessons.find(l=>at.binding(au,l)?.bankId==='aging-birth');
+change(society,'textSemester','2');change(society,'textUnit',au.id);change(society,'textLesson',al.id);change(society,'count','5');submit(society);
+assert.equal(society.document.querySelectorAll('#questions > li').length,5);assert.ok(society.document.querySelector('.science-material table'));assert.match(society.document.querySelector('#questions').textContent,/가상 마을/);
+const savedSocial=load(society.location.search);assert.equal(savedSocial.document.querySelector('#questions').textContent,society.document.querySelector('#questions').textContent);
+change(society,'textFormat','essay');submit(society);assert.equal(society.document.querySelectorAll('.choice-list').length,0);assert.match(society.document.querySelector('#questions').textContent,/근거/);
 console.log('PASS: textbook generation, table rendering, saved URL replay, semester pending, stale-print clearing, mode switch, English, legacy URL');
 
 });
