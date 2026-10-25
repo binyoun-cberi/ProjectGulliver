@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,23);assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),115);
+ assert.equal(E.banks.length,31);assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),155);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(q.evidenceId));ids.add(q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
@@ -54,4 +54,22 @@ test('new social lessons use only evidence for their specific target and retain 
  assert.equal(population[0].scienceMaterial.rows.reduce((n,r)=>n+parseFloat(r[1]),0),100);
  assert.equal(population[2].scienceMaterial.rows.reduce((n,r)=>n+parseFloat(r[1]),0),100);
  assert.match(population[3].explanation,/원인.*보여 주지는/);assert.match(population[4].explanation,/면적도 필요/);
+});
+test('second social expansion keeps benefits, responses, participation and environmental effects separate',()=>{
+ const added=['social-life-change','aging-birth','customs','map-purpose','geographic-info','resident-participation','environment-use','urban-life'];
+ const reached=[];
+ for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||!added.includes(b.id))continue;reached.push(l.id);
+  const ids=b.items.map(q=>q.evidenceId);
+  if(b.id==='social-life-change')assert.deepEqual(ids,/대처/.test(l.name)?['social-life-change-3','social-life-change-4','social-life-change-5']:['social-life-change-1','social-life-change-2']);
+  if(b.id==='environment-use')assert.deepEqual(ids,/변화/.test(l.name)?['environment-use-3']:/태도/.test(l.name)?['environment-use-4','environment-use-5']:['environment-use-1','environment-use-2']);
+  if(b.id==='resident-participation'&&/태도/.test(l.name))assert.deepEqual(ids,['resident-participation-4']);
+  if(b.id==='customs'&&/비교/.test(l.name))assert.deepEqual(ids,['customs-4']);
+  if(b.id==='urban-life'&&/특색/.test(l.name))assert.deepEqual(ids,['urban-life-2','urban-life-3']);
+ }
+ assert.equal(reached.length,23);
+ const age=E.banks.find(b=>b.id==='aging-birth').items;
+ const rows=age[1].scienceMaterial.rows;assert.equal(rows[0][1],rows[1][1]);assert.ok(parseInt(rows[1][2])>parseInt(rows[0][2]));assert.match(age[1].answer,/비중이 커/);
+ assert.match(age[4].explanation,/원인은 알 수 없/);
+ const change=E.banks.find(b=>b.id==='environment-use').items[2];
+ const [time,forest]=change.scienceMaterial.rows;assert.ok(parseInt(time[2])<parseInt(time[1]));assert.ok(parseInt(forest[2])<parseInt(forest[1]));assert.match(change.answer,/편리해졌지만 숲이 줄/);
 });
