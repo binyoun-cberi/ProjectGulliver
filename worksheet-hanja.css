@@ -1,4 +1,4 @@
-@font-face{font-family:"Clasheet Hanja Practice";src:url("assets/fonts/hanja-tracing.otf") format("opentype");font-weight:400;font-display:swap}
+@font-face{font-family:"Clasheet Hanja Practice";src:url("assets/fonts/hanja-tracing.woff") format("woff");font-weight:400;font-display:swap}
 /* Keep the same CJK glyph shape in the model and in every tracing cell. */
 .tracing-questions{--hanja-cell:25mm;--hanja-line:#91a4ac;--hanja-guide:#c6d0d5}
 .paper .tracing-questions,.print-paper .print-question-list.tracing-questions{display:block!important;padding:0!important;margin:6mm 0 0;list-style:none}

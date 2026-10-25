@@ -7,7 +7,7 @@ const LEGACY_CHARACTERS=[
 [5,`春|봄|춘 夏|여름|하 秋|가을|추 冬|겨울|동 風|바람|풍 雪|눈|설 海|바다|해 江|강|강 林|수풀|림 森|수풀|삼 明|밝을|명 光|빛|광 心|마음|심 力|힘|력 文|글월|문 字|글자|자 讀|읽을|독 書|글|서 言|말씀|언 語|말씀|어 時|때|시 間|사이|간 道|길|도 正|바를|정 直|곧을|직 安|편안|안 全|온전|전 公|공평할|공 共|함께|공 同|한가지|동`]
 ].flatMap(([minGrade,text])=>text.split(' ').map(token=>{const [character,meaning,sound]=token.split('|');return {character,meaning,sound,minGrade}}));
 const lookup=new Map([...LEGACY_CHARACTERS,...LEVELS.dictionary].map(x=>[x.character,x]));
-const CHARACTERS=LEVELS.levels.flatMap(level=>Array.from(level.characters).map(character=>{const item=lookup.get(character);if(!item)throw Error('한자 훈·음 확인 필요: '+character);return {character,meaning:item.meaning,sound:item.sound,level:level.id}}));
+const CHARACTERS=LEVELS.levels.flatMap(level=>Array.from(level.characters).map(character=>{const item=lookup.get(character);if(!item||!item.meaning||!item.sound)throw Error('한자 훈·음 확인 필요: '+character);return {character,meaning:item.meaning,sound:item.sound,level:level.id}}));
 // Original child-friendly definitions and classroom examples.
 const IDIOMS=[
 [1,`一石二鳥|일석이조|한 일로 두 가지 이익을 얻음.|걸어서 도서관에 가니 운동도 하고 책도 빌려 일석이조였어요.|한:일,돌:석,두:이,새:조

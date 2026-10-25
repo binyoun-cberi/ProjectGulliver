@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,148);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),2378);
+ assert.equal(E.banks.length,175);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),3053);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(b.id+q.evidenceId));ids.add(b.id+q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
@@ -46,11 +46,11 @@ test('new social lessons use only evidence for their specific target and retain 
   if(b.id==='transport-types')assert.deepEqual(ids,/옛날/.test(l.name)?['transport-types-1','transport-types-2']:['transport-types-3','transport-types-4','transport-types-5']);
   if(b.id==='transport-change')assert.deepEqual(ids,/불편/.test(l.name)?['transport-change-4','transport-change-5']:['transport-change-1','transport-change-2','transport-change-3']);
   if(b.id==='communication-types')assert.deepEqual(ids,/옛날/.test(l.name)?['communication-types-2','communication-types-3']:/오늘날/.test(l.name)?['communication-types-4','communication-types-5']:['communication-types-1']);
-  if(b.id==='trade-reason')assert.deepEqual(ids,/무역이란/.test(l.name)?['trade-reason-1','trade-reason-5']:/이유/.test(l.name)?['trade-reason-2']:['trade-reason-3','trade-reason-4']);
+  if(b.id==='trade-reason'){const original=/무역이란/.test(l.name)?['trade-reason-1','trade-reason-5']:/이유/.test(l.name)?['trade-reason-2']:['trade-reason-3','trade-reason-4'];if(/무역이란/.test(l.name)){for(const id of original)assert.ok(ids.includes(id));assert.ok(ids.some(id=>id.startsWith('social-world-economy-trade-definition-')));}else assert.deepEqual(ids,original);}
  }
- assert.equal(reached.size,15);
+ assert.equal(reached.size,13); // Two original lessons now use exact independent world-economy banks.
  const population=E.banks.find(b=>b.id==='population-distribution').items;
- for(const q of population)assert.match(q.scienceMaterial.note,/통계청.*2024년.*2025.*표 4/);
+ for(const q of population.slice(0,5))assert.match(q.scienceMaterial.note,/통계청.*2024년.*2025.*표 4/); // The original statistics remain intact; authored contextual cases follow.
  assert.equal(population[0].scienceMaterial.rows.reduce((n,r)=>n+parseFloat(r[1]),0),100);
  assert.equal(population[2].scienceMaterial.rows.reduce((n,r)=>n+parseFloat(r[1]),0),100);
  assert.match(population[3].explanation,/원인.*보여 주지는/);assert.match(population[4].explanation,/면적도 필요/);
@@ -82,10 +82,10 @@ test('sixth grade expansion separates economic, media and global problem evidenc
   if(b.id==='media-judgment')assert.deepEqual(ids,/비판적/.test(l.name)?['media-judgment-1','media-judgment-2','media-judgment-3']:['media-judgment-4','media-judgment-5']);
   if(b.id==='world-spatial-tools'&&/디지털/.test(l.name))assert.deepEqual(ids,['world-spatial-tools-3','world-spatial-tools-4']);
   if(b.id==='world-spatial-tools'&&/활용/.test(l.name))assert.deepEqual(ids,['world-spatial-tools-5']);
-  if(b.id==='global-problems'&&/겪고/.test(l.name))assert.deepEqual(ids,['global-problems-1','global-problems-2']);
+  if(b.id==='global-problems'&&/겪고/.test(l.name)){for(const id of ['global-problems-1','global-problems-2'])assert.ok(ids.includes(id));assert.ok(ids.some(id=>id.startsWith('social-world-economy-global-challenges-')));}
   if(b.id==='economic-work'&&/기업은/.test(l.name))assert.deepEqual(ids,['economic-work-2','economic-work-5']);
  }
- assert.equal(targets.length,17);
+ assert.equal(targets.length,13); // Four original target lessons now use exact world-geography/economy banks.
  const q=E.banks.find(b=>b.id==='sustainable-future').items[2];const amounts=q.scienceMaterial.rows.map(r=>parseInt(r[1]));assert.equal(amounts[1]-amounts[0],5);assert.match(q.explanation,/5 L.*모든 가정/);
  const media=E.banks.find(b=>b.id==='media-judgment').items[2];assert.match(media.explanation,/서로 다른 관점/);
  const world=E.banks.find(b=>b.id==='world-spatial-tools').items[1];assert.match(world.explanation,/왜곡이 생길 수/);
@@ -102,7 +102,8 @@ test('geography expansion separates climate elements, landforms, regional causes
   if(b.id==='korea-landforms'&&/해안/.test(l.name))assert.deepEqual(ids,['korea-landforms-4']);
   if(b.id==='economic-growth-effects'&&/문제를 합리적/.test(l.name))assert.deepEqual(ids,['economic-growth-effects-5']);
  }
- assert.equal(targets.length,28);
+ assert.equal(targets.length,16); // 12 original targets now resolve to more precise, lesson-specific geography/economy banks.
+ const geo=T.catalog.filter(u=>u.subject==='social'&&u.grade===6&&u.semester===2).flatMap(u=>u.lessons.map(l=>T.binding(u,l))).filter(b=>b?.bankId?.startsWith('social-geo-'));assert.equal(geo.length,9);
  const climate=E.banks.find(b=>b.id==='korea-season-climate').items;assert.match(climate[3].scienceMaterial.note,/기상청.*1991~2020/);assert.match(climate[3].explanation,/54%/);assert.match(climate[4].explanation,/모든 지역의 모든 날/);
  const pop=E.banks.find(b=>b.id==='population-structure').items[2];assert.match(pop.explanation,/전체.*인구도/);
  const warming=E.banks.find(b=>b.id==='climate-disaster').items[1];assert.equal(parseInt(warming.scienceMaterial.rows[1][1])-parseInt(warming.scienceMaterial.rows[0][1]),1);assert.match(warming.explanation,/해마다.*제시되지/);
@@ -150,7 +151,7 @@ test('Silla unification and Goryeo lessons keep periods, activities and event or
  const culture=E.banks.find(b=>b.id==='goryeo-culture').items;assert.match(culture[0].answer,/다른 색 흙/);assert.match(culture[2].answer,/낱글자 활자를 조합/);
 });
 test('legacy history is reused without changing its bank, with photo rights and separate essay capacity',()=>{
- assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),1466);
+ assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),3221);
  const original=C.historyItems('goryeo');const copy=C.historyItems('goryeo');copy[0].answer='changed';copy[0].choices[0]='changed';assert.deepEqual(C.historyItems('goryeo'),original);
  const used=E.banks.flatMap(b=>b.items.filter(q=>q.legacyHistoryId));assert.equal(used.length,139);assert.equal(new Set(used.map(q=>q.legacyHistoryId)).size,139);
  for(const b of E.banks){const known=b.items.filter(q=>q.legacyHistoryId);assert.equal(new Set(known.map(q=>q.answer.replace(/\s/g,''))).size,known.length);
