@@ -42,12 +42,14 @@ test('all lessons using expanded social banks support 20 real questions without 
   const b=T.binding(u,l);
   if(!ids.includes(b?.bankId))continue;
   covered++;
+  const alternativeDraws=[];
   for(const responseFormat of ['choice','short','essay'])for(const seed of [7,42,101]){
    const options={subject:'social',grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:20,seed,responseFormat};
    const sheet=T.generate(options,C);
    assert.deepEqual(sheet,T.generate(options,C),'seed is not reproducible: '+l.name);
    assert.equal(sheet.items.length,20,l.name);
    assert.equal(new Set(sheet.items.map(q=>JSON.stringify([q.prompt,q.detail,q.scienceMaterial]))).size,20,l.name);
+   if(responseFormat==='choice')alternativeDraws.push(sheet.items.map(q=>q.evidenceId).sort().join('|'));
    for(const q of sheet.items){
     assert.ok(q.explanation,q.evidenceId);
     assert.ok(q.answer,q.evidenceId);
@@ -55,6 +57,7 @@ test('all lessons using expanded social banks support 20 real questions without 
     else assert.equal(q.choices.length,0,q.evidenceId);
    }
   }
+  assert.ok(new Set(alternativeDraws).size>1,'20문항 출제 구성이 바뀌지 않음: '+l.name);
  }
  assert.equal(covered,34);
 });
