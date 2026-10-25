@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,39);assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),195);
+ assert.equal(E.banks.length,47);assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),238);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(q.evidenceId));ids.add(q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
@@ -89,4 +89,21 @@ test('sixth grade expansion separates economic, media and global problem evidenc
  const q=E.banks.find(b=>b.id==='sustainable-future').items[2];const amounts=q.scienceMaterial.rows.map(r=>parseInt(r[1]));assert.equal(amounts[1]-amounts[0],5);assert.match(q.explanation,/5 L.*모든 가정/);
  const media=E.banks.find(b=>b.id==='media-judgment').items[2];assert.match(media.explanation,/서로 다른 관점/);
  const world=E.banks.find(b=>b.id==='world-spatial-tools').items[1];assert.match(world.explanation,/왜곡이 생길 수/);
+});
+test('geography expansion separates climate elements, landforms, regional causes and growth effects',()=>{
+ const added=['korea-landforms','korea-season-climate','climate-disaster','regional-balance','world-terrain-life','world-climate-life','population-structure','economic-growth-effects'];
+ const targets=[];for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||!added.includes(b.id))continue;targets.push(l.id);
+  const ids=b.items.map(q=>q.evidenceId);
+  if(b.id==='korea-season-climate'&&/강수량의/.test(l.name))assert.deepEqual(ids,['korea-season-climate-4','korea-season-climate-5']);
+  if(b.id==='korea-season-climate'&&/기온의/.test(l.name))assert.deepEqual(ids,['korea-season-climate-2','korea-season-climate-3']);
+  if(b.id==='regional-balance'&&/원인/.test(l.name))assert.deepEqual(ids,['regional-balance-1']);
+  if(b.id==='world-climate-life'&&/냉대와 한대/.test(l.name))assert.deepEqual(ids,['world-climate-life-4','world-climate-life-5']);
+  if(b.id==='world-climate-life'&&/고산 기후/.test(l.name))assert.deepEqual(ids,['world-climate-life-6']);
+  if(b.id==='korea-landforms'&&/해안/.test(l.name))assert.deepEqual(ids,['korea-landforms-4']);
+  if(b.id==='economic-growth-effects'&&/문제를 합리적/.test(l.name))assert.deepEqual(ids,['economic-growth-effects-5']);
+ }
+ assert.equal(targets.length,28);
+ const climate=E.banks.find(b=>b.id==='korea-season-climate').items;assert.match(climate[3].scienceMaterial.note,/기상청.*1991~2020/);assert.match(climate[3].explanation,/54%/);assert.match(climate[4].explanation,/모든 지역의 모든 날/);
+ const pop=E.banks.find(b=>b.id==='population-structure').items[2];assert.match(pop.explanation,/전체.*인구도/);
+ const warming=E.banks.find(b=>b.id==='climate-disaster').items[1];assert.equal(parseInt(warming.scienceMaterial.rows[1][1])-parseInt(warming.scienceMaterial.rows[0][1]),1);assert.match(warming.explanation,/해마다.*제시되지/);
 });
