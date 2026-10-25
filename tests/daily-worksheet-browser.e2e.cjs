@@ -18,6 +18,7 @@ test('worksheet editor generates and prints student/teacher versions in real Chr
     const pageErrors = [];
     page.on('pageerror', error => pageErrors.push(error.message));
     await page.goto(pathToFileURL(path.resolve('문제지 만들기.html')).href, { waitUntil: 'load' });
+    await page.locator('[data-mode="practice"]').click();
     await page.waitForFunction(() => document.querySelector('#questions')?.children.length > 0);
     await page.selectOption('#grade', '3');
     await page.selectOption('#unit', 'g3-add');

@@ -94,8 +94,8 @@ test('every listed unit type produces distinct, reproducible exercises with corr
  }
 });
 
-test('five subjects expose only supported grades and topics, with complete unique sheets',()=>{
- assert.deepEqual(Object.keys(SUBJECTS),['korean','math','social','science','english']);
+test('six subjects expose only supported grades and topics, with complete unique sheets',()=>{
+ assert.deepEqual(Object.keys(SUBJECTS),['hanja','korean','math','social','science','english']);
  for(const [subject,info] of Object.entries(SUBJECTS))for(const grade of info.grades)for(const [topic,,fromGrade,toGrade=6] of info.topics){
   if(grade<fromGrade||grade>toGrade)continue;
   if(['column','mixed','decimal','history-review','history-mix','math-mix','reading-set'].includes(topic))continue;

@@ -45,19 +45,19 @@ function make(seed,{replay=false,preserve=false}={}){
 }
 let lastIndexes;
 function sync(initial=false){
- subject=form.querySelector('input[name="subject"]:checked').value;active=subject!=='english'&&$('learningMode').value!=='practice';
+ subject=form.querySelector('input[name="subject"]:checked').value;active=!['english','hanja'].includes(subject)&&$('learningMode').value!=='practice';
  dictationLink.hidden=subject!=='korean';dictationLink.href='받아쓰기.html?grade='+$('grade').value;
- form.classList.toggle('compact-learning',active);box.hidden=subject==='english';$('textbookControls').hidden=!active;
+ form.classList.toggle('compact-learning',active);box.hidden=['english','hanja'].includes(subject);$('textbookControls').hidden=!active;
  for(const button of box.querySelectorAll('[data-mode]'))button.setAttribute('aria-pressed',String(button.dataset.mode===$('learningMode').value));
  for(const cls of ['semester-control','unit-control','lesson-control'])box.querySelector('.'+cls).hidden=standardMode();box.querySelector('.standard-control').hidden=!standardMode();
  for(const id of hiddenIds)if(active)$(id).hidden=true;
- if(!active){$('unitMixSettings').hidden=false;$('curriculumNote').hidden=false;form.querySelector('button[type="submit"]').disabled=false;for(const id of ['regenerate','toggleAnswers','printOnly','printWithAnswers'])$(id).disabled=false;return;}
+ if(!active){$('unitMixSettings').hidden=subject==='hanja';$('curriculumNote').hidden=false;form.querySelector('button[type="submit"]').disabled=false;for(const id of ['regenerate','toggleAnswers','printOnly','printWithAnswers'])$(id).disabled=false;return;}
  if(standardMode())standards(initial?query.get('standard'):null);else units(initial?query.get('unit'):null,initial?query.get('lesson'):null);
  clear(chosen?.binding?'범위를 골랐어요. 문제지 만들기를 눌러 주세요.':'이 범위의 문제는 준비 중이에요.');
 }
 for(const button of box.querySelectorAll('[data-mode]'))button.onclick=()=>{$('learningMode').value=button.dataset.mode;$('learningMode').dispatchEvent(new Event('change',{bubbles:true}));};
 $('learningMode').value=legacy?'practice':query.get('mode')==='standard'?'standard':'textbook';$('textSemester').value=query.get('semester')==='2'?'2':'1';
-form.addEventListener('change',e=>{if(e.target.id==='learningMode'&&e.target.value==='practice'||e.target.name==='subject'&&e.target.value==='english'){$('count').replaceChildren();for(const n of [6,8,12,5,10,15,20])option($('count'),String(n),n+'문항');$('count').value='10';$('count').disabled=false;}},true);
+form.addEventListener('change',e=>{if(e.target.id==='learningMode'&&e.target.value==='practice'||e.target.name==='subject'&&['english','hanja'].includes(e.target.value)){$('count').replaceChildren();for(const n of [6,8,12,5,10,15,20])option($('count'),String(n),n+'문항');$('count').value=e.target.value==='hanja'?'5':'10';$('count').disabled=false;}},true);
 const newSeed=()=>window.crypto?.getRandomValues?crypto.getRandomValues(new Uint32Array(1))[0]:Date.now();
 form.addEventListener('submit',e=>{if(!active)return;e.preventDefault();e.stopImmediatePropagation();make(newSeed())},true);
 const regenerate=$('regenerate').onclick;$('regenerate').onclick=()=>active?make(newSeed()):regenerate();
