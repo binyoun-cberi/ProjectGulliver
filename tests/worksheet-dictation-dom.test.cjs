@@ -5,7 +5,7 @@ test('dictation UI separates hidden answers, grade changes, saved selections and
  const raw=fs.readFileSync(path.join(__dirname,'../받아쓰기.html'),'utf8');
  function load(search,voiceList=[]){const dom=new JSDOM(raw.replace(/<script[\s\S]*?<\/script>/g,''),{url:'https://clasheet.test/받아쓰기.html'+search,runScripts:'outside-only'}),w=dom.window;
   w.speechSynthesis={getVoices:()=>voiceList,cancel:()=>{},speak:u=>{w.lastSpoken=u;},resume:()=>{},addEventListener:()=>{}};w.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};w.print=()=>{w.printed=true;};
-  for(const f of ['worksheet-dictation-topics.js','worksheet-dictation-data.js','worksheet-dictation-player.js','worksheet-dictation-ui.js'])w.eval(fs.readFileSync(path.join(__dirname,'..',f),'utf8'));return w;
+  for(const f of ['worksheet-dictation-topics.js','worksheet-dictation-data.js','worksheet-english-dictation.js','worksheet-dictation-player.js','worksheet-dictation-ui.js'])w.eval(fs.readFileSync(path.join(__dirname,'..',f),'utf8'));return w;
  }
  const w=load('?grade=1&seed=42'),d=w.document;assert.equal(d.querySelectorAll('#dictWritingList>li').length,10);assert.equal(d.querySelector('#dictTeacher').open,false);assert.equal(w.lastSpoken,undefined);
  const original=d.querySelector('#dictAnswerList').textContent;const replay=load(w.location.search);assert.equal(replay.document.querySelector('#dictAnswerList').textContent,original);replay.close();
@@ -15,6 +15,11 @@ test('dictation UI separates hidden answers, grade changes, saved selections and
  d.querySelector('#newDictation').click();assert.equal(new Set(new URL(w.location).searchParams.get('items').split(',')).size,10);w.close();
  const unavailable=load('?grade=3',[{lang:'en-US',name:'English',voiceURI:'en'}]);assert.equal(unavailable.document.querySelector('#dictStart').disabled,true);unavailable.document.querySelector('#dictPrintStudent').click();assert.equal(unavailable.printed,true);unavailable.close();
  const malformed=load('?grade=5&items=g1-1');assert.match(malformed.document.querySelector('#dictNotice').textContent,/새 10문장/);malformed.close();
+ const english=load('?subject=english&grade=4&topic=school&seed=42',[{lang:'en-GB',name:'English',voiceURI:'en-gb'},{lang:'ko-KR',name:'한국어',voiceURI:'ko'}]),ed=english.document;
+ assert.equal(ed.querySelector('#dictSubject').value,'english');assert.deepEqual([...ed.querySelector('#dictGrade').options].map(o=>o.value),['3','4','5','6']);assert.equal(ed.querySelectorAll('.dictation-meaning').length,10);assert.equal(ed.querySelectorAll('#dictVoice option').length,2);
+ ed.querySelector('#dictVoice').value='en-gb';ed.querySelector('#dictVoice').dispatchEvent(new english.Event('change'));ed.querySelector('#dictStart').click();assert.equal(english.lastSpoken.lang,'en-GB');assert.match(english.lastSpoken.text,/^Number 1\./);assert.doesNotMatch(english.lastSpoken.text,/[가-힣]/);
+ const englishReplay=load(english.location.search,[{lang:'en-US',name:'English',voiceURI:'en'}]);assert.equal(englishReplay.document.querySelector('#dictAnswerList').textContent,ed.querySelector('#dictAnswerList').textContent);englishReplay.close();
+ const staleEnglish=english.lastSpoken;ed.querySelector('#dictSubject').value='korean';ed.querySelector('#dictSubject').dispatchEvent(new english.Event('change'));staleEnglish.onend();assert.equal(ed.querySelector('#dictSubject').value,'korean');ed.querySelector('#dictStart').click();assert.equal(english.lastSpoken.lang,'ko-KR');english.close();
  const themed=load('?grade=5&topic=friends&seed=42'),td=themed.document;
  assert.equal(td.querySelector('#dictTopic').value,'friends');assert.match(td.querySelector('#poolInfo').textContent,/10문장 한 묶음/);assert.match(td.querySelector('#newDictation').textContent,/순서/);
  assert.ok([...td.querySelectorAll('.dictation-word-focus')].every(el=>el.textContent.includes('친구·마음')));
