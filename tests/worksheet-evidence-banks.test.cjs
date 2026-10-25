@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,63);assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),310);
+ assert.equal(E.banks.length,68);assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),335);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(q.evidenceId));ids.add(q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
@@ -137,4 +137,15 @@ test('early history evidence stays within each era and distinguishes traces from
  const wall=E.banks.find(b=>b.id==='goguryeo').items[0];assert.match(wall.detail,/실제 그림은 제시하지/);
  const baekje=E.banks.find(b=>b.id==='baekje').items[0];assert.equal(baekje.answer,'한성 → 웅진 → 사비');
  const balhae=E.banks.find(b=>b.id==='balhae').items[3];const years=balhae.scienceMaterial.rows.map(r=>parseInt(r[1]));assert.ok(years[0]<years[1]);assert.match(balhae.answer,/고구려 멸망 → 발해 건국/);
+});
+test('Silla unification and Goryeo lessons keep periods, activities and event order distinct',()=>{
+ const added=['silla-unification','goryeo-founding','goryeo-society','goryeo-defense','goryeo-culture'];
+ const reached=[];for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||!added.includes(b.id))continue;reached.push(b.id);assert.equal(u.grade,5);assert.equal(u.semester,2);
+  const sheet=T.generate({subject:u.subject,grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:5,responseFormat:'choice',seed:42},C);assert.equal(sheet.items.length,5);assert.ok(sheet.items.every(q=>q.evidenceId.startsWith(b.id+'-')));
+ }
+ assert.deepEqual(reached.sort(),added.sort());
+ const unification=E.banks.find(b=>b.id==='silla-unification').items;const years=unification[0].scienceMaterial.rows.map(r=>parseInt(r[1]));assert.deepEqual(years,[660,668,676]);assert.match(unification[3].answer,/모든 영역까지.*것은 아니다/);
+ const founding=E.banks.find(b=>b.id==='goryeo-founding').items[0];assert.deepEqual(founding.scienceMaterial.rows.map(r=>parseInt(r[1])),[918,936]);
+ const defense=E.banks.find(b=>b.id==='goryeo-defense').items;assert.match(defense[0].answer,/협상/);assert.match(defense[1].answer,/강감찬.*거란/);assert.match(defense[3].answer,/주민들의 피해/);
+ const culture=E.banks.find(b=>b.id==='goryeo-culture').items;assert.match(culture[0].answer,/다른 색 흙/);assert.match(culture[2].answer,/낱글자 활자를 조합/);
 });

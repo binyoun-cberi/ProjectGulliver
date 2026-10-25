@@ -120,3 +120,16 @@
 - 신라·가야: https://www.museum.go.kr/MUSEUM/contents/M0201030700.do?showHallId=760&showroomCode=DM0007 , https://gimhae.museum.go.kr/kr/html/sub02/020108.html
 - 발해: https://contents.history.go.kr/mobile/kc/view.do?code=kc_age_10&levelId=kc_i100800 , https://contents.history.go.kr/mobile/ta/view.do?levelId=ta_h71_0040_0010_0050_0020
 - 관련 단위·DOM 검사 15개 통과. 시대·학년·학기 일치, 유물 추론 범위, 수도와 연대 순서, 전체 생성·형식·재현성을 확인했다. 실제 브라우저 인쇄 시각 검증은 남았다.
+
+## 사회 빈 차시 7차 보강: 신라 통일·고려
+
+- 신라의 삼국 통일, 고려의 건국·사회·외침 대응·문화 5차시에 창작 문항 25개를 추가했다. 각 묶음은 5문항이며 서로 다른 시대와 사건을 혼합해 연결하지 않는다.
+- 사회 연결은 138→143개, 준비 중은 75→70개다. 전체 연결은 237개, 준비 중은 989개다. 근거형 은행 전체는 68묶음·335문항이다. PR #133 누적은 28차시·97문항 추가다.
+- 통일의 순서·범위·주민 경험, 건국과 후삼국 통일의 구별·통합, 농업과 다양한 생산·교류, 외교·전투·전쟁 피해, 청자와 활자 인쇄의 기술을 다룬다. 모든 고려 문화나 사회 제도를 빠짐없이 다룬다는 뜻은 아니다.
+- 국사편찬위원회 우리역사넷을 확인해 새 학습 문장으로 작성했다. 삼국 통일을 고구려 옛 영역 전체의 확보로 설명하지 않는다. 귀주 대첩은 1018년 침입과 1019년 전투를 혼동하지 않도록 이번 문항에서 연도를 묻지 않는다.
+- 통일: https://contents.history.go.kr/mobile/kc/view.do?code=kc_age_10&levelId=kc_i101220
+- 건국·후삼국: https://contents.history.go.kr/mobile/kc/view.do?code=kc_age_10&levelId=kc_i101800
+- 사회·교류: https://contents.history.go.kr/mobile/ta/view.do?levelId=ta_h61_0050_0030_0040 , https://contents.history.go.kr/mobile/ta/view.do?levelId=ta_m51_0060_0040
+- 서희: https://db.history.go.kr/goryeo/level.do?levelId=kr_094r_0010_0010_0040
+- 문화: https://contents.history.go.kr/play/view.do?levelId=tt_b11 , https://contents.history.go.kr/mobile/eh/view.do?code=eh_age_20&levelId=eh_r0160_0010 , https://emuseum.go.kr/detail?relicId=PS0100100100500446200000
+- 관련 단위·DOM 검사 16개 통과. 통일·건국 연표, 외교·전투의 구별, 통일 범위·주민 피해·제작 기술, 전체 연결 차시 생성·유형·재현성 확인. 실제 브라우저 인쇄 시각 검증은 미완료다.
