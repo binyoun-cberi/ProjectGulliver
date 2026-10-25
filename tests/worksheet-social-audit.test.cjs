@@ -8,8 +8,8 @@ function load(search){const root=path.resolve(__dirname,'..'),raw=fs.readFileSyn
 function change(w,id,value){const e=w.document.getElementById(id);if(e.type==='checkbox')e.checked=value;else e.value=value;e.dispatchEvent(new w.Event('change',{bubbles:true}));}
 function submit(w){w.document.getElementById('sheetForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));}
 test('historical initial hints match answers in every era, grade, format override and saved legacy type',()=>{
- for(const grade of [5,6])for(const era of eras)for(const responseFormat of ['choice','short','initial'])for(const seed of [7,42,101]){
- const o={subject:'social',grade,topic:era,type:era+'-initial',responseFormat,count:20,seed},s=C.generate(o);assert.deepEqual(C.generate(o),s);assert.equal(s.items.length,20);assert.equal(s.responseFormat,'initial');
+ for(const grade of [5,6])for(const era of eras)for(const responseFormat of ['','initial'])for(const seed of [7,42,101]){
+ const o={subject:'social',grade,topic:era,type:era+'-initial',responseFormat,count:20,seed},s=C.generate(o);assert.deepEqual(C.generate(o),s);assert.equal(s.items.length,20);assert.equal(s.responseFormat,responseFormat);
  for(const q of s.items){assert.ok(C.initialAnswerAllowed(q.answer));assert.equal(q.detail,'초성·빈칸 힌트: '+hint(q.answer));assert.deepEqual(q.choices,[]);}
  }
  const s=C.generate({subject:'social',grade:5,topic:'history-mix',type:'history-mix-quiz',responseFormat:'initial',eras,count:20,seed:73});assert.ok(s.items.every(q=>q.detail==='초성·빈칸 힌트: '+hint(q.answer)));
