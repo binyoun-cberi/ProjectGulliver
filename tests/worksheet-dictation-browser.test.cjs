@@ -41,3 +41,28 @@ test('dictation audio controls, grade selection, hidden answers, six A4 student/
   await page.setViewportSize({width:390,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);await entry.click();assert.match(page.url(),/grade=3/);assert.equal(await page.locator('#dictGrade').inputValue(),'3');assert.deepEqual(errors,[]);
  }finally{await browser.close();}
 });
+test('English dictation offers grades 3-6, English-only speech, translations and A4 student/teacher output',{timeout:120000,skip:!chromium||!chrome},async()=>{
+ const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--allow-file-access-from-files','--single-process','--no-zygote','--disable-gpu']});
+ try{const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.addInitScript(()=>{window.__spoken=[];Object.defineProperty(window,'speechSynthesis',{value:{getVoices:()=>[{lang:'en-US',name:'Test English',voiceURI:'en'},{lang:'ko-KR',name:'Test Korean',voiceURI:'ko'}],cancel:()=>{},resume:()=>{},addEventListener:()=>{},speak:u=>window.__spoken.push(u)}});window.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};});
+  const base=pathToFileURL(path.resolve('받아쓰기.html')).href;
+  for(const grade of [3,4,5,6]){
+   await page.goto(base+`?subject=english&grade=${grade}&seed=42`);await page.waitForSelector('#dictWritingList>li');
+   assert.deepEqual(await page.locator('#dictGrade option').evaluateAll(nodes=>nodes.map(n=>n.value)),['3','4','5','6']);assert.equal(await page.locator('.dictation-meaning').count(),10);assert.match(await page.locator('#dictPaperTitle').textContent(),/영어/);
+   await page.click('#dictStart');assert.equal(await page.evaluate(()=>__spoken.at(-1).lang),'en-US');assert.match(await page.evaluate(()=>__spoken.at(-1).text),/^Number 1\./);assert.doesNotMatch(await page.evaluate(()=>__spoken.at(-1).text),/[가-힣]/);await page.click('#dictStop');
+   if(process.env.WORKSHEET_FONT_CSS){await page.addStyleTag({url:pathToFileURL(process.env.WORKSHEET_FONT_CSS).href});await page.addStyleTag({content:'body{font-family:"Noto Sans KR",sans-serif!important}'});await page.evaluate(()=>document.fonts.ready);}
+   await page.emulateMedia({media:'print'});
+   for(const teacher of [false,true]){
+    await page.evaluate(t=>document.body.classList.toggle('dictation-print-teacher',t),teacher);assert.equal(await page.locator('#dictWritingList .dictation-answer:visible').count(),teacher?10:0);
+    assert.equal(await page.locator('#dictPaper').evaluate(p=>p.querySelector('footer').getBoundingClientRect().bottom<=p.getBoundingClientRect().bottom-12*96/25.4),true);
+    const pdf=await page.pdf({format:'A4',preferCSSPageSize:true,printBackground:true});assert.equal([...pdf.toString('latin1').matchAll(/\/Type\s*\/Page\b/g)].length,1);
+    if(process.env.WORKSHEET_QA_DIR)fs.writeFileSync(path.join(process.env.WORKSHEET_QA_DIR,`english-${grade}-${teacher?'teacher':'student'}.pdf`),pdf);
+   }
+   await page.emulateMedia({media:'screen'});await page.setViewportSize({width:390,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);await page.setViewportSize({width:1440,height:1100});
+  }
+  await page.goto(pathToFileURL(path.resolve('문제지 만들기.html')).href+'?subject=english&grade=4');assert.equal(await page.locator('.english-dictation-link').isVisible(),true);await page.locator('.english-dictation-link').click();assert.equal(await page.locator('#dictSubject').inputValue(),'english');assert.equal(await page.locator('#dictGrade').inputValue(),'4');
+  await page.selectOption('#dictSubject','korean');assert.equal(await page.locator('#dictGrade option').count(),6);await page.click('#dictStart');assert.equal(await page.evaluate(()=>__spoken.at(-1).lang),'ko-KR');await page.click('#dictStop');
+  await page.selectOption('#dictSubject','english');await page.locator('#dictTeacher summary').click();
+  if(process.env.WORKSHEET_QA_DIR)await page.screenshot({path:path.join(process.env.WORKSHEET_QA_DIR,'english-review-desktop.png'),fullPage:true});assert.deepEqual(errors,[]);
+ }finally{await browser.close();}
+});
