@@ -5,8 +5,10 @@ on:
       - 'daily-worksheet-*.js'
       - 'science-*.js'
       - 'worksheet-science-term2.js'
+      - 'worksheet-science-term1.js'
       - 'worksheet-evidence-banks.js'
       - 'tests/worksheet-science-term2.test.cjs'
+      - 'tests/worksheet-science-term1.test.cjs'
       - 'tests/worksheet-evidence-banks.test.cjs'
       - 'daily-worksheet.css'
       - '문제지 만들기.html'
@@ -33,8 +35,10 @@ on:
       - 'daily-worksheet-*.js'
       - 'science-*.js'
       - 'worksheet-science-term2.js'
+      - 'worksheet-science-term1.js'
       - 'worksheet-evidence-banks.js'
       - 'tests/worksheet-science-term2.test.cjs'
+      - 'tests/worksheet-science-term1.test.cjs'
       - 'tests/worksheet-evidence-banks.test.cjs'
       - 'daily-worksheet.css'
       - '문제지 만들기.html'
@@ -79,6 +83,7 @@ jobs:
         run: |
           node --check science-inquiry.js
           node --check worksheet-science-term2.js
+          node --check worksheet-science-term1.js
           node --check tests/worksheet-science-term2.test.cjs
           node --check science-materials.js
           node --check daily-worksheet-core.js
@@ -94,7 +99,7 @@ jobs:
         run: node --test tests/worksheet-balanced-pages.test.cjs tests/daily-worksheet-core.test.cjs tests/daily-worksheet-challenger.test.cjs tests/worksheet-pr-contract.test.cjs
       - name: Verify textbook science lesson coverage and unique evidence
         run: |
-          node --test tests/worksheet-science-term2.test.cjs tests/worksheet-evidence-banks.test.cjs tests/worksheet-learning.test.cjs
+          node --test tests/worksheet-science-term2.test.cjs tests/worksheet-science-term1.test.cjs tests/worksheet-evidence-banks.test.cjs tests/worksheet-learning.test.cjs
           node scripts/science-lesson-coverage.cjs
       - name: Collect structured critique candidates across subjects
         run: |
