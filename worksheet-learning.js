@@ -102,7 +102,7 @@ const standardBanks={
  '6사04-02':['goguryeo','baekje','silla-gaya','silla-unification','balhae'],
  '6사04-03':['goryeo-founding','goryeo-society','goryeo-defense','goryeo-culture'],
  '6사05-01':['joseon-foundation','joseon-life'],
- '6사05-02':['joseon-late-culture','joseon-opening','modern-daily-change'],
+ '6사05-02':['joseon-late-culture','joseon-late-politics','joseon-opening','joseon-reforms','modern-daily-change'],
  '6사06-01':['sovereignty-resistance','independence-1919','independence-struggle','colonial-life'],
  '6사06-02':['liberation','korean-war'],
  '4사02-01':['timeline','social-fill-personal-history'],

@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,130);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),978);
+ assert.equal(E.banks.length,130);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),1298);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(b.id+q.evidenceId));ids.add(b.id+q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
@@ -150,7 +150,7 @@ test('Silla unification and Goryeo lessons keep periods, activities and event or
  const culture=E.banks.find(b=>b.id==='goryeo-culture').items;assert.match(culture[0].answer,/다른 색 흙/);assert.match(culture[2].answer,/낱글자 활자를 조합/);
 });
 test('legacy history is reused without changing its bank, with photo rights and separate essay capacity',()=>{
- assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),1146);
+ assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),1466);
  const original=C.historyItems('goryeo');const copy=C.historyItems('goryeo');copy[0].answer='changed';copy[0].choices[0]='changed';assert.deepEqual(C.historyItems('goryeo'),original);
  const used=E.banks.flatMap(b=>b.items.filter(q=>q.legacyHistoryId));assert.equal(used.length,139);assert.equal(new Set(used.map(q=>q.legacyHistoryId)).size,139);
  for(const b of E.banks){const known=b.items.filter(q=>q.legacyHistoryId);assert.equal(new Set(known.map(q=>q.answer.replace(/\s/g,''))).size,known.length);
@@ -167,13 +167,13 @@ test('legacy material retains provenance while reviewed passages support the ans
  const reused=E.banks.flatMap(b=>b.items.filter(q=>q.legacyMaterialId));assert.equal(reused.length,12);
  const before=C.historyEvidenceItems('modern');const copy=C.historyEvidenceItems('modern');copy[0].answer='changed';assert.deepEqual(C.historyEvidenceItems('modern'),before);
  for(const q of reused){const [topic,,index]=q.legacyMaterialId.split('-');const original=C.historyEvidenceItems(topic)[Number(index)];assert.ok(original);assert.equal(q.reviewedMaterial,true);assert.notEqual(q.detail,original.detail);assert.ok(q.explanation.length>15);assert.equal(q.choices.length,3);assert.ok(q.choices.includes(q.answer));assert.ok(!q.knowledgeOnly);assert.ok(q.source);}
- const u=T.catalog.find(u=>u.lessons.some(l=>T.binding(u,l)?.bankId==='joseon-life')),l=u.lessons.find(l=>T.binding(u,l)?.bankId==='joseon-life');const b=T.binding(u,l);assert.equal(b.essayIds.length,2);assert.ok(T.formats(b).some(([f])=>f==='essay'));
- const s=T.generate({subject:'social',grade:5,semester:2,unitId:u.id,lessonId:l.id,count:2,responseFormat:'essay',seed:42},C);assert.ok(s.items.every(q=>q.legacyMaterialId&&q.detail&&q.modelExplanation));
+ const u=T.catalog.find(u=>u.lessons.some(l=>T.binding(u,l)?.bankId==='joseon-life')),l=u.lessons.find(l=>T.binding(u,l)?.bankId==='joseon-life');const b=T.binding(u,l);assert.equal(b.essayIds.length,42);assert.ok(T.formats(b).some(([f])=>f==='essay'));
+ const s=T.generate({subject:'social',grade:5,semester:2,unitId:u.id,lessonId:l.id,count:2,responseFormat:'essay',seed:42,itemIndexes:[0,1]},C);assert.ok(s.items.every(q=>q.legacyMaterialId&&q.detail&&q.modelExplanation));
 });
 test('late Joseon and modernization lessons separate policy, chronology, reform intent and reach',()=>{
  const ids=['joseon-late-politics','joseon-opening','joseon-reforms','modern-daily-change'],reached=[];
- for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||!ids.includes(b.id))continue;reached.push(b.id);assert.equal(u.grade,5);assert.equal(u.semester,2);const binding=T.binding(u,l);assert.equal(binding.essayIds.length,5);
-  for(const format of ['choice','short','essay']){const s=T.generate({subject:'social',grade:5,semester:2,unitId:u.id,lessonId:l.id,count:5,responseFormat:format,seed:24},C);assert.equal(s.items.length,5);if(format==='essay')assert.ok(s.items.every(q=>!q.knowledgeOnly&&q.source&&(q.detail||q.scienceMaterial)));}
+ for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||!ids.includes(b.id))continue;reached.push(b.id);assert.equal(u.grade,5);assert.equal(u.semester,2);const binding=T.binding(u,l);assert.equal(binding.essayIds.length,b.id==='modern-daily-change'?5:45);
+  for(const format of ['choice','short','essay']){const s=T.generate({subject:'social',grade:5,semester:2,unitId:u.id,lessonId:l.id,count:5,responseFormat:format,seed:24},C);assert.equal(s.items.length,5);if(format==='essay')assert.ok(s.items.every(q=>!q.knowledgeOnly&&q.source&&(q.detail||q.scienceMaterial||q.readingGroup)));}
  }
  assert.deepEqual(reached.sort(),ids.sort());
  const politics=E.banks.find(b=>b.id==='joseon-late-politics');assert.equal(politics.items.filter(q=>q.legacyHistoryId).length,2);assert.match(politics.items[2].detail,/두 필에서 한 필/);
@@ -184,7 +184,7 @@ test('late Joseon and modernization lessons separate policy, chronology, reform 
 test('industrialization separates historical sequence, production share and lived experiences',()=>{
  const ids=['korea-industrialization','industrialization-life'],reached=[];
  for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||!ids.includes(b.id))continue;reached.push(b.id);assert.equal(u.grade,6);assert.equal(u.semester,1);assert.equal(T.lookup('social',6,2,u.id,l.id),null);
-  for(const responseFormat of ['choice','short','essay']){const s=T.generate({subject:'social',grade:6,semester:1,unitId:u.id,lessonId:l.id,count:6,responseFormat,seed:42},C);assert.equal(s.items.length,6);assert.equal(new Set(s.items.map(q=>q.evidenceId)).size,6);assert.ok(s.items.every(q=>q.source&&(q.detail||q.scienceMaterial)));}
+  for(const responseFormat of ['choice','short','essay']){const s=T.generate({subject:'social',grade:6,semester:1,unitId:u.id,lessonId:l.id,count:6,responseFormat,seed:42},C);assert.equal(s.items.length,6);assert.equal(new Set(s.items.map(q=>q.evidenceId)).size,6);assert.ok(s.items.every(q=>q.source&&(q.detail||q.scienceMaterial||q.readingGroup)));}
  }
  assert.deepEqual(reached.sort(),ids.sort());
  const process=E.banks.find(b=>b.id==='korea-industrialization').items,life=E.banks.find(b=>b.id==='industrialization-life').items;

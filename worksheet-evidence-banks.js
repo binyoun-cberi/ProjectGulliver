@@ -551,6 +551,7 @@ for(const [id,topic,index,prompt,answer,w1,w2,detail,explanation,source,sourceLa
 (typeof module==='object'&&module.exports?require('./worksheet-social-completion.js'):globalThis.WorksheetSocialCompletion)({bank,table,diagram,photos});
 
 (typeof module==='object'&&module.exports?require('./worksheet-history-volume.js'):globalThis.WorksheetHistoryVolume)(banks);
+(typeof module==='object'&&module.exports?require('./worksheet-joseon-volume.js'):globalThis.WorksheetJoseonVolume)(banks);
 function find(unit,lesson){
  const b=banks.find(b=>b.subject===unit.subject&&b.grades.includes(unit.grade)&&b.pattern.test(lesson.name)&&!(b.id==='local-problem'&&/지역문제란/.test(lesson.name)));if(!b)return null;
  let indexes=null;const n=lesson.name;
