@@ -1,4 +1,4 @@
-(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./data/worksheet-textbooks.js'):root.WorksheetTextbooks,typeof module==='object'&&module.exports?require('./science-expansion.js'):root.ScienceExpansion);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetLearning=api;})(globalThis,(catalog,science)=>{
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./data/worksheet-textbooks.js'):root.WorksheetTextbooks,typeof module==='object'&&module.exports?require('./science-expansion.js'):root.ScienceExpansion,typeof module==='object'&&module.exports?require('./worksheet-evidence-banks.js'):root.WorksheetEvidence);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetLearning=api;})(globalThis,(catalog,science,evidence)=>{
 'use strict';
 // Bind only the learning target named by the public lesson heading. Never fill
 // an unmapped lesson with an entire subject bank or a neighbouring grade.
@@ -29,6 +29,7 @@ const emotions=[
 function units(subject,grade,semester){return catalog.filter(u=>u.subject===subject&&u.grade===Number(grade)&&u.semester===Number(semester))}
 function binding(unit,lesson){
  const n=lesson.name;if(/단원 도입|단원 마무리|준비하기|마무리하기|배울 내용|배운 내용|실천하기|함께하는 수학|해결하는 수학|문제로 마무리|실천하는 과학|과학 속으로|생각 폴짝/.test(n))return null;
+ const extra=evidence.find(unit,lesson);if(extra)return {kind:'evidence',bankId:extra.id,ids:extra.items.map(q=>q.evidenceId),label:extra.label};
  if(unit.subject==='math'){
   const g=unit.grade;
   if(g===3&&/세 자리 수의 덧셈/.test(n))return {kind:'math',topic:'hundreds',type:'add-ones-none',label:'세 자리 수 덧셈 · 받아올림 없는 계산'};
@@ -68,7 +69,7 @@ function binding(unit,lesson){
 }
 function lookup(subject,grade,semester,unitId,lessonId){const unit=units(subject,grade,semester).find(u=>u.id===unitId),lesson=unit?.lessons.find(l=>l.id===lessonId);return unit&&lesson?{unit,lesson,binding:binding(unit,lesson)}:null}
 function formats(b){return !b?[]:b.kind==='writing'?[['essay','서술형']]:['math','fraction','decimal','table','division','numbers','speed'].includes(b.kind)?[['short','단답형']]:[['choice','객관식'],['short','단답형'],['essay','서술형']]}
-function counts(b){if(!b)return [];const max=b.kind==='science'?b.ids.length:b.kind==='emotion'?emotions.length:b.kind==='writing'?6:b.kind==='table'?9:b.kind==='economy'?12:20;return [1,2,3,4,5,6,8,10,15,20].filter(n=>n<=max)}
+function counts(b){if(!b)return [];const max=['science','evidence'].includes(b.kind)?b.ids.length:b.kind==='emotion'?emotions.length:b.kind==='writing'?6:b.kind==='table'?9:b.kind==='economy'?12:20;return [1,2,3,4,5,6,8,10,15,20].filter(n=>n<=max)}
 function rng(seed){let n=(Number(seed)>>>0)||1;return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296}}
 function shuffled(a,r){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function generate(options,C){
@@ -77,7 +78,8 @@ function generate(options,C){
  const {unit,lesson,binding:b}=selected;if(!b)throw Error('이 학습 내용의 문제는 준비 중이에요. 다른 학습 내용을 골라 주세요.');
  if(!counts(b).includes(Number(count))||!formats(b).some(([f])=>f===responseFormat))throw Error('선택한 학습 내용의 문제 유형과 문항 수를 확인해 주세요.');
  const r=rng(seed),int=(a,z)=>a+Math.floor(r()*(z-a+1));let items=[];
- if(b.kind==='math'){
+ if(b.kind==='evidence'){const bank=evidence.banks.find(row=>row.id===b.bankId);items=shuffled(bank.items.filter(q=>b.ids.includes(q.evidenceId)),r).slice(0,Number(count)).map(q=>({...q,choices:shuffled(q.choices,r)}));}
+ else if(b.kind==='math'){
   const s=C.generate({subject:'math',grade,topic:b.topic,type:b.type,count:[5,10,15,20].find(n=>n>=Number(count)),seed});items=s.items.slice(0,Number(count)).map(q=>({...q,explanation:q.explanation||(b.topic==='hundreds'||b.topic==='addition'?'같은 자리끼리 계산합니다. '+q.prompt+' '+q.answer:b.topic==='fraction'?'분모를 확인하고 분자를 계산한 뒤 약분합니다. '+q.prompt+' '+q.answer:'연산 순서와 식을 확인하여 계산합니다. '+q.prompt+' '+q.answer)}));
  }else if(b.kind==='science'){
   const bank=science.banks[b.topic];items=shuffled(b.ids.map(id=>{const q=bank.find(q=>q.id===id);if(!q)throw Error('연결된 과학 문제를 확인해 주세요.');return {prompt:q.prompt,answer:q.answer,choices:shuffled([q.answer,...q.wrong],r),explanation:q.explanation,...(q.material?{scienceMaterial:q.material}:{}),scienceId:q.id}}),r).slice(0,Number(count));
@@ -99,7 +101,7 @@ function generate(options,C){
   if(b.kind==='economy'){const goods=shuffled(['빵','가방','의자','옷','공책','도자기'],r)[0],object=goods+((goods.charCodeAt(goods.length-1)-0xAC00)%28?'을':'를'),prod=r()<.5;q={prompt:'다음 사례는 생산과 소비 중 무엇에 해당하나요?',detail:prod?`가게에 팔 ${object} 만들었습니다.`:`필요한 ${object} 사서 사용했습니다.`,answer:prod?'생산':'소비',choices:shuffled(['생산','소비'],r),explanation:prod?'판매할 물건을 만드는 것은 생산 활동입니다.':'필요한 물건을 사서 사용하는 것은 소비 활동입니다.'}}
   if(!q)throw Error('연결된 문제 유형을 확인해 주세요.');const key=JSON.stringify([q.prompt,q.detail,q.scienceMaterial]);if(seen.has(key))continue;seen.add(key);items.push(q);
  }if(items.length!==Number(count))throw Error('겹치지 않는 문제가 부족해요. 문항 수를 줄여 주세요.');}
- items=items.map(q=>{if(responseFormat==='choice')return q;const prompt=q.prompt.replace(/알맞은 것은 무엇인가요\?/,'마음을 쓰세요.').replace(/중 무엇에 해당하나요\?/,'중 어디에 해당하는지 쓰세요.');if(responseFormat==='essay')return {...q,prompt:b.kind==='writing'?q.prompt:prompt+' 글이나 자료에서 근거를 찾아 까닭도 설명해 보세요.',choices:[],format:'essay',modelExplanation:q.explanation};return {...q,prompt,choices:[],format:'short'}});
+ items=items.map(q=>{if(responseFormat==='choice')return q;const prompt=q.prompt.replace(/알맞은 것은 무엇인가요\?/,'알맞은 답을 쓰세요.').replace(/중 무엇에 해당하나요\?/,'중 어디에 해당하는지 쓰세요.');if(responseFormat==='essay')return {...q,prompt:b.kind==='writing'?q.prompt:prompt+' 글이나 자료에서 근거를 찾아 까닭도 설명해 보세요.',choices:[],format:'essay',modelExplanation:q.explanation};return {...q,prompt,choices:[],format:'short'}});
  const curriculum={revision:'2022',semester:Number(semester),unitId,lessonId,unit:unit.name,lesson:lesson.name,practice:b.label,source:unit.source,book:unit.book};
  return {subject,grade:Number(grade),topic:'textbook-learning',type:'',count:Number(count),seed:Number(seed)>>>0,difficulty:'basic',responseFormat,alignment:null,title:`${grade}학년 ${semester}학기 · ${unit.name}`,curriculum,items:items.map(q=>({...q,curriculumLesson:lessonId}))};
 }
