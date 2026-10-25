@@ -557,7 +557,7 @@ for(const [id,topic,index,prompt,answer,w1,w2,detail,explanation,source,sourceLa
 (typeof module==='object'&&module.exports?require('./worksheet-social-world-economy.js'):globalThis.WorksheetSocialWorldEconomy)({bank,banks});
 (typeof module==='object'&&module.exports?require('./worksheet-science-term2.js'):globalThis.WorksheetScienceTermTwo)({bank});
 (typeof module==='object'&&module.exports?require('./worksheet-science-term1.js'):globalThis.WorksheetScienceTermOne)({bank});
-(typeof module==='object'&&module.exports?require('./worksheet-science-other-grades.js'):globalThis.WorksheetScienceOtherGrades)({bank});
+(typeof module==='object'&&module.exports?require('./worksheet-science-other-grades.js'):globalThis.WorksheetScienceOtherGrades)({bank,banks});
 function find(unit,lesson){
  const exactLessonName=lesson.name.replace(/^(?:[①-⑳]|\d+\.)\s*/, '').trim();
  const exact=banks.find(b=>b.exactLessonName===exactLessonName&&b.subject===unit.subject&&b.grades.includes(unit.grade)&&(!b.exactUnitName||b.exactUnitName===unit.name)&&(!b.exactSemester||b.exactSemester===unit.semester));
