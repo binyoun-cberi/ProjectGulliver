@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,31);assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),155);
+ assert.equal(E.banks.length,39);assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),195);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(q.evidenceId));ids.add(q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
@@ -72,4 +72,21 @@ test('second social expansion keeps benefits, responses, participation and envir
  assert.match(age[4].explanation,/원인은 알 수 없/);
  const change=E.banks.find(b=>b.id==='environment-use').items[2];
  const [time,forest]=change.scienceMaterial.rows;assert.ok(parseInt(time[2])<parseInt(time[1]));assert.ok(parseInt(forest[2])<parseInt(forest[1]));assert.match(change.answer,/편리해졌지만 숲이 줄/);
+});
+test('sixth grade expansion separates economic, media and global problem evidence by objective',()=>{
+ const added=['household-firm','economic-work','trade-cooperation','media-role','media-judgment','world-spatial-tools','global-problems','sustainable-future'];
+ const targets=[];
+ for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||!added.includes(b.id))continue;targets.push(l.id);assert.equal(u.grade,6);assert.equal(u.subject,'social');
+  const ids=b.items.map(q=>q.evidenceId);
+  if(b.id==='media-role')assert.deepEqual(ids,/미디어란/.test(l.name)?['media-role-1','media-role-2']:['media-role-3','media-role-4','media-role-5']);
+  if(b.id==='media-judgment')assert.deepEqual(ids,/비판적/.test(l.name)?['media-judgment-1','media-judgment-2','media-judgment-3']:['media-judgment-4','media-judgment-5']);
+  if(b.id==='world-spatial-tools'&&/디지털/.test(l.name))assert.deepEqual(ids,['world-spatial-tools-3','world-spatial-tools-4']);
+  if(b.id==='world-spatial-tools'&&/활용/.test(l.name))assert.deepEqual(ids,['world-spatial-tools-5']);
+  if(b.id==='global-problems'&&/겪고/.test(l.name))assert.deepEqual(ids,['global-problems-1','global-problems-2']);
+  if(b.id==='economic-work'&&/기업은/.test(l.name))assert.deepEqual(ids,['economic-work-2','economic-work-5']);
+ }
+ assert.equal(targets.length,17);
+ const q=E.banks.find(b=>b.id==='sustainable-future').items[2];const amounts=q.scienceMaterial.rows.map(r=>parseInt(r[1]));assert.equal(amounts[1]-amounts[0],5);assert.match(q.explanation,/5 L.*모든 가정/);
+ const media=E.banks.find(b=>b.id==='media-judgment').items[2];assert.match(media.explanation,/서로 다른 관점/);
+ const world=E.banks.find(b=>b.id==='world-spatial-tools').items[1];assert.match(world.explanation,/왜곡이 생길 수/);
 });
