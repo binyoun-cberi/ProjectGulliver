@@ -574,7 +574,7 @@ function find(unit,lesson){
  if(b.id==='media-role')indexes=/미디어란/.test(n)?[0,1]:[2,3,4];
  if(b.id==='media-judgment')indexes=/비판적/.test(n)?[0,1,2]:[3,4];
  if(b.id==='world-spatial-tools')indexes=/지구본과/.test(n)?[0,1]:/디지털/.test(n)?[2,3]:/활용/.test(n)?[4]:[0,1,2,3,4];
- if(b.id==='global-problems')indexes=/겪고/.test(n)?[0,1]:/해결하기 위한 노력/.test(n)?[2,4]:[2,3,4];
+ if(b.id==='global-problems')indexes=/겪고/.test(n)?null:/해결하기 위한 노력/.test(n)?[2,4]:[2,3,4];
  if(b.id==='korea-landforms')indexes=/산지/.test(n)?[1]:/하천과 평야/.test(n)?[2,4]:/해안/.test(n)?[3]:[0,1,2,3,4];
  if(b.id==='korea-season-climate')indexes=/기온의/.test(n)?[1,2]:/강수량의/.test(n)?[3,4]:[0,1,2,3,4];
  if(b.id==='climate-disaster')indexes=/대응/.test(n)?[2,3,4]:[0,1,5];
