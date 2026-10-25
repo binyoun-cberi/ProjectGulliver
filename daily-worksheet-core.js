@@ -1288,7 +1288,10 @@ function generateSingle({subject,topic,grade,count=10,seed=Date.now(),difficulty
  return{subject,topic,type,responseFormat:responseFormat||'',eras:mixed?[...chosen]:[],mathTypes:mathMixed?[...selectedMath]:[],grade:year,count:size,difficulty,variant:topic==='hundreds'?variant:'tens',seed:Number(seed)>>>0,title:year+'학년 '+info.name+' · '+(mixed?'선택한 시대 역사':mathMixed?'선택한 유형 혼합 연습':subject!=='math'?info.topics.find(t=>t[0]===topic)[1]:selected?selected[1]:info.topics.find(t=>t[0]===topic)[1]),alignment:['mixed','decimal','history-mix','math-mix'].includes(topic)?null:alignment(subject,topic,year),items:finalized};
 }
 function supportedCounts(options){return (options.subject==='math'&&options.topic==='column'?[6,8,10,12]:[5,10,15,20]).filter(count=>{try{generate({...options,count,seed:42});return true}catch{return false}})}
-return{SUBJECTS,generate,mixOptions,supportedCounts,alignment,units,types,answerFormats,answerFormatFor};
+// Return copies so textbook adapters cannot mutate the legacy question banks.
+function historyItems(topic){return (HISTORY_QUIZ[topic]||[]).map((row,index)=>({id:topic+'-'+index,prompt:row[0],answer:row[1],choices:row.slice(1),explanation:row[0]+' '+row[1]+'입니다.',source:'https://contents.history.go.kr/mobile/eh/list.do?code=eh_age_'+(topic==='modern'&&[4,5,12,13,14,39,40,41,42].includes(index)?'50':HISTORY_AGE[topic]),sourceLabel:'국사편찬위원회 · 재미있는 초등역사'}))}
+function historyEvidenceItems(topic){const data=SOCIAL_EVIDENCE[topic];if(!data)return [];const rows=[...data.cards.map((r,i)=>[...r,SOCIAL_LEGACY_NOTES[topic][i][1],SOCIAL_LEGACY_NOTES[topic][i][0]]),...SOCIAL_EXTRA[topic],...SOCIAL_VARIETY[topic]];return rows.map(([detail,answer,w1,w2,key,explanation],index)=>({id:topic+'-evidence-'+index,detail,answer,choices:[answer,w1,w2],explanation,source:evidenceSource(key),sourceLabel:'국사편찬위원회 · 해당 자료 보기'}))}
+return{historyEvidenceItems,historyItems,SUBJECTS,generate,mixOptions,supportedCounts,alignment,units,types,answerFormats,answerFormatFor};
 });
 
 
