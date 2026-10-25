@@ -87,6 +87,7 @@ test('browser dropdown and actual A4 student/teacher layouts reflect the selecte
   await page.goto(pathToFileURL(path.resolve('문제지 만들기.html')).href,{waitUntil:'load'});await page.locator('[data-mode="practice"]').click();
   await page.locator('.gx-worksheet-picker summary').click();await page.locator('[data-worksheet-subject="korean"]').click();
   await page.selectOption('#grade','4');
+  await page.locator('[data-mode=practice]').click();
   await page.selectOption('#unit','k4-vocabulary');
   await page.selectOption('#topic','vocabulary');
   assert.equal(await page.locator('#responseSetting').isVisible(),true);
@@ -127,7 +128,7 @@ test('worksheet subject navigation and horizontal settings work on desktop and m
  async function geometry(){return page.evaluate(()=>{const s=document.getElementById('sheetForm').getBoundingClientRect(),o=document.querySelector('.daily-output').getBoundingClientRect();return {settings:{x:s.x,y:s.y,width:s.width,bottom:s.bottom},output:{x:o.x,y:o.y,width:o.width}}})}
  let rect=await geometry();assert.ok(rect.settings.width>1100,'settings should span the workspace');assert.ok(rect.output.y>=rect.settings.bottom,'preview belongs below settings');assert.ok(Math.abs(rect.settings.width-rect.output.width)<3);
  assert.equal(await page.locator('.subject-source').isVisible(),false,'subject belongs in top navigation');
- await page.locator('.gx-worksheet-picker summary').click();assert.equal(await page.locator('.gx-subject-menu a').count(),6);await page.locator('[data-worksheet-subject="english"]').click();
+ await page.locator('.gx-worksheet-picker summary').click();assert.equal(await page.locator('.gx-subject-menu [data-worksheet-subject]').count(),6);assert.equal(await page.locator('.gx-subject-menu a[href="받아쓰기.html"]').count(),1);await page.locator('[data-worksheet-subject="english"]').click();
  assert.equal(await page.locator('#filterSubjectTitle').textContent(),'영어 문제지 설정');assert.equal(await page.locator('.gx-worksheet-picker').getAttribute('open'),null);
  await page.selectOption('#grade','5');await page.selectOption('#topic','message-reading');await page.selectOption('#count','20');await page.locator('button.daily-primary').click();
  assert.equal(await page.locator('#questions>li').count(),20);assert.match(await page.locator('#questionSheet #paperTitle').textContent(),/영어/);assert.match(await page.locator('#filterSelectionSummary').textContent(),/20문항/);
