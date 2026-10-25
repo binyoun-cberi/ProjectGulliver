@@ -1291,7 +1291,8 @@ function supportedCounts(options){return (options.subject==='math'&&options.topi
 // Return copies so textbook adapters cannot mutate the legacy question banks.
 function historyItems(topic){return (HISTORY_QUIZ[topic]||[]).map((row,index)=>({id:topic+'-'+index,prompt:row[0],answer:row[1],choices:row.slice(1),explanation:row[0]+' '+row[1]+'입니다.',source:'https://contents.history.go.kr/mobile/eh/list.do?code=eh_age_'+(topic==='modern'&&[4,5,12,13,14,39,40,41,42].includes(index)?'50':HISTORY_AGE[topic]),sourceLabel:'국사편찬위원회 · 재미있는 초등역사'}))}
 function historyEvidenceItems(topic){const data=SOCIAL_EVIDENCE[topic];if(!data)return [];const rows=[...data.cards.map((r,i)=>[...r,SOCIAL_LEGACY_NOTES[topic][i][1],SOCIAL_LEGACY_NOTES[topic][i][0]]),...SOCIAL_EXTRA[topic],...SOCIAL_VARIETY[topic]];return rows.map(([detail,answer,w1,w2,key,explanation],index)=>({id:topic+'-evidence-'+index,detail,answer,choices:[answer,w1,w2],explanation,source:evidenceSource(key),sourceLabel:'국사편찬위원회 · 해당 자료 보기'}))}
-return{historyEvidenceItems,historyItems,SUBJECTS,generate,mixOptions,supportedCounts,alignment,units,types,answerFormats,answerFormatFor};
+function readingInventory(grade){const g=Number(grade);if(!Number.isInteger(g)||g<1||g>6)throw Error('학년을 확인해 주세요.');return JSON.parse(JSON.stringify(READING_SETS[g<=2?'early':g<=4?'lower':'upper'].filter(p=>(!p.minGrade||g>=p.minGrade)&&p.genre)));}
+return{readingInventory,historyEvidenceItems,historyItems,SUBJECTS,generate,mixOptions,supportedCounts,alignment,units,types,answerFormats,answerFormatFor};
 });
 
 

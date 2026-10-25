@@ -1,4 +1,4 @@
-(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./data/worksheet-textbooks.js'):root.WorksheetTextbooks,typeof module==='object'&&module.exports?require('./science-expansion.js'):root.ScienceExpansion,typeof module==='object'&&module.exports?require('./worksheet-evidence-banks.js'):root.WorksheetEvidence,typeof module==='object'&&module.exports?require('./data/worksheet-standards.js'):root.WorksheetStandards);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetLearning=api;})(globalThis,(sourceCatalog,science,evidence,standardCatalog)=>{
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./data/worksheet-textbooks.js'):root.WorksheetTextbooks,typeof module==='object'&&module.exports?require('./science-expansion.js'):root.ScienceExpansion,typeof module==='object'&&module.exports?require('./worksheet-evidence-banks.js'):root.WorksheetEvidence,typeof module==='object'&&module.exports?require('./data/worksheet-standards.js'):root.WorksheetStandards,typeof module==='object'&&module.exports?require('./worksheet-korean-readings.js'):root.WorksheetKoreanReadings);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetLearning=api;})(globalThis,(sourceCatalog,science,evidence,standardCatalog,korean)=>{
 'use strict';
 // Preserve source titles; exclude bookend corners and reviewed live performances.
 // Keep paper-answerable reading, writing and calculation; omit tasks requiring
@@ -56,6 +56,7 @@ function units(subject,grade,semester){return catalog.filter(u=>u.subject===subj
 function binding(unit,lesson){
  if(!isCoreLesson(lesson))return null;
  const n=lesson.name;
+ const reading=korean.find(unit,lesson);if(reading)return reading;
  const extra=evidence.find(unit,lesson);if(extra)return {kind:'evidence',bankId:extra.id,ids:extra.items.map(q=>q.evidenceId),essayIds:extra.items.filter(q=>!q.knowledgeOnly).map(q=>q.evidenceId),label:extra.label};
  if(unit.subject==='math'){
   const g=unit.grade;
@@ -130,12 +131,12 @@ function standardForBinding(b){
 }
 function standards(subject,grade){
  return standardCatalog.filter(s=>s.subject===subject&&s.grades.includes(Number(grade))).map(s=>{
-  const bankIds=standardBanks[s.code]||[],pool=evidence.banks.filter(b=>bankIds.includes(b.id)&&b.subject===subject).flatMap(b=>b.items);
+  const bankIds=standardBanks[s.code]||[],pool=evidence.banks.filter(b=>bankIds.includes(b.id)&&b.subject===subject).flatMap(b=>b.items).concat(korean.standardPool(s.code,grade));
   const refs=catalog.filter(u=>u.subject===subject&&s.grades.includes(u.grade)).flatMap(unit=>unit.lessons.map(lesson=>({unit,lesson,binding:binding(unit,lesson)}))).filter(x=>x.binding&&standardForBinding(x.binding)===s.code);
   for(const ref of refs.filter(x=>x.binding.kind==='science'))for(const id of ref.binding.ids){const q=science.banks[ref.binding.topic].find(q=>q.id===id);if(q&&!pool.some(x=>x.evidenceId==='standard-'+id))pool.push({evidenceId:'standard-'+id,prompt:q.prompt,answer:q.answer,choices:[q.answer,...q.wrong],explanation:q.explanation,...(q.material?{scienceMaterial:q.material}:{})});}
   if(!pool.length&&!refs.length)return null;
   const b=pool.length?{kind:'evidence',pool,ids:pool.map(q=>q.evidenceId),essayIds:pool.filter(q=>!q.knowledgeOnly).map(q=>q.evidenceId),label:s.statement}:refs[0].binding;
-  return {...s,refs,binding:b,coverage:pool.length?evidence.banks.filter(b=>bankIds.includes(b.id)).map(b=>b.label):[...new Set(refs.map(x=>x.binding.label))]};
+  return {...s,refs,binding:b,coverage:pool.length?[...evidence.banks.filter(b=>bankIds.includes(b.id)).map(b=>b.label),...korean.standardCoverage(s.code)]:[...new Set(refs.map(x=>x.binding.label))]};
  }).filter(Boolean);
 }
 function lookupStandard(subject,grade,code){const s=standards(subject,grade).find(s=>s.code===code);return s?{standard:s,unit:{name:'['+s.code+'] '+s.statement,source:s.source,book:'2022 개정 교육과정'},lesson:{name:s.statement,id:s.code},binding:s.binding}:null;}
