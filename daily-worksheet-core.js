@@ -957,11 +957,13 @@ const HISTORY_QUIZ_MORE={
  ]
 };
 for(const [topic,rows] of Object.entries(HISTORY_QUIZ_EXTRA))HISTORY_QUIZ[topic].push(...rows,...HISTORY_QUIZ_MORE[topic]);
+const modernDepth=typeof module==='object'&&module.exports?require('./data/history-modern-depth.js'):globalThis.HistoryModernDepth;
+for(const q of modernDepth.items().filter(q=>q.legacy))HISTORY_QUIZ.modern.push([q.prompt,q.answer,...q.choices.filter(c=>c!==q.answer),q]);
 const HISTORY_AGE={prehistoric:'10',ancient:'10',goryeo:'20',joseon:'30',modern:'40'};
 function initialAnswerAllowed(answer){return String(answer).length<=18&&!/(?:요$|때문|하려고|할 수|도움이|필요했다|있었|사회적 지위|생활 장면)/.test(answer);}
 function initialHint(answer){return Array.from(String(answer)).map(ch=>{const n=ch.charCodeAt(0)-0xac00;return n>=0&&n<11172?'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'[Math.floor(n/588)]:/[0-9]/.test(ch)?'□':ch}).join('');}
-function historyQuiz(topic,type,r){const kind=type?.split('-').at(-1)||'quiz',pool=kind==='initial'?HISTORY_QUIZ[topic].filter(q=>initialAnswerAllowed(q[1])):HISTORY_QUIZ[topic];const [prompt,answer,wrong1,wrong2]=pick(pool,r),age=topic==='modern'&&/(대한민국 정부|6·25|정전|1948|1950|1953|광복 → 정부 수립|정부가 세워진 순서)/.test(prompt)?'50':HISTORY_AGE[topic],source=`https://contents.history.go.kr/mobile/eh/list.do?code=eh_age_${age}`;
- const common={explanation:`${prompt} 정답은 ${answer}입니다.`,source,sourceLabel:'국사편찬위원회 · 재미있는 초등역사'};
+function historyQuiz(topic,type,r){const kind=type?.split('-').at(-1)||'quiz',pool=kind==='initial'?HISTORY_QUIZ[topic].filter(q=>initialAnswerAllowed(q[1])):HISTORY_QUIZ[topic];const [prompt,answer,wrong1,wrong2,metadata]=pick(pool,r),age=topic==='modern'&&/(대한민국 정부|6·25|정전|1948|1950|1953|광복 → 정부 수립|정부가 세워진 순서)/.test(prompt)?'50':HISTORY_AGE[topic],source=`https://contents.history.go.kr/mobile/eh/list.do?code=eh_age_${age}`;
+ const common={sourceEra:topic,explanation:metadata?.explanation||`${prompt} 정답은 ${answer}입니다.`,source:metadata?.source||source,sourceLabel:metadata?.sourceLabel||'국사편찬위원회 · 재미있는 초등역사',...(metadata?{modernDepth:true,evidenceId:metadata.evidenceId}: {})};
  if(kind==='ox'){const falseStatement=r()<.5;return {...common,prompt:`“${falseStatement?wrong1:answer}”은(는) 다음 질문의 답입니다. ${prompt} (O/X)`,answer:falseStatement?'X':'O',choices:['O','X']}}
  if(kind==='initial')return {...common,prompt,detail:`초성·빈칸 힌트: ${initialHint(answer)}`,answer,choices:[]};
  if(kind==='short')return {...common,prompt,answer,choices:[],detail:''};
@@ -1300,7 +1302,7 @@ function generateSingle({subject,topic,grade,count=10,seed=Date.now(),difficulty
 }
 function supportedCounts(options){return (options.subject==='math'&&options.topic==='column'?[6,8,10,12]:[5,10,15,20]).filter(count=>{try{generate({...options,count,seed:42});return true}catch{return false}})}
 // Return copies so textbook adapters cannot mutate the legacy question banks.
-function historyItems(topic){return (HISTORY_QUIZ[topic]||[]).map((row,index)=>({id:topic+'-'+index,prompt:row[0],answer:row[1],choices:row.slice(1),explanation:row[0]+' '+row[1]+'입니다.',source:'https://contents.history.go.kr/mobile/eh/list.do?code=eh_age_'+(topic==='modern'&&[4,5,12,13,14,39,40,41,42].includes(index)?'50':HISTORY_AGE[topic]),sourceLabel:'국사편찬위원회 · 재미있는 초등역사'}))}
+function historyItems(topic){return (HISTORY_QUIZ[topic]||[]).map((row,index)=>({id:topic+'-'+index,prompt:row[0],answer:row[1],choices:row.slice(1,4),explanation:row[0]+' '+row[1]+'입니다.',source:'https://contents.history.go.kr/mobile/eh/list.do?code=eh_age_'+(topic==='modern'&&[4,5,12,13,14,39,40,41,42].includes(index)?'50':HISTORY_AGE[topic]),sourceLabel:'국사편찬위원회 · 재미있는 초등역사',...(row[4]?{explanation:row[4].explanation,source:row[4].source,sourceLabel:row[4].sourceLabel,modernDepth:true,evidenceId:row[4].evidenceId}:{})}))}
 function historyEvidenceItems(topic){const data=SOCIAL_EVIDENCE[topic];if(!data)return [];const rows=[...data.cards.map((r,i)=>[...r,SOCIAL_LEGACY_NOTES[topic][i][1],SOCIAL_LEGACY_NOTES[topic][i][0]]),...SOCIAL_EXTRA[topic],...SOCIAL_VARIETY[topic]];return rows.map(([detail,answer,w1,w2,key,explanation],index)=>({id:topic+'-evidence-'+index,detail,answer,choices:[answer,w1,w2],explanation,source:evidenceSource(key),sourceLabel:'국사편찬위원회 · 해당 자료 보기'}))}
 function readingInventory(grade){const g=Number(grade);if(!Number.isInteger(g)||g<1||g>6)throw Error('학년을 확인해 주세요.');return JSON.parse(JSON.stringify(READING_SETS[g<=2?'early':g<=4?'lower':'upper'].filter(p=>(!p.minGrade||g>=p.minGrade)&&p.genre)));}
 return{readingInventory,historyEvidenceItems,historyItems,SUBJECTS,generate,mixOptions,supportedCounts,alignment,units,types,answerFormats,answerFormatFor,initialHint,initialAnswerAllowed};

@@ -1,6 +1,8 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
 const {SUBJECTS,generate,types,units}=require('../daily-worksheet-core.js');
+const depthById=new Map(require('../data/history-modern-depth').items().filter(q=>q.legacy).map(q=>[q.evidenceId,q]));
+function checkHistorySource(q){if(q.modernDepth){const row=depthById.get(q.evidenceId);assert.ok(row);assert.equal(q.source,row.source);assert.equal(q.explanation,row.explanation);}else assert.match(q.source,/^https:\/\/contents\.history\.go\.kr\/mobile\/eh\/list\.do\?/);}
 
 test('science and English contextual reading yields twenty distinct sourced-by-context exercises per grade band',()=>{
  for(const [subject,topic,grades] of [['science','plant-observation',[3,4]],['science','ecosystem',[5,6]],['english','short-reading',[3,4]],['english','message-reading',[5,6]]]){
@@ -119,7 +121,7 @@ test('social units generate sourced history quizzes and local evidence exercises
    assert.equal(new Set(sheet.items.map(q=>topic==='history-review'?q.format==='ordering'?q.orderChoices.join('|'):q.prompt:grade>=5?q.prompt:q.detail)).size,15,`${grade}/${topic}/${seed}: 문제가 중복됨`);
    if(sheet.alignment)assert.match(sheet.alignment.code,/^\[[46]사\d{2}-\d{2}\]$/);
    else assert.ok(['joseon','modern','history-review'].includes(topic));
-   for(const question of sheet.items){assert.ok(question.explanation&&question.sourceLabel);if(grade>=5){assert.match(question.source,/^https:\/\/contents\.history\.go\.kr\/mobile\/eh\/list\.do\?/);assert.ok(!question.prompt.includes('자료에서 알 수 있는 것을'));assert.ok(!/세트장|놀이공원|텔레비전/.test(question.prompt+' '+question.choices.join(' ')));if(topic==='history-review'){if(type==='history-matching')assert.ok(question.right&&question.answer.includes('번 · '));else assert.ok(question.orderChoices.length===4&&/^[1-4] → [1-4] → [1-4] → [1-4]$/.test(question.answer))}else if(type.endsWith('-initial'))assert.ok(question.detail.includes('힌트:'));else if(type.endsWith('-short'))assert.ok(!question.detail&&!question.choices.length);else assert.ok(question.choices.includes(question.answer))}else{assert.ok(question.detail&&question.choices.includes(question.answer));assert.equal(question.source,'')}}
+   for(const question of sheet.items){assert.ok(question.explanation&&question.sourceLabel);if(grade>=5){checkHistorySource(question);assert.ok(!question.prompt.includes('자료에서 알 수 있는 것을'));assert.ok(!/세트장|놀이공원|텔레비전/.test(question.prompt+' '+question.choices.join(' ')));if(topic==='history-review'){if(type==='history-matching')assert.ok(question.right&&question.answer.includes('번 · '));else assert.ok(question.orderChoices.length===4&&/^[1-4] → [1-4] → [1-4] → [1-4]$/.test(question.answer))}else if(type.endsWith('-initial'))assert.ok(question.detail.includes('힌트:'));else if(type.endsWith('-short'))assert.ok(!question.detail&&!question.choices.length);else assert.ok(question.choices.includes(question.answer))}else{assert.ok(question.detail&&question.choices.includes(question.answer));assert.equal(question.source,'')}}
   }
  }
  assert.throws(()=>generate({subject:'social',grade:4,topic:'goryeo',type:'goryeo-evidence',count:5}));
@@ -135,7 +137,7 @@ test('regenerating history changes questions while retaining answer and source',
   for(let seed=1;seed<=100;seed++){
    const sheet=generate({...options,seed});
    assert.equal(new Set(sheet.items.map(q=>topic==='history-review'?q.format==='ordering'?q.orderChoices.join('|'):q.prompt:grade>=5?q.prompt:q.detail)).size,15,`${topic}/${seed}`);
-  for(const q of sheet.items){assert.ok(q.explanation);if(grade>=5){assert.match(q.source,/code=eh_age_(10|20|30|40|50)/);if(topic!=='history-review')assert.ok(q.choices.includes(q.answer))}}
+  for(const q of sheet.items){assert.ok(q.explanation);if(grade>=5){checkHistorySource(q);if(topic!=='history-review')assert.ok(q.choices.includes(q.answer))}}
   }
  }
 });
@@ -166,7 +168,7 @@ test('checked history eras alone contribute balanced, reproducible questions',()
    assert.deepEqual(sheet,generate(options));assert.deepEqual(sheet.eras,eras);assert.equal(sheet.items.length,15);
    if(suffix!=='ox')assert.equal(new Set(sheet.items.map(q=>q.answer)).size,15);
    if(eras.length===1)assert.ok(sheet.items.every(q=>q.source.includes(`eh_age_${eras[0]==='prehistoric'||eras[0]==='ancient'?'10':eras[0]==='goryeo'?'20':eras[0]==='joseon'?'30':'40'}`)||eras[0]==='modern'&&q.source.includes('eh_age_50')));
-   if(eras.length>1){const sources=sheet.items.map(q=>q.source.match(/eh_age_(\d+)/)[1]);for(const age of [...new Set(eras.map(era=>({prehistoric:'10',ancient:'10',goryeo:'20',joseon:'30',modern:'40'})[era]))])assert.ok(sources.includes(age))}
+   if(eras.length>1){const present=new Set(sheet.items.map(q=>q.sourceEra));for(const era of eras)assert.ok(present.has(era));}
   }
  }
  for(const eras of [[],['ancient','ancient'],['future']])assert.throws(()=>generate({subject:'social',grade:5,topic:'history-mix',type:'history-mix-quiz',eras,count:10,seed:1}));
