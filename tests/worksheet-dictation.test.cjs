@@ -62,5 +62,16 @@ test('jump, replay, new grade, errors and unavailable speech never leave a queue
  h.spoken.at(-1).onerror({error:'language-unavailable'});assert.equal(h.p.snapshot().state,'error');h.tick(60000);assert.equal(h.p.snapshot().state,'error');
  h.p.start();h.tick(45000);assert.equal(h.p.snapshot().state,'error');
  const p=P.create({});p.load(D.bank(1).slice(0,10));p.start();assert.equal(p.snapshot().state,'error');
- assert.throws(()=>h.p.load(D.bank(1),{repeats:4}));
+ assert.throws(()=>h.p.load(D.bank(1),{repeats:11}));
+});
+
+test('extended repetitions and long waits respect completion and paused remaining time',()=>{
+ for(const repeats of [4,5,6,7,8,9,10]){
+  const h=harness();h.p.load(D.bank(1).slice(0,2),{repeats,repeatGap:0,nextGap:300});h.p.start();
+  for(let i=0;i<repeats;i++)h.end();
+  assert.equal(h.p.snapshot().phase,'next');h.tick(90000);h.p.pause();assert.equal(h.p.snapshot().remaining,210);h.tick(500000);assert.equal(h.spoken.length,repeats);
+  h.p.start();h.tick(209999);assert.equal(h.spoken.length,repeats);h.tick(1);
+  for(let i=0;i<repeats;i++)h.end();assert.equal(h.spoken.length,repeats*2);assert.equal(h.p.snapshot().state,'complete');assert.equal(h.timers.size,0);
+ }
+ for(const options of [{repeats:0},{repeats:2.5},{repeatGap:301},{nextGap:-1},{nextGap:Infinity}])assert.throws(()=>harness().p.load(D.bank(1),options));
 });
