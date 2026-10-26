@@ -24,7 +24,7 @@ test('five-era quotas preserve each selected answer format even under an opposit
 });
 test('all social evidence banks have complete unique options and rectangular tables',()=>{
  let questions=0;const banks=E.banks.filter(b=>b.subject==='social');for(const b of banks)for(const q of b.items){questions++;assert.ok(q.prompt&&q.answer&&q.explanation,q.evidenceId);assert.ok(q.choices.includes(q.answer),q.evidenceId);assert.equal(new Set(q.choices).size,q.choices.length,q.evidenceId);if(q.scienceMaterial?.headers)for(const row of q.scienceMaterial.rows)assert.equal(row.length,q.scienceMaterial.headers.length,q.evidenceId);}
- assert.equal(banks.length,143);assert.equal(questions,2921);
+ assert.equal(banks.length,143);assert.equal(questions,3001);
 });
 test('every enabled social lesson and standard has valid answers, evidence, exact counts and reproducible selection',()=>{
  let lessons=0,sheets=0,standards=0;
