@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,342);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),7303);
+ assert.equal(E.banks.length,342);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),7528);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(b.id+q.evidenceId));ids.add(b.id+q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
@@ -151,7 +151,7 @@ test('Silla unification and Goryeo lessons keep periods, activities and event or
  const culture=E.banks.find(b=>b.id==='goryeo-culture').items;assert.match(culture[0].answer,/다른 색 흙/);assert.match(culture[2].answer,/낱글자 활자를 조합/);
 });
 test('legacy history is reused without changing its bank, with photo rights and separate essay capacity',()=>{
- assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),7471);
+ assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),7696);
  const original=C.historyItems('goryeo');const copy=C.historyItems('goryeo');copy[0].answer='changed';copy[0].choices[0]='changed';assert.deepEqual(C.historyItems('goryeo'),original);
  const used=E.banks.flatMap(b=>b.items.filter(q=>q.legacyHistoryId));assert.equal(used.length,139);assert.equal(new Set(used.map(q=>q.legacyHistoryId)).size,139);
  for(const b of E.banks){const known=b.items.filter(q=>q.legacyHistoryId);assert.equal(new Set(known.map(q=>q.answer.replace(/\s/g,''))).size,known.length);
@@ -173,7 +173,7 @@ test('legacy material retains provenance while reviewed passages support the ans
 });
 test('late Joseon and modernization lessons separate policy, chronology, reform intent and reach',()=>{
  const ids=['joseon-late-politics','joseon-opening','joseon-reforms','modern-daily-change'],reached=[];
- for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||!ids.includes(b.id))continue;reached.push(b.id);assert.equal(u.grade,5);assert.equal(u.semester,2);const binding=T.binding(u,l);assert.equal(binding.essayIds.length,b.id==='modern-daily-change'?5:45);
+ for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||!ids.includes(b.id))continue;reached.push(b.id);assert.equal(u.grade,5);assert.equal(u.semester,2);const binding=T.binding(u,l);assert.equal(binding.essayIds.length,b.id==='modern-daily-change'?30:45);
   for(const format of ['choice','short','essay']){const s=T.generate({subject:'social',grade:5,semester:2,unitId:u.id,lessonId:l.id,count:5,responseFormat:format,seed:24},C);assert.equal(s.items.length,5);if(format==='essay')assert.ok(s.items.every(q=>!q.knowledgeOnly&&q.source&&(q.detail||q.scienceMaterial||q.readingGroup)));}
  }
  assert.deepEqual(reached.sort(),ids.sort());
