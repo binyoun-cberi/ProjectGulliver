@@ -37,6 +37,6 @@ test('social mixing controls survive selection changes and generate, replay, res
  change(w,rows[0].querySelector('input'),21);assert.equal(d.querySelector('button[type=submit]').disabled,true);
  change(w,'textSemester','1');assert.equal(d.querySelector('#learningMixEnabled').checked,false);assert.equal(d.querySelector('#textUnit').disabled,false);
  d.querySelector('[data-mode=practice]').click();assert.equal(d.querySelector('#unitMixSettings').hidden,false);assert.equal(d.querySelector('#learningMixSettings').hidden,true);
- change(w,'unitMixEnabled',true);d.querySelector('#addUnitMix').click();submit(w);assert.equal(d.querySelectorAll('#questions>li').length,10);assert.match(d.querySelector('#paperTitle').textContent,/여러 단원/);
+ change(w,'unitMixEnabled',true);d.querySelector('#addUnitMix').click();submit(w);assert.equal(d.querySelectorAll('#questions>li').length,15);assert.match(d.querySelector('#paperTitle').textContent,/여러 단원/);
  d.querySelector('[data-mode=textbook]').click();assert.equal(d.querySelector('#unitMixSettings').hidden,true);assert.equal(d.querySelector('#learningMixSettings').hidden,false);assert.equal(d.querySelector('#sheetForm').classList.contains('unit-mix-active'),false);
 });
