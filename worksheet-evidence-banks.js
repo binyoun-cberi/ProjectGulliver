@@ -563,6 +563,7 @@ for(const q of modernDepth.items()){const b=banks.find(b=>b.id===q.bankId);if(!b
 (typeof module==='object'&&module.exports?require('./worksheet-science-other-grades.js'):globalThis.WorksheetScienceOtherGrades)({bank,banks});
 (typeof module==='object'&&module.exports?require('./worksheet-science-second-semester.js'):globalThis.WorksheetScienceSecondSemesters)({bank});
 (typeof module==='object'&&module.exports?require('./worksheet-science-depth.js'):globalThis.WorksheetScienceDepth).register(banks);
+(typeof module==='object'&&module.exports?require('./worksheet-korean-depth.js'):globalThis.WorksheetKoreanDepth).register(banks);
 function find(unit,lesson){
  const exactLessonName=lesson.name.replace(/^(?:[①-⑳]|\d+\.)\s*/, '').trim();
  const exact=banks.find(b=>b.exactLessonName===exactLessonName&&b.subject===unit.subject&&b.grades.includes(unit.grade)&&(!b.exactUnitName||b.exactUnitName===unit.name)&&(!b.exactSemester||b.exactSemester===unit.semester));
@@ -600,7 +601,7 @@ function find(unit,lesson){
   if(/지역문제란/.test(n))return null;
   indexes=/원인/.test(n)?[0,1]:/실천/.test(n)?[2,4]:null;
  }
- if(b.id==='main-content'&&/문단 쓰는 방법/.test(n))indexes=[1,3];
+ if(b.id==='main-content'&&/문단 쓰는 방법/.test(n))indexes=[1,3,...b.items.map((q,i)=>q.koreanDepth?i:-1).filter(i=>i>=0)];
  return indexes?{...b,items:indexes.map(i=>b.items[i])}:b;
 }
 return {banks,find};

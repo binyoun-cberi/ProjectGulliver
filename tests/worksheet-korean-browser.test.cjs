@@ -4,7 +4,7 @@ const T=require('../worksheet-learning'),K=require('../worksheet-korean-readings
 let chromium;try{({chromium}=require('playwright-core'));}catch{}
 const chrome=process.env.CHROME_BIN;
 test('Korean lessons render and replay their passages, print complete student and teacher copies, and fit mobile',{timeout:120000,skip:!chromium||!chrome},async()=>{
- const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--allow-file-access-from-files','--single-process','--no-zygote','--disable-gpu']});
+ const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--allow-file-access-from-files','--disable-gpu']});
  try{
   const page=await browser.newPage({viewport:{width:1440,height:1200}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   for(const [grade,profile] of [[3,'poetry'],[4,'story'],[5,'nonfiction'],[6,'poetry']]){
@@ -34,6 +34,6 @@ test('Korean lessons render and replay their passages, print complete student an
   }
   const u=T.catalog.find(u=>u.subject==='korean'&&u.grade===5&&u.lessons.some(l=>l.name.trim()==='시에 나타난 비유적 표현 알기')),l=u.lessons.find(l=>l.name.trim()==='시에 나타난 비유적 표현 알기');
   const url=pathToFileURL(path.resolve('문제지 만들기.html'));url.search=new URLSearchParams({subject:'korean',grade:5,semester:u.semester,unit:u.id,lesson:l.id,count:20});await page.goto(url.href);
-  assert.equal(await page.locator('#count option[value="20"]').count(),0);assert.match(await page.locator('#textPractice').textContent(),/최대 8문항/);assert.deepEqual(errors,[]);
+  assert.equal(await page.locator('#count option[value="20"]').count(),1);assert.equal(await page.locator('#questions>li').count(),20);assert.deepEqual(errors,[]);
  }finally{await browser.close();}
 });

@@ -1,4 +1,4 @@
-(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./daily-worksheet-core.js'):root.DailyWorksheetCore);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetKoreanReadings=api;})(globalThis,core=>{
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./daily-worksheet-core.js'):root.DailyWorksheetCore,typeof module==='object'&&module.exports?require('./worksheet-korean-depth.js'):root.WorksheetKoreanDepth);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetKoreanReadings=api;})(globalThis,(core,depth)=>{
 'use strict';
 const authored=[];
 function text(band,id,genre,title,passage,rows){
@@ -300,6 +300,7 @@ const reviewedRationales={
  '동네 기온을 비교하려면':['운동장 모둠은 오후 두 시, 공원 모둠은 오전 아홉 시에 측정했습니다.','두 모둠은 장소뿐 아니라 시각과 햇볕 조건도 다르게 측정했습니다.','같은 시각에 같은 종류의 온도계로 재야 한다고 설명합니다.','여러 날 반복하면 하루의 우연한 날씨가 준 영향도 살필 수 있다고 합니다.','글은 시각과 도구 등 조건을 맞추고 결과를 살펴 결론 내리도록 설명합니다.'],
  '오래된 사진을 읽는 법':['옛 사진에는 가로수 뒤로 작은 상점이 보입니다.','상점이 왜 사라졌는지는 사진만으로 알 수 없다고 설명합니다.','사진을 찍은 위치가 다르면 같은 건물의 모습도 달라질 수 있다고 합니다.','촬영 연도와 위치를 확인하고 지도와 주민의 기억을 함께 살피라고 합니다.','사진의 단서와 한계를 설명하고 다른 자료를 함께 살피도록 권합니다.']
 };
+authored.push(...depth.readings());
 const cache=new Map();
 function inventory(grade){
  if(cache.has(grade))return cache.get(grade);
