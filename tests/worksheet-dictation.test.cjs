@@ -11,7 +11,7 @@ function harness(){
 test('six grade pools use separate complete sentences and preserve ten-item draws and replay',()=>{
  const all=new Set();let previous=0;
  for(let grade=1;grade<=6;grade++){
-  const bank=D.bank(grade);assert.equal(bank.length,110);const average=bank.reduce((n,q)=>n+q.text.length,0)/bank.length;
+  const bank=D.bank(grade);assert.equal(bank.length,grade<=4?210:110);const average=bank.reduce((n,q)=>n+q.text.length,0)/bank.length;
   if(grade<=4){assert.ok(average>previous);previous=average;}else assert.ok(average>25,'upper grades also practice difficult words in shorter sentences');
   for(const q of bank){assert.ok(!all.has(q.text));all.add(q.text);assert.match(q.text,/[.!?]$/);assert.match(q.id,new RegExp('^g'+grade+'-'));}
   const first=D.generate({grade,seed:42}),second=D.generate({grade,seed:43,excludeIds:first.items.map(q=>q.id)});
@@ -32,7 +32,7 @@ test('ten sentences play exactly three times each, with separate waits starting 
 test('all 48 grade/topic sets yield ten complete sentences and enforce topic/grade boundaries',()=>{
  for(let grade=1;grade<=6;grade++){
   const basic=D.bank(grade,'basic');assert.equal(basic.length,30);assert.deepEqual(basic.map(q=>q.id),Array.from({length:30},(_,i)=>`g${grade}-${i+1}`));
-  const themes=D.topics(grade).filter(t=>!['all','basic'].includes(t.id));assert.equal(themes.length,8);
+  const themes=D.topics(grade).filter(t=>!['all','basic'].includes(t.id)&&!t.id.startsWith('level-'));assert.equal(themes.length,8);
   for(const t of themes){
    assert.equal(t.count,10);const sheet=D.generate({grade,topic:t.id,seed:42});assert.equal(sheet.items.length,10);
    assert.ok(sheet.items.every(q=>q.topic===t.id&&q.focus&&/[.!?]$/.test(q.text)));

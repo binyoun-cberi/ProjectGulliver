@@ -3,7 +3,7 @@
 <title>학년별 받아쓰기 | 클라시트</title><link rel="icon" type="image/svg+xml" href="clasheet-mark.svg">
 <link rel="stylesheet" href="gulliver-design.css?v=1.2.0"><link rel="stylesheet" href="worksheet-dictation.css?v=20261026-custom1">
 <script src="gulliver-app-shell.js?v=20261026-english1" defer></script>
-<script src="worksheet-dictation-topics.js?v=20261025-topics1" defer></script><script src="worksheet-dictation-data.js?v=20261025-topics1" defer></script><script src="worksheet-english-dictation.js?v=20261026-english1" defer></script><script src="worksheet-dictation-player.js?v=20261026-english1" defer></script><script src="worksheet-dictation-custom.js?v=20261026-custom1" defer></script><script src="worksheet-dictation-ui.js?v=20261026-custom1" defer></script>
+<script src="worksheet-dictation-topics.js?v=20261025-topics1" defer></script><script src="worksheet-dictation-levels.js?v=20261026-levels1" defer></script><script src="worksheet-dictation-data.js?v=20261026-levels1" defer></script><script src="worksheet-english-dictation.js?v=20261026-english1" defer></script><script src="worksheet-dictation-player.js?v=20261026-english1" defer></script><script src="worksheet-dictation-custom.js?v=20261026-custom1" defer></script><script src="worksheet-dictation-ui.js?v=20261026-levels1" defer></script>
 </head><body><main id="gulliverWork" class="dictation-layout">
  <header class="dictation-intro"><div><p class="eyebrow">클라시트 · 국어</p><h1>열 문장, 차근차근 받아쓰기</h1><p>한 문장을 듣고 쓸 시간을 가진 뒤, 다음 문장으로 넘어가요.</p></div><a id="backToKorean" href="문제지 만들기.html?subject=korean">국어 문제지로 돌아가기 →</a></header>
  <div class="dictation-workspace">
@@ -13,9 +13,10 @@
    <label for="dictGrade">학년</label><select id="dictGrade"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="4">4학년</option><option value="5">5학년</option><option value="6">6학년</option></select>
    <label for="dictSource">문장 고르기</label><select id="dictSource"><option value="bank">문제 은행에서 고르기</option><option value="custom">직접 입력하기</option></select>
    <section id="dictCustomEditor" class="dictation-custom-editor" aria-label="받아쓸 문장 직접 입력" hidden><label for="dictCustomText">받아쓸 문장</label><p class="dictation-note">한 줄에 한 문장씩 1~10문장을 넣어 주세요. 입력한 순서대로 읽어요. 문장마다 120자까지 쓸 수 있어요.</p><textarea id="dictCustomText" rows="9" maxlength="3200" aria-describedby="dictCustomCount" spellcheck="false"></textarea><p id="dictCustomCount" class="dictation-note" role="status"></p><button id="applyCustomDictation" type="button">입력한 문장으로 문제지 만들기</button><p class="dictation-note">직접 입력한 문장과 문제지는 이 브라우저에 저장돼요. 같은 브라우저에서는 문제지 주소를 다시 열어 이어 쓸 수 있어요.</p></section>
-   <label id="dictTopicLabel" for="dictTopic">주제</label><select id="dictTopic"><option value="all">모든 주제</option></select>
+   <label id="dictTopicLabel" for="dictTopic">주제 · 연습 급수</label><select id="dictTopic"><option value="all">모든 주제</option></select>
    <p id="gradeFocus" class="dictation-note"></p><p id="poolInfo" class="dictation-note"></p>
    <button id="newDictation" type="button">↻ 다른 10문장 뽑기</button>
+   <details id="dictReferences" class="dictation-note"><summary>급수 안내 · 참고한 원본 자료</summary><p>1~4학년 연습 1~10급은 클라시트에서 새로 구성한 문장입니다. 1급부터 차례로 연습하며, 학교에서 배부한 급수표와 번호·내용이 다를 수 있어요.</p><p><a href="https://chamssaem.com/1850" target="_blank" rel="noopener">참쌤스쿨 · 차근차근 받아쓰기 원본 HWPX·PDF 자료 보기 ↗</a></p></details>
    <div class="dictation-setting-grid">
     <label>문장마다 읽는 횟수<select id="dictRepeats"><option value="1">1번</option><option value="2">2번</option><option value="3" selected>3번</option></select></label>
     <label>읽기 속도<select id="dictRate"><option value="0.65">아주 천천히</option><option value="0.85" selected>천천히</option><option value="1">보통</option></select></label>
