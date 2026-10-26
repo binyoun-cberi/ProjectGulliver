@@ -7,18 +7,18 @@ const fs=require('node:fs'),path=require('node:path');
 
 const target=T.catalog.filter(u=>u.subject==='science'&&u.grade===5&&u.semester===2).flatMap(u=>u.lessons.map(lesson=>({unit:u,lesson,binding:T.binding(u,lesson)})));
 const scienceBanks=E.banks.filter(b=>b.scienceInvestigation);
-const scienceItems=scienceBanks.flatMap(b=>b.items);
+const scienceItems=scienceBanks.flatMap(b=>b.items.filter(q=>!q.scienceDepth));
 
 test('27 grade-five term-two targets get independent banks with 25 questions and primary records',()=>{
  assert.equal(target.length,27);assert.equal(scienceBanks.length,27);assert.equal(scienceItems.length,675);
  assert.equal(new Set(scienceItems.map(q=>q.evidenceId)).size,675);
  for(const row of target){
   assert.equal(row.binding.kind,'evidence',row.lesson.name);
-  assert.equal(T.capacity(row.binding,'choice'),25,row.lesson.name);
+  assert.equal(T.capacity(row.binding,'choice'),25+E.banks.find(b=>b.id===row.binding.bankId).items.filter(q=>q.scienceDepth).length,row.lesson.name);
   const bank=E.banks.find(b=>b.id===row.binding.bankId);
-  assert.equal(bank.exactUnitName,row.unit.name);assert.equal(bank.exactLessonName,row.lesson.name.replace(/^\d+\.\s*/,''));assert.equal(bank.items.length,25);
-  assert.equal(new Set(bank.items.map(q=>q.passageId)).size,5);
-  assert.equal(bank.items.filter(q=>q.scienceMaterial?.kind==='table').length,1);
+  assert.equal(bank.exactUnitName,row.unit.name);assert.equal(bank.exactLessonName,row.lesson.name.replace(/^\d+\.\s*/,''));assert.equal(bank.items.filter(q=>!q.scienceDepth).length,25);
+  assert.equal(new Set(bank.items.filter(q=>!q.scienceDepth).map(q=>q.passageId)).size,5);
+  assert.equal(bank.items.filter(q=>!q.scienceDepth&&q.scienceMaterial?.kind==='table').length,1);
   const m=bank.items[0].scienceMaterial;
   assert.ok(m.headers.length>=2&&m.rows.length>=2,m.title);
   for(const dataRow of m.rows)assert.equal(dataRow.length,m.headers.length);

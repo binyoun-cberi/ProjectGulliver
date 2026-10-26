@@ -3,7 +3,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js'),fs=require('node:fs'),path=require('node:path');
 
 const target=T.catalog.filter(u=>u.subject==='science'&&u.semester===2&&[3,4,6].includes(u.grade)).flatMap(u=>u.lessons.map(lesson=>({unit:u,lesson,binding:T.binding(u,lesson)})));
-const banks=E.banks.filter(x=>x.scienceSecondSemester),items=banks.flatMap(b=>b.items);
+const banks=E.banks.filter(x=>x.scienceSecondSemester),items=banks.flatMap(b=>b.items.filter(q=>!q.scienceDepth));
 const unique=q=>JSON.stringify([q.prompt,q.detail,q.scienceMaterial,q.readingPassage]);
 
 test('all seventy-one second-semester lesson banks have twenty-five unique evidence items',()=>{
@@ -15,14 +15,14 @@ test('all seventy-one second-semester lesson banks have twenty-five unique evide
  for(const {unit,lesson,binding} of target){
   grades[unit.grade]=(grades[unit.grade]||0)+1;
   assert.equal(binding?.kind,'evidence',lesson.name);
-  assert.equal(T.capacity(binding,'choice'),25,lesson.name);
+  assert.equal(T.capacity(binding,'choice'),25+E.banks.find(b=>b.id===binding.bankId).items.filter(q=>q.scienceDepth).length,lesson.name);
   const b=banks.find(b=>b.id===binding.bankId);
   assert.ok(b,lesson.name);
   assert.equal(b.exactSemester,2);assert.equal(b.exactUnitName,unit.name);
   assert.equal(b.exactLessonName,lesson.name.replace(/^(?:[①-⑳]|\d+\.)\s*/, '').trim());
-  assert.equal(b.items.length,25);
-  assert.equal(new Set(b.items.map(q=>q.passageId)).size,5);
-  assert.equal(b.items.filter(q=>q.scienceMaterial?.kind==='table').length,1);
+  assert.equal(b.items.filter(q=>!q.scienceDepth).length,25);
+  assert.equal(new Set(b.items.filter(q=>!q.scienceDepth).map(q=>q.passageId)).size,5);
+  assert.equal(b.items.filter(q=>!q.scienceDepth&&q.scienceMaterial?.kind==='table').length,1);
   const m=b.items[0].scienceMaterial;
   assert.equal(m.rows.length,5);for(const row of m.rows)assert.equal(row.length,m.headers.length);
  }
