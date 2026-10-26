@@ -556,6 +556,8 @@ for(const [id,topic,index,prompt,answer,w1,w2,detail,explanation,source,sourceLa
 (typeof module==='object'&&module.exports?require('./worksheet-social-geography.js'):globalThis.WorksheetSocialGeography)({bank,banks});
 (typeof module==='object'&&module.exports?require('./worksheet-social-world-economy.js'):globalThis.WorksheetSocialWorldEconomy)({bank,banks});
 (typeof module==='object'&&module.exports?require('./worksheet-social-modern-volume.js'):globalThis.WorksheetSocialModernVolume)(banks);
+const modernDepth=typeof module==='object'&&module.exports?require('./data/history-modern-depth.js'):globalThis.HistoryModernDepth;
+for(const q of modernDepth.items()){const b=banks.find(b=>b.id===q.bankId);if(!b)throw Error('Missing modern depth bank: '+q.bankId);b.items.push(q);}
 (typeof module==='object'&&module.exports?require('./worksheet-science-term2.js'):globalThis.WorksheetScienceTermTwo)({bank});
 (typeof module==='object'&&module.exports?require('./worksheet-science-term1.js'):globalThis.WorksheetScienceTermOne)({bank});
 (typeof module==='object'&&module.exports?require('./worksheet-science-other-grades.js'):globalThis.WorksheetScienceOtherGrades)({bank,banks});

@@ -15,6 +15,8 @@ on:
       - 'worksheet-learning*.js'
       - 'worksheet-range-tree.js'
       - 'worksheet-social-modern-volume.js'
+      - 'data/history-modern-depth.js'
+      - 'tests/worksheet-history-modern*.cjs'
       - 'tests/worksheet-social-modern*.cjs'
       - 'worksheet-practice-ui.js'
       - 'tests/worksheet-practice*.cjs'
@@ -67,6 +69,8 @@ on:
       - 'worksheet-learning*.js'
       - 'worksheet-range-tree.js'
       - 'worksheet-social-modern-volume.js'
+      - 'data/history-modern-depth.js'
+      - 'tests/worksheet-history-modern*.cjs'
       - 'tests/worksheet-social-modern*.cjs'
       - 'worksheet-practice-ui.js'
       - 'tests/worksheet-practice*.cjs'
@@ -127,6 +131,7 @@ jobs:
         run: |
           node --check worksheet-dictation-custom.js
           node --check worksheet-social-modern-volume.js
+          node --check data/history-modern-depth.js
           node --check worksheet-hanja-levels.js
           node --check worksheet-hanja.js
           node --check worksheet-hanja-ui.js
@@ -150,7 +155,7 @@ jobs:
         run: node --test tests/worksheet-hanja.test.cjs tests/worksheet-balanced-pages.test.cjs tests/daily-worksheet-core.test.cjs tests/daily-worksheet-challenger.test.cjs tests/worksheet-pr-contract.test.cjs tests/worksheet-dictation.test.cjs tests/worksheet-dictation-custom.test.cjs tests/worksheet-english-dictation.test.cjs
       - name: Verify textbook science lesson coverage and unique evidence
         run: |
-          node --test tests/worksheet-science-term2.test.cjs tests/worksheet-science-term1.test.cjs tests/worksheet-science-other-grades.test.cjs tests/worksheet-science-second-semester.test.cjs tests/worksheet-evidence-banks.test.cjs tests/worksheet-learning.test.cjs tests/worksheet-learning-mix.test.cjs tests/worksheet-social-audit.test.cjs tests/worksheet-social-modern.test.cjs tests/worksheet-range-tree.test.cjs tests/worksheet-practice-ui.test.cjs
+          node --test tests/worksheet-science-term2.test.cjs tests/worksheet-science-term1.test.cjs tests/worksheet-science-other-grades.test.cjs tests/worksheet-science-second-semester.test.cjs tests/worksheet-evidence-banks.test.cjs tests/worksheet-learning.test.cjs tests/worksheet-learning-mix.test.cjs tests/worksheet-social-audit.test.cjs tests/worksheet-social-modern.test.cjs tests/worksheet-history-modern-depth.test.cjs tests/worksheet-range-tree.test.cjs tests/worksheet-practice-ui.test.cjs
           node scripts/science-lesson-coverage.cjs
       - name: Collect structured critique candidates across subjects
         run: |
@@ -182,7 +187,7 @@ jobs:
       - name: Install pinned Playwright browser driver (use runner's Chrome)
         run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1 jsdom@26.1.0
       - name: Prove complete A4 pages across five subjects, student/teacher versions and big print
-        run: node --test --test-concurrency=1 tests/daily-worksheet-browser.e2e.cjs tests/daily-worksheet-a4.test.cjs tests/daily-worksheet-formats.test.cjs tests/worksheet-hanja-browser.test.cjs tests/worksheet-dictation-browser.test.cjs tests/worksheet-dictation-custom-browser.test.cjs tests/worksheet-dictation-custom.test.cjs tests/worksheet-dictation-dom.test.cjs tests/worksheet-learning-mix-browser.test.cjs tests/worksheet-range-tree-browser.test.cjs tests/worksheet-social-modern-browser.test.cjs tests/worksheet-practice-browser.test.cjs tests/worksheet-learning-mix.test.cjs tests/worksheet-social-audit.test.cjs tests/worksheet-social-modern.test.cjs tests/worksheet-range-tree.test.cjs tests/worksheet-practice-ui.test.cjs
+        run: node --test --test-concurrency=1 tests/daily-worksheet-browser.e2e.cjs tests/daily-worksheet-a4.test.cjs tests/daily-worksheet-formats.test.cjs tests/worksheet-hanja-browser.test.cjs tests/worksheet-dictation-browser.test.cjs tests/worksheet-dictation-custom-browser.test.cjs tests/worksheet-dictation-custom.test.cjs tests/worksheet-dictation-dom.test.cjs tests/worksheet-learning-mix-browser.test.cjs tests/worksheet-range-tree-browser.test.cjs tests/worksheet-social-modern-browser.test.cjs tests/worksheet-history-modern-browser.test.cjs tests/worksheet-practice-browser.test.cjs tests/worksheet-learning-mix.test.cjs tests/worksheet-social-audit.test.cjs tests/worksheet-social-modern.test.cjs tests/worksheet-history-modern-depth.test.cjs tests/worksheet-range-tree.test.cjs tests/worksheet-practice-ui.test.cjs
       - name: Export all subject student and teacher PDFs for visual review
         run: node tests/worksheet-pdf-review.cjs
       - name: Attach screenshots and printable PDFs for review
