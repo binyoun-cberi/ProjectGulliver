@@ -5,7 +5,7 @@ const T=require('../worksheet-learning.js');
 const C=require('../daily-worksheet-core.js');
 const fs=require('node:fs'),path=require('node:path');
 const targets=T.catalog.filter(u=>u.subject==='science'&&u.grade===5&&u.semester===1).flatMap(u=>u.lessons.map(lesson=>({unit:u,lesson,binding:T.binding(u,lesson)})));
-const banks=E.banks.filter(b=>b.scienceTermOne),items=banks.flatMap(b=>b.items);
+const banks=E.banks.filter(b=>b.scienceTermOne),items=banks.flatMap(b=>b.items.filter(q=>!q.scienceDepth));
 const identity=q=>JSON.stringify([q.prompt,q.detail,q.scienceMaterial,q.readingPassage]);
 
 test('all twenty-six first-term science lessons have at least 25 independently supported questions',()=>{
@@ -15,15 +15,15 @@ test('all twenty-six first-term science lessons have at least 25 independently s
  const groupCounts={};
  for(const {unit,lesson,binding} of targets){
   assert.equal(binding?.kind,'evidence',lesson.name);
-  assert.equal(T.capacity(binding,'choice'),25,lesson.name);
-  assert.equal(T.capacity(binding,'essay'),25,lesson.name);
+  assert.equal(T.capacity(binding,'choice'),25+E.banks.find(b=>b.id===binding.bankId).items.filter(q=>q.scienceDepth).length,lesson.name);
+  assert.equal(T.capacity(binding,'essay'),25+E.banks.find(b=>b.id===binding.bankId).items.filter(q=>q.scienceDepth).length,lesson.name);
   const bank=banks.find(x=>x.id===binding.bankId);
   assert.ok(bank,lesson.name);
   assert.equal(bank.exactUnitName,unit.name);
   assert.equal(bank.exactLessonName,lesson.name.replace(/^(?:[①-⑳]|\d+\.)\s*/, '').trim());
-  assert.equal(bank.items.length,25);
-  assert.equal(new Set(bank.items.map(q=>q.passageId)).size,5);
-  assert.equal(bank.items.filter(q=>q.scienceMaterial?.kind==='table').length,1);
+  assert.equal(bank.items.filter(q=>!q.scienceDepth).length,25);
+  assert.equal(new Set(bank.items.filter(q=>!q.scienceDepth).map(q=>q.passageId)).size,5);
+  assert.equal(bank.items.filter(q=>!q.scienceDepth&&q.scienceMaterial?.kind==='table').length,1);
   const table=bank.items[0].scienceMaterial;
   assert.ok(table.rows.length>=2&&table.headers.length>=2,lesson.name);
   for(const row of table.rows)assert.equal(row.length,table.headers.length);

@@ -4,7 +4,7 @@ const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learni
 const fs=require('node:fs'),path=require('node:path');
 const targets=T.catalog.filter(u=>u.subject==='science'&&u.semester===1&&[3,4,6].includes(u.grade)).flatMap(u=>u.lessons.map(lesson=>({unit:u,lesson,binding:T.binding(u,lesson)})));
 const banks=E.banks.filter(x=>x.scienceOtherGrades),items=banks.flatMap(b=>b.items.filter(q=>q.evidenceId.startsWith('science-rework-')));
-const sig=q=>JSON.stringify([q.prompt,q.detail,q.scienceMaterial,q.readingPassage]);
+const sig=q=>JSON.stringify([q.prompt,q.detail,q.scienceMaterial,q.readingPassage,q.readingGroup]);
 
 test('all 73 other-grade first-semester science lessons are matched precisely',()=>{
  assert.equal(targets.length,73);assert.equal(banks.length,73);assert.equal(items.length,1825);
@@ -72,5 +72,5 @@ test('grade five banks remain intact and grade three four six new banks do not l
  assert.ok(html.indexOf('src="worksheet-science-other-grades.js')<html.indexOf('src="worksheet-evidence-banks.js'));
  const gradeFive=T.catalog.filter(x=>x.subject==='science'&&x.grade===5);
  assert.equal(gradeFive.flatMap(x=>x.lessons).length,53);
- for(const unit of gradeFive)for(const lesson of unit.lessons)assert.equal(T.capacity(T.binding(unit,lesson),'choice'),25);
+ for(const unit of gradeFive)for(const lesson of unit.lessons){const b=T.binding(unit,lesson),extra=E.banks.find(row=>row.id===b.bankId).items.filter(q=>q.scienceDepth).length;assert.equal(T.capacity(b,'choice'),25+extra);}
 });

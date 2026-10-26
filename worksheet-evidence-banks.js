@@ -562,6 +562,7 @@ for(const q of modernDepth.items()){const b=banks.find(b=>b.id===q.bankId);if(!b
 (typeof module==='object'&&module.exports?require('./worksheet-science-term1.js'):globalThis.WorksheetScienceTermOne)({bank});
 (typeof module==='object'&&module.exports?require('./worksheet-science-other-grades.js'):globalThis.WorksheetScienceOtherGrades)({bank,banks});
 (typeof module==='object'&&module.exports?require('./worksheet-science-second-semester.js'):globalThis.WorksheetScienceSecondSemesters)({bank});
+(typeof module==='object'&&module.exports?require('./worksheet-science-depth.js'):globalThis.WorksheetScienceDepth).register(banks);
 function find(unit,lesson){
  const exactLessonName=lesson.name.replace(/^(?:[①-⑳]|\d+\.)\s*/, '').trim();
  const exact=banks.find(b=>b.exactLessonName===exactLessonName&&b.subject===unit.subject&&b.grades.includes(unit.grade)&&(!b.exactUnitName||b.exactUnitName===unit.name)&&(!b.exactSemester||b.exactSemester===unit.semester));

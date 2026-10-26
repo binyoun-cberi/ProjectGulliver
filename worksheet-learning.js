@@ -155,7 +155,7 @@ function pickEvidence(pool,count,seed,exclude=[],indexes){
  const regrouped=new Map();for(const q of selected){const key=q.passageId||q.evidenceId;if(!regrouped.has(key))regrouped.set(key,[]);regrouped.get(key).push(q);}selected=[...regrouped.values()].flat();
  // Separate the choice shuffle from the draw so a saved selection always replays exactly.
  const cr=rng(Number(seed)^0x9e3779b9),seen=new Set();
- return selected.map(q=>{const item={...q,choices:shuffled(q.choices,cr),poolIndex:pool.indexOf(q)};if(q.passageId){item.readingGroup=q.passageId;if(!seen.has(q.passageId)){item.readingTitle=q.passageTitle;item.readingPassage=q.detail;seen.add(q.passageId);}delete item.detail;}return item;});
+ return selected.map(q=>{const item={...q,choices:shuffled(q.choices,cr),poolIndex:pool.indexOf(q)};if(q.passageId){item.readingGroup=q.passageId;if(!seen.has(q.passageId)){item.readingTitle=q.passageTitle;item.readingPassage=q.detail;seen.add(q.passageId);}else if(q.scienceDepth){delete item.scienceMaterial;}delete item.detail;}return item;});
 }
 
 function historyPool(b){return b?.kind==='evidence'?evidencePool(b).filter(q=>q.historyVolume):[];}
