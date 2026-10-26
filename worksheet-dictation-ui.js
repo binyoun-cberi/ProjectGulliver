@@ -8,7 +8,7 @@ $('dictSource').value=query.get('mode')==='custom'?'custom':'bank';
 function stored(key,fallback){try{return JSON.parse(localStorage.getItem(key)||'null')||fallback;}catch{return fallback;}}
 function saveDraft(){const drafts=stored(draftStore,{});try{localStorage.setItem(draftStore,JSON.stringify({...drafts,[subject]:$('dictCustomText').value}));}catch{}}
 function loadDraft(){const drafts=stored(draftStore,{});$('dictCustomText').value=typeof drafts[subject]==='string'?drafts[subject].slice(0,3200):'';}
-function customControls(){document.querySelector('.dictation-intro h1').textContent=customMode()?'내 문장으로 받아쓰기':'열 문장, 차근차근 받아쓰기';document.body.classList.toggle('custom-dictation',customMode());$('dictCustomEditor').hidden=!customMode();for(const id of ['dictTopic','dictTopicLabel','newDictation'])$(id).hidden=customMode();$('dictTopic').disabled=customMode();$('dictCustomText').placeholder=subject==='english'?'This is my pencil.\nWe play together.':'친구와 함께 걸어요.\n책을 소중히 다뤄요.';let count=$('dictCustomText').value.split(/\r?\n/).filter(s=>s.trim()).length;try{Custom.parse($('dictCustomText').value);$('applyCustomDictation').disabled=false;$('dictCustomCount').textContent=count+' / 10문장 · 입력 순서대로 만들어요.';}catch(e){$('applyCustomDictation').disabled=true;$('dictCustomCount').textContent=e.message;}}
+function customControls(){document.querySelector('.dictation-intro h1').textContent=customMode()?'내 문장으로 받아쓰기':'열 문장, 차근차근 받아쓰기';document.body.classList.toggle('custom-dictation',customMode());$('dictCustomEditor').hidden=!customMode();$('dictReferences').hidden=customMode()||$('dictSubject').value==='english';for(const id of ['dictTopic','dictTopicLabel','newDictation'])$(id).hidden=customMode();$('dictTopic').disabled=customMode();$('dictCustomText').placeholder=subject==='english'?'This is my pencil.\nWe play together.':'친구와 함께 걸어요.\n책을 소중히 다뤄요.';let count=$('dictCustomText').value.split(/\r?\n/).filter(s=>s.trim()).length;try{Custom.parse($('dictCustomText').value);$('applyCustomDictation').disabled=false;$('dictCustomCount').textContent=count+' / 10문장 · 입력 순서대로 만들어요.';}catch(e){$('applyCustomDictation').disabled=true;$('dictCustomCount').textContent=e.message;}}
 try{preference=JSON.parse(localStorage.getItem('clasheet-dictation-settings')||'{}')||{};}catch{}
 const controls={repeats:'dictRepeats',rate:'dictRate',repeatGap:'dictRepeatGap',nextGap:'dictNextGap'};
 for(const [key,id] of Object.entries(controls)){const v=query.get(key)??preference[key];if([...$(id).options].some(o=>o.value===String(v)))$(id).value=String(v);}
@@ -22,6 +22,7 @@ function configureLanguage(grade,topic){
  if(grades.includes(Number(grade)))$('dictGrade').value=String(grade);
  $('dictTopic').replaceChildren(...D.topics(config.grades.includes(Number($('dictGrade').value))?Number($('dictGrade').value):config.grades[0]).map(t=>new Option(t.label,t.id)));
  if([...$('dictTopic').options].some(o=>o.value===topic))$('dictTopic').value=topic;
+ $('dictTopicLabel').textContent=subject==='korean'?'주제 · 연습 급수':'주제';
  $('dictVoiceLabel').textContent=config.voice+' 음성';document.querySelector('.dictation-intro .eyebrow').textContent='클라시트 · '+config.name;document.body.classList.toggle('english-dictation',subject==='english');
  $('dictTeacherNote').textContent=subject==='english'?'영어 문장을 확인해 주세요. 대문자·띄어쓰기·문장 부호도 살펴보세요. 뜻과 문장 부호의 이름은 음성으로 읽지 않습니다.':'수업 전에 문장과 띄어쓰기를 확인해 주세요. 마침표와 쉼표는 문장에 맞게 쓰되 음성으로 따로 읽지 않습니다.';
  document.querySelector('.dictation-instruction').textContent=subject==='english'?'영어 문장을 듣고 써 보세요. 대문자와 띄어쓰기, 문장 부호도 살펴보세요.':'문장을 듣고 띄어쓰기에 유의해 바르게 써 보세요.';
@@ -49,7 +50,7 @@ const player=window.WorksheetDictationPlayer.create({synth,Utterance:window.Spee
 function reloadPlayer(){if(!sheet)return;const voice=voices.find(v=>v.voiceURI===$('dictVoice').value)||null;player.load(sheet.items,{...settings(),voice,language:voice?.lang||languages[subject].lang});}
 function render(){
  const size=sheet.custom?sheet.items.length:D.bank(sheet.grade,sheet.topic).length;
- $('gradeFocus').textContent=sheet.focus;$('poolInfo').textContent=sheet.custom?`${sheet.grade}학년 · 직접 입력 · ${size}문장`:`${sheet.grade}학년 · ${sheet.topicLabel} · ${size===10?'10문장 한 묶음':size+'개 중 10문장'}`;
+ $('gradeFocus').textContent=sheet.focus+(subject==='korean'&&/^level-/.test(sheet.topic)?' · 클라시트 연습 급수입니다. 학교 급수표와는 다를 수 있어요.':'');$('poolInfo').textContent=sheet.custom?`${sheet.grade}학년 · 직접 입력 · ${size}문장`:`${sheet.grade}학년 · ${sheet.topicLabel} · ${size===10?'10문장 한 묶음':size+'개 중 10문장'}`;
  $('newDictation').textContent=size===10?'↻ 이 주제의 10문장 순서 바꾸기':'↻ 다른 10문장 뽑기';
  $('backToKorean').href=`문제지 만들기.html?subject=${subject}&grade=${sheet.grade}`;$('backToKorean').textContent=languages[subject].name+' 문제지로 돌아가기 →';
  $('dictPaperTitle').textContent=`${sheet.grade}학년 ${subject==='english'?'영어 ':''}받아쓰기 · ${sheet.items.length}문장`;$('dictSheetNumber').textContent=`${sheet.topicLabel} · 문제지 번호 ${sheet.seed.toString(36).toUpperCase()}`;
@@ -89,7 +90,7 @@ $('dictCustomText').oninput=()=>{saveDraft();clearCustom();customControls();$('d
 $('applyCustomDictation').onclick=applyCustom;
 refreshVoices();synth?.addEventListener('voiceschanged',refreshVoices);
 $('dictSubject').onchange=()=>{const grade=$('dictGrade').value,topic=$('dictTopic').value;player.stop();subject=$('dictSubject').value;sheet=null;configureLanguage(grade,topic);customControls();refreshVoices();if(customMode()){loadDraft();customControls();clearCustom();const url=new URL(location.href);url.search=new URLSearchParams({subject,grade:$('dictGrade').value,mode:'custom'});history.replaceState(null,'',url);}else draw();};
-$('dictGrade').onchange=draw;$('dictTopic').onchange=draw;$('newDictation').onclick=draw;
+$('dictGrade').onchange=()=>{const topic=$('dictTopic').value;configureLanguage($('dictGrade').value,topic);draw();};$('dictTopic').onchange=draw;$('newDictation').onclick=draw;
 for(const id of [...Object.values(controls),'dictVoice'])$(id).onchange=()=>{reloadPlayer();save();};
 $('dictStart').onclick=()=>{if(!sheet)return;if($('dictTeacher').open)$('dictTeacher').open=false;player.start();};
 $('dictPause').onclick=()=>player.pause();$('dictStop').onclick=()=>player.stop();$('dictPrevious').onclick=()=>player.jump(player.snapshot().index-1);$('dictNext').onclick=()=>player.jump(player.snapshot().index+1);$('dictReplay').onclick=()=>{ $('dictTeacher').open=false;player.repeat();};

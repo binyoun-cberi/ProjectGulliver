@@ -1,4 +1,4 @@
-(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./worksheet-dictation-topics.js'):root.WorksheetDictationTopics);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetDictationData=api;})(globalThis,extra=>{
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./worksheet-dictation-topics.js'):root.WorksheetDictationTopics,typeof module==='object'&&module.exports?require('./worksheet-dictation-levels.js'):root.WorksheetDictationLevels);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetDictationData=api;})(globalThis,(extra,levels)=>{
 'use strict';
 // Separate authored pools: no mechanical lengthening of the same sentences.
 const grades={
@@ -51,9 +51,10 @@ const grades={
  '전달하려는 뜻이 분명하더라도 독자가 필요한 배경지식을 갖추었는지에 따라 이해의 정도는 달라질 수 있다.','비유적 표현은 익숙한 대상을 새롭게 보게 하지만 그 의미를 해석할 때에는 앞뒤 맥락을 놓치지 않아야 한다.','어떤 수치가 늘었다는 설명을 읽고 변화의 크기뿐 아니라 비교의 기준과 기간도 확인해 보았다.','차이를 존중한다는 말이 부당한 대우까지 받아들여야 한다는 뜻으로 쓰이지 않도록 의미를 분명히 했다.','완벽한 답을 빨리 찾으려 하기보다 아직 알지 못하는 부분을 구체적으로 밝히는 데서 탐구를 시작했다.'
  ]}
 };
-const extraSets=extra.sets(),topicLabels=[{id:'all',label:'모든 주제'},{id:'basic',label:'기본 문장'},...extra.topics()];
-function topicLabel(topic){const row=topicLabels.find(t=>t.id===topic);if(!row)throw Error('받아쓰기 주제를 다시 골라 주세요.');return row.label;}
-function bank(grade,topic='all'){const row=grades[Number(grade)];if(!row||!Number.isInteger(Number(grade)))throw Error('1~6학년 중에서 골라 주세요.');topicLabel(topic);
+const levelSets=levels.sets(),extraSets=[...extra.sets(),...levelSets],topicLabels=[{id:'all',label:'모든 주제'},{id:'basic',label:'기본 문장'},...extra.topics()];
+function labels(grade){return [...topicLabels,...levelSets.filter(s=>s.grade===Number(grade)).map(s=>({id:s.topic,label:'연습 '+s.label,level:s.level}))];}
+function topicLabel(topic,grade){const row=labels(grade).find(t=>t.id===topic);if(!row)throw Error('받아쓰기 주제를 다시 골라 주세요.');return row.label;}
+function bank(grade,topic='all'){const row=grades[Number(grade)];if(!row||!Number.isInteger(Number(grade)))throw Error('1~6학년 중에서 골라 주세요.');topicLabel(topic,grade);
  const base=row.sentences.map((text,i)=>({id:`g${Number(grade)}-${i+1}`,text,topic:'basic',focus:row.focus}));
  const added=extraSets.filter(s=>s.grade===Number(grade)).flatMap(s=>s.sentences.map((text,i)=>({id:`g${Number(grade)}-${s.topic}-${i+1}`,text,topic:s.topic,focus:s.focus})));
  return [...base,...added].filter(q=>topic==='all'||q.topic===topic);
@@ -62,7 +63,7 @@ function generate({grade,topic='all',seed=1,excludeIds=[],itemIds}={}){
  const all=bank(grade,topic);let items;
  if(itemIds!==undefined){if(!Array.isArray(itemIds)||itemIds.length!==10||new Set(itemIds).size!==10||itemIds.some(id=>!all.some(q=>q.id===id)))throw Error('저장된 받아쓰기 문장을 확인해 주세요.');items=itemIds.map(id=>all.find(q=>q.id===id));}
  else{let n=(Number(seed)>>>0)||1;const shuffled=[...all];for(let i=shuffled.length-1;i>0;i--){n=(Math.imul(n,1664525)+1013904223)>>>0;const j=n%(i+1);[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}const old=new Set(excludeIds);shuffled.sort((a,b)=>Number(old.has(a.id))-Number(old.has(b.id)));items=shuffled.slice(0,10);}
- return {grade:Number(grade),topic,topicLabel:topicLabel(topic),seed:Number(seed)>>>0,focus:topic==='all'||topic==='basic'?grades[Number(grade)].focus:extraSets.find(s=>s.grade===Number(grade)&&s.topic===topic).focus,items};
+ return {grade:Number(grade),topic,topicLabel:topicLabel(topic,grade),seed:Number(seed)>>>0,focus:topic==='all'||topic==='basic'?grades[Number(grade)].focus:extraSets.find(s=>s.grade===Number(grade)&&s.topic===topic).focus,items};
 }
-return {bank,generate,topics:grade=>topicLabels.map(t=>({...t,count:bank(grade,t.id).length})),focus:grade=>{bank(grade);return grades[Number(grade)].focus;}};
+return {bank,generate,topics:grade=>labels(grade).map(t=>({...t,count:bank(grade,t.id).length})),focus:grade=>{bank(grade);return grades[Number(grade)].focus;}};
 });
