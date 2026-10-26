@@ -7,7 +7,7 @@ test('클라시트 브랜드가 홈, 문제지, 시간 도구, 학생 화면에 
   assert.doesNotMatch(page,/매일 수업|뚝딱교실/,name);
   assert.match(page,/clasheet-mark\.svg/,name);
  }
- assert.match(read('workspace-home.js'),/home:\['클라시트'/);
+ assert.match(read('workspace-home.js'),/home:\['오늘 수업, 여기서 시작하세요'/);
  assert.match(read('gulliver-app-shell.js'),/클라시트 주요 메뉴/);
  assert.match(read('gulliver-teacher-display-view.js'),/클라시트 · 학급 운영/);
  assert.match(read('gulliver-shared.js'),/클라시트/);

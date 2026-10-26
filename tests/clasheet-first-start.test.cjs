@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),{spawn}=require('node:child_process');
 let chromium;try{({chromium}=require('playwright-core'))}catch{}
-const chrome=Boolean(chromium&&[chromium.executablePath(),'/usr/bin/google-chrome','/usr/bin/google-chrome-stable','/opt/google/chrome/chrome'].some(x=>x&&fs.existsSync(x)));
+const chrome=Boolean(chromium&&[process.env.CHROME_BIN,chromium.executablePath(),'/usr/bin/google-chrome','/usr/bin/google-chrome-stable','/opt/google/chrome/chrome'].some(x=>x&&fs.existsSync(x)));
 test('first use routes into real current tools without restoring retired canvas source',()=>{
  const home=fs.readFileSync('workspace-home.js','utf8'),html=fs.readFileSync('index.html','utf8');
  for(const target of ['문제지 만들기.html','이번 수업 알리미.html','플래시퀴즈메이커.html']){assert.ok(home.includes('href="'+target+'"'));assert.ok(fs.existsSync(target));}
@@ -13,7 +13,7 @@ test('Chrome first use: links and dismiss persist on 390px screen',{timeout:1000
  const server=spawn('python3',['-m','http.server','8997','--bind','127.0.0.1'],{stdio:'ignore'});let browser;
  try{
   for(let i=0;i<100;i++){try{if((await fetch('http://127.0.0.1:8997/index.html')).ok)break}catch{}await new Promise(r=>setTimeout(r,100))}
-  browser=await chromium.launch({...(fs.existsSync(chromium.executablePath())?{}:{channel:'chrome'}),headless:true,args:['--no-sandbox']});
+  browser=await chromium.launch({...(process.env.CHROME_BIN?{executablePath:process.env.CHROME_BIN}:fs.existsSync(chromium.executablePath())?{}:{channel:'chrome'}),headless:true,args:['--no-sandbox']});
   const page=await browser.newPage({viewport:{width:390,height:844}});
   await page.goto('http://127.0.0.1:8997/index.html');
   await page.locator('#firstStartTitle').waitFor();

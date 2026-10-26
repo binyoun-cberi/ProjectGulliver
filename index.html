@@ -37,6 +37,7 @@
 <link rel="stylesheet" href="workspace-home-v54.css?v=20261018-v54">
 <link rel="stylesheet" href="gulliver-ui-v56.css?v=20261018-v56">
 <link rel="stylesheet" href="gulliver-design.css?v=1.2.0">
+<link rel="stylesheet" href="workspace-home-dashboard.css?v=20261026-home1">
 <script src="gulliver-app-shell.js?v=1.2.0"></script>
 </head>
 <body>
@@ -44,17 +45,17 @@
 <aside class="sidebar" aria-label="작업 공간 메뉴">
 <div class="gx-local-heading">빠른 메뉴</div>
 <button class="create" id="createButton" aria-label="문제지 만들기"><span>＋</span><span class="create-label">문제지 만들기</span></button>
-<button class="rail-toggle" id="railToggle" aria-label="메뉴 펼치기" aria-expanded="false">☰</button><nav class="nav"><button data-view="home" aria-current="page"><span class="nav-icon">⌂</span><span class="nav-label">홈</span></button><a href="문제지 만들기.html"><span class="nav-icon">▤</span><span class="nav-label">문제지</span></a><button data-view="tools"><span class="nav-icon">⚒</span><span class="nav-label">교사 도구</span></button><button data-view="favorites"><span class="nav-icon">☆</span><span class="nav-label">즐겨찾기</span></button></nav>
+<button class="rail-toggle" id="railToggle" aria-label="메뉴 펼치기" aria-expanded="false">☰</button><nav class="nav"><button data-view="home" aria-current="page"><span class="nav-icon">⌂</span><span class="nav-label">홈</span></button><a href="문제지 만들기.html"><span class="nav-icon">▤</span><span class="nav-label">문제지</span></a><button data-view="tools"><span class="nav-icon">⚒</span><span class="nav-label">교사 도구</span></button><button data-view="activities"><span class="nav-icon">▱</span><span class="nav-label">저장한 활동</span></button><button data-view="favorites"><span class="nav-icon">☆</span><span class="nav-label">즐겨찾기</span></button></nav>
 <div><div class="folder-head"><span>수업별 폴더</span><button id="newFolder" aria-label="폴더 만들기">＋</button></div><div class="folders" id="folders"></div></div>
 <a href="우리반.html" class="class-mini" id="classSummary">우리 반<span>명단 등록하기 →</span></a>
 <div class="sidebar-bottom"><p>수업 도구 기록은 이 브라우저에 저장돼요.<br>기기를 바꾸기 전에 백업해 주세요.</p><div class="backup-actions"><button class="text-btn" id="backup">활동 백업</button><button class="text-btn" id="restore">활동 불러오기</button></div><button class="text-btn trash-link" data-view="trash">보관한 활동 복원</button><input type="file" id="importFile" accept="application/json,.json" hidden></div>
 </aside>
 <main class="main">
 
-<div class="welcome"><div><span class="brand-eyebrow">선생님의 통합 수업 공간</span><h1 id="pageTitle">클라시트</h1><p id="pageDescription">수업의 모든 순간을 한곳에. 문제지부터 수업 도구까지 바로 시작하세요.</p></div><button class="secondary" id="topCreate" hidden>＋ 문제지 만들기</button></div><header class="topbar"><button class="mobile-menu" id="menuButton" aria-label="작업 공간 메뉴 열기" aria-expanded="false">☰</button><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="교사 도구·활동 검색" aria-label="교사 도구와 활동 검색"></label><a class="top-links" href="https://binyoun-cberi.github.io/kidscade/" target="_blank" rel="noopener">키즈케이드 ↗</a></header><div id="content"></div><p class="storage-note">교사 도구 활동은 이 브라우저에 저장됩니다. 기기를 바꾸기 전 활동 백업 파일을 받아 두세요.</p></main>
+<div class="welcome"><div><span class="brand-eyebrow">선생님의 통합 수업 공간</span><h1 id="pageTitle">오늘 수업, 여기서 시작하세요</h1><p id="pageDescription">문제지와 받아쓰기를 만들고, 필요한 수업 도구를 바로 열어요.</p></div><button class="secondary" id="topCreate" hidden>＋ 문제지 만들기</button></div><header class="topbar"><button class="mobile-menu" id="menuButton" aria-label="작업 공간 메뉴 열기" aria-expanded="false">☰</button><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="과목, 받아쓰기, 교사 도구 검색" aria-label="문제지, 교사 도구와 활동 검색"></label><a class="top-links" href="https://binyoun-cberi.github.io/kidscade/" target="_blank" rel="noopener">키즈케이드 ↗</a></header><p id="homeSearchStatus" class="home-search-status" role="status" aria-live="polite"></p><div id="content"></div><p class="storage-note">교사 도구 활동은 이 브라우저에 저장됩니다. 기기를 바꾸기 전 활동 백업 파일을 받아 두세요.</p></main>
 
 <dialog class="new-dialog folder-dialog" id="editDialog"><form id="editForm"><h2 id="editTitle">폴더 만들기</h2><label for="editValue" id="editLabel">폴더 이름</label><input id="editValue" required maxlength="80"><select id="editFolder" hidden aria-label="이동할 폴더"></select><div class="dialog-buttons"><button class="secondary" type="button" id="editCancel">취소</button><button class="create" type="submit">저장</button></div></form></dialog>
 <div class="toast" id="toast" role="status" hidden></div>
-<script src="gulliver-shared.js?v=20261020-ui"></script><script src="classroom-workspace.js?v=20261020-ui"></script><script src="tools-catalog.js?v=20261023-daily3"></script><script src="workspace-home.js?v=20261023-clasheet1"></script>
+<script src="gulliver-shared.js?v=20261020-ui"></script><script src="classroom-workspace.js?v=20261020-ui"></script><script src="tools-catalog.js?v=20261023-daily3"></script><script src="workspace-home.js?v=20261026-home1"></script>
 </body></html>
 
