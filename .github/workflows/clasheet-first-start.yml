@@ -3,6 +3,10 @@ on:
   pull_request:
     paths:
       - 'workspace-home.js'
+      - 'workspace-home-dashboard.css'
+      - 'index.html'
+      - 'tests/clasheet-home.test.cjs'
+      - 'tests/clasheet-branding.test.cjs'
       - 'workspace-experience.css'
       - 'tests/clasheet-first-start.test.cjs'
       - '.github/workflows/clasheet-first-start.yml'
@@ -20,4 +24,4 @@ jobs:
       - name: Install browser driver
         run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
       - name: Test real first-use desktop and phone navigation
-        run: node --test tests/clasheet-first-start.test.cjs
+        run: node --test tests/clasheet-first-start.test.cjs tests/clasheet-home.test.cjs tests/clasheet-branding.test.cjs tests/classroom-workspace.test.cjs
