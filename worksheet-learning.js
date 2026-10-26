@@ -213,12 +213,12 @@ const prompt=q.prompt.replace(/알맞은 것은 무엇인가요\?/,'알맞은 �
  return {subject,grade:Number(grade),topic:'textbook-learning',type:'',count:Number(count),seed:Number(seed)>>>0,difficulty:'basic',responseFormat,alignment:selected.standard?{code:selected.standard.code,summary:selected.standard.statement,scope:'2022 개정 · 연결된 학습 내용',source:selected.standard.source}:null,title:selected.standard?`${grade}학년 · [${selected.standard.code}]`:`${grade}학년 ${semester}학기 · ${unit.name}`,curriculum,items:items.map(q=>({...q,curriculumLesson:lessonId}))};
 }
 function mixOptions(subject,grade,semester){
- return units(subject,Number(grade),Number(semester)).flatMap(unit=>unit.lessons.map(lesson=>({unit,lesson,binding:binding(unit,lesson)})).filter(x=>x.binding).map(x=>({id:x.lesson.id,unitId:x.unit.id,label:x.unit.name+' · '+x.lesson.name,binding:x.binding})));
+ return units(subject,Number(grade),Number(semester)).flatMap(unit=>unit.lessons.map(lesson=>({unit,lesson,binding:binding(unit,lesson)})).filter(x=>x.binding).map(x=>({id:x.lesson.id,unitId:x.unit.id,semester:x.unit.semester,label:x.unit.name+' · '+x.lesson.name,binding:x.binding})));
 }
 function generateMixed(options,C){
  const {subject,grade,semester,seed=Date.now(),responseFormat='choice',lessonMix}=options;
- const available=mixOptions(subject,grade,semester),seen=new Set(),items=[],plan=[],mixedItemIndexes=[];
- if(!Array.isArray(lessonMix)||!lessonMix.length||lessonMix.length>20)throw Error('섞을 차시를 1~20개 골라 주세요.');
+ const available=options.acrossSemesters?[1,2].flatMap(term=>mixOptions(subject,grade,term)):mixOptions(subject,grade,semester),seen=new Set(),items=[],plan=[],mixedItemIndexes=[];
+ if(!Array.isArray(lessonMix)||!lessonMix.length||lessonMix.length>40)throw Error('섞을 차시를 1~40개 골라 주세요.');
  if(options.mixedItemIndexes!==undefined&&(!Array.isArray(options.mixedItemIndexes)||options.mixedItemIndexes.length!==lessonMix.length))throw Error('저장된 문항 구성을 확인해 주세요.');
  const total=lessonMix.reduce((n,row)=>n+Number(row.count),0);
  if(!Number.isInteger(total)||total<1||total>40)throw Error('전체 문항 수는 1~40문항으로 정해 주세요.');
@@ -230,14 +230,17 @@ function generateMixed(options,C){
   const size=amount;
   if(size>capacity(entry.binding,responseFormat))throw Error(entry.label+'의 문항 수를 줄여 주세요.');
   const prior=items.map(q=>q.evidenceId).filter(Boolean);
-  const sheet=generate({subject,grade,semester,unitId:entry.unitId,lessonId:entry.id,count:size,seed:((Number(seed)>>>0)+Math.imul(index+1,2654435761))>>>0,responseFormat,...(options.mixedItemIndexes?.[index]?{itemIndexes:options.mixedItemIndexes[index]}:{}),excludeEvidenceIds:[...(options.excludeEvidenceIds||[]),...prior]},C);
+  const sheet=generate({subject,grade,semester:entry.semester,unitId:entry.unitId,lessonId:entry.id,count:size,seed:((Number(seed)>>>0)+Math.imul(index+1,2654435761))>>>0,responseFormat,...(options.mixedItemIndexes?.[index]?{itemIndexes:options.mixedItemIndexes[index]}:{}),excludeEvidenceIds:[...(options.excludeEvidenceIds||[]),...prior]},C);
   mixedItemIndexes.push(sheet.items.every(q=>Number.isInteger(q.poolIndex))?sheet.items.map(q=>q.poolIndex):null);
-  const selected=sheet.items.slice(0,amount);
+  let selected=sheet.items.slice(0,amount);
+  if(subject==='math'){const used=new Set(items.map(q=>JSON.stringify([q.prompt,q.detail,q.scienceMaterial]))),fresh=[];let draw=sheet;for(let attempt=0;attempt<100&&fresh.length<amount;attempt++){for(const q of draw.items){const key=JSON.stringify([q.prompt,q.detail,q.scienceMaterial]);if(!used.has(key)&&fresh.length<amount){used.add(key);fresh.push(q);}}if(fresh.length<amount)draw=generate({subject,grade,semester:entry.semester,unitId:entry.unitId,lessonId:entry.id,count:amount,seed:((Number(seed)>>>0)+Math.imul(index+1,2654435761)+Math.imul(attempt+1,2246822519))>>>0,responseFormat},C);}
+   if(fresh.length!==amount)throw Error('차시 사이에 겹치는 문제가 많아요. 문항 수를 줄여 주세요.');selected=fresh;
+  }
   if(selected.some(q=>q.evidenceId&&prior.includes(q.evidenceId)))throw Error('선택한 차시에 겹치는 문제가 있어요. 차시별 문항 수를 줄여 주세요.');
   items.push(...selected.map(q=>({...q,sourceUnit:entry.label,...(q.readingGroup?{readingGroup:index+':'+q.readingGroup}:{})})));
   plan.push({id:row.id,count:amount});
  });
- return {subject,grade:Number(grade),topic:'textbook-mix',type:'',count:total,seed:Number(seed)>>>0,difficulty:'basic',responseFormat,alignment:null,title:grade+'학년 '+semester+'학기 · 여러 차시 모아 풀기',curriculum:{semester:Number(semester),lesson:'여러 차시 모아 풀기'},lessonMix:plan,mixedItemIndexes,items};
+ return {subject,grade:Number(grade),topic:'textbook-mix',type:'',count:total,seed:Number(seed)>>>0,difficulty:'basic',responseFormat,alignment:null,title:grade+'학년 '+(options.acrossSemesters?core.SUBJECTS[subject].name:semester+'학기')+' · 여러 차시 모아 풀기',curriculum:{semester:Number(semester),lesson:'여러 차시 모아 풀기',acrossSemesters:Boolean(options.acrossSemesters)},lessonMix:plan,mixedItemIndexes,items};
 }
 return {catalog,sourceCatalog,isCoreLesson,units,binding,lookup,formats,capacity,counts,generate,standards,lookupStandard,mixOptions,generateMixed};
 });

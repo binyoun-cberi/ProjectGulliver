@@ -8,7 +8,7 @@ test('social lesson mixing works on desktop/mobile and prints complete student/t
  const base=pathToFileURL(path.resolve('문제지 만들기.html')).href;await page.goto(base+'?subject=social&grade=5&semester=2');
  if(process.env.WORKSHEET_FONT_CSS){const fontCSS=fs.readFileSync(process.env.WORKSHEET_FONT_CSS,'utf8').replace(/url\(([^)]+)\)/g,(_,file)=>'url("'+pathToFileURL(path.resolve(path.dirname(process.env.WORKSHEET_FONT_CSS),file.replace(/["']/g,''))).href+'")');await page.addStyleTag({content:fontCSS});await page.addStyleTag({content:'body{font-family:"Noto Sans KR",sans-serif!important}'});await page.evaluate(()=>document.fonts.ready);}
  await page.locator('#textUnit').selectOption({index:1});assert.equal(await page.locator('#unitMixSettings').isVisible(),false);
- await page.locator('#learningMixSettings summary').click();await page.locator('#learningMixEnabled').check();await page.locator('#addLearningMix').click();
+ await page.locator('#learningMixSettings > summary').click();await page.locator('#learningMixEnabled').check();await page.locator('#addLearningMix').click();
  const rows=page.locator('#learningMixRows>div'),ids=await page.evaluate(()=>{const o=WorksheetLearning.mixOptions('social',5,2);return [o[0].id,o.find(x=>x.unitId!==o[0].unitId&&WorksheetLearning.capacity(x.binding,'choice')>=7).id];});
  await rows.nth(0).locator('select').selectOption(ids[0]);await rows.nth(0).locator('input').fill('3');await rows.nth(1).locator('select').selectOption(ids[1]);await rows.nth(1).locator('input').fill('7');
  await page.locator('button.daily-primary').click();assert.equal(await page.locator('#questions>li').count(),10);assert.match(await page.locator('#questionSheet #paperTitle').textContent(),/여러 차시/);
