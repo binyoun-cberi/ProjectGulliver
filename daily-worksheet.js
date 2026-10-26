@@ -55,6 +55,8 @@ function addMixRow(value){
 function updateMixTotal(){const plan=mixPlan(),total=plan.reduce((n,row)=>n+row.count,0);$('unitMixTotal').textContent=plan.length+'개 유형 · 총 '+total+'문항';const active=$('unitMixEnabled').checked;form.classList.toggle('unit-mix-active',active);$('count').disabled=active;$('addUnitMix').disabled=plan.length>=20;const allHistory=subject==='social'&&active&&plan.length>0&&plan.every(row=>/-(quiz|ox|short|initial)$/.test(row.id));$('responseFormat').disabled=allHistory;$('responseSetting').hidden=allHistory||subject==='math'||$('topic').value==='history-review';$('historyMixNote').hidden=subject!=='social';$('responseSetting').firstChild.textContent=allHistory?'문제 유형 · 각 행에서 선택한 유형 적용':'문제 유형';}
 function resetMix(){ $('unitMixEnabled').checked=false;$('unitMixRows').replaceChildren();addMixRow();updateMixTotal() }
 $('addUnitMix').onclick=()=>{addMixRow();updateFilterSummary()};
+// Shared model for the comprehensive selector; generation keeps using the same plan.
+window.WorksheetPractice={plan:mixPlan,setPlan(plan){$('unitMixRows').replaceChildren();plan.forEach(addMixRow);$('unitMixEnabled').checked=true;updateMixTotal();updateFilterSummary();}};
 function denseAvailable(){if(subject!=='math')return false;if(!$('typeSetting').hidden)return /^(add-|sub-|small-|two-|times-)/.test($('type').value)&&$('type').value!=='times-missing';return ['addition','hundreds','multiplication'].includes($('topic').value)}
 function syncCount(preferred){
  const column=subject==='math'&&$('topic').value==='column';$('columnSettings').hidden=!column;$('columnSettings').disabled=!column;$('columnModeLabel').textContent=$('type').value==='column-div3'?'나머지':['column-sub2','column-sub3'].includes($('type').value)?'받아내림':'받아올림';

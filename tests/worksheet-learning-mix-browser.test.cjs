@@ -27,7 +27,7 @@ test('five historical initial rows print 25 hints and mixed row formats remain i
  fs.mkdirSync(dir,{recursive:true});const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--allow-file-access-from-files',...(process.env.CI?[]:['--single-process','--no-zygote']),'--disable-gpu']});
  try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  const eras=['prehistoric','ancient','goryeo','joseon','modern'],base=pathToFileURL(path.resolve('문제지 만들기.html')).href;
- await page.goto(base+'?subject=social&grade=5');await page.locator('[data-mode=practice]').click();await page.locator('#unitMixSettings summary').click();await page.locator('#unitMixEnabled').check();
+ await page.goto(base+'?subject=social&grade=5');await page.locator('[data-mode=practice]').click();assert.equal(await page.locator('#unitMixSettings').getAttribute('open'),'');
  for(let i=1;i<5;i++)await page.locator('#addUnitMix').click();
  const rows=page.locator('#unitMixRows>div');for(let i=0;i<5;i++){await rows.nth(i).locator('select').selectOption(`s5-${eras[i]}:${eras[i]}-initial`);await rows.nth(i).locator('input').fill('5');}
  assert.equal(await page.locator('#responseSetting').isVisible(),false);await page.locator('button.daily-primary').click();assert.equal(await page.locator('#questions>li').count(),25);assert.equal(await page.locator('#questions .question-detail').count(),25);assert.ok((await page.locator('#questions .question-detail').allTextContents()).every(t=>t.startsWith('초성·빈칸 힌트:')));assert.equal(await page.locator('#questions .choice-list').count(),0);

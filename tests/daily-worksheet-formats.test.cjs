@@ -88,17 +88,16 @@ test('browser dropdown and actual A4 student/teacher layouts reflect the selecte
   await page.locator('.gx-worksheet-picker summary').click();await page.locator('[data-worksheet-subject="korean"]').click();
   await page.selectOption('#grade','4');
   await page.locator('[data-mode=practice]').click();
-  await page.selectOption('#unit','k4-vocabulary');
-  await page.selectOption('#topic','vocabulary');
+  await page.locator('#unitMixRows select').selectOption('k4-vocabulary:vocabulary-context');
   assert.equal(await page.locator('#responseSetting').isVisible(),true);
-  assert.equal(await page.locator('#topicSetting').isVisible(),true,'show actual multiple learning content choices');
+  assert.equal(await page.locator('.practice-range-layout .range-tree').isVisible(),true,'show comprehensive learning content check list');
   assert.equal(await page.locator('#typeSetting').isVisible(),false,'word banks are not response formats');
   assert.deepEqual(await page.locator('#responseFormat option').evaluateAll(nodes=>nodes.map(x=>x.textContent)),['객관식 (보기 고르기)','OX형','단답형','서술형']);
   for(const mode of ['ox','short','essay','choice']){
    await page.selectOption('#responseFormat',mode);
-   await page.selectOption('#count','5');
+   await page.locator('#unitMixRows input').fill('5');
    await page.locator('button.daily-primary').click();
-   await page.waitForFunction(()=>document.querySelector('#questions')?.children.length===5);
+   assert.equal(await page.locator('#questions>li').count(),5,await page.locator('#sheetStatus').textContent());
    const classes=await page.locator('#questions > li').first().getAttribute('class')||'';
    if(mode==='ox')assert.match(classes,/ox-question/);
    if(mode==='essay')assert.match(classes,/essay-question/);
@@ -110,7 +109,7 @@ test('browser dropdown and actual A4 student/teacher layouts reflect the selecte
   }
   await page.locator('.gx-worksheet-picker summary').click();await page.locator('[data-worksheet-subject="math"]').click();
   assert.equal(await page.locator('#responseSetting').isVisible(),false);
-  assert.equal(await page.locator('#typeSetting').isVisible(),true);
+  assert.equal(await page.locator('.practice-range-layout .range-tree').isVisible(),true);
   await page.locator('.gx-worksheet-picker summary').click();await page.locator('[data-worksheet-subject="english"]').click();
   assert.equal(await page.locator('#unitSetting').isVisible(),false,'do not show an empty unit selector for English');
   await page.selectOption('#grade','3');
@@ -144,8 +143,8 @@ test('collapsible unit quotas generate exact counts, survive reload and print on
  const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--allow-file-access-from-files']});
  try{const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(pathToFileURL(path.resolve('문제지 만들기.html')).href,{waitUntil:'load'});await page.locator('[data-mode="practice"]').click();
- assert.equal(await page.locator('#unitMixSettings').getAttribute('open'),null);
- await page.locator('#unitMixSettings summary').click();await page.locator('#unitMixEnabled').check();await page.locator('#addUnitMix').click();
+ assert.equal(await page.locator('#unitMixSettings').getAttribute('open'),'');
+ await page.locator('#addUnitMix').click();
  const rows=page.locator('.unit-mix-row');await rows.nth(0).locator('input').fill('3');await rows.nth(1).locator('input').fill('7');
  await page.locator('button.daily-primary').click();assert.equal(await page.locator('#questions>li').count(),10);assert.match(await page.locator('#questionSheet #paperTitle').textContent(),/여러 단원/);
  assert.equal(await page.locator('#count').isDisabled(),true);const url=page.url();assert.ok(url.includes('unitMix='));
