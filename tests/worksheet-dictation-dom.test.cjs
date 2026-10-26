@@ -5,7 +5,7 @@ test('dictation UI separates hidden answers, grade changes, saved selections and
  const raw=fs.readFileSync(path.join(__dirname,'../받아쓰기.html'),'utf8');
  function load(search,voiceList=[]){const dom=new JSDOM(raw.replace(/<script[\s\S]*?<\/script>/g,''),{url:'https://clasheet.test/받아쓰기.html'+search,runScripts:'outside-only'}),w=dom.window;
   w.speechSynthesis={getVoices:()=>voiceList,cancel:()=>{},speak:u=>{w.lastSpoken=u;},resume:()=>{},addEventListener:()=>{}};w.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};w.print=()=>{w.printed=true;};
-  for(const f of ['worksheet-dictation-topics.js','worksheet-dictation-data.js','worksheet-english-dictation.js','worksheet-dictation-player.js','worksheet-dictation-ui.js'])w.eval(fs.readFileSync(path.join(__dirname,'..',f),'utf8'));return w;
+  for(const f of ['worksheet-dictation-topics.js','worksheet-dictation-data.js','worksheet-english-dictation.js','worksheet-dictation-player.js','worksheet-dictation-custom.js','worksheet-dictation-ui.js'])w.eval(fs.readFileSync(path.join(__dirname,'..',f),'utf8'));return w;
  }
  const w=load('?grade=1&seed=42'),d=w.document;assert.equal(d.querySelectorAll('#dictWritingList>li').length,10);assert.equal(d.querySelector('#dictTeacher').open,false);assert.equal(w.lastSpoken,undefined);
  const original=d.querySelector('#dictAnswerList').textContent;const replay=load(w.location.search);assert.equal(replay.document.querySelector('#dictAnswerList').textContent,original);replay.close();
