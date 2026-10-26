@@ -4,8 +4,8 @@ const K=require('../worksheet-korean-readings'),T=require('../worksheet-learning
 const targets=T.catalog.filter(u=>u.subject==='korean').flatMap(unit=>unit.lessons.map(lesson=>({unit,lesson,binding:K.find(unit,lesson)}))).filter(t=>t.binding);
 function options(t,extra={}){return {subject:'korean',grade:t.unit.grade,semester:t.unit.semester,unitId:t.unit.id,lessonId:t.lesson.id,count:20,responseFormat:'choice',seed:42,...extra};}
 test('new readings and reused readings have complete questions, distinct choices and reviewed explanations',()=>{
- const original=K.authored();assert.equal(original.length,28);assert.equal(original.filter(p=>p.genre==='poetry').length,16);
- assert.equal(new Set(original.map(p=>p.id)).size,28);
+ const original=K.authored();assert.equal(original.length,50);assert.equal(original.filter(p=>p.genre==='poetry').length,24);
+ assert.equal(new Set(original.map(p=>p.id)).size,50);
  for(const p of original){
   assert.equal(p.questions.length,5);assert.equal(p.rationales.length,5);assert.equal(p.skills.length,5);
   assert.ok(p.passage.length>65,p.title);if(p.genre==='poetry')assert.ok(p.passage.includes('\n'),p.title);
@@ -47,7 +47,7 @@ test('narrow figurative lessons retain genre and skill filters and expose their 
  for(const name of ['시에 나타난 비유적 표현 알기','이야기에 나타난 비유적 표현 알기']){
   const t=targets.find(t=>t.lesson.name.trim()===name),genre=name.startsWith('시에')?'poetry':'literary';
   assert.ok(t.binding.pool.every(q=>q.readingGenre===genre&&q.koreanSkill==='figurative'));
-  assert.ok(!T.counts(t.binding,'choice').includes(20));assert.throws(()=>T.generate(options(t),C),/문항 수/);
+  assert.ok(T.counts(t.binding,'choice').includes(20));const sheet=T.generate(options(t),C);assert.equal(sheet.items.length,20);
  }
  for(const grade of [3,4,5,6])for(const s of T.standards('korean',grade).filter(s=>K.standardCoverage(s.code).length)){
   const newItems=s.binding.pool.filter(q=>q.evidenceId.startsWith('kr-'));
