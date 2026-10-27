@@ -147,3 +147,5 @@ body.home-view.gx-app .first-start-card strong{font-size:12px;grid-column:2}.hom
  body.home-view.gx-app .first-start-close{margin:0}
 }
 @media(prefers-reduced-motion:reduce){body.home-view.gx-app .format-tile,.home-dictation-link,.home-view .tool-row{transition:none}}
+
+.home-speaking-panel{grid-column:1/-1}
