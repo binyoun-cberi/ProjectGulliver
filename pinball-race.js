@@ -263,7 +263,7 @@
     top.forEach((b,i)=>{
       const li=document.createElement('li');
       const dot=document.createElement('i'),name=document.createElement('span'),pos=document.createElement('strong');
-      dot.style.background=b.color;name.textContent=b.name;pos.textContent=(i+1)+'위';
+      dot.style.background=b.color;name.textContent=b.name;pos.textContent=(state.arrivals.length+i+1)+'위';
       li.append(pos,dot,name);list.append(li);
     });
     if(!top.length){const li=document.createElement('li');li.textContent='모두 도착했어요!';list.append(li);}
