@@ -401,7 +401,7 @@ function renderResults(){
   $('report').innerHTML=`<div class="report"><table><thead><tr><th>반</th><th>전체</th><th>남</th><th>여</th><th>성별 미입력</th><th>학습지표 평균</th></tr></thead><tbody>${counts.map((d,i)=>`<tr><td>${escapeHtml(displayClass(i+1))}</td><td>${d.total}명</td><td>${d.boys}명</td><td>${d.girls}명</td><td>${d.total-d.boys-d.girls}명</td><td>${d.levelN?(d.levelSum/d.levelN).toFixed(2):'—'}</td></tr>`).join('')}</tbody></table></div><div class="legend">${state.traits.filter(t=>counts.some(d=>d.traitCounts[t]>0)||Number.isInteger(state.capRules[t])).map(t=>`<span>${escapeHtml(t)}${Number.isInteger(state.capRules[t])?' (반당 최대 '+state.capRules[t]+'명)':''}: ${counts.map((d,i)=>`${i+1}반 ${d.traitCounts[t]}`).join(' / ')}</span>`).join('')}</div>`;
   $('resultGrid').innerHTML=counts.map((d,index)=>{
     const c=index+1;const pupils=state.students.filter(s=>selected.assign[s.id]===c).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-    return `<div class="class-card"><div class="class-top"><h3>${escapeHtml(displayClass(c))}<small>${d.total}명</small></h3><div class="class-metrics">남 ${d.boys} · 여 ${d.girls} · 학습지표 ${d.levelN?(d.levelSum/d.levelN).toFixed(2):'미입력'}</div></div><div class="class-body">${pupils.map(s=>`<div class="assigned"><div class="person"><b>${escapeHtml(s.name)}${s.fixed?' <span class="warning-dot" title="반 고정">◆</span>':''}</b><small>${escapeHtml(s.oldClass||'기존 반 미입력')}${s.number?' · '+escapeHtml(s.number)+'번':''} · ${escapeHtml(s.gender||'성별 미입력')} · 학습 ${escapeHtml(studyText(s.level))}${s.traits.length?' · '+escapeHtml(s.traits.join(', ')):''}</small></div><select data-move="${escapeHtml(s.id)}" aria-label="${escapeHtml(s.name)} 반 변경" ${s.fixed?'disabled title="고정된 학생"':''}>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${i+1===c?'selected':''}>${i+1}반</option>`).join('')}</select></div>`).join('')||'<div class="empty">학생 없음</div>'}</div></div>`;
+    return `<div class="class-card"><div class="class-top"><h3>${escapeHtml(displayClass(c))}<small>${d.total}명</small></h3><div class="class-metrics">${state.teacherNames[c]?'담당 '+escapeHtml(state.teacherNames[c])+' · ':''}교사 우선 배치 ${pupils.filter(st=>st.fixed).length}명 · 남 ${d.boys} · 여 ${d.girls} · 학습지표 ${d.levelN?(d.levelSum/d.levelN).toFixed(2):'미입력'}</div></div><div class="class-body">${pupils.map(s=>`<div class="assigned"><div class="person"><b>${escapeHtml(s.name)}${s.fixed?' <span class="warning-dot" title="교사가 우선 배치한 학생 · 자동 편성에서 유지">◆</span>':''}</b><small>${escapeHtml(s.oldClass||'기존 반 미입력')}${s.number?' · '+escapeHtml(s.number)+'번':''} · ${escapeHtml(s.gender||'성별 미입력')} · 학습 ${escapeHtml(studyText(s.level))}${s.traits.length?' · '+escapeHtml(s.traits.join(', ')):''}</small></div><select data-move="${escapeHtml(s.id)}" aria-label="${escapeHtml(s.name)} 반 변경" ${s.fixed?'disabled title="고정된 학생"':''}>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${i+1===c?'selected':''}>${i+1}반</option>`).join('')}</select></div>`).join('')||'<div class="empty">학생 없음</div>'}</div></div>`;
   }).join('');
 }
 function parseBulk(text){
@@ -426,10 +426,10 @@ function download(name,content,mime){const b=new Blob([content],{type:mime});con
 function csvCell(x){let s=String(x??'');if(/^\s*[=+\-@]/.test(s))s="'"+s;return /[",\n\r]/.test(s)?'"'+s.replaceAll('"','""')+'"':s}
 function exportCSV(){
   const c=state.candidates[state.activeCandidate];if(!c)return;
-  const rows=[['새 학급','새 번호','기존 반','번호','이름','성별','학습지표','유의 사항','교사 메모']];
+  const rows=[['새 학급','담당 교사','새 번호','기존 반','번호','이름','성별','학습지표','유의 사항','교사 메모','우선 배치']];
   for(let i=1;i<=state.classCount;i++){
     const pupils=state.students.filter(st=>c.assign[st.id]===i).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-    pupils.forEach((st,j)=>rows.push([displayClass(i),j+1,st.oldClass,st.number,st.name,st.gender,hasStudyScore(st)?studyText(st.level):'',st.traits.join('; '),st.note]));
+    pupils.forEach((st,j)=>rows.push([displayClass(i),state.teacherNames[i]||'',j+1,st.oldClass,st.number,st.name,st.gender,hasStudyScore(st)?studyText(st.level):'',st.traits.join('; '),st.note,st.fixed?'교사 지정':'자동 편성']));
   }
   download('반편성_결과_'+state.grade+'학년.csv','\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');toast('편성 결과 CSV를 저장했습니다.');
 }
@@ -471,13 +471,13 @@ function installEvents(){
   $('presetSearch').addEventListener('input',renderPreset);
   $('presetUnassigned').addEventListener('change',e=>{
     const select=e.target.closest('[data-preset]');
-    if(select)tryPreset(select.dataset.preset,Number(select.value));
+    if(select&&!tryPreset(select.dataset.preset,Number(select.value)))select.value='0';
   });
   $('presetClassGrid').addEventListener('change',e=>{
     const teacher=e.target.closest('[data-teacher-class]');
     if(teacher){const num=Number(teacher.dataset.teacherClass);if(num>=1&&num<=state.classCount){state.teacherNames[num]=teacher.value.slice(0,40);saveState();renderPreset()}return}
     const select=e.target.closest('[data-place-class]');
-    if(select&&select.value)tryPreset(select.value,Number(select.dataset.placeClass));
+    if(select&&select.value&&!tryPreset(select.value,Number(select.dataset.placeClass)))select.value='';
   });
   $('presetClassGrid').addEventListener('click',e=>{const el=e.target.closest('[data-unpin]');if(el)tryPreset(el.dataset.unpin,0)});
   $('clearPresets').addEventListener('click',()=>{
