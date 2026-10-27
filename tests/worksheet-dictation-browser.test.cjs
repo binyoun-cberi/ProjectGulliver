@@ -12,8 +12,8 @@ test('dictation audio controls, grade selection, hidden answers, six A4 student/
    window.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};
   });
   const base=pathToFileURL(path.resolve('받아쓰기.html'));
-  await page.goto(base.href+'?grade=1&seed=42&repeats=10&repeatGap=120&nextGap=300&rate=0.5');
-  for(const [id,value] of [['dictRepeats','10'],['dictRepeatGap','120'],['dictNextGap','300'],['dictRate','0.5']])assert.equal(await page.locator('#'+id).inputValue(),value);
+  await page.goto(base.href+'?grade=1&seed=42&repeats=5&repeatGap=120&nextGap=300&rate=0.5');
+  for(const [id,value] of [['dictRepeats','5'],['dictRepeatGap','120'],['dictNextGap','300'],['dictRate','0.5']])assert.equal(await page.locator('#'+id).inputValue(),value);
   await page.reload();assert.equal(await page.locator('#dictNextGap').inputValue(),'300');
   await page.goto(base.href+'?grade=1&seed=42');await page.waitForSelector('#dictWritingList>li');assert.equal(await page.evaluate(()=>__spoken.length),0);
   await page.click('#dictStart');assert.equal(await page.evaluate(()=>__spoken.length),1);assert.equal(await page.evaluate(()=>__spoken[0].lang),'ko-KR');

@@ -28,7 +28,7 @@ function create({synth,Utterance,setTimer=setTimeout,clearTimer=clearTimeout,now
  return {
   snapshot,
   load(rows,options={}){if(!Array.isArray(rows)||!rows.length||rows.some(q=>!q.text))throw Error('읽을 문장을 확인해 주세요.');clear();items=rows.map(q=>({...q}));settings={...settings,...options};
-   if(!(Number.isInteger(settings.repeats)&&settings.repeats>=1&&settings.repeats<=10)||![settings.repeatGap,settings.nextGap].every(n=>Number.isFinite(n)&&n>=0&&n<=300)||!Number.isFinite(settings.rate)||settings.rate<.5||settings.rate>1.2)throw Error('읽기 설정을 확인해 주세요.');
+   if(!(Number.isInteger(settings.repeats)&&settings.repeats>=1&&settings.repeats<=5)||![settings.repeatGap,settings.nextGap].every(n=>Number.isFinite(n)&&n>=0&&n<=300)||!Number.isFinite(settings.rate)||settings.rate<.5||settings.rate>1.2)throw Error('읽기 설정을 확인해 주세요.');
    state='idle';index=round=0;phase='';remaining=0;error='';emit();},
   start(){if(!items.length||['speaking','waiting'].includes(state))return;if(state==='paused'){if(phase==='speech')speak();else wait(phase,remaining);return;}if(state==='complete'){index=round=0;}speak();},
   pause,
