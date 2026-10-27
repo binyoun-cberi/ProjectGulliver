@@ -121,7 +121,7 @@ function tryPreset(id,to){
   const st=findStudent(id);if(!st||!Number.isInteger(to)||to<0||to>state.classCount)return false;
   const before=st.fixed;st.fixed=to;
   const errors=presetIssues(state.students,state.pairs,state.classCount,state.capRules);
-  if(errors.length){st.fixed=before;toast('배치할 수 없습니다. '+errors[0]);return false}
+  if(to&&errors.length){st.fixed=before;toast('배치할 수 없습니다. '+errors[0]);return false}
   invalidate();changeState();toast(to?st.name+' 학생을 '+to+'반에 우선 배치했습니다.':st.name+' 학생의 우선 배치를 해제했습니다.');
   return true;
 }
@@ -413,7 +413,7 @@ function addStudent(){const s={id:makeId(),oldClass:'',number:'',name:'',gender:
 function addTrait(){const t=$('newTrait').value.trim();if(!t)return;if(state.traits.includes(t)){toast('이미 있는 특징입니다.');return}if(state.traits.length>=64){toast('유의 사항은 최대 64개까지 추가할 수 있습니다.');return}state.traits.push(t);$('newTrait').value='';invalidate();changeState()}
 function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)return;const s=findStudent(tr.dataset.student);if(!s)return;
   if(e.target.dataset.trait){const t=e.target.dataset.trait;s.traits=e.target.checked?[...new Set([...s.traits,t])]:s.traits.filter(x=>x!==t);const picker=e.target.closest('.notice-picker');if(picker){picker.querySelector('[data-notice-summary]').textContent=s.traits.length?s.traits.join(', '):'유의 사항 선택';picker.querySelector('.count-pill').textContent=s.traits.length+'개'}invalidate();saveState();return}
-  else if(e.target.dataset.key){const key=e.target.dataset.key;const value=e.target.value;if(key==='level'){const parsed=parseStudyScore(value);if(value!==''&&parsed===null){toast('학습지표는 0.00 이상의 숫자로 입력해 주세요.');renderRoster();return}s.level=parsed}else if(key==='fixed')s.fixed=Number(value);else s[key]=value.slice(0,key==='name'?80:50)}
+  else if(e.target.dataset.key){const key=e.target.dataset.key;const value=e.target.value;if(key==='level'){const parsed=parseStudyScore(value);if(value!==''&&parsed===null){toast('학습지표는 0.00 이상의 숫자로 입력해 주세요.');renderRoster();return}s.level=parsed}else if(key==='fixed'){tryPreset(s.id,Number(value));return}else s[key]=value.slice(0,key==='name'?80:50)}
   else return;
   invalidate();saveState();render();
 }
@@ -424,7 +424,7 @@ function manualMove(e){const select=e.target.closest('[data-move]');if(!select)r
 function installEvents(){
   document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
   $('grade').addEventListener('change',e=>{state.grade=e.target.value.trim()||'1';changeState()});
-  $('classCount').addEventListener('change',e=>{const n=Number(e.target.value);if(!Number.isInteger(n)||n<2||n>12){toast('학급 수는 2~12로 설정해 주세요.');render();return}state.classCount=n;state.students.forEach(s=>{if(s.fixed>n)s.fixed=0});invalidate();changeState()});
+  $('classCount').addEventListener('change',e=>{const n=Number(e.target.value);if(!Number.isInteger(n)||n<2||n>12){toast('학급 수는 2~12로 설정해 주세요.');render();return}state.classCount=n;state.students.forEach(s=>{if(s.fixed>n)s.fixed=0});state.teacherNames=Object.fromEntries(Object.entries(state.teacherNames).filter(([id])=>Number(id)<=n));invalidate();changeState()});
   $('demo').addEventListener('click',()=>{if(state.students.length&&!confirm('현재 학생 명단을 예시 데이터로 교체할까요? 먼저 JSON 백업을 저장할 수 있습니다.'))return;state=defaultState();state.students=sampleData();state.pairs=[{a:state.students[0].id,b:state.students[3].id},{a:state.students[7].id,b:state.students[19].id}];view='roster';showTab('roster');changeState();toast('가상의 학생 36명과 분리 관계 2쌍을 불러왔습니다.')});
   $('reset').addEventListener('click',()=>{if(!confirm('모든 학생 정보와 편성 결과를 이 브라우저에서 지울까요? 되돌릴 수 없습니다.'))return;state=defaultState();changeState();showTab('roster');toast('모든 내용을 지웠습니다.')});
   $('saveJson').addEventListener('click',()=>{const copy={...state,candidates:[]};download('반편성_설정_백업.json',JSON.stringify(copy,null,2),'application/json;charset=utf-8');toast('설정 백업 파일을 저장했습니다.')});
@@ -442,6 +442,25 @@ function installEvents(){
   $('rosterBody').addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');if(remove){const s=findStudent(remove.dataset.remove);if(!confirm(`「${studentTitle(s)}」 학생을 삭제할까요?`))return;state.students=state.students.filter(x=>x.id!==remove.dataset.remove);state.pairs=state.pairs.filter(p=>p.a!==remove.dataset.remove&&p.b!==remove.dataset.remove);invalidate();changeState();return}
     const note=e.target.closest('[data-note]');if(note){const s=findStudent(note.dataset.note);noteStudentId=s.id;$('noteTitle').textContent=`${s.name||'학생'} 메모`;$('noteText').value=s.note;$('noteDialog').showModal()}});
   $('cancelNote').addEventListener('click',()=>$('noteDialog').close());$('saveNote').addEventListener('click',()=>{const s=findStudent(noteStudentId);if(s){s.note=$('noteText').value.slice(0,1000);invalidate();changeState()}$('noteDialog').close()});
+  $('presetSearch').addEventListener('input',renderPreset);
+  $('presetUnassigned').addEventListener('change',e=>{
+    const select=e.target.closest('[data-preset]');
+    if(select)tryPreset(select.dataset.preset,Number(select.value));
+  });
+  $('presetClassGrid').addEventListener('change',e=>{
+    const teacher=e.target.closest('[data-teacher-class]');
+    if(teacher){const num=Number(teacher.dataset.teacherClass);if(num>=1&&num<=state.classCount){state.teacherNames[num]=teacher.value.slice(0,40);saveState();renderPreset()}return}
+    const select=e.target.closest('[data-place-class]');
+    if(select&&select.value)tryPreset(select.value,Number(select.dataset.placeClass));
+  });
+  $('presetClassGrid').addEventListener('click',e=>{const el=e.target.closest('[data-unpin]');if(el)tryPreset(el.dataset.unpin,0)});
+  $('clearPresets').addEventListener('click',()=>{
+    const count=state.students.filter(st=>st.fixed).length;
+    if(!count){toast('해제할 우선 배치가 없습니다.');return}
+    if(!confirm('교사가 확정한 '+count+'명의 반 배치를 모두 해제할까요?'))return;
+    state.students.forEach(st=>st.fixed=0);invalidate();changeState();toast('우선 배치를 모두 해제했습니다.');
+  });
+  $('fillRemaining').addEventListener('click',()=>$('generate').click());
   $('capRules').addEventListener('change',e=>{const el=e.target.closest('[data-cap]');if(!el)return;const tag=el.dataset.cap,value=el.value.trim();if(!state.traits.includes(tag))return;if(value!==''&&(!/^\d+$/.test(value)||Number(value)>1000)){toast('반당 최대 인원은 0~1000 사이의 정수를 입력해 주세요.');renderCaps();return}if(value==='')delete state.capRules[tag];else state.capRules[tag]=Number(value);invalidate();changeState();toast(value===''?`「${tag}」 인원 제한을 해제했습니다.`:`「${tag}」 반당 최대 ${value}명으로 설정했습니다.`)});
   $('addPair').addEventListener('click',()=>{const a=$('pairA').value,b=$('pairB').value;if(!a||!b){toast('두 학생을 모두 선택해 주세요.');return}if(a===b){toast('서로 다른 학생 두 명을 선택해 주세요.');return}if(state.pairs.some(p=>(p.a===a&&p.b===b)||(p.a===b&&p.b===a))){toast('이미 지정한 분리 관계입니다.');return}state.pairs.push({a,b});invalidate();changeState();toast('분리 관계를 추가했습니다.')});
   $('pairList').addEventListener('click',e=>{const b=e.target.closest('[data-pair-index]');if(!b)return;state.pairs.splice(Number(b.dataset.pairIndex),1);invalidate();changeState()});
