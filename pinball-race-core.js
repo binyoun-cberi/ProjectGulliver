@@ -5,7 +5,7 @@
   if (root) root.ClasheetPinballCore = api;
 })(typeof window !== 'undefined' ? window : null, function () {
   'use strict';
-  const W = 900, H = 690, FINISH_Y = 574, RADIUS = 12;
+  const W = 900, H = 690, FINISH_Y = 574, RADIUS = 11;
   const BRIDGE_KEY = 'clasheet.race-roster.v1';
   const OWN_KEY = 'clasheet.pinballRace.v1';
   const BUMPER_KEY = 'gulliver.bumperRoulette.v2';
@@ -13,7 +13,7 @@
   function normalizeNames(raw) {
     const names = (Array.isArray(raw) ? raw : String(raw || '').split(/\r?\n/))
       .map(x => String(x || '').trim()).filter(Boolean);
-    if (names.length < 2 || names.length > 16) throw Error('참가자는 2~16명으로 입력해 주세요.');
+    if (names.length < 2 || names.length > 30) throw Error('참가자는 2~30명으로 입력해 주세요.');
     if (names.some(n => n.length > 24)) throw Error('이름은 24글자 이내로 입력해 주세요.');
     if (new Set(names).size !== names.length) throw Error('같은 이름이 있어요. 구별할 수 있도록 번호를 붙여 주세요.');
     return names;
@@ -27,8 +27,8 @@
     return out;
   }
   function makeCapacities(n, k, random = Math.random) {
-    if (!Number.isInteger(n) || !Number.isInteger(k) || n < 2 || n > 16 || k < 2 || k > 4 || k > n) {
-      throw Error('참가자는 2~16명, 팀은 2~4개로 설정해 주세요.');
+    if (!Number.isInteger(n) || !Number.isInteger(k) || n < 2 || n > 30 || k < 2 || k > 4 || k > n) {
+      throw Error('참가자는 2~30명, 팀은 2~4개로 설정해 주세요.');
     }
     const caps = Array(k).fill(Math.floor(n / k));
     shuffled(Array.from({length:k},(_,i)=>i),random).slice(0,n % k).forEach(i => caps[i]++);
@@ -63,10 +63,10 @@
   }
   function createWorld(Matter, names, random = Math.random) {
     const roster = normalizeNames(names);
-    const { Engine, Bodies, Body, Composite } = Matter;
+    const { Engine, Bodies, Body, Composite, Events } = Matter;
     const engine = Engine.create({enableSleeping:false});
     engine.gravity.y = 0.012;
-    const staticBodies=[], animated=[];
+    const staticBodies=[], animated=[], impacts=[];
     const wall = {isStatic:true, friction:0.02, restitution:0.66,label:'rail',
       render:{fillStyle:'#43516e'}};
     function add(body) { staticBodies.push(body); return body; }
@@ -82,7 +82,7 @@
       [138,332],[265,345],[420,338],[573,345],[730,337],
       [210,460],[350,446],[545,451],[705,470]];
     for (const [x,y] of pegs) add(Bodies.circle(x,y,10,pegOpts));
-    [[265,280,35],[645,288,38],[455,405,39]].forEach(([x,y,r]) => add(Bodies.circle(x,y,r,bumperOpts)));
+    [[265,280,35],[645,288,38],[455,405,39],[185,405,28],[715,405,28]].forEach(([x,y,r]) => add(Bodies.circle(x,y,r,bumperOpts)));
     // Short alternative routes: risky spinning middle versus slower side rails.
     // Lower section remains open: narrow V-shaped ramps can trap slow-moving balls.
     const spindle=add(Bodies.rectangle(450,305,150,19,{isStatic:true,restitution:1.15,
@@ -93,17 +93,36 @@
     animated.push({body:gates,angle:0,speed:-(0.055+random()*0.015)});
     // A single finish sensor line, followed by UI capacity gates for team mode.
     const order=shuffled(roster,random);
-    const colors=['#fb7185','#60a5fa','#4ade80','#fbbf24','#c084fc','#22d3ee','#fb923c','#e879f9',
-                  '#a3e635','#f472b6','#93c5fd','#fcd34d','#34d399','#818cf8','#fdba74','#e2e8f0'];
+    const columns=Math.min(order.length,15);
+    const colors=order.map((_,i)=>'hsl('+Math.round(i*137.508%360)+' 92% 68%)');
     const balls=order.map((name,index)=>{
-      const x=170 + (index+0.5)*(560/order.length) + (random()-0.5)*12;
-      const y=85+(index%3)*7;
+      // Two staggered launch rows keep all thirty marbles from spawning on top of one another.
+      const col=index%columns, row=Math.floor(index/columns);
+      const x=165 + (col+0.5)*(570/columns) + (random()-.5)*5;
+      const y=68+row*34+(col%2)*3;
       const body=Bodies.circle(x,y,RADIUS,{label:'ball',restitution:0.72,friction:0.004,
         frictionAir:0.005,density:0.0012,render:{fillStyle:colors[index]}});
       Body.setVelocity(body,{x:(random()-.5)*1.1,y:.2});
       return {name,index,body,color:colors[index],finished:false,team:null,finishFx:null,stallFrames:0};
     });
     Composite.add(engine.world,[...staticBodies,...balls.map(b=>b.body)]);
+    // Bumpers deliver the SAME physical kick to everyone. Rank and participant names are never consulted.
+    Events.on(engine,'collisionStart',event=>{
+      for (const pair of event.pairs) {
+        const ballBody=pair.bodyA.label==='ball'?pair.bodyA:pair.bodyB.label==='ball'?pair.bodyB:null;
+        if (!ballBody) continue;
+        const obstacle=pair.bodyA===ballBody?pair.bodyB:pair.bodyA;
+        if (obstacle.label!=='bumper'&&obstacle.label!=='spinner') continue;
+        const dx=ballBody.position.x-obstacle.position.x;
+        const sign=Math.abs(dx)<3?(random()<.5?-1:1):Math.sign(dx);
+        if(obstacle.label==='bumper'){
+          const vel=ballBody.velocity;
+          Body.setVelocity(ballBody,{x:Math.max(-3.8,Math.min(3.8,vel.x+sign*1.65)),y:Math.max(-2.5,vel.y-.85)});
+        }
+        if(impacts.length<160)impacts.push({x:ballBody.position.x,y:ballBody.position.y,
+          type:obstacle.label,energy:Math.min(1.7,Math.max(.6,ballBody.speed/4))});
+      }
+    });
     let frame=0;
     function step() {
       frame++;
@@ -119,7 +138,7 @@
         }
       }
     }
-    return {engine,balls,staticBodies,animated,step,frame:()=>frame,finishY:FINISH_Y,W,H};
+    return {engine,balls,staticBodies,animated,impacts,step,frame:()=>frame,finishY:FINISH_Y,W,H};
   }
   return {W,H,RADIUS,FINISH_Y,BRIDGE_KEY,OWN_KEY,BUMPER_KEY,normalizeNames,shuffled,
     makeCapacities,createAllocator,parseBridge,rosterPayload,createWorld};

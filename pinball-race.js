@@ -7,9 +7,11 @@
   const roster=$('roster-input'), modeOptions=$('race-options');
   const teamNames=['파랑 팀','노랑 팀','초록 팀','보라 팀'];
   let current=null, startedAt=0, elapsedMs=0, lastFrame=0, accumulator=0, finishAfter=0;
-  let toastDeadline=0, audio=null, muted=false;
+  let toastDeadline=0, audio=null, muted=false, lastRankPaint=0, lastImpactSound=0;
+  let previousLeader=null,lastLeadToast=0;
+  const fx=[];
   const state={mode:'winner',k:2,balanced:true,labels:[],world:null,allocator:null,counts:[],capacities:[],
-    arrivals:[],finished:false,timeoutAnnounced:false};
+    arrivals:[],finished:false,timeoutAnnounced:false,target:1,speed:1.55};
 
   function say(message,bad=false) {
     $('form-message').textContent=message||'';
@@ -49,33 +51,44 @@
   function syncMode() {
     const selected=document.querySelector('input[name="mode"]:checked');
     $('team-options').hidden=selected?.value!=='teams';
-    $('start-btn').textContent=selected?.value==='teams'?'▶ 팀 나누기 시작':'▶ 레이스 시작';
+    $('winner-options').hidden=selected?.value==='teams';
+    $('start-btn').textContent=selected?.value==='teams'?'▶ 팀 나누기 시작':'▶ 순위 뽑기 시작';
     updateDescription();
   }
   function updateDescription() {
     const isTeams=document.querySelector('input[name="mode"]:checked')?.value==='teams';
-    if(!current)$('play-description').textContent=isTeams?'팀이 가득 차면 다음 입구로 이동해요':'가장 먼저 골인하면 승리!';
+    if(!current)$('play-description').textContent=isTeams?'골인할 때마다 팀에 입장해요':'설정한 등수까지 골인하면 바로 종료!';
   }
   function collectConfig() {
     const names=C.normalizeNames(roster.value);
     const mode=document.querySelector('input[name="mode"]:checked')?.value||'winner';
     const k=Number($('team-count').value), balanced=$('balanced').checked;
+    const target=Number($('finish-target').value);
+    if(mode==='winner'&&(!Number.isInteger(target)||target<1||target>names.length))throw Error('종료 등수는 1부터 참가자 수('+names.length+'명)까지 정해 주세요.');
+    const speed=Number($('race-speed').value);
+    if(![1,1.55,1.9].includes(speed))throw Error('경기 속도를 다시 선택해 주세요.');
     if(mode==='teams'&&k>names.length)throw Error('팀 수보다 참가자가 적어요. 팀을 줄이거나 친구를 더 넣어 주세요.');
     const raw=$('team-labels').value.split(/[,，\n]/).map(s=>s.trim());
     const labels=Array.from({length:k},(_,i)=>raw[i]||teamNames[i]);
     if(new Set(labels).size!==labels.length)throw Error('서로 다른 팀 이름을 입력해 주세요.');
-    return {names,mode,k,balanced,labels};
+    return {names,mode,k,balanced,labels,target,speed};
   }
   function saveConfig() {
     try {
       localStorage.setItem(C.OWN_KEY,JSON.stringify({names:roster.value,
         mode:document.querySelector('input[name="mode"]:checked')?.value,
-        k:Number($('team-count').value),balanced:$('balanced').checked,labels:$('team-labels').value}));
+        k:Number($('team-count').value),balanced:$('balanced').checked,labels:$('team-labels').value,
+        target:Number($('finish-target').value),speed:Number($('race-speed').value)}));
     }catch(_){}
   }
   function stopRun(showSetup=true) {
     if(current?.world) M.Engine.clear(current.world.engine);
-    current=null;state.world=null;state.finished=false;finishAfter=0;accumulator=0;
+    current=null;state.world=null;state.finished=false;finishAfter=0;accumulator=0;fx.length=0;
+    $('live-rankings').hidden=true;
+    $('live-rank-list').replaceChildren();
+    $('marble-legend').hidden=true;
+    $('marble-legend-list').replaceChildren();
+    previousLeader=null;lastLeadToast=0;
     $('result-overlay').hidden=true;
     $('stop-btn').hidden=true;
     $('start-btn').hidden=false;
@@ -106,6 +119,7 @@
     try {config=collectConfig();}catch(e){say(e.message,true);return;}
     saveConfig();stopRun(false);
     state.mode=config.mode;state.k=config.k;state.balanced=config.balanced;state.labels=config.labels;
+    state.target=config.target;state.speed=config.speed;
     state.arrivals=[];state.finished=false;state.timeoutAnnounced=false;
     state.allocator=config.mode==='teams'&&config.balanced?C.createAllocator(config.names.length,config.k):null;
     state.counts=state.allocator?state.allocator.counts:Array(config.k).fill(0);
@@ -116,8 +130,19 @@
     $('result-overlay').hidden=true;$('pre-start').hidden=true;
     $('start-btn').hidden=true;$('stop-btn').hidden=false;modeOptions.disabled=true;
     $('race-count').textContent='0 / '+current.total+' 도착';
-    $('play-title').textContent=state.mode==='teams'?'팀 나누기 레이스':'1등 뽑기 레이스';
-    $('play-description').textContent='출발! 구슬을 응원해 주세요.';
+    $('play-title').textContent=state.mode==='teams'?'팀 나누기 레이스':'상위 '+state.target+'명 뽑기';
+    $('play-description').textContent='⚡ 범퍼에 맞으면 튕겨 나가요!';
+    $('live-rankings').hidden=false;
+    $('marble-legend').hidden=false;
+    $('marble-legend-heading').textContent='내 구슬 번호 찾기 · '+config.names.length+'명';
+    const namesBox=$('marble-legend-list');
+    for(const ball of state.world.balls){
+      const item=document.createElement('span');item.className='marble-legend-item';
+      const dot=document.createElement('i'),number=document.createElement('b'),label=document.createElement('span');
+      dot.style.background=ball.color;number.textContent=ball.index+1;label.textContent=ball.name;
+      item.append(dot,number,label);namesBox.append(item);
+    }
+    updateLiveRankings();
     say('');showTeamStatus();showToast('핀볼 레이스 시작!');playNote(660,.2);
   }
   function chooseTeam(x) {
@@ -146,22 +171,26 @@
     $('race-count').textContent=state.arrivals.length+' / '+current.total+' 도착';
     showTeamStatus();
     if(state.arrivals.length===1) {
-      showToast(state.mode==='winner'?'🏆 '+ball.name+' 1등 도착!':'첫 도착! '+ball.name);
-      playNote(880,.18);
-    } else if(state.arrivals.length%3===0)playNote(630,.09);
-    if(state.mode==='winner') {
-      if(!finishAfter) finishAfter=performance.now()+1150;
-    } else if(state.arrivals.length===current.total) {
+      showToast('🏆 '+ball.name+' 1등 도착!');playNote(880,.18);
+    } else {
+      showToast(''+state.arrivals.length+'등 '+ball.name+' 골인!');
+      if(state.arrivals.length%2===0)playNote(630+state.arrivals.length*8,.085);
+    }
+    if(state.mode==='winner'&&state.arrivals.length>=state.target) {
+      finishAfter=performance.now()+850;
+      $('play-description').textContent=state.target+'명 골인 · 경기 종료!';
+    } else if(state.mode==='teams'&&state.arrivals.length===current.total) {
       finishAfter=performance.now()+800;
     }
+    updateLiveRankings();
   }
   function resolveArrival() {
     if(!current||state.finished)return;
     const remaining=state.world.balls.filter(ball=>!ball.finished&&ball.body.position.y>=C.FINISH_Y);
     remaining.sort((a,b)=>b.body.position.y-a.body.position.y);
     for(const ball of remaining) {
+      if(state.mode==='winner'&&state.arrivals.length>=state.target)break;
       arrival(ball);
-      if(state.mode==='winner')break;
     }
   }
   function timeoutRescue() {
@@ -170,7 +199,10 @@
     showToast('늦은 구슬은 회수 수로로 이동해요.');
     // Timeout fallback is explicit; no adjustment based on participant names/ranks.
     const left=state.world.balls.filter(b=>!b.finished).sort((a,b)=>b.body.position.y-a.body.position.y);
-    for(const b of left){arrival(b);if(state.mode==='winner')break;}
+    for(const b of left){
+      if(state.mode==='winner'&&state.arrivals.length>=state.target)break;
+      arrival(b);
+    }
   }
   function finish() {
     if(!current||state.finished)return;
@@ -178,11 +210,14 @@
     $('result-overlay').hidden=false;
     const list=$('result-entries');list.replaceChildren();
     if(state.mode==='winner') {
-      $('result-heading').textContent='오늘의 1등!';
-      $('result-summary').textContent='핀볼을 가장 먼저 통과한 친구예요.';
-      const winner=document.createElement('div');winner.className='winner-result';
-      winner.textContent='🏆 '+(state.arrivals[0]?.name||'도착자 없음');
-      list.append(winner);
+      $('result-heading').textContent=state.target===1?'오늘의 1등!':'상위 '+state.target+'명 도착!';
+      $('result-summary').textContent=state.target+'번째 구슬까지 골인해 경기가 끝났어요.';
+      state.arrivals.slice(0,state.target).forEach((arrival,index)=>{
+        const row=document.createElement('div');
+        row.className=index===0?'winner-result':'person-result';
+        row.textContent=(index===0?'🏆 ':index===1?'🥈 ':index===2?'🥉 ':'')+(index+1)+'등 · '+arrival.name;
+        list.append(row);
+      });
     } else {
       $('result-heading').textContent='팀 나누기 완료!';
       $('result-summary').textContent=state.balanced?
@@ -210,6 +245,57 @@
       localStorage.setItem(C.BUMPER_KEY,JSON.stringify(previous));
     } catch (_) {} // Don't overwrite the other game's saved roster on empty/invalid inputs.
   }
+  function updateLiveRankings() {
+    if(!current)return;
+    const entries=state.world.balls.filter(b=>!b.finished).sort((a,b)=>b.body.position.y-a.body.position.y);
+    const list=$('live-rank-list');list.replaceChildren();
+    const lead=entries[0];
+    if(lead){
+      if(previousLeader&&previousLeader!==lead.name&&performance.now()-lastLeadToast>2800
+        &&current&&performance.now()-current.launchedAt>3500&&state.arrivals.length===0){
+        showToast('⚡ 역전! '+lead.name+' 선두!');
+        lastLeadToast=performance.now();
+        playNote(790,.095);
+      }
+      previousLeader=lead.name;
+    }
+    const top=entries.slice(0,5);
+    top.forEach((b,i)=>{
+      const li=document.createElement('li');
+      const dot=document.createElement('i'),name=document.createElement('span'),pos=document.createElement('strong');
+      dot.style.background=b.color;name.textContent=b.name;pos.textContent=(state.arrivals.length+i+1)+'위';
+      li.append(pos,dot,name);list.append(li);
+    });
+    if(!top.length){const li=document.createElement('li');li.textContent='모두 도착했어요!';list.append(li);}
+  }
+  function pullImpacts(now) {
+    const impacts=state.world?.impacts;
+    if(!impacts?.length)return;
+    for(const event of impacts.splice(0,impacts.length)){
+      const vx=event.type==='bumper'?2.7:1.7;
+      fx.push({x:event.x,y:event.y,start:now,life:330,energy:event.energy,
+        type:event.type,vx,color:event.type==='bumper'?'#ffca67':'#8dfff0'});
+      if(now-lastImpactSound>105){playNote(event.type==='bumper'?410:580,.05);lastImpactSound=now;}
+    }
+    if(fx.length>90)fx.splice(0,fx.length-90);
+  }
+  function drawEffects(now) {
+    for(let i=fx.length-1;i>=0;i--){
+      const p=fx[i],t=(now-p.start)/p.life;
+      if(t>=1){fx.splice(i,1);continue;}
+      const radius=17+t*45*p.energy;
+      ctx.save();
+      ctx.globalAlpha=(1-t)*.8;ctx.strokeStyle=p.color;ctx.lineWidth=4*(1-t)+1;
+      ctx.shadowBlur=18;ctx.shadowColor=p.color;
+      ctx.beginPath();ctx.arc(p.x,p.y,radius,0,Math.PI*2);ctx.stroke();
+      for(let k=0;k<6;k++){
+        const a=k*Math.PI/3+t*1.1,inner=radius*1.1,outer=inner+13*(1-t);
+        ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*inner,p.y+Math.sin(a)*inner);
+        ctx.lineTo(p.x+Math.cos(a)*outer,p.y+Math.sin(a)*outer);ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
   function drawPill(x,y,w,h,r=10) {
     ctx.beginPath();ctx.roundRect(x,y,w,h,r);
   }
@@ -221,6 +307,23 @@
     for(let i=0;i<48;i++){
       ctx.beginPath();ctx.arc((i*157+91)%C.W,(i*83+39)%C.H,1.25,0,Math.PI*2);
       ctx.fillStyle='rgba(185,215,255,.18)';ctx.fill();
+    }
+    // Bright visible arcade zones and movement lanes, rather than an empty falling-ball board.
+    const zones=[
+      [118,252,'1 / 범퍼 난전','#fead5c'],
+      [254,419,'2 / 회전 대결','#65e2cf'],
+      [421,574,'3 / 결승 스프린트','#b7a1ff']
+    ];
+    for(const [top,bottom,label,color] of zones){
+      ctx.fillStyle=color+'0D';drawPill(92,top,716,bottom-top,17);ctx.fill();
+      ctx.fillStyle=color;ctx.textAlign='right';ctx.font='bold 13px system-ui';
+      ctx.fillText(label,796,top+24);
+    }
+    for(let i=0;i<14;i++){
+      const y=160+i*28;
+      ctx.strokeStyle='rgba(255,255,255,.065)';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(95,y);ctx.lineTo(130,y+11);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(772,y);ctx.lineTo(807,y+11);ctx.stroke();
     }
     ctx.strokeStyle='rgba(125,186,245,.20)';ctx.lineWidth=4;
     drawPill(46,32,808,637,32);ctx.stroke();
@@ -269,7 +372,7 @@
     ctx.shadowBlur=0;ctx.strokeStyle='rgba(255,255,255,.27)';ctx.lineWidth=2;ctx.stroke();
     ctx.restore();
   }
-  function drawBall(ball,now) {
+  function drawBall(ball,now,showName=false) {
     let x=ball.body.position.x,y=ball.body.position.y;
     if(ball.finishFx) {
       const fx=ball.finishFx, t=Math.min(1,(now-fx.started)/650);
@@ -278,14 +381,27 @@
       y=fx.sy+(fx.ty-fx.sy)*eased-Math.sin(t*Math.PI)*18;
     }
     ctx.save();
-    ctx.shadowBlur=15;ctx.shadowColor=ball.color;
+    if(!ball.finished){
+      const trace=ball.trace||[];
+      trace.forEach((p,i)=>{
+        ctx.globalAlpha=(i+1)/trace.length*.40;
+        ctx.beginPath();ctx.arc(p.x,p.y,2+6*i/trace.length,0,Math.PI*2);
+        ctx.fillStyle=ball.color;ctx.fill();
+      });
+      ctx.globalAlpha=1;
+    }
+    ctx.shadowBlur=19;ctx.shadowColor=ball.color;
     const g=ctx.createRadialGradient(x-5,y-6,2,x,y,16);
     g.addColorStop(0,'#fff');g.addColorStop(.24,ball.color);g.addColorStop(1,ball.color);
     ctx.beginPath();ctx.arc(x,y,C.RADIUS+2,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
     ctx.shadowBlur=0;ctx.strokeStyle='rgba(255,255,255,.82)';ctx.lineWidth=2;ctx.stroke();
-    ctx.font='900 16px "Malgun Gothic",system-ui';ctx.textAlign='center';ctx.textBaseline='bottom';
-    ctx.lineWidth=5;ctx.strokeStyle='rgba(4,13,34,.95)';ctx.strokeText(ball.name,x,y-21,115);
-    ctx.fillStyle='white';ctx.fillText(ball.name,x,y-21,115);
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font='900 10px system-ui';ctx.fillStyle='#101a30';ctx.fillText(String(ball.index+1),x,y+.5);
+    if(showName||ball.finished){
+      ctx.font='900 18px "Malgun Gothic",system-ui';ctx.textBaseline='bottom';
+      ctx.lineWidth=5;ctx.strokeStyle='rgba(4,13,34,.95)';ctx.strokeText(ball.name,x,y-23,112);
+      ctx.fillStyle='white';ctx.fillText(ball.name,x,y-23,112);
+    }
     ctx.restore();
   }
   function draw(now) {
@@ -293,7 +409,10 @@
     drawBoard();
     if(!current) return;
     for(const body of current.world.staticBodies)drawBody(body);
-    for(const ball of current.world.balls)drawBall(ball,now);
+    const leaders=new Set(current.world.balls.filter(b=>!b.finished)
+      .sort((a,b)=>b.body.position.y-a.body.position.y).slice(0,6));
+    for(const ball of current.world.balls)drawBall(ball,now,leaders.has(ball));
+    drawEffects(now);
   }
   function loop(now) {
     requestAnimationFrame(loop);
@@ -301,15 +420,25 @@
     if(current&&!state.finished){
       if(!lastFrame)lastFrame=now;
       const delta=Math.min(70,Math.max(0,now-lastFrame));
-      accumulator+=delta;
+      if(!finishAfter) accumulator+=delta*state.speed;
       elapsedMs=now-startedAt;
       let steps=0;
-      while(accumulator>=1000/60&&steps<5){
+      while(!finishAfter&&accumulator>=1000/60&&steps<6){
         current.world.step();accumulator-=1000/60;steps++;
+        if(current.world.frame()%2===0){
+          for(const b of current.world.balls){
+            if(b.finished)continue;
+            const trace=b.trace||(b.trace=[]);
+            trace.push({x:b.body.position.x,y:b.body.position.y});
+            if(trace.length>11)trace.shift();
+          }
+        }
       }
-      resolveArrival();
+      pullImpacts(now);
+      if(!finishAfter)resolveArrival();
+      if(now-lastRankPaint>175){updateLiveRankings();lastRankPaint=now;}
       const cap=state.mode==='winner'?35000:40000;
-      if(elapsedMs>=cap&&!state.timeoutAnnounced)timeoutRescue();
+      if(!finishAfter&&elapsedMs>=cap&&!state.timeoutAnnounced)timeoutRescue();
       if(finishAfter&&now>=finishAfter)finish();
       $('race-clock').textContent=String(Math.floor(elapsedMs/60000)).padStart(2,'0')+':'+
         String(Math.floor(elapsedMs/1000)%60).padStart(2,'0');
@@ -325,18 +454,20 @@
       if([2,3,4].includes(Number(old.k)))$('team-count').value=String(old.k);
       $('balanced').checked=old.balanced!==false;
       if(old.labels)$('team-labels').value=old.labels;
+      if(Number.isInteger(old.target)&&old.target>=1&&old.target<=30)$('finish-target').value=String(old.target);
+      if([1,1.55,1.9].includes(Number(old.speed)))$('race-speed').value=String(old.speed);
     }
     syncMode();
   }
   document.querySelectorAll('input[name="mode"]').forEach(el=>el.addEventListener('change',()=>{syncMode();saveConfig();}));
-  [roster,$('team-count'),$('balanced'),$('team-labels')].forEach(el=>el.addEventListener('change',saveConfig));
+  [roster,$('team-count'),$('balanced'),$('team-labels'),$('finish-target'),$('race-speed')].forEach(el=>el.addEventListener('change',saveConfig));
   $('sample-btn').addEventListener('click',()=>{roster.value='민준\n서연\n도윤\n하은\n지호\n수아\n현우\n윤서';saveConfig();say('예시 명단을 넣었어요.');});
   $('clear-btn').addEventListener('click',()=>{roster.value='';saveConfig();say('');roster.focus();});
   $('classroom-btn').addEventListener('click',()=>{
     try {
       const students=window.Gulliver?.getClassroom?.()?.students||readJson('gulliver.classroom.v1')?.students||[];
       if(!students.length){say('우리 반에 저장한 학생이 없어요. 먼저 명단을 등록해 주세요.',true);return;}
-      if(students.length>16){say('핀볼 레이스는 16명까지 가능해요. 필요한 친구만 골라 넣어 주세요.',true);return;}
+      if(students.length>30){say('핀볼 레이스는 30명까지 가능해요. 필요한 친구만 골라 넣어 주세요.',true);return;}
       roster.value=students.map(s=>s.name).join('\n');saveConfig();say(students.length+'명을 불러왔어요.');
     }catch(_){say('우리 반 명단을 읽지 못했어요.',true);}
   });
