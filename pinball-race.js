@@ -305,7 +305,7 @@
         current.world.step();accumulator-=1000/60;steps++;
       }
       resolveArrival();
-      const cap=state.mode==='winner'?38000:44000;
+      const cap=state.mode==='winner'?35000:40000;
       if(elapsedMs>=cap&&!state.timeoutAnnounced)timeoutRescue();
       if(finishAfter&&now>=finishAfter)finish();
       $('race-clock').textContent=String(Math.floor(elapsedMs/60000)).padStart(2,'0')+':'+
