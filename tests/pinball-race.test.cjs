@@ -12,12 +12,12 @@ function seeded(seed) {
 }
 test('participant limits, duplicates and blank lines are validated',()=>{
   assert.deepEqual(core.normalizeNames('가\n \n나\n다'),['가','나','다']);
-  for(const s of ['가','가\n가',Array.from({length:17},(_,i)=>i).join('\n')]) {
+  for(const s of ['가','가\n가',Array.from({length:31},(_,i)=>i).join('\n')]) {
     assert.throws(()=>core.normalizeNames(s));
   }
 });
 test('all possible class and team sizes balance exactly; no slot overflows',()=>{
-  for(let n=2;n<=16;n++)for(let k=2;k<=Math.min(4,n);k++)for(let seed=0;seed<60;seed++){
+  for(let n=2;n<=30;n++)for(let k=2;k<=Math.min(4,n);k++)for(let seed=0;seed<60;seed++){
     const random=seeded(seed+1000*n+10*k);
     const allocator=core.createAllocator(n,k,random);
     for(let i=0;i<n;i++) {
@@ -60,7 +60,7 @@ test('pinball JavaScript has valid syntax',()=>{
 test('Matter.js board supports multiple runs without changing old roulette',()=>{
   const M=require('../vendor/matter.min.js');
   for(let seed=1;seed<=12;seed++) {
-    const names=Array.from({length:seed%2===0?16:8},(_,i)=>'학생'+i);
+    const names=Array.from({length:seed%3===0?30:seed%2===0?16:8},(_,i)=>'학생'+i);
     const world=core.createWorld(M,names,seeded(seed));
     for(let frame=0;frame<420;frame++) world.step();
     assert.equal(world.balls.length,names.length);
@@ -71,4 +71,27 @@ test('Matter.js board supports multiple runs without changing old roulette',()=>
     M.World.clear(world.engine.world,false);
     M.Engine.clear(world.engine);
   }
+});
+
+test('thirty simultaneous marbles have collision-free spawn positions and independent identifiers',()=>{
+ const M=require('../vendor/matter.min.js');
+ const world=core.createWorld(M,Array.from({length:30},(_,i)=>'참가자'+(i+1)),seeded(420));
+ assert.equal(world.balls.length,30);
+ for(let i=0;i<30;i++)for(let j=0;j<i;j++){
+   const a=world.balls[i].body.position,b=world.balls[j].body.position;
+   assert.ok(Math.hypot(a.x-b.x,a.y-b.y)>=core.RADIUS*2.05,'Start spawn overlap '+i+'/'+j);
+ }
+ assert.ok(Array.isArray(world.impacts));
+ M.Engine.clear(world.engine);
+});
+test('the two game types have distinct settings for finishing rank versus balanced teams',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../핀볼 레이스.html'),'utf8');
+ const script=fs.readFileSync(path.join(__dirname,'../pinball-race.js'),'utf8');
+ assert.match(html,/id="finish-target" min="1" max="30"/);
+ assert.match(html,/id="race-speed"/);
+ assert.match(script,/state\.arrivals\.length>=state\.target/);
+ assert.match(script,/if\(state\.mode==='winner'&&state\.arrivals\.length>=state\.target\)break/);
+ assert.match(script,/mode==='teams'&&state\.arrivals\.length===current\.total/);
+ assert.match(html,/id="live-rankings"/);
+ assert.doesNotMatch(script,/cheatData|teacherResults/);
 });
