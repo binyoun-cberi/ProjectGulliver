@@ -158,121 +158,157 @@ function calcScore(students,assign,k,traits,target){
   }
   return loss;
 }
-function candidateTargets(students,k,random){
-  const N=students.length,base=Math.floor(N/k),extra=N%k,counts=Array(k).fill(0);
-  for(const s of students)if(s.fixed)counts[s.fixed-1]++;
-  if(counts.some(c=>c>base+1))return null;
-  const slots=Array.from({length:k},(_,i)=>i).sort((a,b)=>(counts[b]-counts[a])||(random()-.5));
-  const target=Array(k).fill(base);for(let i=0;i<extra;i++)target[slots[i]]++;
-  if(target.some((n,i)=>counts[i]>n))return null;return target;
+/* Highest first, then class 1…k, k…1, preserving equal scores' roster order. */
+function snakeOrder(students){
+  return students.map((s,index)=>({s,index})).sort((a,b)=>{
+    const av=hasStudyScore(a.s),bv=hasStudyScore(b.s);
+    if(av!==bv)return av?-1:1;
+    return av?(b.s.level-a.s.level||a.index-b.index):a.index-b.index;
+  }).map(x=>x.s);
 }
-function canEnter(id,to,assignment,neighbors){return !(neighbors[id]||[]).some(other=>assignment[other]===to)}
-function improveCandidate(students,pairs,traits,k,candidate,random){
-  const assignments={...candidate.assign};let score=calcScore(students,assignments,k,traits,candidate.target);
-  const unlocked=students.filter(s=>!s.fixed);if(unlocked.length<2)return {...candidate,assign:assignments,score};
-  const neighbors={};for(const s of students)neighbors[s.id]=[];for(const p of pairs){neighbors[p.a].push(p.b);neighbors[p.b].push(p.a)}
-  let stale=0;for(let attempt=0;attempt<(students.length>400?160:students.length>180?500:students.length>100?1100:2800) && stale<850;attempt++){
-    const a=unlocked[Math.floor(random()*unlocked.length)],b=unlocked[Math.floor(random()*unlocked.length)];if(a===b)continue;
-    const ca=assignments[a.id],cb=assignments[b.id];if(ca===cb)continue;
-    assignments[a.id]=cb;assignments[b.id]=ca;
-    if(!canEnter(a.id,cb,assignments,neighbors)||!canEnter(b.id,ca,assignments,neighbors)){
-      assignments[a.id]=ca;assignments[b.id]=cb;stale++;continue;
-    }
-    const next=calcScore(students,assignments,k,traits,candidate.target);
-    if(next+1e-7<score){score=next;stale=0}else{assignments[a.id]=ca;assignments[b.id]=cb;stale++}
+function snakeClass(rank,k,variant=0){
+  const step=rank%k,block=Math.floor(rank/k);
+  let num=block%2===0?step+1:k-step;
+  if(variant===1)num=k+1-num;
+  if(variant===2)num=num%k+1;
+  return num;
+}
+function snakeTargets(students,k,preferred){
+  const n=students.length,base=Math.floor(n/k),extra=n%k,fixed=Array(k).fill(0),demand=Array(k).fill(0);
+  for(const s of students)if(s.fixed)fixed[s.fixed-1]++;
+  for(const c of preferred)demand[c-1]++;
+  if(fixed.some(x=>x>base+1))return null;
+  const target=Array(k).fill(base);
+  for(let i=0;i<k;i++)if(fixed[i]>base){target[i]++;extra--}
+  if(extra<0)return null;
+  const options=Array.from({length:k},(_,i)=>i).filter(i=>target[i]===base)
+    .sort((a,b)=>demand[b]-demand[a]||fixed[b]-fixed[a]||a-b);
+  for(let i=0;i<extra;i++)target[options[i]]++;
+  return target;
+}
+function capAllowed(s,to,capRules,traitCounts){
+  for(const tag of s.traits||[]){
+    const limit=capRules[tag];
+    if(Number.isInteger(limit)&&limit>=0&&(traitCounts[to-1]?.[tag]||0)>=limit)return false;
   }
-  return {...candidate,assign:assignments,score};
+  return true;
 }
-/* The greedy allocator can miss valid layouts with overlapping fixed students and separation rules.
-   An MRV backtracking fallback searches the constrained cases without claiming infeasibility. */
-function searchFeasibleAssignment(students,pairs,k,traits,random){
-  const target=candidateTargets(students,k,random);if(!target)return null;
-  const assignment={},counts=Array(k).fill(0),neighbors={};
-  for(const s of students){neighbors[s.id]=[];if(s.fixed){assignment[s.id]=s.fixed;counts[s.fixed-1]++}}
-  for(const p of pairs){if(neighbors[p.a]&&neighbors[p.b]){neighbors[p.a].push(p.b);neighbors[p.b].push(p.a)}}
-  const free=students.filter(s=>!s.fixed),taken=new Set();let steps=0;
-  // Bound the search instead of freezing a teacher's browser on impossible inputs.
-  const nodeBudget=students.length>300?2000:students.length>150?9000:60000;
+function makeNeighborMap(students,pairs){
+  const neighbors=Object.fromEntries(students.map(s=>[s.id,[]]));
+  for(const p of pairs)if(neighbors[p.a]&&neighbors[p.b]){neighbors[p.a].push(p.b);neighbors[p.b].push(p.a)}
+  return neighbors;
+}
+function canEnter(id,to,assign,neighbors){return !(neighbors[id]||[]).some(other=>assign[other]===to)}
+function countTraits(counts,s,to,delta){
+  for(const tag of s.traits||[])counts[to-1][tag]=(counts[to-1][tag]||0)+delta;
+}
+function prepareSnake(students,pairs,k,capRules,preferred){
+  const target=snakeTargets(students,k,preferred);
+  if(!target)return null;
+  const counts=Array(k).fill(0),traitCounts=Array.from({length:k},()=>({})),assign={},neighbors=makeNeighborMap(students,pairs);
+  for(const s of students)if(s.fixed){
+    assign[s.id]=s.fixed;counts[s.fixed-1]++;countTraits(traitCounts,s,s.fixed,1);
+  }
+  if(validateAssignment(students,pairs,assign,capRules).length)return null;
+  return {target,counts,traitCounts,assign,neighbors};
+}
+/* The first plan follows the exact score-ordered snake unless a hard constraint requires another class. */
+function greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,random){
+  const preferred=ordered.map((_,rank)=>snakeClass(rank,k,variant));
+  const ctx=prepareSnake(students,pairs,k,capRules,preferred);
+  if(!ctx)return null;
+  const {target,counts,traitCounts,assign,neighbors}=ctx;
+  const ranking=new Map(ordered.map((s,i)=>[s.id,i]));
+  const free=ordered.filter(s=>!s.fixed);
+  if(trial>0){
+    free.sort((a,b)=>{
+      const limited=s=>(s.traits||[]).filter(tag=>Number.isInteger(capRules[tag])).length*5+(neighbors[s.id]||[]).length;
+      return limited(b)-limited(a)||ranking.get(a.id)-ranking.get(b.id);
+    });
+  }
+  for(const s of free){
+    const desired=preferred[ranking.get(s.id)],options=[];
+    for(let c=1;c<=k;c++){
+      if(counts[c-1]>=target[c-1]||!canEnter(s.id,c,assign,neighbors)||!capAllowed(s,c,capRules,traitCounts))continue;
+      const distance=Math.abs(c-desired),fill=counts[c-1]/Math.max(1,target[c-1]);
+      const penalty=distance*100+fill*2+(trial?random()*7:0);
+      options.push({c,penalty});
+    }
+    if(!options.length)return null;
+    options.sort((a,b)=>a.penalty-b.penalty||a.c-b.c);
+    const to=options[0].c;
+    assign[s.id]=to;counts[to-1]++;countTraits(traitCounts,s,to,1);
+  }
+  if(counts.some((count,i)=>count!==target[i])||validateAssignment(students,pairs,assign,capRules).length)return null;
+  return {assign,target,score:calcScore(students,assign,k,traits,target)};
+}
+/* Bounded MRV fallback to resolve overlapping hard constraints. No false assertion of impossibility. */
+function searchFeasibleAssignment(students,pairs,k,traits,capRules,ordered,random){
+  const preferred=ordered.map((_,rank)=>snakeClass(rank,k,0));
+  const ranking=new Map(ordered.map((s,i)=>[s.id,i]));
+  const ctx=prepareSnake(students,pairs,k,capRules,preferred);if(!ctx)return null;
+  const {target,counts,traitCounts,assign,neighbors}=ctx,free=ordered.filter(s=>!s.fixed);
+  const taken=new Set();let nodes=0;
+  const budget=students.length>400?3000:students.length>150?12000:65000;
   function recurse(depth){
     if(depth===free.length)return true;
-    if(++steps>nodeBudget)return false;
-    let chosen=null,options=null,priority=-Infinity;
+    if(++nodes>budget)return false;
+    let chosen=null,choices=null,best=Infinity;
     for(const s of free){
       if(taken.has(s.id))continue;
       const possible=[];
-      for(let c=1;c<=k;c++)if(counts[c-1]<target[c-1]&&canEnter(s.id,c,assignment,neighbors))possible.push(c);
+      for(let c=1;c<=k;c++)if(counts[c-1]<target[c-1]&&canEnter(s.id,c,assign,neighbors)&&capAllowed(s,c,capRules,traitCounts))possible.push(c);
       if(!possible.length)return false;
-      const rank=-possible.length*1000+neighbors[s.id].length+random()*0.01;
-      if(rank>priority){priority=rank;chosen=s;options=possible}
+      const priority=possible.length*1000-(neighbors[s.id]||[]).length*5-(s.traits||[]).filter(t=>Number.isInteger(capRules[t])).length*15;
+      if(priority<best){best=priority;chosen=s;choices=possible}
     }
-    options.sort((a,b)=>{
-      const da=counts[a-1]/Math.max(1,target[a-1]),db=counts[b-1]/Math.max(1,target[b-1]);
-      return da-db||a-b;
-    });
+    const wanted=preferred[ranking.get(chosen.id)];
+    choices.sort((a,b)=>Math.abs(a-wanted)-Math.abs(b-wanted)||counts[a-1]-counts[b-1]||a-b);
     taken.add(chosen.id);
-    for(const c of options){assignment[chosen.id]=c;counts[c-1]++;
+    for(const to of choices){
+      assign[chosen.id]=to;counts[to-1]++;countTraits(traitCounts,chosen,to,1);
       if(recurse(depth+1))return true;
-      counts[c-1]--;delete assignment[chosen.id];
-      if(steps>nodeBudget)break;
+      countTraits(traitCounts,chosen,to,-1);counts[to-1]--;delete assign[chosen.id];
+      if(nodes>budget)break;
     }
     taken.delete(chosen.id);return false;
   }
   if(!recurse(0))return null;
-  return {assign:{...assignment},target,score:calcScore(students,assignment,k,traits,target)};
+  return {assign:{...assign},target,score:calcScore(students,assign,k,traits,target)};
 }
-function generateCandidates(students,pairs,k,traits,random=Math.random){
+function generateCandidates(students,pairs,k,traits,random=Math.random,capRules={}){
   if(!students.length)return {error:'학생 명단을 먼저 입력해 주세요.'};
   if(students.some(s=>!s.name.trim()))return {error:'이름이 비어 있는 학생이 있습니다. 이름을 모두 입력해 주세요.'};
   const locked=new Map(students.filter(s=>s.fixed).map(s=>[s.id,s.fixed]));
-  for(const p of pairs)if(locked.has(p.a)&&locked.get(p.a)===locked.get(p.b))return {error:'같은 반에 고정된 학생 사이에 분리 조건이 있습니다. 학생 명단의 「새 반 고정」을 먼저 수정해 주세요.'};
-  const neighbors={};for(const s of students)neighbors[s.id]=[];
-  for(const p of pairs){if(neighbors[p.a] && neighbors[p.b]){neighbors[p.a].push(p.b);neighbors[p.b].push(p.a)}}
-  const solutions=[],seen=new Set();let totalSuccess=0;
-  for(let trial=0;trial<(students.length>400?12:students.length>180?36:students.length>100?75:260);trial++){
-    const target=candidateTargets(students,k,random);if(!target)return {error:'특정 반에 고정된 학생이 너무 많습니다. 반별 고정 인원은 전체 학생 수를 반 수로 나눈 적정 인원 이하여야 합니다.'};
-    const assignment={},counts=Array(k).fill(0),boys=Array(k).fill(0),girls=Array(k).fill(0),levelSum=Array(k).fill(0),levelN=Array(k).fill(0);
-    const totalBoys=students.filter(s=>s.gender==='남').length,totalGirls=students.filter(s=>s.gender==='여').length;
-    const scored=students.filter(hasStudyScore),totalLevel=scored.reduce((n,st)=>n+st.level,0),avgLevel=scored.length?totalLevel/scored.length:0;
-    const levelVariance=scored.length?scored.reduce((n,st)=>n+Math.pow(st.level-avgLevel,2),0)/scored.length:0;
-    const levelSd=Math.max(1,Math.sqrt(levelVariance));
-    for(const s of students)if(s.fixed){assignment[s.id]=s.fixed;counts[s.fixed-1]++;
-      if(s.gender==='남')boys[s.fixed-1]++;if(s.gender==='여')girls[s.fixed-1]++;
-      if(hasStudyScore(s)){levelSum[s.fixed-1]+=s.level;levelN[s.fixed-1]++;}
+  for(const p of pairs)if(locked.has(p.a)&&locked.get(p.a)===locked.get(p.b))
+    return {error:'같은 반에 고정된 학생 사이에 분리 조건이 있습니다. 해당 학생의 반 고정을 변경해 주세요.'};
+  const fixedRoom=Array(k).fill(0);for(const s of students)if(s.fixed)fixedRoom[s.fixed-1]++;
+  if(fixedRoom.some(x=>x>Math.ceil(students.length/k)))
+    return {error:'반별 적정 인원보다 고정 배정 학생이 많습니다. 새 반 고정을 수정해 주세요.'};
+  for(const [tag,cap] of Object.entries(capRules||{})){
+    if(!Number.isInteger(cap)||cap<0)continue;
+    const members=students.filter(s=>(s.traits||[]).includes(tag));
+    if(members.length>cap*k)return {error:'「'+tag+'」 학생 '+members.length+'명은 반당 최대 '+cap+'명 × '+k+'개 반 조건을 초과합니다. 최대 인원을 높이거나 제한을 해제해 주세요.'};
+    for(let c=1;c<=k;c++){
+      const fixed=members.filter(s=>s.fixed===c).length;
+      if(fixed>cap)return {error:c+'반에 고정된 「'+tag+'」 학생 '+fixed+'명이 반당 최대 '+cap+'명 조건을 초과합니다.'};
     }
-    const order=students.filter(s=>!s.fixed).map(s=>({s,rank:(neighbors[s.id]||[]).length+random()*.9})).sort((a,b)=>b.rank-a.rank).map(x=>x.s);
-    let failed=false;
-    for(const s of order){
-      const choices=[];for(let c=1;c<=k;c++){
-        if(counts[c-1]>=target[c-1]||!canEnter(s.id,c,assignment,neighbors))continue;
-        assignment[s.id]=c;
-        const score=students.length>180?(
-          45*(counts[c-1]+1)/Math.max(1,target[c-1]) +
-          9*Math.abs((boys[c-1]+(s.gender==='남'?1:0))-(counts[c-1]+1)*totalBoys/students.length) +
-          9*Math.abs((girls[c-1]+(s.gender==='여'?1:0))-(counts[c-1]+1)*totalGirls/students.length) +
-          1.5*Math.abs(((levelSum[c-1]+(hasStudyScore(s)?s.level:0))-(levelN[c-1]+(hasStudyScore(s)?1:0))*avgLevel)/levelSd) +random()*2
-        ):calcScore(students.filter(x=>assignment[x.id]),assignment,k,traits,target)+random()*2;
-        choices.push({c,score});delete assignment[s.id];
-      }
-      if(!choices.length){failed=true;break}
-      choices.sort((a,b)=>a.score-b.score);const selected=trial%7===0 && choices.length>1 && random()<.35?choices[1]:choices[0];
-      assignment[s.id]=selected.c;counts[selected.c-1]++;
-      if(s.gender==='남')boys[selected.c-1]++;if(s.gender==='여')girls[selected.c-1]++;
-      if(hasStudyScore(s)){levelSum[selected.c-1]+=s.level;levelN[selected.c-1]++;}
-    }
-    if(failed||validateAssignment(students,pairs,assignment).length||counts.some((x,j)=>x!==target[j]))continue;
-    totalSuccess++;
-    const sc=calcScore(students,assignment,k,traits,target);const sig=students.map(s=>assignment[s.id]).join(',');
-    if(!seen.has(sig)){seen.add(sig);solutions.push({assign:{...assignment},target,score:sc})}
+  }
+  const ordered=snakeOrder(students),solutions=[],seen=new Set();
+  // The A plan is always the forward 1→k→1 snake when feasible.
+  for(let trial=0;trial<6&&solutions.length<3;trial++){
+    const variant=trial===0?0:trial===1?1:trial===2?2:(trial%3);
+    const candidate=greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,random);
+    if(!candidate)continue;
+    const sig=ordered.map(s=>candidate.assign[s.id]).join(',');
+    if(!seen.has(sig)){solutions.push(candidate);seen.add(sig)}
   }
   if(!solutions.length){
-    const fallback=searchFeasibleAssignment(students,pairs,k,traits,random);
+    const fallback=searchFeasibleAssignment(students,pairs,k,traits,capRules,ordered,random);
     if(fallback)solutions.push(fallback);
   }
-  if(!solutions.length)return {error:'모든 분리 조건을 지키는 편성안을 찾지 못했습니다. 분리 관계나 고정 배정이 지나치게 많지 않은지 확인해 주세요. 조건이 실제로 불가능한지까지 확정하는 판정은 아닙니다.'};
-  solutions.sort((a,b)=>a.score-b.score);
-  const top=solutions.slice(0,Math.min(8,solutions.length)).map(s=>improveCandidate(students,pairs,traits,k,s,random)).sort((a,b)=>a.score-b.score);
-  const unique=[];const resultSeen=new Set();for(const c of top){const sig=students.map(s=>c.assign[s.id]).join(',');if(!resultSeen.has(sig)){resultSeen.add(sig);unique.push(c)}if(unique.length===3)break}
-  return {candidates:unique,successes:totalSuccess};
+  if(!solutions.length)return {error:'지정한 분리 관계·반 고정·유의 사항별 최대 인원을 모두 만족하는 편성안을 찾지 못했습니다. 조건을 확인해 주세요. 탐색 한도 때문에 실제로 가능한 편성안이 있을 수도 있습니다.'};
+  return {candidates:solutions,successes:solutions.length};
 }
 /* ENGINE_END */
 function reportData(candidate){
