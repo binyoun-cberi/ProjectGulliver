@@ -69,7 +69,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.ok(await page.locator('#alternatives .alt').count()>=1);
     assert.match(await page.locator('#validation').textContent(),/조건 위반 없음/);
     const [classCsv] = await Promise.all([page.waitForEvent('download'),page.locator('#exportCsv').click()]);
-    assert.match(classCsv.suggestedFilename(),/반편성_결과_.*\\.csv$/);
+    assert.ok(classCsv.suggestedFilename().startsWith('반편성_결과_') && classCsv.suggestedFilename().endsWith('.csv'));
 
     await page.goto(base + encodeURIComponent('지도안식 원형 타이머.html'), {waitUntil: 'domcontentloaded'});
     await page.locator('.gt-shell').waitFor({state: 'attached'});
