@@ -315,8 +315,8 @@ function isCompatibleMove(id,to,candidate){const student=findStudent(id);if(!stu
 function addStudent(){const s={id:makeId(),oldClass:'',number:'',name:'',gender:'',level:null,traits:[],fixed:0,note:''};state.students.push(s);invalidate();changeState();const field=document.querySelector(`[data-student="${s.id}"] [data-key="name"]`);field?.focus()}
 function addTrait(){const t=$('newTrait').value.trim();if(!t)return;if(state.traits.includes(t)){toast('이미 있는 특징입니다.');return}if(state.traits.length>=64){toast('유의 사항은 최대 64개까지 추가할 수 있습니다.');return}state.traits.push(t);$('newTrait').value='';invalidate();changeState()}
 function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)return;const s=findStudent(tr.dataset.student);if(!s)return;
-  if(e.target.dataset.trait){const t=e.target.dataset.trait;s.traits=e.target.checked?[...new Set([...s.traits,t])]:s.traits.filter(x=>x!==t)}
-  else if(e.target.dataset.key){const key=e.target.dataset.key;const value=e.target.value;if(key==='level'||key==='fixed')s[key]=Number(value);else s[key]=value.slice(0,key==='name'?80:50)}
+  if(e.target.dataset.trait){const t=e.target.dataset.trait;s.traits=e.target.checked?[...new Set([...s.traits,t])]:s.traits.filter(x=>x!==t);const picker=e.target.closest('.notice-picker');if(picker){picker.querySelector('[data-notice-summary]').textContent=s.traits.length?s.traits.join(', '):'유의 사항 선택';picker.querySelector('.count-pill').textContent=s.traits.length+'개'}invalidate();saveState();return}
+  else if(e.target.dataset.key){const key=e.target.dataset.key;const value=e.target.value;if(key==='level'){const parsed=parseStudyScore(value);if(value!==''&&parsed===null){toast('학습지표는 0.00 이상의 숫자로 입력해 주세요.');renderRoster();return}s.level=parsed}else if(key==='fixed')s.fixed=Number(value);else s[key]=value.slice(0,key==='name'?80:50)}
   else return;
   invalidate();saveState();render();
 }
