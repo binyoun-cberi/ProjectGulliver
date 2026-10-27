@@ -265,6 +265,19 @@ function greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,rand
   const {target,counts,traitCounts,assign,neighbors}=ctx;
   const ranking=new Map(ordered.map((s,i)=>[s.id,i]));
   const free=ordered.filter(s=>!s.fixed);
+  const hasPresets=free.length<ordered.length;
+  const scored=students.filter(hasStudyScore),avg=scored.length?scored.reduce((sum,st)=>sum+st.level,0)/scored.length:0;
+  const sd=scored.length?Math.max(1,Math.sqrt(scored.reduce((sum,st)=>sum+(st.level-avg)**2,0)/scored.length)):1;
+  const academic=Array(k).fill(0),boys=Array(k).fill(0),genderCount=Array(k).fill(0);
+  const boyRatio=students.length?students.filter(st=>st.gender==='남').length/students.length:0.5;
+  const oldCount=Array.from({length:k},()=>({}));
+  for(const st of students)if(st.fixed){
+    const i=st.fixed-1;
+    if(hasStudyScore(st))academic[i]+=(st.level-avg)/sd;
+    if(st.gender==='남')boys[i]++;
+    if(st.gender==='남'||st.gender==='여')genderCount[i]++;
+    if(st.oldClass)oldCount[i][st.oldClass]=(oldCount[i][st.oldClass]||0)+1;
+  }
   if(trial>0){
     free.sort((a,b)=>{
       const limited=s=>(s.traits||[]).filter(tag=>Number.isInteger(capRules[tag])).length*5+(neighbors[s.id]||[]).length;
@@ -275,14 +288,27 @@ function greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,rand
     const desired=preferred[ranking.get(s.id)],options=[];
     for(let c=1;c<=k;c++){
       if(counts[c-1]>=target[c-1]||!canEnter(s.id,c,assign,neighbors)||!capAllowed(s,c,capRules,traitCounts))continue;
-      const distance=Math.abs(c-desired),fill=counts[c-1]/Math.max(1,target[c-1]);
-      const penalty=distance*100+fill*2+(trial?random()*7:0);
+      const i=c-1,distance=Math.abs(c-desired),fill=counts[i]/Math.max(1,target[i]);
+      let penalty=distance*100+fill*2+(trial?random()*7:0);
+      if(hasPresets){
+        const z=hasStudyScore(s)?(s.level-avg)/sd:0;
+        const academicCost=3.2*((academic[i]+z)**2-academic[i]**2);
+        const genderCost=s.gender==='남'||s.gender==='여'?
+          1.7*((boys[i]+(s.gender==='남'?1:0)-(genderCount[i]+1)*boyRatio)**2-(boys[i]-genderCount[i]*boyRatio)**2):0;
+        const traitCost=(s.traits||[]).reduce((sum,tag)=>sum+(traitCounts[i][tag]||0)*1.2,0);
+        const oldCost=s.oldClass?(oldCount[i][s.oldClass]||0)*0.6:0;
+        penalty=distance*7+fill*3+academicCost+genderCost+traitCost+oldCost+(trial?random()*3:0);
+      }
       options.push({c,penalty});
     }
     if(!options.length)return null;
     options.sort((a,b)=>a.penalty-b.penalty||a.c-b.c);
     const to=options[0].c;
     assign[s.id]=to;counts[to-1]++;countTraits(traitCounts,s,to,1);
+    if(hasStudyScore(s))academic[to-1]+=(s.level-avg)/sd;
+    if(s.gender==='남')boys[to-1]++;
+    if(s.gender==='남'||s.gender==='여')genderCount[to-1]++;
+    if(s.oldClass)oldCount[to-1][s.oldClass]=(oldCount[to-1][s.oldClass]||0)+1;
   }
   if(counts.some((count,i)=>count!==target[i])||validateAssignment(students,pairs,assign,capRules).length)return null;
   return {assign,target,score:calcScore(students,assign,k,traits,target)};
