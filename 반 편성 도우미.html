@@ -347,6 +347,40 @@ function searchFeasibleAssignment(students,pairs,k,traits,capRules,ordered,rando
   if(!recurse(0))return null;
   return {assign:{...assign},target,score:calcScore(students,assign,k,traits,target)};
 }
+/* Improve the empty seats around teacher choices without ever moving a preset pupil.
+   A low snake-distance penalty preserves the user's rank-order intent while reducing
+   academic, gender, and attention imbalance when the preset picks were uneven. */
+function polishTeacherFirst(students,pairs,k,traits,capRules,ordered,candidate,random){
+  if(!candidate||!students.some(s=>s.fixed))return candidate;
+  const free=ordered.filter(s=>!s.fixed);
+  if(free.length<2)return candidate;
+  const assign={...candidate.assign},preferred=new Map(ordered.map((s,i)=>[s.id,snakeClass(i,k,0)]));
+  const snakePenalty=()=>free.reduce((sum,s)=>sum+Math.abs(assign[s.id]-preferred.get(s.id)),0);
+  let quality=calcScore(students,assign,k,traits,candidate.target)+.12*snakePenalty();
+  let changed=false,checks=0;
+  const budget=students.length<=80?1300:students.length<=180?600:students.length<=350?220:90;
+  const maxPasses=students.length<=80?6:3;
+  for(let pass=0;pass<maxPasses&&checks<budget;pass++){
+    let improved=false;
+    for(let n=0;n<free.length&&checks<budget;n++){
+      const ai=students.length>180?(n*37+pass*17)%free.length:n;
+      const a=free[ai];
+      for(let m=n+1;m<free.length&&checks<budget;m++){
+        const bi=students.length>180?(m*53+pass*11)%free.length:m,b=free[bi];
+        if(a===b||assign[a.id]===assign[b.id])continue;
+        checks++;
+        const ca=assign[a.id],cb=assign[b.id];assign[a.id]=cb;assign[b.id]=ca;
+        if(validateAssignment(students,pairs,assign,capRules).length===0){
+          const next=calcScore(students,assign,k,traits,candidate.target)+.12*snakePenalty();
+          if(next+1e-7<quality){quality=next;improved=true;changed=true;continue}
+        }
+        assign[a.id]=ca;assign[b.id]=cb;
+      }
+    }
+    if(!improved)break;
+  }
+  return changed?{...candidate,assign,score:calcScore(students,assign,k,traits,candidate.target)}:candidate;
+}
 function generateCandidates(students,pairs,k,traits,random=Math.random,capRules={}){
   if(!students.length)return {error:'학생 명단을 먼저 입력해 주세요.'};
   if(students.some(s=>!s.name.trim()))return {error:'이름이 비어 있는 학생이 있습니다. 이름을 모두 입력해 주세요.'};
@@ -370,13 +404,14 @@ function generateCandidates(students,pairs,k,traits,random=Math.random,capRules=
   // the hard rules, repair that same order before offering reverse/rotated alternatives.
   const primary=greedySnake(students,pairs,k,traits,capRules,ordered,0,0,random)
     ||searchFeasibleAssignment(students,pairs,k,traits,capRules,ordered,random);
-  if(primary){solutions.push(primary);seen.add(ordered.map(st=>primary.assign[st.id]).join(','))}
+  if(primary){const tuned=polishTeacherFirst(students,pairs,k,traits,capRules,ordered,primary,random);solutions.push(tuned);seen.add(ordered.map(st=>tuned.assign[st.id]).join(','))}
   for(let trial=1;trial<6&&solutions.length<3;trial++){
     const variant=trial===1?1:trial===2?2:trial%3;
     const candidate=greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,random);
     if(!candidate)continue;
-    const sig=ordered.map(st=>candidate.assign[st.id]).join(',');
-    if(!seen.has(sig)){solutions.push(candidate);seen.add(sig)}
+    const tuned=polishTeacherFirst(students,pairs,k,traits,capRules,ordered,candidate,random);
+    const sig=ordered.map(st=>tuned.assign[st.id]).join(',');
+    if(!seen.has(sig)){solutions.push(tuned);seen.add(sig)}
   }
   if(!solutions.length)return {error:'지정한 분리 관계·반 고정·유의 사항별 최대 인원을 모두 만족하는 편성안을 찾지 못했습니다. 조건을 확인해 주세요. 탐색 한도 때문에 실제로 가능한 편성안이 있을 수도 있습니다.'};
   return {candidates:solutions,successes:solutions.length};
