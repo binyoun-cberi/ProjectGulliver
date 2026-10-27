@@ -65,7 +65,7 @@
     const roster = normalizeNames(names);
     const { Engine, Bodies, Body, Composite } = Matter;
     const engine = Engine.create({enableSleeping:false});
-    engine.gravity.y = 0.62;
+    engine.gravity.y = 0.012;
     const staticBodies=[], animated=[];
     const wall = {isStatic:true, friction:0.02, restitution:0.66,label:'rail',
       render:{fillStyle:'#43516e'}};
@@ -84,11 +84,11 @@
     for (const [x,y] of pegs) add(Bodies.circle(x,y,10,pegOpts));
     [[265,280,35],[645,288,38],[455,405,39]].forEach(([x,y,r]) => add(Bodies.circle(x,y,r,bumperOpts)));
     // Short alternative routes: risky spinning middle versus slower side rails.
-    rail(320,494,275,18,0.23); rail(580,494,275,18,-0.23);
+    // Lower section remains open: narrow V-shaped ramps can trap slow-moving balls.
     const spindle=add(Bodies.rectangle(450,305,150,19,{isStatic:true,restitution:1.15,
       label:'spinner',render:{fillStyle:'#78e0d3'}}));
     animated.push({body:spindle,angle:0,speed:0.047 + random()*0.018});
-    const gates=add(Bodies.rectangle(450,513,102,15,{isStatic:true,restitution:1.35,
+    const gates=add(Bodies.rectangle(450,405,102,15,{isStatic:true,restitution:1.35,
       label:'spinner',render:{fillStyle:'#b4a1ff'}}));
     animated.push({body:gates,angle:0,speed:-(0.055+random()*0.015)});
     // A single finish sensor line, followed by UI capacity gates for team mode.
