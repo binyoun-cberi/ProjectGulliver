@@ -49,9 +49,12 @@ test('real Chrome: balanced teams complete, roster transfers into unchanged bump
   assert.ok(Math.max(...counts)-Math.min(...counts)<=1);
   const errorAtGame=errors.slice();
   await page.locator('a.result-route').click();
-  await page.waitForURL(/범퍼/);
+  await page.waitForURL(url=>decodeURIComponent(url.pathname).includes('범퍼 룰렛.html'),{timeout:12000});
   const saved=await page.locator('#names-input').inputValue();
   assert.equal(saved.trim().split(/\r?\n/).length,8);
+  await page.locator('[data-pinball-switch]').first().click();
+  await page.waitForURL(url=>decodeURIComponent(url.pathname).includes('핀볼 레이스.html'),{timeout:12000});
+  assert.equal((await page.locator('#roster-input').inputValue()).trim().split(/\r?\n/).length,8);
   assert.deepEqual(errorAtGame,[],'No uncaught browser errors during team race');
   await page.close();
 });
