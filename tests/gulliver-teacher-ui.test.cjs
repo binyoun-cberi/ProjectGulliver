@@ -64,7 +64,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.goto(base + encodeURIComponent('반 편성 도우미.html'), {waitUntil: 'domcontentloaded'});
     await page.locator('#demo').click();
     assert.equal(await page.locator('#statStudents').textContent(),'36명');
-    await page.locator('#generate').click();
+    await page.locator('#generateQuick').click();
     assert.equal(await page.locator('#view-results').isVisible(),true,'편성 결과 화면으로 이동해야 합니다.');
     assert.ok(await page.locator('#alternatives .alt').count()>=1);
     assert.match(await page.locator('#validation').textContent(),/조건 위반 없음/);
