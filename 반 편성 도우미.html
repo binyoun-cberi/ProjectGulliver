@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>반 편성 도우미 | 클라시트</title><link rel="icon" type="image/svg+xml" href="clasheet-mark.svg?v=20261023-1">
+<style>
+/* CLASHEET classroom tool – standalone client-only planner. */
+:root{--ink:#28354e;--muted:#65758d;--line:#e5eaf3;--bg:#f5f7fb;--card:#fff;--blue:#247b6b;--bluep:#e8f5ef;--red:#b52643;--redp:#fff1f3;--green:#147b68;--greenp:#eaf8f2;--radius:17px;--shadow:0 8px 26px rgba(19,42,76,.045)}
+*{box-sizing:border-box}body{margin:0;padding-top:70px;color:var(--ink);background:var(--bg);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Pretendard","Noto Sans KR","Malgun Gothic",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}input,select,textarea{border:1px solid #dbe2ee;background:white;border-radius:9px;padding:9px 11px;color:var(--ink);min-width:0}input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid #bfd4ff;outline-offset:1px}input[type=checkbox]{accent-color:var(--blue);height:17px;width:17px;cursor:pointer;vertical-align:middle}h1,h2,h3,p{margin-top:0}.shell{max-width:1420px;margin:0 auto;padding:30px 24px 75px}.top{display:flex;justify-content:space-between;align-items:start;gap:16px;margin-bottom:22px}.identity{display:flex;align-items:center;gap:13px}.mark{width:49px;height:49px;border-radius:14px;display:grid;place-items:center;color:white;background:#247b6b;font-weight:900;font-size:24px}.eyebrow{font-size:12px;letter-spacing:.08em;color:var(--blue);font-weight:800}.top h1{font-size:27px;letter-spacing:-.05em;margin:0}.subtitle{color:var(--muted);font-size:13px;margin:4px 0 0}.privacy{font-size:12px;border:1px solid #cddcd7;background:#f1faf6;color:#226c58;border-radius:99px;padding:7px 12px;white-space:nowrap}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}.stat,.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}.stat{padding:17px 20px}.stat small{display:block;color:var(--muted);font-weight:600}.stat strong{font-size:25px;letter-spacing:-.04em;font-weight:800}.stat .hint{font-size:11px;color:var(--muted);margin-left:6px}.card{padding:23px;margin:16px 0}.setup{display:flex;align-items:end;justify-content:space-between;gap:14px;flex-wrap:wrap}.formfields{display:flex;align-items:end;gap:14px;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px;font-size:12px;color:#4b5c75;font-weight:700}.field input{width:130px}.field input[type=number]{width:106px}.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.btn{border:1px solid #dce4ef;background:#fff;color:#294062;font-weight:750;padding:10px 14px;border-radius:10px;white-space:nowrap}.btn:hover{background:#f5f8ff}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.primary:hover{background:#1847bc}.btn.soft{border-color:#d6e3ff;background:var(--bluep);color:#2756bc}.btn.danger{color:var(--red)}.btn.small{padding:5px 9px;font-size:12px;border-radius:8px}.btn.ghost{border-color:transparent;background:transparent;padding:8px}.tabs{border-bottom:1px solid #dce3ec;display:flex;gap:7px;margin-top:24px;overflow:auto}.tab{padding:14px 20px;border:0;background:transparent;color:var(--muted);font-weight:750;white-space:nowrap;border-bottom:3px solid transparent}.tab[aria-selected=true]{border-bottom-color:var(--blue);color:var(--blue)}.section-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap}.section-head h2{font-size:20px;letter-spacing:-.035em;margin:0}.section-head p{font-size:12px;margin:3px 0 0;color:var(--muted)}.inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.helper{background:#f7f9fe;border:1px solid #e2e8f4;color:#53647e;border-radius:11px;padding:11px 14px;font-size:12px;margin:14px 0}.alert{background:var(--redp);color:#8a1936;border:1px solid #f6cbd4;border-radius:12px;padding:12px 14px;margin:12px 0}.success{background:var(--greenp);color:#176955;border:1px solid #c8ebe0;border-radius:12px;padding:12px 14px;margin:12px 0}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:white}.student-table{border-collapse:collapse;width:100%;min-width:970px;font-size:12px}.student-table th{text-align:left;white-space:nowrap;color:#5f7088;background:#f7f9fd;border-bottom:1px solid var(--line);padding:13px 9px;font-weight:800;position:sticky;top:0}.student-table td{padding:7px 8px;border-top:1px solid #eef1f6;vertical-align:middle}.student-table td input:not([type=checkbox]),.student-table td select{padding:7px 8px;font-size:12px;width:100%;min-width:64px}.student-table td .check{text-align:center;display:block}.student-table th.center,.student-table td.center{text-align:center}.student-table tr:hover td{background:#fafcff}.student-table td .note{max-width:180px}.wide{width:100%}.muted{color:var(--muted)}.tagline{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:13px}.chip{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;background:#f1f5fc;border-radius:8px;font-size:12px;color:#51617a}.chip button{border:0;background:none;color:#8a96a8;font-size:15px;line-height:1;padding:0 2px}.feature-add{display:flex;gap:8px}.feature-add input{width:135px}.empty{text-align:center;padding:50px 16px;color:#6b7a90}.empty b{display:block;font-size:17px;color:#344662;margin-bottom:7px}.bulk{padding:17px;background:#f8faff;border-radius:13px;border:1px solid #dae5f6;margin-bottom:16px}.bulk textarea{width:100%;height:142px;resize:vertical;font-family:Consolas,"Malgun Gothic",monospace;font-size:12px}.bulk .bulk-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.bulk p{color:var(--muted);font-size:12px;margin:6px 0 12px}.hidden,[hidden]{display:none!important}.constraint-form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin:16px 0}.constraint-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 15px;border:1px solid var(--line);border-radius:11px;margin:9px 0}.constraint-name{font-weight:750}.detail{font-size:11px;color:var(--muted);font-weight:450}.arrow{color:#b45b68;font-size:15px;padding:0 7px}.result-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.alternatives{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.alt{background:white;border:1px solid var(--line);border-radius:12px;padding:12px 17px;text-align:left;color:var(--ink);min-width:138px}.alt strong{display:block}.alt small{display:block;color:var(--muted)}.alt.active{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue);background:var(--bluep)}.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:13px}.class-card{border:1px solid var(--line);border-radius:13px;background:#fff;overflow:hidden}.class-top{padding:15px 17px;background:#f8faff;border-bottom:1px solid var(--line)}.class-top h3{font-size:18px;margin:0;display:flex;align-items:center;justify-content:space-between}.class-top h3 small{font-size:12px;color:var(--muted)}.class-metrics{color:#56677f;font-size:12px;margin-top:3px}.class-body{padding:5px 13px 12px;max-height:690px;overflow:auto}.assigned{display:flex;align-items:center;gap:8px;justify-content:space-between;border-bottom:1px solid #f0f2f8;padding:8px 1px}.assigned:last-child{border:0}.assigned .person{min-width:0}.assigned .person b{font-size:12px}.assigned .person small{font-size:11px;color:var(--muted);display:block}.assigned select{font-size:11px;width:94px;padding:6px;flex-shrink:0}.warning-dot{color:var(--red);font-size:13px}.legend{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 15px}.legend span{font-size:11px;padding:5px 9px;border-radius:8px;background:#f4f6fa;color:#596983}.report{border:1px solid var(--line);border-radius:12px;overflow:auto;margin:15px 0}.report table{width:100%;border-collapse:collapse;min-width:440px;font-size:12px}.report th,.report td{padding:10px 12px;text-align:center;border-bottom:1px solid #eef1f5}.report th{background:#f7f9fc;color:#65748b}.report td:first-child,.report th:first-child{text-align:left;font-weight:750}.help-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}.help-grid h3{font-size:14px;margin:0 0 4px}.help-grid p{font-size:12px;color:var(--muted);margin:0}.foot{font-size:12px;color:#78879a;margin-top:22px;line-height:1.75}.toast{position:fixed;bottom:20px;right:20px;max-width:480px;background:#1f304c;color:#fff;padding:14px 18px;border-radius:11px;box-shadow:0 12px 30px #17253d44;font-weight:650;z-index:10;display:none}.toast.show{display:block}dialog{border:none;border-radius:16px;box-shadow:0 20px 80px #18274545;width:min(480px,95vw);padding:24px;color:var(--ink)}dialog::backdrop{background:#11213e75}dialog textarea{height:130px;width:100%}dialog h3{font-size:19px}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}.count-pill{font-size:11px;color:#52647f;background:#edf2fa;padding:3px 8px;border-radius:99px;margin-left:6px}.warn-text{color:var(--red)}@media(max-width:720px){.shell{padding:15px 11px 45px}.top{flex-direction:column}.privacy{white-space:normal}.top h1{font-size:24px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat{padding:13px 15px}.card{padding:15px}.constraint-form{grid-template-columns:1fr}.tab{padding:11px 14px}.result-grid{grid-template-columns:1fr}}@media print{body{background:#fff}.shell{max-width:none;padding:0}.top,.stats,.setup,.tabs,.section-head .actions,.result-toolbar,.alternatives,.foot,.no-print,.result-help{display:none!important}.card{border:0;box-shadow:none;padding:0;margin:0}#view-roster,#view-rules{display:none!important}#view-results{display:block!important}.result-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.class-card{break-inside:avoid}.class-body{max-height:none}.assigned select{display:none}.report{break-inside:avoid}h2{font-size:17px}}
+</style>
+<link rel="stylesheet" href="gulliver-design.css?v=1.2.0">
+<script src="gulliver-app-shell.js?v=1.2.0" defer></script>
+<style>@media print{.gx-header{display:none!important}}</style>
+</head>
+<body>
+<main class="shell">
+ <div class="top"><div class="identity"><div class="mark" aria-hidden="true">반</div><div><div class="eyebrow">CLASS PLANNER</div><h1>반편성 도우미</h1><p class="subtitle">학생의 특징과 관계를 고려하는 새 학년 반 배정</p></div></div><div class="privacy">기기에서만 처리 · 외부 서버로 전송하지 않음</div></div>
+ <div class="stats" aria-live="polite"><div class="stat"><small>등록한 학생</small><strong id="statStudents">0명</strong></div><div class="stat"><small>편성할 학급</small><strong id="statClasses">3개 반</strong></div><div class="stat"><small>분리해야 할 관계</small><strong id="statPairs">0쌍</strong></div><div class="stat"><small>중복 이름</small><strong id="statDuplicates">0건</strong></div></div>
+ <div class="card setup"><div class="formfields"><label class="field">새 학년 <input id="grade" type="text" value="1" maxlength="12" aria-label="새 학년"></label><label class="field">새 학급 수 <input id="classCount" type="number" min="2" max="12" value="3"></label></div><div class="actions"><button id="demo" class="btn soft">예시 데이터 보기</button><button id="saveJson" class="btn">설정 백업 (.json)</button><button id="openJson" class="btn">백업 불러오기</button><input type="file" id="jsonFile" accept=".json,application/json" hidden><button id="reset" class="btn danger">모두 지우기</button></div></div>
+ <nav class="tabs" aria-label="기능 선택"><button class="tab" data-tab="roster" aria-selected="true">01 학생 명단 · 특징</button><button class="tab" data-tab="rules" aria-selected="false">02 분리할 학생 지정</button><button class="tab" data-tab="results" aria-selected="false">03 반 편성 · 검토</button></nav>
+ <section id="view-roster" class="card" aria-label="학생 명단"><div class="section-head"><div><h2>학생 명단 <span id="rosterCount" class="count-pill">0명</span></h2><p>기존 반·성별·학습지표를 입력하고 학생별 특징을 체크해 주세요.</p></div><div class="actions"><input id="searchStudent" aria-label="학생 검색" placeholder="이름 · 기존 반 검색" style="width:160px"><button id="toggleBulk" class="btn">스프레드시트 붙여넣기</button><button id="addStudent" class="btn primary">+ 학생 추가</button></div></div>
+ <div id="bulkPanel" class="bulk hidden"><div class="bulk-head"><strong>여러 명 한 번에 입력</strong><button id="closeBulk" class="btn ghost small">닫기</button></div><p>구글 스프레드시트에서 복사하여 붙여넣으세요. 순서: <b>기존 반 / 번호 / 이름 / 성별 / 학습지표(1~5) / 특징(쉼표 구분) / 메모</b>. 이름만 있는 한 열도 가능합니다. 첫 줄의 열 제목은 자동으로 건너뜁니다.</p><textarea id="bulkText" placeholder="1반&#9;1&#9;김하늘&#9;여&#9;3&#9;리더십,관계 지원&#9;\n1반&#9;2&#9;이도윤&#9;남&#9;4&#9;생활 지원"></textarea><div class="inline"><label style="font-size:12px"><input type="radio" name="bulkMode" value="append" checked> 기존 명단에 추가</label><label style="font-size:12px"><input type="radio" name="bulkMode" value="replace"> 기존 명단 교체</label><button id="commitBulk" class="btn primary">명단 적용</button></div></div>
+ <div class="tagline"><b style="font-size:12px">체크할 특징</b><div id="traitChips" class="inline"></div><div class="feature-add"><input id="newTrait" maxlength="20" placeholder="특징 직접 추가"><button id="addTrait" class="btn small">추가</button></div></div>
+ <div class="table-wrap"><table class="student-table"><thead id="rosterHead"></thead><tbody id="rosterBody"></tbody></table></div><div class="helper">학습지표는 선택 사항입니다. 1~5처럼 학교에서 동일하게 정한 기준을 입력하면 학급별로 고르게 분산합니다. 특징 항목은 인원이 한쪽 반에 몰리지 않도록 고려하며, 학생의 진단명이나 민감한 개인정보를 입력할 필요는 없습니다.</div>
+ </section>
+ <section id="view-rules" class="card hidden" aria-label="같은 반에 배정하지 않을 학생"><div class="section-head"><div><h2>같은 반에 배정하지 않을 학생 <span id="pairCount" class="count-pill">0쌍</span></h2><p>서로 다른 반이어야 하는 두 학생을 선택하세요. 자동 편성 때 이 조건을 우선 적용합니다.</p></div></div><div class="constraint-form"><label class="field">학생 A <select id="pairA" class="wide"></select></label><label class="field">학생 B <select id="pairB" class="wide"></select></label><button id="addPair" class="btn primary">분리 관계 추가</button></div><div class="helper">세 명이 각각 서로 다른 반이어야 한다면 A–B, A–C, B–C 세 관계를 모두 추가해야 합니다. 동명이인도 기존 반·번호로 구별합니다.</div><div id="pairList"></div></section>
+ <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>자동 반 편성 결과</h2><p>분리 조건과 고정 배정을 지키면서 인원, 성별, 학습지표, 특징, 기존 반을 균형 있게 나눕니다.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="exportCsv" class="btn" disabled>CSV 내려받기</button><button id="print" class="btn" disabled>결과 인쇄 · PDF</button></div></div>
+ <div id="resultMessage" class="helper result-help">먼저 학생 명단을 작성한 다음 자동 편성하기를 눌러 주세요. 결과에서 학생의 반을 직접 바꾸거나 다른 편성안을 선택할 수도 있습니다.</div><div id="alternatives" class="alternatives"></div><div id="validation"></div><div id="report"></div><div id="resultGrid" class="result-grid"></div><div class="helper result-help">자동 편성은 의사결정을 돕는 초안입니다. 최종 배정 전에 학교의 편성 원칙과 학생별 사정을 직접 검토하세요. 결과는 자동으로 이 브라우저에 임시 보관되며, JSON 백업 파일을 별도로 저장할 수 있습니다.</div></section>
+ <div class="card"><div class="help-grid"><div><h3>① 명단과 특징 입력</h3><p>학생별 특징을 체크하거나 시트 내용을 붙여넣습니다. 동명이인은 별개 학생으로 관리됩니다.</p></div><div><h3>② 분리 조건 설정</h3><p>갈등이나 배려가 필요한 학생 쌍을 등록하고, 꼭 필요한 학생은 새 반을 고정합니다.</p></div><div><h3>③ 여러 편성안 비교</h3><p>자동으로 생성된 최대 세 가지 안을 비교하고 수동 조정한 뒤 CSV로 저장합니다.</p></div></div></div>
+ <div class="foot">개인정보 보호: 내용은 이 페이지를 이용하는 브라우저에만 보관하며 학생 정보는 서버로 전송하지 않습니다. 다만 동일 기기를 쓰는 다른 사람이 브라우저 저장 내용을 볼 수 있을 수 있으므로, 공용 PC에서는 사용 후 「모두 지우기」를 눌러 주세요. JSON·CSV 파일에는 학생 정보가 포함되므로 학교의 보안 규정에 따라 보관하세요. 브라우저의 파일 저장 방식에 따라 자동 저장이 제한될 수 있어 중요한 명단은 JSON 백업을 권장합니다.</div>
+</main>
+<dialog id="noteDialog"><h3 id="noteTitle">학생 메모</h3><label class="field">참고 사항 (선택) <textarea id="noteText" placeholder="편성 시 교사가 참고할 사항을 짧게 적어 주세요."></textarea></label><div class="dialog-actions"><button id="cancelNote" class="btn">취소</button><button id="saveNote" class="btn primary">저장</button></div></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+'use strict';
+const STORAGE_KEY = 'classplanner-v1-local';
+const DEFAULT_TRAITS = ['리더십','학습 지원','관계 지원','생활 지원'];
+let state = loadState();
+let view = 'roster';
+let noteStudentId = null;
+let searchQuery = '';
+const $ = id => document.getElementById(id);
+const escapeHtml = v => String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
+function makeId(){return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,9)}
+function defaultState(){return {version:1,grade:'1',classCount:3,traits:[...DEFAULT_TRAITS],students:[],pairs:[],candidates:[],activeCandidate:0}}
+function normalize(raw){
+  const base=defaultState();if(!raw || typeof raw!=='object')return base;
+  const count=Math.max(2,Math.min(12,Number(raw.classCount)||3));
+  const traits=(Array.isArray(raw.traits)?raw.traits:DEFAULT_TRAITS).filter(x=>typeof x==='string'&&x.trim()).slice(0,16).map(x=>x.slice(0,20));
+  const students=(Array.isArray(raw.students)?raw.students:[]).slice(0,1000).filter(x=>x && typeof x==='object').map(s=>({id:String(s.id||makeId()),oldClass:String(s.oldClass||'').slice(0,50),number:String(s.number||'').slice(0,25),name:String(s.name||'').slice(0,80),gender:['남','여',''].includes(s.gender)?s.gender:'',level:Number(s.level)>=1&&Number(s.level)<=5?Number(s.level):0,traits:(Array.isArray(s.traits)?s.traits:[]).filter(x=>traits.includes(x)),fixed:Number(s.fixed)>=1&&Number(s.fixed)<=count?Number(s.fixed):0,note:String(s.note||'').slice(0,1000)}));
+  const ids=new Set(),uniqueStudents=[];for(const s of students){if(ids.has(s.id))s.id=makeId();ids.add(s.id);uniqueStudents.push(s)}
+  const pairs=(Array.isArray(raw.pairs)?raw.pairs:[]).filter(p=>p && ids.has(p.a) && ids.has(p.b) && p.a!==p.b).map(p=>({a:String(p.a),b:String(p.b)}));
+  const cleanPairs=uniquePairs(pairs);
+  const candidates=(Array.isArray(raw.candidates)?raw.candidates:[]).slice(0,3).filter(c=>c&&c.assign&&typeof c.assign==='object'&&uniqueStudents.every(st=>Number.isInteger(Number(c.assign[st.id]))&&Number(c.assign[st.id])>=1&&Number(c.assign[st.id])<=count)).map(c=>({assign:Object.fromEntries(uniqueStudents.map(st=>[st.id,Number(c.assign[st.id])])),target:Array.from({length:count},(_,i)=>Number(c.target?.[i])||Math.floor(uniqueStudents.length/count)),score:Number(c.score)||0}));
+  return {...base,grade:String(raw.grade??'1').slice(0,12),classCount:count,traits:traits.length?traits:[...DEFAULT_TRAITS],students:uniqueStudents,pairs:cleanPairs,candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
+}
+function loadState(){try{return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY)))}catch(e){return defaultState()}}
+function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
+function invalidate(){state.candidates=[];state.activeCandidate=0}
+function changeState(){saveState();render()}
+function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),3700)}
+function uniquePairs(arr){const seen=new Set();return arr.filter(p=>{const key=[p.a,p.b].sort().join('|');if(seen.has(key))return false;seen.add(key);return true})}
+function findStudent(id){return state.students.find(s=>s.id===id)}
+function studentTitle(s){return s ? (s.name||'(이름 없음)')+' · '+(s.oldClass||'기존 반 미입력')+(s.number?' '+s.number+'번':'') : '알 수 없음'}
+function displayClass(num){return state.grade+'학년 '+num+'반'}
+function duplicateNames(){const m=new Map();state.students.forEach(s=>{const n=s.name.trim();if(n)m.set(n,(m.get(n)||0)+1)});return [...m.entries()].filter(([,count])=>count>1)}
+function showTab(tab){view=tab;document.querySelectorAll('.tab').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.tab===tab)));['roster','rules','results'].forEach(key=>$('view-'+key).classList.toggle('hidden',tab!==key));render()}
+function render(){
+  $('grade').value=state.grade;$('classCount').value=state.classCount;
+  $('statStudents').textContent=state.students.length+'명';$('statClasses').textContent=state.classCount+'개 반';$('statPairs').textContent=state.pairs.length+'쌍';$('statDuplicates').textContent=duplicateNames().length+'건';
+  $('rosterCount').textContent=state.students.length+'명';$('pairCount').textContent=state.pairs.length+'쌍';
+  if(view==='roster')renderRoster();if(view==='rules')renderPairs();if(view==='results')renderResults();
+}
+function renderRoster(){
+  $('traitChips').innerHTML=state.traits.map(t=>`<span class="chip">${escapeHtml(t)} <button type="button" data-delete-trait="${escapeHtml(t)}" aria-label="${escapeHtml(t)} 특징 삭제" title="특징 삭제">×</button></span>`).join('');
+  $('rosterHead').innerHTML='<tr><th>기존 반</th><th>번호</th><th>학생 이름</th><th>성별</th><th>학습지표</th>'+state.traits.map(t=>`<th class="center">${escapeHtml(t)}</th>`).join('')+'<th>새 반 고정</th><th>메모</th><th></th></tr>';
+  const visible=state.students.filter(s=>!searchQuery||[s.oldClass,s.name,s.number].join(' ').toLowerCase().includes(searchQuery));
+  $('rosterBody').innerHTML=visible.length?visible.map(s=>`<tr data-student="${escapeHtml(s.id)}">
+    <td><input data-key="oldClass" value="${escapeHtml(s.oldClass)}" aria-label="${escapeHtml(s.name)} 기존 반" placeholder="예: 1반"></td>
+    <td><input data-key="number" value="${escapeHtml(s.number)}" aria-label="${escapeHtml(s.name)} 번호" placeholder="번호" style="width:58px"></td>
+    <td><input data-key="name" value="${escapeHtml(s.name)}" aria-label="학생 이름" placeholder="이름" style="min-width:86px"></td>
+    <td><select data-key="gender" aria-label="${escapeHtml(s.name)} 성별"><option value="" ${s.gender===''?'selected':''}>선택</option><option ${s.gender==='남'?'selected':''}>남</option><option ${s.gender==='여'?'selected':''}>여</option></select></td>
+    <td><select data-key="level" aria-label="${escapeHtml(s.name)} 학습지표"><option value="0">미입력</option>${[1,2,3,4,5].map(n=>`<option value="${n}" ${s.level===n?'selected':''}>${n}</option>`).join('')}</select></td>
+    ${state.traits.map(t=>`<td class="center"><label class="check"><input type="checkbox" data-trait="${escapeHtml(t)}" aria-label="${escapeHtml(s.name)} ${escapeHtml(t)}" ${s.traits.includes(t)?'checked':''}></label></td>`).join('')}
+    <td><select data-key="fixed" aria-label="${escapeHtml(s.name)} 배정 반 고정"><option value="0">미고정</option>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${s.fixed===i+1?'selected':''}>${i+1}반 고정</option>`).join('')}</select></td>
+    <td><button class="btn small" data-note="${escapeHtml(s.id)}">${s.note?'메모 있음':'메모'}</button></td>
+    <td><button class="btn ghost danger small" data-remove="${escapeHtml(s.id)}" aria-label="${escapeHtml(s.name)} 삭제">삭제</button></td></tr>`).join(''):`<tr><td colspan="${9+state.traits.length}" class="empty"><b>${state.students.length?'검색 결과가 없습니다.':'등록된 학생이 없습니다.'}</b>${state.students.length?'검색어를 바꿔 주세요.':'「+ 학생 추가」 또는 「스프레드시트 붙여넣기」로 시작하세요.'}</td></tr>`;
+}
+function renderPairs(){
+  const opts='<option value="">학생 선택</option>'+state.students.map(s=>`<option value="${escapeHtml(s.id)}">${escapeHtml(studentTitle(s))}</option>`).join('');
+  const av=$('pairA').value,bv=$('pairB').value;$('pairA').innerHTML=opts;$('pairB').innerHTML=opts;$('pairA').value=av;$('pairB').value=bv;
+  $('pairList').innerHTML=state.pairs.length?state.pairs.map((p,i)=>`<div class="constraint-item"><div><span class="constraint-name">${escapeHtml(studentTitle(findStudent(p.a)))}</span><span class="arrow">≠</span><span class="constraint-name">${escapeHtml(studentTitle(findStudent(p.b)))}</span><div class="detail">서로 다른 반으로 편성</div></div><button class="btn small danger" data-pair-index="${i}">해제</button></div>`).join(''):'<div class="empty"><b>아직 지정한 분리 관계가 없습니다.</b>학생을 선택해 한 쌍씩 추가하세요.</div>';
+}
+/* ENGINE_START — Node 환경에서도 테스트할 수 있는 순수 편성 엔진 */
+function validateAssignment(students,pairs,assign){
+  const violations=[];const map=new Map(students.map(s=>[s.id,s]));
+  for(const p of pairs){if(assign[p.a] && assign[p.a]===assign[p.b])violations.push(`${studentTitle(map.get(p.a))} / ${studentTitle(map.get(p.b))}`)}
+  for(const s of students){if(s.fixed && assign[s.id] && Number(assign[s.id])!==s.fixed)violations.push(`${studentTitle(s)}: ${s.fixed}반 고정 조건 위반`)}
+  return violations;
+}
+function calcScore(students,assign,k,traits,target){
+  const count=Array(k).fill(0),boys=Array(k).fill(0),girls=Array(k).fill(0),scoreSum=Array(k).fill(0),scoreN=Array(k).fill(0);
+  const traitCounts=Array.from({length:k},()=>Object.fromEntries(traits.map(t=>[t,0])));
+  const oldCounts=Array.from({length:k},()=>({}));const totals={boys:0,girls:0,levelSum:0,levelN:0,traits:{},old:{}};
+  for(const t of traits)totals.traits[t]=0;
+  for(const s of students){const idx=(assign[s.id]||0)-1;if(idx<0||idx>=k)continue;
+    count[idx]++;
+    if(s.gender==='남'){boys[idx]++;totals.boys++}if(s.gender==='여'){girls[idx]++;totals.girls++}
+    if(s.level){scoreSum[idx]+=s.level;scoreN[idx]++;totals.levelSum+=s.level;totals.levelN++}
+    for(const t of s.traits||[])if(traitCounts[idx][t]!==undefined){traitCounts[idx][t]++;totals.traits[t]++}
+    if(s.oldClass){oldCounts[idx][s.oldClass]=(oldCounts[idx][s.oldClass]||0)+1;totals.old[s.oldClass]=(totals.old[s.oldClass]||0)+1}
+  }
+  const N=students.length||1;let loss=0;
+  for(let j=0;j<k;j++){
+    const t=target[j]||N/k;loss+=85*Math.pow((count[j]-t),2)/Math.max(1,t);
+    loss+=18*Math.pow(boys[j]-(totals.boys*t/N),2)/Math.max(1,totals.boys/k);
+    loss+=18*Math.pow(girls[j]-(totals.girls*t/N),2)/Math.max(1,totals.girls/k);
+    if(totals.levelN)loss+=12*Math.pow(scoreSum[j]-totals.levelSum*t/N,2)/Math.max(1,totals.levelN/k);
+    for(const trait of traits){const total=totals.traits[trait];if(total)loss+=12*Math.pow(traitCounts[j][trait]-total*t/N,2)/Math.max(1,total/k)}
+    for(const old of Object.keys(totals.old)){const total=totals.old[old];if(total)loss+=8*Math.pow((oldCounts[j][old]||0)-total*t/N,2)/Math.max(1,total/k)}
+  }
+  return loss;
+}
+function candidateTargets(students,k,random){
+  const N=students.length,base=Math.floor(N/k),extra=N%k,counts=Array(k).fill(0);
+  for(const s of students)if(s.fixed)counts[s.fixed-1]++;
+  if(counts.some(c=>c>base+1))return null;
+  const slots=Array.from({length:k},(_,i)=>i).sort((a,b)=>(counts[b]-counts[a])||(random()-.5));
+  const target=Array(k).fill(base);for(let i=0;i<extra;i++)target[slots[i]]++;
+  if(target.some((n,i)=>counts[i]>n))return null;return target;
+}
+function canEnter(id,to,assignment,neighbors){return !(neighbors[id]||[]).some(other=>assignment[other]===to)}
+function improveCandidate(students,pairs,traits,k,candidate,random){
+  const assignments={...candidate.assign};let score=calcScore(students,assignments,k,traits,candidate.target);
+  const unlocked=students.filter(s=>!s.fixed);if(unlocked.length<2)return {...candidate,assign:assignments,score};
+  const neighbors={};for(const s of students)neighbors[s.id]=[];for(const p of pairs){neighbors[p.a].push(p.b);neighbors[p.b].push(p.a)}
+  let stale=0;for(let attempt=0;attempt<2800 && stale<850;attempt++){
+    const a=unlocked[Math.floor(random()*unlocked.length)],b=unlocked[Math.floor(random()*unlocked.length)];if(a===b)continue;
+    const ca=assignments[a.id],cb=assignments[b.id];if(ca===cb)continue;
+    assignments[a.id]=cb;assignments[b.id]=ca;
+    if(!canEnter(a.id,cb,assignments,neighbors)||!canEnter(b.id,ca,assignments,neighbors)){
+      assignments[a.id]=ca;assignments[b.id]=cb;stale++;continue;
+    }
+    const next=calcScore(students,assignments,k,traits,candidate.target);
+    if(next+1e-7<score){score=next;stale=0}else{assignments[a.id]=ca;assignments[b.id]=cb;stale++}
+  }
+  return {...candidate,assign:assignments,score};
+}
+function generateCandidates(students,pairs,k,traits,random=Math.random){
+  if(!students.length)return {error:'학생 명단을 먼저 입력해 주세요.'};
+  if(students.some(s=>!s.name.trim()))return {error:'이름이 비어 있는 학생이 있습니다. 이름을 모두 입력해 주세요.'};
+  const locked=new Map(students.filter(s=>s.fixed).map(s=>[s.id,s.fixed]));
+  for(const p of pairs)if(locked.has(p.a)&&locked.get(p.a)===locked.get(p.b))return {error:'같은 반에 고정된 학생 사이에 분리 조건이 있습니다. 학생 명단의 「새 반 고정」을 먼저 수정해 주세요.'};
+  const neighbors={};for(const s of students)neighbors[s.id]=[];
+  for(const p of pairs){if(neighbors[p.a] && neighbors[p.b]){neighbors[p.a].push(p.b);neighbors[p.b].push(p.a)}}
+  const solutions=[],seen=new Set();let totalSuccess=0;
+  for(let trial=0;trial<260;trial++){
+    const target=candidateTargets(students,k,random);if(!target)return {error:'특정 반에 고정된 학생이 너무 많습니다. 반별 고정 인원은 전체 학생 수를 반 수로 나눈 적정 인원 이하여야 합니다.'};
+    const assignment={},counts=Array(k).fill(0);for(const s of students)if(s.fixed){assignment[s.id]=s.fixed;counts[s.fixed-1]++}
+    const order=students.filter(s=>!s.fixed).map(s=>({s,rank:(neighbors[s.id]||[]).length+random()*.9})).sort((a,b)=>b.rank-a.rank).map(x=>x.s);
+    let failed=false;
+    for(const s of order){
+      const choices=[];for(let c=1;c<=k;c++){
+        if(counts[c-1]>=target[c-1]||!canEnter(s.id,c,assignment,neighbors))continue;
+        assignment[s.id]=c;
+        const score=calcScore(students.filter(x=>assignment[x.id]),assignment,k,traits,target)+random()*2;
+        choices.push({c,score});delete assignment[s.id];
+      }
+      if(!choices.length){failed=true;break}
+      choices.sort((a,b)=>a.score-b.score);const selected=trial%7===0 && choices.length>1 && random()<.35?choices[1]:choices[0];
+      assignment[s.id]=selected.c;counts[selected.c-1]++;
+    }
+    if(failed||validateAssignment(students,pairs,assignment).length||counts.some((x,j)=>x!==target[j]))continue;
+    totalSuccess++;
+    const sc=calcScore(students,assignment,k,traits,target);const sig=students.map(s=>assignment[s.id]).join(',');
+    if(!seen.has(sig)){seen.add(sig);solutions.push({assign:{...assignment},target,score:sc})}
+  }
+  if(!solutions.length)return {error:'모든 분리 조건을 지키는 편성안을 찾지 못했습니다. 분리 관계나 고정 배정이 지나치게 많지 않은지 확인해 주세요. 조건이 실제로 불가능한지까지 확정하는 판정은 아닙니다.'};
+  solutions.sort((a,b)=>a.score-b.score);
+  const top=solutions.slice(0,Math.min(8,solutions.length)).map(s=>improveCandidate(students,pairs,traits,k,s,random)).sort((a,b)=>a.score-b.score);
+  const unique=[];const resultSeen=new Set();for(const c of top){const sig=students.map(s=>c.assign[s.id]).join(',');if(!resultSeen.has(sig)){resultSeen.add(sig);unique.push(c)}if(unique.length===3)break}
+  return {candidates:unique,successes:totalSuccess};
+}
+/* ENGINE_END */
+function reportData(candidate){const data=Array.from({length:state.classCount},()=>({total:0,boys:0,girls:0,levelN:0,levelSum:0,traitCounts:Object.fromEntries(state.traits.map(t=>[t,0]))}));for(const s of state.students){const c=candidate.assign[s.id];const d=data[c-1];if(!d)continue;d.total++;if(s.gender==='남')d.boys++;if(s.gender==='여')d.girls++;if(s.level){d.levelN++;d.levelSum+=s.level}for(const t of s.traits)if(t in d.traitCounts)d.traitCounts[t]++}return data}
+function renderResults(){
+  const has=state.candidates.length>0;
+  $('exportCsv').disabled=!has;$('print').disabled=!has;
+  if(!has){$('resultMessage').classList.remove('hidden');$('alternatives').innerHTML='';$('validation').innerHTML='';$('report').innerHTML='';$('resultGrid').innerHTML='';return}
+  $('resultMessage').classList.add('hidden');
+  $('alternatives').innerHTML=state.candidates.map((c,i)=>`<button class="alt ${state.activeCandidate===i?'active':''}" data-candidate="${i}"><strong>편성안 ${String.fromCharCode(65+i)}</strong><small>${i===0?'추천안 · ':''}조건 위반 ${validateAssignment(state.students,state.pairs,c.assign).length}건</small></button>`).join('');
+  const selected=state.candidates[state.activeCandidate];if(!selected)return;
+  const violations=validateAssignment(state.students,state.pairs,selected.assign);
+  const counts=reportData(selected);const totals=counts.map(d=>d.total);const diff=Math.max(...totals)-Math.min(...totals);
+  const over=diff>1?`반별 인원 차이가 ${diff}명입니다. 편성 결과를 직접 검토하세요.`: `반별 인원 차이 ${diff}명 · 분리 조건 위반 없음`;
+  $('validation').innerHTML=violations.length?`<div class="alert"><b>분리 조건 위반 ${violations.length}건</b><div>${violations.map(escapeHtml).join('<br>')}</div></div>`:`<div class="success">${escapeHtml(over)}${duplicateNames().length?' · 동명이인이 있어 기존 반과 번호를 함께 확인하세요.':''}</div>`;
+  $('report').innerHTML=`<div class="report"><table><thead><tr><th>반</th><th>전체</th><th>남</th><th>여</th><th>성별 미입력</th><th>학습지표 평균</th></tr></thead><tbody>${counts.map((d,i)=>`<tr><td>${escapeHtml(displayClass(i+1))}</td><td>${d.total}명</td><td>${d.boys}명</td><td>${d.girls}명</td><td>${d.total-d.boys-d.girls}명</td><td>${d.levelN?(d.levelSum/d.levelN).toFixed(2):'—'}</td></tr>`).join('')}</tbody></table></div><div class="legend">${state.traits.map(t=>`<span>${escapeHtml(t)}: ${counts.map((d,i)=>`${i+1}반 ${d.traitCounts[t]}`).join(' / ')}</span>`).join('')}</div>`;
+  $('resultGrid').innerHTML=counts.map((d,index)=>{
+    const c=index+1;const pupils=state.students.filter(s=>selected.assign[s.id]===c).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+    return `<div class="class-card"><div class="class-top"><h3>${escapeHtml(displayClass(c))}<small>${d.total}명</small></h3><div class="class-metrics">남 ${d.boys} · 여 ${d.girls} · 학습지표 ${d.levelN?(d.levelSum/d.levelN).toFixed(1):'미입력'}</div></div><div class="class-body">${pupils.map(s=>`<div class="assigned"><div class="person"><b>${escapeHtml(s.name)}${s.fixed?' <span class="warning-dot" title="반 고정">◆</span>':''}</b><small>${escapeHtml(s.oldClass||'기존 반 미입력')}${s.number?' · '+escapeHtml(s.number)+'번':''} · ${escapeHtml(s.gender||'성별 미입력')}${s.traits.length?' · '+escapeHtml(s.traits.join(', ')):''}</small></div><select data-move="${escapeHtml(s.id)}" aria-label="${escapeHtml(s.name)} 반 변경" ${s.fixed?'disabled title="고정된 학생"':''}>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${i+1===c?'selected':''}>${i+1}반</option>`).join('')}</select></div>`).join('')||'<div class="empty">학생 없음</div>'}</div></div>`;
+  }).join('');
+}
+function parseBulk(text){
+  const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(x=>x.trim());if(!lines.length)return [];
+  const delimiter=lines.some(x=>x.includes('\t'))?'\t':lines.some(x=>x.includes(','))?',':null;
+  let columns=lines.map(line=>delimiter?parseCSVLine(line,delimiter):[line.trim()]);
+  if(columns[0] && columns[0].some(x=>/^(이름|학생명|성별|기존\s?반|현재\s?반|번호|학습지표|메모)$/i.test(x.trim())))columns.shift();
+  const results=[];
+  for(const row of columns){let oldClass='',number='',name='',gender='',level=0,traits=[],note='';
+    if(row.length===1){name=row[0]||''}
+    else if(row.length===2){[oldClass,name]=row}
+    else if(row.length===3){[oldClass,name,gender]=row}
+    else if(row.length===4){[oldClass,number,name,gender]=row}
+    else{[oldClass,number,name,gender]=row;level=Number(row[4])||0;traits=(row[5]||'').split(/[,，、;/]/).map(x=>x.trim()).filter(Boolean);note=row.slice(6).join(' / ')}
+    if(!String(name||'').trim())continue;
+    results.push({id:makeId(),oldClass:String(oldClass||'').trim(),number:String(number||'').trim(),name:String(name).trim(),gender:['남','여'].includes(String(gender||'').trim())?String(gender).trim():'',level:level>=1&&level<=5?level:0,traits,fixed:0,note:String(note||'')})
+  }
+  return results;
+}
+function parseCSVLine(s,sep){const out=[];let value='',quoted=false;for(let i=0;i<s.length;i++){const ch=s[i];if(ch==='"'){if(quoted && s[i+1]==='"'){value+='"';i++}else quoted=!quoted}else if(ch===sep&&!quoted){out.push(value);value=''}else value+=ch}out.push(value);return out}
+function download(name,content,mime){const b=new Blob([content],{type:mime});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
+function csvCell(x){let s=String(x??'');if(/^\s*[=+\-@]/.test(s))s="'"+s;return /[",\n\r]/.test(s)?'"'+s.replaceAll('"','""')+'"':s}
+function exportCSV(){const c=state.candidates[state.activeCandidate];if(!c)return;const rows=[['새 학급','새 번호','이름','성별','기존 반','기존 번호','학습지표',...state.traits,'메모']];for(let i=1;i<=state.classCount;i++){const pupils=state.students.filter(s=>c.assign[s.id]===i).sort((a,b)=>a.name.localeCompare(b.name,'ko'));pupils.forEach((s,j)=>rows.push([displayClass(i),j+1,s.name,s.gender,s.oldClass,s.number,s.level||'',...state.traits.map(t=>s.traits.includes(t)?'✓':''),s.note]))}download('반편성_결과_'+state.grade+'학년.csv','\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');toast('편성 결과 CSV를 저장했습니다.')}
+function sampleData(){const surnames=['김','이','박','최','정','강','조','윤','장','임','한','오'];const names=['하늘','지우','도윤','민서','준우','서연','시우','하은','예준','다은','현우','윤서','지호','수아','건우','서준','나은','이안','채원','예은','유준','지안','서아','태윤','은우','시윤','다현','승우','윤호','서진','연우','수빈','민준','다온','현서','재윤'];const list=names.map((n,i)=>({id:makeId(),oldClass:(i%3+1)+'반',number:String(Math.floor(i/3)+1),name:surnames[i%12]+n,gender:i%2?'여':'남',level:i%5+1,traits:[i%5===0?'리더십':null,i%4===0?'학습 지원':null,i%6===0?'관계 지원':null,i%7===0?'생활 지원':null].filter(Boolean),fixed:0,note:''}));return list}
+function isCompatibleMove(id,to,candidate){const student=findStudent(id);if(!student||student.fixed)return false;for(const p of state.pairs)if((p.a===id&&candidate.assign[p.b]===to)||(p.b===id&&candidate.assign[p.a]===to))return false;return true}
+function addStudent(){const s={id:makeId(),oldClass:'',number:'',name:'',gender:'',level:0,traits:[],fixed:0,note:''};state.students.push(s);invalidate();changeState();const field=document.querySelector(`[data-student="${s.id}"] [data-key="name"]`);field?.focus()}
+function addTrait(){const t=$('newTrait').value.trim();if(!t)return;if(state.traits.includes(t)){toast('이미 있는 특징입니다.');return}if(state.traits.length>=16){toast('특징은 최대 16개까지 추가할 수 있습니다.');return}state.traits.push(t);$('newTrait').value='';invalidate();changeState()}
+function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)return;const s=findStudent(tr.dataset.student);if(!s)return;
+  if(e.target.dataset.trait){const t=e.target.dataset.trait;s.traits=e.target.checked?[...new Set([...s.traits,t])]:s.traits.filter(x=>x!==t)}
+  else if(e.target.dataset.key){const key=e.target.dataset.key;const value=e.target.value;if(key==='level'||key==='fixed')s[key]=Number(value);else s[key]=value.slice(0,key==='name'?80:50)}
+  else return;
+  invalidate();saveState();render();
+}
+function manualMove(e){const select=e.target.closest('[data-move]');if(!select)return;const id=select.dataset.move,to=Number(select.value),c=state.candidates[state.activeCandidate];if(!c)return;
+  if(!isCompatibleMove(id,to,c)){toast('분리 관계 또는 고정 배정 때문에 해당 반으로 이동할 수 없습니다.');renderResults();return}
+  c.assign[id]=to;c.score=calcScore(state.students,c.assign,state.classCount,state.traits,c.target);saveState();renderResults();toast('학생의 배정 반을 변경했습니다. 인원 균형을 다시 확인해 주세요.')
+}
+function installEvents(){
+  document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+  $('grade').addEventListener('change',e=>{state.grade=e.target.value.trim()||'1';changeState()});
+  $('classCount').addEventListener('change',e=>{const n=Number(e.target.value);if(!Number.isInteger(n)||n<2||n>12){toast('학급 수는 2~12로 설정해 주세요.');render();return}state.classCount=n;state.students.forEach(s=>{if(s.fixed>n)s.fixed=0});invalidate();changeState()});
+  $('demo').addEventListener('click',()=>{if(state.students.length&&!confirm('현재 학생 명단을 예시 데이터로 교체할까요? 먼저 JSON 백업을 저장할 수 있습니다.'))return;state=defaultState();state.students=sampleData();state.pairs=[{a:state.students[0].id,b:state.students[3].id},{a:state.students[7].id,b:state.students[19].id}];view='roster';showTab('roster');changeState();toast('가상의 학생 36명과 분리 관계 2쌍을 불러왔습니다.')});
+  $('reset').addEventListener('click',()=>{if(!confirm('모든 학생 정보와 편성 결과를 이 브라우저에서 지울까요? 되돌릴 수 없습니다.'))return;state=defaultState();changeState();showTab('roster');toast('모든 내용을 지웠습니다.')});
+  $('saveJson').addEventListener('click',()=>{const copy={...state,candidates:[]};download('반편성_설정_백업.json',JSON.stringify(copy,null,2),'application/json;charset=utf-8');toast('설정 백업 파일을 저장했습니다.')});
+  $('openJson').addEventListener('click',()=>$('jsonFile').click());
+  $('jsonFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());const next=normalize(data);if(state.students.length&&!confirm('현재 학생 명단을 백업 내용으로 교체할까요?'))return;state=next;changeState();showTab('roster');toast('백업을 불러왔습니다.')}catch(err){toast('올바른 JSON 백업 파일인지 확인해 주세요.')}finally{e.target.value=''}});
+  $('addStudent').addEventListener('click',addStudent);
+  $('searchStudent').addEventListener('input',e=>{searchQuery=e.target.value.trim().toLowerCase();renderRoster()});
+  $('toggleBulk').addEventListener('click',()=>$('bulkPanel').classList.toggle('hidden'));
+  $('closeBulk').addEventListener('click',()=>$('bulkPanel').classList.add('hidden'));
+  $('commitBulk').addEventListener('click',()=>{const newList=parseBulk($('bulkText').value);if(!newList.length){toast('입력할 학생 명단이 없습니다.');return}const mode=document.querySelector('input[name="bulkMode"]:checked').value;if(mode==='replace'&&state.students.length&&!confirm('기존 명단과 분리 조건을 새 명단으로 교체할까요?'))return;
+    if(mode==='replace'){state.students=[];state.pairs=[]}for(const s of newList){for(const t of s.traits)if(!state.traits.includes(t)&&state.traits.length<16)state.traits.push(t);s.traits=s.traits.filter(t=>state.traits.includes(t));state.students.push(s)}invalidate();$('bulkPanel').classList.add('hidden');$('bulkText').value='';changeState();toast(`${newList.length}명의 학생을 추가했습니다.`)});
+  $('newTrait').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTrait()}});$('addTrait').addEventListener('click',addTrait);
+  $('traitChips').addEventListener('click',e=>{const b=e.target.closest('[data-delete-trait]');if(!b)return;const t=b.dataset.deleteTrait;if(!confirm(`「${t}」 특징을 학생 명단에서도 삭제할까요?`))return;state.traits=state.traits.filter(x=>x!==t);state.students.forEach(s=>s.traits=s.traits.filter(x=>x!==t));invalidate();changeState()});
+  $('rosterBody').addEventListener('change',updateStudent);
+  $('rosterBody').addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');if(remove){const s=findStudent(remove.dataset.remove);if(!confirm(`「${studentTitle(s)}」 학생을 삭제할까요?`))return;state.students=state.students.filter(x=>x.id!==remove.dataset.remove);state.pairs=state.pairs.filter(p=>p.a!==remove.dataset.remove&&p.b!==remove.dataset.remove);invalidate();changeState();return}
+    const note=e.target.closest('[data-note]');if(note){const s=findStudent(note.dataset.note);noteStudentId=s.id;$('noteTitle').textContent=`${s.name||'학생'} 메모`;$('noteText').value=s.note;$('noteDialog').showModal()}});
+  $('cancelNote').addEventListener('click',()=>$('noteDialog').close());$('saveNote').addEventListener('click',()=>{const s=findStudent(noteStudentId);if(s){s.note=$('noteText').value.slice(0,1000);invalidate();changeState()}$('noteDialog').close()});
+  $('addPair').addEventListener('click',()=>{const a=$('pairA').value,b=$('pairB').value;if(!a||!b){toast('두 학생을 모두 선택해 주세요.');return}if(a===b){toast('서로 다른 학생 두 명을 선택해 주세요.');return}if(state.pairs.some(p=>(p.a===a&&p.b===b)||(p.a===b&&p.b===a))){toast('이미 지정한 분리 관계입니다.');return}state.pairs.push({a,b});invalidate();changeState();toast('분리 관계를 추가했습니다.')});
+  $('pairList').addEventListener('click',e=>{const b=e.target.closest('[data-pair-index]');if(!b)return;state.pairs.splice(Number(b.dataset.pairIndex),1);invalidate();changeState()});
+  $('generate').addEventListener('click',()=>{const outcome=generateCandidates(state.students,state.pairs,state.classCount,state.traits);if(outcome.error){toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;changeState();toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
+  $('alternatives').addEventListener('click',e=>{const b=e.target.closest('[data-candidate]');if(!b)return;state.activeCandidate=Number(b.dataset.candidate);saveState();renderResults()});
+  $('resultGrid').addEventListener('change',manualMove);
+  $('exportCsv').addEventListener('click',exportCSV);$('print').addEventListener('click',()=>window.print());
+}
+installEvents();render();
+</script>
+</body>
+</html>
