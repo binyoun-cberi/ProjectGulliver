@@ -8,6 +8,7 @@
   const teamNames=['파랑 팀','노랑 팀','초록 팀','보라 팀'];
   let current=null, startedAt=0, elapsedMs=0, lastFrame=0, accumulator=0, finishAfter=0;
   let toastDeadline=0, audio=null, muted=false, lastRankPaint=0, lastImpactSound=0;
+  let previousLeader=null,lastLeadToast=0;
   const fx=[];
   const state={mode:'winner',k:2,balanced:true,labels:[],world:null,allocator:null,counts:[],capacities:[],
     arrivals:[],finished:false,timeoutAnnounced:false,target:1,speed:1.55};
@@ -85,6 +86,9 @@
     current=null;state.world=null;state.finished=false;finishAfter=0;accumulator=0;fx.length=0;
     $('live-rankings').hidden=true;
     $('live-rank-list').replaceChildren();
+    $('marble-legend').hidden=true;
+    $('marble-legend-list').replaceChildren();
+    previousLeader=null;lastLeadToast=0;
     $('result-overlay').hidden=true;
     $('stop-btn').hidden=true;
     $('start-btn').hidden=false;
@@ -129,6 +133,15 @@
     $('play-title').textContent=state.mode==='teams'?'팀 나누기 레이스':'상위 '+state.target+'명 뽑기';
     $('play-description').textContent='⚡ 범퍼에 맞으면 튕겨 나가요!';
     $('live-rankings').hidden=false;
+    $('marble-legend').hidden=false;
+    $('marble-legend-heading').textContent='내 구슬 번호 찾기 · '+config.names.length+'명';
+    const namesBox=$('marble-legend-list');
+    for(const ball of state.world.balls){
+      const item=document.createElement('span');item.className='marble-legend-item';
+      const dot=document.createElement('i'),number=document.createElement('b'),label=document.createElement('span');
+      dot.style.background=ball.color;number.textContent=ball.index+1;label.textContent=ball.name;
+      item.append(dot,number,label);namesBox.append(item);
+    }
     updateLiveRankings();
     say('');showTeamStatus();showToast('핀볼 레이스 시작!');playNote(660,.2);
   }
@@ -236,6 +249,16 @@
     if(!current)return;
     const entries=state.world.balls.filter(b=>!b.finished).sort((a,b)=>b.body.position.y-a.body.position.y);
     const list=$('live-rank-list');list.replaceChildren();
+    const lead=entries[0];
+    if(lead){
+      if(previousLeader&&previousLeader!==lead.name&&performance.now()-lastLeadToast>2800
+        &&current&&performance.now()-current.launchedAt>3500&&state.arrivals.length===0){
+        showToast('⚡ 역전! '+lead.name+' 선두!');
+        lastLeadToast=performance.now();
+        playNote(790,.095);
+      }
+      previousLeader=lead.name;
+    }
     const top=entries.slice(0,5);
     top.forEach((b,i)=>{
       const li=document.createElement('li');
