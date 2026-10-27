@@ -112,10 +112,22 @@ function renderPairs(){
   $('pairList').innerHTML=state.pairs.length?state.pairs.map((p,i)=>`<div class="constraint-item"><div><span class="constraint-name">${escapeHtml(studentTitle(findStudent(p.a)))}</span><span class="arrow">≠</span><span class="constraint-name">${escapeHtml(studentTitle(findStudent(p.b)))}</span><div class="detail">서로 다른 반으로 편성</div></div><button class="btn small danger" data-pair-index="${i}">해제</button></div>`).join(''):'<div class="empty"><b>아직 지정한 분리 관계가 없습니다.</b>학생을 선택해 한 쌍씩 추가하세요.</div>';
 }
 /* ENGINE_START — Node 환경에서도 테스트할 수 있는 순수 편성 엔진 */
-function validateAssignment(students,pairs,assign){
-  const violations=[];const map=new Map(students.map(s=>[s.id,s]));
-  for(const p of pairs){if(assign[p.a] && assign[p.a]===assign[p.b])violations.push(`${studentTitle(map.get(p.a))} / ${studentTitle(map.get(p.b))}`)}
-  for(const s of students){if(s.fixed && assign[s.id] && Number(assign[s.id])!==s.fixed)violations.push(`${studentTitle(s)}: ${s.fixed}반 고정 조건 위반`)}
+function validateAssignment(students,pairs,assign,capRules={}){
+  const violations=[],byId=new Map(students.map(s=>[s.id,s]));
+  for(const p of pairs)if(assign[p.a]&&assign[p.a]===assign[p.b]){
+    violations.push((byId.get(p.a)?.name||p.a)+' / '+(byId.get(p.b)?.name||p.b)+': 분리 조건 위반');
+  }
+  for(const s of students)if(s.fixed&&assign[s.id]&&Number(assign[s.id])!==s.fixed){
+    violations.push((s.name||s.id)+': '+s.fixed+'반 고정 조건 위반');
+  }
+  for(const [tag,cap] of Object.entries(capRules||{})){
+    if(!Number.isInteger(cap)||cap<0)continue;
+    const counts=new Map();
+    for(const s of students)if((s.traits||[]).includes(tag)&&assign[s.id]){
+      const n=Number(assign[s.id]);counts.set(n,(counts.get(n)||0)+1);
+    }
+    for(const [num,total] of counts)if(total>cap)violations.push(num+'반 '+tag+': '+total+'명(최대 '+cap+'명) 초과');
+  }
   return violations;
 }
 function calcScore(students,assign,k,traits,target){
