@@ -38,7 +38,7 @@
 <script>
 'use strict';
 const STORAGE_KEY = 'classplanner-v1-local';
-const DEFAULT_TRAITS = ['리더십','학습 지원','관계 지원','생활 지원'];
+const DEFAULT_TRAITS = ['다문화','특수','쌍생아','분리조치','운동부','교권침해','성 사안','범법','연애관계','사회성'];
 let state = loadState();
 let view = 'roster';
 let noteStudentId = null;
@@ -46,17 +46,28 @@ let searchQuery = '';
 const $ = id => document.getElementById(id);
 const escapeHtml = v => String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 function makeId(){return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,9)}
-function defaultState(){return {version:1,grade:'1',classCount:3,traits:[...DEFAULT_TRAITS],students:[],pairs:[],candidates:[],activeCandidate:0}}
+function defaultState(){return {version:2,grade:'1',classCount:3,traits:[...DEFAULT_TRAITS],students:[],pairs:[],candidates:[],activeCandidate:0}}
+function parseStudyScore(v,legacy=false){if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return !Number.isFinite(n)||n<0||n>1e9||(legacy&&n===0)?null:Math.round((n+Number.EPSILON)*100)/100}
+function hasStudyScore(s){return Number.isFinite(s.level)&&s.level>=0}
+function studyText(v){return Number.isFinite(v)?v.toFixed(2):'미입력'}
 function normalize(raw){
-  const base=defaultState();if(!raw || typeof raw!=='object')return base;
-  const count=Math.max(2,Math.min(12,Number(raw.classCount)||3));
-  const traits=(Array.isArray(raw.traits)?raw.traits:DEFAULT_TRAITS).filter(x=>typeof x==='string'&&x.trim()).slice(0,16).map(x=>x.slice(0,20));
-  const students=(Array.isArray(raw.students)?raw.students:[]).slice(0,1000).filter(x=>x && typeof x==='object').map(s=>({id:String(s.id||makeId()),oldClass:String(s.oldClass||'').slice(0,50),number:String(s.number||'').slice(0,25),name:String(s.name||'').slice(0,80),gender:['남','여',''].includes(s.gender)?s.gender:'',level:Number(s.level)>=1&&Number(s.level)<=5?Number(s.level):0,traits:(Array.isArray(s.traits)?s.traits:[]).filter(x=>traits.includes(x)),fixed:Number(s.fixed)>=1&&Number(s.fixed)<=count?Number(s.fixed):0,note:String(s.note||'').slice(0,1000)}));
-  const ids=new Set(),uniqueStudents=[];for(const s of students){if(ids.has(s.id))s.id=makeId();ids.add(s.id);uniqueStudents.push(s)}
-  const pairs=(Array.isArray(raw.pairs)?raw.pairs:[]).filter(p=>p && ids.has(p.a) && ids.has(p.b) && p.a!==p.b).map(p=>({a:String(p.a),b:String(p.b)}));
-  const cleanPairs=uniquePairs(pairs);
-  const candidates=(Array.isArray(raw.candidates)?raw.candidates:[]).slice(0,3).filter(c=>c&&c.assign&&typeof c.assign==='object'&&uniqueStudents.every(st=>Number.isInteger(Number(c.assign[st.id]))&&Number(c.assign[st.id])>=1&&Number(c.assign[st.id])<=count)).map(c=>({assign:Object.fromEntries(uniqueStudents.map(st=>[st.id,Number(c.assign[st.id])])),target:Array.from({length:count},(_,i)=>Number(c.target?.[i])||Math.floor(uniqueStudents.length/count)),score:Number(c.score)||0}));
-  return {...base,grade:String(raw.grade??'1').slice(0,12),classCount:count,traits:traits.length?traits:[...DEFAULT_TRAITS],students:uniqueStudents,pairs:cleanPairs,candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
+ const base=defaultState();if(!raw||typeof raw!=='object')return base;
+ const count=Math.max(2,Math.min(12,Number(raw.classCount)||3));
+ const oldTraits=Array.isArray(raw.traits)?raw.traits:[];
+ const traits=[...new Set([...DEFAULT_TRAITS,...oldTraits.filter(x=>typeof x==='string').map(x=>x.trim()).filter(Boolean).map(x=>x.slice(0,20))])].slice(0,64);
+ const legacy=Number(raw.version||1)<2;
+ const students=(Array.isArray(raw.students)?raw.students:[]).slice(0,1000).filter(x=>x&&typeof x==='object').map(st=>({
+  id:String(st.id||makeId()),oldClass:String(st.oldClass??'').slice(0,50),number:String(st.number??'').slice(0,25),name:String(st.name??'').slice(0,80),
+  gender:['남','여',''].includes(st.gender)?st.gender:'',level:parseStudyScore(st.level,legacy),
+  traits:[...new Set((Array.isArray(st.traits)?st.traits:[]).filter(x=>traits.includes(x)))],
+  fixed:Number(st.fixed)>=1&&Number(st.fixed)<=count?Number(st.fixed):0,note:String(st.note??'').slice(0,1000)
+ }));
+ const ids=new Set(),uniqueStudents=[];for(const st of students){if(ids.has(st.id))st.id=makeId();ids.add(st.id);uniqueStudents.push(st)}
+ const pairs=(Array.isArray(raw.pairs)?raw.pairs:[]).filter(p=>p&&ids.has(p.a)&&ids.has(p.b)&&p.a!==p.b).map(p=>({a:String(p.a),b:String(p.b)}));
+ const candidates=(Array.isArray(raw.candidates)?raw.candidates:[]).slice(0,3)
+  .filter(c=>c&&c.assign&&typeof c.assign==='object'&&uniqueStudents.every(st=>Number.isInteger(Number(c.assign[st.id]))&&Number(c.assign[st.id])>=1&&Number(c.assign[st.id])<=count))
+  .map(c=>({assign:Object.fromEntries(uniqueStudents.map(st=>[st.id,Number(c.assign[st.id])])),target:Array.from({length:count},(_,i)=>Number(c.target?.[i])||Math.floor(uniqueStudents.length/count)),score:Number(c.score)||0}));
+ return {...base,grade:String(raw.grade??'1').slice(0,12),classCount:count,traits,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
 }
 function loadState(){try{return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY)))}catch(e){return defaultState()}}
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
