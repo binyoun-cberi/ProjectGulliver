@@ -82,10 +82,20 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await nextFirst.locator('input[data-trait="돌봄 필요"]').check();
     await nextFirst.locator('.notice-picker summary').click();
     assert.equal(await nextFirst.locator('[data-key="level"]').inputValue(),'0.00');
+    // Teacher-defined note ceiling is stored and applied to snake allocation.
+    await page.locator('[data-tab="rules"]').click();
+    await page.locator('input[data-cap="운동부"]').fill('2');
+    await page.locator('input[data-cap="운동부"]').press('Tab');
+    assert.equal(await page.locator('input[data-cap="운동부"]').inputValue(),'2');
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.locator('[data-tab="rules"]').click();
+    assert.equal(await page.locator('input[data-cap="운동부"]').inputValue(),'2','반당 인원 상한은 새로고침 후에도 보존해야 합니다.');
+    await page.locator('[data-tab="roster"]').click();
     await page.locator('#generateQuick').click();
     assert.equal(await page.locator('#view-results').isVisible(),true,'편성 결과 화면으로 이동해야 합니다.');
     assert.ok(await page.locator('#alternatives .alt').count()>=1);
     assert.match(await page.locator('#validation').textContent(),/조건 위반 없음/);
+    assert.match(await page.locator('#report').textContent(),/운동부 \(반당 최대 2명\)/);
     const [classCsv] = await Promise.all([page.waitForEvent('download'),page.locator('#exportCsv').click()]);
     assert.ok(classCsv.suggestedFilename().startsWith('반편성_결과_') && classCsv.suggestedFilename().endsWith('.csv'));
 
