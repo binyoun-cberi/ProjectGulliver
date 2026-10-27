@@ -1,15 +1,15 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const D=require('../worksheet-english-dictation'),P=require('../worksheet-dictation-player');
-test('English grades have 160 complete unique sentences, translations and four ten-sentence themes',()=>{
+test('English grades have 320 complete unique sentences, translations and four twenty-sentence themes',()=>{
  const seen=new Set();let previous=0;
  for(const grade of [3,4,5,6]){
-  const bank=D.bank(grade);assert.equal(bank.length,40);const words=bank.reduce((n,q)=>n+q.text.split(/\s+/).length,0)/40;assert.ok(words>previous);previous=words;
+  const bank=D.bank(grade);assert.equal(bank.length,80);const words=bank.reduce((n,q)=>n+q.text.split(/\s+/).length,0)/80;assert.ok(words>previous);previous=words;
   for(const q of bank){assert.ok(!seen.has(q.text));seen.add(q.text);assert.match(q.text,/^[A-Z].*[.!?]$/);assert.match(q.text,/^[\x20-\x7e]+$/);assert.ok(q.translation);assert.ok(q.focus);}
   for(const topic of D.topics(grade)){
    const sheet=D.generate({grade,topic:topic.id,seed:42});assert.equal(sheet.items.length,10);assert.equal(new Set(sheet.items.map(q=>q.id)).size,10);
    assert.deepEqual(D.generate({grade,topic:topic.id,seed:42,itemIds:sheet.items.map(q=>q.id)}),sheet);
-   if(topic.id!=='all'){assert.equal(topic.count,10);assert.ok(sheet.items.every(q=>q.topic===topic.id));}
+   if(topic.id!=='all'){assert.equal(topic.count,20);assert.ok(sheet.items.every(q=>q.topic===topic.id));}
   }
   const first=D.generate({grade,seed:42}),second=D.generate({grade,seed:43,excludeIds:first.items.map(q=>q.id)});assert.ok(second.items.every(q=>!first.items.some(x=>x.id===q.id)));
  }
