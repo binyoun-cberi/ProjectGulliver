@@ -1,0 +1,40 @@
+name: Clasheet Pinball Race checks
+on:
+  pull_request:
+    paths:
+      - '핀볼 레이스.html'
+      - 'pinball-race*.js'
+      - 'pinball-race*.css'
+      - '범퍼 룰렛.html'
+      - 'tools-catalog.js'
+      - 'tests/pinball-race*.cjs'
+      - '.github/workflows/pinball-race-checks.yml'
+  push:
+    branches: [main]
+    paths:
+      - '핀볼 레이스.html'
+      - 'pinball-race*.js'
+      - 'pinball-race*.css'
+      - '범퍼 룰렛.html'
+      - 'tools-catalog.js'
+      - 'tests/pinball-race*.cjs'
+      - '.github/workflows/pinball-race-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static and Matter.js regression tests
+        run: node --test tests/pinball-race.test.cjs
+      - name: Chromium browser smoke tests
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
+          command -v google-chrome
+          node --test --test-concurrency=1 tests/pinball-race-browser.e2e.cjs
