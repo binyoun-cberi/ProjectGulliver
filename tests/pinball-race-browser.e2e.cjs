@@ -37,7 +37,7 @@ test('real Chrome: balanced teams complete, roster transfers into unchanged bump
   const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/핀볼 레이스.html',{waitUntil:'load'});
-  await page.locator('input[name=mode][value=teams]').check();
+  await page.locator('.mode-choice').nth(1).click();
   await page.locator('#roster-input').fill('민준\n서연\n도윤\n하은\n지호\n수아\n현우\n윤서');
   await page.locator('#team-count').selectOption('3');
   await page.locator('#start-btn').click();
