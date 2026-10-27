@@ -183,3 +183,28 @@ test('우선 배치 없는 기존 지그재그 동작을 유지',()=>{
  assert.ok(r.candidates?.length);
  assert.deepEqual(list.slice(0,8).map(st=>r.candidates[0].assign[st.id]),[1,2,3,4,4,3,2,1]);
 });
+
+function presetUI(people,pairs=[],caps={}){
+ const scope=engine();Object.assign(scope,{state:{students:people,pairs,classCount:3,capRules:caps},presetSelected:new Set(people.map(st=>st.id)),presetUndo:null,findStudent:id=>people.find(st=>st.id===id),invalidate:()=>{},changeState:()=>{},renderPreset:()=>{},presetFeedback:()=>{}});
+ vm.runInContext(html.slice(html.indexOf('function presetIssues('),html.indexOf('function presetFeedback(')),scope);
+ vm.runInContext(html.slice(html.indexOf('function applyPresets('),html.indexOf('function presetVisibleStudents(')),scope);
+ return scope;
+}
+test('일괄 배치 중 분리 충돌은 전체 복구하고 선택을 유지한다',()=>{
+ const people=students(12),ui=presetUI(people,[{a:people[0].id,b:people[1].id}]);
+ assert.equal(ui.applyPresets([people[0].id,people[1].id],1),false);
+ assert.ok(people.every(st=>st.fixed===0));assert.equal(ui.presetSelected.size,12);assert.equal(ui.presetUndo,null);
+});
+test('일괄 배치 및 반 이동을 한 단계 되돌리고 자동 편성에 지정 반을 보존한다',()=>{
+ const people=students(12),ui=presetUI(people),ids=people.slice(0,3).map(st=>st.id);
+ assert.equal(ui.applyPresets(ids,1),true);assert.equal(ui.presetSelected.size,9);
+ assert.equal(ui.applyPresets(ids,2),true);ui.undoPresets();assert.ok(people.slice(0,3).every(st=>st.fixed===1));
+ const out=ui.generateCandidates(people,[],3,[],seed(25),{});assert.ok(out.candidates.length);
+ for(const c of out.candidates)for(const id of ids)assert.equal(c.assign[id],1);
+});
+test('일괄 배치 인원 초과·유의 사항 상한·변경된 명단의 되돌리기 방지',()=>{
+ const people=students(12),ui=presetUI(people,[],{'학습 지원':1});
+ assert.equal(ui.applyPresets(people.slice(0,5).map(st=>st.id),1),false);assert.ok(people.every(st=>!st.fixed));
+ assert.equal(ui.applyPresets([people[0].id,people[4].id],1),false);assert.ok(people.every(st=>!st.fixed));
+ assert.equal(ui.applyPresets([people[0].id],1),true);people.pop();ui.undoPresets();assert.equal(people[0].fixed,1);assert.equal(ui.presetUndo,null);
+});
