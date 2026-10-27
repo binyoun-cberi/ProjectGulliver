@@ -60,6 +60,17 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
       assert.match(status, /저장 방식이 달라요/, tool.href);
       assert.doesNotMatch(await shell.textContent(), /자동 저장됨|비밀번호|역할 배정 결과/);
     }
+    // Real browser smoke: demo import -> generate -> result preview -> download.
+    await page.goto(base + encodeURIComponent('반 편성 도우미.html'), {waitUntil: 'domcontentloaded'});
+    await page.locator('#demo').click();
+    assert.equal(await page.locator('#statStudents').textContent(),'36명');
+    await page.locator('#generateQuick').click();
+    assert.equal(await page.locator('#view-results').isVisible(),true,'편성 결과 화면으로 이동해야 합니다.');
+    assert.ok(await page.locator('#alternatives .alt').count()>=1);
+    assert.match(await page.locator('#validation').textContent(),/조건 위반 없음/);
+    const [classCsv] = await Promise.all([page.waitForEvent('download'),page.locator('#exportCsv').click()]);
+    assert.ok(classCsv.suggestedFilename().startsWith('반편성_결과_') && classCsv.suggestedFilename().endsWith('.csv'));
+
     await page.goto(base + encodeURIComponent('지도안식 원형 타이머.html'), {waitUntil: 'domcontentloaded'});
     await page.locator('.gt-shell').waitFor({state: 'attached'});
     await page.locator('body').evaluate(node => node.classList.add('student-view'));

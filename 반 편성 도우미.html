@@ -20,7 +20,7 @@
 <main class="shell">
  <div class="top"><div class="identity"><div class="mark" aria-hidden="true">반</div><div><div class="eyebrow">CLASS PLANNER</div><h1>반편성 도우미</h1><p class="subtitle">학생의 특징과 관계를 고려하는 새 학년 반 배정</p></div></div><div class="privacy">기기에서만 처리 · 외부 서버로 전송하지 않음</div></div>
  <div class="stats" aria-live="polite"><div class="stat"><small>등록한 학생</small><strong id="statStudents">0명</strong></div><div class="stat"><small>편성할 학급</small><strong id="statClasses">3개 반</strong></div><div class="stat"><small>분리해야 할 관계</small><strong id="statPairs">0쌍</strong></div><div class="stat"><small>중복 이름</small><strong id="statDuplicates">0건</strong></div></div>
- <div class="card setup"><div class="formfields"><label class="field">새 학년 <input id="grade" type="text" value="1" maxlength="12" aria-label="새 학년"></label><label class="field">새 학급 수 <input id="classCount" type="number" min="2" max="12" value="3"></label></div><div class="actions"><button id="demo" class="btn soft">예시 데이터 보기</button><button id="saveJson" class="btn">설정 백업 (.json)</button><button id="openJson" class="btn">백업 불러오기</button><input type="file" id="jsonFile" accept=".json,application/json" hidden><button id="reset" class="btn danger">모두 지우기</button></div></div>
+ <div class="card setup"><div class="formfields"><label class="field">새 학년 <input id="grade" type="text" value="1" maxlength="12" aria-label="새 학년"></label><label class="field">새 학급 수 <input id="classCount" type="number" min="2" max="12" value="3"></label></div><div class="actions"><button id="demo" class="btn soft">예시 데이터 보기</button><button id="generateQuick" class="btn primary">바로 반 편성하기</button><button id="saveJson" class="btn">설정 백업 (.json)</button><button id="openJson" class="btn">백업 불러오기</button><input type="file" id="jsonFile" accept=".json,application/json" hidden><button id="reset" class="btn danger">모두 지우기</button></div></div>
  <nav class="tabs" aria-label="기능 선택"><button class="tab" data-tab="roster" aria-selected="true">01 학생 명단 · 특징</button><button class="tab" data-tab="rules" aria-selected="false">02 분리할 학생 지정</button><button class="tab" data-tab="results" aria-selected="false">03 반 편성 · 검토</button></nav>
  <section id="view-roster" class="card" aria-label="학생 명단"><div class="section-head"><div><h2>학생 명단 <span id="rosterCount" class="count-pill">0명</span></h2><p>기존 반·성별·학습지표를 입력하고 학생별 특징을 체크해 주세요.</p></div><div class="actions"><input id="searchStudent" aria-label="학생 검색" placeholder="이름 · 기존 반 검색" style="width:160px"><button id="toggleBulk" class="btn">스프레드시트 붙여넣기</button><button id="addStudent" class="btn primary">+ 학생 추가</button></div></div>
  <div id="bulkPanel" class="bulk hidden"><div class="bulk-head"><strong>여러 명 한 번에 입력</strong><button id="closeBulk" class="btn ghost small">닫기</button></div><p>구글 스프레드시트에서 복사하여 붙여넣으세요. 순서: <b>기존 반 / 번호 / 이름 / 성별 / 학습지표(1~5) / 특징(쉼표 구분) / 메모</b>. 이름만 있는 한 열도 가능합니다. 첫 줄의 열 제목은 자동으로 건너뜁니다.</p><textarea id="bulkText" placeholder="1반&#9;1&#9;김하늘&#9;여&#9;3&#9;리더십,관계 지원&#9;\n1반&#9;2&#9;이도윤&#9;남&#9;4&#9;생활 지원"></textarea><div class="inline"><label style="font-size:12px"><input type="radio" name="bulkMode" value="append" checked> 기존 명단에 추가</label><label style="font-size:12px"><input type="radio" name="bulkMode" value="replace"> 기존 명단 교체</label><button id="commitBulk" class="btn primary">명단 적용</button></div></div>
@@ -138,7 +138,7 @@ function improveCandidate(students,pairs,traits,k,candidate,random){
   const assignments={...candidate.assign};let score=calcScore(students,assignments,k,traits,candidate.target);
   const unlocked=students.filter(s=>!s.fixed);if(unlocked.length<2)return {...candidate,assign:assignments,score};
   const neighbors={};for(const s of students)neighbors[s.id]=[];for(const p of pairs){neighbors[p.a].push(p.b);neighbors[p.b].push(p.a)}
-  let stale=0;for(let attempt=0;attempt<2800 && stale<850;attempt++){
+  let stale=0;for(let attempt=0;attempt<(students.length>400?160:students.length>180?500:students.length>100?1100:2800) && stale<850;attempt++){
     const a=unlocked[Math.floor(random()*unlocked.length)],b=unlocked[Math.floor(random()*unlocked.length)];if(a===b)continue;
     const ca=assignments[a.id],cb=assignments[b.id];if(ca===cb)continue;
     assignments[a.id]=cb;assignments[b.id]=ca;
@@ -150,6 +150,43 @@ function improveCandidate(students,pairs,traits,k,candidate,random){
   }
   return {...candidate,assign:assignments,score};
 }
+/* The greedy allocator can miss valid layouts with overlapping fixed students and separation rules.
+   An MRV backtracking fallback searches the constrained cases without claiming infeasibility. */
+function searchFeasibleAssignment(students,pairs,k,traits,random){
+  const target=candidateTargets(students,k,random);if(!target)return null;
+  const assignment={},counts=Array(k).fill(0),neighbors={};
+  for(const s of students){neighbors[s.id]=[];if(s.fixed){assignment[s.id]=s.fixed;counts[s.fixed-1]++}}
+  for(const p of pairs){if(neighbors[p.a]&&neighbors[p.b]){neighbors[p.a].push(p.b);neighbors[p.b].push(p.a)}}
+  const free=students.filter(s=>!s.fixed),taken=new Set();let steps=0;
+  // Bound the search instead of freezing a teacher's browser on impossible inputs.
+  const nodeBudget=students.length>300?2000:students.length>150?9000:60000;
+  function recurse(depth){
+    if(depth===free.length)return true;
+    if(++steps>nodeBudget)return false;
+    let chosen=null,options=null,priority=-Infinity;
+    for(const s of free){
+      if(taken.has(s.id))continue;
+      const possible=[];
+      for(let c=1;c<=k;c++)if(counts[c-1]<target[c-1]&&canEnter(s.id,c,assignment,neighbors))possible.push(c);
+      if(!possible.length)return false;
+      const rank=-possible.length*1000+neighbors[s.id].length+random()*0.01;
+      if(rank>priority){priority=rank;chosen=s;options=possible}
+    }
+    options.sort((a,b)=>{
+      const da=counts[a-1]/Math.max(1,target[a-1]),db=counts[b-1]/Math.max(1,target[b-1]);
+      return da-db||a-b;
+    });
+    taken.add(chosen.id);
+    for(const c of options){assignment[chosen.id]=c;counts[c-1]++;
+      if(recurse(depth+1))return true;
+      counts[c-1]--;delete assignment[chosen.id];
+      if(steps>nodeBudget)break;
+    }
+    taken.delete(chosen.id);return false;
+  }
+  if(!recurse(0))return null;
+  return {assign:{...assignment},target,score:calcScore(students,assignment,k,traits,target)};
+}
 function generateCandidates(students,pairs,k,traits,random=Math.random){
   if(!students.length)return {error:'학생 명단을 먼저 입력해 주세요.'};
   if(students.some(s=>!s.name.trim()))return {error:'이름이 비어 있는 학생이 있습니다. 이름을 모두 입력해 주세요.'};
@@ -158,26 +195,43 @@ function generateCandidates(students,pairs,k,traits,random=Math.random){
   const neighbors={};for(const s of students)neighbors[s.id]=[];
   for(const p of pairs){if(neighbors[p.a] && neighbors[p.b]){neighbors[p.a].push(p.b);neighbors[p.b].push(p.a)}}
   const solutions=[],seen=new Set();let totalSuccess=0;
-  for(let trial=0;trial<260;trial++){
+  for(let trial=0;trial<(students.length>400?12:students.length>180?36:students.length>100?75:260);trial++){
     const target=candidateTargets(students,k,random);if(!target)return {error:'특정 반에 고정된 학생이 너무 많습니다. 반별 고정 인원은 전체 학생 수를 반 수로 나눈 적정 인원 이하여야 합니다.'};
-    const assignment={},counts=Array(k).fill(0);for(const s of students)if(s.fixed){assignment[s.id]=s.fixed;counts[s.fixed-1]++}
+    const assignment={},counts=Array(k).fill(0),boys=Array(k).fill(0),girls=Array(k).fill(0),levelSum=Array(k).fill(0);
+    const totalBoys=students.filter(s=>s.gender==='남').length,totalGirls=students.filter(s=>s.gender==='여').length;
+    const totalLevel=students.reduce((n,s)=>n+(s.level||0),0);
+    for(const s of students)if(s.fixed){assignment[s.id]=s.fixed;counts[s.fixed-1]++;
+      if(s.gender==='남')boys[s.fixed-1]++;if(s.gender==='여')girls[s.fixed-1]++;
+      levelSum[s.fixed-1]+=s.level||0;
+    }
     const order=students.filter(s=>!s.fixed).map(s=>({s,rank:(neighbors[s.id]||[]).length+random()*.9})).sort((a,b)=>b.rank-a.rank).map(x=>x.s);
     let failed=false;
     for(const s of order){
       const choices=[];for(let c=1;c<=k;c++){
         if(counts[c-1]>=target[c-1]||!canEnter(s.id,c,assignment,neighbors))continue;
         assignment[s.id]=c;
-        const score=calcScore(students.filter(x=>assignment[x.id]),assignment,k,traits,target)+random()*2;
+        const score=students.length>180?(
+          45*(counts[c-1]+1)/Math.max(1,target[c-1]) +
+          9*Math.abs((boys[c-1]+(s.gender==='남'?1:0))-(counts[c-1]+1)*totalBoys/students.length) +
+          9*Math.abs((girls[c-1]+(s.gender==='여'?1:0))-(counts[c-1]+1)*totalGirls/students.length) +
+          1.5*Math.abs((levelSum[c-1]+(s.level||0))-(counts[c-1]+1)*totalLevel/students.length) +random()*2
+        ):calcScore(students.filter(x=>assignment[x.id]),assignment,k,traits,target)+random()*2;
         choices.push({c,score});delete assignment[s.id];
       }
       if(!choices.length){failed=true;break}
       choices.sort((a,b)=>a.score-b.score);const selected=trial%7===0 && choices.length>1 && random()<.35?choices[1]:choices[0];
       assignment[s.id]=selected.c;counts[selected.c-1]++;
+      if(s.gender==='남')boys[selected.c-1]++;if(s.gender==='여')girls[selected.c-1]++;
+      levelSum[selected.c-1]+=s.level||0;
     }
     if(failed||validateAssignment(students,pairs,assignment).length||counts.some((x,j)=>x!==target[j]))continue;
     totalSuccess++;
     const sc=calcScore(students,assignment,k,traits,target);const sig=students.map(s=>assignment[s.id]).join(',');
     if(!seen.has(sig)){seen.add(sig);solutions.push({assign:{...assignment},target,score:sc})}
+  }
+  if(!solutions.length){
+    const fallback=searchFeasibleAssignment(students,pairs,k,traits,random);
+    if(fallback)solutions.push(fallback);
   }
   if(!solutions.length)return {error:'모든 분리 조건을 지키는 편성안을 찾지 못했습니다. 분리 관계나 고정 배정이 지나치게 많지 않은지 확인해 주세요. 조건이 실제로 불가능한지까지 확정하는 판정은 아닙니다.'};
   solutions.sort((a,b)=>a.score-b.score);
@@ -262,7 +316,8 @@ function installEvents(){
   $('cancelNote').addEventListener('click',()=>$('noteDialog').close());$('saveNote').addEventListener('click',()=>{const s=findStudent(noteStudentId);if(s){s.note=$('noteText').value.slice(0,1000);invalidate();changeState()}$('noteDialog').close()});
   $('addPair').addEventListener('click',()=>{const a=$('pairA').value,b=$('pairB').value;if(!a||!b){toast('두 학생을 모두 선택해 주세요.');return}if(a===b){toast('서로 다른 학생 두 명을 선택해 주세요.');return}if(state.pairs.some(p=>(p.a===a&&p.b===b)||(p.a===b&&p.b===a))){toast('이미 지정한 분리 관계입니다.');return}state.pairs.push({a,b});invalidate();changeState();toast('분리 관계를 추가했습니다.')});
   $('pairList').addEventListener('click',e=>{const b=e.target.closest('[data-pair-index]');if(!b)return;state.pairs.splice(Number(b.dataset.pairIndex),1);invalidate();changeState()});
-  $('generate').addEventListener('click',()=>{const outcome=generateCandidates(state.students,state.pairs,state.classCount,state.traits);if(outcome.error){toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;changeState();toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
+  $('generate').addEventListener('click',()=>{const outcome=generateCandidates(state.students,state.pairs,state.classCount,state.traits);if(outcome.error){toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
+  $('generateQuick').addEventListener('click',()=>$('generate').click());
   $('alternatives').addEventListener('click',e=>{const b=e.target.closest('[data-candidate]');if(!b)return;state.activeCandidate=Number(b.dataset.candidate);saveState();renderResults()});
   $('resultGrid').addEventListener('change',manualMove);
   $('exportCsv').addEventListener('click',exportCSV);$('print').addEventListener('click',()=>window.print());
