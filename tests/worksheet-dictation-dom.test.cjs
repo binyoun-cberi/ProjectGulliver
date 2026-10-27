@@ -16,6 +16,10 @@ test('dictation UI separates hidden answers, grade changes, saved selections and
  d.getElementById('dictStart').click();assert.equal(timed.lastSpoken.rate,.5);assert.match(d.getElementById('dictRound').textContent,/5번/);timed.close();
  }
  const oldCount=load('?grade=1&seed=42&repeats=10');assert.equal(oldCount.document.getElementById('dictRepeats').value,'3');oldCount.close();
+ for(const [grade,topic] of [[1,'batchim-nasal'],[1,'batchim-stop'],[2,'batchim-spelling'],[2,'batchim-link'],[3,'batchim-double-one'],[3,'batchim-double-two']]){
+ const focused=load('?grade='+grade+'&topic='+topic+'&seed=42'),fd=focused.document;assert.equal(fd.getElementById('dictTopic').value,topic);assert.match(fd.getElementById('poolInfo').textContent,/20개 중 10문장/);assert.equal(fd.querySelectorAll('#dictWritingList>li').length,10);assert.match(fd.getElementById('gradeFocus').textContent,/받침/);
+ const saved=load(focused.location.search);assert.equal(saved.document.getElementById('dictAnswerList').textContent,fd.getElementById('dictAnswerList').textContent);saved.close();focused.close();
+ }
  const w=load('?grade=1&seed=42'),d=w.document;assert.equal(d.querySelectorAll('#dictWritingList>li').length,10);assert.equal(d.querySelector('#dictTeacher').open,false);assert.equal(w.lastSpoken,undefined);
  const original=d.querySelector('#dictAnswerList').textContent;const replay=load(w.location.search);assert.equal(replay.document.querySelector('#dictAnswerList').textContent,original);replay.close();
  d.querySelector('#dictTeacher').open=true;d.querySelector('#dictStart').click();assert.equal(d.querySelector('#dictTeacher').open,false);assert.equal(w.lastSpoken.lang,'ko-KR');assert.equal(d.querySelector('#dictRate').disabled,true);
