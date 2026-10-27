@@ -109,3 +109,13 @@ legend.field-label{margin:0 0 10px}
 .result-entries .person-result{min-width:calc(50% - 8px);padding:10px;text-align:center;color:#2f445d}
 @media(min-width:1100px){#pinball-canvas{max-height:calc(100vh - 180px);min-height:430px}}
 @media(max-width:780px){.pinball-page{padding-top:77px}.play-toolbar{padding:12px 14px}.play-bottom{font-size:10px}.live-rankings{margin-top:12px}}
+
+.marble-legend{margin-top:12px;border:1px solid #d9e4ea;border-radius:12px;background:#fcfdff;overflow:hidden}
+.marble-legend summary{font-size:12px;font-weight:900;color:#34566a;padding:12px;cursor:pointer;list-style:none}
+.marble-legend summary::after{content:"⌄";float:right}
+.marble-legend[open] summary::after{content:"⌃"}
+#marble-legend-list{max-height:205px;overflow:auto;padding:7px 10px 10px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.marble-legend-item{display:flex;gap:6px;align-items:center;min-width:0;padding:5px 6px;border-radius:8px;background:#f0f5fa;font-size:11px;font-weight:850}
+.marble-legend-item i{width:11px;height:11px;flex:0 0 11px;border-radius:100%;box-shadow:0 0 0 2px #fff}
+.marble-legend-item b{color:#698096;min-width:15px}
+.marble-legend-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
