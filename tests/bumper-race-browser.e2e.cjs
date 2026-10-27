@@ -48,9 +48,9 @@ for(const config of [
  const names=Array.from({length:config.n},(_,i)=>'참가자'+(i+1));
  await page.locator('#names-input').fill(names.join('\n'));
  await page.locator('#slots-input').fill(Array.from({length:config.k},(_,i)=>'모둠'+(i+1)).join('\n'));
- await page.locator('#game-purpose').selectOption('assign');
+ if(!config.balanced)await page.locator('#game-purpose').selectOption('assign');
  if(config.unique)await page.locator('#one-marble-per-slot').check();
- if(config.balanced)await page.locator('#balanced-teams').check();
+ if(config.balanced){await page.locator('#balanced-teams').check();assert.equal(await page.locator('#game-purpose').inputValue(),'assign');}
  await page.locator('#start-btn').click();
  await page.locator('#setup-panel').waitFor({state:'hidden'});
  assert.ok(await page.locator('#allocation-live').isVisible());

@@ -1237,27 +1237,6 @@
   }
 }
 
-        #result-list > div {min-width:0}
-        #result-list > div > div:last-child {max-width:55%;white-space:normal;overflow-wrap:anywhere;flex-shrink:1}
-        #win-log .win-item > div:last-child > div:last-child {max-width:55%;white-space:normal;overflow-wrap:anywhere;flex-shrink:1}
-        #result-list [hidden] {display:none!important}
-        #gameCanvas{position:fixed;left:0;top:var(--bumper-top,72px)}
-        #ui-layer{position:fixed!important;top:var(--bumper-top,72px)!important;height:calc(100dvh - var(--bumper-top,72px))!important}
-        #allocation-live{top:calc(var(--bumper-top,72px) + 8px)!important;max-width:94vw;font-size:13px;max-height:60px;overflow:hidden}
-        #setup-panel{max-height:calc(100dvh - var(--bumper-top,72px) - 24px)!important}
-        #result-modal>.glass-panel{max-height:calc(100dvh - var(--bumper-top,72px) - 30px)!important}
-        #result-list{min-height:0;touch-action:pan-y}
-        #result-title{margin-bottom:14px}
-        #leaderboard-panel,#win-log{top:68px!important}
-        body:has(#directed-result-notice:not(.hidden)) #allocation-live{top:calc(var(--bumper-top,72px) + 58px)!important}
-        body:has(#directed-result-notice:not(.hidden)) #leaderboard-panel,body:has(#directed-result-notice:not(.hidden)) #win-log{top:122px!important}
-        @media(max-width:768px){
-          #leaderboard-panel{left:8px;min-width:0;width:40%;opacity:1;padding:9px}
-          #win-log{right:8px;width:44%;max-height:190px}
-          #allocation-live{font-size:12px;padding:8px;min-width:65vw}
-          #result-modal>.glass-panel{padding:18px}
-        }
-
     </style>
     <style>
         body { margin: 0; overflow: hidden; background-color: #1a202c; color: white; font-family: 'Pretendard', sans-serif; touch-action: none; }
@@ -2568,6 +2547,7 @@
             useOneMarblePerSlot = document.getElementById('one-marble-per-slot').checked;
             useCloseRace = document.getElementById('close-race').checked;
             useBalanced=document.getElementById('balanced-teams').checked;
+            if(useBalanced){gamePurpose='assign';useCountdown=false;document.getElementById('game-purpose').value='assign';syncPurposeUI();}
             saveGameConfig();
 
             let namesInput=document.getElementById('names-input').value.split('\n').map(n=>n.trim()).filter(Boolean);
@@ -3099,7 +3079,10 @@
             document.getElementById('allocation-rule').textContent=balance?'모둠별 인원을 최대 1명 차이로 배정합니다.':labels.length>16?'선택지가 많아 넓은 결승 게이트에서 무작위로 배정합니다.':'실제 구슬이 도착한 결과함으로 배정합니다.';
         }
         document.getElementById('balanced-teams').addEventListener('change',()=>{
-            if(document.getElementById('balanced-teams').checked)document.getElementById('one-marble-per-slot').checked=false;
+            if(document.getElementById('balanced-teams').checked){
+                document.getElementById('one-marble-per-slot').checked=false;
+                document.getElementById('game-purpose').value='assign';syncPurposeUI();
+            }
             updateAllocationRule();saveGameConfig();
         });
         document.getElementById('one-marble-per-slot').addEventListener('change',()=>{
@@ -3112,7 +3095,10 @@
         const purposeEl = document.getElementById('game-purpose');
         loadGameConfig();
         updateAllocationRule();
-        purposeEl.addEventListener('change',()=>{syncPurposeUI();saveGameConfig();});
+        purposeEl.addEventListener('change',()=>{
+            if(purposeEl.value==='winner')document.getElementById('balanced-teams').checked=false;
+            syncPurposeUI();updateAllocationRule();saveGameConfig();
+        });
         countdownToggleEl.addEventListener('change',()=>{syncCountdownInputState();saveGameConfig();});
         countdownInputEl.addEventListener('change',()=>{resetCountdownDisplay();saveGameConfig();});
         countdownInputEl.addEventListener('blur', resetCountdownDisplay);

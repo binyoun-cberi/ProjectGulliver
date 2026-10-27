@@ -73,3 +73,9 @@ test('physical unique slots, directed results and repeat starts keep the right q
  }
  t.dispose();
 });
+
+
+test('balanced teams always use complete assignment instead of a winner countdown',()=>{
+ const t=harness();t.start({n:100,k:6,purpose:'winner',balanced:true,countdown:true});
+ assert.deepEqual(t.alerts,[]);assert.equal(t.run('gamePurpose'),'assign');assert.equal(t.run('useCountdown'),false);t.dispose();
+});
