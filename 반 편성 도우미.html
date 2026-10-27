@@ -295,17 +295,17 @@ function generateCandidates(students,pairs,k,traits,random=Math.random,capRules=
     }
   }
   const ordered=snakeOrder(students),solutions=[],seen=new Set();
-  // The A plan is always the forward 1→k→1 snake when feasible.
-  for(let trial=0;trial<6&&solutions.length<3;trial++){
-    const variant=trial===0?0:trial===1?1:trial===2?2:(trial%3);
+  // Prefer the canonical 1→k→1 order. If greedy assignment cannot satisfy
+  // the hard rules, repair that same order before offering reverse/rotated alternatives.
+  const primary=greedySnake(students,pairs,k,traits,capRules,ordered,0,0,random)
+    ||searchFeasibleAssignment(students,pairs,k,traits,capRules,ordered,random);
+  if(primary){solutions.push(primary);seen.add(ordered.map(st=>primary.assign[st.id]).join(','))}
+  for(let trial=1;trial<6&&solutions.length<3;trial++){
+    const variant=trial===1?1:trial===2?2:trial%3;
     const candidate=greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,random);
     if(!candidate)continue;
-    const sig=ordered.map(s=>candidate.assign[s.id]).join(',');
+    const sig=ordered.map(st=>candidate.assign[st.id]).join(',');
     if(!seen.has(sig)){solutions.push(candidate);seen.add(sig)}
-  }
-  if(!solutions.length){
-    const fallback=searchFeasibleAssignment(students,pairs,k,traits,capRules,ordered,random);
-    if(fallback)solutions.push(fallback);
   }
   if(!solutions.length)return {error:'지정한 분리 관계·반 고정·유의 사항별 최대 인원을 모두 만족하는 편성안을 찾지 못했습니다. 조건을 확인해 주세요. 탐색 한도 때문에 실제로 가능한 편성안이 있을 수도 있습니다.'};
   return {candidates:solutions,successes:solutions.length};
