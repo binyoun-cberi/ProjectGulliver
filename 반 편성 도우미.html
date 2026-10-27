@@ -117,21 +117,26 @@ function validateAssignment(students,pairs,assign){
 function calcScore(students,assign,k,traits,target){
   const count=Array(k).fill(0),boys=Array(k).fill(0),girls=Array(k).fill(0),scoreSum=Array(k).fill(0),scoreN=Array(k).fill(0);
   const traitCounts=Array.from({length:k},()=>Object.fromEntries(traits.map(t=>[t,0])));
-  const oldCounts=Array.from({length:k},()=>({}));const totals={boys:0,girls:0,levelSum:0,levelN:0,traits:{},old:{}};
+  const oldCounts=Array.from({length:k},()=>({}));const totals={boys:0,girls:0,levelSum:0,levelSumSq:0,levelN:0,traits:{},old:{}};
   for(const t of traits)totals.traits[t]=0;
-  for(const s of students){const idx=(assign[s.id]||0)-1;if(idx<0||idx>=k)continue;
+  for(const st of students){const idx=(assign[st.id]||0)-1;if(idx<0||idx>=k)continue;
     count[idx]++;
-    if(s.gender==='남'){boys[idx]++;totals.boys++}if(s.gender==='여'){girls[idx]++;totals.girls++}
-    if(s.level){scoreSum[idx]+=s.level;scoreN[idx]++;totals.levelSum+=s.level;totals.levelN++}
-    for(const t of s.traits||[])if(traitCounts[idx][t]!==undefined){traitCounts[idx][t]++;totals.traits[t]++}
-    if(s.oldClass){oldCounts[idx][s.oldClass]=(oldCounts[idx][s.oldClass]||0)+1;totals.old[s.oldClass]=(totals.old[s.oldClass]||0)+1}
+    if(st.gender==='남'){boys[idx]++;totals.boys++}if(st.gender==='여'){girls[idx]++;totals.girls++}
+    if(hasStudyScore(st)){scoreSum[idx]+=st.level;scoreN[idx]++;totals.levelSum+=st.level;totals.levelSumSq+=st.level*st.level;totals.levelN++}
+    for(const t of st.traits||[])if(traitCounts[idx][t]!==undefined){traitCounts[idx][t]++;totals.traits[t]++}
+    if(st.oldClass){oldCounts[idx][st.oldClass]=(oldCounts[idx][st.oldClass]||0)+1;totals.old[st.oldClass]=(totals.old[st.oldClass]||0)+1}
   }
   const N=students.length||1;let loss=0;
+  const avg=totals.levelN?totals.levelSum/totals.levelN:0;
+  const deviation=totals.levelN?Math.max(1,Math.sqrt(Math.max(0,totals.levelSumSq/totals.levelN-avg*avg))):1;
   for(let j=0;j<k;j++){
     const t=target[j]||N/k;loss+=85*Math.pow((count[j]-t),2)/Math.max(1,t);
     loss+=18*Math.pow(boys[j]-(totals.boys*t/N),2)/Math.max(1,totals.boys/k);
     loss+=18*Math.pow(girls[j]-(totals.girls*t/N),2)/Math.max(1,totals.girls/k);
-    if(totals.levelN)loss+=12*Math.pow(scoreSum[j]-totals.levelSum*t/N,2)/Math.max(1,totals.levelN/k);
+    if(totals.levelN){
+      loss+=12*Math.pow((scoreSum[j]-avg*scoreN[j])/(deviation*Math.sqrt(Math.max(1,scoreN[j]))),2);
+      loss+=4*Math.pow(scoreN[j]-totals.levelN*t/N,2)/Math.max(1,totals.levelN/k);
+    }
     for(const trait of traits){const total=totals.traits[trait];if(total)loss+=12*Math.pow(traitCounts[j][trait]-total*t/N,2)/Math.max(1,total/k)}
     for(const old of Object.keys(totals.old)){const total=totals.old[old];if(total)loss+=8*Math.pow((oldCounts[j][old]||0)-total*t/N,2)/Math.max(1,total/k)}
   }
@@ -209,12 +214,14 @@ function generateCandidates(students,pairs,k,traits,random=Math.random){
   const solutions=[],seen=new Set();let totalSuccess=0;
   for(let trial=0;trial<(students.length>400?12:students.length>180?36:students.length>100?75:260);trial++){
     const target=candidateTargets(students,k,random);if(!target)return {error:'특정 반에 고정된 학생이 너무 많습니다. 반별 고정 인원은 전체 학생 수를 반 수로 나눈 적정 인원 이하여야 합니다.'};
-    const assignment={},counts=Array(k).fill(0),boys=Array(k).fill(0),girls=Array(k).fill(0),levelSum=Array(k).fill(0);
+    const assignment={},counts=Array(k).fill(0),boys=Array(k).fill(0),girls=Array(k).fill(0),levelSum=Array(k).fill(0),levelN=Array(k).fill(0);
     const totalBoys=students.filter(s=>s.gender==='남').length,totalGirls=students.filter(s=>s.gender==='여').length;
-    const totalLevel=students.reduce((n,s)=>n+(s.level||0),0);
+    const scored=students.filter(hasStudyScore),totalLevel=scored.reduce((n,st)=>n+st.level,0),avgLevel=scored.length?totalLevel/scored.length:0;
+    const levelVariance=scored.length?scored.reduce((n,st)=>n+Math.pow(st.level-avgLevel,2),0)/scored.length:0;
+    const levelSd=Math.max(1,Math.sqrt(levelVariance));
     for(const s of students)if(s.fixed){assignment[s.id]=s.fixed;counts[s.fixed-1]++;
       if(s.gender==='남')boys[s.fixed-1]++;if(s.gender==='여')girls[s.fixed-1]++;
-      levelSum[s.fixed-1]+=s.level||0;
+      if(hasStudyScore(s)){levelSum[s.fixed-1]+=s.level;levelN[s.fixed-1]++;}
     }
     const order=students.filter(s=>!s.fixed).map(s=>({s,rank:(neighbors[s.id]||[]).length+random()*.9})).sort((a,b)=>b.rank-a.rank).map(x=>x.s);
     let failed=false;
@@ -226,7 +233,7 @@ function generateCandidates(students,pairs,k,traits,random=Math.random){
           45*(counts[c-1]+1)/Math.max(1,target[c-1]) +
           9*Math.abs((boys[c-1]+(s.gender==='남'?1:0))-(counts[c-1]+1)*totalBoys/students.length) +
           9*Math.abs((girls[c-1]+(s.gender==='여'?1:0))-(counts[c-1]+1)*totalGirls/students.length) +
-          1.5*Math.abs((levelSum[c-1]+(s.level||0))-(counts[c-1]+1)*totalLevel/students.length) +random()*2
+          1.5*Math.abs(((levelSum[c-1]+(hasStudyScore(s)?s.level:0))-(levelN[c-1]+(hasStudyScore(s)?1:0))*avgLevel)/levelSd) +random()*2
         ):calcScore(students.filter(x=>assignment[x.id]),assignment,k,traits,target)+random()*2;
         choices.push({c,score});delete assignment[s.id];
       }
@@ -234,7 +241,7 @@ function generateCandidates(students,pairs,k,traits,random=Math.random){
       choices.sort((a,b)=>a.score-b.score);const selected=trial%7===0 && choices.length>1 && random()<.35?choices[1]:choices[0];
       assignment[s.id]=selected.c;counts[selected.c-1]++;
       if(s.gender==='남')boys[selected.c-1]++;if(s.gender==='여')girls[selected.c-1]++;
-      levelSum[selected.c-1]+=s.level||0;
+      if(hasStudyScore(s)){levelSum[selected.c-1]+=s.level;levelN[selected.c-1]++;}
     }
     if(failed||validateAssignment(students,pairs,assignment).length||counts.some((x,j)=>x!==target[j]))continue;
     totalSuccess++;
@@ -252,7 +259,11 @@ function generateCandidates(students,pairs,k,traits,random=Math.random){
   return {candidates:unique,successes:totalSuccess};
 }
 /* ENGINE_END */
-function reportData(candidate){const data=Array.from({length:state.classCount},()=>({total:0,boys:0,girls:0,levelN:0,levelSum:0,traitCounts:Object.fromEntries(state.traits.map(t=>[t,0]))}));for(const s of state.students){const c=candidate.assign[s.id];const d=data[c-1];if(!d)continue;d.total++;if(s.gender==='남')d.boys++;if(s.gender==='여')d.girls++;if(s.level){d.levelN++;d.levelSum+=s.level}for(const t of s.traits)if(t in d.traitCounts)d.traitCounts[t]++}return data}
+function reportData(candidate){
+ const data=Array.from({length:state.classCount},()=>({total:0,boys:0,girls:0,levelN:0,levelSum:0,traitCounts:Object.fromEntries(state.traits.map(t=>[t,0]))}));
+ for(const st of state.students){const c=candidate.assign[st.id],d=data[c-1];if(!d)continue;d.total++;if(st.gender==='남')d.boys++;if(st.gender==='여')d.girls++;if(hasStudyScore(st)){d.levelN++;d.levelSum+=st.level}for(const t of st.traits)if(t in d.traitCounts)d.traitCounts[t]++}
+ return data;
+}
 function renderResults(){
   const has=state.candidates.length>0;
   $('exportCsv').disabled=!has;$('print').disabled=!has;
@@ -264,10 +275,10 @@ function renderResults(){
   const counts=reportData(selected);const totals=counts.map(d=>d.total);const diff=Math.max(...totals)-Math.min(...totals);
   const over=diff>1?`반별 인원 차이가 ${diff}명입니다. 편성 결과를 직접 검토하세요.`: `반별 인원 차이 ${diff}명 · 분리 조건 위반 없음`;
   $('validation').innerHTML=violations.length?`<div class="alert"><b>분리 조건 위반 ${violations.length}건</b><div>${violations.map(escapeHtml).join('<br>')}</div></div>`:`<div class="success">${escapeHtml(over)}${duplicateNames().length?' · 동명이인이 있어 기존 반과 번호를 함께 확인하세요.':''}</div>`;
-  $('report').innerHTML=`<div class="report"><table><thead><tr><th>반</th><th>전체</th><th>남</th><th>여</th><th>성별 미입력</th><th>학습지표 평균</th></tr></thead><tbody>${counts.map((d,i)=>`<tr><td>${escapeHtml(displayClass(i+1))}</td><td>${d.total}명</td><td>${d.boys}명</td><td>${d.girls}명</td><td>${d.total-d.boys-d.girls}명</td><td>${d.levelN?(d.levelSum/d.levelN).toFixed(2):'—'}</td></tr>`).join('')}</tbody></table></div><div class="legend">${state.traits.map(t=>`<span>${escapeHtml(t)}: ${counts.map((d,i)=>`${i+1}반 ${d.traitCounts[t]}`).join(' / ')}</span>`).join('')}</div>`;
+  $('report').innerHTML=`<div class="report"><table><thead><tr><th>반</th><th>전체</th><th>남</th><th>여</th><th>성별 미입력</th><th>학습지표 평균</th></tr></thead><tbody>${counts.map((d,i)=>`<tr><td>${escapeHtml(displayClass(i+1))}</td><td>${d.total}명</td><td>${d.boys}명</td><td>${d.girls}명</td><td>${d.total-d.boys-d.girls}명</td><td>${d.levelN?(d.levelSum/d.levelN).toFixed(2):'—'}</td></tr>`).join('')}</tbody></table></div><div class="legend">${state.traits.filter(t=>counts.some(d=>d.traitCounts[t]>0)).map(t=>`<span>${escapeHtml(t)}: ${counts.map((d,i)=>`${i+1}반 ${d.traitCounts[t]}`).join(' / ')}</span>`).join('')}</div>`;
   $('resultGrid').innerHTML=counts.map((d,index)=>{
     const c=index+1;const pupils=state.students.filter(s=>selected.assign[s.id]===c).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-    return `<div class="class-card"><div class="class-top"><h3>${escapeHtml(displayClass(c))}<small>${d.total}명</small></h3><div class="class-metrics">남 ${d.boys} · 여 ${d.girls} · 학습지표 ${d.levelN?(d.levelSum/d.levelN).toFixed(1):'미입력'}</div></div><div class="class-body">${pupils.map(s=>`<div class="assigned"><div class="person"><b>${escapeHtml(s.name)}${s.fixed?' <span class="warning-dot" title="반 고정">◆</span>':''}</b><small>${escapeHtml(s.oldClass||'기존 반 미입력')}${s.number?' · '+escapeHtml(s.number)+'번':''} · ${escapeHtml(s.gender||'성별 미입력')}${s.traits.length?' · '+escapeHtml(s.traits.join(', ')):''}</small></div><select data-move="${escapeHtml(s.id)}" aria-label="${escapeHtml(s.name)} 반 변경" ${s.fixed?'disabled title="고정된 학생"':''}>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${i+1===c?'selected':''}>${i+1}반</option>`).join('')}</select></div>`).join('')||'<div class="empty">학생 없음</div>'}</div></div>`;
+    return `<div class="class-card"><div class="class-top"><h3>${escapeHtml(displayClass(c))}<small>${d.total}명</small></h3><div class="class-metrics">남 ${d.boys} · 여 ${d.girls} · 학습지표 ${d.levelN?(d.levelSum/d.levelN).toFixed(2):'미입력'}</div></div><div class="class-body">${pupils.map(s=>`<div class="assigned"><div class="person"><b>${escapeHtml(s.name)}${s.fixed?' <span class="warning-dot" title="반 고정">◆</span>':''}</b><small>${escapeHtml(s.oldClass||'기존 반 미입력')}${s.number?' · '+escapeHtml(s.number)+'번':''} · ${escapeHtml(s.gender||'성별 미입력')} · 학습 ${escapeHtml(studyText(s.level))}${s.traits.length?' · '+escapeHtml(s.traits.join(', ')):''}</small></div><select data-move="${escapeHtml(s.id)}" aria-label="${escapeHtml(s.name)} 반 변경" ${s.fixed?'disabled title="고정된 학생"':''}>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${i+1===c?'selected':''}>${i+1}반</option>`).join('')}</select></div>`).join('')||'<div class="empty">학생 없음</div>'}</div></div>`;
   }).join('');
 }
 function parseBulk(text){
