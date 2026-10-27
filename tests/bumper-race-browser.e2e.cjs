@@ -54,9 +54,13 @@ for(const config of [
  await page.locator('#start-btn').click();
  await page.locator('#setup-panel').waitFor({state:'hidden'});
  assert.ok(await page.locator('#allocation-live').isVisible());
+ const headerBottom=await page.locator('.gx-header,.gt-shell').first().evaluate(el=>el.getBoundingClientRect().bottom);
+ assert.ok((await page.locator('#allocation-live').boundingBox()).y>=headerBottom,'Live status must clear the shared header');
  await page.waitForTimeout(4000);
  if(screenshots)await page.screenshot({path:path.join(screenshots,'race-'+config.k+'-'+config.width+'.png')});
  await page.waitForFunction(()=>!document.getElementById('result-modal').classList.contains('hidden'),null,{timeout:60000});
+ const titleBox=await page.locator('#result-title').boundingBox();
+ assert.ok(titleBox.y>=headerBottom,'Result title must clear the shared header');
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('gulliver.roulette.lastResults.v1')));
  assert.equal(saved.completed,true);assert.equal(saved.results.length,100);
  assert.equal(new Set(saved.results.map(r=>r.name)).size,100);
