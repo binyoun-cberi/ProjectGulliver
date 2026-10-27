@@ -10,7 +10,7 @@ const start=html.indexOf('function validateAssignment(');
 const end=html.indexOf('/* ENGINE_END */');
 function engine(){
  assert.ok(start>0&&end>start,'순수 편성 엔진을 찾을 수 있어야 함');
- const scope={};vm.createContext(scope);vm.runInContext(html.slice(start,end),scope);return scope;
+ const scope={};vm.createContext(scope);vm.runInContext('function hasStudyScore(s){return Number.isFinite(s.level)&&s.level>=0}\n'+html.slice(start,end),scope);return scope;
 }
 function seed(n){let value=n|0;return()=>((value=Math.imul(1664525,value)+1013904223|0)>>>0)/4294967296}
 function students(N){return Array.from({length:N},(_,i)=>({id:'student-'+i,name:'학생'+i,oldClass:String(i%4+1),gender:i%2?'여':'남',level:i%5+1,traits:i%4===0?['학습 지원']:[],fixed:0}));}
@@ -81,3 +81,30 @@ for(const [N,k] of [[150,5],[300,6],[500,10],[1000,10]]){
   }
  });
 }
+
+test('학습지표의 0.00, 소수점, 미입력과 옛 데이터 변환',()=>{
+ const a=html.indexOf('function parseStudyScore('),b=html.indexOf('function hasStudyScore(',a);
+ assert.ok(a>0&&b>a);
+ const scope={};vm.createContext(scope);vm.runInContext(html.slice(a,b),scope);
+ assert.equal(scope.parseStudyScore('0.00'),0);
+ assert.equal(scope.parseStudyScore('83.75'),83.75);
+ assert.equal(scope.parseStudyScore('92.126'),92.13);
+ assert.equal(scope.parseStudyScore(''),null);
+ assert.equal(scope.parseStudyScore(-1),null);
+ assert.equal(scope.parseStudyScore(0,true),null);
+ assert.equal(scope.parseStudyScore(3,true),3);
+ for(const item of ['다문화','특수','쌍생아','분리조치','운동부','교권침해','성 사안','범법','연애관계','사회성'])assert.ok(html.includes(item));
+ assert.match(html,/id="rosterHead"/);
+ assert.match(html,/학습지표 \(0\.00~/);
+});
+test('실제 점수 0.00과 90.75가 포함된 편성 점수는 유한하며 분리조건 위반 없음',()=>{
+ const api=engine(),people=students(36);
+ people[0].level=0;people[1].level=90.75;people[2].level=null;
+ const pairs=[{a:people[0].id,b:people[1].id}];
+ const result=api.generateCandidates(people,pairs,3,['사회성'],seed(1978));
+ assert.ok(result.candidates?.length,result.error);
+ for(const c of result.candidates){
+  assert.ok(Number.isFinite(c.score));
+  assert.equal(api.validateAssignment(people,pairs,c.assign).length,0);
+ }
+});
