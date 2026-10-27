@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#15213b">
+<title>핀볼 레이스 | 클라시트</title>
+<meta name="description" content="짧고 짜릿한 교실용 핀볼 레이스. 1등 뽑기와 균등 팀 나누기를 한 화면에서.">
+<link rel="icon" type="image/svg+xml" href="clasheet-mark.svg">
+<link rel="stylesheet" href="gulliver-design.css?v=1.2.0">
+<link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
+<link rel="stylesheet" href="pinball-race.css?v=1">
+<script src="gulliver-shared.js?v=20261020-ui"></script>
+<script src="gulliver-app-shell.js?v=1.2.0"></script>
+<script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
+<script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
+<script src="vendor/matter.min.js"></script>
+<script src="pinball-race-core.js?v=1"></script>
+<script defer src="pinball-race.js?v=1"></script>
+</head>
+<body>
+<main class="pinball-page">
+  <header class="page-heading">
+    <div><span class="eyebrow">CLASHEET · 교실용 추첨 게임</span>
+      <h1>핀볼 레이스 <span class="heading-mark">●</span></h1>
+      <p>짧은 핀볼 경기로 발표자를 뽑고, 팀도 고르게 나눠요.</p>
+    </div>
+    <div class="heading-actions">
+      <a href="범퍼 룰렛.html" data-bumper-switch class="route-link">긴 경기 · 범퍼 룰렛 ↗</a>
+      <button type="button" class="soft-button" id="fullscreen-btn">⛶ 전체 화면</button>
+    </div>
+  </header>
+  <div class="pinball-layout">
+    <aside class="control-card" aria-label="레이스 설정">
+      <h2>레이스 설정</h2>
+      <p class="aside-intro">설정하고 출발하면 화면의 구슬들이 서로 부딪히며 달려요.</p>
+      <fieldset id="race-options">
+        <legend class="field-label">어떻게 뽑을까요?</legend>
+        <div class="mode-grid">
+          <label class="mode-choice"><input type="radio" name="mode" value="winner" checked>
+            <span class="mode-face"><strong>🏆 1등 뽑기</strong><small>첫 번째로 도착한 친구</small></span></label>
+          <label class="mode-choice"><input type="radio" name="mode" value="teams">
+            <span class="mode-face"><strong>🎨 팀 나누기</strong><small>경주로 모둠 배정하기</small></span></label>
+        </div>
+        <label class="field-label" for="roster-input">누가 달릴까요?</label>
+        <div class="tiny-actions">
+          <button type="button" id="classroom-btn" class="tiny-button">우리 반 불러오기</button>
+          <button type="button" id="sample-btn" class="tiny-button">예시 8명</button>
+          <button type="button" id="clear-btn" class="tiny-button">지우기</button>
+        </div>
+        <textarea id="roster-input" rows="7" placeholder="한 줄에 한 명씩 입력&#10;민준&#10;서연&#10;지후&#10;하은" spellcheck="false" aria-describedby="roster-help"></textarea>
+        <p id="roster-help" class="field-help">2~16명 · 이름이 같으면 번호를 붙여 구분해 주세요.</p>
+        <div id="team-options" class="team-options" hidden>
+          <label class="field-label" for="team-count">몇 팀으로 나눌까요?</label>
+          <select id="team-count"><option value="2">2팀</option><option value="3">3팀</option><option value="4">4팀</option></select>
+          <label class="field-label" for="team-labels">팀 이름 <span class="optional">쉼표로 구분</span></label>
+          <input id="team-labels" value="파랑 팀, 노랑 팀, 초록 팀, 보라 팀" maxlength="100">
+          <label class="balance-toggle"><input type="checkbox" id="balanced" checked><span><strong>인원 균등하게 나누기</strong><small>정원이 차면 입구가 닫혀 다른 팀으로 넘어가요.</small></span></label>
+          <p class="field-help">균등 배정을 끄면 도착 위치대로 자유롭게 나뉘어요.</p>
+        </div>
+      </fieldset>
+      <div class="start-area">
+        <button type="button" id="start-btn" class="primary-button">▶ 레이스 시작</button>
+        <button type="button" id="stop-btn" class="soft-button" hidden>■ 설정으로 돌아가기</button>
+        <p id="form-message" class="form-message" role="alert" aria-live="polite"></p>
+      </div>
+      <div class="aside-footer">기존 범퍼 룰렛은 변경하지 않았어요. 이름을 유지하며 두 게임을 오갈 수 있어요.</div>
+    </aside>
+    <section class="play-card" aria-label="핀볼 레이스 경기장">
+      <div class="play-toolbar">
+        <div class="play-label"><span class="live-light" aria-hidden="true"></span><strong id="play-title">핀볼 아레나</strong><span id="play-description">경기 준비</span></div>
+        <div class="clock-wrap"><span id="race-count">0 / 0 도착</span><strong id="race-clock">00:00</strong></div>
+      </div>
+      <div class="arena-surface">
+        <canvas id="pinball-canvas" width="900" height="690" aria-label="구슬이 핀볼 장애물 사이를 통과하는 경기 화면"></canvas>
+        <div id="pre-start" class="pre-start"><div class="pre-start-content"><span class="preview-orb">●</span>
+          <strong>짧고 짜릿한 핀볼 레이스</strong><span>참가자 이름을 입력하고 출발해 보세요.</span></div></div>
+        <div id="race-toast" class="race-toast" role="status" aria-live="polite"></div>
+        <div id="result-overlay" class="result-overlay" hidden>
+          <div class="result-card">
+            <span class="result-eyebrow">FINISH!</span>
+            <h2 id="result-heading">경기 결과</h2>
+            <p id="result-summary"></p>
+            <div id="result-entries" class="result-entries"></div>
+            <div class="result-actions">
+              <button type="button" id="again-btn" class="primary-button">↻ 같은 친구로 다시</button>
+              <button type="button" id="edit-btn" class="soft-button">설정 바꾸기</button>
+            </div>
+            <a href="범퍼 룰렛.html" data-bumper-switch class="result-route">길게 달리고 싶다면 범퍼 룰렛으로 ↗</a>
+          </div>
+        </div>
+      </div>
+      <div class="play-bottom">
+        <span id="race-note">모든 구슬은 같은 물리 규칙으로 달립니다.</span>
+        <span class="mini-key"><span class="key-dot orange"></span>범퍼 <span class="key-dot mint"></span>회전 장애물 <span class="key-dot violet"></span>마지막 관문</span>
+      </div>
+      <div id="team-status" class="team-status" aria-live="polite" hidden></div>
+    </section>
+  </div>
+</main>
+<script>window.addEventListener('DOMContentLoaded',()=>{window.Gulliver?.mountShell?.({title:'핀볼 레이스',icon:'🎯'});});</script>
+</body>
+</html>
