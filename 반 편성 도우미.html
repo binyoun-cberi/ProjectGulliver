@@ -285,16 +285,16 @@ function parseBulk(text){
   const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(x=>x.trim());if(!lines.length)return [];
   const delimiter=lines.some(x=>x.includes('\t'))?'\t':lines.some(x=>x.includes(','))?',':null;
   let columns=lines.map(line=>delimiter?parseCSVLine(line,delimiter):[line.trim()]);
-  if(columns[0] && columns[0].some(x=>/^(이름|학생명|성별|기존\s?반|현재\s?반|번호|학습지표|메모)$/i.test(x.trim())))columns.shift();
+  if(columns[0]&&columns[0].some(x=>/^(이름|학생명|성별|기존\s?반|현재\s?반|번호|학습지표(?:\s*\(.*\))?|유의\s?사항|특징|메모)$/i.test(x.trim())))columns.shift();
   const results=[];
-  for(const row of columns){let oldClass='',number='',name='',gender='',level=0,traits=[],note='';
+  for(const row of columns){let oldClass='',number='',name='',gender='',level=null,traits=[],note='';
     if(row.length===1){name=row[0]||''}
     else if(row.length===2){[oldClass,name]=row}
     else if(row.length===3){[oldClass,name,gender]=row}
     else if(row.length===4){[oldClass,number,name,gender]=row}
-    else{[oldClass,number,name,gender]=row;level=Number(row[4])||0;traits=(row[5]||'').split(/[,，、;/]/).map(x=>x.trim()).filter(Boolean);note=row.slice(6).join(' / ')}
+    else{[oldClass,number,name,gender]=row;level=parseStudyScore(row[4]);traits=String(row[5]||'').split(/[;,，、|/]/).map(x=>x.trim()).filter(Boolean);note=row.slice(6).join(' / ')}
     if(!String(name||'').trim())continue;
-    results.push({id:makeId(),oldClass:String(oldClass||'').trim(),number:String(number||'').trim(),name:String(name).trim(),gender:['남','여'].includes(String(gender||'').trim())?String(gender).trim():'',level:level>=1&&level<=5?level:0,traits,fixed:0,note:String(note||'')})
+    results.push({id:makeId(),oldClass:String(oldClass||'').trim(),number:String(number||'').trim(),name:String(name).trim(),gender:['남','여'].includes(String(gender||'').trim())?String(gender).trim():'',level,traits,fixed:0,note:String(note||'')})
   }
   return results;
 }
