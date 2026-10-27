@@ -13,7 +13,7 @@ button:focus-visible,a:focus-visible,textarea:focus-visible,input:focus-visible,
 .heading-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .route-link,.soft-button{border:1px solid #d2dee6;border-radius:12px;background:#fff;color:#32455b;padding:11px 13px;font-weight:850;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:42px}
 .route-link:hover,.soft-button:hover{background:#ebf7f2}
-.pinball-layout{display:grid;grid-template-columns:minmax(280px,350px) minmax(0,1fr);gap:18px;align-items:start}
+.pinball-layout{display:grid;grid-template-columns:minmax(280px,320px) minmax(0,1fr);gap:18px;align-items:start}
 .control-card,.play-card{background:#fff;border:1px solid var(--pr-line);border-radius:22px;box-shadow:0 14px 32px rgba(25,60,83,.065)}
 .control-card{padding:21px}
 .control-card h2{font-size:19px;letter-spacing:-.035em;margin:0 0 4px}
@@ -50,7 +50,7 @@ legend.field-label{margin:0 0 10px}
 .live-light{width:9px;height:9px;background:#16bd88;border-radius:100%;box-shadow:0 0 0 4px rgba(22,189,136,.14)}
 .clock-wrap{display:flex;align-items:center;gap:11px;white-space:nowrap;font-size:11px;color:#8792a5}
 .clock-wrap strong{font-size:22px;color:#213350;font-variant-numeric:tabular-nums;letter-spacing:.04em}
-.arena-surface{position:relative;width:100%;background:#121a31}
+.arena-surface{position:relative;width:100%;background:#121a31;box-shadow:inset 0 0 35px rgba(119,87,244,.28)}
 #pinball-canvas{display:block;width:100%;height:auto;aspect-ratio:900/690;max-height:calc(100vh - 170px);object-fit:contain;margin:auto;background:#131a2c}
 .pre-start,.result-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(14,24,44,.65);padding:15px}
 .pre-start-content{display:grid;justify-items:center;gap:10px;text-align:center;color:#fff}
@@ -82,3 +82,30 @@ legend.field-label{margin:0 0 10px}
 @media(max-width:1050px){.pinball-layout{grid-template-columns:280px minmax(0,1fr)}.control-card{padding:16px}}
 @media(max-width:780px){.pinball-page{padding-top:80px;width:calc(100% - 20px)}.pinball-layout{grid-template-columns:1fr}.page-heading{align-items:flex-start;flex-direction:column}.control-card{order:2}.play-card{order:1}.pre-start-content strong{font-size:18px}.clock-wrap strong{font-size:18px}#pinball-canvas{max-height:none}.team-status{grid-template-columns:repeat(2,1fr)}}
 @media(prefers-reduced-motion:reduce){.race-toast{transition:none}}
+
+/* v2: meaningful pace/rank controls and visible arcade action. */
+.winner-options{background:linear-gradient(115deg,#fff9e9,#fdfbf6);border:1px solid #f1dab0;border-radius:13px;padding:3px 12px 12px;margin-top:12px}
+.winner-options .field-label{margin-top:9px}
+.target-controls{display:flex;align-items:center;gap:12px;color:#745626;font-size:13px;font-weight:850}
+#finish-target{border:2px solid #e2b34c;border-radius:12px;background:#fff;max-width:100px;padding:11px;text-align:center;color:#634812;font-weight:950;font-size:21px}
+#race-speed{width:100%;border:1px solid #d9e2e9;border-radius:11px;padding:11px 12px;background:#fff;color:#263b50;font-weight:800;min-height:43px}
+.live-rankings{padding:13px;margin-top:16px;background:#f5fafc;border:1px solid #d9e8ed;border-radius:14px}
+.live-rankings h3{font-size:13px;margin:0 0 10px;font-weight:950;letter-spacing:-.02em}
+#live-rank-list{padding:0;margin:0;list-style:none;display:grid;gap:5px}
+#live-rank-list li{display:flex;align-items:center;gap:9px;border-radius:9px;background:#fff;padding:8px 10px;box-shadow:0 1px 3px #152b4710;font-size:12px}
+#live-rank-list strong{font-size:12px;min-width:26px;color:#357b78}
+#live-rank-list li:first-child strong{color:#bb771f}
+#live-rank-list i{width:12px;height:12px;border-radius:100%;box-shadow:0 0 5px #152b4733}
+#live-rank-list span{font-weight:800;color:#2c4057;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arena-surface{border-top:4px solid #263761;border-bottom:5px solid #1b3157}
+.play-toolbar{background:linear-gradient(115deg,#f3fbfb,#f4f6ff)}
+.play-label strong{font-weight:950}
+.clock-wrap strong{color:#0c6e74}
+.race-toast{border:2px solid #ffcf67;box-shadow:0 10px 38px #d49337a0,0 0 28px #fbbf24a0;background:linear-gradient(110deg,#192744,#352142);z-index:2}
+.arrival-flash{position:absolute;inset:0;pointer-events:none;opacity:0}
+.result-card{border:2px solid #ffc76a}
+.result-entries{max-height:min(46vh,350px);gap:7px}
+.result-entries .winner-result{font-size:clamp(19px,3vw,31px);font-weight:1000;color:#bb7315;width:100%;text-align:center;border-radius:12px;background:#fff6da;border:2px solid #ffcb68;padding:12px}
+.result-entries .person-result{min-width:calc(50% - 8px);padding:10px;text-align:center;color:#2f445d}
+@media(min-width:1100px){#pinball-canvas{max-height:calc(100vh - 180px);min-height:430px}}
+@media(max-width:780px){.pinball-page{padding-top:77px}.play-toolbar{padding:12px 14px}.play-bottom{font-size:10px}.live-rankings{margin-top:12px}}
