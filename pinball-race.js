@@ -37,7 +37,10 @@
   }
   function preferredNames() {
     const bridge=C.parseBridge(localStorage.getItem(C.BRIDGE_KEY));
-    if(bridge)return bridge.join('\n');
+    if(bridge){
+      try{localStorage.removeItem(C.BRIDGE_KEY);}catch(_){}
+      return bridge.join('\n');
+    }
     const own=readJson(C.OWN_KEY);
     if(own&&typeof own.names==='string')return own.names;
     const old=readJson(C.BUMPER_KEY);
