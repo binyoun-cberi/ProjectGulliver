@@ -61,11 +61,19 @@
   function rosterPayload(names) {
     return JSON.stringify({names:normalizeNames(names).join('\n'),updatedAt:Date.now()});
   }
+  function crossingOrder(balls) {
+    return balls.filter(b=>!b.finished&&b.body.position.y>=FINISH_Y)
+      .sort((a,b)=>crossingFraction(a)-crossingFraction(b)||a.index-b.index);
+  }
+  function crossingFraction(ball) {
+    const previous=ball.previousY ?? ball.body.positionPrev.y;
+    return Math.max(0,Math.min(1,(FINISH_Y-previous)/(ball.body.position.y-previous||1)));
+  }
   function createWorld(Matter, names, random = Math.random) {
     const roster = normalizeNames(names);
     const { Engine, Bodies, Body, Composite, Events } = Matter;
     const engine = Engine.create({enableSleeping:false});
-    engine.gravity.y = 0.012;
+    engine.gravity.y = 0.065;
     const staticBodies=[], animated=[], impacts=[];
     const wall = {isStatic:true, friction:0.02, restitution:0.66,label:'rail',
       render:{fillStyle:'#43516e'}};
@@ -76,30 +84,32 @@
     // Open-top funnel and safety side rails. No participant-specific geometry.
     rail(67,345,30,690); rail(833,345,30,690);
     rail(168,151,215,18,0.42); rail(732,151,215,18,-0.42);
+    // Short central route meets a rotating gate; side routes remain open.
+
     const pegOpts={isStatic:true,restitution:1.2,friction:0,label:'peg',render:{fillStyle:'#8ea3c5'}};
     const bumperOpts={isStatic:true,restitution:1.44,friction:0,label:'bumper',render:{fillStyle:'#fda846'}};
     const pegs = [[180,230],[330,208],[480,227],[630,208],[755,245],
       [138,332],[265,345],[420,338],[573,345],[730,337],
       [210,460],[350,446],[545,451],[705,470]];
     for (const [x,y] of pegs) add(Bodies.circle(x,y,10,pegOpts));
-    [[265,280,35],[645,288,38],[455,405,39],[185,405,28],[715,405,28]].forEach(([x,y,r]) => add(Bodies.circle(x,y,r,bumperOpts)));
+    [[265,280,30],[645,288,30],[185,405,24],[715,405,24]].forEach(([x,y,r]) => add(Bodies.circle(x,y,r,bumperOpts)));
     // Short alternative routes: risky spinning middle versus slower side rails.
     // Lower section remains open: narrow V-shaped ramps can trap slow-moving balls.
     const spindle=add(Bodies.rectangle(450,305,150,19,{isStatic:true,restitution:1.15,
       label:'spinner',render:{fillStyle:'#78e0d3'}}));
     animated.push({body:spindle,angle:0,speed:0.047 + random()*0.018});
-    const gates=add(Bodies.rectangle(450,405,102,15,{isStatic:true,restitution:1.35,
+    const gates=add(Bodies.rectangle(450,500,190,15,{isStatic:true,restitution:1.35,
       label:'spinner',render:{fillStyle:'#b4a1ff'}}));
-    animated.push({body:gates,angle:0,speed:-(0.055+random()*0.015)});
+    animated.push({body:gates,angle:random()*Math.PI,speed:-(0.035+random()*0.015)});
     // A single finish sensor line, followed by UI capacity gates for team mode.
     const order=shuffled(roster,random);
-    const columns=Math.min(order.length,15);
+    const columns=order.length;
     const colors=order.map((_,i)=>'hsl('+Math.round(i*137.508%360)+' 92% 68%)');
     const balls=order.map((name,index)=>{
-      // Two staggered launch rows keep all thirty marbles from spawning on top of one another.
-      const col=index%columns, row=Math.floor(index/columns);
-      const x=165 + (col+0.5)*(570/columns) + (random()-.5)*5;
-      const y=68+row*34+(col%2)*3;
+      // All marbles start at the same height; roster order is shuffled independently.
+      const col=index;
+      const x=85 + (col+0.5)*(730/columns);
+      const y=78;
       const body=Bodies.circle(x,y,RADIUS,{label:'ball',restitution:0.72,friction:0.004,
         frictionAir:0.005,density:0.0012,render:{fillStyle:colors[index]}});
       Body.setVelocity(body,{x:(random()-.5)*1.1,y:.2});
@@ -126,6 +136,7 @@
     let frame=0;
     function step() {
       frame++;
+      for (const ball of balls) ball.previousY=ball.body.position.y;
       for (const part of animated) Body.setAngle(part.body,part.angle+part.speed*frame);
       Engine.update(engine,1000/60);
       // Universal stuck-ball recovery, independent of identity or rank.
@@ -141,5 +152,5 @@
     return {engine,balls,staticBodies,animated,impacts,step,frame:()=>frame,finishY:FINISH_Y,W,H};
   }
   return {W,H,RADIUS,FINISH_Y,BRIDGE_KEY,OWN_KEY,BUMPER_KEY,normalizeNames,shuffled,
-    makeCapacities,createAllocator,parseBridge,rosterPayload,createWorld};
+    makeCapacities,createAllocator,parseBridge,rosterPayload,crossingOrder,createWorld};
 });
