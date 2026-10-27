@@ -61,7 +61,7 @@
           link.onclick=e=>{if(file==='문제지 만들기.html'&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){e.preventDefault();picker.open=false;window.dispatchEvent(new CustomEvent('gulliver:worksheet-subject',{detail:{subject:value}}));summary.focus();}};menu.append(link)}
         const dictation=element('a','','국어 받아쓰기');dictation.href='받아쓰기.html?subject=korean';menu.append(dictation);
         const englishDictation=element('a','','영어 받아쓰기');englishDictation.href='받아쓰기.html?subject=english';menu.append(englishDictation);
-        const speaking=element('a','','국어 말하기 · 영어 스피킹');speaking.href='말하기.html';menu.append(speaking);
+        const speaking=element('a','','국어 말하기');speaking.href='말하기.html?language=korean';menu.append(speaking);const englishSpeaking=element('a','','영어 스피킹');englishSpeaking.href='말하기.html?language=english';menu.append(englishSpeaking);
         picker.append(summary,menu);nav.append(picker);
         picker.addEventListener('toggle',()=>{if(picker.open)shell?.querySelectorAll('.gx-release[open]').forEach(badge=>{badge.open=false})});
         document.addEventListener('click',e=>{if(!picker.contains(e.target))picker.open=false});
