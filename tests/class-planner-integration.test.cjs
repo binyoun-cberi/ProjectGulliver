@@ -144,3 +144,42 @@ test('고정 반에 같은 유의 사항 학생이 최대 인원을 넘으면 �
  const out=E.generateCandidates(list,[],3,['사회성'],seed(8),{'사회성':2});
  assert.match(out.error,/1반/);assert.match(out.error,/사회성/);
 });
+
+test('교사 우선 배치 5명을 유지하면서 남은 학생으로 학습지표 평균을 맞춘다',()=>{
+ const E=engine(),list=Array.from({length:36},(_,i)=>({id:'pre'+i,name:'학생'+i,oldClass:String(i%3+1),gender:i%2?'남':'여',level:100-i,traits:[],fixed:i<5?1:0}));
+ const result=E.generateCandidates(list,[],3,[],seed(215),{});
+ assert.ok(result.candidates?.length,result.error);
+ for(const c of result.candidates){
+  for(let i=0;i<5;i++)assert.equal(c.assign[list[i].id],1,'교사 지정 배치 변경 금지');
+  const averages=Array.from({length:3},(_,j)=>{
+   const room=list.filter(st=>c.assign[st.id]===j+1);
+   assert.equal(room.length,12);
+   return room.reduce((sum,st)=>sum+st.level,0)/12;
+  });
+  assert.ok(Math.max(...averages)-Math.min(...averages)<=2.5,averages.join(','));
+ }
+});
+test('일부 반을 거의 채운 교사 우선 배치를 그대로 두고 빈 칸 편성',()=>{
+ const E=engine(),list=Array.from({length:60},(_,i)=>({id:'pre'+i,name:'학생'+i,oldClass:String(i%3+1),gender:i%2?'남':'여',level:i===0?0:90-i*.5,traits:i%7===0?['사회성']:[],fixed:i<17?1:0}));
+ const result=E.generateCandidates(list,[],3,['사회성'],seed(90),{'사회성':4});
+ assert.ok(result.candidates?.length,result.error);
+ for(const c of result.candidates){
+  assert.equal(E.validateAssignment(list,[],c.assign,{'사회성':4}).length,0);
+  for(let i=0;i<17;i++)assert.equal(c.assign[list[i].id],1);
+  const sizes=Array.from({length:3},(_,j)=>list.filter(st=>c.assign[st.id]===j+1).length);
+  assert.deepEqual(sizes,[20,20,20]);
+ }
+});
+test('교사가 먼저 지정한 반의 분리·상한 충돌은 명시적으로 거부',()=>{
+ const E=engine(),list=Array.from({length:12},(_,i)=>({id:'pre'+i,name:'학생'+i,oldClass:'',gender:'',level:90-i,traits:i<2?['사회성']:[],fixed:i<2?1:0}));
+ const pair=E.generateCandidates(list,[{a:list[0].id,b:list[1].id}],3,['사회성'],seed(42),{'사회성':2});
+ assert.match(pair.error,/분리 조건/);
+ const over=E.generateCandidates(list,[],3,['사회성'],seed(42),{'사회성':1});
+ assert.match(over.error,/1반/);
+});
+test('우선 배치 없는 기존 지그재그 동작을 유지',()=>{
+ const E=engine(),list=Array.from({length:24},(_,i)=>({id:'s'+i,name:'학생'+i,oldClass:'',gender:'',level:100-i,traits:[],fixed:0}));
+ const r=E.generateCandidates(list,[],4,[],seed(14),{});
+ assert.ok(r.candidates?.length);
+ assert.deepEqual(list.slice(0,8).map(st=>r.candidates[0].assign[st.id]),[1,2,3,4,4,3,2,1]);
+});

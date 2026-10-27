@@ -90,14 +90,44 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.reload({waitUntil:'domcontentloaded'});
     await page.locator('[data-tab="rules"]').click();
     assert.equal(await page.locator('input[data-cap="운동부"]').inputValue(),'2','반당 인원 상한은 새로고침 후에도 보존해야 합니다.');
+    // Teacher-first workflow: reserve willing teachers' pupils, then fill vacancies.
+    await page.locator('[data-tab="preset"]').click();
+    assert.equal(await page.locator('#presetRemaining').textContent(),'36명');
+    const firstId=await page.locator('#presetUnassigned [data-preset]').first().getAttribute('data-preset');
+    await page.locator('#presetUnassigned [data-preset]').first().selectOption('1');
+    assert.equal(await page.locator('#presetCount').textContent(),'1명 확정');
+    await page.locator('input[data-teacher-class="1"]').fill('담당교사 A');
+    await page.locator('input[data-teacher-class="1"]').press('Tab');
+    const secondId=await page.locator('#presetUnassigned [data-preset]').first().getAttribute('data-preset');
+    await page.locator('select[data-place-class="2"]').selectOption(secondId);
+    assert.equal(await page.locator('#presetCount').textContent(),'2명 확정');
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.locator('[data-tab="preset"]').click();
+    assert.equal(await page.locator('input[data-teacher-class="1"]').inputValue(),'담당교사 A');
+    assert.equal(await page.locator('#presetCount').textContent(),'2명 확정');
+    await page.locator('#fillRemaining').click();
+    assert.equal(await page.locator('#view-results').isVisible(),true);
+    assert.equal(await page.locator('#resultGrid select[data-move]:disabled').count(),2,'교사 지정 학생은 결과에서 이동 불가');
+    assert.match(await page.locator('#resultGrid').textContent(),/담당 담당교사 A/);
+    const firstClass=await page.locator('select[data-move="'+firstId+'"]').inputValue();
+    const secondClass=await page.locator('select[data-move="'+secondId+'"]').inputValue();
+    assert.equal(firstClass,'1');
+    assert.equal(secondClass,'2');
     await page.locator('[data-tab="roster"]').click();
     await page.locator('#generateQuick').click();
+    assert.equal(await page.locator('select[data-move="'+firstId+'"]').inputValue(),'1');
+    assert.equal(await page.locator('select[data-move="'+secondId+'"]').inputValue(),'2');
+
     assert.equal(await page.locator('#view-results').isVisible(),true,'편성 결과 화면으로 이동해야 합니다.');
     assert.ok(await page.locator('#alternatives .alt').count()>=1);
     assert.match(await page.locator('#validation').textContent(),/조건 위반 없음/);
     assert.match(await page.locator('#report').textContent(),/운동부 \(반당 최대 2명\)/);
     const [classCsv] = await Promise.all([page.waitForEvent('download'),page.locator('#exportCsv').click()]);
     assert.ok(classCsv.suggestedFilename().startsWith('반편성_결과_') && classCsv.suggestedFilename().endsWith('.csv'));
+    const savedCsv=fs.readFileSync(await classCsv.path(),'utf8');
+    assert.match(savedCsv,/담당교사 A/);
+    assert.match(savedCsv,/교사 지정/);
+
 
     await page.goto(base + encodeURIComponent('지도안식 원형 타이머.html'), {waitUntil: 'domcontentloaded'});
     await page.locator('.gt-shell').waitFor({state: 'attached'});
