@@ -12,7 +12,7 @@ test('400 original items form forty complete ten-item levels with stable, isolat
   assert.deepEqual(new Set(D.generate({grade:set.grade,topic:set.topic,seed:13}).items.map(q=>q.id)),new Set(bank.map(q=>q.id)));
   assert.throws(()=>D.generate({grade:set.grade,topic:set.topic,itemIds:D.bank(set.grade,'basic').slice(0,10).map(q=>q.id)}));
  }
- assert.equal(ids.size,400);assert.equal([1,2,3,4,5,6].reduce((n,g)=>n+D.bank(g).length,0),1060);
+ assert.equal(ids.size,400);assert.equal([1,2,3,4,5,6].reduce((n,g)=>n+D.bank(g).length,0),1180);
  for(const grade of [5,6]){assert.equal(D.topics(grade).some(t=>t.id.startsWith('level-')),false);assert.throws(()=>D.bank(grade,'level-1'),/주제/);}
  for(const topic of ['level-0','level-11','level-01'])assert.throws(()=>D.bank(1,topic),/주제/);
 });
