@@ -1,0 +1,40 @@
+name: Bumper Roulette large-class checks
+on:
+  pull_request:
+    paths:
+      - '범퍼 룰렛.html'
+      - 'bumper-race-core.js'
+      - 'tests/bumper-race*.cjs'
+      - '.github/workflows/bumper-race-checks.yml'
+  push:
+    branches: [main]
+    paths:
+      - '범퍼 룰렛.html'
+      - 'bumper-race-core.js'
+      - 'tests/bumper-race*.cjs'
+      - '.github/workflows/bumper-race-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Allocation, full physics races and persistence
+        run: node --test tests/bumper-race.test.cjs
+      - name: Desktop and mobile Chromium races
+        env:
+          BUMPER_SCREENSHOTS: test-results/bumper
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.55.1
+          node --test --test-concurrency=1 tests/bumper-race-browser.e2e.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bumper-race-screenshots
+          path: test-results/bumper
