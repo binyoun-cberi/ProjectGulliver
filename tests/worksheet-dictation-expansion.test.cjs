@@ -1,0 +1,6 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const K=require('../worksheet-dictation-data'),E=require('../worksheet-english-dictation'),L=require('../worksheet-dictation-levels');
+function rounds(D,grade,topic,n){const ids=[];for(let i=0;i<n;i++){const sheet=D.generate({grade,topic,seed:77+i,excludeIds:ids});assert.equal(sheet.items.length,10);for(const q of sheet.items){assert.ok(!ids.includes(q.id),'repeated '+q.id);ids.push(q.id);}assert.deepEqual(D.generate({grade,topic,itemIds:sheet.items.map(q=>q.id),seed:77+i}),sheet);}}
+test('expanded pools supply five basic, three batchim and two English rounds without repeated items',()=>{for(let g=1;g<=6;g++)rounds(K,g,'basic',5);for(const s of L.batchim())rounds(K,s.grade,s.topic,3);for(let g=3;g<=6;g++)for(const t of E.topics(g).filter(t=>t.id!=='all'))rounds(E,g,t.id,2);});
+test('expanded languages contain unique IDs and texts and accurately counted topic menus',()=>{for(const [D,grades,total]of [[K,[1,2,3,4,5,6],1360],[E,[3,4,5,6],320]]){const ids=new Set(),texts=new Set();for(const g of grades){const bank=D.bank(g);for(const q of bank){assert.ok(!ids.has(q.id));assert.ok(!texts.has(q.text),q.text);ids.add(q.id);texts.add(q.text);}for(const t of D.topics(g))assert.equal(t.count,D.bank(g,t.id).length);}assert.equal(ids.size,total);}});
