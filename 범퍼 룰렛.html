@@ -1330,6 +1330,27 @@
         @media (max-width: 640px) {
             .setting-option { min-height: auto; }
         }
+        #result-list > div {min-width:0}
+        #result-list > div > div:last-child {max-width:55%;white-space:normal;overflow-wrap:anywhere;flex-shrink:1}
+        #win-log .win-item > div:last-child > div:last-child {max-width:55%;white-space:normal;overflow-wrap:anywhere;flex-shrink:1}
+        #result-list [hidden] {display:none!important}
+        #gameCanvas{position:fixed;left:0;top:var(--bumper-top,72px)}
+        #ui-layer{position:fixed!important;top:var(--bumper-top,72px)!important;height:calc(100dvh - var(--bumper-top,72px))!important}
+        #allocation-live{top:calc(var(--bumper-top,72px) + 8px)!important;max-width:94vw;font-size:13px;max-height:60px;overflow:hidden}
+        #setup-panel{max-height:calc(100dvh - var(--bumper-top,72px) - 24px)!important}
+        #result-modal>.glass-panel{max-height:calc(100dvh - var(--bumper-top,72px) - 30px)!important}
+        #result-list{min-height:0;touch-action:pan-y}
+        #result-title{margin-bottom:14px}
+        #leaderboard-panel,#win-log{top:68px!important}
+        body:has(#directed-result-notice:not(.hidden)) #allocation-live{top:calc(var(--bumper-top,72px) + 58px)!important}
+        body:has(#directed-result-notice:not(.hidden)) #leaderboard-panel,body:has(#directed-result-notice:not(.hidden)) #win-log{top:122px!important}
+        @media(max-width:768px){
+          #leaderboard-panel{left:8px;min-width:0;width:40%;opacity:1;padding:9px}
+          #win-log{right:8px;width:44%;max-height:190px}
+          #allocation-live{font-size:12px;padding:8px;min-width:65vw}
+          #result-modal>.glass-panel{padding:18px}
+        }
+
     </style>
   <script src="gulliver-shared.js?v=20261020-ui"></script>
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
@@ -1337,10 +1358,12 @@
 <script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
 <link rel="stylesheet" href="gulliver-design.css?v=1.2.0">
 <script src="gulliver-app-shell.js?v=1.2.0"></script>
+<script src="bumper-race-core.js?v=1"></script>
 </head>
 <body>
 
     <canvas id="gameCanvas"></canvas>
+    <div id="allocation-live" role="status" aria-live="polite" style="display:none;position:fixed;left:50%;top:74px;transform:translateX(-50%);max-width:90vw;padding:9px 15px;border-radius:12px;background:#102331ed;color:#fff;text-align:center;z-index:4;pointer-events:none;overflow-wrap:anywhere"></div>
 
     <div id="ui-layer" class="flex flex-col items-center justify-center">
         
@@ -1354,16 +1377,16 @@
                         <button type="button" id="load-classroom-btn" class="setup-helper-btn">👥 우리 반 불러오기</button>
                         <button type="button" id="sample-names-btn" class="setup-helper-btn">예시 명단</button>
                     </div>
-                    <textarea id="names-input" rows="8" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none text-sm md:text-base" placeholder="학생 이름을 한 줄에 한 명씩 입력"></textarea>
+                    <textarea id="names-input" rows="8" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none text-sm md:text-base" placeholder="최대 100명 · 한 줄에 한 명씩 입력"></textarea>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">결과 슬롯 (엔터로 구분)</label>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">결과 선택지 (최대 200개 · 엔터로 구분)</label>
                     <textarea id="slots-input" rows="8" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none text-sm md:text-base">발표 당첨!
 통과
 통과
 질문하기
 통과</textarea>
-                    <p class="probability-hint">같은 결과를 여러 줄 넣으면 그 결과가 나올 영역이 넓어져 확률이 높아집니다.</p>
+                    <p class="probability-hint">같은 결과를 여러 줄 넣으면 그 결과의 비중이 커집니다. 17개 이상은 결승 통과 후 무작위로 배정합니다.</p>
                 </div>
             </div>
 
@@ -1375,7 +1398,7 @@
                     <span>🔒 교사 지정 결과</span>
                     <button id="close-debug-btn" class="ml-auto text-xs bg-red-800 hover:bg-red-700 px-2 py-1 rounded text-white">닫기</button>
                 </h3>
-                <p class="text-xs text-gray-300 mb-3">필요한 경우 특정 학생이 들어갈 결과 함을 지정합니다. 지정된 구슬은 마지막 구간에서 실제 해당 함으로 유도됩니다.</p>
+                <p class="text-xs text-gray-300 mb-3">필요한 경우 특정 학생이 들어갈 결과 함을 지정합니다. 일반 결과함에서는 해당 함으로 유도되며, 무작위 배정 게이트에서는 지정한 결과로 배정됩니다.</p>
                 <div class="flex flex-col gap-2" id="cheat-list">
                     <div class="flex gap-2 cheat-row">
                         <input type="text" placeholder="학생 이름 (예: 김철수)" class="cheat-name flex-1 bg-gray-800 border border-gray-600 rounded p-2 text-sm text-white focus:outline-none">
@@ -1429,6 +1452,9 @@
                     <p class="text-xs text-gray-500 mt-3 pl-8">전체 결과 배정에서 사용할 때 슬롯 수가 학생 수 이상이어야 합니다.</p>
                 </section>
             </div>
+            <label class="mode-card" style="display:block;margin-top:12px"><input type="checkbox" id="balanced-teams"> 모둠 인원 균등하게 나누기
+              <small style="display:block;color:#cbd5e1;margin-top:6px">서로 다른 결과 이름을 모둠으로 보고 인원 차이를 최대 1명으로 맞춥니다. 교사 지정도 정원에 포함합니다.</small></label>
+            <p id="allocation-rule" role="status" style="color:#a7f3d0;font-size:13px;margin-top:10px"></p>
             <p class="text-xs text-gray-400 text-center mt-2">용수철은 각각 무작위로 1~3번 튕긴 뒤 사라집니다.</p>
 
             <div style="display:flex;justify-content:flex-end;margin:12px 0 0"><a href="핀볼 레이스.html" data-pinball-switch style="font-weight:850;font-size:13px;color:#a7f3d0;text-decoration:underline;text-underline-offset:4px">⚡ 짧게 즐기는 핀볼 레이스로 바꾸기 ↗</a></div>
@@ -1461,7 +1487,11 @@
         <div id="result-modal" class="hidden absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center pointer-events-auto z-50 p-4">
             <div class="glass-panel p-6 md:p-8 rounded-2xl text-center transform transition-transform scale-95 hover:scale-100 shadow-2xl border-yellow-500 border-2 w-full max-w-2xl max-h-[85vh] flex flex-col">
                 <h2 id="result-title" class="text-2xl md:text-3xl text-yellow-300 mb-6 font-bold shrink-0">🎉 최종 결과 🎉</h2>
-                <div id="result-list" class="flex-1 overflow-y-auto grid grid-cols-1 gap-2 md:gap-3 mb-6 pr-2 text-left">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+             <input id="result-search" type="search" aria-label="결과에서 이름 또는 선택지 검색" placeholder="이름·결과 검색" style="min-width:0;flex:1;color:#fff;background:#1f2937;padding:9px;border:1px solid #64748b;border-radius:8px">
+             <label style="color:#fff;font-size:13px"><input id="result-grouped" type="checkbox"> 모둠별 보기</label>
+            </div>
+            <div id="result-list" class="flex-1 overflow-y-auto grid grid-cols-1 gap-2 md:gap-3 mb-6 pr-2 text-left">
                 </div>
                 <a href="핀볼 레이스.html" data-pinball-switch style="display:block;text-align:center;padding:11px;font-size:13px;font-weight:850;color:#a7f3d0;text-decoration:underline">⚡ 같은 친구로 핀볼 레이스하기 ↗</a>
                 <button id="reset-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 md:py-4 px-8 rounded-xl transition text-base md:text-lg w-full shrink-0">
@@ -1474,7 +1504,7 @@
     <script src="vendor/matter.min.js"></script>
     <script>
         // --- 교사 지정 결과 관련 로직 ---
-        let cheatData = {};
+        let cheatData = Object.create(null);
         const escapeDisplay=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); 
         
         const titleEl = document.getElementById('main-title');
@@ -1500,7 +1530,7 @@
         });
 
         function parseCheatData() {
-            cheatData = {};
+            cheatData = Object.create(null);
             const rows = document.querySelectorAll('.cheat-row');
             rows.forEach(row => {
                 const name = row.querySelector('.cheat-name').value.trim();
@@ -1671,7 +1701,11 @@
         let isFinished = false;
         let finishLineY = 0; 
         
-        let startBoxBottom; 
+        let startBoxBottom;
+        let useBalanced=false,virtualGate=false,resultPool=null;
+        let launchCeiling=-200,courseOpened=false,roundSerial=0;
+        const BC=window.ClasheetBumperCore;
+
 
         let countdownTimer = null;
         let countdownValue = 10;
@@ -1705,6 +1739,7 @@
                     useCountdown: document.getElementById('use-countdown').checked,
                     countdown: getCountdownSeconds(),
                     uniqueSlot: document.getElementById('one-marble-per-slot').checked,
+                    balanced: document.getElementById('balanced-teams').checked,
                     teacherResults: rows
                 };
                 localStorage.setItem(CONFIG_KEY, JSON.stringify(payload));
@@ -1740,6 +1775,7 @@
             document.getElementById('use-countdown').checked = saved.useCountdown !== false;
             if (saved.countdown) document.getElementById('countdown-seconds').value = saved.countdown;
             document.getElementById('one-marble-per-slot').checked = Boolean(saved.uniqueSlot);
+            document.getElementById('balanced-teams').checked=Boolean(saved.balanced);
             restoreTeacherRows(saved.teacherResults);
         }
 
@@ -1818,7 +1854,7 @@
 
         function reserveTeacherSlots() {
             slotZones.forEach(zone => { zone.reservedFor = null; });
-            if (!useOneMarblePerSlot) return true;
+            if (virtualGate || !useOneMarblePerSlot) return true;
             for (const [name, result] of Object.entries(cheatData)) {
                 const zone = slotZones.find(z => z.text === result && !z.reservedFor);
                 if (!zone) return false;
@@ -1853,7 +1889,12 @@
 
         function captureMarbleInSlot(marble, slot) {
             if (!slot) return;
-
+            if(virtualGate){
+                slot.occupiedCount=(slot.occupiedCount||0)+1;
+                slot.occupied=useOneMarblePerSlot;
+                Composite.remove(engine.world,marble.body);
+                return;
+            }
             slot.occupiedCount = (slot.occupiedCount || 0) + 1;
 
             const isTeacherDirected = Boolean(cheatData[marble.name]);
@@ -1922,6 +1963,8 @@
             return springBody;
         }
 
+        function crossingTime(m){const prev=m.body.positionPrev.y;return (finishLineY-prev)/(m.body.position.y-prev||1);}
+
         function initGame() {
             engine = Engine.create();
             // 수정됨: Matter.js 0.19.0에서는 engine.gravity.y를 사용해야 합니다.
@@ -1929,6 +1972,8 @@
 
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
+            const shellHeader=document.querySelector?.('.gx-header,.gt-shell');
+            if(shellHeader&&typeof ResizeObserver!=='undefined')new ResizeObserver(resizeCanvas).observe(shellHeader);
 
             document.getElementById('start-btn').addEventListener('click', startGame);
             document.getElementById('reset-btn').addEventListener('click', resetGame);
@@ -1970,12 +2015,32 @@
 
             Events.on(engine, 'afterUpdate', function() {
                 flushPendingSpringRemovals();
+                if(gameState==='playing'&&!isFinished){
+                    const crossed=marbles.filter(m=>!m.finished&&m.body.position.y>=finishLineY);
+                    crossed.sort((a,b)=>crossingTime(a)-crossingTime(b)||a.id-b.id);
+                    crossed.forEach(checkWinCondition);
+                }
             });
 
             Events.on(engine, 'beforeUpdate', function() {
                 if(gameState !== 'playing') return;
 
                 const time = engine.timing.timestamp;
+                if(gamePurpose==='assign'&&!courseOpened&&time>=25000){
+                    courseOpened=true;
+                    const removable=mapElements.filter(b=>b.label!=='boundary'&&b.label!=='slotWall');
+                    removable.forEach(b=>Composite.remove(engine.world,b));
+                    mapElements=mapElements.filter(b=>!removable.includes(b));
+                    motorizedWheels=[];dynamicSlopes=[];
+                    const status=document.getElementById('allocation-live');
+                    status.style.display='block';status.textContent='우회 수로가 열렸어요 · 남은 구슬도 결승까지 달려요';
+                }
+                if(courseOpened){
+                    for(const m of marbles)if(!m.finished){
+                        Body.setVelocity(m.body,{x:m.body.velocity.x*.7,y:Math.max(14,m.body.velocity.y)});
+                    }
+                }
+
 
                 motorizedWheels.forEach(wheel => {
                     Body.setAngularVelocity(wheel, wheel.motorSpeed);
@@ -1997,7 +2062,7 @@
                     if (m.finished) return;
 
                     // --- 교사 지정 결과 또는 결과 중복 금지에서만 보조 유도 ---
-                    const needsSlotGuide = Boolean(cheatData[m.name]) || useOneMarblePerSlot;
+                    const needsSlotGuide = !virtualGate && (Boolean(cheatData[m.name]) || useOneMarblePerSlot);
                     if (needsSlotGuide && m.body.position.y > finishLineY - 1500) {
                         const preferredSlot = getPreferredSlotForMarble(m, m.body.position.x);
                         if (preferredSlot) {
@@ -2089,12 +2154,38 @@
 
         function resizeCanvas() {
             canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            const header=document.querySelector?.('.gx-header,.gt-shell');
+            const top=header?Math.ceil(header.getBoundingClientRect().bottom):0;
+            document.documentElement?.style.setProperty('--bumper-top',top+'px');
+            canvas.height = Math.max(120,window.innerHeight-top);
+        }
+
+        function addResultArea(labels,y){
+            const width=WORLD_WIDTH/labels.length;
+            slotZones=labels.map((text,id)=>({id,text,x:id*width,width,y,centerX:(id+.5)*width,captureY:y+845,occupied:false,occupiedCount:0,reservedFor:null}));
+            const opts={isStatic:true,label:'slotWall',friction:0,restitution:.1,render:{fillStyle:'#334155'}};
+            if(!virtualGate)for(let i=0;i<=labels.length;i++)mapElements.push(Bodies.rectangle(i*width,y+500,30,1000,opts));
+            mapElements.push(Bodies.rectangle(600,y+1000,1200,60,opts));
+            finishLineY=y+900;WORLD_HEIGHT=y+1200;
+        }
+        function createAssignmentMap(labels){
+            const wall={isStatic:true,label:'boundary',friction:0,restitution:.2,render:{fillStyle:'#334155'}};
+            mapElements.push(Bodies.rectangle(600,launchCeiling-500,1200,1000,wall),Bodies.rectangle(-50,1800,100,5000,wall),Bodies.rectangle(1250,1800,100,5000,wall));
+            startBoxBottom=Bodies.rectangle(600,100,900,40,{...wall,label:'startBoxBottom',render:{fillStyle:'#f59e0b'}});
+            mapElements.push(startBoxBottom);
+            for(const [x,y] of [[240,450],[650,620],[950,900],[400,1150],[800,1450]])mapElements.push(Bodies.circle(x,y,55,{isStatic:true,label:'bumper',restitution:1.1,render:{fillStyle:'#f43f5e'}}));
+            for(const [x,y,speed] of [[450,780,.035],[650,1450,-.04]]){
+                const wheel=Bodies.rectangle(x,y,290,18,{isStatic:true,label:'dynamicSlope',render:{fillStyle:'#10b981'}});
+                wheel.baseAngle=0;wheel.swingSpeed=speed/100;wheel.timeOffset=Math.random()*6;wheel.swingAmplitude=1;
+                dynamicSlopes.push(wheel);mapElements.push(wheel);
+            }
+            addResultArea(labels,1800);Composite.add(engine.world,mapElements);
         }
 
         function createMap(slotNames) {
             mapElements = [];
             slotZones = [];
+            courseOpened=false;
             motorizedWheels = []; 
             dynamicSlopes = [];
             pendingSpringRemovals = [];
@@ -2107,6 +2198,7 @@
 
             let currentY = 0;
 
+            if(gamePurpose==='assign'){createAssignmentMap(slotNames);return;}
             const boxWidth = 900; 
             
             mapElements.push(Bodies.rectangle(WORLD_WIDTH / 2 - boxWidth/2, -50, 40, 300, wallOpts)); 
@@ -2384,37 +2476,10 @@
             }
             currentY += pachinkoHeight + 300; 
 
-            const slotCount = slotNames.length;
-            const slotWidth = WORLD_WIDTH / slotCount;
-            const slotDepth = 1000; 
-            const slotCenterY = currentY + slotDepth / 2;
+            addResultArea(slotNames,currentY);
 
-            for (let i = 0; i <= slotCount; i++) {
-                mapElements.push(Bodies.rectangle(i * slotWidth, slotCenterY, 30, slotDepth, wallOpts));
-            }
 
-            for (let i = 0; i < slotCount; i++) {
-                const centerX = i * slotWidth + slotWidth / 2;
-                mapElements.push(Bodies.rectangle(centerX, currentY + slotDepth, slotWidth, 100, wallOpts));
-                slotZones.push({
-                    id: i,
-                    x: i * slotWidth,
-                    width: slotWidth,
-                    y: currentY,
-                    text: slotNames[i],
-                    centerX: centerX,
-                    captureY: currentY + slotDepth - 155,
-                    occupied: false,
-                    occupiedBy: null,
-                    occupiedCount: 0,
-                    reservedFor: null
-                });
-            }
-
-            finishLineY = currentY + slotDepth - 100;
-            WORLD_HEIGHT = currentY + slotDepth + 200;
-
-            mapElements.push(Bodies.rectangle(WORLD_WIDTH / 2, -500, WORLD_WIDTH, 1000, wallOpts)); 
+            mapElements.push(Bodies.rectangle(WORLD_WIDTH / 2, launchCeiling-500, WORLD_WIDTH, 1000, {...wallOpts,label:'boundary'}));
             mapElements.push(Bodies.rectangle(-250, WORLD_HEIGHT / 2, 500, WORLD_HEIGHT + 1000, wallOpts)); 
             mapElements.push(Bodies.rectangle(WORLD_WIDTH + 250, WORLD_HEIGHT / 2, 500, WORLD_HEIGHT + 1000, wallOpts)); 
 
@@ -2437,23 +2502,13 @@
         function createMarbles(names) {
             marbles = [];
             
-            const maxCols = 22;
-            const spacing = MARBLE_RADIUS * 2.5; 
-            const actualCols = Math.min(names.length, maxCols);
-            
-            const startX = (WORLD_WIDTH / 2) - ((actualCols * spacing) / 2) + (spacing / 2);
-            const startY = 70; 
-
+            const layout=BC.launchLayout(names.length);
             names.forEach((name, index) => {
                 if(!name.trim()) return;
 
                 const color = colors[index % colors.length];
                 
-                const row = Math.floor(index / maxCols);
-                const col = index % maxCols;
-                const spawnX = startX + (col * spacing);
-                const spawnY = startY - (row * spacing); 
-                
+                const {x:spawnX,y:spawnY}=layout.positions[index];
                 const body = Bodies.circle(
                     spawnX, 
                     spawnY,       
@@ -2491,13 +2546,15 @@
             countdownSeconds = getCountdownSeconds();
             useOneMarblePerSlot = document.getElementById('one-marble-per-slot').checked;
             useCloseRace = document.getElementById('close-race').checked;
+            useBalanced=document.getElementById('balanced-teams').checked;
+            if(useBalanced){gamePurpose='assign';useCountdown=false;document.getElementById('game-purpose').value='assign';syncPurposeUI();}
             saveGameConfig();
 
             let namesInput=document.getElementById('names-input').value.split('\n').map(n=>n.trim()).filter(Boolean);
             const slotsInput=document.getElementById('slots-input').value.split('\n').map(n=>n.trim()).filter(Boolean);
             if(new Set(namesInput).size!==namesInput.length){alert('이름이 중복돼 있어 결과를 정확히 구분할 수 없어요. 동명이인은 번호 등을 붙여 구분해 주세요.');return;}
 
-            if(namesInput.length>80||slotsInput.length>80){alert('안정적인 화면을 위해 학생과 결과 슬롯은 각각 최대 80개까지 입력해 주세요.');return;}
+            if(namesInput.length>100||slotsInput.length>200){alert('참가자는 최대 100명, 결과 선택지는 최대 200개까지 입력해 주세요.');return;}
             if (namesInput.length === 0 || slotsInput.length === 0) {
                 alert("학생 명단과 슬롯을 1개 이상 입력해주세요.");
                 return;
@@ -2509,8 +2566,8 @@
             }
             const nameSet = new Set(namesInput.map(x=>x.trim()));
             const slotSet = new Set(slotsInput.map(x=>x.trim()));
-            const directedCounts = {};
-            const slotCounts = {};
+            const directedCounts = Object.create(null);
+            const slotCounts = Object.create(null);
             slotsInput.forEach(result => slotCounts[result.trim()] = (slotCounts[result.trim()] || 0) + 1);
             for (const [name,result] of Object.entries(cheatData)) {
                 if (!nameSet.has(name)) {
@@ -2532,6 +2589,11 @@
                 }
             }
 
+            try{
+                resultPool=BC.createPool(namesInput,slotsInput,{unique:useOneMarblePerSlot,balanced:useBalanced,directed:cheatData});
+                virtualGate=resultPool.virtual;
+                launchCeiling=BC.launchLayout(namesInput.length).ceiling;
+            }catch(error){alert(error.message);return;}
             const isDirected=Object.keys(cheatData).length>0;
             if(isDirected&&!window.confirm('교사 지정 결과가 '+Object.keys(cheatData).length+'건 있어요. 이 레이스는 무작위 추첨이 아니며 진행 화면에도 표시됩니다. 계속할까요?'))return;
             const notice=document.getElementById('directed-result-notice');
@@ -2541,11 +2603,13 @@
                 [namesInput[i], namesInput[j]] = [namesInput[j], namesInput[i]];
             }
 
+            const roundToken=++roundSerial;
             if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
 
             document.getElementById('setup-panel').style.opacity = '0';
             
-            document.getElementById('win-log').innerHTML = ''; 
+            document.getElementById('win-log').innerHTML = '';
+            document.getElementById('result-search').value='';
             document.getElementById('countdown-display').classList.add('hidden');
             document.getElementById('countdown-number').className = 'text-7xl md:text-9xl font-extrabold text-red-500 opacity-90 drop-shadow-2xl transition-all';
             
@@ -2554,11 +2618,16 @@
             resetCountdownDisplay();
 
             setTimeout(() => {
+                if(roundToken!==roundSerial)return;
                 document.getElementById('setup-panel').style.display = 'none';
                 setHudVisible(true);
             }, 300);
 
             createMap(slotsInput);
+            engine.timing.timestamp=0;
+            const status=document.getElementById('allocation-live');
+            status.style.display='block';
+            status.textContent=virtualGate?(useBalanced?'결승 통과 후 남은 모둠 자리에 균등 배정해요':'결승 통과 후 '+slotsInput.length+'개 선택지에서 '+(useOneMarblePerSlot?'중복 없이 ':'')+'무작위 배정해요'):'도착한 결과함에 배정해요';
             if (!reserveTeacherSlots()) {
                 alert('교사 지정 결과용 슬롯을 예약하지 못했습니다. 결과 슬롯 설정을 확인해 주세요.');
                 resetGame();
@@ -2573,11 +2642,11 @@
             isFinished = false;
             results = [];
             
-            camera.y = -200;
-            camera.targetY = -200;
+            camera.y = Math.min(-200,launchCeiling-40);
+            camera.targetY = camera.y;
 
             setTimeout(() => {
-                if (gameState === 'playing' && startBoxBottom) {
+                if (roundToken===roundSerial && gameState === 'playing' && startBoxBottom) {
                     playSound('hit', 20); 
                     
                     Composite.remove(engine.world, startBoxBottom);
@@ -2591,12 +2660,14 @@
         }
 
         function resetGame() {
+            roundSerial++;
             document.getElementById('directed-result-notice').classList.add('hidden');
             if (runner) {
                 Runner.stop(runner);
                 runner = null;
             }
             gameState = 'setup';
+            document.getElementById('allocation-live').style.display='none';
             
             clearInterval(countdownTimer);
             
@@ -2654,7 +2725,7 @@
             if (leader) {
                 camera.targetY = leader.body.position.y - (canvas.height * 0.6);
             }
-            camera.targetY = Math.max(-200, Math.min(camera.targetY, WORLD_HEIGHT - canvas.height));
+            camera.targetY = Math.max(Math.min(-200,launchCeiling-40), Math.min(camera.targetY, WORLD_HEIGHT - canvas.height));
 
             const lerpSpeed = 0.05; 
             camera.y += (camera.targetY - camera.y) * lerpSpeed;
@@ -2748,7 +2819,11 @@
                 }
             });
 
-            slotZones.forEach(slot => {
+            if(virtualGate){
+                ctx.fillStyle='#34d399';ctx.fillRect(30,finishLineY-15,1140,12);
+                ctx.font='bold 32px Pretendard';ctx.textAlign='center';ctx.fillText(useBalanced?'균등 모둠 배정 게이트':'무작위 결과 배정 게이트',600,finishLineY-55);
+            }
+            if(!virtualGate)slotZones.forEach(slot => {
                 ctx.fillStyle = slot.occupied ? 'rgba(16, 185, 129, 0.26)' : 'rgba(255, 255, 255, 0.12)';
                 ctx.fillRect(slot.x + 16, slot.y + 40, Math.max(0, slot.width - 32), 110);
                 ctx.strokeStyle = slot.occupied ? 'rgba(110, 231, 183, 0.9)' : 'rgba(255, 255, 255, 0.24)';
@@ -2769,6 +2844,7 @@
             });
 
             marbles.forEach(m => {
+                if(virtualGate&&m.finished)return;
                 const pos = m.body.position;
                 
                 ctx.beginPath();
@@ -2846,7 +2922,7 @@
             if (isFinished || marble.finished) return;
 
             const x = marble.body.position.x;
-            const selectedSlot = getPreferredSlotForMarble(marble, x)
+            const selectedSlot = (virtualGate?slotZones[resultPool.assign(marble.name)]:getPreferredSlotForMarble(marble, x))
                 || getNearestFreeSlot(x)
                 || getSlotByX(Math.max(0, Math.min(WORLD_WIDTH - 0.001, x)))
                 || slotZones[0];
@@ -2863,6 +2939,8 @@
 
             marble.slotResult = resultText;
             results.push({ marble: marble, text: resultText });
+            document.getElementById('allocation-live').textContent=results.length+' / '+marbles.length+'명 도착 · '+marble.name+' → '+resultText;
+
             
             playSound('win', 20); 
             
@@ -2939,6 +3017,7 @@
                     </div>
                     <div class="text-yellow-400 font-extrabold text-base md:text-xl whitespace-nowrap shrink-0">${escapeDisplay(res.text)}</div>
                 `;
+                item.dataset.search=(res.marble.name+' '+res.text).toLocaleLowerCase();item.dataset.result=res.text;
                 resultList.appendChild(item);
             });
             
@@ -2946,7 +3025,7 @@
             try {
                 localStorage.setItem('gulliver.roulette.lastResults.v1',JSON.stringify({
                     version:1,completed:results.length===marbles.length,purpose:gamePurpose,
-                    results:results.slice(0,80).map(res=>({name:String(res.marble.name).slice(0,42),result:String(res.text).slice(0,65)})),
+                    results:results.map(res=>({name:String(res.marble.name),result:String(res.text)})),
                     createdAt:Date.now()
                 }));
             } catch (e) { console.warn('룰렛 결과 저장 실패',e); }
@@ -2962,20 +3041,64 @@
                     </div>
                     <div class="text-red-400 font-extrabold text-sm md:text-lg whitespace-nowrap shrink-0">시간 초과</div>
                 `;
+                item.dataset.search=m.name.toLocaleLowerCase();item.dataset.result='미완주';
                 resultList.appendChild(item);
             });
+            filterResults();
 
+            const endedRound=roundSerial;
             setTimeout(() => {
+                if(endedRound!==roundSerial||!isFinished)return;
                 modal.classList.remove('hidden');
                 setHudVisible(false);
             }, 1000); 
         }
 
+        function filterResults(){
+            const list=document.getElementById('result-list');
+            list.querySelectorAll('[data-group-heading]').forEach(el=>el.remove());
+            const rows=[...list.children];
+            const query=document.getElementById('result-search').value.trim().toLocaleLowerCase();
+            const grouped=document.getElementById('result-grouped').checked;
+            rows.forEach((row,i)=>{if(!row.dataset.order)row.dataset.order=String(i+1);row.hidden=!row.dataset.search?.includes(query);});
+            rows.sort((a,b)=>grouped?String(a.dataset.result).localeCompare(String(b.dataset.result),'ko')||Number(a.dataset.order)-Number(b.dataset.order):Number(a.dataset.order)-Number(b.dataset.order));
+            let previous=null;
+            for(const row of rows){
+                if(grouped&&!row.hidden&&row.dataset.result!==previous){
+                    previous=row.dataset.result;const h=document.createElement('h3');h.dataset.groupHeading='true';
+                    h.textContent=previous+' · '+rows.filter(r=>!r.hidden&&r.dataset.result===previous).length+'명';h.style.color='#a7f3d0';list.appendChild(h);
+                }
+                list.appendChild(row);
+            }
+        }
+        document.getElementById('result-search').addEventListener('input',filterResults);
+        document.getElementById('result-grouped').addEventListener('change',filterResults);
+        function updateAllocationRule(){
+            const labels=document.getElementById('slots-input').value.split('\n').map(x=>x.trim()).filter(Boolean);
+            const balance=document.getElementById('balanced-teams').checked;
+            document.getElementById('allocation-rule').textContent=balance?'모둠별 인원을 최대 1명 차이로 배정합니다.':labels.length>16?'선택지가 많아 넓은 결승 게이트에서 무작위로 배정합니다.':'실제 구슬이 도착한 결과함으로 배정합니다.';
+        }
+        document.getElementById('balanced-teams').addEventListener('change',()=>{
+            if(document.getElementById('balanced-teams').checked){
+                document.getElementById('one-marble-per-slot').checked=false;
+                document.getElementById('game-purpose').value='assign';syncPurposeUI();
+            }
+            updateAllocationRule();saveGameConfig();
+        });
+        document.getElementById('one-marble-per-slot').addEventListener('change',()=>{
+            if(document.getElementById('one-marble-per-slot').checked)document.getElementById('balanced-teams').checked=false;
+            updateAllocationRule();saveGameConfig();
+        });
+        document.getElementById('slots-input').addEventListener('input',updateAllocationRule);
         const countdownToggleEl = document.getElementById('use-countdown');
         const countdownInputEl = document.getElementById('countdown-seconds');
         const purposeEl = document.getElementById('game-purpose');
         loadGameConfig();
-        purposeEl.addEventListener('change',()=>{syncPurposeUI();saveGameConfig();});
+        updateAllocationRule();
+        purposeEl.addEventListener('change',()=>{
+            if(purposeEl.value==='winner')document.getElementById('balanced-teams').checked=false;
+            syncPurposeUI();updateAllocationRule();saveGameConfig();
+        });
         countdownToggleEl.addEventListener('change',()=>{syncCountdownInputState();saveGameConfig();});
         countdownInputEl.addEventListener('change',()=>{resetCountdownDisplay();saveGameConfig();});
         countdownInputEl.addEventListener('blur', resetCountdownDisplay);
