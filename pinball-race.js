@@ -8,7 +8,7 @@
   const teamNames=['파랑 팀','노랑 팀','초록 팀','보라 팀'];
   let current=null, startedAt=0, elapsedMs=0, lastFrame=0, accumulator=0, finishAfter=0;
   let toastDeadline=0, audio=null, muted=false, lastRankPaint=0, lastImpactSound=0;
-  let previousLeader=null,lastLeadToast=0;
+  let previousLeader=null,lastLeadToast=0, focusedName=null;
   const fx=[];
   const state={mode:'winner',k:2,balanced:true,labels:[],world:null,allocator:null,counts:[],capacities:[],
     arrivals:[],finished:false,timeoutAnnounced:false,target:1,speed:1.55};
@@ -111,7 +111,10 @@
       const title=document.createElement('strong'),count=document.createElement('span');
       title.textContent=state.labels[i];
       count.textContent=String(state.counts[i])+' / '+(state.balanced?state.capacities[i]:'자유')+'명';
-      card.append(title,count);box.append(card);
+      const members=document.createElement('small');
+      members.className='team-members';
+      members.textContent=state.arrivals.filter(a=>a.team===i).map(a=>a.name).join(' · ')||'친구를 기다려요';
+      card.append(title,count,members);box.append(card);
     }
   }
   function start() {
@@ -125,6 +128,7 @@
     state.counts=state.allocator?state.allocator.counts:Array(config.k).fill(0);
     state.capacities=state.allocator?state.allocator.capacities:Array(config.k).fill(Infinity);
     state.world=C.createWorld(M,config.names);
+    focusedName=null;
     current={world:state.world,total:config.names.length,launchedAt:performance.now(),roundDone:false};
     elapsedMs=0;startedAt=performance.now();lastFrame=startedAt;accumulator=0;finishAfter=0;
     $('result-overlay').hidden=true;$('pre-start').hidden=true;
@@ -134,10 +138,16 @@
     $('play-description').textContent='⚡ 범퍼에 맞으면 튕겨 나가요!';
     $('live-rankings').hidden=false;
     $('marble-legend').hidden=false;
-    $('marble-legend-heading').textContent='내 구슬 번호 찾기 · '+config.names.length+'명';
+    $('marble-legend-heading').textContent='응원할 친구 선택 · '+config.names.length+'명';
+    $('marble-legend').open=true;
     const namesBox=$('marble-legend-list');
     for(const ball of state.world.balls){
-      const item=document.createElement('span');item.className='marble-legend-item';
+      const item=document.createElement('button');item.type='button';item.className='marble-legend-item';
+      item.setAttribute('aria-pressed','false');
+      item.addEventListener('click',()=>{
+        focusedName=focusedName===ball.name?null:ball.name;
+        for(const button of namesBox.children)button.setAttribute('aria-pressed',String(button===item&&focusedName!==null));
+      });
       const dot=document.createElement('i'),number=document.createElement('b'),label=document.createElement('span');
       dot.style.background=ball.color;number.textContent=ball.index+1;label.textContent=ball.name;
       item.append(dot,number,label);namesBox.append(item);
@@ -152,9 +162,9 @@
   }
   function park(ball,team) {
     const isTeams=state.mode==='teams';
-    const count=isTeams?state.counts[team]:state.arrivals.length+1;
+    const count=isTeams?state.counts[team]:state.arrivals.length;
     const center=isTeams?(team+.5)*C.W/state.k:C.W/2;
-    const maxPerRow=isTeams?Math.max(2,Math.floor((C.W/state.k-24)/31)):5;
+    const maxPerRow=isTeams?Math.max(2,Math.floor((C.W/state.k-24)/31)):15;
     const col=(count-1)%maxPerRow, row=Math.floor((count-1)/maxPerRow);
     const within=Math.min(maxPerRow,isTeams?state.capacities[team]||maxPerRow:maxPerRow);
     const cols=Math.min(within,maxPerRow);
@@ -186,8 +196,7 @@
   }
   function resolveArrival() {
     if(!current||state.finished)return;
-    const remaining=state.world.balls.filter(ball=>!ball.finished&&ball.body.position.y>=C.FINISH_Y);
-    remaining.sort((a,b)=>b.body.position.y-a.body.position.y);
+    const remaining=C.crossingOrder(state.world.balls);
     for(const ball of remaining) {
       if(state.mode==='winner'&&state.arrivals.length>=state.target)break;
       arrival(ball);
@@ -196,13 +205,7 @@
   function timeoutRescue() {
     if(state.timeoutAnnounced)return;
     state.timeoutAnnounced=true;
-    showToast('늦은 구슬은 회수 수로로 이동해요.');
-    // Timeout fallback is explicit; no adjustment based on participant names/ranks.
-    const left=state.world.balls.filter(b=>!b.finished).sort((a,b)=>b.body.position.y-a.body.position.y);
-    for(const b of left){
-      if(state.mode==='winner'&&state.arrivals.length>=state.target)break;
-      arrival(b);
-    }
+    showToast('구슬이 잠시 막혔어요. 설정으로 돌아가 다시 시작할 수 있어요.');
   }
   function finish() {
     if(!current||state.finished)return;
@@ -259,6 +262,12 @@
       }
       previousLeader=lead.name;
     }
+    if(!finishAfter){
+      const left=state.mode==='winner'?state.target-state.arrivals.length:current.total-state.arrivals.length;
+      $('play-description').textContent=state.mode==='winner'?
+        (state.target+'명 중 '+state.arrivals.length+'명 도착 · '+(left===1?'마지막 1자리!':left+'자리 남았어요')):
+        ('남은 친구 '+left+'명 · 도착한 입구의 모둠으로 들어가요');
+    }
     const top=entries.slice(0,5);
     top.forEach((b,i)=>{
       const li=document.createElement('li');
@@ -310,9 +319,9 @@
     }
     // Bright visible arcade zones and movement lanes, rather than an empty falling-ball board.
     const zones=[
-      [118,252,'1 / 범퍼 난전','#fead5c'],
-      [254,419,'2 / 회전 대결','#65e2cf'],
-      [421,574,'3 / 결승 스프린트','#b7a1ff']
+      [118,252,'1 / 갈림길','#fead5c'],
+      [254,419,'2 / 범퍼 추월','#65e2cf'],
+      [421,574,'3 / 마지막 회전문','#b7a1ff']
     ];
     for(const [top,bottom,label,color] of zones){
       ctx.fillStyle=color+'0D';drawPill(92,top,716,bottom-top,17);ctx.fill();
@@ -381,6 +390,9 @@
       y=fx.sy+(fx.ty-fx.sy)*eased-Math.sin(t*Math.PI)*18;
     }
     ctx.save();
+    if(!ball.finished&&showName&&state.mode==='winner'&&state.target-state.arrivals.length===1){
+      ctx.strokeStyle='#ffda75';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,19,0,Math.PI*2);ctx.stroke();
+    }
     if(!ball.finished){
       const trace=ball.trace||[];
       trace.forEach((p,i)=>{
@@ -397,10 +409,30 @@
     ctx.shadowBlur=0;ctx.strokeStyle='rgba(255,255,255,.82)';ctx.lineWidth=2;ctx.stroke();
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.font='900 10px system-ui';ctx.fillStyle='#101a30';ctx.fillText(String(ball.index+1),x,y+.5);
-    if(showName||ball.finished){
-      ctx.font='900 18px "Malgun Gothic",system-ui';ctx.textBaseline='bottom';
-      ctx.lineWidth=5;ctx.strokeStyle='rgba(4,13,34,.95)';ctx.strokeText(ball.name,x,y-23,112);
-      ctx.fillStyle='white';ctx.fillText(ball.name,x,y-23,112);
+    if(ball.name===focusedName&&!ball.finished){
+      ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,21,0,Math.PI*2);ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function drawNames(now,leaders) {
+    const occupied=[];
+    const balls=current.world.balls.filter(b=>!b.finished).sort((a,b)=>
+      Number(b.name===focusedName)-Number(a.name===focusedName)||Number(leaders.has(b))-Number(leaders.has(a))||a.index-b.index);
+    ctx.save();ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+    for(const ball of balls){
+      const x=ball.body.position.x,y=ball.body.position.y;
+      const text=ball.name.length>9?ball.name.slice(0,8)+'…':ball.name;
+      const w=Math.min(138,ctx.measureText(text).width+14),h=22;
+      let chosen=null;
+      for(const dy of [-28,28,-53,53]){
+        const box={x:Math.max(5,Math.min(C.W-w-5,x-w/2)),y:Math.max(4,Math.min(550,y+dy-h/2)),w,h};
+        if(!occupied.some(o=>box.x<o.x+o.w+3&&box.x+box.w+3>o.x&&box.y<o.y+o.h+3&&box.y+box.h+3>o.y)){chosen=box;break;}
+      }
+      if(!chosen)continue;
+      occupied.push(chosen);
+      ctx.strokeStyle=ball.color;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(chosen.x+w/2,chosen.y+h/2);ctx.stroke();
+      ctx.fillStyle=ball.name===focusedName?'#fff':'#101a30ee';drawPill(chosen.x,chosen.y,w,h,6);ctx.fill();
+      ctx.fillStyle=ball.name===focusedName?'#101a30':'#fff';ctx.fillText(text,chosen.x+w/2,chosen.y+h/2);
     }
     ctx.restore();
   }
@@ -413,6 +445,7 @@
       .sort((a,b)=>b.body.position.y-a.body.position.y).slice(0,6));
     for(const ball of current.world.balls)drawBall(ball,now,leaders.has(ball));
     drawEffects(now);
+    drawNames(now,leaders);
   }
   function loop(now) {
     requestAnimationFrame(loop);
@@ -420,11 +453,11 @@
     if(current&&!state.finished){
       if(!lastFrame)lastFrame=now;
       const delta=Math.min(70,Math.max(0,now-lastFrame));
-      if(!finishAfter) accumulator+=delta*state.speed;
+      if(!finishAfter&&now-current.launchedAt>1800) accumulator+=delta*state.speed;
       elapsedMs=now-startedAt;
       let steps=0;
       while(!finishAfter&&accumulator>=1000/60&&steps<6){
-        current.world.step();accumulator-=1000/60;steps++;
+        current.world.step();resolveArrival();accumulator-=1000/60;steps++;
         if(current.world.frame()%2===0){
           for(const b of current.world.balls){
             if(b.finished)continue;

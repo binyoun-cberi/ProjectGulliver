@@ -95,3 +95,27 @@ test('the two game types have distinct settings for finishing rank versus balanc
  assert.match(html,/id="live-rankings"/);
  assert.doesNotMatch(script,/cheatData|teacherResults/);
 });
+
+test('crossings use within-step time, not final depth or roster order',()=>{
+ const ball=(index,previousY,y)=>({index,previousY,finished:false,body:{position:{y}}});
+ // A crosses at .8, B at .2; A ends deeper but B arrived first.
+ const a=ball(0,550,580),b=ball(1,572,582);
+ assert.deepEqual(core.crossingOrder([a,b]).map(b=>b.index),[1,0]);
+ b.finished=true;assert.deepEqual(core.crossingOrder([a,b]).map(b=>b.index),[0]);
+});
+test('30-player races finish naturally within thirty simulation seconds',()=>{
+ const M=require('../vendor/matter.min.js');
+ for(let seed=1;seed<=24;seed++){
+   const world=core.createWorld(M,Array.from({length:30},(_,i)=>'학생'+i),seeded(seed));
+   assert.equal(new Set(world.balls.map(b=>b.body.position.y)).size,1);
+   let count=0;
+   for(let frame=0;frame<1800&&count<30;frame++){
+     world.step();
+     for(const b of core.crossingOrder(world.balls)){
+       b.finished=true;count++;M.Composite.remove(world.engine.world,b.body);
+     }
+   }
+   assert.equal(count,30,'natural finish, seed '+seed);
+   M.Engine.clear(world.engine);
+ }
+});

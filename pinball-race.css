@@ -119,3 +119,8 @@ legend.field-label{margin:0 0 10px}
 .marble-legend-item i{width:11px;height:11px;flex:0 0 11px;border-radius:100%;box-shadow:0 0 0 2px #fff}
 .marble-legend-item b{color:#698096;min-width:15px}
 .marble-legend-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* v3: readable spectator names and live team membership. */
+.marble-legend-item{border:1px solid transparent;cursor:pointer;text-align:left;color:#263b50;font-family:inherit}
+.marble-legend-item[aria-pressed="true"]{border-color:#168675;background:#dcfff5;box-shadow:0 0 0 1px #168675}
+.gate-pill{flex-wrap:wrap}.team-members{flex:0 0 100%;line-height:1.6;color:#37556c;overflow-wrap:anywhere}
