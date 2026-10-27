@@ -72,3 +72,45 @@ test('real Chrome: first arrival wins and class list remains editable',async()=>
   assert.deepEqual(errors,[]);
   await page.close();
 });
+
+test('real Chrome: rank cutoff selects exactly the requested top seven out of 30', {timeout:90000}, async()=>{
+  const page=await browser.newPage({viewport:{width:1450,height:930}});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const students=Array.from({length:30},(_,i)=>'참가자'+(i+1));
+  await page.goto(base+'/핀볼 레이스.html',{waitUntil:'load'});
+  await page.locator('#roster-input').fill(students.join('\n'));
+  await page.locator('#finish-target').fill('7');
+  await page.locator('#race-speed').selectOption('1.9');
+  await page.locator('#start-btn').click();
+  await page.locator('#result-overlay:not([hidden])').waitFor({timeout:50000});
+  const places=await page.locator('#result-entries > div').allTextContents();
+  assert.equal(places.length,7,'Stop at seventh arrival; do not include eighth');
+  assert.ok(places.every((t,i)=>t.includes((i+1)+'등')));
+  const selected=places.map(t=>t.split(' · ').at(-1));
+  assert.equal(new Set(selected).size,7,'Every participant appears once');
+  assert.ok(selected.every(x=>students.includes(x)));
+  assert.match(await page.locator('#race-count').textContent(),/^7 \/ 30 도착$/);
+  assert.equal(await page.locator('#marble-legend-list .marble-legend-item').count(),30);
+  assert.deepEqual(errors,[]);
+  await page.close();
+});
+
+test('real Chrome: thirty players are evenly divided among four teams', {timeout:90000}, async()=>{
+  const page=await browser.newPage({viewport:{width:1380,height:920}});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/핀볼 레이스.html',{waitUntil:'load'});
+  await page.locator('.mode-choice').nth(1).click();
+  await page.locator('#roster-input').fill(Array.from({length:30},(_,i)=>'학생'+(i+1)).join('\n'));
+  await page.locator('#team-count').selectOption('4');
+  await page.locator('#race-speed').selectOption('1.9');
+  await page.locator('#start-btn').click();
+  await page.locator('#result-overlay:not([hidden])').waitFor({timeout:53000});
+  const labels=await page.locator('.group-result strong').allTextContents();
+  const counts=labels.map(v=>Number(v.match(/(\d+)명/)?.[1]));
+  assert.equal(counts.length,4);
+  assert.equal(counts.reduce((sum,n)=>sum+n,0),30);
+  assert.equal(Math.max(...counts)-Math.min(...counts),1);
+  assert.match(await page.locator('#race-count').textContent(),/^30 \/ 30 도착$/);
+  assert.deepEqual(errors,[]);
+  await page.close();
+});
