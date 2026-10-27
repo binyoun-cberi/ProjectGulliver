@@ -108,3 +108,39 @@ test('실제 점수 0.00과 90.75가 포함된 편성 점수는 유한하며 분
   assert.equal(api.validateAssignment(people,pairs,c.assign).length,0);
  }
 });
+
+test('학습지표 내림차순으로 3개 반 왕복 지그재그 순서를 정확히 지킨다',()=>{
+ const E=engine(),list=Array.from({length:12},(_,i)=>({id:'rank'+i,name:'학생'+i,gender:'',oldClass:'',level:100-i,traits:[],fixed:0}));
+ const out=E.generateCandidates(list,[],3,[],seed(12),{});
+ assert.ok(out.candidates?.length,out.error);
+ assert.deepEqual(list.map(s=>out.candidates[0].assign[s.id]),[1,2,3,3,2,1,1,2,3,3,2,1]);
+});
+test('4개 반 지그재그와 점수 미입력 마지막, 동점은 명단 순서 유지',()=>{
+ const E=engine(),list=Array.from({length:16},(_,i)=>({id:'rank'+i,name:'학생'+i,gender:'',oldClass:'',level:i>13?null:100-Math.floor(i/2),traits:[],fixed:0}));
+ const out=E.generateCandidates(list,[],4,[],seed(72),{});
+ assert.ok(out.candidates?.length,out.error);
+ assert.deepEqual(list.map(s=>out.candidates[0].assign[s.id]),[1,2,3,4,4,3,2,1,1,2,3,4,4,3,2,1]);
+});
+test('유의 사항별 반당 최대 인원을 초과하지 않으며 0명 제한도 적용',()=>{
+ const E=engine(),list=Array.from({length:18},(_,i)=>({id:'rank'+i,name:'학생'+i,gender:i%2?'여':'남',oldClass:String(i%3+1),level:99-i,traits:i%3===0?['사회성']:[],fixed:0}));
+ const caps={'사회성':2,'운동부':0};
+ const out=E.generateCandidates(list,[],3,['사회성','운동부'],seed(41),caps);
+ assert.ok(out.candidates?.length,out.error);
+ for(const c of out.candidates){
+  assert.equal(E.validateAssignment(list,[],c.assign,caps).length,0);
+  for(let room=1;room<=3;room++)assert.ok(list.filter(s=>c.assign[s.id]===room&&s.traits.includes('사회성')).length<=2);
+ }
+ list[0].traits.push('운동부');
+ assert.match(E.generateCandidates(list,[],3,['사회성','운동부'],seed(41),caps).error,/운동부/);
+});
+test('총 학생 수가 반별 상한의 합을 넘으면 구체적으로 안내',()=>{
+ const E=engine(),list=Array.from({length:7},(_,i)=>({id:'rank'+i,name:'학생'+i,gender:'',oldClass:'',level:99-i,traits:['사회성'],fixed:0}));
+ const out=E.generateCandidates(list,[],3,['사회성'],seed(4),{'사회성':2});
+ assert.match(out.error,/사회성/);
+ assert.match(out.error,/최대 2명/);
+});
+test('고정 반에 같은 유의 사항 학생이 최대 인원을 넘으면 거부',()=>{
+ const E=engine(),list=Array.from({length:12},(_,i)=>({id:'rank'+i,name:'학생'+i,gender:'',oldClass:'',level:99-i,traits:i<3?['사회성']:[],fixed:i<3?1:0}));
+ const out=E.generateCandidates(list,[],3,['사회성'],seed(8),{'사회성':2});
+ assert.match(out.error,/1반/);assert.match(out.error,/사회성/);
+});
