@@ -7,6 +7,15 @@ test('dictation UI separates hidden answers, grade changes, saved selections and
   w.speechSynthesis={getVoices:()=>voiceList,cancel:()=>{},speak:u=>{w.lastSpoken=u;},resume:()=>{},addEventListener:()=>{}};w.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};w.print=()=>{w.printed=true;};
   for(const f of ['worksheet-dictation-topics.js','worksheet-dictation-levels.js','worksheet-dictation-data.js','worksheet-english-dictation.js','worksheet-dictation-player.js','worksheet-dictation-custom.js','worksheet-dictation-ui.js'])w.eval(fs.readFileSync(path.join(__dirname,'..',f),'utf8'));return w;
  }
+ for(const subject of ['korean','english']){
+ const timed=load('?subject='+subject+'&grade=3&seed=42&repeats=5&repeatGap=120&nextGap=300&rate=0.5'),d=timed.document;
+ for(const [id,value] of [['dictRepeats','5'],['dictRepeatGap','120'],['dictNextGap','300'],['dictRate','0.5']])assert.equal(d.getElementById(id).value,value);
+ assert.deepEqual([...d.getElementById('dictRepeats').options].map(o=>o.value),['1','2','3','4','5']);
+ const saved=load(timed.location.search);assert.equal(saved.document.getElementById('dictNextGap').value,'300');saved.close();
+ assert.equal(JSON.parse(timed.localStorage.getItem('clasheet-dictation-settings')).repeats,5);
+ d.getElementById('dictStart').click();assert.equal(timed.lastSpoken.rate,.5);assert.match(d.getElementById('dictRound').textContent,/5번/);timed.close();
+ }
+ const oldCount=load('?grade=1&seed=42&repeats=10');assert.equal(oldCount.document.getElementById('dictRepeats').value,'3');oldCount.close();
  const w=load('?grade=1&seed=42'),d=w.document;assert.equal(d.querySelectorAll('#dictWritingList>li').length,10);assert.equal(d.querySelector('#dictTeacher').open,false);assert.equal(w.lastSpoken,undefined);
  const original=d.querySelector('#dictAnswerList').textContent;const replay=load(w.location.search);assert.equal(replay.document.querySelector('#dictAnswerList').textContent,original);replay.close();
  d.querySelector('#dictTeacher').open=true;d.querySelector('#dictStart').click();assert.equal(d.querySelector('#dictTeacher').open,false);assert.equal(w.lastSpoken.lang,'ko-KR');assert.equal(d.querySelector('#dictRate').disabled,true);

@@ -3,7 +3,7 @@
 <title>학년별 받아쓰기 | 클라시트</title><link rel="icon" type="image/svg+xml" href="clasheet-mark.svg">
 <link rel="stylesheet" href="gulliver-design.css?v=1.2.0"><link rel="stylesheet" href="worksheet-dictation.css?v=20261026-custom1">
 <script src="gulliver-app-shell.js?v=20261026-english1" defer></script>
-<script src="worksheet-dictation-topics.js?v=20261025-topics1" defer></script><script src="worksheet-dictation-levels.js?v=20261026-levels1" defer></script><script src="worksheet-dictation-data.js?v=20261026-levels1" defer></script><script src="worksheet-english-dictation.js?v=20261026-english1" defer></script><script src="worksheet-dictation-player.js?v=20261026-english1" defer></script><script src="worksheet-dictation-custom.js?v=20261026-custom1" defer></script><script src="worksheet-dictation-ui.js?v=20261026-levels1" defer></script>
+<script src="worksheet-dictation-topics.js?v=20261025-topics1" defer></script><script src="worksheet-dictation-levels.js?v=20261026-levels1" defer></script><script src="worksheet-dictation-data.js?v=20261026-levels1" defer></script><script src="worksheet-english-dictation.js?v=20261026-english1" defer></script><script src="worksheet-dictation-player.js?v=20261027-five" defer></script><script src="worksheet-dictation-custom.js?v=20261026-custom1" defer></script><script src="worksheet-dictation-ui.js?v=20261027-five" defer></script>
 </head><body><main id="gulliverWork" class="dictation-layout">
  <header class="dictation-intro"><div><p class="eyebrow">클라시트 · 국어</p><h1>열 문장, 차근차근 받아쓰기</h1><p>한 문장을 듣고 쓸 시간을 가진 뒤, 다음 문장으로 넘어가요.</p></div><a id="backToKorean" href="문제지 만들기.html?subject=korean">국어 문제지로 돌아가기 →</a></header>
  <div class="dictation-workspace">
@@ -18,12 +18,12 @@
    <button id="newDictation" type="button">↻ 다른 10문장 뽑기</button>
    <details id="dictReferences" class="dictation-note"><summary>급수 안내 · 참고한 원본 자료</summary><p>1~4학년 연습 1~10급은 클라시트에서 새로 구성한 문장입니다. 1급부터 차례로 연습하며, 학교에서 배부한 급수표와 번호·내용이 다를 수 있어요.</p><p><a href="https://chamssaem.com/1850" target="_blank" rel="noopener">참쌤스쿨 · 차근차근 받아쓰기 원본 HWPX·PDF 자료 보기 ↗</a></p></details>
    <div class="dictation-setting-grid">
-    <label>문장마다 읽는 횟수<select id="dictRepeats"><option value="1">1번</option><option value="2">2번</option><option value="3" selected>3번</option></select></label>
-    <label>읽기 속도<select id="dictRate"><option value="0.65">아주 천천히</option><option value="0.85" selected>천천히</option><option value="1">보통</option></select></label>
-    <label>반복 사이 쉬는 시간<select id="dictRepeatGap"><option value="5">5초</option><option value="10" selected>10초</option><option value="15">15초</option><option value="20">20초</option><option value="30">30초</option></select></label>
-    <label>다음 문장까지 쓰는 시간<select id="dictNextGap"><option value="10">10초</option><option value="15">15초</option><option value="20" selected>20초</option><option value="30">30초</option><option value="45">45초</option><option value="60">60초</option></select></label>
+    <label>문장마다 읽는 횟수<select id="dictRepeats"><option value="1">1번</option><option value="2">2번</option><option value="3" selected>3번</option><option value="4">4번</option><option value="5">5번</option></select></label>
+    <label>읽기 속도<select id="dictRate"><option value="0.5">가장 천천히</option><option value="0.65">아주 천천히</option><option value="0.85" selected>천천히</option><option value="1">보통</option><option value="1.1">조금 빠르게</option><option value="1.2">빠르게</option></select></label>
+    <label>반복 사이 쉬는 시간<select id="dictRepeatGap"><option value="0">바로 읽기</option><option value="1">1초</option><option value="2">2초</option><option value="3">3초</option><option value="5">5초</option><option value="10" selected>10초</option><option value="15">15초</option><option value="20">20초</option><option value="30">30초</option><option value="45">45초</option><option value="60">1분</option><option value="90">1분 30초</option><option value="120">2분</option><option value="180">3분</option><option value="240">4분</option><option value="300">5분</option></select></label>
+    <label>다음 문장까지 쓰는 시간<select id="dictNextGap"><option value="0">바로 읽기</option><option value="1">1초</option><option value="2">2초</option><option value="3">3초</option><option value="5">5초</option><option value="10">10초</option><option value="15">15초</option><option value="20" selected>20초</option><option value="30">30초</option><option value="45">45초</option><option value="60">1분</option><option value="90">1분 30초</option><option value="120">2분</option><option value="180">3분</option><option value="240">4분</option><option value="300">5분</option></select></label>
    </div>
-   <label for="dictVoice" id="dictVoiceLabel">한국어 음성</label><select id="dictVoice"><option value="">기본 한국어 음성</option></select><p id="voiceNote" class="dictation-note">음성과 기기 소리를 확인한 뒤 시작해 주세요.</p>
+   <label for="dictVoice" id="dictVoiceLabel">한국어 음성</label><select id="dictVoice"><option value="">기본 한국어 음성</option></select><p id="voiceNote" class="dictation-note">음성과 기기 소리를 확인한 뒤 시작해 주세요.</p><p class="dictation-note">목소리 목록은 기기와 브라우저에 따라 달라요. 남성 목소리가 목록에 있으면 선택해서 사용할 수 있어요.</p>
    <p class="dictation-note">문장을 다 읽은 뒤부터 쉬는 시간을 셉니다. 화면을 벗어나면 일시정지해요. 다시 이어서 시작할 때에는 읽던 문장을 처음부터 들려줘요.</p>
   </section>
   <section class="dictation-output" aria-label="받아쓰기 진행과 문제지">
