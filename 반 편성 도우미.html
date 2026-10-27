@@ -105,6 +105,49 @@ function renderRoster(){
       ${st.fixed?'<span class="note-inline">◆ '+st.fixed+'반 고정</span>':''}${st.note?'<span class="note-inline">메모 있음</span>':''}
     </td></tr>`).join(''):`<tr><td colspan="6" class="empty"><b>${state.students.length?'검색 결과가 없습니다.':'등록된 학생이 없습니다.'}</b>${state.students.length?'검색어를 바꿔 주세요.':'「+ 학생 추가」 또는 「스프레드시트 붙여넣기」로 시작하세요.'}</td></tr>`;
 }
+function presetPersonInfo(st){
+  return [st.oldClass,st.gender,hasStudyScore(st)?'학습 '+studyText(st.level):'학습 미입력',...(st.traits||[])].filter(Boolean).join(' · ');
+}
+function presetIssues(students,pairs,k,capRules){
+  const fixed=students.filter(st=>st.fixed),capacity=Math.ceil(students.length/k),count=Array(k).fill(0);
+  for(const st of fixed)if(st.fixed>=1&&st.fixed<=k)count[st.fixed-1]++;
+  const errors=[];
+  count.forEach((n,i)=>{if(n>capacity)errors.push((i+1)+'반 우선 배치 '+n+'명: 반당 최대 '+capacity+'명을 초과했습니다.')});
+  const assigned=Object.fromEntries(fixed.map(st=>[st.id,st.fixed]));
+  errors.push(...validateAssignment(students,pairs,assigned,capRules));
+  return errors;
+}
+function tryPreset(id,to){
+  const st=findStudent(id);if(!st||!Number.isInteger(to)||to<0||to>state.classCount)return false;
+  const before=st.fixed;st.fixed=to;
+  const errors=presetIssues(state.students,state.pairs,state.classCount,state.capRules);
+  if(errors.length){st.fixed=before;toast('배치할 수 없습니다. '+errors[0]);return false}
+  invalidate();changeState();toast(to?st.name+' 학생을 '+to+'반에 우선 배치했습니다.':st.name+' 학생의 우선 배치를 해제했습니다.');
+  return true;
+}
+function renderPreset(){
+  const fixed=state.students.filter(st=>st.fixed),free=state.students.filter(st=>!st.fixed);
+  $('presetCount').textContent=fixed.length+'명 확정';$('presetRemaining').textContent=free.length+'명';
+  const capacity=Math.ceil(state.students.length/state.classCount);
+  const errors=presetIssues(state.students,state.pairs,state.classCount,state.capRules);
+  $('presetStatus').className=errors.length?'alert':'helper';
+  $('presetStatus').textContent=errors.length?errors.join(' / '):'우선 배치 '+fixed.length+'명 · 남은 학생 '+free.length+'명 · 학급당 '+Math.floor(state.students.length/state.classCount)+'~'+capacity+'명 기준 · 우선 배치는 자동 편성에서 유지됩니다.';
+  const q=($('presetSearch').value||'').trim().toLowerCase();
+  const filtered=free.filter(st=>[st.name,st.oldClass,st.number,...st.traits].join(' ').toLowerCase().includes(q));
+  const list=filtered.slice(0,120);
+  $('presetUnassigned').innerHTML=list.map(st=>`<div class="preset-person" data-preset-row="${escapeHtml(st.id)}"><div class="preset-person-main"><b>${escapeHtml(st.name||'(이름 미입력)')}</b><small>${escapeHtml(presetPersonInfo(st))}</small></div><select aria-label="${escapeHtml(st.name)} 우선 배치 반" data-preset="${escapeHtml(st.id)}"><option value="0">반 선택</option>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}">${i+1}반</option>`).join('')}</select></div>`).join('')||'<div class="empty">조건에 맞는 미배치 학생이 없습니다.</div>';
+  if(filtered.length>list.length)$('presetUnassigned').insertAdjacentHTML('beforeend','<div class="helper">처음 120명만 표시합니다. 검색하여 나머지 학생을 찾으세요.</div>');
+  $('presetClassGrid').innerHTML=Array.from({length:state.classCount},(_,index)=>{
+    const num=index+1,members=fixed.filter(st=>st.fixed===num),left=Math.max(0,capacity-members.length);
+    const maxTags=Object.entries(state.capRules).filter(([,limit])=>Number.isInteger(limit)).map(([tag,limit])=>{
+      const used=members.filter(st=>(st.traits||[]).includes(tag)).length;
+      return used?tag+' '+used+'/'+limit+'명':null;
+    }).filter(Boolean).join(' · ');
+    return `<section class="preset-class" aria-label="${num}반 우선 배치"><div class="preset-class-head"><h3>${num}반</h3><span class="count-pill">${members.length}명 확정 / 최대 ${capacity}명</span></div><div class="preset-meter ${left===0?'warning':''}"><span style="width:${Math.min(100,capacity?members.length/capacity*100:0)}%"></span></div><label class="teacher-field">담당 교사(선택)<input data-teacher-class="${num}" maxlength="40" placeholder="교사명" value="${escapeHtml(state.teacherNames[num]||'')}"></label><div class="detail">자동 배정 가능한 빈자리 최대 ${left}명</div>${maxTags?'<div class="detail">'+escapeHtml(maxTags)+'</div>':''}
+    <div class="preset-members">${members.map(st=>`<div class="preset-locked"><div><b>${escapeHtml(st.name||'(이름 미입력)')}</b><small>${escapeHtml(presetPersonInfo(st))}</small></div><button class="btn small" data-unpin="${escapeHtml(st.id)}" aria-label="${escapeHtml(st.name)} 우선 배치 해제">해제</button></div>`).join('')||'<div class="empty" style="padding:17px 6px">우선 배치한 학생 없음</div>'}</div>
+    <select data-place-class="${num}" aria-label="${num}반에 학생 우선 배치"><option value="">이 반에 학생 추가…</option>${free.map(st=>`<option value="${escapeHtml(st.id)}">${escapeHtml(studentTitle(st))}</option>`).join('')}</select></section>`;
+  }).join('');
+}
 function renderCaps(){
   $('capRules').innerHTML=state.traits.map(tag=>`<div class="cap-item"><label for="cap-${escapeHtml(tag)}">${escapeHtml(tag)}</label><input type="number" min="0" max="1000" step="1" inputmode="numeric" data-cap="${escapeHtml(tag)}" aria-label="${escapeHtml(tag)} 반당 최대 인원" placeholder="제한 없음" value="${state.capRules[tag]??''}"></div>`).join('');
 }
