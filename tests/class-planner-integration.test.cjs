@@ -47,3 +47,37 @@ test('동명이인에게 개별 학생 ID를 부여할 수 있음',()=>{
  const p=[{a:people[0].id,b:people[1].id}];const result=api.generateCandidates(people,p,3,[],seed(52));
  assert.ok(result.candidates?.length);for(const item of result.candidates)assert.notEqual(item.assign[people[0].id],item.assign[people[1].id]);
 });
+
+test('재현: 100명 4개 반, 여러 분리 관계와 20% 반 고정도 편성 가능한 경우는 찾아낸다',()=>{
+ const E=engine(),n=100,k=4,rng=seed(3810),people=students(n);
+ for(let i=0;i<Math.floor(n*.2);i++){const j=Math.floor(rng()*n);people[j].fixed=j%k+1;}
+ const pairs=[],seen=new Set();
+ for(let t=0;t<n*3;t++){
+  let a=Math.floor(rng()*n),b=Math.floor(rng()*n);
+  if(a%k===b%k||a===b)continue;
+  const key=[a,b].sort((x,y)=>x-y).join('-');if(seen.has(key))continue;seen.add(key);
+  pairs.push({a:people[a].id,b:people[b].id});
+ }
+ const outcome=E.generateCandidates(people,pairs,k,['학습 지원'],rng);
+ assert.ok(outcome.candidates?.length,outcome.error);
+ for(const candidate of outcome.candidates){
+  assert.equal(E.validateAssignment(people,pairs,candidate.assign).length,0);
+  const counts=Array(k).fill(0);for(const pupil of people)counts[candidate.assign[pupil.id]-1]++;
+  assert.ok(Math.max(...counts)-Math.min(...counts)<=1);
+ }
+});
+for(const [N,k] of [[150,5],[300,6],[500,10],[1000,10]]){
+ test('대규모 '+N+'명 '+k+'개 반: 분리 조건과 반별 인원 보존',()=>{
+  const E=engine(),rng=seed(2600+N),people=students(N);
+  for(let i=0;i<Math.floor(N*.1);i++){const j=Math.floor(rng()*N);people[j].fixed=j%k+1;}
+  const pairs=[],seen=new Set();
+  for(let t=0;t<N;t++){const a=Math.floor(rng()*N),b=Math.floor(rng()*N);if(a%k===b%k||a===b)continue;const sig=[a,b].sort((x,y)=>x-y).join('-');if(seen.has(sig))continue;seen.add(sig);pairs.push({a:people[a].id,b:people[b].id});}
+  const result=E.generateCandidates(people,pairs,k,['학습 지원'],rng);
+  assert.ok(result.candidates?.length,result.error);
+  for(const c of result.candidates){
+   assert.equal(E.validateAssignment(people,pairs,c.assign).length,0);
+   const count=Array(k).fill(0);people.forEach(p=>count[c.assign[p.id]-1]++);
+   assert.ok(Math.max(...count)-Math.min(...count)<=1);
+  }
+ });
+}
