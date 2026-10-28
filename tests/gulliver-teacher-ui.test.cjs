@@ -129,6 +129,38 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.match(savedCsv,/교사 지정/);
 
 
+
+    // Real Excel-like grid: paste a header, quoted multiline attention notes, and a summary column.
+    await page.locator('[data-tab="roster"]').click();
+    await page.locator('#toggleBulk').click();
+    const workbook='학년\t반\t번호\t이름\t성별\t유의사항\t\n6\t1\t1\t\t\t\t남:10+여:14=24명\n6\t1\t2\t김하늘\t여\t"다문화\n한부모"\t\n6\t2\t1\t이도윤\t남\t다문화(모)\t\n\t\t\t\t\t\t총: 96명';
+    await page.locator('[data-bulk-r="0"][data-bulk-c="0"]').evaluate((element,raw)=>{
+      const data=new DataTransfer();data.setData('text/plain',raw);
+      element.dispatchEvent(new ClipboardEvent('paste',{clipboardData:data,bubbles:true,cancelable:true}));
+    },workbook);
+    assert.match(await page.locator('#bulkPreview').textContent(),/입력된 학생 행 3개/);
+    assert.match(await page.locator('#bulkPreview').textContent(),/이름 미입력 1행/);
+    assert.equal(await page.locator('[data-bulk-r="1"][data-bulk-c="5"]').inputValue(),'다문화\n한부모');
+    await page.locator('[data-bulk-r="0"][data-bulk-c="3"]').fill('박서연');
+    assert.match(await page.locator('#bulkPreview').textContent(),/이름 입력 완료 3명/);
+    await page.locator('input[name="bulkMode"][value="replace"]').check();
+    page.once('dialog',dialog=>dialog.accept());
+    await page.locator('#commitBulk').click();
+    assert.equal(await page.locator('#statStudents').textContent(),'3명');
+    const importState=await page.evaluate(()=>state.students.map(st=>({grade:st.oldGrade,oldClass:st.oldClass,name:st.name,traits:st.traits})));
+    assert.deepEqual(importState.map(st=>st.name),['박서연','김하늘','이도윤']);
+    assert.equal(importState[1].grade,'6');
+    assert.equal(importState[2].oldClass,'2반');
+    assert.ok(importState[1].traits.includes('다문화')&&importState[1].traits.includes('한부모'));
+    assert.ok(importState[2].traits.includes('다문화(모)'));
+    await page.reload({waitUntil:'domcontentloaded'});
+    assert.equal(await page.locator('#statStudents').textContent(),'3명');
+    await page.locator('#toggleBulk').click();
+    await page.locator('#bulkText').fill('| 학년 | 반 | 번호 | 이름 | 성별 | 유의사항 |\n| --- | --- | --- | --- | --- | --- |\n| 6 | 4 | 1 | 최가람 | 여 | 한부모<br> 다문화 |');
+    await page.locator('#bulkParseText').click();
+    assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="3"]').inputValue(),'최가람');
+    assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="5"]').inputValue(),'한부모\n 다문화');
+
     await page.goto(base + encodeURIComponent('지도안식 원형 타이머.html'), {waitUntil: 'domcontentloaded'});
     await page.locator('.gt-shell').waitFor({state: 'attached'});
     await page.locator('body').evaluate(node => node.classList.add('student-view'));
