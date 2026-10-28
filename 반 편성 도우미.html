@@ -149,6 +149,39 @@ let presetUndo=null;
 const $ = id => document.getElementById(id);
 const escapeHtml = v => String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 function makeId(){return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,9)}
+/* SEPARATION_BASKETS_START */
+function normalizeBaskets(value,validIds){
+ if(!Array.isArray(value))return [];
+ const seen=new Set();
+ return value.slice(0,40).filter(x=>x&&typeof x==='object').map((x,index)=>{
+   let id=String(x.id||'basket-'+(index+1)).slice(0,80);
+   if(seen.has(id))id='basket-'+(index+1)+'-'+id;
+   seen.add(id);
+   const members=[...new Set((Array.isArray(x.members)?x.members:[]).map(String).filter(v=>validIds.has(v)))].slice(0,1000);
+   return {id,name:String(x.name||'분리 바구니 '+(index+1)).trim().slice(0,40),members};
+ });
+}
+function buildBasketPairs(pairs,baskets){
+ const unique=new Set(),output=[];
+ function add(a,b){
+   if(!a||!b||a===b)return;
+   const key=a<b?a+'\u001f'+b:b+'\u001f'+a;
+   if(unique.has(key))return;
+   unique.add(key);output.push({a,b});
+ }
+ for(const p of pairs||[])if(p)add(p.a,p.b);
+ for(const basket of baskets||[]){
+   const ids=[...new Set(basket.members||[])];
+   for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++)add(ids[i],ids[j]);
+ }
+ return output;
+}
+/* SEPARATION_BASKETS_END */
+function activeStudents(){return state.teacherPriorityOn?state.students:state.students.map(st=>({...st,fixed:0}))}
+function effectivePairs(){return buildBasketPairs(state.pairs,state.baskets)}
+function basketProblems(baskets=state.baskets,k=state.classCount){
+ return baskets.filter(b=>b.members.length>k).map(b=>'「'+b.name+'」에 '+b.members.length+'명: '+k+'개 반에 나눌 수 없습니다.');
+}
 function defaultState(){return {version:5,grade:'1',classCount:3,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},baskets:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
 function parseStudyScore(v,legacy=false){if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return !Number.isFinite(n)||n<0||n>1e9||(legacy&&n===0)?null:Math.round((n+Number.EPSILON)*100)/100}
 function hasStudyScore(s){return Number.isFinite(s.level)&&s.level>=0}
@@ -186,13 +219,14 @@ function findStudent(id){return state.students.find(s=>s.id===id)}
 function studentTitle(s){return s ? (s.name||'(이름 없음)')+' · '+(s.oldGrade?s.oldGrade+'학년 ':'')+(s.oldClass||'기존 반 미입력')+(s.number?' '+s.number+'번':'') : '알 수 없음'}
 function displayClass(num){return state.grade+'학년 '+num+'반'}
 function duplicateNames(){const m=new Map();state.students.forEach(s=>{const n=s.name.trim();if(n)m.set(n,(m.get(n)||0)+1)});return [...m.entries()].filter(([,count])=>count>1)}
-function showTab(tab){view=tab;document.querySelectorAll('.tab').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.tab===tab)));['roster','preset','rules','results'].forEach(key=>$('view-'+key).classList.toggle('hidden',tab!==key));render()}
+function showTab(tab){if(tab==='preset'&&!state.teacherPriorityOn){toast('교사 우선 배치를 사용하려면 먼저 ON으로 변경해 주세요.');return}view=tab;document.querySelectorAll('.tab').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.tab===tab)));['roster','preset','rules','results'].forEach(key=>$('view-'+key).classList.toggle('hidden',tab!==key));render()}
 function render(){
   $('grade').value=state.grade;$('classCount').value=state.classCount;
   $('teacherPriorityOn').checked=!!state.teacherPriorityOn;
   $('priorityModeHelp').textContent=state.teacherPriorityOn?'ON · 교사가 지정한 학생의 반을 유지하며 나머지 빈자리를 채웁니다.':'OFF · 교사 지정 없이 자동 편성합니다. 기존 우선 배치 정보는 그대로 보관합니다.';
   document.querySelector('[data-tab="preset"]').classList.toggle('priority-tab-off',!state.teacherPriorityOn);
-  $('statStudents').textContent=state.students.length+'명';$('statClasses').textContent=state.classCount+'개 반';$('statPairs').textContent=state.pairs.length+'쌍';$('statDuplicates').textContent=duplicateNames().length+'건';
+  document.querySelector('[data-tab="preset"]').setAttribute('aria-disabled',String(!state.teacherPriorityOn));
+  $('statStudents').textContent=state.students.length+'명';$('statClasses').textContent=state.classCount+'개 반';$('statPairs').textContent=effectivePairs().length+'쌍';$('statDuplicates').textContent=duplicateNames().length+'건';
   $('rosterCount').textContent=state.students.length+'명';$('pairCount').textContent=state.pairs.length+'쌍';
   if(view==='roster')renderRoster();if(view==='preset')renderPreset();if(view==='rules'){renderCaps();renderPairs();renderBaskets();}if(view==='results')renderResults();
 }
@@ -230,7 +264,7 @@ function applyPresets(ids,to){
   if(!pupils.length||pupils.some(st=>!st)||!Number.isInteger(to)||to<0||to>state.classCount)return false;
   const before=Object.fromEntries(state.students.map(st=>[st.id,st.fixed]));
   pupils.forEach(st=>st.fixed=to);
-  const errors=to?presetIssues(state.students,state.pairs,state.classCount,state.capRules):[];
+  const errors=to?presetIssues(state.students,effectivePairs(),state.classCount,state.capRules):[];
   if(errors.length){state.students.forEach(st=>st.fixed=before[st.id]);presetFeedback('배치할 수 없습니다. '+errors[0]+' 선택한 학생은 그대로 유지됩니다.',true);return false}
   presetUndo={before,after:Object.fromEntries(state.students.map(st=>[st.id,st.fixed]))};
   pupils.forEach(st=>presetSelected.delete(st.id));invalidate();changeState();
@@ -242,7 +276,7 @@ function undoPresets(){
   const {before,after}=presetUndo;
   if(state.students.length!==Object.keys(after).length||state.students.some(st=>!(st.id in after)||st.fixed!==after[st.id])){presetUndo=null;renderPreset();presetFeedback('학생 명단이나 배치가 변경되어 되돌릴 수 없습니다.',true);return}
   const restored=state.students.map(st=>({...st,fixed:before[st.id]}));
-  if(restored.some(st=>st.fixed>state.classCount)||presetIssues(restored,state.pairs,state.classCount,state.capRules).length){presetFeedback('현재 편성 조건과 충돌하여 되돌릴 수 없습니다.',true);return}
+  if(restored.some(st=>st.fixed>state.classCount)||presetIssues(restored,effectivePairs(),state.classCount,state.capRules).length){presetFeedback('현재 편성 조건과 충돌하여 되돌릴 수 없습니다.',true);return}
   state.students.forEach(st=>st.fixed=before[st.id]);presetUndo=null;presetSelected.clear();invalidate();changeState();presetFeedback('최근 배치를 되돌렸습니다.');
 }
 function presetVisibleStudents(){
@@ -258,7 +292,7 @@ function renderPreset(){
   const fixed=state.students.filter(st=>st.fixed),free=state.students.filter(st=>!st.fixed);
   $('presetCount').textContent=fixed.length+'명 확정';$('presetRemaining').textContent=free.length+'명';
   const capacity=Math.ceil(state.students.length/state.classCount);
-  const errors=presetIssues(state.students,state.pairs,state.classCount,state.capRules);
+  const errors=presetIssues(state.students,effectivePairs(),state.classCount,state.capRules);
   $('presetStatus').className=errors.length?'alert':'helper';
   $('presetStatus').textContent=errors.length?errors.join(' / '):'우선 배치 '+fixed.length+'명 · 남은 학생 '+free.length+'명 · 학급당 '+Math.floor(state.students.length/state.classCount)+'~'+capacity+'명 기준 · 우선 배치는 자동 편성에서 유지됩니다.';
   const setOptions=(id,values,label)=>{const el=$(id),value=el.value;el.innerHTML='<option value="">'+label+'</option>'+values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');if(values.includes(value))el.value=value};
@@ -569,9 +603,9 @@ function renderResults(){
   $('exportCsv').disabled=!has;$('print').disabled=!has;
   if(!has){$('resultMessage').classList.remove('hidden');$('alternatives').innerHTML='';$('validation').innerHTML='';$('report').innerHTML='';$('resultGrid').innerHTML='';return}
   $('resultMessage').classList.add('hidden');
-  $('alternatives').innerHTML=state.candidates.map((c,i)=>`<button class="alt ${state.activeCandidate===i?'active':''}" data-candidate="${i}"><strong>편성안 ${String.fromCharCode(65+i)}</strong><small>${i===0?'추천안 · ':''}조건 위반 ${validateAssignment(state.students,state.pairs,c.assign,state.capRules).length}건</small></button>`).join('');
+  $('alternatives').innerHTML=state.candidates.map((c,i)=>`<button class="alt ${state.activeCandidate===i?'active':''}" data-candidate="${i}"><strong>편성안 ${String.fromCharCode(65+i)}</strong><small>${i===0?'추천안 · ':''}조건 위반 ${validateAssignment(activeStudents(),effectivePairs(),c.assign,state.capRules).length}건</small></button>`).join('');
   const selected=state.candidates[state.activeCandidate];if(!selected)return;
-  const violations=validateAssignment(state.students,state.pairs,selected.assign,state.capRules);
+  const violations=validateAssignment(activeStudents(),effectivePairs(),selected.assign,state.capRules);
   const counts=reportData(selected);const totals=counts.map(d=>d.total);const diff=Math.max(...totals)-Math.min(...totals);
   const over=diff>1?`반별 인원 차이가 ${diff}명입니다. 편성 결과를 직접 검토하세요.`: `반별 인원 차이 ${diff}명 · 분리·고정·인원 상한 조건 위반 없음`;
   $('validation').innerHTML=violations.length?`<div class="alert"><b>분리 조건 위반 ${violations.length}건</b><div>${violations.map(escapeHtml).join('<br>')}</div></div>`:`<div class="success">${escapeHtml(over)}${duplicateNames().length?' · 동명이인이 있어 기존 반과 번호를 함께 확인하세요.':''}</div>`;
@@ -891,7 +925,7 @@ function exportCSV(){
   download('반편성_결과_'+state.grade+'학년.csv','\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');toast('편성 결과 CSV를 저장했습니다.');
 }
 function sampleData(){const surnames=['김','이','박','최','정','강','조','윤','장','임','한','오'];const names=['하늘','지우','도윤','민서','준우','서연','시우','하은','예준','다은','현우','윤서','지호','수아','건우','서준','나은','이안','채원','예은','유준','지안','서아','태윤','은우','시윤','다현','승우','윤호','서진','연우','수빈','민준','다온','현서','재윤'];return names.map((n,i)=>({id:makeId(),oldClass:(i%3+1)+'반',number:String(Math.floor(i/3)+1),name:surnames[i%12]+n,gender:i%2?'여':'남',level:Math.round((65+(i*13)%34+((i%4)*0.25))*100)/100,traits:[i%5===0?'사회성':null,i%7===0?'운동부':null].filter(Boolean),fixed:0,note:''}))}
-function isCompatibleMove(id,to,candidate){const student=findStudent(id);if(!student||student.fixed)return false;const proposal={...candidate.assign,[id]:to};return validateAssignment(state.students,state.pairs,proposal,state.capRules).length===0}
+function isCompatibleMove(id,to,candidate){const student=findStudent(id);if(!student||(state.teacherPriorityOn&&student.fixed))return false;const proposal={...candidate.assign,[id]:to};return validateAssignment(activeStudents(),effectivePairs(),proposal,state.capRules).length===0}
 function addStudent(){const s={id:makeId(),oldGrade:'',oldClass:'',number:'',name:'',gender:'',level:null,traits:[],fixed:0,note:''};state.students.push(s);invalidate();changeState();const field=document.querySelector(`[data-student="${s.id}"] [data-key="name"]`);field?.focus()}
 function addTrait(){const t=$('newTrait').value.trim();if(!t)return;if(state.traits.includes(t)){toast('이미 있는 특징입니다.');return}if(state.traits.length>=64){toast('유의 사항은 최대 64개까지 추가할 수 있습니다.');return}state.traits.push(t);$('newTrait').value='';invalidate();changeState()}
 function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)return;const s=findStudent(tr.dataset.student);if(!s)return;
@@ -1063,7 +1097,7 @@ function installEvents(){
     if(mode==='replace'&&state.students.length&&!confirm('기존 학생 명단, 분리 관계, 교사 우선 배치를 새 명단으로 교체할까요?'))return;
     if(named.length+(mode==='append'?state.students.length:0)>1000){toast('학생은 최대 1000명까지 등록할 수 있습니다. 기존 명단과 추가 인원을 확인하세요.');return}
     const list=named.map(bulkStudentFromGrid);
-    if(mode==='replace'){state.students=[];state.pairs=[]}
+    if(mode==='replace'){state.students=[];state.pairs=[];state.baskets=[]}
     const skipped=[];
     for(const st of list){
       const tags=[];
@@ -1088,7 +1122,7 @@ function installEvents(){
   $('newTrait').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTrait()}});$('addTrait').addEventListener('click',addTrait);
   $('traitChips').addEventListener('click',e=>{const b=e.target.closest('[data-delete-trait]');if(!b)return;const t=b.dataset.deleteTrait;if(!confirm(`「${t}」 유의 사항을 학생 명단에서도 삭제할까요?`))return;state.traits=state.traits.filter(x=>x!==t);delete state.capRules[t];state.students.forEach(s=>s.traits=s.traits.filter(x=>x!==t));invalidate();changeState()});
   $('rosterBody').addEventListener('change',updateStudent);
-  $('rosterBody').addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');if(remove){const s=findStudent(remove.dataset.remove);if(!confirm(`「${studentTitle(s)}」 학생을 삭제할까요?`))return;state.students=state.students.filter(x=>x.id!==remove.dataset.remove);state.pairs=state.pairs.filter(p=>p.a!==remove.dataset.remove&&p.b!==remove.dataset.remove);invalidate();changeState();return}
+  $('rosterBody').addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');if(remove){const s=findStudent(remove.dataset.remove);if(!confirm(`「${studentTitle(s)}」 학생을 삭제할까요?`))return;state.students=state.students.filter(x=>x.id!==remove.dataset.remove);state.pairs=state.pairs.filter(p=>p.a!==remove.dataset.remove&&p.b!==remove.dataset.remove);state.baskets.forEach(b=>b.members=b.members.filter(id=>id!==remove.dataset.remove));invalidate();changeState();return}
     const note=e.target.closest('[data-note]');if(note){const s=findStudent(note.dataset.note);noteStudentId=s.id;$('noteTitle').textContent=`${s.name||'학생'} 메모`;$('noteText').value=s.note;$('noteDialog').showModal()}});
   $('cancelNote').addEventListener('click',()=>$('noteDialog').close());$('saveNote').addEventListener('click',()=>{const s=findStudent(noteStudentId);if(s){s.note=$('noteText').value.slice(0,1000);invalidate();changeState()}$('noteDialog').close()});
   $('presetSearch').addEventListener('input',renderPreset);
@@ -1123,7 +1157,7 @@ function installEvents(){
   $('capRules').addEventListener('change',e=>{const el=e.target.closest('[data-cap]');if(!el)return;const tag=el.dataset.cap,value=el.value.trim();if(!state.traits.includes(tag))return;if(value!==''&&(!/^\d+$/.test(value)||Number(value)>1000)){toast('반당 최대 인원은 0~1000 사이의 정수를 입력해 주세요.');renderCaps();return}if(value==='')delete state.capRules[tag];else state.capRules[tag]=Number(value);invalidate();changeState();toast(value===''?`「${tag}」 인원 제한을 해제했습니다.`:`「${tag}」 반당 최대 ${value}명으로 설정했습니다.`)});
   $('addPair').addEventListener('click',()=>{const a=$('pairA').value,b=$('pairB').value;if(!a||!b){toast('두 학생을 모두 선택해 주세요.');return}if(a===b){toast('서로 다른 학생 두 명을 선택해 주세요.');return}if(state.pairs.some(p=>(p.a===a&&p.b===b)||(p.a===b&&p.b===a))){toast('이미 지정한 분리 관계입니다.');return}state.pairs.push({a,b});invalidate();changeState();toast('분리 관계를 추가했습니다.')});
   $('pairList').addEventListener('click',e=>{const b=e.target.closest('[data-pair-index]');if(!b)return;state.pairs.splice(Number(b.dataset.pairIndex),1);invalidate();changeState()});
-  $('generate').addEventListener('click',()=>{const outcome=generateCandidates(state.students,state.pairs,state.classCount,state.traits,Math.random,state.capRules);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
+  $('generate').addEventListener('click',()=>{const outcome=generateCandidates(activeStudents(),effectivePairs(),state.classCount,state.traits,Math.random,state.capRules);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
   $('generateQuick').addEventListener('click',()=>$('generate').click());
   $('alternatives').addEventListener('click',e=>{const b=e.target.closest('[data-candidate]');if(!b)return;state.activeCandidate=Number(b.dataset.candidate);saveState();renderResults()});
   $('resultGrid').addEventListener('change',manualMove);
