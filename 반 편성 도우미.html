@@ -242,7 +242,7 @@ function renderRoster(){
     <td><input class="score-input" data-key="level" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${hasStudyScore(st)?studyText(st.level):''}" aria-label="${escapeHtml(st.name)} 학습지표, 소수점 둘째 자리"></td>
     <td class="notice-cell"><details class="notice-picker"><summary><span data-notice-summary>${escapeHtml(st.traits.length?st.traits.join(', '):'유의 사항 선택')}</span><span class="count-pill">${st.traits.length}개</span></summary>
       <div class="notice-options">${state.traits.map(t=>`<label><input type="checkbox" data-trait="${escapeHtml(t)}" aria-label="${escapeHtml(st.name)} ${escapeHtml(t)}" ${st.traits.includes(t)?'checked':''}><span>${escapeHtml(t)}</span></label>`).join('')}</div>
-      <div class="notice-extra"><label class="field">새 반 고정 (선택)<select data-key="fixed" aria-label="${escapeHtml(st.name)} 배정 반 고정"><option value="0">미고정</option>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${st.fixed===i+1?'selected':''}>${i+1}반 고정</option>`).join('')}</select></label><button class="btn small" data-note="${escapeHtml(st.id)}">${st.note?'참고 메모 수정':'참고 메모 작성'}</button></div></details>
+      <div class="notice-extra"><label class="field">교사 우선 배치 반 (ON 시 적용)<select data-key="fixed" aria-label="${escapeHtml(st.name)} 배정 반 고정"><option value="0">미고정</option>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${st.fixed===i+1?'selected':''}>${i+1}반 고정</option>`).join('')}</select></label><button class="btn small" data-note="${escapeHtml(st.id)}">${st.note?'참고 메모 수정':'참고 메모 작성'}</button></div></details>
       ${st.fixed?'<span class="note-inline">◆ '+st.fixed+'반 고정</span>':''}${st.note?'<span class="note-inline">메모 있음</span>':''}
     </td></tr>`).join(''):`<tr><td colspan="6" class="empty"><b>${state.students.length?'검색 결과가 없습니다.':'등록된 학생이 없습니다.'}</b>${state.students.length?'검색어를 바꿔 주세요.':'「+ 학생 추가」 또는 「스프레드시트 붙여넣기」로 시작하세요.'}</td></tr>`;
 }
@@ -641,7 +641,7 @@ function renderResults(){
   $('report').innerHTML=`<div class="report"><table><thead><tr><th>반</th><th>전체</th><th>남</th><th>여</th><th>성별 미입력</th><th>학습지표 평균</th></tr></thead><tbody>${counts.map((d,i)=>`<tr><td>${escapeHtml(displayClass(i+1))}</td><td>${d.total}명</td><td>${d.boys}명</td><td>${d.girls}명</td><td>${d.total-d.boys-d.girls}명</td><td>${d.levelN?(d.levelSum/d.levelN).toFixed(2):'—'}</td></tr>`).join('')}</tbody></table></div><div class="legend">${state.traits.filter(t=>counts.some(d=>d.traitCounts[t]>0)||Number.isInteger(state.capRules[t])).map(t=>`<span>${escapeHtml(t)}${Number.isInteger(state.capRules[t])?' (반당 최대 '+state.capRules[t]+'명)':''}: ${counts.map((d,i)=>`${i+1}반 ${d.traitCounts[t]}`).join(' / ')}</span>`).join('')}</div>`;
   $('resultGrid').innerHTML=counts.map((d,index)=>{
     const c=index+1;const pupils=state.students.filter(s=>selected.assign[s.id]===c).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-    return `<div class="class-card"><div class="class-top"><h3>${escapeHtml(displayClass(c))}<small>${d.total}명</small></h3><div class="class-metrics">${state.teacherNames[c]?'담당 '+escapeHtml(state.teacherNames[c])+' · ':''}교사 우선 배치 ${pupils.filter(st=>st.fixed).length}명 · 남 ${d.boys} · 여 ${d.girls} · 학습지표 ${d.levelN?(d.levelSum/d.levelN).toFixed(2):'미입력'}</div></div><div class="class-body">${pupils.map(s=>`<div class="assigned"><div class="person"><b>${escapeHtml(s.name)}${s.fixed?' <span class="warning-dot" title="교사가 우선 배치한 학생 · 자동 편성에서 유지">◆</span>':''}</b><small>${escapeHtml(s.oldClass||'기존 반 미입력')}${s.number?' · '+escapeHtml(s.number)+'번':''} · ${escapeHtml(s.gender||'성별 미입력')} · 학습 ${escapeHtml(studyText(s.level))}${s.traits.length?' · '+escapeHtml(s.traits.join(', ')):''}</small></div><select data-move="${escapeHtml(s.id)}" aria-label="${escapeHtml(s.name)} 반 변경" ${s.fixed?'disabled title="고정된 학생"':''}>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${i+1===c?'selected':''}>${i+1}반</option>`).join('')}</select></div>`).join('')||'<div class="empty">학생 없음</div>'}</div></div>`;
+    return `<div class="class-card"><div class="class-top"><h3>${escapeHtml(displayClass(c))}<small>${d.total}명</small></h3><div class="class-metrics">${state.teacherNames[c]?'담당 '+escapeHtml(state.teacherNames[c])+' · ':''}교사 우선 배치 ${state.teacherPriorityOn?pupils.filter(st=>st.fixed).length:0}명 · 남 ${d.boys} · 여 ${d.girls} · 학습지표 ${d.levelN?(d.levelSum/d.levelN).toFixed(2):'미입력'}</div></div><div class="class-body">${pupils.map(s=>`<div class="assigned"><div class="person"><b>${escapeHtml(s.name)}${state.teacherPriorityOn&&s.fixed?' <span class="warning-dot" title="교사가 우선 배치한 학생 · 자동 편성에서 유지">◆</span>':''}</b><small>${escapeHtml(s.oldClass||'기존 반 미입력')}${s.number?' · '+escapeHtml(s.number)+'번':''} · ${escapeHtml(s.gender||'성별 미입력')} · 학습 ${escapeHtml(studyText(s.level))}${s.traits.length?' · '+escapeHtml(s.traits.join(', ')):''}</small></div><select data-move="${escapeHtml(s.id)}" aria-label="${escapeHtml(s.name)} 반 변경" ${state.teacherPriorityOn&&s.fixed?'disabled title="고정된 학생"':''}>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${i+1===c?'selected':''}>${i+1}반</option>`).join('')}</select></div>`).join('')||'<div class="empty">학생 없음</div>'}</div></div>`;
   }).join('');
 }
 /* BULK_TABLE_START: pure input helpers shared by the grid and paste fallback */
@@ -1014,6 +1014,12 @@ function installEvents(){
     bulkSelection={anchor:{r:0,c},focus:{r:bulkRows.length-1,c}};
     bulkPaintSelection();
     toast('열 전체를 선택했습니다. 값 붙여넣기 또는 선택 영역 아래로 채우기를 사용할 수 있습니다.');
+  });
+  $('bulkGridTable').querySelector('thead').addEventListener('paste',e=>{
+    const head=e.target.closest('[data-bulk-head]');if(!head)return;
+    const pasted=e.clipboardData?.getData('text/plain');
+    if(!pasted)return;
+    e.preventDefault();bulkApplyPaste(pasted);
   });
   $('bulkGridTable').querySelector('thead').addEventListener('keydown',e=>{
     if(!['Enter',' '].includes(e.key))return;
