@@ -348,3 +348,61 @@ test('교사 우선 배치 ON/OFF 설정과 분리 바구니 입력 화면이 �
  assert.match(html,/function activeStudents\(\)/);
  assert.match(html,/function effectivePairs\(\)/);
 });
+
+function moveReviewApi(){
+ const a=html.indexOf('/* MOVE_REVIEW_START'),b=html.indexOf('/* MOVE_REVIEW_END */',a);
+ assert.ok(a>0&&b>a,'학생 이동 검토 엔진을 찾을 수 있어야 함');
+ const ctx=engine();
+ vm.runInContext(html.slice(a,b),ctx);
+ return ctx;
+}
+test('드래그 이동은 출발·도착 반의 남녀·다문화·특수 수와 학습 평균을 즉시 다시 계산',()=>{
+ const api=moveReviewApi(),people=Array.from({length:12},(_,i)=>({
+  id:'p'+i,name:'학생'+i,gender:i%2?'여':'남',level:i===0?0:70+i,
+  oldClass:String(i%3+1),traits:i===0?['다문화','특수']:i===3?['다문화']:[],fixed:0
+ }));
+ const original=Object.fromEntries(people.map((st,i)=>[st.id,i%3+1]));
+ const result=api.reviewStudentMove(people,[],original,3,['다문화','특수'],{},'p0',2,false);
+ assert.equal(result.ok,true);
+ assert.equal(original.p0,1,'기존 편성안은 검사 중 변경되면 안 됨');
+ assert.equal(result.proposed.p0,2);
+ assert.equal(result.before[0].total,4);assert.equal(result.after[0].total,3);
+ assert.equal(result.before[1].total,4);assert.equal(result.after[1].total,5);
+ assert.equal(result.before[0].boys,4);assert.equal(result.after[0].boys,3);
+ assert.equal(result.before[1].boys,0);assert.equal(result.after[1].boys,1);
+ assert.equal(result.before[0].traitCounts['다문화'],2);assert.equal(result.after[0].traitCounts['다문화'],1);
+ assert.equal(result.before[1].traitCounts['다문화'],0);assert.equal(result.after[1].traitCounts['다문화'],1);
+ assert.equal(result.after[1].traitCounts['특수'],1);
+ assert.equal(result.before[0].levelN,4,'0.00점도 평가 인원에 포함');
+ assert.equal(api.validateAssignment(people,[],result.proposed,{}).length,0);
+});
+test('분리 관계와 바구니에 걸리는 반 이동은 금지하고 결과를 변경하지 않음',()=>{
+ const api=moveReviewApi(),people=Array.from({length:12},(_,i)=>({id:'p'+i,name:'학생'+i,gender:'',level:80+i,traits:[],fixed:0}));
+ const assign=Object.fromEntries(people.map((st,i)=>[st.id,i%3+1]));
+ const pairs=[{a:'p0',b:'p1'}];
+ const result=api.reviewStudentMove(people,pairs,assign,3,[],{},'p0',2,false);
+ assert.equal(result.ok,false);assert.match(result.error,/분리/);assert.equal(assign.p0,1);
+});
+test('반당 유의 사항 인원 상한 위반은 이동 중에도 차단',()=>{
+ const api=moveReviewApi(),people=Array.from({length:12},(_,i)=>({id:'p'+i,name:'학생'+i,gender:i%2?'남':'여',level:80+i,traits:i<2?['다문화']:[],fixed:0}));
+ const assign=Object.fromEntries(people.map((st,i)=>[st.id,i%3+1]));
+ const result=api.reviewStudentMove(people,[],assign,3,['다문화'],{'다문화':1},'p0',2,false);
+ assert.equal(result.ok,false);assert.match(result.error,/다문화/);assert.equal(assign.p0,1);
+});
+test('교사 우선 배치 ON은 고정 이동 차단, OFF는 저장한 고정정보를 무시',()=>{
+ const api=moveReviewApi(),people=Array.from({length:12},(_,i)=>({id:'p'+i,name:'학생'+i,gender:'',level:80+i,traits:[],fixed:i===0?1:0}));
+ const assign=Object.fromEntries(people.map((st,i)=>[st.id,i%3+1]));
+ const blocked=api.reviewStudentMove(people,[],assign,3,[],{},'p0',2,true);
+ assert.equal(blocked.ok,false);assert.match(blocked.error,/교사 우선/);
+ const accepted=api.reviewStudentMove(people,[],assign,3,[],{},'p0',2,false);
+ assert.equal(accepted.ok,true);
+ const same=api.reviewStudentMove(people,[],assign,3,[],{},'p0',1,false);
+ assert.equal(same.ok,false);
+});
+test('완성된 편성표의 드래그·이동 미리보기·되돌리기 인터페이스가 존재',()=>{
+ for(const id of ['movePreview','moveHistoryResult','undoMove','moveSelection'])assert.ok(html.includes('id="'+id+'"'),id);
+ for(const attr of ['data-result-student','data-drop-class','data-select-move','data-drop-button'])assert.ok(html.includes(attr),attr);
+ assert.match(html,/addEventListener\('dragstart'/);
+ assert.match(html,/addEventListener\('drop'/);
+ assert.match(html,/function undoResultMove\(/);
+});
