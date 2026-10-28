@@ -574,6 +574,10 @@ function bulkFormatRows(matrix,startColumn=0){
   const mapping=header?keys:legacy?[1,2,3,4,6,5,-1]:
     first.length>=6?[0,1,2,3,4,5,6]:
     first.length===5?[1,2,3,4,5]:
+    startColumn===0&&first.length===4?[1,2,3,4]:
+    startColumn===0&&first.length===3?[1,3,4]:
+    startColumn===0&&first.length===2?[1,3]:
+    startColumn===0&&first.length===1&&!/^[0-9]+$/.test(bulkClean(first[0]))?[3]:
     Array.from({length:first.length},(_,i)=>startColumn+i);
   const rows=[];let skipped=0;
   for(const sourceRow of source){
@@ -632,7 +636,8 @@ function renderBulkPreview(){
   const invalid=named.filter(row=>bulkClean(row[6])&&parseStudyScore(row[6])===null).length;
   const rooms=new Map();
   for(const row of entered){
-    const className=[bulkClean(row[0]),bulkClean(row[1])].filter(Boolean).join('학년 ')||'반 미입력';
+    const grade=bulkClean(row[0]),room=bulkClean(row[1]);
+    const className=(grade?grade+'학년 ':'')+(room?(/^d+$/.test(room)?room+'반':room):'반 미입력');
     rooms.set(className,(rooms.get(className)||0)+1);
   }
   const label=[...rooms.entries()].slice(0,8).map(([name,count])=>escapeHtml(name)+' : '+count+'행').join(' · ');
@@ -650,17 +655,6 @@ function putBulkRows(rows,start=0){
   let imported=0;
   for(let i=0;i<rows.length&&start+i<1000;i++){bulkRows[start+i]=rows[i].slice(0,7);imported++}
   renderBulkGrid();return imported;
-}
-function bulkApplyPastedText(text,startRow=0,startCol=0){
-  const source=parseSheetText(text);
-  const output=bulkFormatRows(source,startCol);
-  if(!output.rows.length)return 0;
-  const rows=output.rows.map(row=>{
-    const final=blankBulkRow();
-    row.forEach((value,col)=>{final[col]=value});
-    return final;
-  });
-  return putBulkRows(rows,output.header?0:startRow);
 }
 function bulkClearDraft(){
   bulkRows=Array.from({length:12},blankBulkRow);renderBulkGrid();
@@ -803,7 +797,6 @@ function installEvents(){
       state.students.push(st);
     }
     const grades=[...new Set(list.map(st=>st.oldGrade).filter(Boolean))];
-    if(!state.students.length)state.grade=state.grade;
     // The source grade describes the current roster; keep the explicitly selected destination grade.
     invalidate();bulkClearDraft();$('bulkText').value='';$('bulkPanel').classList.add('hidden');
     changeState();
