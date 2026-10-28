@@ -346,7 +346,8 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
 
 
 
-    // Drag-to-class review: totals, sex, multicultural and learning score update immediately.
+    // Drag-to-class review: use same-row comparison view, where both classes are visible at once.
+    await page.locator('#resultCompare').click();
     const reviewChoice=await page.evaluate(()=>{
       const plan=state.candidates[state.activeCandidate];
       const visible=Array.from(document.querySelectorAll('#resultGrid .class-body')).flatMap(body=>Array.from(body.querySelectorAll('[data-result-student]')).slice(0,4)).map(el=>state.students.find(st=>st.id===el.dataset.resultStudent)).filter(Boolean);
@@ -393,6 +394,8 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.locator('#undoMove').click();
     assert.equal(await page.locator('select[data-move="'+reviewChoice.id+'"]').inputValue(),String(reviewChoice.from));
     assert.match(await page.locator('#moveHistoryResult').textContent(),/되돌림 완료/);
+    // In vertical mode the destination may be far away: use the touch-friendly select-and-move controls.
+    await page.locator('#resultVertical').click();
     // Tablet workflow without native HTML drag support: select a pupil and tap destination.
     await page.setViewportSize({width:420,height:840});
     await page.locator('[data-result-student="'+reviewChoice.id+'"] [data-select-move]').click();
