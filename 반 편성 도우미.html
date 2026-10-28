@@ -200,7 +200,7 @@
   <details id="bulkRawPanel" class="bulk-raw"><summary>텍스트로 한꺼번에 붙여넣기 (표로 변환)</summary><p>엑셀에서 복사한 탭 구분 표, CSV, 마크다운 표도 붙여넣을 수 있습니다. 셀 속 줄바꿈이나 ‘다문화; 한부모’와 같은 복수 유의 사항을 지원합니다.</p><textarea id="bulkText" aria-label="학생 명단 표 텍스트 붙여넣기" placeholder="학년&#9;반&#9;번호&#9;이름&#9;성별&#9;유의사항
 6&#9;1&#9;1&#9;김하늘&#9;여&#9;다문화; 한부모
 6&#9;1&#9;2&#9;이도윤&#9;남&#9;사회성"></textarea><button id="bulkParseText" class="btn small">붙여넣은 내용 표로 변환</button></details>
-  <div class="inline bulk-commit"><label style="font-size:12px"><input type="radio" name="bulkMode" value="append" checked> 기존 명단에 추가</label><label style="font-size:12px"><input type="radio" name="bulkMode" value="replace"> 기존 명단 교체</label><button id="commitBulk" class="btn primary">입력된 학생 명단 적용</button></div>
+  <div class="inline bulk-commit"><label style="font-size:12px"><input type="radio" name="bulkMode" value="fill" checked> 0단계 명단의 입력 칸 채우기</label><label style="font-size:12px"><input type="radio" name="bulkMode" value="append"> 기존 명단에 추가</label><label style="font-size:12px"><input type="radio" name="bulkMode" value="replace"> 기존 명단 교체</label><button id="commitBulk" class="btn primary">입력된 학생 명단 적용</button></div>
 </div>
  <div class="tagline"><b style="font-size:12px">유의 사항 선택지</b><div id="traitChips" class="inline"></div><div class="feature-add"><input id="newTrait" maxlength="20" placeholder="유의 사항 항목 추가"><button id="addTrait" class="btn small">추가</button></div></div>
  <div class="table-wrap"><table class="student-table"><thead id="rosterHead"></thead><tbody id="rosterBody"></tbody></table></div><div class="helper privacy-note">학습지표는 0.00 이상의 점수를 소수점 둘째 자리까지 입력할 수 있으며, 미입력과 0.00은 구분됩니다. 유의 사항은 여러 개를 선택하거나 새 항목을 추가할 수 있습니다. 「분리조치」를 선택하는 것만으로 두 학생이 자동 분리되지는 않으므로, 반드시 「분리할 학생 지정」에서 실제 분리 관계를 설정해 주세요.</div>
@@ -1247,7 +1247,7 @@ function exportCSV(){
 }
 function sampleData(){const surnames=['김','이','박','최','정','강','조','윤','장','임','한','오'];const names=['하늘','지우','도윤','민서','준우','서연','시우','하은','예준','다은','현우','윤서','지호','수아','건우','서준','나은','이안','채원','예은','유준','지안','서아','태윤','은우','시윤','다현','승우','윤호','서진','연우','수빈','민준','다온','현서','재윤'];return names.map((n,i)=>({id:makeId(),oldClass:(i%3+1)+'반',number:String(Math.floor(i/3)+1),name:surnames[i%12]+n,gender:i%2?'여':'남',level:Math.round((65+(i*13)%34+((i%4)*0.25))*100)/100,traits:[i%5===0?'사회성':null,i%7===0?'운동부':null].filter(Boolean),fixed:0,note:''}))}
 function isCompatibleMove(id,to,candidate){const student=findStudent(id);if(!student||(state.teacherPriorityOn&&student.fixed))return false;const proposal={...candidate.assign,[id]:to};return validateAssignment(activeStudents(),effectivePairs(),proposal,state.capRules).length===0}
-function addStudent(){const s={id:makeId(),oldGrade:'',oldClass:'',number:'',name:'',gender:'',level:null,traits:[],fixed:0,note:''};state.students.push(s);invalidate();changeState();const field=document.querySelector(`[data-student="${s.id}"] [data-key="name"]`);field?.focus()}
+function addStudent(){const room=state.sourceClassCount||1;const last=Math.max(0,...state.students.filter(st=>stageZeroRoom(st.oldClass)===room).map(st=>Number(st.number)||0));const s={id:makeId(),oldGrade:state.sourceGrade,oldClass:room+'반',number:String(last+1),name:'',gender:'',level:null,traits:[],fixed:0,note:''};state.students.push(s);invalidate();changeState();toast('현재 '+room+'반에 임시 학생 자리 1개를 추가했습니다. 0단계 인원과 차이가 생겼습니다.');const field=document.querySelector(`[data-student="${s.id}"] [data-key="name"]`);field?.focus()}
 function addTrait(){const t=$('newTrait').value.trim();if(!t)return;if(state.traits.includes(t)){toast('이미 있는 특징입니다.');return}if(state.traits.length>=64){toast('유의 사항은 최대 64개까지 추가할 수 있습니다.');return}state.traits.push(t);$('newTrait').value='';invalidate();changeState()}
 function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)return;const s=findStudent(tr.dataset.student);if(!s)return;
   if(e.target.dataset.trait){const t=e.target.dataset.trait;s.traits=e.target.checked?[...new Set([...s.traits,t])]:s.traits.filter(x=>x!==t);const picker=e.target.closest('.notice-picker');if(picker){picker.querySelector('[data-notice-summary]').textContent=s.traits.length?s.traits.join(', '):'유의 사항 선택';picker.querySelector('.count-pill').textContent=s.traits.length+'개'}invalidate();saveState();return}
@@ -1522,6 +1522,33 @@ function installEvents(){
     if(invalid.length){toast('학습지표가 올바르지 않은 학생 '+invalid.length+'명이 있습니다. 숫자로 수정해 주세요.');return}
     if(missing&&!confirm('이름이 없는 '+missing+'개 행을 제외하고 '+named.length+'명만 적용할까요?'))return;
     const mode=document.querySelector('input[name="bulkMode"]:checked').value;
+    if(mode==='fill'){
+      if(!state.students.length){toast('0단계에서 먼저 학생 명단 틀을 만들어 주세요.');return}
+      const changes=[];
+      for(let i=0;i<bulkRows.length;i++){
+        const row=bulkRows[i];
+        if(!bulkClean(row[3]))continue;
+        const room=stageZeroRoom(row[1]),num=Number(row[2]);
+        const explicit=room>0&&Number.isInteger(num)&&num>0;
+        const target=explicit?state.students.find(st=>stageZeroRoom(st.oldClass)===room&&Number(st.number)===num):state.students[i];
+        if(!target){toast('붙여넣기 '+(i+1)+'행에 대응하는 학생 자리가 없습니다. 0단계 반별 인원과 번호를 확인해 주세요.');return}
+        changes.push({target,row});
+      }
+      if(changes.some(({target,row})=>target.name&&target.name!==bulkClean(row[3]))&&!confirm('이름이 입력된 학생 칸을 덮어쓸까요? 기존 학생 정보는 백업하는 것이 좋습니다.'))return;
+      for(const {target,row} of changes){
+        target.name=bulkClean(row[3]).slice(0,80);
+        if(bulkClean(row[4]))target.gender=/^(남|남자|남학생)$/.test(bulkClean(row[4]))?'남':/^(여|여자|여학생)$/.test(bulkClean(row[4]))?'여':target.gender;
+        if(bulkClean(row[6]))target.level=parseStudyScore(row[6]);
+        if(bulkClean(row[5])){
+          const tags=bulkAttention(row[5]);
+          for(const tag of tags)if(!state.traits.includes(tag)&&state.traits.length<64)state.traits.push(tag);
+          target.traits=[...new Set(tags.filter(t=>state.traits.includes(t)))];
+        }
+      }
+      invalidate();bulkClearDraft();$('bulkText').value='';$('bulkPanel').classList.add('hidden');changeState();
+      toast(changes.length+'명의 이름·학생별 정보가 기존 학년·반·번호에 맞춰 입력됐습니다.');
+      return;
+    }
     if(mode==='replace'&&state.students.length&&!confirm('기존 학생 명단, 분리 관계, 교사 우선 배치를 새 명단으로 교체할까요?'))return;
     if(named.length+(mode==='append'?state.students.length:0)>1000){toast('학생은 최대 1000명까지 등록할 수 있습니다. 기존 명단과 추가 인원을 확인하세요.');return}
     const list=named.map(bulkStudentFromGrid);
