@@ -162,6 +162,42 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="3"]').inputValue(),'최가람');
     assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="5"]').inputValue(),'한부모\n 다문화');
 
+    // Regression: a teacher fills grade 5 for every row, then pastes an Excel names-only column.
+    page.once('dialog',dialog=>dialog.accept());
+    await page.locator('#bulkClearGrid').click();
+    await page.locator('#bulkAdd50Rows').click();
+    assert.equal(await page.locator('#bulkRowCount').textContent(),'62행');
+    await page.locator('#bulkFillGrade').fill('5학년');
+    await page.locator('#bulkFillGradeAll').click();
+    assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="0"]').inputValue(),'5');
+    assert.equal(await page.locator('[data-bulk-r="61"][data-bulk-c="0"]').inputValue(),'5');
+    const columnNames=['김하늘','이도윤','박서연','최유리'].join('\r\n');
+    await page.locator('[data-bulk-r="0"][data-bulk-c="3"]').evaluate((el,raw)=>{
+      const clipboard=new DataTransfer();clipboard.setData('text/plain',raw);
+      el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:clipboard,bubbles:true,cancelable:true}));
+    },columnNames);
+    assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="3"]').inputValue(),'김하늘');
+    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="3"]').inputValue(),'최유리');
+    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="0"]').inputValue(),'5');
+    // Shift-click range selection followed by fill-down and undo.
+    await page.locator('[data-bulk-r="0"][data-bulk-c="1"]').fill('2');
+    await page.locator('[data-bulk-r="0"][data-bulk-c="1"]').click();
+    await page.locator('[data-bulk-r="3"][data-bulk-c="1"]').click({modifiers:['Shift']});
+    await page.locator('#bulkFillDown').click();
+    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="1"]').inputValue(),'2');
+    await page.locator('#bulkUndo').click();
+    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="1"]').inputValue(),'');
+    // One pasted value fills a selected multi-cell range, as in Excel.
+    await page.locator('[data-bulk-r="0"][data-bulk-c="4"]').click();
+    await page.locator('[data-bulk-r="3"][data-bulk-c="4"]').click({modifiers:['Shift']});
+    await page.locator('[data-bulk-r="3"][data-bulk-c="4"]').evaluate(el=>{
+      const data=new DataTransfer();data.setData('text/plain','여');
+      el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:data,bubbles:true,cancelable:true}));
+    });
+    assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="4"]').inputValue(),'여');
+    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="4"]').inputValue(),'여');
+
+
     await page.goto(base + encodeURIComponent('지도안식 원형 타이머.html'), {waitUntil: 'domcontentloaded'});
     await page.locator('.gt-shell').waitFor({state: 'attached'});
     await page.locator('body').evaluate(node => node.classList.add('student-view'));
