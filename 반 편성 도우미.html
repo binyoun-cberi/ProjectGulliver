@@ -114,6 +114,7 @@
 .tab[hidden]{display:none!important}.tab[data-tab="preset"]:not([hidden]){animation:plannerTabAppear .18s ease-out}@keyframes plannerTabAppear{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:850px){.planner-overview{grid-template-columns:1fr}}@media(max-width:720px){.planner-header-right{width:100%;justify-content:space-between}.planner-tool-btn{min-width:61px}.overview-pane{padding:14px}.planner-panel-dialog{padding:18px 16px}}@media print{.planner-tool-actions,.planner-panel-dialog,.setup-setting-hint{display:none!important}.planner-overview{box-shadow:none}}
 
+.planner-legacy-stats{display:none!important}.settings-data-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.settings-data-actions .btn{font-size:12px}
 /* Stage 0: source enrollment and future class planning */
 .setup-year-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:13px 0 16px}
 .setup-year-grid .field{min-width:0}
@@ -172,8 +173,8 @@
   <button id="openSettings" class="planner-tool-btn" type="button" aria-haspopup="dialog" aria-controls="plannerSettingsDialog" aria-label="설정 열기"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.4 2.7-.6 2.1-2 .9-2.1-1-2.2 2.2 1 2.1-.9 2-2.1.6v3.1l2.1.6.9 2-1 2.1 2.2 2.2 2.1-1 2 .9.6 2.1h3.1l.6-2.1 2-.9 2.1 1 2.2-2.2-1-2.1.9-2 2.1-.6v-3.1l-2.1-.6-.9-2 1-2.1-2.2-2.2-2.1 1-2-.9-.6-2.1z"></path><circle cx="12" cy="12" r="3.1"></circle></svg><span>설정</span></button>
  </div></div></div>
  <section id="overviewDashboard" class="planner-overview" aria-label="반 편성 현황 인포그래픽" aria-live="polite"></section>
- <div class="stats" aria-live="polite"><div class="stat"><small>등록한 학생</small><strong id="statStudents">0명</strong></div><div class="stat"><small>편성할 학급</small><strong id="statClasses">3개 반</strong></div><div class="stat"><small>분리해야 할 관계</small><strong id="statPairs">0쌍</strong></div><div class="stat"><small>중복 이름</small><strong id="statDuplicates">0건</strong></div></div>
- <div class="card setup"><div class="actions"><button id="demo" class="btn soft">예시 데이터 보기</button><button id="generateQuick" class="btn primary">바로 반 편성하기</button><button id="saveJson" class="btn">설정 백업 (.json)</button><button id="openJson" class="btn">백업 불러오기</button><input type="file" id="jsonFile" accept=".json,application/json" hidden><button id="reset" class="btn danger">모두 지우기</button></div></div>
+ <div class="stats planner-legacy-stats" aria-live="polite"><div class="stat"><small>등록한 학생</small><strong id="statStudents">0명</strong></div><div class="stat"><small>편성할 학급</small><strong id="statClasses">3개 반</strong></div><div class="stat"><small>분리해야 할 관계</small><strong id="statPairs">0쌍</strong></div><div class="stat"><small>중복 이름</small><strong id="statDuplicates">0건</strong></div></div>
+ <div class="card setup"><div class="actions"><button id="demo" class="btn soft">예시 데이터 보기</button><button id="generateQuick" class="btn primary">바로 반 편성하기</button></div></div>
 
  <nav class="tabs" aria-label="반 편성 단계">
   <button class="tab" data-tab="setup" aria-selected="true">00 기본 편성 설정</button>
@@ -256,6 +257,9 @@
   <div id="traitChips" class="settings-trait-list" aria-live="polite"></div>
   <div class="feature-add"><input id="newTrait" maxlength="20" placeholder="새 유의 사항" aria-label="새 유의 사항 선택지"><button id="addTrait" class="btn primary small">추가</button></div>
   <p class="settings-warning">항목을 삭제하면 해당 항목을 선택한 학생의 정보에서도 삭제됩니다. 삭제 전에 확인합니다.</p>
+ </section>
+ <section class="settings-block" aria-labelledby="backupSettingTitle"><h3 id="backupSettingTitle">자료 관리</h3><p>학생 명단과 편성 조건을 백업하거나 불러옵니다.</p>
+  <div class="settings-data-actions"><button id="saveJson" class="btn">JSON 백업 저장</button><button id="openJson" class="btn">백업 불러오기</button><input type="file" id="jsonFile" accept=".json,application/json" hidden><button id="reset" class="btn danger">모든 자료 지우기</button></div>
  </section></div>
  <div class="dialog-actions"><button id="settingsDone" class="btn primary" type="button">완료</button></div>
 </dialog>
@@ -465,7 +469,7 @@ function renderOverview(){
   '<div><small>학습지표 입력</small><strong>'+d.scored+'명</strong></div><div><small>학습지표 평균</small><strong>'+(d.avgScore===null?'—':d.avgScore.toFixed(2))+'</strong></div></div>'+
   '<div class="overview-actual">확인된 성별 · 남 '+d.enteredBoys+'명 / 여 '+d.enteredGirls+'명 / 미입력 '+d.noGender+'명</div>'+
   '<div class="overview-head" style="margin-top:15px;margin-bottom:6px"><h2>유의 사항</h2><small>학생별 선택 내역 · 중복 선택 가능</small></div>'+
-  '<div class="overview-tags">'+tags+'</div><div class="overview-actual">내년 '+escapeHtml(state.grade)+'학년 '+state.classCount+'개 반 · 반당 예상 '+fixed(d.total/state.classCount)+'명</div></div>';
+  '<div class="overview-tags">'+tags+'</div><div class="overview-actual">분리 관계 '+effectivePairs().length+'쌍 · 동명이인 '+duplicateNames().length+'건</div><div class="overview-actual">내년 '+escapeHtml(state.grade)+'학년 '+state.classCount+'개 반 · 반당 예상 '+fixed(d.total/state.classCount)+'명</div></div>';
 }
 function renderTraitSettings(){
  $('traitChips').innerHTML=state.traits.map(t=>'<span class="chip">'+escapeHtml(t)+' <button type="button" data-delete-trait="'+escapeHtml(t)+'" aria-label="'+escapeHtml(t)+' 유의 사항 삭제" title="항목 삭제">×</button></span>').join('');
