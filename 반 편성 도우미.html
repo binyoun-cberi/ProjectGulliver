@@ -1499,7 +1499,7 @@ function installEvents(){
     const card=e.target.closest('[data-drop-class]');
     if(!card)return;
     e.preventDefault();
-    const id=e.dataTransfer?.getData('text/plain')||moveDraggingId;
+    const id=moveDraggingId||e.dataTransfer?.getData('text/plain');
     moveDraggingId=null;
     if(id&&state.students.some(s=>s.id===id))applyResultMove(id,Number(card.dataset.dropClass));
     else clearReviewPreview();
