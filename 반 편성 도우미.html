@@ -703,10 +703,114 @@ function installEvents(){
   $('jsonFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());const next=normalize(data);if(state.students.length&&!confirm('현재 학생 명단을 백업 내용으로 교체할까요?'))return;state=next;changeState();showTab('roster');toast('백업을 불러왔습니다.')}catch(err){toast('올바른 JSON 백업 파일인지 확인해 주세요.')}finally{e.target.value=''}});
   $('addStudent').addEventListener('click',addStudent);
   $('searchStudent').addEventListener('input',e=>{searchQuery=e.target.value.trim().toLowerCase();renderRoster()});
-  $('toggleBulk').addEventListener('click',()=>$('bulkPanel').classList.toggle('hidden'));
+  $('toggleBulk').addEventListener('click',()=>{
+    const visible=$('bulkPanel').classList.toggle('hidden');
+    if(!visible)renderBulkGrid();
+  });
   $('closeBulk').addEventListener('click',()=>$('bulkPanel').classList.add('hidden'));
-  $('commitBulk').addEventListener('click',()=>{const newList=parseBulk($('bulkText').value);if(!newList.length){toast('입력할 학생 명단이 없습니다.');return}const mode=document.querySelector('input[name="bulkMode"]:checked').value;if(mode==='replace'&&state.students.length&&!confirm('기존 명단과 분리 조건을 새 명단으로 교체할까요?'))return;
-    if(mode==='replace'){state.students=[];state.pairs=[]}for(const s of newList){for(const t of s.traits)if(!state.traits.includes(t)&&state.traits.length<64)state.traits.push(t);s.traits=s.traits.filter(t=>state.traits.includes(t));state.students.push(s)}invalidate();$('bulkPanel').classList.add('hidden');$('bulkText').value='';changeState();toast(`${newList.length}명의 학생을 추가했습니다.`)});
+  $('bulkFocus').addEventListener('click',()=>$('bulkGridBody').querySelector('[data-bulk-r="0"][data-bulk-c="0"]')?.focus());
+  $('bulkAddRows').addEventListener('click',()=>{
+    const n=Math.min(10,1000-bulkRows.length);
+    if(!n){toast('한 번에 입력할 수 있는 최대 행 수는 1000행입니다.');return}
+    for(let i=0;i<n;i++)bulkRows.push(blankBulkRow());
+    renderBulkGrid();
+  });
+  $('bulkClearGrid').addEventListener('click',()=>{
+    if(bulkRows.some(row=>row.some(v=>bulkClean(v)))&&!confirm('아직 명단에 적용하지 않은 표 내용을 모두 지울까요?'))return;
+    bulkClearDraft();$('bulkText').value='';
+  });
+  $('bulkGridBody').addEventListener('input',e=>{
+    const cell=e.target.closest('[data-bulk-r][data-bulk-c]');if(!cell)return;
+    const row=Number(cell.dataset.bulkR),col=Number(cell.dataset.bulkC);
+    if(!bulkRows[row]||col<0||col>6)return;
+    bulkRows[row][col]=cell.value;renderBulkPreview();
+  });
+  $('bulkGridBody').addEventListener('paste',e=>{
+    const cell=e.target.closest('[data-bulk-r][data-bulk-c]');if(!cell)return;
+    const pasted=e.clipboardData?.getData('text/plain')||'';
+    if(!pasted||(!pasted.includes('\t')&&!pasted.includes('\n')&&!pasted.trim().startsWith('|')))return;
+    const input=parseSheetText(pasted);
+    if(input.length===1&&input[0].length===1)return;
+    e.preventDefault();
+    const row=Number(cell.dataset.bulkR),col=Number(cell.dataset.bulkC);
+    const output=bulkFormatRows(input,col);
+    if(!output.rows.length){toast('가져올 학생 행을 찾지 못했습니다.');return}
+    const full=output.header||input.some(record=>record.length>=5);
+    if(full&&row===0)bulkRows=Array.from({length:Math.max(12,output.rows.length)},blankBulkRow);
+    for(let i=0;i<output.rows.length&&row+i<1000;i++){
+      while(bulkRows.length<=row+i)bulkRows.push(blankBulkRow());
+      const incoming=output.rows[i];
+      if(full){bulkRows[row+i]=incoming}
+      else{
+        for(let j=col;j<Math.min(7,col+(input[i]?.length||0));j++)bulkRows[row+i][j]=incoming[j];
+      }
+    }
+    renderBulkGrid();
+    toast(Math.min(output.rows.length,1000-row)+'행을 표에 붙여넣었습니다. 명단 적용 전에 이름을 확인하세요.');
+  });
+  $('bulkGridBody').addEventListener('keydown',e=>{
+    const cell=e.target.closest('[data-bulk-r][data-bulk-c]');
+    if(!cell||e.key!=='Enter'||e.shiftKey||e.isComposing)return;
+    e.preventDefault();
+    const next=Number(cell.dataset.bulkR)+1,col=Number(cell.dataset.bulkC);
+    if(next>=bulkRows.length&&bulkRows.length<1000){bulkRows.push(blankBulkRow());renderBulkGrid()}
+    $('bulkGridBody').querySelector('[data-bulk-r="'+next+'"][data-bulk-c="'+col+'"]')?.focus();
+  });
+  $('bulkGridBody').addEventListener('click',e=>{
+    const button=e.target.closest('[data-bulk-delete]');if(!button)return;
+    bulkRows.splice(Number(button.dataset.bulkDelete),1);
+    if(!bulkRows.length)bulkRows.push(blankBulkRow());
+    renderBulkGrid();
+  });
+  $('bulkParseText').addEventListener('click',()=>{
+    const raw=$('bulkText').value;
+    if(!raw.trim()){toast('먼저 붙여넣을 텍스트를 입력해 주세요.');return}
+    const parsed=bulkFormatRows(parseSheetText(raw));
+    if(!parsed.rows.length){toast('표에서 학생 행을 찾지 못했습니다.');return}
+    if(bulkRows.some(row=>row.some(v=>bulkClean(v)))&&!confirm('입력표의 임시 내용을 붙여넣은 텍스트로 교체할까요?'))return;
+    bulkRows=Array.from({length:Math.max(12,Math.min(1000,parsed.rows.length))},blankBulkRow);
+    const written=putBulkRows(parsed.rows.slice(0,1000),0);
+    toast(written+'행을 입력표로 변환했습니다. 학생 이름을 확인해 주세요.');
+  });
+  $('commitBulk').addEventListener('click',()=>{
+    if(!bulkRows.some(row=>row.some(v=>bulkClean(v)))&&$('bulkText').value.trim()){
+      const parsed=bulkFormatRows(parseSheetText($('bulkText').value));
+      putBulkRows(parsed.rows.slice(0,1000),0);
+    }
+    const entered=bulkRows.filter(row=>bulkRowIsStudent(row)||bulkClean(row[6]));
+    const named=entered.filter(row=>bulkClean(row[3]));
+    const missing=entered.length-named.length;
+    if(!named.length){toast(missing?'이름이 비어 있는 '+missing+'개 행이 있습니다. 이름을 먼저 입력해 주세요.':'입력할 학생 명단이 없습니다.');return}
+    const invalid=named.filter(row=>bulkClean(row[6])&&parseStudyScore(row[6])===null);
+    if(invalid.length){toast('학습지표가 올바르지 않은 학생 '+invalid.length+'명이 있습니다. 숫자로 수정해 주세요.');return}
+    if(missing&&!confirm('이름이 없는 '+missing+'개 행을 제외하고 '+named.length+'명만 적용할까요?'))return;
+    const mode=document.querySelector('input[name="bulkMode"]:checked').value;
+    if(mode==='replace'&&state.students.length&&!confirm('기존 학생 명단, 분리 관계, 교사 우선 배치를 새 명단으로 교체할까요?'))return;
+    if(named.length+(mode==='append'?state.students.length:0)>1000){toast('학생은 최대 1000명까지 등록할 수 있습니다. 기존 명단과 추가 인원을 확인하세요.');return}
+    const list=named.map(bulkStudentFromGrid);
+    if(mode==='replace'){state.students=[];state.pairs=[]}
+    const skipped=[];
+    for(const st of list){
+      const tags=[];
+      for(const tag of st.traits){
+        if(!state.traits.includes(tag)){
+          if(state.traits.length>=64){skipped.push(tag);continue}
+          state.traits.push(tag);
+        }
+        tags.push(tag);
+      }
+      st.traits=tags;
+      state.students.push(st);
+    }
+    const grades=[...new Set(list.map(st=>st.oldGrade).filter(Boolean))];
+    if(!state.students.length)state.grade=state.grade;
+    // The source grade describes the current roster; keep the explicitly selected destination grade.
+    invalidate();bulkClearDraft();$('bulkText').value='';$('bulkPanel').classList.add('hidden');
+    changeState();
+    toast(list.length+'명 등록 완료'+(missing?' · 이름 미입력 '+missing+'행 제외':'')+
+      (skipped.length?' · 유의 사항 '+skipped.length+'개는 선택지 한도로 제외':'')+
+      (grades.length===1?' · 새 학년 설정을 확인해 주세요.':''));
+  });
   $('newTrait').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTrait()}});$('addTrait').addEventListener('click',addTrait);
   $('traitChips').addEventListener('click',e=>{const b=e.target.closest('[data-delete-trait]');if(!b)return;const t=b.dataset.deleteTrait;if(!confirm(`「${t}」 유의 사항을 학생 명단에서도 삭제할까요?`))return;state.traits=state.traits.filter(x=>x!==t);delete state.capRules[t];state.students.forEach(s=>s.traits=s.traits.filter(x=>x!==t));invalidate();changeState()});
   $('rosterBody').addEventListener('change',updateStudent);
