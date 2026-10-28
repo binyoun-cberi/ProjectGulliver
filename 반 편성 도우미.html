@@ -711,6 +711,49 @@ function reportData(candidate){
  for(const st of state.students){const c=candidate.assign[st.id],d=data[c-1];if(!d)continue;d.total++;if(st.gender==='남')d.boys++;if(st.gender==='여')d.girls++;if(hasStudyScore(st)){d.levelN++;d.levelSum+=st.level}for(const t of st.traits)if(t in d.traitCounts)d.traitCounts[t]++}
  return data;
 }
+function metricDiff(before,after,format=false){
+ const fmt=value=>format?Number(value).toFixed(2):String(value);
+ const delta=Number(after)-Number(before);
+ return fmt(before)+' → '+fmt(after)+(Math.abs(delta)>0.000001?' <span class="move-delta '+(delta>0?'positive':'negative')+'">('+ (delta>0?'+':'')+fmt(delta)+')</span>':'');
+}
+function reviewMetricValue(stats,field){
+ if(field==='average')return stats.levelN?stats.levelSum/stats.levelN:null;
+ return stats[field]||0;
+}
+function renderReviewChange(analysis,title){
+ if(!analysis)return '';
+ if(!analysis.ok)return '<div class="move-preview-error">'+escapeHtml(analysis.error||'이동할 수 없습니다.')+'</div>';
+ const fields=[['전체', 'total'],['남', 'boys'],['여', 'girls'],['다문화', '다문화'],['특수','특수']];
+ const dynamicTags=analysis.affectedTraits.filter(t=>t!=='다문화'&&t!=='특수');
+ for(const tag of dynamicTags)fields.push([tag,tag]);
+ return '<strong>'+escapeHtml(title||'이동 전후 변화')+' · '+escapeHtml(analysis.student.name||'학생')+'</strong>'+
+  '<div class="move-diff">'+[analysis.from,analysis.to].map(num=>{
+    const before=analysis.before[num-1],after=analysis.after[num-1];
+    const lines=fields.map(([label,key])=>{
+      const a=key in before?before[key]:before.traitCounts[key]||0;
+      const b=key in after?after[key]:after.traitCounts[key]||0;
+      return '<p><b>'+escapeHtml(label)+'</b> '+metricDiff(a,b)+'</p>';
+    }).join('');
+    const avgBefore=reviewMetricValue(before,'average'),avgAfter=reviewMetricValue(after,'average');
+    const average='<p><b>학습지표 평균</b> '+(avgBefore===null?'미입력':metricDiff(avgBefore,avgAfter,true))+'</p>';
+    return '<div class="move-diff-column"><h4>'+escapeHtml(displayClass(num))+' '+(num===analysis.from?'(출발)':'(도착)')+'</h4>'+lines+average+'</div>';
+  }).join('')+'</div>'+
+  (analysis.notices.length?'<div class="helper">'+analysis.notices.map(escapeHtml).join(' / ')+'</div>':'');
+}
+function renderReviewMoveTools(){
+ const selected=moveSelectedId&&findStudent(moveSelectedId),has=state.candidates.length>0;
+ $('undoMove').disabled=!has||!moveUndoStack.length||moveUndoStack[moveUndoStack.length-1].candidate!==state.activeCandidate;
+ $('moveSelection').textContent=selected&&has?'이동할 학생: '+studentTitle(selected)+' · 원하는 반 카드 아래의 「여기로 이동」 버튼을 누르세요. 학생 선택 버튼을 다시 누르면 해제됩니다.':'';
+ $('moveHistoryResult').innerHTML=moveLastResult&&moveLastResult.candidate===state.activeCandidate?
+   renderReviewChange(moveLastResult.analysis,'최근 이동 · '+(moveLastResult.undone?'되돌림 완료':'반영 완료')):'';
+}
+function renderReviewCardChips(d){
+ const chips=[['남',d.boys],['여',d.girls],['다문화',d.traitCounts['다문화']||0],['특수',d.traitCounts['특수']||0]];
+ const included=new Set(['다문화','특수']);
+ for(const tag of state.traits)if(!included.has(tag)&&d.traitCounts[tag]>0)chips.push([tag,d.traitCounts[tag]]);
+ return '<div class="class-summary-chips">'+chips.map(([label,value])=>
+  '<span class="'+(label==='남'||label==='여'?'':'trait-metric')+'">'+escapeHtml(label)+' '+value+'명</span>').join('')+'</div>';
+}
 function renderResults(){
   const has=state.candidates.length>0;
   $('exportCsv').disabled=!has;$('print').disabled=!has;
