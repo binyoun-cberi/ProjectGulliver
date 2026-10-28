@@ -165,7 +165,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.locator('#demo').click();
     assert.equal(await page.locator('#statStudents').textContent(),'36명');
     const headings=await page.locator('#rosterHead th').allTextContents();
-    assert.deepEqual(headings,['기존 학년 · 반 · 번호','이름','성별','학습지표 (0.00~)','유의 사항']);
+    assert.deepEqual(headings,['기존 학년 · 반 · 번호','이름','성별','학습지표','유의 사항']);
     const first=page.locator('#rosterBody tr').first();
     await first.locator('[data-key="level"]').fill('0.00');
     await first.locator('[data-key="level"]').press('Tab');
