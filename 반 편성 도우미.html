@@ -137,10 +137,32 @@
 <main class="shell">
  <div class="top"><div class="identity"><div class="mark" aria-hidden="true">반</div><div><div class="eyebrow">CLASS PLANNER</div><h1>반편성 도우미</h1><p class="subtitle">학습지표 높은 순으로 지그재그 배정하고 유의 사항별 인원 상한을 적용합니다.</p></div></div><div class="privacy">기기에서만 처리 · 외부 서버로 전송하지 않음</div></div>
  <div class="stats" aria-live="polite"><div class="stat"><small>등록한 학생</small><strong id="statStudents">0명</strong></div><div class="stat"><small>편성할 학급</small><strong id="statClasses">3개 반</strong></div><div class="stat"><small>분리해야 할 관계</small><strong id="statPairs">0쌍</strong></div><div class="stat"><small>중복 이름</small><strong id="statDuplicates">0건</strong></div></div>
- <div class="card setup"><div class="formfields"><label class="field">새 학년 <input id="grade" type="text" value="1" maxlength="12" aria-label="새 학년"></label><label class="field">새 학급 수 <input id="classCount" type="number" min="2" max="12" value="3"></label></div><div class="actions"><button id="demo" class="btn soft">예시 데이터 보기</button><button id="generateQuick" class="btn primary">바로 반 편성하기</button><button id="saveJson" class="btn">설정 백업 (.json)</button><button id="openJson" class="btn">백업 불러오기</button><input type="file" id="jsonFile" accept=".json,application/json" hidden><button id="reset" class="btn danger">모두 지우기</button></div></div>
- <div class="priority-mode no-print" id="priorityModePanel"><label class="priority-switch"><input id="teacherPriorityOn" type="checkbox" role="switch" aria-label="교사 우선 배치 사용"><span class="switch-track" aria-hidden="true"></span><strong>교사 우선 배치 사용</strong></label><span id="priorityModeHelp">OFF · 반 고정 없이 지그재그 편성합니다. 이전 지정은 보관됩니다.</span></div>
- <nav class="tabs" aria-label="기능 선택"><button class="tab" data-tab="roster" aria-selected="true">01 학생 명단 · 유의 사항</button><button class="tab" data-tab="preset" aria-selected="false">02 교사 우선 배치 (선택)</button><button class="tab" data-tab="rules" aria-selected="false">03 편성 조건 · 분리</button><button class="tab" data-tab="results" aria-selected="false">04 완성된 반 · 검토</button></nav>
- <section id="view-roster" class="card" aria-label="학생 명단"><div class="section-head"><div><h2>학생 명단 <span id="rosterCount" class="count-pill">0명</span></h2><p>기존 반·번호·이름·성별·학습지표(소수점 둘째 자리)·유의 사항을 입력하세요.</p></div><div class="actions"><input id="searchStudent" aria-label="학생 검색" placeholder="이름 · 기존 반 검색" style="width:160px"><button id="toggleBulk" class="btn">스프레드시트 붙여넣기</button><button id="addStudent" class="btn primary">+ 학생 추가</button></div></div>
+ <div class="card setup"><div class="actions"><button id="demo" class="btn soft">예시 데이터 보기</button><button id="generateQuick" class="btn primary">바로 반 편성하기</button><button id="saveJson" class="btn">설정 백업 (.json)</button><button id="openJson" class="btn">백업 불러오기</button><input type="file" id="jsonFile" accept=".json,application/json" hidden><button id="reset" class="btn danger">모두 지우기</button></div></div>
+
+ <nav class="tabs" aria-label="반 편성 단계">
+  <button class="tab" data-tab="setup" aria-selected="true">00 기본 편성 설정</button>
+  <button class="tab" data-tab="roster" aria-selected="false">01 학생 명단 · 유의 사항</button>
+  <button class="tab" data-tab="preset" aria-selected="false">02 교사 우선 배치 (선택)</button>
+  <button class="tab" data-tab="rules" aria-selected="false">03 편성 조건 · 분리</button>
+  <button class="tab" data-tab="results" aria-selected="false">04 완성된 반 · 검토</button>
+ </nav>
+ <section id="view-setup" class="card" aria-label="0단계 기본 편성 설정">
+  <div class="section-head"><div><h2>0단계 · 학년과 학급별 인원 설정</h2><p>기존 학년, 반별 남녀 인원, 내년 반 수를 먼저 입력하면 학년·반·번호가 있는 학생 명단을 자동으로 만들 수 있습니다.</p></div><span id="setupProgress" class="count-pill">기본 정보 입력</span></div>
+  <div class="setup-year-grid">
+   <label class="field">현재 학년<input id="sourceGrade" type="number" min="1" max="12" value="5" aria-label="기존 학년"></label>
+   <label class="field">현재 학급 수<input id="sourceClassCount" type="number" min="1" max="12" value="3" aria-label="기존 학급 수"></label>
+   <label class="field">내년 학년<input id="grade" type="number" min="1" max="12" value="6" aria-label="새 학년"></label>
+   <label class="field">내년 학급 수<input id="classCount" type="number" min="2" max="12" value="3" aria-label="새 학급 수"></label>
+  </div>
+  <div class="section-head setup-subhead"><div><h3>현재 반별 남녀 인원</h3><p>현재 반마다 남녀 수를 적으세요. 어떤 학생이 남학생인지는 이 숫자로 추정하지 않으며, 1단계에서 학생별 성별을 입력합니다.</p></div></div>
+  <div class="table-wrap"><table class="setup-source-table"><thead><tr><th>현재 반</th><th>남학생</th><th>여학생</th><th>전체</th></tr></thead><tbody id="sourceClassRows"></tbody><tfoot id="sourceClassTotals"></tfoot></table></div>
+  <div class="section-head setup-subhead"><div><h3>내년 반 구성 참고 목표</h3><p>남녀 총원을 내년 반 수로 나눈 권장 인원을 보여 줍니다. 분리·고정 조건이 있으면 최종 편성 인원과 달라질 수 있습니다.</p></div></div>
+  <div id="futureClassSummary" class="setup-targets" aria-live="polite"></div>
+  <div class="priority-mode no-print" id="priorityModePanel"><label class="priority-switch"><input id="teacherPriorityOn" type="checkbox" role="switch" aria-label="교사 우선 배치 사용"><span class="switch-track" aria-hidden="true"></span><strong>교사 우선 배치 사용</strong></label><span id="priorityModeHelp">OFF · 자동 편성</span></div>
+  <div id="setupNotice" class="helper" role="status" aria-live="polite">현재 반별 남녀 수를 입력하면 학생 명단의 기본 칸을 만들 수 있습니다.</div>
+  <div class="actions setup-apply"><button id="applySetup" class="btn primary">학생 명단 틀 만들고 1단계로</button><button id="continueSetup" class="btn soft">기존 학생 명단 그대로 1단계로</button></div>
+ </section>
+ <section id="view-roster" class="card hidden" aria-label="학생 명단"><div class="section-head"><div><h2>학생 명단 <span id="rosterCount" class="count-pill">0명</span></h2><p>0단계에서 만들어진 학년·반·번호는 그대로 두고 이름·성별·학습지표·유의 사항을 채워 주세요. 엑셀에서 이름 열만 복사해 붙여넣을 수도 있습니다.</p></div><div class="actions"><button id="backToSetup" class="btn soft">0단계 수정</button><input id="searchStudent" aria-label="학생 검색" placeholder="이름 · 기존 반 검색" style="width:160px"><button id="toggleBulk" class="btn">스프레드시트 붙여넣기</button><button id="addStudent" class="btn primary">+ 학생 추가</button></div></div>
  <div id="bulkPanel" class="bulk hidden">
   <div class="bulk-head"><strong>엑셀형 학생 명단 한 번에 입력</strong><button id="closeBulk" class="btn ghost small">닫기</button></div>
   <p>엑셀·스프레드시트의 <b>학년 / 반 / 번호 / 이름 / 성별 / 유의사항</b> 표 전체를 복사한 뒤, 아래 첫 번째 셀에 <b>Ctrl+V</b>로 붙여넣으세요. 학습지표는 필요할 때 마지막 열에 추가하면 됩니다. 표에 있는 제목·반별 남녀 인원 요약·마지막 총원 행은 학생 명단에 포함하지 않습니다.</p>
