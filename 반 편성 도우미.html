@@ -612,6 +612,59 @@ function bulkStudentFromGrid(row){
     level:parseStudyScore(values[6]),traits:bulkAttention(values[5]),fixed:0,note:''
   };
 }
+function renderBulkGrid(){
+  $('bulkGridBody').innerHTML=bulkRows.map((row,r)=>'<tr><td class="bulk-num">'+(r+1)+'</td>'+
+    row.map((value,c)=>{
+      const title=['학년','반','번호','이름','성별','유의 사항','학습지표'][c];
+      const cls=['bulk-grade','bulk-class','bulk-number','bulk-name','bulk-gender','bulk-note','bulk-score'][c];
+      const label=(r+1)+'행 '+title,attributes='data-bulk-r="'+r+'" data-bulk-c="'+c+'" aria-label="'+escapeHtml(label)+'"';
+      return '<td class="'+cls+'">'+(c===5?
+        '<textarea rows="1" '+attributes+' placeholder="예: 다문화; 한부모">'+escapeHtml(value)+'</textarea>':
+        '<input type="text" '+attributes+' value="'+escapeHtml(value)+'" '+(c===6?'inputmode="decimal" placeholder="0.00"':c===4?'placeholder="남 / 여"':'')+'>')+'</td>';
+    }).join('')+'<td class="bulk-delete-cell"><button type="button" data-bulk-delete="'+r+'" aria-label="'+(r+1)+'행 삭제">×</button></td></tr>').join('');
+  $('bulkRowCount').textContent=bulkRows.length+'행';
+  renderBulkPreview();
+}
+function renderBulkPreview(){
+  const entered=bulkRows.filter(row=>bulkRowIsStudent(row)||bulkClean(row[6]));
+  const named=entered.filter(row=>bulkClean(row[3]));
+  const incomplete=entered.length-named.length;
+  const invalid=named.filter(row=>bulkClean(row[6])&&parseStudyScore(row[6])===null).length;
+  const rooms=new Map();
+  for(const row of entered){
+    const className=[bulkClean(row[0]),bulkClean(row[1])].filter(Boolean).join('학년 ')||'반 미입력';
+    rooms.set(className,(rooms.get(className)||0)+1);
+  }
+  const label=[...rooms.entries()].slice(0,8).map(([name,count])=>escapeHtml(name)+' : '+count+'행').join(' · ');
+  $('bulkPreview').classList.toggle('has-warnings',Boolean(incomplete||invalid));
+  $('bulkPreview').innerHTML='<strong>입력된 학생 행 '+entered.length+'개 · 이름 입력 완료 '+named.length+'명</strong>'+
+    (incomplete?' · <b>이름 미입력 '+incomplete+'행</b>':'')+
+    (invalid?' · <b>학습지표 확인 필요 '+invalid+'명</b>':'')+
+    (label?'<div>'+label+'</div>':'')+
+    '<div>이름이 없는 행은 명단 적용에서 제외됩니다. 남녀 인원 요약 문구는 성별 데이터로 추정 입력하지 않습니다. 표 내용은 「명단 적용」을 눌러야 저장됩니다.</div>';
+}
+function putBulkRows(rows,start=0){
+  if(!rows.length)return 0;
+  const total=Math.min(1000,start+rows.length);
+  while(bulkRows.length<total)bulkRows.push(blankBulkRow());
+  let imported=0;
+  for(let i=0;i<rows.length&&start+i<1000;i++){bulkRows[start+i]=rows[i].slice(0,7);imported++}
+  renderBulkGrid();return imported;
+}
+function bulkApplyPastedText(text,startRow=0,startCol=0){
+  const source=parseSheetText(text);
+  const output=bulkFormatRows(source,startCol);
+  if(!output.rows.length)return 0;
+  const rows=output.rows.map(row=>{
+    const final=blankBulkRow();
+    row.forEach((value,col)=>{final[col]=value});
+    return final;
+  });
+  return putBulkRows(rows,output.header?0:startRow);
+}
+function bulkClearDraft(){
+  bulkRows=Array.from({length:12},blankBulkRow);renderBulkGrid();
+}
 function parseBulk(text){return bulkFormatRows(parseSheetText(text)).rows.filter(row=>row[3].trim()).map(bulkStudentFromGrid)}
 function parseCSVLine(s,sep){const out=[];let value='',quoted=false;for(let i=0;i<s.length;i++){const ch=s[i];if(ch==='"'){if(quoted && s[i+1]==='"'){value+='"';i++}else quoted=!quoted}else if(ch===sep&&!quoted){out.push(value);value=''}else value+=ch}out.push(value);return out}
 function download(name,content,mime){const b=new Blob([content],{type:mime});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
