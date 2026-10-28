@@ -72,7 +72,7 @@
           <option value="1">🎱 일반 속도</option>
           <option value="1.9">🚀 초고속</option>
         </select>
-        <p class="field-help">물리 법칙은 그대로 두고 경기 진행 속도만 조절해요.</p>
+        <p class="field-help">긴 코스에서 갈림길 → 회전 급류 → 결승 범퍼를 지나가요. 응원할 친구를 선택하면 화면이 따라가요.</p>
       </fieldset>
       <div class="start-area">
         <button type="button" id="start-btn" class="primary-button">▶ 레이스 시작</button>
@@ -92,6 +92,7 @@
         <div class="clock-wrap"><span id="race-count">0 / 0 도착</span><strong id="race-clock">00:00</strong></div>
       </div>
       <div class="arena-surface">
+        <div id="camera-status" class="camera-status" role="status" aria-live="polite" hidden></div>
         <canvas id="pinball-canvas" width="900" height="690" aria-label="구슬이 핀볼 장애물 사이를 통과하는 경기 화면"></canvas>
         <div id="pre-start" class="pre-start"><div class="pre-start-content"><span class="preview-orb">●</span>
           <strong>짧고 짜릿한 핀볼 레이스</strong><span>참가자 이름을 입력하고 출발해 보세요.</span></div></div>

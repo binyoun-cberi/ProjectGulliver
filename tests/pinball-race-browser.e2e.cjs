@@ -7,6 +7,8 @@ const http=require('node:http');
 const {chromium}=require('playwright-core');
 const root=path.resolve(__dirname,'..');
 let server,browser,base;
+const screenshots=process.env.PINBALL_SCREENSHOTS;
+if(screenshots)fs.mkdirSync(screenshots,{recursive:true});
 function fileType(name){
   if(name.endsWith('.js'))return 'text/javascript; charset=utf-8';
   if(name.endsWith('.css'))return 'text/css; charset=utf-8';
@@ -66,6 +68,8 @@ test('real Chrome: first arrival wins and class list remains editable',async()=>
   await page.locator('#start-btn').click();
   await page.locator('#result-overlay:not([hidden])').waitFor({timeout:43000});
   assert.match(await page.locator('#result-heading').textContent(),/1등/);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+  if(screenshots)await page.screenshot({path:path.join(screenshots,'pinball-mobile-result.png')});
   assert.match(await page.locator('.winner-result').textContent(),/가|나|다|라/);
   await page.locator('#edit-btn').click();
   assert.ok(await page.locator('#start-btn').isVisible());
@@ -104,6 +108,17 @@ test('real Chrome: thirty players are evenly divided among four teams', {timeout
   await page.locator('#team-count').selectOption('4');
   await page.locator('#race-speed').selectOption('1.9');
   await page.locator('#start-btn').click();
+  const focus=page.locator('#marble-legend-list button').first();
+  const focused=await focus.locator('span').textContent();
+  await focus.click();
+  await page.waitForFunction(name=>document.getElementById('camera-status').textContent.includes(name+' 따라가는 중'),focused);
+  assert.equal(await focus.getAttribute('aria-pressed'),'true');
+  await page.waitForTimeout(10000);
+  if(screenshots)await page.screenshot({path:path.join(screenshots,'pinball-follow.png')});
+  await focus.click();
+  await page.waitForFunction(()=>document.getElementById('camera-status').textContent.includes('선두 따라가는 중'));
+  await page.waitForTimeout(7000);
+  if(screenshots)await page.screenshot({path:path.join(screenshots,'pinball-lower-course.png')});
   await page.locator('#result-overlay:not([hidden])').waitFor({timeout:53000});
   const labels=await page.locator('.group-result strong').allTextContents();
   const counts=labels.map(v=>Number(v.match(/(\d+)명/)?.[1]));
@@ -111,6 +126,7 @@ test('real Chrome: thirty players are evenly divided among four teams', {timeout
   assert.equal(counts.reduce((sum,n)=>sum+n,0),30);
   assert.equal(Math.max(...counts)-Math.min(...counts),1);
   assert.match(await page.locator('#race-count').textContent(),/^30 \/ 30 도착$/);
+  if(screenshots)await page.screenshot({path:path.join(screenshots,'pinball-team-results.png')});
   assert.deepEqual(errors,[]);
   await page.close();
 });

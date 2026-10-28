@@ -5,7 +5,7 @@
   if (root) root.ClasheetPinballCore = api;
 })(typeof window !== 'undefined' ? window : null, function () {
   'use strict';
-  const W = 900, H = 690, FINISH_Y = 574, RADIUS = 11;
+  const W = 900, H = 1390, FINISH_Y = 1274, RADIUS = 11;
   const BRIDGE_KEY = 'clasheet.race-roster.v1';
   const OWN_KEY = 'clasheet.pinballRace.v1';
   const BUMPER_KEY = 'gulliver.bumperRoulette.v2';
@@ -82,7 +82,7 @@
       return add(Bodies.rectangle(x,y,w,h,{...wall,angle}));
     }
     // Open-top funnel and safety side rails. No participant-specific geometry.
-    rail(67,345,30,690); rail(833,345,30,690);
+    rail(67,H/2,30,H); rail(833,H/2,30,H);
     rail(168,151,215,18,0.42); rail(732,151,215,18,-0.42);
     // Short central route meets a rotating gate; side routes remain open.
 
@@ -98,9 +98,21 @@
     const spindle=add(Bodies.rectangle(450,305,150,19,{isStatic:true,restitution:1.15,
       label:'spinner',render:{fillStyle:'#78e0d3'}}));
     animated.push({body:spindle,angle:0,speed:0.047 + random()*0.018});
-    const gates=add(Bodies.rectangle(450,500,190,15,{isStatic:true,restitution:1.35,
+    const gates=add(Bodies.rectangle(450,1190,190,15,{isStatic:true,restitution:1.35,
       label:'spinner',render:{fillStyle:'#b4a1ff'}}));
     animated.push({body:gates,angle:random()*Math.PI,speed:-(0.035+random()*0.015)});
+    rail(350,660,600,18,.32).friction=0; rail(550,990,600,18,-.32).friction=0;
+    // Extended middle: staggered rotating paddles leave broad side routes open.
+    for(const [x,y,direction] of [[450,520,1],[450,840,-1]]){
+      const paddle=add(Bodies.rectangle(x,y,180,17,{isStatic:true,restitution:1.12,
+        label:'spinner',render:{fillStyle:'#78e0d3'}}));
+      animated.push({body:paddle,angle:random()*Math.PI,speed:direction*(.025+random()*.015)});
+    }
+    [[680,525,27],[200,690,27],[670,865,28],[200,1180,25],[650,1075,25]]
+      .forEach(([x,y,r])=>add(Bodies.circle(x,y,r,bumperOpts)));
+    for(const [x,y] of [[450,580],[450,770],[180,940],[440,970],[730,950],[360,1135],[540,1145]]){
+      add(Bodies.circle(x,y,10,pegOpts));
+    }
     // A single finish sensor line, followed by UI capacity gates for team mode.
     const order=shuffled(roster,random);
     const columns=order.length;
