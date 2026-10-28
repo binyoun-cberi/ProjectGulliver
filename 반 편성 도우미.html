@@ -1327,6 +1327,35 @@ function manualMove(e){
 
 function installEvents(){
   document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+  $('backToSetup').addEventListener('click',()=>showTab('setup'));
+  $('applySetup').addEventListener('click',applyStageZero);
+  $('continueSetup').addEventListener('click',()=>{if(state.setupCompleted)showTab('roster')});
+  $('sourceGrade').addEventListener('change',e=>{
+    const old=state.sourceGrade;
+    const value=e.target.value.trim();
+    if(!/^(?:[1-9]|1[0-2])$/.test(value)){toast('기존 학년은 1~12 사이여야 합니다.');render();return}
+    state.sourceGrade=value;
+    if(!state.setupCompleted&&state.grade===String(Math.min(12,Number(old)+1)))state.grade=String(Math.min(12,Number(value)+1));
+    changeState();
+  });
+  $('sourceClassCount').addEventListener('change',e=>{
+    const n=Number(e.target.value);
+    if(!Number.isInteger(n)||n<1||n>12){toast('기존 학급 수는 1~12개 반까지 가능합니다.');render();return}
+    state.sourceClassCount=n;state.sourceClasses=stageZeroRows(state.sourceClasses,n);
+    changeState();
+  });
+  $('sourceClassRows').addEventListener('change',e=>{
+    const input=e.target.closest('[data-source-room][data-source-gender]');
+    if(!input)return;
+    const value=input.value.trim(),room=Number(input.dataset.sourceRoom),kind=input.dataset.sourceGender;
+    if(value!==''&&(!/^\d+$/.test(value)||Number(value)>1000)){
+      toast('인원은 0~1000 사이의 정수로 입력해 주세요.');renderSetup();return;
+    }
+    const target=state.sourceClasses.find(row=>row.room===room);
+    if(!target)return;
+    target[kind]=value===''?'':Number(value);
+    saveState();renderSetup();
+  });
   $('teacherPriorityOn').addEventListener('change',e=>{
     state.teacherPriorityOn=e.target.checked;
     invalidate();saveState();
@@ -1335,8 +1364,8 @@ function installEvents(){
   });
   $('grade').addEventListener('change',e=>{state.grade=e.target.value.trim()||'1';changeState()});
   $('classCount').addEventListener('change',e=>{const n=Number(e.target.value);if(!Number.isInteger(n)||n<2||n>12){toast('학급 수는 2~12로 설정해 주세요.');render();return}state.classCount=n;state.students.forEach(s=>{if(s.fixed>n)s.fixed=0});state.teacherNames=Object.fromEntries(Object.entries(state.teacherNames).filter(([id])=>Number(id)<=n));invalidate();changeState()});
-  $('demo').addEventListener('click',()=>{if(state.students.length&&!confirm('현재 학생 명단을 예시 데이터로 교체할까요? 먼저 JSON 백업을 저장할 수 있습니다.'))return;state=defaultState();state.students=sampleData();state.pairs=[{a:state.students[0].id,b:state.students[3].id},{a:state.students[7].id,b:state.students[19].id}];view='roster';showTab('roster');changeState();toast('가상의 학생 36명과 분리 관계 2쌍을 불러왔습니다.')});
-  $('reset').addEventListener('click',()=>{if(!confirm('모든 학생 정보와 편성 결과를 이 브라우저에서 지울까요? 되돌릴 수 없습니다.'))return;state=defaultState();changeState();showTab('roster');toast('모든 내용을 지웠습니다.')});
+  $('demo').addEventListener('click',()=>{if(state.students.length&&!confirm('현재 학생 명단을 예시 데이터로 교체할까요? 먼저 JSON 백업을 저장할 수 있습니다.'))return;state=defaultState();state.setupCompleted=true;state.sourceGrade='5';state.grade='6';state.students=sampleData().map(st=>({...st,oldGrade:'5'}));state.sourceClasses=stageZeroInferRows(state.students);state.sourceClassCount=state.sourceClasses.length;state.pairs=[{a:state.students[0].id,b:state.students[3].id},{a:state.students[7].id,b:state.students[19].id}];view='roster';showTab('roster');changeState();toast('가상의 학생 36명과 분리 관계 2쌍을 불러왔습니다.')});
+  $('reset').addEventListener('click',()=>{if(!confirm('모든 학생 정보와 편성 결과를 이 브라우저에서 지울까요? 되돌릴 수 없습니다.'))return;state=defaultState();showTab('setup');changeState();toast('모든 내용을 지웠습니다.')});
   $('saveJson').addEventListener('click',()=>{const copy={...state,candidates:[]};download('반편성_설정_백업.json',JSON.stringify(copy,null,2),'application/json;charset=utf-8');toast('설정 백업 파일을 저장했습니다.')});
   $('openJson').addEventListener('click',()=>$('jsonFile').click());
   $('jsonFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());const next=normalize(data);if(state.students.length&&!confirm('현재 학생 명단을 백업 내용으로 교체할까요?'))return;state=next;changeState();showTab('roster');toast('백업을 불러왔습니다.')}catch(err){toast('올바른 JSON 백업 파일인지 확인해 주세요.')}finally{e.target.value=''}});
@@ -1677,7 +1706,7 @@ function installEvents(){
 
   $('exportCsv').addEventListener('click',exportCSV);$('print').addEventListener('click',()=>window.print());
 }
-installEvents();render();
+installEvents();showTab(view);
 </script>
 </body>
 </html>
