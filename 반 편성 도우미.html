@@ -1577,14 +1577,104 @@ function parseBulk(text){return bulkFormatRows(parseSheetText(text)).rows.filter
 function parseCSVLine(s,sep){const out=[];let value='',quoted=false;for(let i=0;i<s.length;i++){const ch=s[i];if(ch==='"'){if(quoted && s[i+1]==='"'){value+='"';i++}else quoted=!quoted}else if(ch===sep&&!quoted){out.push(value);value=''}else value+=ch}out.push(value);return out}
 function download(name,content,mime){const b=new Blob([content],{type:mime});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
 function csvCell(x){let s=String(x??'');if(/^\s*[=+\-@]/.test(s))s="'"+s;return /[",\n\r]/.test(s)?'"'+s.replaceAll('"','""')+'"':s}
-function exportCSV(){
-  const c=state.candidates[state.activeCandidate];if(!c)return;
-  const rows=[['새 학급','담당 교사','새 번호','기존 학년','기존 반','번호','이름','성별','학습지표','유의 사항','교사 메모','우선 배치']];
-  for(let i=1;i<=state.classCount;i++){
-    const pupils=state.students.filter(st=>c.assign[st.id]===i).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-    pupils.forEach((st,j)=>rows.push([displayClass(i),state.teacherNames[i]||'',j+1,st.oldGrade||'',st.oldClass,st.number,st.name,st.gender,hasStudyScore(st)?studyText(st.level):'',st.traits.join('; '),st.note,state.teacherPriorityOn&&st.fixed?'교사 지정':'자동 편성']));
+/* RESULTS_PRESENTATION_START: copy/export always reflects current edited assignment. */
+function resultRoomPupils(students,candidate,classCount){
+ return Array.from({length:classCount},(_,i)=>students.filter(s=>candidate.assign[s.id]===i+1)
+  .slice().sort((a,b)=>a.name.localeCompare(b.name,'ko')||String(a.oldClass).localeCompare(String(b.oldClass),'ko',{numeric:true})||Number(a.number||0)-Number(b.number||0)));
+}
+function resultExportMatrix(students,candidate,classCount,grade,teacherNames,teacherFirst,layout){
+ const rooms=resultRoomPupils(students,candidate,classCount);
+ const cell=st=>[st.oldGrade||'',st.oldClass||'',st.number||'',st.name||'',st.gender||'',
+   Number.isFinite(st.level)&&st.level>=0?st.level.toFixed(2):'',(st.traits||[]).join('; '),st.note||'',teacherFirst&&st.fixed?'교사 지정':'자동 편성'];
+ if(layout==='compare'){
+  // Each original class becomes a group of the same six Excel columns, side by side.
+  const perRoom=6;
+  const names=rooms.flatMap((room,i)=>[grade+'학년 '+(i+1)+'반'+(teacherNames[i+1]?' · '+teacherNames[i+1]:''),...Array(perRoom-1).fill('')]);
+  const headers=rooms.flatMap(()=>['새 번호','이름','성별','기존 반·번호','학습지표','유의 사항·메모']);
+  const max=Math.max(0,...rooms.map(room=>room.length));
+  const rows=[names,headers];
+  for(let j=0;j<max;j++)rows.push(rooms.flatMap(room=>{
+   const st=room[j];
+   if(!st)return Array(perRoom).fill('');
+   return [j+1,st.name||'',st.gender||'',(st.oldGrade?st.oldGrade+'학년 ':'')+(st.oldClass||'')+(st.number?' '+st.number+'번':''),
+    Number.isFinite(st.level)&&st.level>=0?st.level.toFixed(2):'',(st.traits||[]).join('; ')+(st.note?' / '+st.note:'')];
+  }));
+  return rows;
+ }
+ const rows=[['새 학급','담당 교사','새 번호','기존 학년','기존 반','기존 번호','이름','성별','학습지표','유의 사항','교사 메모','우선 배치']];
+ for(let i=0;i<rooms.length;i++)rooms[i].forEach((st,j)=>{
+  const values=cell(st);
+  rows.push([grade+'학년 '+(i+1)+'반',teacherNames[i+1]||'',j+1,...values]);
+ });
+ return rows;
+}
+function safeExcelTextCell(value){
+ const text=String(value??'').replace(/[\r\n\t]+/g,' ').trim();
+ return /^[=+\-@]/.test(text)?"'"+text:text;
+}
+function resultMatrixToTsv(matrix){return matrix.map(row=>row.map(safeExcelTextCell).join('\t')).join('\r\n')}
+function resultPrintTables(students,candidate,counts,classCount,grade,teacherNames,teacherFirst,layout,escape){
+ const rooms=resultRoomPupils(students,candidate,classCount),title=i=>grade+'학년 '+(i+1)+'반';
+ const summary=i=>{const d=counts[i];return '전체 '+d.total+'명 · 남 '+d.boys+'명 · 여 '+d.girls+'명 · 다문화 '+(d.traitCounts['다문화']||0)+'명 · 특수 '+(d.traitCounts['특수']||0)+'명 · 학습지표 '+(d.levelN?(d.levelSum/d.levelN).toFixed(2):'미입력')};
+ const escaped=(v)=>escape(String(v??''));
+ if(layout==='compare'){
+  const sheets=[];
+  for(let first=0;first<classCount;first+=4){
+   const group=rooms.slice(first,first+4),max=Math.max(0,...group.map(r=>r.length));
+   const top=group.map((room,i)=>'<th colspan="2">'+escaped(title(first+i))+' · '+room.length+'명'+(teacherNames[first+i+1]?' · 담당 '+escaped(teacherNames[first+i+1]):'')+'</th>').join('');
+   const subs=group.map(()=>'<th style="width:25px">번호</th><th>학생 정보</th>').join('');
+   const body=Array.from({length:max},(_,j)=>'<tr>'+group.map(room=>{
+    const st=room[j];
+    if(!st)return '<td class="print-number"></td><td class="print-student"></td>';
+    const detail=(st.gender||'성별 미입력')+' · '+(st.oldGrade?st.oldGrade+'학년 ':'')+(st.oldClass||'')+(st.number?' '+st.number+'번':'')+
+     ' · 학습 '+(Number.isFinite(st.level)&&st.level>=0?st.level.toFixed(2):'미입력');
+    return '<td class="print-number">'+(j+1)+'</td><td class="print-student"><strong>'+escaped(st.name)+'</strong><div>'+escaped(detail)+'</div>'+
+      ((st.traits||[]).length?'<div>'+escaped(st.traits.join(', '))+'</div>':'')+
+      (st.note?'<div>메모 '+escaped(st.note)+'</div>':'')+
+      (teacherFirst&&st.fixed?'<div>교사 지정</div>':'')+'</td>';
+   }).join('')+'</tr>').join('');
+   sheets.push('<div class="print-page print-compare"><h2>반 편성표 · 가로 비교형</h2><p class="print-subtitle">'+escaped(grade)+'학년 '+(first+1)+'~'+Math.min(classCount,first+4)+'반 · '+classCount+'개 반 중 '+group.length+'개 반</p>'+
+     '<p class="print-summary">'+group.map((_,i)=>escaped(title(first+i))+': '+escaped(summary(first+i))).join('　/　')+'</p>'+
+     '<table><thead><tr>'+top+'</tr><tr>'+subs+'</tr></thead><tbody>'+body+'</tbody></table><p class="print-note">※ 한 페이지에 최대 4개 반씩 비교합니다. 인원 초과 시 표가 다음 인쇄 페이지로 이어집니다.</p></div>');
   }
-  download('반편성_결과_'+state.grade+'학년.csv','\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');toast('편성 결과 CSV를 저장했습니다.');
+  return sheets.join('');
+ }
+ return rooms.map((room,i)=>'<div class="print-page print-vertical"><h2>'+escaped(title(i))+' 편성표</h2><p class="print-subtitle">담당 교사: '+escaped(teacherNames[i+1]||'미지정')+' · '+escaped(summary(i))+'</p>'+
+  '<table><thead><tr><th style="width:6%">번호</th><th style="width:14%">이름</th><th style="width:8%">성별</th><th style="width:15%">기존 반·번호</th><th style="width:12%">학습지표</th><th>유의 사항</th><th>메모</th></tr></thead><tbody>'+
+  room.map((st,j)=>'<tr><td>'+(j+1)+'</td><td>'+escaped(st.name)+'</td><td>'+escaped(st.gender||'—')+'</td><td>'+escaped((st.oldGrade?st.oldGrade+'학년 ':'')+(st.oldClass||'')+(st.number?' '+st.number+'번':''))+'</td><td>'+(Number.isFinite(st.level)&&st.level>=0?st.level.toFixed(2):'—')+'</td><td>'+escaped((st.traits||[]).join(', '))+'</td><td>'+escaped(st.note||'')+'</td></tr>').join('')+
+  '</tbody></table></div>').join('');
+}
+/* RESULTS_PRESENTATION_END */
+function selectedResultMatrix(){
+ const c=state.candidates[state.activeCandidate];
+ return c?resultExportMatrix(state.students,c,state.classCount,state.grade,state.teacherNames,state.teacherPriorityOn,state.resultLayout):[];
+}
+function renderResultPrint(candidate,counts){
+ $('resultPrintSheet').innerHTML=resultPrintTables(state.students,candidate,counts,state.classCount,state.grade,state.teacherNames,state.teacherPriorityOn,state.resultLayout,escapeHtml);
+}
+function setResultLayout(layout){
+ state.resultLayout=layout==='compare'?'compare':'vertical';
+ saveState();renderResults();
+}
+async function copyResultExcel(){
+ const rows=selectedResultMatrix();if(!rows.length)return;
+ const data=resultMatrixToTsv(rows);
+ try{
+  if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(data);
+  else{
+   const field=document.createElement('textarea');field.value=data;field.style.position='fixed';field.style.left='-10000px';
+   document.body.append(field);field.select();
+   if(!document.execCommand('copy'))throw Error('clipboard unavailable');
+   field.remove();
+  }
+  toast(state.resultLayout==='compare'?'반별 열을 나란히 복사했습니다. 엑셀 첫 칸에 붙여넣으세요.':'편성표를 복사했습니다. 엑셀 첫 칸에 붙여넣으세요.');
+ }catch(e){toast('복사 권한이 허용되지 않았습니다. 「엑셀용 파일 저장」을 이용해 주세요.')}
+}
+function exportCSV(){
+ const rows=selectedResultMatrix();if(!rows.length)return;
+ const kind=state.resultLayout==='compare'?'가로비교':'세로형';
+ download('반편성_'+state.grade+'학년_'+kind+'.csv','\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+ toast(kind+' 편성표를 엑셀용 파일로 저장했습니다.');
 }
 /* DEMO_NAMES_START: nonidentifying sample names for rehearsal, no other pupil fields changed. */
 function generateDemoNames(count,usedNames=[],random=Math.random){
