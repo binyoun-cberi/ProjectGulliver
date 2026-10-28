@@ -643,3 +643,39 @@ test('가로/세로 전환과 엑셀 복사·인쇄 버튼은 결과 화면에 �
  assert.match(html,/page:result-portrait/);
  assert.match(html,/function setResultLayout\(/);
 });
+
+function nameColorApi(){
+ const a=html.indexOf('/* STUDENT_NAME_COLORS_START'),b=html.indexOf('/* STUDENT_NAME_COLORS_END */',a);
+ assert.ok(a>0&&b>a,'학생 이름 색상 유틸리티를 찾지 못함');
+ const scope={};vm.createContext(scope);
+ vm.runInContext(html.slice(a,b),scope);
+ return scope;
+}
+test('학생별 이름 색상은 안전한 6자리 HEX만 저장하고 기본값은 무색',()=>{
+ const a=nameColorApi();
+ assert.equal(a.normalizeNameColor('#ffe0e6'),'#ffe0e6');
+ assert.equal(a.normalizeNameColor(' #ABCDEF '),'#abcdef');
+ assert.equal(a.normalizeNameColor('rgb(255,0,0)'),'');
+ assert.equal(a.normalizeNameColor('red; color: white'),'');
+ assert.equal(a.normalizeNameColor(''), '');
+ assert.equal(a.normalizeNameColor(undefined),'');
+ assert.equal(a.studentNameStyle(undefined),'');
+ assert.equal(a.studentNameStyle('#ffead6'),'--student-name-bg:#ffead6;background-color:#ffead6;color:#16251e;');
+});
+test('짙은 사용자 지정 색은 흰색 글자, 밝은 배경은 어두운 글자로 대비 조절',()=>{
+ const a=nameColorApi();
+ assert.equal(a.nameColorTextColor('#162b4d'),'#ffffff');
+ assert.equal(a.nameColorTextColor('#fff0b9'),'#16251e');
+ assert.equal(a.nameColorTextColor('#ffffff'),'#16251e');
+ assert.equal(a.nameColorTextColor('#000000'),'#ffffff');
+});
+test('1단계 이름 배경색, 최종 가로·세로 편성표, 인쇄와 백업에 동일한 학생별 색이 연결',()=>{
+ for(const id of ['nameColorDialog','nameColorPalette','customNameColor','clearNameColor','nameColorPreview'])assert.ok(html.includes('id="'+id+'"'),id);
+ assert.match(html,/color:normalizeNameColor\(st\.color\)/,'저장 자료를 불러올 때 색을 검증');
+ assert.match(html,/data-student-color="\$\{escapeHtml\(st\.id\)\}"/,'1단계 편집 버튼');
+ assert.match(html,/data-student-color="\$\{escapeHtml\(s\.id\)\}"/,'결과 단계 편집 버튼');
+ assert.match(html,/style="\$\{studentNameStyle\(st\.color\)\}"/,'이름 칸 배경');
+ assert.match(html,/style="\$\{studentNameStyle\(s\.color\)\}"/,'완성된 반 이름 배경');
+ assert.match(html,/studentNameStyle\(st\.color\)/,'인쇄 배경색');
+ assert.match(html,/function changeStudentNameColor\(/);
+});
