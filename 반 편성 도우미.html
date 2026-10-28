@@ -255,7 +255,7 @@
 .student-color-action[title]{cursor:pointer}
 .assigned .person .student-name-highlight{font-size:12px}
 .assigned .person .name-and-color{display:flex;align-items:center;gap:5px;min-width:0;flex-wrap:wrap}
-.roster-sheet td.roster-cell-selected[data-roster-cell="name"]{box-shadow:inset 0 0 0 2px #398d68}
+.roster-sheet td.roster-cell-selected[data-roster-cell="name"]{box-shadow:inset 0 0 0 2px #398d68;background-color:var(--student-name-bg,#e0f4e8)!important}
 @media print{.student-color-action{display:none!important}.student-name-highlight,#resultPrintSheet .print-student .print-student-name,#resultPrintSheet .print-name-cell{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}
 @media(max-width:480px){.name-color-palette{grid-template-columns:repeat(4,minmax(0,1fr))}}
 
@@ -538,7 +538,7 @@ function nameColorTextColor(value){
 }
 function studentNameStyle(value){
  const color=normalizeNameColor(value);
- return color?'background-color:'+color+';color:'+nameColorTextColor(color)+';':'';
+ return color?'--student-name-bg:'+color+';background-color:'+color+';color:'+nameColorTextColor(color)+';':'';
 }
 /* STUDENT_NAME_COLORS_END */
 function defaultState(){return {version:6,grade:'6',classCount:3,resultLayout:'vertical',sourceGrade:'5',sourceClassCount:3,sourceClasses:stageZeroRows([],3),setupCompleted:false,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},baskets:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
