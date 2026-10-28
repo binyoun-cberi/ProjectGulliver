@@ -261,3 +261,53 @@ test('명단 입력표 컨트롤과 로컬 저장용 기존 학년 필드가 존
  assert.match(html,/oldGrade:String\(st\.oldGrade/);
  assert.match(html,/data-bulk-r/);
 });
+
+function sheetPasteAPI(){
+ const a=html.indexOf('/* BULK_TABLE_START'),b=html.indexOf('/* BULK_TABLE_END */',a);
+ assert.ok(a>0&&b>a);
+ const ctx={};vm.createContext(ctx);vm.runInContext(html.slice(a,b),ctx);
+ return ctx;
+}
+function rectangle(r1,c1,r2=r1,c2=c1){return {anchor:{r:r1,c:c1},focus:{r:r2,c:c2}}}
+test('Excel: 선택한 학년 열 전체에 단일 값 5를 붙여넣는다',()=>{
+ const api=sheetPasteAPI(),list=Array.from({length:96},()=>Array(7).fill(''));
+ const plan=api.bulkPastePlan('5',0),result=api.bulkPasteIntoRows(list,plan,rectangle(0,0,95,0));
+ assert.equal(result.count,96);assert.ok(result.rows.every(row=>row[0]==='5'));
+});
+test('Excel: 이름 열에 96명 이름 한 열 붙여넣기, 학년 자동 적용',()=>{
+ const api=sheetPasteAPI(),list=Array.from({length:12},()=>Array(7).fill(''));
+ const names=Array.from({length:96},(_,i)=>'학생'+i).join('\r\n');
+ const parsed=api.bulkPastePlan(names,3);
+ assert.equal(parsed.full,false);assert.equal(parsed.column,3);assert.equal(parsed.rows.length,96);
+ const result=api.bulkPasteIntoRows(list,parsed,rectangle(0,3), '5');
+ assert.equal(result.rows.length,96);
+ assert.ok(result.rows.every((row,i)=>row[0]==='5'&&row[3]==='학생'+i));
+});
+test('Excel: 이름 열 중간 빈칸과 단일 열 제목 처리',()=>{
+ const api=sheetPasteAPI(),list=Array.from({length:7},()=>Array(7).fill(''));
+ const plan=api.bulkPastePlan('이름\n김하늘\n\n이도윤\n박서연',3);
+ assert.equal(plan.rows.length,4);
+ const result=api.bulkPasteIntoRows(list,plan,rectangle(0,3));
+ assert.deepEqual(Array.from(result.rows.slice(0,4).map(row=>row[3])),['김하늘','','이도윤','박서연']);
+});
+test('Excel: 선택 범위 첫 셀 아래로 채우기와 다시 복사/붙여넣기',()=>{
+ const api=sheetPasteAPI(),list=Array.from({length:12},()=>Array(7).fill(''));
+ list[0][1]='3';const selection=rectangle(0,1,9,1);
+ const filled=api.bulkFillDownRows(list,selection);
+ assert.equal(filled.count,9);assert.ok(filled.rows.slice(0,10).every(row=>row[1]==='3'));
+ const names=['김하늘','이도윤','박서연'];
+ names.forEach((name,i)=>filled.rows[i][3]=name);
+ const clipboard=api.bulkSelectedTSV(filled.rows,rectangle(0,3,2,3));
+ const pasted=api.bulkPasteIntoRows(filled.rows,api.bulkPastePlan(clipboard,3),rectangle(6,3));
+ assert.deepEqual(Array.from(pasted.rows.slice(6,9).map(row=>row[3])),names);
+});
+test('Excel: 헤더 있는 전체 표와 이름만 한 열의 첫 셀 붙여넣기를 구분한다',()=>{
+ const api=sheetPasteAPI();
+ const full=api.bulkPastePlan('학년\t반\t번호\t이름\t성별\t유의사항\n5\t1\t1\t김하늘\t여\t다문화',0);
+ assert.equal(full.full,true);assert.equal(full.rows[0][3],'김하늘');
+ const names=api.bulkPastePlan('이름\n김하늘\n박서연',0);
+ assert.equal(names.full,false);assert.equal(names.column,3);
+ assert.deepEqual(Array.from(names.rows.map(row=>row[0])),['김하늘','박서연']);
+ const grade=api.bulkNormalizedGrade('5학년');
+ assert.equal(grade,'5');
+});
