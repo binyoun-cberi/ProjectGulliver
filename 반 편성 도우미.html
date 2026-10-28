@@ -101,6 +101,26 @@
 @media(max-width:720px){.assigned{flex-wrap:wrap}.assigned .move-controls{margin-left:auto}.class-drop button{padding:10px}.move-preview .move-preview-row{gap:5px}}
 @media print{.move-guide,.move-selection,.move-preview,.move-history,.class-drop,.move-controls,.drag-handle{display:none!important}}
 
+
+/* Stage 0: source enrollment and future class planning */
+.setup-year-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:13px 0 16px}
+.setup-year-grid .field{min-width:0}
+.setup-subhead{margin:21px 0 10px}.setup-subhead h3{font-size:15px;margin:0 0 6px}
+.setup-source-table{border-collapse:collapse;width:100%;min-width:420px;font-size:13px}
+.setup-source-table th,.setup-source-table td{border-bottom:1px solid #e5edf1;padding:9px 14px;text-align:center}
+.setup-source-table th{background:#f4f8fb;color:#64768b}.setup-source-table td:first-child{font-weight:750;text-align:left}
+.setup-source-table input{width:105px;max-width:100%;text-align:center;padding:8px}
+.setup-source-table tfoot td{font-weight:800;background:#f6faf8}
+.setup-targets{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px;margin:11px 0}
+.setup-target{background:#f8fbfa;border:1px solid #d5e4df;border-radius:12px;padding:12px}
+.setup-target b{font-size:13px}.setup-target span{display:block;font-size:12px;margin:6px 0;color:#516a66}
+.setup-target-overview{padding:12px;background:#eff8f2;border:1px solid #c7dfd0;border-radius:12px;margin:11px 0;font-size:13px;grid-column:1/-1}
+.setup-target-overview strong{font-size:14px}.setup-apply{margin-top:18px}
+.roster-identity{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.roster-identity span{font-size:12px;background:#eef5f4;color:#375b55;padding:4px 6px;border-radius:6px;white-space:nowrap}
+@media(max-width:780px){.setup-year-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media print{#view-setup,.setup-apply{display:none!important}}
+
 /* Editable spreadsheet-style bulk roster. Data stays as a local draft until applied. */
 .bulk-grid-wrap{max-height:480px;overflow:auto;overscroll-behavior:contain;margin:12px 0}
 .bulk-sheet{border-collapse:separate;border-spacing:0;width:100%;min-width:865px;font-size:12px}
