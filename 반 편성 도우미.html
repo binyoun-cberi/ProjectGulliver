@@ -274,7 +274,7 @@
  </section>
  <section id="view-roster" class="card hidden" aria-label="학생 명단"><div class="section-head"><div><h2>학생 명단 <span id="rosterCount" class="count-pill">0명</span></h2><p>이름·성별·학습지표·유의 사항을 입력하세요.</p></div><div class="actions"><button id="backToSetup" class="btn soft">0단계 수정</button><input id="searchStudent" aria-label="학생 검색" placeholder="이름 · 기존 반 검색" style="width:160px"><button id="addStudent" class="btn primary">+ 학생 추가</button></div></div>
  <div id="rosterGenderSummary" aria-live="polite"></div><div class="helper no-print" style="margin:8px 0">엑셀에서 이름·성별·학습지표를 복사해 첫 이름 칸에 Ctrl+V로 붙여넣으세요. 제목 행이 있어도 됩니다.</div>
- <div class="roster-sheet-tools no-print"><div><strong>엑셀처럼 바로 입력</strong><span>학년 · 반 · 번호는 0단계에서 자동으로 채워집니다.</span></div><div class="actions"><button id="rosterFillDown" class="btn small" type="button" disabled>아래로 채우기 (Ctrl+D)</button><button id="rosterUndo" class="btn small" type="button" disabled>되돌리기 (Ctrl+Z)</button></div></div><div class="table-wrap roster-sheet-wrap"><table class="student-table roster-sheet" aria-label="엑셀형 학생 명단 입력표"><thead id="rosterHead"></thead><tbody id="rosterBody"></tbody></table></div><div class="helper privacy-note">같은 반에 배정하면 안 되는 학생은 3단계에서 지정해 주세요.</div>
+ <div class="roster-sheet-tools no-print"><div><strong>엑셀처럼 바로 입력</strong><span id="rosterRangeStatus">셀을 선택하거나 엑셀에서 여러 행을 붙여넣으세요.</span></div><div class="actions"><button id="rosterFillDown" class="btn small" type="button" disabled>아래로 채우기 (Ctrl+D)</button><button id="rosterUndo" class="btn small" type="button" disabled>되돌리기 (Ctrl+Z)</button></div></div><div class="table-wrap roster-sheet-wrap"><table class="student-table roster-sheet" aria-label="엑셀형 학생 명단 입력표"><thead id="rosterHead"></thead><tbody id="rosterBody"></tbody></table></div><div class="helper privacy-note">같은 반에 배정하면 안 되는 학생은 3단계에서 지정해 주세요.</div>
  </section>
  <section id="view-preset" class="card hidden" aria-label="교사가 먼저 배치할 학생"><div class="section-head"><div><h2>교사가 먼저 학생 배치하기 <span id="presetCount" class="count-pill">0명 확정</span></h2><p>고정할 학생을 선택하세요.</p></div><div class="actions"><button id="undoPreset" class="btn" disabled>최근 배치 되돌리기</button><button id="clearPresets" class="btn danger">우선 배치 전체 해제</button><button id="fillRemaining" class="btn primary">남은 학생 자동 채우기</button></div></div><div id="presetStatus" class="helper"></div><div class="preset-workspace"><div class="preset-list"><div class="section-head"><h3>학생 찾아 배치하기</h3><span id="presetRemaining" class="count-pill">0명</span></div><input id="presetSearch" class="wide" aria-label="우선 배치 학생 검색" placeholder="이름 · 유의 사항 · 기존 반 검색"><div class="preset-filters"><label>배치 상태<select id="presetFilterStatus"><option value="free">미배치 학생</option><option value="all">모든 학생</option><option value="fixed">배치한 학생</option></select></label><label>기존 반<select id="presetFilterClass"></select></label><label>유의 사항<select id="presetFilterTrait"></select></label><label>정렬<select id="presetSort"><option value="name">이름순</option><option value="score">학습지표 높은순</option><option value="oldClass">기존 반·번호순</option></select></label></div><div class="preset-selection"><label><input type="checkbox" id="presetSelectAll"> 표시된 학생 선택</label><span id="presetVisibleCount" class="muted"></span></div><div id="presetUnassigned" class="preset-people"></div></div><div id="presetClassGrid" class="preset-classes"></div></div><div class="preset-batch"><strong id="presetSelectedCount" aria-live="polite">0명 선택</strong><label for="presetTarget">배치할 반</label><select id="presetTarget"></select><button id="assignSelected" class="btn primary" disabled>선택 학생 배치</button><button id="clearSelection" class="btn">선택 취소</button><button id="fillRemainingBottom" class="btn">남은 학생 자동 채우기</button></div><div id="presetFeedback" class="preset-feedback" role="status" aria-live="polite"></div></section>
  <section id="view-rules" class="card hidden" aria-label="반 편성 조건"><div class="section-head"><div><h2>같은 반 금지 바구니 <span id="basketCount" class="count-pill">0개</span></h2><p>바구니에 함께 넣은 학생은 서로 다른 반으로 배정됩니다.</p></div><div class="actions"><button id="addBasket" class="btn primary">+ 바구니 만들기</button></div></div>
@@ -611,6 +611,88 @@ function rosterGenderCheck(){
  });
  return '<div class="helper" style="margin:10px 0"><b>학생별 성별 입력 현황</b> · 총 '+state.students.filter(s=>s.gender).length+'/'+state.students.length+'명 입력<div class="legend">'+diff.join('')+'</div><div>0단계의 인원은 참고용입니다. 성별을 학생 번호에서 추정하거나 자동 지정하지 않습니다.</div></div>';
 }
+/* ROSTER_SHEET_START: one live Excel-like grid connected directly to saved student records. */
+const ROSTER_COLUMNS=['name','gender','level','traits'];
+function rosterVisibleIds(){return Array.from($('rosterBody').querySelectorAll('tr[data-student]')).map(tr=>tr.dataset.student)}
+function rosterCellCoords(node){
+ const td=node?.closest?.('[data-roster-cell]'),tr=node?.closest?.('tr[data-student]');
+ if(!td||!tr)return null;
+ const r=rosterVisibleIds().indexOf(tr.dataset.student),c=ROSTER_COLUMNS.indexOf(td.dataset.rosterCell);
+ return r<0||c<0?null:{r,c};
+}
+function rosterBounds(){
+ if(!rosterSelection)return null;
+ const {anchor:a,focus:b}=rosterSelection;
+ return {r1:Math.min(a.r,b.r),r2:Math.max(a.r,b.r),c1:Math.min(a.c,b.c),c2:Math.max(a.c,b.c)};
+}
+function rosterSelect(r,c,extend=false){
+ const ids=rosterVisibleIds();
+ if(!ids.length||r<0||r>=ids.length||c<0||c>=4)return;
+ const value={r,c};
+ rosterSelection=extend&&rosterSelection?{anchor:rosterSelection.anchor,focus:value}:{anchor:value,focus:value};
+ rosterPaintSelection();
+}
+function rosterPaintSelection(){
+ const root=$('rosterBody');if(!root)return;
+ root.querySelectorAll('.roster-cell-selected').forEach(n=>n.classList.remove('roster-cell-selected'));
+ $('rosterHead').querySelectorAll('.roster-head-selected').forEach(n=>n.classList.remove('roster-head-selected'));
+ const range=rosterBounds(),ids=rosterVisibleIds();
+ if(!range){$('rosterRangeStatus').textContent='셀을 선택하거나 엑셀에서 여러 행을 붙여넣으세요.';return}
+ for(let r=range.r1;r<=Math.min(range.r2,ids.length-1);r++)for(let c=range.c1;c<=range.c2;c++){
+  root.querySelector('tr[data-student="'+CSS.escape(ids[r])+'"] [data-roster-cell="'+ROSTER_COLUMNS[c]+'"]')?.classList.add('roster-cell-selected');
+ }
+ if(range.r1===0&&range.r2===ids.length-1)for(let c=range.c1;c<=range.c2;c++)$('rosterHead').querySelector('[data-roster-header="'+ROSTER_COLUMNS[c]+'"]')?.classList.add('roster-head-selected');
+ const count=Math.min(range.r2,ids.length-1)-range.r1+1;
+ $('rosterRangeStatus').textContent=count+'행 × '+(range.c2-range.c1+1)+'열 선택됨 · Ctrl+C 복사 / Ctrl+D 아래로 채우기';
+ $('rosterFillDown').disabled=count<2;
+}
+function rosterSaveUndo(){
+ rosterUndoStack.push({students:state.students.map(s=>({...s,traits:[...s.traits]})),traits:[...state.traits]});
+ if(rosterUndoStack.length>20)rosterUndoStack.shift();
+ $('rosterUndo').disabled=false;
+}
+function rosterUndo(){
+ const old=rosterUndoStack.pop();
+ if(!old){toast('되돌릴 입력 내역이 없습니다.');return}
+ state.students=old.students;state.traits=old.traits;
+ invalidate();changeState();$('rosterUndo').disabled=!rosterUndoStack.length;toast('마지막 명단 수정을 되돌렸습니다.');
+}
+function rosterColumnValue(student,col){
+ if(col==='traits')return student.traits.join('; ');
+ if(col==='level')return hasStudyScore(student)?studyText(student.level):'';
+ return student[col]||'';
+}
+function rosterPasteText(text,firstKey,ids){
+ const result=rosterExcelChanges(text,firstKey,ids,state.students);
+ if(result.errors.length){toast(result.errors.slice(0,3).join(' / '));return false}
+ if(!result.changes.length){toast('입력할 학생 정보를 찾지 못했습니다.');return false}
+ const newTraits=[...new Set(result.changes.filter(x=>x.present.traits).flatMap(x=>x.next.traits))].filter(t=>!state.traits.includes(t));
+ if(state.traits.length+newTraits.length>64){toast('유의 사항이 너무 많습니다. 설정에서 항목을 정리해 주세요.');return false}
+ rosterSaveUndo();
+ state.traits.push(...newTraits);
+ const updated=new Map(result.changes.map(x=>[x.id,x.next]));
+ state.students=state.students.map(st=>updated.get(st.id)||st);
+ invalidate();changeState();
+ $('rosterUndo').disabled=!rosterUndoStack.length;
+ toast(result.changes.length+'명 입력했습니다. 학년·반·번호는 유지됩니다.');
+ return true;
+}
+function rosterFillDown(){
+ const range=rosterBounds(),ids=rosterVisibleIds();
+ if(!range||range.r2<=range.r1){toast('먼저 첫 셀부터 아래의 마지막 셀까지 선택하세요.');return}
+ const source=findStudent(ids[range.r1]);if(!source)return;
+ const value=ROSTER_COLUMNS.slice(range.c1,range.c2+1).map(key=>rosterColumnValue(source,key)).join('\t');
+ const text=Array(range.r2-range.r1).fill(value).join('\n');
+ rosterPasteText(text,ROSTER_COLUMNS[range.c1],ids.slice(range.r1+1,range.r2+1));
+}
+function rosterSelectedTSV(){
+ const range=rosterBounds(),ids=rosterVisibleIds();
+ if(!range)return '';
+ return ids.slice(range.r1,range.r2+1).map(id=>{
+  const st=findStudent(id);return ROSTER_COLUMNS.slice(range.c1,range.c2+1).map(key=>rosterColumnValue(st,key)).join('\t');
+ }).join('\n');
+}
+/* ROSTER_SHEET_END */
 function renderRoster(){
 
   $('rosterHead').innerHTML='<tr><th>기존 학년 · 반 · 번호</th><th data-roster-header="name" tabindex="0" title="이름 열 선택">이름</th><th data-roster-header="gender" tabindex="0" title="성별 열 선택">성별</th><th data-roster-header="level" tabindex="0" title="학습지표 열 선택">학습지표</th><th data-roster-header="traits" tabindex="0" title="유의 사항 열 선택">유의 사항</th></tr>';
