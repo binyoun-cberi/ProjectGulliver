@@ -222,7 +222,7 @@
 const STORAGE_KEY = 'classplanner-v1-local';
 const DEFAULT_TRAITS = ['다문화','특수','쌍생아','분리조치','운동부','교권침해','성 사안','범법','연애관계','사회성'];
 let state = loadState();
-let view = 'roster';
+let view = state.setupCompleted ? 'roster' : 'setup';
 let noteStudentId = null;
 let searchQuery = '';
 let bulkRows=Array.from({length:12},()=>blankBulkRow());
@@ -356,10 +356,16 @@ function normalize(raw){
  const ids=new Set(),uniqueStudents=[];for(const st of students){if(ids.has(st.id))st.id=makeId();ids.add(st.id);uniqueStudents.push(st)}
  const pairs=(Array.isArray(raw.pairs)?raw.pairs:[]).filter(p=>p&&ids.has(p.a)&&ids.has(p.b)&&p.a!==p.b).map(p=>({a:String(p.a),b:String(p.b)}));
  const baskets=normalizeBaskets(raw.baskets,ids);
+ const inferred=stageZeroInferRows(uniqueStudents);
+ const inferredGrade=uniqueStudents.find(st=>st.oldGrade)?.oldGrade||'5';
+ const countSource=Math.max(1,Math.min(12,Number(raw.sourceClassCount)||((Array.isArray(raw.sourceClasses)&&raw.sourceClasses.length)||inferred.length)||3));
+ const sourceClasses=stageZeroRows(Array.isArray(raw.sourceClasses)?raw.sourceClasses:inferred,countSource);
+ const setupCompleted=typeof raw.setupCompleted==='boolean'?raw.setupCompleted:uniqueStudents.length>0;
+ const sourceGrade=String(raw.sourceGrade||inferredGrade).slice(0,12);
  const candidates=(Number(raw.version||1)>=5&&Array.isArray(raw.candidates)?raw.candidates:[]).slice(0,3)
   .filter(c=>c&&c.assign&&typeof c.assign==='object'&&uniqueStudents.every(st=>Number.isInteger(Number(c.assign[st.id]))&&Number(c.assign[st.id])>=1&&Number(c.assign[st.id])<=count))
   .map(c=>({assign:Object.fromEntries(uniqueStudents.map(st=>[st.id,Number(c.assign[st.id])])),target:Array.from({length:count},(_,i)=>Number(c.target?.[i])||Math.floor(uniqueStudents.length/count)),score:Number(c.score)||0}));
- return {...base,grade:String(raw.grade??'1').slice(0,12),classCount:count,teacherPriorityOn,traits,capRules,teacherNames,baskets,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
+ return {...base,grade:String(raw.grade??'6').slice(0,12),classCount:count,sourceGrade,sourceClassCount:countSource,sourceClasses,setupCompleted,teacherPriorityOn,traits,capRules,teacherNames,baskets,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
 }
 function loadState(){try{return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY)))}catch(e){return defaultState()}}
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
@@ -371,15 +377,18 @@ function findStudent(id){return state.students.find(s=>s.id===id)}
 function studentTitle(s){return s ? (s.name||'(이름 없음)')+' · '+(s.oldGrade?s.oldGrade+'학년 ':'')+(s.oldClass||'기존 반 미입력')+(s.number?' '+s.number+'번':'') : '알 수 없음'}
 function displayClass(num){return state.grade+'학년 '+num+'반'}
 function duplicateNames(){const m=new Map();state.students.forEach(s=>{const n=s.name.trim();if(n)m.set(n,(m.get(n)||0)+1)});return [...m.entries()].filter(([,count])=>count>1)}
-function showTab(tab){if(tab==='preset'&&!state.teacherPriorityOn){toast('교사 우선 배치를 사용하려면 먼저 ON으로 변경해 주세요.');return}view=tab;document.querySelectorAll('.tab').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.tab===tab)));['roster','preset','rules','results'].forEach(key=>$('view-'+key).classList.toggle('hidden',tab!==key));render()}
+function showTab(tab){if(tab==='preset'&&!state.teacherPriorityOn){toast('교사 우선 배치를 사용하려면 0단계에서 ON으로 바꾸세요.');return}if(tab!=='setup'&&!state.setupCompleted){toast('0단계에서 현재 반별 인원을 입력하고 명단 틀을 만들어 주세요.');return}view=tab;document.querySelectorAll('.tab').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.tab===tab)));['setup','roster','preset','rules','results'].forEach(key=>$('view-'+key).classList.toggle('hidden',tab!==key));render()}
 function render(){
   $('grade').value=state.grade;$('classCount').value=state.classCount;
+  $('sourceGrade').value=state.sourceGrade;$('sourceClassCount').value=state.sourceClassCount;
+  document.querySelectorAll('.tab').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.tab===view)));
   $('teacherPriorityOn').checked=!!state.teacherPriorityOn;
   $('priorityModeHelp').textContent=state.teacherPriorityOn?'ON · 교사가 지정한 학생의 반을 유지하며 나머지 빈자리를 채웁니다.':'OFF · 교사 지정 없이 자동 편성합니다. 기존 우선 배치 정보는 그대로 보관합니다.';
   document.querySelector('[data-tab="preset"]').classList.toggle('priority-tab-off',!state.teacherPriorityOn);
   document.querySelector('[data-tab="preset"]').setAttribute('aria-disabled',String(!state.teacherPriorityOn));
   $('statStudents').textContent=state.students.length+'명';$('statClasses').textContent=state.classCount+'개 반';$('statPairs').textContent=effectivePairs().length+'쌍';$('statDuplicates').textContent=duplicateNames().length+'건';
   $('rosterCount').textContent=state.students.length+'명';$('pairCount').textContent=state.pairs.length+'쌍';
+  if(view==='setup')renderSetup();
   if(view==='roster')renderRoster();if(view==='preset')renderPreset();if(view==='rules'){renderCaps();renderPairs();renderBaskets();}if(view==='results')renderResults();
 }
 function renderRoster(){
