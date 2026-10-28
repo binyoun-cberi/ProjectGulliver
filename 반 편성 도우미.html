@@ -14,6 +14,49 @@
 @media(min-width:841px){.preset-list{position:sticky;top:80px}.preset-people{max-height:480px}.preset-workspace{grid-template-columns:minmax(320px,1fr) minmax(0,2fr)}}
 @media(max-width:540px){.preset-batch{bottom:8px;gap:7px;padding:10px}.preset-batch strong{width:100%}.preset-batch select{flex:1;min-width:100px}.preset-person select{width:82px}.preset-classes{grid-template-columns:1fr}.preset-locked{flex-wrap:wrap}.preset-filters{grid-template-columns:1fr 1fr}}
 
+
+.bulk-spreadsheet-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0;padding:11px;background:#f5faf9;border:1px solid #d3e4db;border-radius:11px}
+.bulk-spreadsheet-tools label{font-size:12px;font-weight:750;white-space:nowrap}
+.bulk-spreadsheet-tools input{max-width:95px;font-size:12px;padding:7px 9px}
+.bulk-spreadsheet-help{font-size:12px!important;line-height:1.6;background:#f7f9fc;padding:8px 10px;border-radius:8px}
+.bulk-sheet th[data-bulk-head]{cursor:pointer;user-select:none}
+.bulk-sheet th[data-bulk-head]:hover{background:#e0efed}
+.bulk-sheet td.bulk-selected{background:#d8ece8!important;box-shadow:inset 0 0 0 1px #71b2a5}
+.bulk-sheet td.bulk-selected input,.bulk-sheet td.bulk-selected textarea{background:transparent}
+.bulk-sheet td.bulk-selected:focus-within{background:#eff8f4!important;box-shadow:inset 0 0 0 2px #297e6e}
+.bulk-sheet th.bulk-head-selected{background:#cde7df!important;color:#126452}
+.bulk-sheet td.bulk-num[data-bulk-row-head]{cursor:pointer;user-select:none}
+.bulk-sheet td.bulk-num[data-bulk-row-head]:hover{background:#dcefea}
+
+
+.priority-mode{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#f8fafb;border:1px solid #dce5ed;border-radius:13px;padding:11px 16px;margin:14px 0}
+.priority-mode strong{font-size:13px}.priority-mode #priorityModeHelp{font-size:12px;color:var(--muted)}
+.priority-switch{display:flex;align-items:center;gap:9px;cursor:pointer}
+.priority-switch input{position:absolute;width:1px;height:1px;opacity:0}
+.switch-track{position:relative;display:inline-block;width:38px;height:22px;border-radius:30px;background:#bcc7d3;transition:background .18s}
+.switch-track:after{position:absolute;content:"";left:3px;top:3px;width:16px;height:16px;background:white;border-radius:50%;transition:transform .18s}
+.priority-switch input:checked+.switch-track{background:#2a8a72}
+.priority-switch input:checked+.switch-track:after{transform:translateX(16px)}
+.priority-switch input:focus-visible+.switch-track{outline:3px solid #468fc5}
+.priority-tab-off{opacity:.58}
+.basket-zone{display:grid;grid-template-columns:minmax(230px,.82fr) minmax(0,2fr);gap:14px;align-items:start;margin:17px 0}
+.basket-source{border:1px solid var(--line);border-radius:13px;background:#f8fafc;padding:13px;position:sticky;top:80px}
+.basket-source .field{font-size:12px}.basket-pool{max-height:370px;overflow:auto;margin-top:8px}
+.basket-pool-item{display:flex;align-items:center;gap:8px;justify-content:space-between;border-bottom:1px solid #e8eff1;padding:8px 3px;cursor:grab}
+.basket-pool-item b{font-size:12px}.basket-pool-item small{font-size:10px;color:var(--muted);display:block}
+.basket-pool-item select{width:112px;padding:6px;font-size:11px}
+.basket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.basket-card{border:1px solid #c9dcd7;background:#fff;border-radius:14px;padding:14px;min-height:156px;transition:border-color .14s,background .14s}
+.basket-card.drag-over{border-color:#25866f;background:#edf8f3;box-shadow:0 0 0 2px #b5dfd0}
+.basket-head{display:flex;align-items:center;gap:7px}.basket-head input{font-weight:800;min-width:0;flex:1;border-color:transparent;background:#f5f8f7}
+.basket-head .btn{font-size:11px}.basket-info{font-size:11px;color:var(--muted);margin:8px 0}
+.basket-chip{display:flex;justify-content:space-between;align-items:center;gap:5px;background:#edf6f2;border-radius:8px;padding:7px 8px;margin:5px 0}
+.basket-chip b{font-size:12px}.basket-chip small{display:block;color:#596b65;font-size:10px}
+.basket-chip button{border:0;background:transparent;color:#8c5757;font-weight:850;cursor:pointer}
+.basket-empty{border:1px dashed #c5d9d1;padding:19px 10px;border-radius:10px;font-size:11px;color:#7a8b83;text-align:center}
+.basket-card .basket-add{width:100%;padding:6px;margin-top:10px;font-size:12px}
+.basket-card.basket-over{border-color:#d9a76b;background:#fff9ec}
+@media(max-width:860px){.basket-zone{grid-template-columns:1fr}.basket-source{position:static}.basket-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}}
 /* Editable spreadsheet-style bulk roster. Data stays as a local draft until applied. */
 .bulk-grid-wrap{max-height:480px;overflow:auto;overscroll-behavior:contain;margin:12px 0}
 .bulk-sheet{border-collapse:separate;border-spacing:0;width:100%;min-width:865px;font-size:12px}
@@ -51,13 +94,21 @@
  <div class="top"><div class="identity"><div class="mark" aria-hidden="true">반</div><div><div class="eyebrow">CLASS PLANNER</div><h1>반편성 도우미</h1><p class="subtitle">학습지표 높은 순으로 지그재그 배정하고 유의 사항별 인원 상한을 적용합니다.</p></div></div><div class="privacy">기기에서만 처리 · 외부 서버로 전송하지 않음</div></div>
  <div class="stats" aria-live="polite"><div class="stat"><small>등록한 학생</small><strong id="statStudents">0명</strong></div><div class="stat"><small>편성할 학급</small><strong id="statClasses">3개 반</strong></div><div class="stat"><small>분리해야 할 관계</small><strong id="statPairs">0쌍</strong></div><div class="stat"><small>중복 이름</small><strong id="statDuplicates">0건</strong></div></div>
  <div class="card setup"><div class="formfields"><label class="field">새 학년 <input id="grade" type="text" value="1" maxlength="12" aria-label="새 학년"></label><label class="field">새 학급 수 <input id="classCount" type="number" min="2" max="12" value="3"></label></div><div class="actions"><button id="demo" class="btn soft">예시 데이터 보기</button><button id="generateQuick" class="btn primary">바로 반 편성하기</button><button id="saveJson" class="btn">설정 백업 (.json)</button><button id="openJson" class="btn">백업 불러오기</button><input type="file" id="jsonFile" accept=".json,application/json" hidden><button id="reset" class="btn danger">모두 지우기</button></div></div>
- <nav class="tabs" aria-label="기능 선택"><button class="tab" data-tab="roster" aria-selected="true">01 학생 명단 · 유의 사항</button><button class="tab" data-tab="preset" aria-selected="false">02 교사 우선 배치</button><button class="tab" data-tab="rules" aria-selected="false">03 편성 조건 · 분리</button><button class="tab" data-tab="results" aria-selected="false">04 완성된 반 · 검토</button></nav>
+ <div class="priority-mode no-print" id="priorityModePanel"><label class="priority-switch"><input id="teacherPriorityOn" type="checkbox" role="switch" aria-label="교사 우선 배치 사용"><span class="switch-track" aria-hidden="true"></span><strong>교사 우선 배치 사용</strong></label><span id="priorityModeHelp">OFF · 반 고정 없이 지그재그 편성합니다. 이전 지정은 보관됩니다.</span></div>
+ <nav class="tabs" aria-label="기능 선택"><button class="tab" data-tab="roster" aria-selected="true">01 학생 명단 · 유의 사항</button><button class="tab" data-tab="preset" aria-selected="false">02 교사 우선 배치 (선택)</button><button class="tab" data-tab="rules" aria-selected="false">03 편성 조건 · 분리</button><button class="tab" data-tab="results" aria-selected="false">04 완성된 반 · 검토</button></nav>
  <section id="view-roster" class="card" aria-label="학생 명단"><div class="section-head"><div><h2>학생 명단 <span id="rosterCount" class="count-pill">0명</span></h2><p>기존 반·번호·이름·성별·학습지표(소수점 둘째 자리)·유의 사항을 입력하세요.</p></div><div class="actions"><input id="searchStudent" aria-label="학생 검색" placeholder="이름 · 기존 반 검색" style="width:160px"><button id="toggleBulk" class="btn">스프레드시트 붙여넣기</button><button id="addStudent" class="btn primary">+ 학생 추가</button></div></div>
  <div id="bulkPanel" class="bulk hidden">
   <div class="bulk-head"><strong>엑셀형 학생 명단 한 번에 입력</strong><button id="closeBulk" class="btn ghost small">닫기</button></div>
   <p>엑셀·스프레드시트의 <b>학년 / 반 / 번호 / 이름 / 성별 / 유의사항</b> 표 전체를 복사한 뒤, 아래 첫 번째 셀에 <b>Ctrl+V</b>로 붙여넣으세요. 학습지표는 필요할 때 마지막 열에 추가하면 됩니다. 표에 있는 제목·반별 남녀 인원 요약·마지막 총원 행은 학생 명단에 포함하지 않습니다.</p>
-  <div class="bulk-toolbar actions no-print"><button id="bulkFocus" class="btn soft">표 첫 칸 선택</button><button id="bulkAddRows" class="btn">+ 10행 추가</button><button id="bulkClearGrid" class="btn danger">입력표 비우기</button><span id="bulkRowCount" class="count-pill">12행</span></div>
-  <div class="table-wrap bulk-grid-wrap"><table id="bulkGridTable" class="bulk-sheet" aria-label="엑셀형 학생 명단 입력표"><thead><tr><th class="bulk-num">행</th><th>학년</th><th>반</th><th>번호</th><th>이름</th><th>성별</th><th>유의 사항 (복수 가능)</th><th>학습지표 (선택)</th><th class="bulk-delete-col"></th></tr></thead><tbody id="bulkGridBody"></tbody></table></div>
+  <div class="bulk-toolbar actions no-print"><button id="bulkFocus" class="btn soft">표 첫 칸 선택</button><button id="bulkAddRows" class="btn">+ 10행 추가</button><button id="bulkAdd50Rows" class="btn">+ 50행 추가</button><button id="bulkClearGrid" class="btn danger">입력표 비우기</button><span id="bulkRowCount" class="count-pill">12행</span></div>
+  <div class="bulk-spreadsheet-tools">
+    <label for="bulkFillGrade">전체 학년</label><input id="bulkFillGrade" type="text" inputmode="numeric" placeholder="예: 5" maxlength="12"><button id="bulkFillGradeAll" class="btn soft">모든 행 학년 채우기</button>
+    <button id="bulkFillDown" class="btn soft">선택 영역 아래로 채우기 (Ctrl+D)</button>
+    <button id="bulkClearSelected" class="btn ghost">선택 셀 비우기</button>
+    <button id="bulkUndo" class="btn ghost">되돌리기 (Ctrl+Z)</button>
+  </div>
+  <p class="bulk-spreadsheet-help"><b>엑셀식 조작:</b> 셀에서 다른 셀까지 마우스로 드래그하거나 Shift+클릭으로 여러 셀 선택, 선택한 열에 값 하나 붙여넣으면 전체 채우기. <b>이름 열</b>의 첫 칸에 엑셀 이름 목록을 그대로 Ctrl+V 하세요. 머리글을 누르면 한 열 전체가 선택됩니다.</p>
+  <div class="table-wrap bulk-grid-wrap"><table id="bulkGridTable" class="bulk-sheet" aria-label="엑셀형 학생 명단 입력표"><thead><tr><th class="bulk-num">행</th><th tabindex="0" role="button" data-bulk-head="0" title="학년 열 전체 선택">학년</th><th tabindex="0" role="button" data-bulk-head="1" title="반 열 전체 선택">반</th><th tabindex="0" role="button" data-bulk-head="2" title="번호 열 전체 선택">번호</th><th tabindex="0" role="button" data-bulk-head="3" title="이름 열 전체 선택">이름</th><th tabindex="0" role="button" data-bulk-head="4" title="성별 열 전체 선택">성별</th><th tabindex="0" role="button" data-bulk-head="5" title="유의 사항 열 전체 선택">유의 사항 (복수 가능)</th><th tabindex="0" role="button" data-bulk-head="6" title="학습지표 열 전체 선택">학습지표 (선택)</th><th class="bulk-delete-col"></th></tr></thead><tbody id="bulkGridBody"></tbody></table></div>
   <div id="bulkPreview" class="helper bulk-preview" aria-live="polite">이름까지 입력한 학생만 명단에 적용됩니다.</div>
   <details id="bulkRawPanel" class="bulk-raw"><summary>텍스트로 한꺼번에 붙여넣기 (표로 변환)</summary><p>엑셀에서 복사한 탭 구분 표, CSV, 마크다운 표도 붙여넣을 수 있습니다. 셀 속 줄바꿈이나 ‘다문화; 한부모’와 같은 복수 유의 사항을 지원합니다.</p><textarea id="bulkText" aria-label="학생 명단 표 텍스트 붙여넣기" placeholder="학년&#9;반&#9;번호&#9;이름&#9;성별&#9;유의사항
 6&#9;1&#9;1&#9;김하늘&#9;여&#9;다문화; 한부모
@@ -68,7 +119,10 @@
  <div class="table-wrap"><table class="student-table"><thead id="rosterHead"></thead><tbody id="rosterBody"></tbody></table></div><div class="helper privacy-note">학습지표는 0.00 이상의 점수를 소수점 둘째 자리까지 입력할 수 있으며, 미입력과 0.00은 구분됩니다. 유의 사항은 여러 개를 선택하거나 새 항목을 추가할 수 있습니다. 「분리조치」를 선택하는 것만으로 두 학생이 자동 분리되지는 않으므로, 반드시 「분리할 학생 지정」에서 실제 분리 관계를 설정해 주세요.</div>
  </section>
  <section id="view-preset" class="card hidden" aria-label="교사가 먼저 배치할 학생"><div class="section-head"><div><h2>교사가 먼저 학생 배치하기 <span id="presetCount" class="count-pill">0명 확정</span></h2><p>담당 교사가 우선 맡기로 한 학생을 원하는 반에 고정하세요. 나머지는 빈 자리를 자동으로 채웁니다.</p></div><div class="actions"><button id="undoPreset" class="btn" disabled>최근 배치 되돌리기</button><button id="clearPresets" class="btn danger">우선 배치 전체 해제</button><button id="fillRemaining" class="btn primary">남은 학생 자동 채우기</button></div></div><div id="presetStatus" class="helper"></div><div class="preset-workspace"><div class="preset-list"><div class="section-head"><h3>학생 찾아 배치하기</h3><span id="presetRemaining" class="count-pill">0명</span></div><input id="presetSearch" class="wide" aria-label="우선 배치 학생 검색" placeholder="이름 · 유의 사항 · 기존 반 검색"><div class="preset-filters"><label>배치 상태<select id="presetFilterStatus"><option value="free">미배치 학생</option><option value="all">모든 학생</option><option value="fixed">배치한 학생</option></select></label><label>기존 반<select id="presetFilterClass"></select></label><label>유의 사항<select id="presetFilterTrait"></select></label><label>정렬<select id="presetSort"><option value="name">이름순</option><option value="score">학습지표 높은순</option><option value="oldClass">기존 반·번호순</option></select></label></div><div class="preset-selection"><label><input type="checkbox" id="presetSelectAll"> 표시된 학생 선택</label><span id="presetVisibleCount" class="muted"></span></div><div id="presetUnassigned" class="preset-people"></div></div><div id="presetClassGrid" class="preset-classes"></div></div><div class="preset-batch"><strong id="presetSelectedCount" aria-live="polite">0명 선택</strong><label for="presetTarget">배치할 반</label><select id="presetTarget"></select><button id="assignSelected" class="btn primary" disabled>선택 학생 배치</button><button id="clearSelection" class="btn">선택 취소</button><button id="fillRemainingBottom" class="btn">남은 학생 자동 채우기</button></div><div id="presetFeedback" class="preset-feedback" role="status" aria-live="polite"></div><div class="helper">학생을 선택한 뒤 반을 누르면 배치할 반이 바뀝니다. 선택 학생을 한 번에 배치하거나, 배치된 학생의 반을 바로 변경할 수 있습니다.<br>우선 배치한 학생은 자동 편성과 다른 편성안에서도 이동하지 않습니다. 학생의 학습지표·성별·유의 사항을 확인하되, 개인을 낙인찍는 용도로 사용하지 마세요. 인원 상한이나 분리 관계에 맞지 않는 지정은 적용되지 않습니다.</div></section>
- <section id="view-rules" class="card hidden" aria-label="반 편성 조건"><div class="section-head"><div><h2>유의 사항별 반당 최대 인원</h2><p>필요한 항목에만 숫자를 입력하세요. 빈칸은 인원 제한이 없다는 뜻입니다.</p></div></div><div id="capRules" class="cap-grid"></div><div class="helper">예: ‘특수 2명’으로 지정하면 어느 반도 해당 유의 사항 학생이 2명을 넘지 않도록 배정합니다. 서로 떨어져야 하는 학생은 아래 분리 관계를 별도로 지정해야 합니다.</div><div class="section-head"><div><h2>같은 반에 배정하지 않을 학생 <span id="pairCount" class="count-pill">0쌍</span></h2><p>서로 다른 반이어야 하는 두 학생을 선택하세요. 자동 편성 때 이 조건을 우선 적용합니다.</p></div></div><div class="constraint-form"><label class="field">학생 A <select id="pairA" class="wide"></select></label><label class="field">학생 B <select id="pairB" class="wide"></select></label><button id="addPair" class="btn primary">분리 관계 추가</button></div><div class="helper">세 명이 각각 서로 다른 반이어야 한다면 A–B, A–C, B–C 세 관계를 모두 추가해야 합니다. 동명이인도 기존 반·번호로 구별합니다.</div><div id="pairList"></div></section>
+ <section id="view-rules" class="card hidden" aria-label="반 편성 조건"><div class="section-head"><div><h2>유의 사항별 반당 최대 인원</h2><p>필요한 항목에만 숫자를 입력하세요. 빈칸은 인원 제한이 없다는 뜻입니다.</p></div></div><div id="capRules" class="cap-grid"></div><div class="helper">예: ‘특수 2명’으로 지정하면 어느 반도 해당 유의 사항 학생이 2명을 넘지 않도록 배정합니다. 서로 떨어져야 하는 학생은 아래 분리 관계를 별도로 지정해야 합니다.</div><div class="section-head"><div><h2>같은 반 금지 바구니 <span id="basketCount" class="count-pill">0개</span></h2><p>같은 바구니에 넣은 학생은 서로 다른 반에 배정됩니다. 바구니는 여러 개 만들 수 있고 다른 바구니끼리는 별도 규칙입니다.</p></div><div class="actions"><button id="addBasket" class="btn primary">+ 바구니 만들기</button></div></div>
+ <div id="basketNotice" class="helper">바구니에 학생을 넣거나 검색 목록에서 학생을 끌어다 놓으세요. 한 바구니의 학생 수는 편성할 반 수를 넘을 수 없습니다.</div>
+ <div class="basket-zone"><div class="basket-source"><label class="field">학생 찾기<input id="basketSearch" type="search" placeholder="이름, 기존 반, 번호 검색"></label><div id="basketPool" class="basket-pool"></div></div><div id="basketGrid" class="basket-grid"></div></div>
+ <div class="section-head"><div><h2>개별 분리 관계 <span id="pairCount" class="count-pill">0쌍</span></h2><p>서로 다른 반이어야 하는 두 학생을 선택하세요. 자동 편성 때 이 조건을 우선 적용합니다.</p></div></div><div class="constraint-form"><label class="field">학생 A <select id="pairA" class="wide"></select></label><label class="field">학생 B <select id="pairB" class="wide"></select></label><button id="addPair" class="btn primary">분리 관계 추가</button></div><div class="helper">세 명이 각각 서로 다른 반이어야 한다면 A–B, A–C, B–C 세 관계를 모두 추가해야 합니다. 동명이인도 기존 반·번호로 구별합니다.</div><div id="pairList"></div></section>
  <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>지그재그 반 편성 결과</h2><p>학습지표 높은 순으로 1반→마지막 반→1반 순서로 지그재그 배정합니다. 유의 사항별 상한, 분리 관계, 반 고정 조건을 우선 지킵니다.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="exportCsv" class="btn" disabled>CSV 내려받기</button><button id="print" class="btn" disabled>결과 인쇄 · PDF</button></div></div>
  <div id="resultMessage" class="helper result-help">먼저 학생 명단을 작성한 다음 자동 편성하기를 눌러 주세요. 결과에서 학생의 반을 직접 바꾸거나 다른 편성안을 선택할 수도 있습니다.</div><div id="alternatives" class="alternatives"></div><div id="validation"></div><div id="report"></div><div id="resultGrid" class="result-grid"></div><div class="helper result-help">자동 편성은 의사결정을 돕는 초안입니다. 최종 배정 전에 학교의 편성 원칙과 학생별 사정을 직접 검토하세요. 결과는 자동으로 이 브라우저에 임시 보관되며, JSON 백업 파일을 별도로 저장할 수 있습니다.</div></section>
  <div class="card"><div class="help-grid"><div><h3>① 명단과 특징 입력</h3><p>학생별 유의 사항을 체크하거나 시트 내용을 붙여넣습니다. 동명이인은 별개 학생으로 관리됩니다.</p></div><div><h3>② 교사 우선 배치</h3><p>담당 교사가 먼저 맡을 학생을 반별로 선택합니다. 분리·유의 사항별 최대 인원은 다음 탭에서 설정합니다.</p></div><div><h3>④ 지그재그 편성 결과 검토</h3><p>교사가 우선 배치한 학생은 그대로 두고 나머지를 학습지표 지그재그 순서로 채운 뒤 상한·분리 조건을 검토합니다.</p></div></div></div>
@@ -85,12 +139,50 @@ let view = 'roster';
 let noteStudentId = null;
 let searchQuery = '';
 let bulkRows=Array.from({length:12},()=>blankBulkRow());
+let bulkSelection={anchor:{r:0,c:0},focus:{r:0,c:0}};
+let bulkDragging=false;
+let bulkDefaultGrade='';
+let bulkUndoStack=[];
+let bulkPendingEdit=null;
 const presetSelected=new Set();
 let presetUndo=null;
 const $ = id => document.getElementById(id);
 const escapeHtml = v => String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 function makeId(){return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,9)}
-function defaultState(){return {version:4,grade:'1',classCount:3,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},students:[],pairs:[],candidates:[],activeCandidate:0}}
+/* SEPARATION_BASKETS_START */
+function normalizeBaskets(value,validIds){
+ if(!Array.isArray(value))return [];
+ const seen=new Set();
+ return value.slice(0,40).filter(x=>x&&typeof x==='object').map((x,index)=>{
+   let id=String(x.id||'basket-'+(index+1)).slice(0,80);
+   if(seen.has(id))id='basket-'+(index+1)+'-'+id;
+   seen.add(id);
+   const members=[...new Set((Array.isArray(x.members)?x.members:[]).map(String).filter(v=>validIds.has(v)))].slice(0,1000);
+   return {id,name:String(x.name||'분리 바구니 '+(index+1)).trim().slice(0,40),members};
+ });
+}
+function buildBasketPairs(pairs,baskets){
+ const unique=new Set(),output=[];
+ function add(a,b){
+   if(!a||!b||a===b)return;
+   const key=a<b?a+'\u001f'+b:b+'\u001f'+a;
+   if(unique.has(key))return;
+   unique.add(key);output.push({a,b});
+ }
+ for(const p of pairs||[])if(p)add(p.a,p.b);
+ for(const basket of baskets||[]){
+   const ids=[...new Set(basket.members||[])];
+   for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++)add(ids[i],ids[j]);
+ }
+ return output;
+}
+/* SEPARATION_BASKETS_END */
+function activeStudents(){return state.teacherPriorityOn?state.students:state.students.map(st=>({...st,fixed:0}))}
+function effectivePairs(){return buildBasketPairs(state.pairs,state.baskets)}
+function basketProblems(baskets=state.baskets,k=state.classCount){
+ return baskets.filter(b=>b.members.length>k).map(b=>'「'+b.name+'」에 '+b.members.length+'명: '+k+'개 반에 나눌 수 없습니다.');
+}
+function defaultState(){return {version:5,grade:'1',classCount:3,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},baskets:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
 function parseStudyScore(v,legacy=false){if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return !Number.isFinite(n)||n<0||n>1e9||(legacy&&n===0)?null:Math.round((n+Number.EPSILON)*100)/100}
 function hasStudyScore(s){return Number.isFinite(s.level)&&s.level>=0}
 function studyText(v){return Number.isFinite(v)?v.toFixed(2):'미입력'}
@@ -100,6 +192,7 @@ function normalize(raw){
  const oldTraits=Array.isArray(raw.traits)?raw.traits:[];
  const traits=[...new Set([...DEFAULT_TRAITS,...oldTraits.filter(x=>typeof x==='string').map(x=>x.trim()).filter(Boolean).map(x=>x.slice(0,20))])].slice(0,64);
  const legacy=Number(raw.version||1)<2;
+ const teacherPriorityOn=typeof raw.teacherPriorityOn==='boolean'?raw.teacherPriorityOn:(Array.isArray(raw.students)&&raw.students.some(st=>Number(st?.fixed)>0));
  const teacherNames=Object.fromEntries(Object.entries(raw.teacherNames&&typeof raw.teacherNames==='object'&&!Array.isArray(raw.teacherNames)?raw.teacherNames:{}).filter(([n])=>/^(?:[1-9]|1[0-2])$/.test(n)&&Number(n)<=count).map(([n,name])=>[n,String(name??'').slice(0,40)]));
  const capRules=Object.fromEntries(Object.entries(raw.capRules&&typeof raw.capRules==='object'&&!Array.isArray(raw.capRules)?raw.capRules:{}).filter(([tag,max])=>traits.includes(tag)&&max!==''&&max!==null&&Number.isInteger(Number(max))&&Number(max)>=0&&Number(max)<=1000).map(([tag,max])=>[tag,Number(max)]));
  const students=(Array.isArray(raw.students)?raw.students:[]).slice(0,1000).filter(x=>x&&typeof x==='object').map(st=>({
@@ -110,10 +203,11 @@ function normalize(raw){
  }));
  const ids=new Set(),uniqueStudents=[];for(const st of students){if(ids.has(st.id))st.id=makeId();ids.add(st.id);uniqueStudents.push(st)}
  const pairs=(Array.isArray(raw.pairs)?raw.pairs:[]).filter(p=>p&&ids.has(p.a)&&ids.has(p.b)&&p.a!==p.b).map(p=>({a:String(p.a),b:String(p.b)}));
- const candidates=(Number(raw.version||1)>=4&&Array.isArray(raw.candidates)?raw.candidates:[]).slice(0,3)
+ const baskets=normalizeBaskets(raw.baskets,ids);
+ const candidates=(Number(raw.version||1)>=5&&Array.isArray(raw.candidates)?raw.candidates:[]).slice(0,3)
   .filter(c=>c&&c.assign&&typeof c.assign==='object'&&uniqueStudents.every(st=>Number.isInteger(Number(c.assign[st.id]))&&Number(c.assign[st.id])>=1&&Number(c.assign[st.id])<=count))
   .map(c=>({assign:Object.fromEntries(uniqueStudents.map(st=>[st.id,Number(c.assign[st.id])])),target:Array.from({length:count},(_,i)=>Number(c.target?.[i])||Math.floor(uniqueStudents.length/count)),score:Number(c.score)||0}));
- return {...base,grade:String(raw.grade??'1').slice(0,12),classCount:count,traits,capRules,teacherNames,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
+ return {...base,grade:String(raw.grade??'1').slice(0,12),classCount:count,teacherPriorityOn,traits,capRules,teacherNames,baskets,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
 }
 function loadState(){try{return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY)))}catch(e){return defaultState()}}
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
@@ -125,12 +219,16 @@ function findStudent(id){return state.students.find(s=>s.id===id)}
 function studentTitle(s){return s ? (s.name||'(이름 없음)')+' · '+(s.oldGrade?s.oldGrade+'학년 ':'')+(s.oldClass||'기존 반 미입력')+(s.number?' '+s.number+'번':'') : '알 수 없음'}
 function displayClass(num){return state.grade+'학년 '+num+'반'}
 function duplicateNames(){const m=new Map();state.students.forEach(s=>{const n=s.name.trim();if(n)m.set(n,(m.get(n)||0)+1)});return [...m.entries()].filter(([,count])=>count>1)}
-function showTab(tab){view=tab;document.querySelectorAll('.tab').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.tab===tab)));['roster','preset','rules','results'].forEach(key=>$('view-'+key).classList.toggle('hidden',tab!==key));render()}
+function showTab(tab){if(tab==='preset'&&!state.teacherPriorityOn){toast('교사 우선 배치를 사용하려면 먼저 ON으로 변경해 주세요.');return}view=tab;document.querySelectorAll('.tab').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.tab===tab)));['roster','preset','rules','results'].forEach(key=>$('view-'+key).classList.toggle('hidden',tab!==key));render()}
 function render(){
   $('grade').value=state.grade;$('classCount').value=state.classCount;
-  $('statStudents').textContent=state.students.length+'명';$('statClasses').textContent=state.classCount+'개 반';$('statPairs').textContent=state.pairs.length+'쌍';$('statDuplicates').textContent=duplicateNames().length+'건';
+  $('teacherPriorityOn').checked=!!state.teacherPriorityOn;
+  $('priorityModeHelp').textContent=state.teacherPriorityOn?'ON · 교사가 지정한 학생의 반을 유지하며 나머지 빈자리를 채웁니다.':'OFF · 교사 지정 없이 자동 편성합니다. 기존 우선 배치 정보는 그대로 보관합니다.';
+  document.querySelector('[data-tab="preset"]').classList.toggle('priority-tab-off',!state.teacherPriorityOn);
+  document.querySelector('[data-tab="preset"]').setAttribute('aria-disabled',String(!state.teacherPriorityOn));
+  $('statStudents').textContent=state.students.length+'명';$('statClasses').textContent=state.classCount+'개 반';$('statPairs').textContent=effectivePairs().length+'쌍';$('statDuplicates').textContent=duplicateNames().length+'건';
   $('rosterCount').textContent=state.students.length+'명';$('pairCount').textContent=state.pairs.length+'쌍';
-  if(view==='roster')renderRoster();if(view==='preset')renderPreset();if(view==='rules'){renderCaps();renderPairs();}if(view==='results')renderResults();
+  if(view==='roster')renderRoster();if(view==='preset')renderPreset();if(view==='rules'){renderCaps();renderPairs();renderBaskets();}if(view==='results')renderResults();
 }
 function renderRoster(){
   $('traitChips').innerHTML=state.traits.map(t=>`<span class="chip">${escapeHtml(t)} <button type="button" data-delete-trait="${escapeHtml(t)}" aria-label="${escapeHtml(t)} 유의 사항 항목 삭제" title="항목 삭제">×</button></span>`).join('');
@@ -144,8 +242,8 @@ function renderRoster(){
     <td><input class="score-input" data-key="level" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${hasStudyScore(st)?studyText(st.level):''}" aria-label="${escapeHtml(st.name)} 학습지표, 소수점 둘째 자리"></td>
     <td class="notice-cell"><details class="notice-picker"><summary><span data-notice-summary>${escapeHtml(st.traits.length?st.traits.join(', '):'유의 사항 선택')}</span><span class="count-pill">${st.traits.length}개</span></summary>
       <div class="notice-options">${state.traits.map(t=>`<label><input type="checkbox" data-trait="${escapeHtml(t)}" aria-label="${escapeHtml(st.name)} ${escapeHtml(t)}" ${st.traits.includes(t)?'checked':''}><span>${escapeHtml(t)}</span></label>`).join('')}</div>
-      <div class="notice-extra"><label class="field">새 반 고정 (선택)<select data-key="fixed" aria-label="${escapeHtml(st.name)} 배정 반 고정"><option value="0">미고정</option>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${st.fixed===i+1?'selected':''}>${i+1}반 고정</option>`).join('')}</select></label><button class="btn small" data-note="${escapeHtml(st.id)}">${st.note?'참고 메모 수정':'참고 메모 작성'}</button></div></details>
-      ${st.fixed?'<span class="note-inline">◆ '+st.fixed+'반 고정</span>':''}${st.note?'<span class="note-inline">메모 있음</span>':''}
+      <div class="notice-extra"><label class="field">교사 우선 배치 반 (ON 시 적용)<select data-key="fixed" aria-label="${escapeHtml(st.name)} 배정 반 고정" ${!state.teacherPriorityOn?'disabled title="교사 우선 배치를 ON으로 전환해야 합니다"':''}><option value="0">미고정</option>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${st.fixed===i+1?'selected':''}>${i+1}반 고정</option>`).join('')}</select></label><button class="btn small" data-note="${escapeHtml(st.id)}">${st.note?'참고 메모 수정':'참고 메모 작성'}</button></div></details>
+      ${st.fixed?'<span class="note-inline">◆ '+st.fixed+'반 '+(state.teacherPriorityOn?'고정':'지정 보관 (OFF)')+'</span>':''}${st.note?'<span class="note-inline">메모 있음</span>':''}
     </td></tr>`).join(''):`<tr><td colspan="6" class="empty"><b>${state.students.length?'검색 결과가 없습니다.':'등록된 학생이 없습니다.'}</b>${state.students.length?'검색어를 바꿔 주세요.':'「+ 학생 추가」 또는 「스프레드시트 붙여넣기」로 시작하세요.'}</td></tr>`;
 }
 function presetPersonInfo(st){
@@ -166,7 +264,7 @@ function applyPresets(ids,to){
   if(!pupils.length||pupils.some(st=>!st)||!Number.isInteger(to)||to<0||to>state.classCount)return false;
   const before=Object.fromEntries(state.students.map(st=>[st.id,st.fixed]));
   pupils.forEach(st=>st.fixed=to);
-  const errors=to?presetIssues(state.students,state.pairs,state.classCount,state.capRules):[];
+  const errors=to?presetIssues(state.students,effectivePairs(),state.classCount,state.capRules):[];
   if(errors.length){state.students.forEach(st=>st.fixed=before[st.id]);presetFeedback('배치할 수 없습니다. '+errors[0]+' 선택한 학생은 그대로 유지됩니다.',true);return false}
   presetUndo={before,after:Object.fromEntries(state.students.map(st=>[st.id,st.fixed]))};
   pupils.forEach(st=>presetSelected.delete(st.id));invalidate();changeState();
@@ -178,7 +276,7 @@ function undoPresets(){
   const {before,after}=presetUndo;
   if(state.students.length!==Object.keys(after).length||state.students.some(st=>!(st.id in after)||st.fixed!==after[st.id])){presetUndo=null;renderPreset();presetFeedback('학생 명단이나 배치가 변경되어 되돌릴 수 없습니다.',true);return}
   const restored=state.students.map(st=>({...st,fixed:before[st.id]}));
-  if(restored.some(st=>st.fixed>state.classCount)||presetIssues(restored,state.pairs,state.classCount,state.capRules).length){presetFeedback('현재 편성 조건과 충돌하여 되돌릴 수 없습니다.',true);return}
+  if(restored.some(st=>st.fixed>state.classCount)||presetIssues(restored,effectivePairs(),state.classCount,state.capRules).length){presetFeedback('현재 편성 조건과 충돌하여 되돌릴 수 없습니다.',true);return}
   state.students.forEach(st=>st.fixed=before[st.id]);presetUndo=null;presetSelected.clear();invalidate();changeState();presetFeedback('최근 배치를 되돌렸습니다.');
 }
 function presetVisibleStudents(){
@@ -194,7 +292,7 @@ function renderPreset(){
   const fixed=state.students.filter(st=>st.fixed),free=state.students.filter(st=>!st.fixed);
   $('presetCount').textContent=fixed.length+'명 확정';$('presetRemaining').textContent=free.length+'명';
   const capacity=Math.ceil(state.students.length/state.classCount);
-  const errors=presetIssues(state.students,state.pairs,state.classCount,state.capRules);
+  const errors=presetIssues(state.students,effectivePairs(),state.classCount,state.capRules);
   $('presetStatus').className=errors.length?'alert':'helper';
   $('presetStatus').textContent=errors.length?errors.join(' / '):'우선 배치 '+fixed.length+'명 · 남은 학생 '+free.length+'명 · 학급당 '+Math.floor(state.students.length/state.classCount)+'~'+capacity+'명 기준 · 우선 배치는 자동 편성에서 유지됩니다.';
   const setOptions=(id,values,label)=>{const el=$(id),value=el.value;el.innerHTML='<option value="">'+label+'</option>'+values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');if(values.includes(value))el.value=value};
@@ -228,6 +326,35 @@ function renderPreset(){
 }
 function renderCaps(){
   $('capRules').innerHTML=state.traits.map(tag=>`<div class="cap-item"><label for="cap-${escapeHtml(tag)}">${escapeHtml(tag)}</label><input type="number" min="0" max="1000" step="1" inputmode="numeric" data-cap="${escapeHtml(tag)}" aria-label="${escapeHtml(tag)} 반당 최대 인원" placeholder="제한 없음" value="${state.capRules[tag]??''}"></div>`).join('');
+}
+function addBasketMember(basketId,studentId){
+  const basket=state.baskets.find(b=>b.id===basketId),student=findStudent(studentId);
+  if(!basket||!student)return false;
+  if(basket.members.includes(studentId)){toast('이미 이 바구니에 들어 있는 학생입니다.');return false}
+  if(basket.members.length>=state.classCount){toast('한 바구니에 '+state.classCount+'명까지 넣을 수 있습니다. 서로 다른 반에 배정해야 하기 때문입니다.');return false}
+  basket.members.push(studentId);invalidate();changeState();
+  toast('「'+basket.name+'」에 '+student.name+' 학생을 추가했습니다.');return true;
+}
+function renderBaskets(){
+  $('basketCount').textContent=state.baskets.length+'개';
+  const errors=basketProblems();
+  $('basketNotice').className=errors.length?'alert':'helper';
+  $('basketNotice').textContent=errors.length?errors.join(' / '):
+    state.baskets.length+'개 바구니 · '+'같은 바구니의 학생은 반드시 서로 다른 반으로 편성됩니다. 여러 바구니에 같은 학생을 넣을 수도 있습니다.';
+  const q=($('basketSearch').value||'').trim().toLowerCase();
+  const pupils=state.students.filter(st=>[st.name,st.oldGrade,st.oldClass,st.number].join(' ').toLowerCase().includes(q));
+  const shown=pupils.slice(0,100);
+  $('basketPool').innerHTML=shown.map(st=>`<div class="basket-pool-item" draggable="true" data-drag-student="${escapeHtml(st.id)}"><div><b>${escapeHtml(st.name||'(이름 미입력)')}</b><small>${escapeHtml(st.oldClass||'반 미입력')}${st.number?' · '+escapeHtml(st.number)+'번':''}</small></div><select data-basket-assign="${escapeHtml(st.id)}" aria-label="${escapeHtml(st.name)} 분리 바구니 선택"><option value="">바구니에 넣기…</option>${state.baskets.map(b=>`<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)}</option>`).join('')}</select></div>`).join('')||'<div class="empty">표시할 학생이 없습니다.</div>';
+  if(pupils.length>shown.length)$('basketPool').insertAdjacentHTML('beforeend','<div class="helper">100명만 표시했습니다. 검색하여 학생을 찾으세요.</div>');
+  $('basketGrid').innerHTML=state.baskets.map((b,i)=>{
+    const opts=state.students.filter(st=>!b.members.includes(st.id));
+    return `<div class="basket-card ${b.members.length>state.classCount?'basket-over':''}" data-basket-drop="${escapeHtml(b.id)}" aria-label="${escapeHtml(b.name)}">
+      <div class="basket-head"><input data-basket-name="${escapeHtml(b.id)}" aria-label="${i+1}번 바구니 이름" maxlength="40" value="${escapeHtml(b.name)}"><button type="button" class="btn ghost danger small" data-basket-remove="${escapeHtml(b.id)}" title="바구니 삭제">삭제</button></div>
+      <div class="basket-info">${b.members.length}명 · ${state.classCount}개 반에 모두 분리 ${b.members.length>state.classCount?'· 인원 초과':''}</div>
+      <div class="basket-members">${b.members.map(id=>{const st=findStudent(id);if(!st)return '';return `<div class="basket-chip" draggable="true" data-drag-student="${escapeHtml(st.id)}"><div><b>${escapeHtml(st.name)}</b><small>${escapeHtml(st.oldClass||'기존 반 미입력')}${st.number?' · '+escapeHtml(st.number)+'번':''}</small></div><button type="button" data-basket-unpin="${escapeHtml(b.id)}" data-student-id="${escapeHtml(st.id)}" aria-label="${escapeHtml(st.name)} 바구니에서 빼기">×</button></div>`}).join('')||'<div class="basket-empty">여기로 학생을 드래그하거나 아래에서 선택하세요</div>'}</div>
+      <select class="basket-add" data-basket-add="${escapeHtml(b.id)}" aria-label="${escapeHtml(b.name)} 학생 추가"><option value="">+ 학생 선택하여 넣기</option>${opts.map(st=>`<option value="${escapeHtml(st.id)}">${escapeHtml(studentTitle(st))}</option>`).join('')}</select>
+    </div>`;
+  }).join('')||'<div class="basket-empty">아직 바구니가 없습니다. 「+ 바구니 만들기」를 누르세요.</div>';
 }
 function renderPairs(){
   const opts='<option value="">학생 선택</option>'+state.students.map(s=>`<option value="${escapeHtml(s.id)}">${escapeHtml(studentTitle(s))}</option>`).join('');
@@ -505,16 +632,16 @@ function renderResults(){
   $('exportCsv').disabled=!has;$('print').disabled=!has;
   if(!has){$('resultMessage').classList.remove('hidden');$('alternatives').innerHTML='';$('validation').innerHTML='';$('report').innerHTML='';$('resultGrid').innerHTML='';return}
   $('resultMessage').classList.add('hidden');
-  $('alternatives').innerHTML=state.candidates.map((c,i)=>`<button class="alt ${state.activeCandidate===i?'active':''}" data-candidate="${i}"><strong>편성안 ${String.fromCharCode(65+i)}</strong><small>${i===0?'추천안 · ':''}조건 위반 ${validateAssignment(state.students,state.pairs,c.assign,state.capRules).length}건</small></button>`).join('');
+  $('alternatives').innerHTML=state.candidates.map((c,i)=>`<button class="alt ${state.activeCandidate===i?'active':''}" data-candidate="${i}"><strong>편성안 ${String.fromCharCode(65+i)}</strong><small>${i===0?'추천안 · ':''}조건 위반 ${validateAssignment(activeStudents(),effectivePairs(),c.assign,state.capRules).length}건</small></button>`).join('');
   const selected=state.candidates[state.activeCandidate];if(!selected)return;
-  const violations=validateAssignment(state.students,state.pairs,selected.assign,state.capRules);
+  const violations=validateAssignment(activeStudents(),effectivePairs(),selected.assign,state.capRules);
   const counts=reportData(selected);const totals=counts.map(d=>d.total);const diff=Math.max(...totals)-Math.min(...totals);
   const over=diff>1?`반별 인원 차이가 ${diff}명입니다. 편성 결과를 직접 검토하세요.`: `반별 인원 차이 ${diff}명 · 분리·고정·인원 상한 조건 위반 없음`;
   $('validation').innerHTML=violations.length?`<div class="alert"><b>분리 조건 위반 ${violations.length}건</b><div>${violations.map(escapeHtml).join('<br>')}</div></div>`:`<div class="success">${escapeHtml(over)}${duplicateNames().length?' · 동명이인이 있어 기존 반과 번호를 함께 확인하세요.':''}</div>`;
   $('report').innerHTML=`<div class="report"><table><thead><tr><th>반</th><th>전체</th><th>남</th><th>여</th><th>성별 미입력</th><th>학습지표 평균</th></tr></thead><tbody>${counts.map((d,i)=>`<tr><td>${escapeHtml(displayClass(i+1))}</td><td>${d.total}명</td><td>${d.boys}명</td><td>${d.girls}명</td><td>${d.total-d.boys-d.girls}명</td><td>${d.levelN?(d.levelSum/d.levelN).toFixed(2):'—'}</td></tr>`).join('')}</tbody></table></div><div class="legend">${state.traits.filter(t=>counts.some(d=>d.traitCounts[t]>0)||Number.isInteger(state.capRules[t])).map(t=>`<span>${escapeHtml(t)}${Number.isInteger(state.capRules[t])?' (반당 최대 '+state.capRules[t]+'명)':''}: ${counts.map((d,i)=>`${i+1}반 ${d.traitCounts[t]}`).join(' / ')}</span>`).join('')}</div>`;
   $('resultGrid').innerHTML=counts.map((d,index)=>{
     const c=index+1;const pupils=state.students.filter(s=>selected.assign[s.id]===c).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-    return `<div class="class-card"><div class="class-top"><h3>${escapeHtml(displayClass(c))}<small>${d.total}명</small></h3><div class="class-metrics">${state.teacherNames[c]?'담당 '+escapeHtml(state.teacherNames[c])+' · ':''}교사 우선 배치 ${pupils.filter(st=>st.fixed).length}명 · 남 ${d.boys} · 여 ${d.girls} · 학습지표 ${d.levelN?(d.levelSum/d.levelN).toFixed(2):'미입력'}</div></div><div class="class-body">${pupils.map(s=>`<div class="assigned"><div class="person"><b>${escapeHtml(s.name)}${s.fixed?' <span class="warning-dot" title="교사가 우선 배치한 학생 · 자동 편성에서 유지">◆</span>':''}</b><small>${escapeHtml(s.oldClass||'기존 반 미입력')}${s.number?' · '+escapeHtml(s.number)+'번':''} · ${escapeHtml(s.gender||'성별 미입력')} · 학습 ${escapeHtml(studyText(s.level))}${s.traits.length?' · '+escapeHtml(s.traits.join(', ')):''}</small></div><select data-move="${escapeHtml(s.id)}" aria-label="${escapeHtml(s.name)} 반 변경" ${s.fixed?'disabled title="고정된 학생"':''}>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${i+1===c?'selected':''}>${i+1}반</option>`).join('')}</select></div>`).join('')||'<div class="empty">학생 없음</div>'}</div></div>`;
+    return `<div class="class-card"><div class="class-top"><h3>${escapeHtml(displayClass(c))}<small>${d.total}명</small></h3><div class="class-metrics">${state.teacherNames[c]?'담당 '+escapeHtml(state.teacherNames[c])+' · ':''}교사 우선 배치 ${state.teacherPriorityOn?pupils.filter(st=>st.fixed).length:0}명 · 남 ${d.boys} · 여 ${d.girls} · 학습지표 ${d.levelN?(d.levelSum/d.levelN).toFixed(2):'미입력'}</div></div><div class="class-body">${pupils.map(s=>`<div class="assigned"><div class="person"><b>${escapeHtml(s.name)}${state.teacherPriorityOn&&s.fixed?' <span class="warning-dot" title="교사가 우선 배치한 학생 · 자동 편성에서 유지">◆</span>':''}</b><small>${escapeHtml(s.oldClass||'기존 반 미입력')}${s.number?' · '+escapeHtml(s.number)+'번':''} · ${escapeHtml(s.gender||'성별 미입력')} · 학습 ${escapeHtml(studyText(s.level))}${s.traits.length?' · '+escapeHtml(s.traits.join(', ')):''}</small></div><select data-move="${escapeHtml(s.id)}" aria-label="${escapeHtml(s.name)} 반 변경" ${state.teacherPriorityOn&&s.fixed?'disabled title="고정된 학생"':''}>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${i+1===c?'selected':''}>${i+1}반</option>`).join('')}</select></div>`).join('')||'<div class="empty">학생 없음</div>'}</div></div>`;
   }).join('');
 }
 /* BULK_TABLE_START: pure input helpers shared by the grid and paste fallback */
@@ -532,7 +659,7 @@ function parseSheetText(text){
     }).filter(row=>!row.every(v=>/^:?-{2,}:?$/.test(v)||!v));
   }
   const separator=raw.includes('\t')?'\t':lines[0].split(',').length>=4?',':null;
-  if(!separator)return lines.map(line=>[bulkClean(line)]).filter(row=>row.some(Boolean));
+  if(!separator){const rows=lines.map(line=>[bulkClean(line)]);while(rows.length&&rows[rows.length-1].every(v=>!v))rows.pop();return rows}
   const rows=[];let row=[],cell='',quoted=false;
   for(let i=0;i<raw.length;i++){
     const ch=raw[i];
@@ -605,19 +732,172 @@ function bulkAttention(value){
   }
   return out;
 }
+/* PASTE_RANGE_START: Excel-compatible column and range interpretation. */
+function bulkPastePlan(text,startColumn=0){
+ const source=parseSheetText(text);
+ if(!source.length)return {rows:[],full:false,column:startColumn,header:false};
+ const first=source.find(row=>row.some(v=>bulkClean(v)))||[];
+ const keys=first.map(bulkHeaderColumn);
+ const header=keys.filter(x=>x>=0).length>=3&&keys.includes(3);
+ const full=header||(startColumn===0&&first.length>=5);
+ if(full){
+   const formatted=bulkFormatRows(source,startColumn);
+   return {rows:formatted.rows,full:true,column:0,header:formatted.header};
+ }
+ const oneColumn=source.every(row=>row.length<=1);
+ const nameHeader=oneColumn&&bulkHeaderColumn(source[0]?.[0])===3;
+ const maybeNames=startColumn===0&&oneColumn&&!nameHeader&&source.filter(row=>bulkClean(row[0])).length>0&&
+   source.filter(row=>bulkClean(row[0])).every(row=>/^[가-힣]{2,7}$|^[A-Za-z][A-Za-z .'-]{1,70}$/.test(bulkClean(row[0]))) &&
+   !/^(학년|이름|학생명)$/.test(bulkClean(first[0]));
+ const column=maybeNames||startColumn===0&&nameHeader?3:startColumn;
+ const rows=source.map(row=>row.map(bulkClean));
+ // A copied name column may include its own header; don't register it as a pupil.
+ if(rows.length>1&&rows[0].length===1&&bulkHeaderColumn(rows[0][0])===column)rows.shift();
+ return {rows,full:false,column,header:false};
+}
+function bulkRange(selection){
+ const a=selection.anchor,b=selection.focus;
+ return {r1:Math.min(a.r,b.r),r2:Math.max(a.r,b.r),c1:Math.min(a.c,b.c),c2:Math.max(a.c,b.c)};
+}
+function bulkPasteIntoRows(existing,plan,selection,defaultGrade=''){
+ const rows=existing.map(row=>row.slice()),range=bulkRange(selection);
+ const source=plan.rows||[];
+ if(!source.length)return {rows,count:0,range};
+ const single=source.length===1&&source[0].length===1;
+ const fill=single&&(range.r2>range.r1||range.c2>range.c1);
+ const r1=range.r1,c1=plan.full?0:plan.column;
+ const height=fill?range.r2-range.r1+1:source.length;
+ const width=fill?range.c2-range.c1+1:Math.max(...source.map(row=>row.length));
+ const writing=height>0&&width>0;
+ if(!writing)return {rows,count:0,range};
+ let written=0;
+ const end=Math.min(1000,r1+height);
+ while(rows.length<end)rows.push(blankBulkRow());
+ for(let i=r1;i<end;i++){
+   if(!rows[i])rows[i]=blankBulkRow();
+   if(defaultGrade&&!bulkClean(rows[i][0]))rows[i][0]=defaultGrade;
+   for(let j=c1;j<Math.min(7,c1+width);j++){
+     const x=fill?0:i-r1,y=fill?0:j-c1;
+     const value=source[x]?.[y];
+     if(value===undefined)continue;
+     rows[i][j]=String(value);
+     written++;
+   }
+ }
+ return {rows,count:written,range:{r1,c1,r2:end-1,c2:Math.min(6,c1+width-1)}};
+}
+function bulkFillDownRows(existing,selection){
+ const rows=existing.map(row=>row.slice()),range=bulkRange(selection);
+ if(range.r2<=range.r1)return {rows,count:0};
+ let count=0;
+ for(let r=range.r1+1;r<=range.r2;r++)for(let c=range.c1;c<=range.c2;c++){rows[r][c]=rows[range.r1][c];count++}
+ return {rows,count};
+}
+function bulkSelectedTSV(rows,selection){
+ const {r1,r2,c1,c2}=bulkRange(selection);
+ const esc=value=>{
+   const text=String(value??'');
+   return /[\t\n\r"]/.test(text)?'"'+text.replaceAll('"','""')+'"':text;
+ };
+ return rows.slice(r1,r2+1).map(row=>row.slice(c1,c2+1).map(esc).join('\t')).join('\r\n');
+}
+function bulkNormalizedGrade(value){
+ const grade=bulkClean(value);
+ return /^(?:[1-9]|1[0-2])\s*학년$/.test(grade)?grade.replace(/\s*학년$/,''):grade;
+}
+/* PASTE_RANGE_END */
 /* BULK_TABLE_END */
 function bulkStudentFromGrid(row){
   const values=row.map(bulkClean);
   return {
-    id:makeId(),oldGrade:values[0].slice(0,12),
+    id:makeId(),oldGrade:bulkNormalizedGrade(values[0]).slice(0,12),
     oldClass:(/^\d+$/.test(values[1])?values[1]+'반':values[1]).slice(0,50),
     number:values[2].slice(0,25),name:values[3].slice(0,80),
     gender:/^(남|남자|남학생)$/.test(values[4])?'남':/^(여|여자|여학생)$/.test(values[4])?'여':'',
     level:parseStudyScore(values[6]),traits:bulkAttention(values[5]),fixed:0,note:''
   };
 }
+function bulkSaveUndo(snapshot){
+ const old=snapshot||{rows:bulkRows.map(row=>row.slice()),grade:bulkDefaultGrade};
+ bulkUndoStack.push(old);
+ if(bulkUndoStack.length>25)bulkUndoStack.shift();
+}
+function bulkUndo(){
+ const snapshot=bulkUndoStack.pop();
+ if(!snapshot){toast('되돌릴 입력 내역이 없습니다.');return}
+ bulkRows=snapshot.rows.map(row=>row.slice());
+ bulkDefaultGrade=snapshot.grade||'';
+ $('bulkFillGrade').value=bulkDefaultGrade;
+ bulkPendingEdit=null;
+ renderBulkGrid();
+ toast('직전 입력을 되돌렸습니다.');
+}
+function bulkSelectionBounds(){
+ const range=bulkRange(bulkSelection);
+ return {...range,r1:Math.max(0,Math.min(range.r1,bulkRows.length-1)),r2:Math.max(0,Math.min(range.r2,bulkRows.length-1))};
+}
+function bulkPaintSelection(){
+ const {r1,r2,c1,c2}=bulkSelectionBounds();
+ $('bulkGridBody').querySelectorAll('td.bulk-selected').forEach(td=>td.classList.remove('bulk-selected'));
+ $('bulkGridTable').querySelectorAll('th.bulk-head-selected').forEach(th=>th.classList.remove('bulk-head-selected'));
+ for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++){
+   $('bulkGridBody').querySelector('[data-bulk-r="'+r+'"][data-bulk-c="'+c+'"]')?.closest('td')?.classList.add('bulk-selected');
+ }
+ if(r1===0&&r2===bulkRows.length-1)for(let c=c1;c<=c2;c++)$('bulkGridTable').querySelector('th[data-bulk-head="'+c+'"]')?.classList.add('bulk-head-selected');
+}
+function bulkSelect(r,c,extend=false){
+ if(r<0||r>=bulkRows.length||c<0||c>6)return;
+ if(!extend)bulkSelection.anchor={r,c};
+ bulkSelection.focus={r,c};
+ bulkPaintSelection();
+}
+function bulkFocusCell(r,c,extend=false){
+ if(r<0||r>=1000||c<0||c>6)return;
+ if(r>=bulkRows.length){
+   while(bulkRows.length<=r)bulkRows.push([bulkDefaultGrade,'','','','','','']);
+   renderBulkGrid();
+ }
+ bulkSelect(r,c,extend);
+ $('bulkGridBody').querySelector('[data-bulk-r="'+r+'"][data-bulk-c="'+c+'"]')?.focus();
+}
+function bulkApplyPaste(text){
+ const range=bulkSelectionBounds(),plan=bulkPastePlan(text,range.c1);
+ if(!plan.rows.length){toast('붙여넣을 내용을 찾지 못했습니다.');return}
+ const result=bulkPasteIntoRows(bulkRows,plan,bulkSelection,bulkDefaultGrade);
+ if(!result.count){toast('이 위치에 붙여넣을 수 없습니다.');return}
+ bulkSaveUndo();bulkPendingEdit=null;bulkRows=result.rows;
+ bulkSelection={anchor:{r:result.range.r1,c:result.range.c1},focus:{r:result.range.r2,c:result.range.c2}};
+ renderBulkGrid();
+ const firstRow=bulkRows[result.range.r1];
+ if(firstRow)$('bulkGridBody').querySelector('[data-bulk-r="'+result.range.r1+'"][data-bulk-c="'+result.range.c1+'"]')?.focus();
+ // Restore the highlighted pasted range even when focusing the top-left cell.
+ bulkSelection={anchor:{r:result.range.r1,c:result.range.c1},focus:{r:result.range.r2,c:result.range.c2}};
+ bulkPaintSelection();
+ toast(Math.min(1000,result.range.r2-result.range.r1+1)+'개 행에 붙여넣었습니다.');
+}
+function bulkFillDown(){
+ const range=bulkSelectionBounds();
+ if(range.r1===range.r2){toast('먼저 시작 셀에서 아래쪽 마지막 셀까지 선택하거나 열 제목을 클릭하세요.');return}
+ const result=bulkFillDownRows(bulkRows,bulkSelection);
+ if(!result.count)return;
+ bulkSaveUndo();bulkRows=result.rows;bulkPendingEdit=null;renderBulkGrid();toast('선택한 '+(range.r2-range.r1+1)+'개 행을 첫 줄 값으로 채웠습니다.');
+}
+function bulkFillAllGrade(){
+ const grade=bulkNormalizedGrade($('bulkFillGrade').value);
+ if(!grade||grade.length>12){toast('전체 학년을 입력해 주세요. 예: 5');return}
+ bulkSaveUndo();bulkDefaultGrade=grade;
+ for(const row of bulkRows)row[0]=grade;
+ bulkSelection={anchor:{r:0,c:0},focus:{r:bulkRows.length-1,c:0}};
+ bulkPendingEdit=null;renderBulkGrid();
+ toast('현재 '+bulkRows.length+'개 행과 앞으로 추가할 행의 학년을 '+grade+'로 설정했습니다.');
+}
+function bulkClearSelected(){
+ const {r1,r2,c1,c2}=bulkSelectionBounds();bulkSaveUndo();
+ for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)bulkRows[r][c]='';
+ bulkPendingEdit=null;renderBulkGrid();toast('선택한 셀의 값을 비웠습니다.');
+}
 function renderBulkGrid(){
-  $('bulkGridBody').innerHTML=bulkRows.map((row,r)=>'<tr><td class="bulk-num">'+(r+1)+'</td>'+
+  $('bulkGridBody').innerHTML=bulkRows.map((row,r)=>'<tr><td class="bulk-num" data-bulk-row-head="'+r+'" title="이 행 선택" tabindex="0">'+(r+1)+'</td>'+
     row.map((value,c)=>{
       const title=['학년','반','번호','이름','성별','유의 사항','학습지표'][c];
       const cls=['bulk-grade','bulk-class','bulk-number','bulk-name','bulk-gender','bulk-note','bulk-score'][c];
@@ -628,6 +908,7 @@ function renderBulkGrid(){
     }).join('')+'<td class="bulk-delete-cell"><button type="button" data-bulk-delete="'+r+'" aria-label="'+(r+1)+'행 삭제">×</button></td></tr>').join('');
   $('bulkRowCount').textContent=bulkRows.length+'행';
   renderBulkPreview();
+  bulkPaintSelection();
 }
 function renderBulkPreview(){
   const entered=bulkRows.filter(row=>bulkRowIsStudent(row)||bulkClean(row[6]));
@@ -637,7 +918,7 @@ function renderBulkPreview(){
   const rooms=new Map();
   for(const row of entered){
     const grade=bulkClean(row[0]),room=bulkClean(row[1]);
-    const className=(grade?grade+'학년 ':'')+(room?(/^d+$/.test(room)?room+'반':room):'반 미입력');
+    const className=(grade?grade+'학년 ':'')+(room?(/^\d+$/.test(room)?room+'반':room):'반 미입력');
     rooms.set(className,(rooms.get(className)||0)+1);
   }
   const label=[...rooms.entries()].slice(0,8).map(([name,count])=>escapeHtml(name)+' : '+count+'행').join(' · ');
@@ -657,7 +938,7 @@ function putBulkRows(rows,start=0){
   renderBulkGrid();return imported;
 }
 function bulkClearDraft(){
-  bulkRows=Array.from({length:12},blankBulkRow);renderBulkGrid();
+  bulkRows=Array.from({length:12},blankBulkRow);bulkDefaultGrade='';bulkSelection={anchor:{r:0,c:0},focus:{r:0,c:0}};bulkUndoStack=[];bulkPendingEdit=null;$('bulkFillGrade').value='';renderBulkGrid();
 }
 function parseBulk(text){return bulkFormatRows(parseSheetText(text)).rows.filter(row=>row[3].trim()).map(bulkStudentFromGrid)}
 function parseCSVLine(s,sep){const out=[];let value='',quoted=false;for(let i=0;i<s.length;i++){const ch=s[i];if(ch==='"'){if(quoted && s[i+1]==='"'){value+='"';i++}else quoted=!quoted}else if(ch===sep&&!quoted){out.push(value);value=''}else value+=ch}out.push(value);return out}
@@ -668,12 +949,12 @@ function exportCSV(){
   const rows=[['새 학급','담당 교사','새 번호','기존 학년','기존 반','번호','이름','성별','학습지표','유의 사항','교사 메모','우선 배치']];
   for(let i=1;i<=state.classCount;i++){
     const pupils=state.students.filter(st=>c.assign[st.id]===i).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-    pupils.forEach((st,j)=>rows.push([displayClass(i),state.teacherNames[i]||'',j+1,st.oldGrade||'',st.oldClass,st.number,st.name,st.gender,hasStudyScore(st)?studyText(st.level):'',st.traits.join('; '),st.note,st.fixed?'교사 지정':'자동 편성']));
+    pupils.forEach((st,j)=>rows.push([displayClass(i),state.teacherNames[i]||'',j+1,st.oldGrade||'',st.oldClass,st.number,st.name,st.gender,hasStudyScore(st)?studyText(st.level):'',st.traits.join('; '),st.note,state.teacherPriorityOn&&st.fixed?'교사 지정':'자동 편성']));
   }
   download('반편성_결과_'+state.grade+'학년.csv','\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');toast('편성 결과 CSV를 저장했습니다.');
 }
 function sampleData(){const surnames=['김','이','박','최','정','강','조','윤','장','임','한','오'];const names=['하늘','지우','도윤','민서','준우','서연','시우','하은','예준','다은','현우','윤서','지호','수아','건우','서준','나은','이안','채원','예은','유준','지안','서아','태윤','은우','시윤','다현','승우','윤호','서진','연우','수빈','민준','다온','현서','재윤'];return names.map((n,i)=>({id:makeId(),oldClass:(i%3+1)+'반',number:String(Math.floor(i/3)+1),name:surnames[i%12]+n,gender:i%2?'여':'남',level:Math.round((65+(i*13)%34+((i%4)*0.25))*100)/100,traits:[i%5===0?'사회성':null,i%7===0?'운동부':null].filter(Boolean),fixed:0,note:''}))}
-function isCompatibleMove(id,to,candidate){const student=findStudent(id);if(!student||student.fixed)return false;const proposal={...candidate.assign,[id]:to};return validateAssignment(state.students,state.pairs,proposal,state.capRules).length===0}
+function isCompatibleMove(id,to,candidate){const student=findStudent(id);if(!student||(state.teacherPriorityOn&&student.fixed))return false;const proposal={...candidate.assign,[id]:to};return validateAssignment(activeStudents(),effectivePairs(),proposal,state.capRules).length===0}
 function addStudent(){const s={id:makeId(),oldGrade:'',oldClass:'',number:'',name:'',gender:'',level:null,traits:[],fixed:0,note:''};state.students.push(s);invalidate();changeState();const field=document.querySelector(`[data-student="${s.id}"] [data-key="name"]`);field?.focus()}
 function addTrait(){const t=$('newTrait').value.trim();if(!t)return;if(state.traits.includes(t)){toast('이미 있는 특징입니다.');return}if(state.traits.length>=64){toast('유의 사항은 최대 64개까지 추가할 수 있습니다.');return}state.traits.push(t);$('newTrait').value='';invalidate();changeState()}
 function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)return;const s=findStudent(tr.dataset.student);if(!s)return;
@@ -688,6 +969,12 @@ function manualMove(e){const select=e.target.closest('[data-move]');if(!select)r
 }
 function installEvents(){
   document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+  $('teacherPriorityOn').addEventListener('change',e=>{
+    state.teacherPriorityOn=e.target.checked;
+    invalidate();saveState();
+    if(!state.teacherPriorityOn&&view==='preset')showTab('roster');else render();
+    toast(state.teacherPriorityOn?'교사 우선 배치 ON · 기존 지정 학생을 유지해 편성합니다.':'교사 우선 배치 OFF · 저장된 학생 지정은 삭제하지 않고 자동 편성에서 제외합니다.');
+  });
   $('grade').addEventListener('change',e=>{state.grade=e.target.value.trim()||'1';changeState()});
   $('classCount').addEventListener('change',e=>{const n=Number(e.target.value);if(!Number.isInteger(n)||n<2||n>12){toast('학급 수는 2~12로 설정해 주세요.');render();return}state.classCount=n;state.students.forEach(s=>{if(s.fixed>n)s.fixed=0});state.teacherNames=Object.fromEntries(Object.entries(state.teacherNames).filter(([id])=>Number(id)<=n));invalidate();changeState()});
   $('demo').addEventListener('click',()=>{if(state.students.length&&!confirm('현재 학생 명단을 예시 데이터로 교체할까요? 먼저 JSON 백업을 저장할 수 있습니다.'))return;state=defaultState();state.students=sampleData();state.pairs=[{a:state.students[0].id,b:state.students[3].id},{a:state.students[7].id,b:state.students[19].id}];view='roster';showTab('roster');changeState();toast('가상의 학생 36명과 분리 관계 2쌍을 불러왔습니다.')});
@@ -702,16 +989,70 @@ function installEvents(){
     if(!visible)renderBulkGrid();
   });
   $('closeBulk').addEventListener('click',()=>$('bulkPanel').classList.add('hidden'));
-  $('bulkFocus').addEventListener('click',()=>$('bulkGridBody').querySelector('[data-bulk-r="0"][data-bulk-c="0"]')?.focus());
-  $('bulkAddRows').addEventListener('click',()=>{
-    const n=Math.min(10,1000-bulkRows.length);
+  $('bulkFocus').addEventListener('click',()=>bulkFocusCell(0,0));
+  function addBulkDraftRows(amount){
+    const n=Math.min(amount,1000-bulkRows.length);
     if(!n){toast('한 번에 입력할 수 있는 최대 행 수는 1000행입니다.');return}
-    for(let i=0;i<n;i++)bulkRows.push(blankBulkRow());
+    bulkSaveUndo();
+    for(let i=0;i<n;i++)bulkRows.push([bulkDefaultGrade,'','','','','','']);
     renderBulkGrid();
-  });
+  }
+  $('bulkAddRows').addEventListener('click',()=>addBulkDraftRows(10));
+  $('bulkAdd50Rows').addEventListener('click',()=>addBulkDraftRows(50));
+  $('bulkFillGradeAll').addEventListener('click',bulkFillAllGrade);
+  $('bulkFillGrade').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();bulkFillAllGrade()}});
+  $('bulkFillDown').addEventListener('click',bulkFillDown);
+  $('bulkClearSelected').addEventListener('click',bulkClearSelected);
+  $('bulkUndo').addEventListener('click',bulkUndo);
   $('bulkClearGrid').addEventListener('click',()=>{
     if(bulkRows.some(row=>row.some(v=>bulkClean(v)))&&!confirm('아직 명단에 적용하지 않은 표 내용을 모두 지울까요?'))return;
     bulkClearDraft();$('bulkText').value='';
+  });
+  $('bulkGridTable').querySelector('thead').addEventListener('click',e=>{
+    const head=e.target.closest('[data-bulk-head]');if(!head)return;
+    const c=Number(head.dataset.bulkHead);
+    bulkSelection={anchor:{r:0,c},focus:{r:bulkRows.length-1,c}};
+    bulkPaintSelection();
+    toast('열 전체를 선택했습니다. 값 붙여넣기 또는 선택 영역 아래로 채우기를 사용할 수 있습니다.');
+  });
+  $('bulkGridTable').querySelector('thead').addEventListener('paste',e=>{
+    const head=e.target.closest('[data-bulk-head]');if(!head)return;
+    const pasted=e.clipboardData?.getData('text/plain');
+    if(!pasted)return;
+    e.preventDefault();bulkApplyPaste(pasted);
+  });
+  $('bulkGridTable').querySelector('thead').addEventListener('keydown',e=>{
+    if(!['Enter',' '].includes(e.key))return;
+    const h=e.target.closest('[data-bulk-head]');if(h){e.preventDefault();h.click()}
+  });
+  $('bulkGridBody').addEventListener('mousedown',e=>{
+    const heading=e.target.closest('[data-bulk-row-head]');
+    if(heading){
+      const r=Number(heading.dataset.bulkRowHead);
+      bulkSelection={anchor:{r,c:0},focus:{r,c:6}};
+      bulkPaintSelection();return;
+    }
+    const cell=e.target.closest('[data-bulk-r][data-bulk-c]');
+    if(!cell||e.button!==0)return;
+    bulkDragging=true;
+    bulkSelect(Number(cell.dataset.bulkR),Number(cell.dataset.bulkC),e.shiftKey);
+  });
+  $('bulkGridBody').addEventListener('mouseover',e=>{
+    if(!bulkDragging||!(e.buttons&1))return;
+    const cell=e.target.closest('[data-bulk-r][data-bulk-c]');
+    if(cell)bulkSelect(Number(cell.dataset.bulkR),Number(cell.dataset.bulkC),true);
+  });
+  document.addEventListener('mouseup',()=>{bulkDragging=false});
+  $('bulkGridBody').addEventListener('focusin',e=>{
+    const cell=e.target.closest('[data-bulk-r][data-bulk-c]');if(!cell)return;
+    if(!bulkDragging)bulkSelect(Number(cell.dataset.bulkR),Number(cell.dataset.bulkC));
+    bulkPendingEdit={rows:bulkRows.map(row=>row.slice()),grade:bulkDefaultGrade};
+  });
+  $('bulkGridBody').addEventListener('change',e=>{
+    const cell=e.target.closest('[data-bulk-r][data-bulk-c]');if(!cell||!bulkPendingEdit)return;
+    const changed=bulkPendingEdit.rows[Number(cell.dataset.bulkR)]?.[Number(cell.dataset.bulkC)]!==cell.value;
+    if(changed)bulkSaveUndo(bulkPendingEdit);
+    bulkPendingEdit=null;
   });
   $('bulkGridBody').addEventListener('input',e=>{
     const cell=e.target.closest('[data-bulk-r][data-bulk-c]');if(!cell)return;
@@ -719,41 +1060,56 @@ function installEvents(){
     if(!bulkRows[row]||col<0||col>6)return;
     bulkRows[row][col]=cell.value;renderBulkPreview();
   });
+  $('bulkGridBody').addEventListener('copy',e=>{
+    const cell=e.target.closest('[data-bulk-r][data-bulk-c]');
+    if(!cell)return;
+    const range=bulkSelectionBounds();
+    if(range.r1===range.r2&&range.c1===range.c2)return;
+    e.preventDefault();
+    e.clipboardData?.setData('text/plain',bulkSelectedTSV(bulkRows,bulkSelection));
+  });
   $('bulkGridBody').addEventListener('paste',e=>{
     const cell=e.target.closest('[data-bulk-r][data-bulk-c]');if(!cell)return;
     const pasted=e.clipboardData?.getData('text/plain')||'';
-    if(!pasted||(!pasted.includes('\t')&&!pasted.includes('\n')&&!pasted.trim().startsWith('|')))return;
-    const input=parseSheetText(pasted);
-    if(input.length===1&&input[0].length===1)return;
+    if(!pasted)return;
+    const parsed=parseSheetText(pasted);
+    const range=bulkSelectionBounds();
+    const multiple=parsed.length>1||parsed.some(row=>row.length>1);
+    const selected=range.r2>range.r1||range.c2>range.c1;
+    const smartName=range.c1===0&&!multiple&&bulkPastePlan(pasted,0).column===3;
+    if(!multiple&&!selected&&!smartName)return; // preserve native single-cell typing/paste
     e.preventDefault();
-    const row=Number(cell.dataset.bulkR),col=Number(cell.dataset.bulkC);
-    const output=bulkFormatRows(input,col);
-    if(!output.rows.length){toast('가져올 학생 행을 찾지 못했습니다.');return}
-    const full=output.header||input.some(record=>record.length>=5);
-    if(full&&row===0)bulkRows=Array.from({length:Math.max(12,output.rows.length)},blankBulkRow);
-    for(let i=0;i<output.rows.length&&row+i<1000;i++){
-      while(bulkRows.length<=row+i)bulkRows.push(blankBulkRow());
-      const incoming=output.rows[i];
-      if(full){bulkRows[row+i]=incoming}
-      else{
-        for(let j=col;j<Math.min(7,col+(input[i]?.length||0));j++)bulkRows[row+i][j]=incoming[j];
-      }
-    }
-    renderBulkGrid();
-    toast(Math.min(output.rows.length,1000-row)+'행을 표에 붙여넣었습니다. 명단 적용 전에 이름을 확인하세요.');
+    bulkApplyPaste(pasted);
   });
   $('bulkGridBody').addEventListener('keydown',e=>{
-    const cell=e.target.closest('[data-bulk-r][data-bulk-c]');
-    if(!cell||e.key!=='Enter'||e.shiftKey||e.isComposing)return;
-    e.preventDefault();
-    const next=Number(cell.dataset.bulkR)+1,col=Number(cell.dataset.bulkC);
-    if(next>=bulkRows.length&&bulkRows.length<1000){bulkRows.push(blankBulkRow());renderBulkGrid()}
-    $('bulkGridBody').querySelector('[data-bulk-r="'+next+'"][data-bulk-c="'+col+'"]')?.focus();
+    const cell=e.target.closest('[data-bulk-r][data-bulk-c]');if(!cell||e.isComposing)return;
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'){
+      e.preventDefault();bulkFillDown();return;
+    }
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&bulkUndoStack.length){
+      e.preventDefault();bulkUndo();return;
+    }
+    const row=Number(cell.dataset.bulkR),col=Number(cell.dataset.bulkC);
+    if(e.key==='Enter'&&!e.ctrlKey&&!e.altKey){
+      e.preventDefault();bulkFocusCell(row+(e.shiftKey?-1:1),col);return;
+    }
+    if(e.key==='Tab'){
+      e.preventDefault();
+      const next=col+(e.shiftKey?-1:1);
+      const nextR=row+(next>6?1:next<0?-1:0);
+      bulkFocusCell(nextR,(next+7)%7);return;
+    }
+    if(e.altKey&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
+      e.preventDefault();
+      const dr=e.key==='ArrowUp'?-1:e.key==='ArrowDown'?1:0;
+      const dc=e.key==='ArrowLeft'?-1:e.key==='ArrowRight'?1:0;
+      bulkFocusCell(row+dr,col+dc,e.shiftKey);
+    }
   });
   $('bulkGridBody').addEventListener('click',e=>{
     const button=e.target.closest('[data-bulk-delete]');if(!button)return;
-    bulkRows.splice(Number(button.dataset.bulkDelete),1);
-    if(!bulkRows.length)bulkRows.push(blankBulkRow());
+    bulkSaveUndo();bulkRows.splice(Number(button.dataset.bulkDelete),1);
+    if(!bulkRows.length)bulkRows.push([bulkDefaultGrade,'','','','','','']);
     renderBulkGrid();
   });
   $('bulkParseText').addEventListener('click',()=>{
@@ -782,7 +1138,7 @@ function installEvents(){
     if(mode==='replace'&&state.students.length&&!confirm('기존 학생 명단, 분리 관계, 교사 우선 배치를 새 명단으로 교체할까요?'))return;
     if(named.length+(mode==='append'?state.students.length:0)>1000){toast('학생은 최대 1000명까지 등록할 수 있습니다. 기존 명단과 추가 인원을 확인하세요.');return}
     const list=named.map(bulkStudentFromGrid);
-    if(mode==='replace'){state.students=[];state.pairs=[]}
+    if(mode==='replace'){state.students=[];state.pairs=[];state.baskets=[]}
     const skipped=[];
     for(const st of list){
       const tags=[];
@@ -807,7 +1163,7 @@ function installEvents(){
   $('newTrait').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTrait()}});$('addTrait').addEventListener('click',addTrait);
   $('traitChips').addEventListener('click',e=>{const b=e.target.closest('[data-delete-trait]');if(!b)return;const t=b.dataset.deleteTrait;if(!confirm(`「${t}」 유의 사항을 학생 명단에서도 삭제할까요?`))return;state.traits=state.traits.filter(x=>x!==t);delete state.capRules[t];state.students.forEach(s=>s.traits=s.traits.filter(x=>x!==t));invalidate();changeState()});
   $('rosterBody').addEventListener('change',updateStudent);
-  $('rosterBody').addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');if(remove){const s=findStudent(remove.dataset.remove);if(!confirm(`「${studentTitle(s)}」 학생을 삭제할까요?`))return;state.students=state.students.filter(x=>x.id!==remove.dataset.remove);state.pairs=state.pairs.filter(p=>p.a!==remove.dataset.remove&&p.b!==remove.dataset.remove);invalidate();changeState();return}
+  $('rosterBody').addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');if(remove){const s=findStudent(remove.dataset.remove);if(!confirm(`「${studentTitle(s)}」 학생을 삭제할까요?`))return;state.students=state.students.filter(x=>x.id!==remove.dataset.remove);state.pairs=state.pairs.filter(p=>p.a!==remove.dataset.remove&&p.b!==remove.dataset.remove);state.baskets.forEach(b=>b.members=b.members.filter(id=>id!==remove.dataset.remove));invalidate();changeState();return}
     const note=e.target.closest('[data-note]');if(note){const s=findStudent(note.dataset.note);noteStudentId=s.id;$('noteTitle').textContent=`${s.name||'학생'} 메모`;$('noteText').value=s.note;$('noteDialog').showModal()}});
   $('cancelNote').addEventListener('click',()=>$('noteDialog').close());$('saveNote').addEventListener('click',()=>{const s=findStudent(noteStudentId);if(s){s.note=$('noteText').value.slice(0,1000);invalidate();changeState()}$('noteDialog').close()});
   $('presetSearch').addEventListener('input',renderPreset);
@@ -840,9 +1196,69 @@ function installEvents(){
   $('fillRemaining').addEventListener('click',()=>$('generate').click());
   $('fillRemainingBottom').addEventListener('click',()=>$('generate').click());
   $('capRules').addEventListener('change',e=>{const el=e.target.closest('[data-cap]');if(!el)return;const tag=el.dataset.cap,value=el.value.trim();if(!state.traits.includes(tag))return;if(value!==''&&(!/^\d+$/.test(value)||Number(value)>1000)){toast('반당 최대 인원은 0~1000 사이의 정수를 입력해 주세요.');renderCaps();return}if(value==='')delete state.capRules[tag];else state.capRules[tag]=Number(value);invalidate();changeState();toast(value===''?`「${tag}」 인원 제한을 해제했습니다.`:`「${tag}」 반당 최대 ${value}명으로 설정했습니다.`)});
+  $('addBasket').addEventListener('click',()=>{
+    if(state.baskets.length>=40){toast('바구니는 최대 40개까지 만들 수 있습니다.');return}
+    const id=makeId(),name='분리 바구니 '+(state.baskets.length+1);
+    state.baskets.push({id,name,members:[]});invalidate();changeState();
+    $('basketGrid').querySelector('[data-basket-name="'+id+'"]')?.focus();
+  });
+  $('basketSearch').addEventListener('input',renderBaskets);
+  $('basketPool').addEventListener('change',e=>{
+    const select=e.target.closest('[data-basket-assign]');
+    if(select&&select.value&&!addBasketMember(select.value,select.dataset.basketAssign))select.value='';
+  });
+  $('basketGrid').addEventListener('change',e=>{
+    const rename=e.target.closest('[data-basket-name]');
+    if(rename){
+      const b=state.baskets.find(b=>b.id===rename.dataset.basketName);
+      if(b){b.name=rename.value.trim().slice(0,40)||b.name;invalidate();changeState()}return;
+    }
+    const select=e.target.closest('[data-basket-add]');
+    if(select&&select.value&&!addBasketMember(select.dataset.basketAdd,select.value))select.value='';
+  });
+  $('basketGrid').addEventListener('click',e=>{
+    const remove=e.target.closest('[data-basket-remove]');
+    if(remove){
+      const b=state.baskets.find(x=>x.id===remove.dataset.basketRemove);
+      if(!b||!confirm('「'+b.name+'」 바구니를 삭제할까요? 이 바구니에만 적용된 분리 규칙이 해제됩니다.'))return;
+      state.baskets=state.baskets.filter(x=>x.id!==b.id);invalidate();changeState();return;
+    }
+    const unpin=e.target.closest('[data-basket-unpin]');
+    if(unpin){
+      const b=state.baskets.find(x=>x.id===unpin.dataset.basketUnpin);
+      if(b){b.members=b.members.filter(id=>id!==unpin.dataset.studentId);invalidate();changeState()}
+    }
+  });
+  function basketDropId(e){
+    const id=e.dataTransfer?.getData('text/plain');
+    return id&&findStudent(id)?id:null;
+  }
+  $('basketPool').addEventListener('dragstart',e=>{
+    const item=e.target.closest('[data-drag-student]');if(!item)return;
+    e.dataTransfer.effectAllowed='copy';e.dataTransfer.setData('text/plain',item.dataset.dragStudent);
+  });
+  $('basketGrid').addEventListener('dragstart',e=>{
+    const item=e.target.closest('[data-drag-student]');if(!item)return;
+    e.dataTransfer.effectAllowed='copy';e.dataTransfer.setData('text/plain',item.dataset.dragStudent);
+  });
+  $('basketGrid').addEventListener('dragover',e=>{
+    const b=e.target.closest('[data-basket-drop]');if(!b)return;
+    e.preventDefault();e.dataTransfer.dropEffect='copy';b.classList.add('drag-over');
+  });
+  $('basketGrid').addEventListener('dragleave',e=>{
+    const b=e.target.closest('[data-basket-drop]');if(b&&!b.contains(e.relatedTarget))b.classList.remove('drag-over');
+  });
+  $('basketGrid').addEventListener('drop',e=>{
+    const basket=e.target.closest('[data-basket-drop]');if(!basket)return;
+    e.preventDefault();basket.classList.remove('drag-over');
+    const id=basketDropId(e);if(id)addBasketMember(basket.dataset.basketDrop,id);
+  });
   $('addPair').addEventListener('click',()=>{const a=$('pairA').value,b=$('pairB').value;if(!a||!b){toast('두 학생을 모두 선택해 주세요.');return}if(a===b){toast('서로 다른 학생 두 명을 선택해 주세요.');return}if(state.pairs.some(p=>(p.a===a&&p.b===b)||(p.a===b&&p.b===a))){toast('이미 지정한 분리 관계입니다.');return}state.pairs.push({a,b});invalidate();changeState();toast('분리 관계를 추가했습니다.')});
   $('pairList').addEventListener('click',e=>{const b=e.target.closest('[data-pair-index]');if(!b)return;state.pairs.splice(Number(b.dataset.pairIndex),1);invalidate();changeState()});
-  $('generate').addEventListener('click',()=>{const outcome=generateCandidates(state.students,state.pairs,state.classCount,state.traits,Math.random,state.capRules);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
+  $('generate').addEventListener('click',()=>{
+    const problems=basketProblems();
+    if(problems.length){invalidate();saveState();showTab('results');$('resultMessage').textContent=problems.join(' / ');toast(problems[0]);return}
+    const outcome=generateCandidates(activeStudents(),effectivePairs(),state.classCount,state.traits,Math.random,state.capRules);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
   $('generateQuick').addEventListener('click',()=>$('generate').click());
   $('alternatives').addEventListener('click',e=>{const b=e.target.closest('[data-candidate]');if(!b)return;state.activeCandidate=Number(b.dataset.candidate);saveState();renderResults()});
   $('resultGrid').addEventListener('change',manualMove);

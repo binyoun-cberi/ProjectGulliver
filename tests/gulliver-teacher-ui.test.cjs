@@ -90,6 +90,29 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.reload({waitUntil:'domcontentloaded'});
     await page.locator('[data-tab="rules"]').click();
     assert.equal(await page.locator('input[data-cap="운동부"]').inputValue(),'2','반당 인원 상한은 새로고침 후에도 보존해야 합니다.');
+
+    // Visual separation baskets: build two independent groups with draggable students.
+    const basketIds=await page.evaluate(()=>state.students.slice(0,5).map(st=>st.id));
+    await page.locator('#addBasket').click();
+    assert.equal(await page.locator('#basketCount').textContent(),'1개');
+    await page.locator('[data-basket-drop]').first().locator('[data-basket-add]').selectOption(basketIds[0]);
+    await page.locator('[data-basket-drop]').first().locator('[data-basket-add]').selectOption(basketIds[1]);
+    await page.locator('#basketPool [data-drag-student="'+basketIds[2]+'"]').dragTo(page.locator('[data-basket-drop]').first());
+    assert.equal(await page.locator('[data-basket-drop]').first().locator('.basket-chip').count(),3);
+    await page.locator('#addBasket').click();
+    assert.equal(await page.locator('#basketCount').textContent(),'2개');
+    await page.locator('[data-basket-drop]').nth(1).locator('[data-basket-add]').selectOption(basketIds[3]);
+    await page.locator('[data-basket-drop]').nth(1).locator('[data-basket-add]').selectOption(basketIds[4]);
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.locator('[data-tab="rules"]').click();
+    assert.equal(await page.locator('[data-basket-drop]').count(),2);
+    assert.equal(await page.locator('[data-basket-drop]').first().locator('.basket-chip').count(),3);
+    assert.equal(await page.locator('[data-basket-drop]').nth(1).locator('.basket-chip').count(),2);
+    // Schools without prior teacher choice start OFF; switching ON preserves future fixed picks.
+    assert.equal(await page.locator('#teacherPriorityOn').isChecked(),false);
+    await page.locator('.priority-switch').click();
+    assert.equal(await page.locator('#teacherPriorityOn').isChecked(),true);
+
     // Teacher-first workflow: reserve willing teachers' pupils, then fill vacancies.
     await page.locator('[data-tab="preset"]').click();
     assert.equal(await page.locator('#presetRemaining').textContent(),'36명');
@@ -128,6 +151,26 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.match(savedCsv,/담당교사 A/);
     assert.match(savedCsv,/교사 지정/);
 
+    // All basket members must be placed into different classes, even with teacher-first OFF.
+    const preserved=await page.evaluate(()=>state.students.filter(st=>st.fixed).map(st=>[st.id,st.fixed]));
+    await page.locator('.priority-switch').click();
+    assert.equal(await page.locator('#teacherPriorityOn').isChecked(),false);
+    await page.locator('#generateQuick').click();
+    assert.equal(await page.locator('#resultGrid select[data-move]:disabled').count(),0);
+    const offState=await page.evaluate(()=>{
+      const assigned=state.candidates[state.activeCandidate].assign;
+      return {pins:state.students.filter(st=>st.fixed).map(st=>[st.id,st.fixed]),
+        baskets:state.baskets.map(b=>b.members.map(id=>assigned[id]))};
+    });
+    assert.deepEqual(offState.pins,preserved,'OFF여도 저장된 교사 지정 기록은 남아야 함');
+    for(const classes of offState.baskets)assert.equal(new Set(classes).size,classes.length,'같은 바구니 학생은 서로 다른 반');
+    await page.reload({waitUntil:'domcontentloaded'});
+    assert.equal(await page.locator('#teacherPriorityOn').isChecked(),false);
+    await page.locator('.priority-switch').click();
+    await page.locator('#generateQuick').click();
+    assert.equal(await page.locator('#resultGrid select[data-move]:disabled').count(),2);
+
+
 
 
     // Real Excel-like grid: paste a header, quoted multiline attention notes, and a summary column.
@@ -161,6 +204,42 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.locator('#bulkParseText').click();
     assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="3"]').inputValue(),'최가람');
     assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="5"]').inputValue(),'한부모\n 다문화');
+
+    // Regression: a teacher fills grade 5 for every row, then pastes an Excel names-only column.
+    page.once('dialog',dialog=>dialog.accept());
+    await page.locator('#bulkClearGrid').click();
+    await page.locator('#bulkAdd50Rows').click();
+    assert.equal(await page.locator('#bulkRowCount').textContent(),'62행');
+    await page.locator('#bulkFillGrade').fill('5학년');
+    await page.locator('#bulkFillGradeAll').click();
+    assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="0"]').inputValue(),'5');
+    assert.equal(await page.locator('[data-bulk-r="61"][data-bulk-c="0"]').inputValue(),'5');
+    const columnNames=['김하늘','이도윤','박서연','최유리'].join('\r\n');
+    await page.locator('[data-bulk-r="0"][data-bulk-c="3"]').evaluate((el,raw)=>{
+      const clipboard=new DataTransfer();clipboard.setData('text/plain',raw);
+      el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:clipboard,bubbles:true,cancelable:true}));
+    },columnNames);
+    assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="3"]').inputValue(),'김하늘');
+    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="3"]').inputValue(),'최유리');
+    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="0"]').inputValue(),'5');
+    // Shift-click range selection followed by fill-down and undo.
+    await page.locator('[data-bulk-r="0"][data-bulk-c="1"]').fill('2');
+    await page.locator('[data-bulk-r="0"][data-bulk-c="1"]').click();
+    await page.locator('[data-bulk-r="3"][data-bulk-c="1"]').click({modifiers:['Shift']});
+    await page.locator('#bulkFillDown').click();
+    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="1"]').inputValue(),'2');
+    await page.locator('#bulkUndo').click();
+    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="1"]').inputValue(),'');
+    // One pasted value fills a selected multi-cell range, as in Excel.
+    await page.locator('[data-bulk-r="0"][data-bulk-c="4"]').click();
+    await page.locator('[data-bulk-r="3"][data-bulk-c="4"]').click({modifiers:['Shift']});
+    await page.locator('[data-bulk-r="3"][data-bulk-c="4"]').evaluate(el=>{
+      const data=new DataTransfer();data.setData('text/plain','여');
+      el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:data,bubbles:true,cancelable:true}));
+    });
+    assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="4"]').inputValue(),'여');
+    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="4"]').inputValue(),'여');
+
 
     await page.goto(base + encodeURIComponent('지도안식 원형 타이머.html'), {waitUntil: 'domcontentloaded'});
     await page.locator('.gt-shell').waitFor({state: 'attached'});
