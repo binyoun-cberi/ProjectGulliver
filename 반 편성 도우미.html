@@ -672,6 +672,40 @@ function generateCandidates(students,pairs,k,traits,random=Math.random,capRules=
   return {candidates:solutions,successes:solutions.length};
 }
 /* ENGINE_END */
+/* MOVE_REVIEW_START: side-effect-free change preview for manual and drag movements. */
+function reviewClassStats(students,assign,k,traits){
+ const data=Array.from({length:k},()=>({total:0,boys:0,girls:0,levelN:0,levelSum:0,traitCounts:Object.fromEntries(traits.map(t=>[t,0]))}));
+ for(const st of students){
+   const room=assign[st.id],d=data[room-1];if(!d)continue;
+   d.total++;
+   if(st.gender==='남')d.boys++;
+   if(st.gender==='여')d.girls++;
+   if(Number.isFinite(st.level)&&st.level>=0){d.levelSum+=st.level;d.levelN++}
+   for(const tag of st.traits||[])if(tag in d.traitCounts)d.traitCounts[tag]++;
+ }
+ return data;
+}
+function reviewStudentMove(students,pairs,assign,k,traits,capRules,id,to,teacherPriorityOn){
+ const student=students.find(s=>s.id===id);
+ if(!student)return {ok:false,error:'학생을 찾지 못했습니다.'};
+ const from=Number(assign[id]);
+ if(!Number.isInteger(to)||to<1||to>k)return {ok:false,error:'이동할 반을 선택해 주세요.'};
+ if(!Number.isInteger(from)||from<1||from>k)return {ok:false,error:'현재 배정 반을 찾을 수 없습니다.'};
+ if(from===to)return {ok:false,error:'이미 이 반에 배정된 학생입니다.',from,to};
+ if(teacherPriorityOn&&student.fixed)return {ok:false,error:'교사 우선 배치로 고정된 학생은 이동할 수 없습니다. 우선 배치를 해제하거나 OFF로 변경해 주세요.',from,to};
+ const before=reviewClassStats(students,assign,k,traits);
+ const proposed={...assign,[id]:to};
+ const active=teacherPriorityOn?students:students.map(s=>({...s,fixed:0}));
+ const violations=validateAssignment(active,pairs,proposed,capRules);
+ if(violations.length)return {ok:false,error:violations[0],violations,from,to};
+ const after=reviewClassStats(students,proposed,k,traits);
+ const counts=after.map(d=>d.total),average=students.length/k;
+ const notices=[];
+ if(counts.some(n=>Math.abs(n-average)>1))notices.push('반별 인원 차이가 커졌습니다. 이동 후 인원 균형을 확인하세요.');
+ return {ok:true,from,to,id,student,proposed,before,after,notices,
+   affectedTraits:[...new Set(student.traits||[])].filter(t=>traits.includes(t))};
+}
+/* MOVE_REVIEW_END */
 function reportData(candidate){
  const data=Array.from({length:state.classCount},()=>({total:0,boys:0,girls:0,levelN:0,levelSum:0,traitCounts:Object.fromEntries(state.traits.map(t=>[t,0]))}));
  for(const st of state.students){const c=candidate.assign[st.id],d=data[c-1];if(!d)continue;d.total++;if(st.gender==='남')d.boys++;if(st.gender==='여')d.girls++;if(hasStudyScore(st)){d.levelN++;d.levelSum+=st.level}for(const t of st.traits)if(t in d.traitCounts)d.traitCounts[t]++}
