@@ -327,6 +327,35 @@ function renderPreset(){
 function renderCaps(){
   $('capRules').innerHTML=state.traits.map(tag=>`<div class="cap-item"><label for="cap-${escapeHtml(tag)}">${escapeHtml(tag)}</label><input type="number" min="0" max="1000" step="1" inputmode="numeric" data-cap="${escapeHtml(tag)}" aria-label="${escapeHtml(tag)} 반당 최대 인원" placeholder="제한 없음" value="${state.capRules[tag]??''}"></div>`).join('');
 }
+function addBasketMember(basketId,studentId){
+  const basket=state.baskets.find(b=>b.id===basketId),student=findStudent(studentId);
+  if(!basket||!student)return false;
+  if(basket.members.includes(studentId)){toast('이미 이 바구니에 들어 있는 학생입니다.');return false}
+  if(basket.members.length>=state.classCount){toast('한 바구니에 '+state.classCount+'명까지 넣을 수 있습니다. 서로 다른 반에 배정해야 하기 때문입니다.');return false}
+  basket.members.push(studentId);invalidate();changeState();
+  toast('「'+basket.name+'」에 '+student.name+' 학생을 추가했습니다.');return true;
+}
+function renderBaskets(){
+  $('basketCount').textContent=state.baskets.length+'개';
+  const errors=basketProblems();
+  $('basketNotice').className=errors.length?'alert':'helper';
+  $('basketNotice').textContent=errors.length?errors.join(' / '):
+    state.baskets.length+'개 바구니 · '+'같은 바구니의 학생은 반드시 서로 다른 반으로 편성됩니다. 여러 바구니에 같은 학생을 넣을 수도 있습니다.';
+  const q=($('basketSearch').value||'').trim().toLowerCase();
+  const pupils=state.students.filter(st=>[st.name,st.oldGrade,st.oldClass,st.number].join(' ').toLowerCase().includes(q));
+  const shown=pupils.slice(0,100);
+  $('basketPool').innerHTML=shown.map(st=>`<div class="basket-pool-item" draggable="true" data-drag-student="${escapeHtml(st.id)}"><div><b>${escapeHtml(st.name||'(이름 미입력)')}</b><small>${escapeHtml(st.oldClass||'반 미입력')}${st.number?' · '+escapeHtml(st.number)+'번':''}</small></div><select data-basket-assign="${escapeHtml(st.id)}" aria-label="${escapeHtml(st.name)} 분리 바구니 선택"><option value="">바구니에 넣기…</option>${state.baskets.map(b=>`<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)}</option>`).join('')}</select></div>`).join('')||'<div class="empty">표시할 학생이 없습니다.</div>';
+  if(pupils.length>shown.length)$('basketPool').insertAdjacentHTML('beforeend','<div class="helper">100명만 표시했습니다. 검색하여 학생을 찾으세요.</div>');
+  $('basketGrid').innerHTML=state.baskets.map((b,i)=>{
+    const opts=state.students.filter(st=>!b.members.includes(st.id));
+    return `<div class="basket-card ${b.members.length>state.classCount?'basket-over':''}" data-basket-drop="${escapeHtml(b.id)}" aria-label="${escapeHtml(b.name)}">
+      <div class="basket-head"><input data-basket-name="${escapeHtml(b.id)}" aria-label="${i+1}번 바구니 이름" maxlength="40" value="${escapeHtml(b.name)}"><button type="button" class="btn ghost danger small" data-basket-remove="${escapeHtml(b.id)}" title="바구니 삭제">삭제</button></div>
+      <div class="basket-info">${b.members.length}명 · ${state.classCount}개 반에 모두 분리 ${b.members.length>state.classCount?'· 인원 초과':''}</div>
+      <div class="basket-members">${b.members.map(id=>{const st=findStudent(id);if(!st)return '';return `<div class="basket-chip" draggable="true" data-drag-student="${escapeHtml(st.id)}"><div><b>${escapeHtml(st.name)}</b><small>${escapeHtml(st.oldClass||'기존 반 미입력')}${st.number?' · '+escapeHtml(st.number)+'번':''}</small></div><button type="button" data-basket-unpin="${escapeHtml(b.id)}" data-student-id="${escapeHtml(st.id)}" aria-label="${escapeHtml(st.name)} 바구니에서 빼기">×</button></div>`}).join('')||'<div class="basket-empty">여기로 학생을 드래그하거나 아래에서 선택하세요</div>'}</div>
+      <select class="basket-add" data-basket-add="${escapeHtml(b.id)}" aria-label="${escapeHtml(b.name)} 학생 추가"><option value="">+ 학생 선택하여 넣기</option>${opts.map(st=>`<option value="${escapeHtml(st.id)}">${escapeHtml(studentTitle(st))}</option>`).join('')}</select>
+    </div>`;
+  }).join('')||'<div class="basket-empty">아직 바구니가 없습니다. 「+ 바구니 만들기」를 누르세요.</div>';
+}
 function renderPairs(){
   const opts='<option value="">학생 선택</option>'+state.students.map(s=>`<option value="${escapeHtml(s.id)}">${escapeHtml(studentTitle(s))}</option>`).join('');
   const av=$('pairA').value,bv=$('pairB').value;$('pairA').innerHTML=opts;$('pairB').innerHTML=opts;$('pairA').value=av;$('pairB').value=bv;
