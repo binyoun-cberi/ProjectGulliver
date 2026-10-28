@@ -173,6 +173,47 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
 
 
 
+    // Drag-to-class review: totals, sex, multicultural and learning score update immediately.
+    const reviewChoice=await page.evaluate(()=>{
+      const plan=state.candidates[state.activeCandidate];
+      for(const preferTags of [true,false])for(const st of state.students){
+        if(st.fixed||(preferTags&&!st.traits.includes('다문화')))continue;
+        const from=plan.assign[st.id];
+        for(let to=1;to<=state.classCount;to++){
+          const result=previewResultMove(st.id,to);
+          if(result?.ok)return {id:st.id,from,to,hasMulticultural:st.traits.includes('다문화')};
+        }
+      }
+      return null;
+    });
+    assert.ok(reviewChoice,'at least one legal drag movement must exist');
+    const originalReport=await page.evaluate(()=>state.candidates[state.activeCandidate].assign);
+    const startMetrics=await page.evaluate(()=>reportData(state.candidates[state.activeCandidate]));
+    assert.match(await page.locator('#report').textContent(),/다문화/);
+    assert.match(await page.locator('#report').textContent(),/특수/);
+    await page.locator('[data-result-student="'+reviewChoice.id+'"]').dragTo(page.locator('[data-drop-class="'+reviewChoice.to+'"]'));
+    assert.equal(await page.locator('select[data-move="'+reviewChoice.id+'"]').inputValue(),String(reviewChoice.to));
+    assert.match(await page.locator('#moveHistoryResult').textContent(),/최근 이동/);
+    assert.match(await page.locator('#moveHistoryResult').textContent(),/학습지표 평균/);
+    assert.match(await page.locator('#moveHistoryResult').textContent(),/다문화/);
+    const changedMetrics=await page.evaluate(()=>reportData(state.candidates[state.activeCandidate]));
+    assert.equal(changedMetrics[reviewChoice.from-1].total,startMetrics[reviewChoice.from-1].total-1);
+    assert.equal(changedMetrics[reviewChoice.to-1].total,startMetrics[reviewChoice.to-1].total+1);
+    assert.equal(await page.locator('#undoMove').isEnabled(),true);
+    await page.locator('#undoMove').click();
+    assert.equal(await page.locator('select[data-move="'+reviewChoice.id+'"]').inputValue(),String(reviewChoice.from));
+    assert.match(await page.locator('#moveHistoryResult').textContent(),/되돌림 완료/);
+    // Tablet workflow without native HTML drag support: select a pupil and tap destination.
+    await page.setViewportSize({width:420,height:840});
+    await page.locator('[data-result-student="'+reviewChoice.id+'"] [data-select-move]').click();
+    assert.match(await page.locator('#moveSelection').textContent(),/이동할 학생/);
+    await page.locator('[data-drop-button="'+reviewChoice.to+'"]').click();
+    assert.equal(await page.locator('select[data-move="'+reviewChoice.id+'"]').inputValue(),String(reviewChoice.to));
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.locator('[data-tab="results"]').click();
+    assert.equal(await page.locator('select[data-move="'+reviewChoice.id+'"]').inputValue(),String(reviewChoice.to),'drag changes persist after reload');
+    await page.setViewportSize({width:1280,height:900});
+
     // Real Excel-like grid: paste a header, quoted multiline attention notes, and a summary column.
     await page.locator('[data-tab="roster"]').click();
     await page.locator('#toggleBulk').click();
