@@ -154,6 +154,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.equal(await page.locator('[data-basket-drop]').nth(1).locator('.basket-chip').count(),2);
     // Schools without prior teacher choice start OFF; switching ON preserves future fixed picks.
     assert.equal(await page.locator('#teacherPriorityOn').isChecked(),false);
+    await page.locator('[data-tab="setup"]').click();
     await page.locator('.priority-switch').click();
     assert.equal(await page.locator('#teacherPriorityOn').isChecked(),true);
 
@@ -197,6 +198,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
 
     // All basket members must be placed into different classes, even with teacher-first OFF.
     const preserved=await page.evaluate(()=>state.students.filter(st=>st.fixed).map(st=>[st.id,st.fixed]));
+    await page.locator('[data-tab="setup"]').click();
     await page.locator('.priority-switch').click();
     assert.equal(await page.locator('#teacherPriorityOn').isChecked(),false);
     await page.locator('#generateQuick').click();
@@ -210,6 +212,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     for(const classes of offState.baskets)assert.equal(new Set(classes).size,classes.length,'같은 바구니 학생은 서로 다른 반');
     await page.reload({waitUntil:'domcontentloaded'});
     assert.equal(await page.locator('#teacherPriorityOn').isChecked(),false);
+    await page.locator('[data-tab="setup"]').click();
     await page.locator('.priority-switch').click();
     await page.locator('#generateQuick').click();
     assert.equal(await page.locator('#resultGrid select[data-move]:disabled').count(),2);
