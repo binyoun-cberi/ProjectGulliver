@@ -342,7 +342,7 @@
  <details><summary>1단계 · 학생 명단 작성</summary><p>학년·반·번호는 자동으로 준비됩니다. 이름, 성별, 학습지표, 유의 사항만 입력하세요. 엑셀의 이름 열을 한꺼번에 복사해 첫 번째 이름 칸에 붙여넣어도 됩니다. 학습지표의 빈칸과 0.00은 다릅니다.</p></details>
  <details><summary>교사 우선 배치(선택)</summary><p>설정에서 교사 우선 배치를 켜면 별도의 단계가 나타납니다. 미리 맡을 학생을 반마다 정할 수 있으며, 자동 편성에서도 유지됩니다. 끄면 단계가 숨겨지고 이전 지정은 보관됩니다.</p></details>
  <details><summary>3단계 · 함께 배정하지 않을 학생</summary><p>유의 사항별 최대 인원을 정하거나 '같은 반 금지 바구니'를 여러 개 만들 수 있습니다. 같은 바구니에 넣은 학생은 각각 다른 반에 배정됩니다.</p></details>
- <details><summary>4단계 · 결과 수정과 저장</summary><p>완성된 반에서 학생 카드를 다른 반으로 끌어 옮기고, 성별·유의 사항 인원과 학습지표 변화도 볼 수 있습니다. 편성 결과는 이 브라우저에 보관되므로 다른 PC에서 열려면 백업 파일을 이용하세요.</p></details>
+ <details><summary>4단계 · 결과 수정과 저장</summary><p>세로형 또는 가로 비교형으로 반을 펼쳐 볼 수 있습니다. 가로 비교형은 여러 반을 같은 줄에 나란히 표시합니다. 학생을 드래그해 옮겨도 반별 인원과 학습지표가 갱신됩니다. 「엑셀에 복사」를 누르고 엑셀의 첫 칸에 붙여넣으면 세로형은 한 목록으로, 가로형은 반별 열로 나란히 들어갑니다. 인쇄와 PDF 저장도 선택한 형태에 맞춰 만들어지며, 가로형 인쇄는 읽기 쉽도록 한 장에 최대 네 반을 배치합니다. 편성 결과는 이 브라우저에 보관되므로 다른 PC에서는 백업 파일을 이용하세요.</p></details>
  <details><summary>자료 보호와 유의 사항</summary><p>학생 정보는 이 도구의 브라우저 저장 공간에서 다루며 서버로 전송하지 않습니다. 공동으로 사용하는 PC에서는 사용 후 자료를 정리하고, 백업 파일은 학교의 개인정보 보호 규정에 따라 관리해 주세요. '분리조치' 항목만 체크하면 자동으로 학생 사이의 분리 관계가 지정되지는 않습니다. 바구니에서 학생을 직접 선택해야 합니다.</p></details>
  </div>
  <div class="dialog-actions"><button id="helpDone" class="btn primary" type="button">닫기</button></div>
@@ -1218,8 +1218,13 @@ function renderReviewCardChips(d){
 }
 function renderResults(){
   const has=state.candidates.length>0;
-  $('exportCsv').disabled=!has;$('print').disabled=!has;
-  if(!has){$('resultMessage').classList.remove('hidden');$('alternatives').innerHTML='';$('validation').innerHTML='';$('report').innerHTML='';$('resultGrid').innerHTML='';$('movePreview').innerHTML='';$('moveHistoryResult').innerHTML='';$('moveSelection').textContent='';$('undoMove').disabled=true;return}
+  $('exportCsv').disabled=!has;$('print').disabled=!has;$('copyResultExcel').disabled=!has;
+  $('resultVertical').setAttribute('aria-pressed',String(state.resultLayout!=='compare'));
+  $('resultCompare').setAttribute('aria-pressed',String(state.resultLayout==='compare'));
+  $('resultGrid').dataset.layout=state.resultLayout;
+  $('resultGrid').style.setProperty('--comparison-classes',String(state.classCount));
+  $('resultLayoutHint').textContent=state.resultLayout==='compare'?'반을 한 줄에 나란히 비교합니다. 반이 많으면 옆으로 스크롤하세요. 엑셀 복사·인쇄도 가로로 나옵니다.':'반별 학생을 세로로 확인합니다. 엑셀 복사·인쇄도 세로형으로 나옵니다.';
+  if(!has){$('resultMessage').classList.remove('hidden');$('alternatives').innerHTML='';$('validation').innerHTML='';$('report').innerHTML='';$('resultGrid').innerHTML='';$('movePreview').innerHTML='';$('moveHistoryResult').innerHTML='';$('moveSelection').textContent='';$('undoMove').disabled=true;$('resultPrintSheet').innerHTML='';return}
   $('resultMessage').classList.add('hidden');
   renderReviewMoveTools();
   $('alternatives').innerHTML=state.candidates.map((c,i)=>`<button class="alt ${state.activeCandidate===i?'active':''}" data-candidate="${i}"><strong>편성안 ${String.fromCharCode(65+i)}</strong><small>${i===0?'추천안 · ':''}조건 위반 ${validateAssignment(activeStudents(),effectivePairs(),c.assign,state.capRules).length}건</small></button>`).join('');
@@ -1233,6 +1238,7 @@ function renderResults(){
     const c=index+1;const pupils=state.students.filter(s=>selected.assign[s.id]===c).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
     return `<div class="class-card" data-drop-class="${c}" aria-label="${escapeHtml(displayClass(c))} 학생 이동 대상"><div class="class-top"><h3>${escapeHtml(displayClass(c))}<small>${d.total}명</small></h3><div class="class-metrics">${state.teacherNames[c]?'담당 '+escapeHtml(state.teacherNames[c])+' · ':''}교사 우선 배치 ${state.teacherPriorityOn?pupils.filter(st=>st.fixed).length:0}명 · 남 ${d.boys} · 여 ${d.girls} · 학습지표 ${d.levelN?(d.levelSum/d.levelN).toFixed(2):'미입력'}</div>${renderReviewCardChips(d)}</div><div class="class-body">${pupils.map(s=>`<div class="assigned ${moveSelectedId===s.id?'move-selected':''}" data-result-student="${escapeHtml(s.id)}" draggable="${!(state.teacherPriorityOn&&s.fixed)}" aria-label="${escapeHtml(studentTitle(s))}"><div class="drag-handle" aria-hidden="true" title="드래그해서 다른 반으로 이동">⠿</div><div class="person"><b>${escapeHtml(s.name)}${state.teacherPriorityOn&&s.fixed?' <span class="warning-dot" title="교사가 우선 배치한 학생 · 자동 편성에서 유지">◆</span>':''}</b><small>${escapeHtml(s.oldClass||'기존 반 미입력')}${s.number?' · '+escapeHtml(s.number)+'번':''} · ${escapeHtml(s.gender||'성별 미입력')} · 학습 ${escapeHtml(studyText(s.level))}${s.traits.length?' · '+escapeHtml(s.traits.join(', ')):''}</small></div><div class="move-controls">${state.teacherPriorityOn&&s.fixed?'<span class="move-locked">고정</span>':`<button type="button" class="btn move-select-btn" data-select-move="${escapeHtml(s.id)}" aria-pressed="${moveSelectedId===s.id}">${moveSelectedId===s.id?'선택 해제':'이동 선택'}</button>`}<select data-move="${escapeHtml(s.id)}" aria-label="${escapeHtml(s.name)} 반 변경" ${state.teacherPriorityOn&&s.fixed?'disabled title="고정된 학생"':''}>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${i+1===c?'selected':''}>${i+1}반</option>`).join('')}</select></div></div>`).join('')||'<div class="empty">학생 없음</div>'}</div><div class="class-drop no-print"><button type="button" class="btn" data-drop-button="${c}" ${!moveSelectedId||selected.assign[moveSelectedId]===c?'disabled':''}>${moveSelectedId&&selected.assign[moveSelectedId]!==c?'선택한 학생 여기로 이동':'여기로 이동'}</button></div></div>`;
   }).join('');
+  renderResultPrint(selected,counts);
 }
 /* BULK_TABLE_START: pure input helpers shared by the grid and paste fallback */
 function blankBulkRow(){return Array(7).fill('')}
@@ -2058,7 +2064,9 @@ function installEvents(){
   });
   $('resultGrid').addEventListener('change',manualMove);
 
-  $('exportCsv').addEventListener('click',exportCSV);$('print').addEventListener('click',()=>window.print());
+  document.querySelectorAll('[data-result-layout]').forEach(button=>button.addEventListener('click',()=>setResultLayout(button.dataset.resultLayout)));
+  $('copyResultExcel').addEventListener('click',copyResultExcel);
+  $('exportCsv').addEventListener('click',exportCSV);$('print').addEventListener('click',()=>{if(state.candidates.length)window.print()});
 }
 installEvents();showTab(view);
 </script>
