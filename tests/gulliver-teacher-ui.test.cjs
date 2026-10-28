@@ -164,6 +164,27 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     page.once('dialog',dialog=>dialog.accept());
     await page.locator('#demo').click();
     assert.equal(await page.locator('#statStudents').textContent(),'36명');
+
+    // Individual name colors in the live roster, including palette and arbitrary custom colors.
+    const coloredStudentId=await page.evaluate(()=>state.students[0].id);
+    const secondColoredStudentId=await page.evaluate(()=>state.students[1].id);
+    await page.locator('#rosterBody [data-student="'+coloredStudentId+'"] [data-student-color]').click();
+    assert.equal(await page.locator('#nameColorDialog').isVisible(),true);
+    await page.locator('#nameColorPalette [data-pick-name-color="#ffe0e6"]').click();
+    assert.equal(await page.evaluate(id=>state.students.find(s=>s.id===id).color,coloredStudentId),'#ffe0e6');
+    assert.match(await page.locator('#nameColorPreview').innerHTML(),/#ffe0e6/);
+    await page.locator('#nameColorDone').click();
+    await page.locator('#rosterBody [data-student="'+secondColoredStudentId+'"] [data-student-color]').click();
+    await page.locator('#customNameColor').fill('#162b4d');
+    await page.locator('#customNameColor').dispatchEvent('change');
+    assert.equal(await page.evaluate(id=>state.students.find(s=>s.id===id).color,secondColoredStudentId),'#162b4d');
+    await page.locator('#nameColorDone').click();
+    const nameColorsBeforeReload=await page.evaluate(()=>state.students.slice(0,2).map(s=>s.color));
+    assert.deepEqual(nameColorsBeforeReload,['#ffe0e6','#162b4d']);
+    await page.reload({waitUntil:'domcontentloaded'});
+    assert.deepEqual(await page.evaluate(()=>state.students.slice(0,2).map(s=>s.color)),nameColorsBeforeReload);
+    assert.match(await page.locator('#rosterBody [data-student="'+secondColoredStudentId+'"] [data-roster-cell="name"]').getAttribute('style'),/#162b4d/);
+
     const headings=await page.locator('#rosterHead th').allTextContents();
     assert.deepEqual(headings,['기존 학년 · 반 · 번호','이름','성별','학습지표','유의 사항']);
     const first=page.locator('#rosterBody tr').first();
@@ -261,6 +282,26 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.equal(await page.locator('select[data-move="'+secondId+'"]').inputValue(),'2');
 
     assert.equal(await page.locator('#view-results').isVisible(),true,'편성 결과 화면으로 이동해야 합니다.');
+
+    // Both class layout modes and printed output keep the original pupil color.
+    const initialCandidateCount=await page.evaluate(()=>state.candidates.length);
+    assert.match(await page.locator('#resultGrid [data-result-student="'+coloredStudentId+'"] .student-name-highlight').getAttribute('style'),/#ffe0e6/);
+    assert.match(await page.locator('#resultGrid [data-result-student="'+secondColoredStudentId+'"] .student-name-highlight').getAttribute('style'),/#162b4d/);
+    await page.locator('#resultGrid [data-result-student="'+coloredStudentId+'"] [data-student-color]').click();
+    assert.equal(await page.locator('#nameColorDialog').isVisible(),true);
+    await page.locator('#nameColorPalette [data-pick-name-color="#fff0b9"]').click();
+    await page.locator('#nameColorDone').click();
+    assert.equal(await page.evaluate(()=>state.candidates.length),initialCandidateCount,'색상만 변경하면 편성안을 다시 계산하지 않아야 함');
+    assert.equal(await page.evaluate(id=>state.students.find(s=>s.id===id).color,coloredStudentId),'#fff0b9');
+    await page.locator('#resultCompare').click();
+    assert.match(await page.locator('#resultGrid [data-result-student="'+coloredStudentId+'"] .student-name-highlight').getAttribute('style'),/#fff0b9/);
+    assert.match(await page.locator('#resultPrintSheet').innerHTML(),/#fff0b9/);
+    await page.locator('#resultVertical').click();
+    assert.match(await page.locator('#resultPrintSheet').innerHTML(),/#fff0b9/);
+    await page.locator('[data-tab="roster"]').click();
+    assert.match(await page.locator('#rosterBody [data-student="'+coloredStudentId+'"] [data-roster-cell="name"]').getAttribute('style'),/#fff0b9/);
+    await page.locator('[data-tab="results"]').click();
+
     assert.ok(await page.locator('#alternatives .alt').count()>=1);
     assert.match(await page.locator('#validation').textContent(),/지정한 배정 조건 충족/);
     assert.match(await page.locator('#report').textContent(),/운동부 \(반당 최대 2명\)/);
