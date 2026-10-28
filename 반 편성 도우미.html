@@ -422,14 +422,70 @@ function studentTitle(s){return s ? (s.name||'(이름 없음)')+' · '+(s.oldGra
 function displayClass(num){return state.grade+'학년 '+num+'반'}
 function duplicateNames(){const m=new Map();state.students.forEach(s=>{const n=s.name.trim();if(n)m.set(n,(m.get(n)||0)+1)});return [...m.entries()].filter(([,count])=>count>1)}
 function showTab(tab){if(tab==='preset'&&!state.teacherPriorityOn){toast('교사 우선 배치를 사용하려면 0단계에서 ON으로 바꾸세요.');return}if(tab!=='setup'&&!state.setupCompleted){toast('0단계에서 현재 반별 인원을 입력하고 명단 틀을 만들어 주세요.');return}view=tab;document.querySelectorAll('.tab').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.tab===tab)));['setup','roster','preset','rules','results'].forEach(key=>$('view-'+key).classList.toggle('hidden',tab!==key));render()}
+/* PLANNER_DASHBOARD_START: source counts and recorded pupil information are deliberately separate. */
+function plannerSummaryData(current){
+ const rows=current.sourceClasses||[];
+ const planned=rows.reduce((n,row)=>({boys:n.boys+(Number(row.boys)||0),girls:n.girls+(Number(row.girls)||0)}),{boys:0,girls:0});
+ const students=current.students||[];
+ const named=students.filter(st=>String(st.name||'').trim()).length;
+ const enteredBoys=students.filter(st=>st.gender==='남').length,enteredGirls=students.filter(st=>st.gender==='여').length;
+ const scored=students.filter(st=>Number.isFinite(st.level)&&st.level>=0);
+ const traitCounts=new Map();
+ for(const st of students){
+  const tags=new Set((st.traits||[]).map(tag=>String(tag).startsWith('다문화(')?'다문화':tag));
+  for(const tag of tags)traitCounts.set(tag,(traitCounts.get(tag)||0)+1);
+ }
+ return {rows,planned,total:planned.boys+planned.girls,named,registered:students.length,enteredBoys,enteredGirls,
+   noGender:students.length-enteredBoys-enteredGirls,
+   scored:scored.length,avgScore:scored.length?scored.reduce((a,b)=>a+b.level,0)/scored.length:null,
+   tags:[...traitCounts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ko'))};
+}
+function renderOverview(){
+ const d=plannerSummaryData(state),hasPlan=d.total>0,denom=d.total||1;
+ const fixed=x=>Math.round(x*10)/10;
+ const stacked=(boys,girls)=>{
+  const sum=boys+girls;
+  return '<div class="overview-sexbar" role="img" aria-label="남 '+boys+'명, 여 '+girls+'명">'+
+   (sum?'<div class="boys" style="width:'+(100*boys/sum)+'%"></div><div class="girls" style="width:'+(100*girls/sum)+'%"></div>':'')+'</div>';
+ };
+ const roomRows=hasPlan?d.rows.map(row=>{
+  const boys=Number(row.boys)||0,girls=Number(row.girls)||0,total=boys+girls;
+  return '<div class="overview-room"><strong>'+row.room+'반</strong>'+stacked(boys,girls)+'<b>'+total+'명</b></div>';
+ }).join(''):'<div class="overview-empty">0단계에서 반별 남녀 수를 입력하면 여기에 분포가 표시됩니다.</div>';
+ const tags=d.tags.length?d.tags.slice(0,7).map(([tag,count])=>
+   '<span class="overview-tag">'+escapeHtml(tag)+' <strong>'+count+'명</strong></span>').join(''):'<div class="overview-empty">학생별 유의 사항을 선택하면 항목별 인원을 볼 수 있습니다.</div>';
+ $('overviewDashboard').innerHTML=
+  '<div class="overview-pane"><div class="overview-head"><h2>기존 학급 한눈에</h2><small>'+escapeHtml(state.sourceGrade)+'학년 · '+state.sourceClassCount+'개 반 · 0단계 입력 기준</small></div>'+
+  '<div class="overview-kpis"><div class="overview-kpi"><small>전체 인원</small><strong>'+d.total+'명</strong></div><div class="overview-kpi"><small>남학생</small><strong>'+d.planned.boys+'명</strong></div><div class="overview-kpi"><small>여학생</small><strong>'+d.planned.girls+'명</strong></div></div>'+
+  (hasPlan?stacked(d.planned.boys,d.planned.girls):'')+
+  '<div class="overview-legend"><span><i class="overview-legend-dot boys"></i> 남 '+d.planned.boys+'명</span><span><i class="overview-legend-dot girls"></i> 여 '+d.planned.girls+'명</span></div>'+
+  roomRows+'</div>'+
+  '<div class="overview-pane"><div class="overview-head"><h2>학생 정보 현황</h2><small>1단계에서 입력한 정보 기준</small></div>'+
+  '<div class="overview-mini"><div><small>이름 입력</small><strong>'+d.named+' / '+d.registered+'명</strong></div><div><small>성별 입력</small><strong>'+(d.enteredBoys+d.enteredGirls)+' / '+d.registered+'명</strong></div>'+
+  '<div><small>학습지표 입력</small><strong>'+d.scored+'명</strong></div><div><small>학습지표 평균</small><strong>'+(d.avgScore===null?'—':d.avgScore.toFixed(2))+'</strong></div></div>'+
+  '<div class="overview-actual">확인된 성별 · 남 '+d.enteredBoys+'명 / 여 '+d.enteredGirls+'명 / 미입력 '+d.noGender+'명</div>'+
+  '<div class="overview-head" style="margin-top:15px;margin-bottom:6px"><h2>유의 사항</h2><small>학생별 선택 내역 · 중복 선택 가능</small></div>'+
+  '<div class="overview-tags">'+tags+'</div><div class="overview-actual">내년 '+escapeHtml(state.grade)+'학년 '+state.classCount+'개 반 · 반당 예상 '+fixed(d.total/state.classCount)+'명</div></div>';
+}
+function renderTraitSettings(){
+ $('traitChips').innerHTML=state.traits.map(t=>'<span class="chip">'+escapeHtml(t)+' <button type="button" data-delete-trait="'+escapeHtml(t)+'" aria-label="'+escapeHtml(t)+' 유의 사항 삭제" title="항목 삭제">×</button></span>').join('');
+}
+function renderPlannerSettings(){
+ $('teacherPriorityOn').checked=!!state.teacherPriorityOn;
+ $('priorityModeHelp').textContent=state.teacherPriorityOn?'켜짐 · 지정한 학생은 해당 반에 유지됩니다.':'꺼짐 · 전체 학생을 자동 편성합니다.';
+ renderTraitSettings();
+ const presetTab=document.querySelector('[data-tab="preset"]');
+ presetTab.hidden=!state.teacherPriorityOn;
+ presetTab.setAttribute('aria-disabled',String(!state.teacherPriorityOn));
+ if(!state.teacherPriorityOn&&view==='preset')view='roster';
+}
+/* PLANNER_DASHBOARD_END */
 function render(){
   $('grade').value=state.grade;$('classCount').value=state.classCount;
   $('sourceGrade').value=state.sourceGrade;$('sourceClassCount').value=state.sourceClassCount;
   document.querySelectorAll('.tab').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.tab===view)));
-  $('teacherPriorityOn').checked=!!state.teacherPriorityOn;
-  $('priorityModeHelp').textContent=state.teacherPriorityOn?'ON · 교사가 지정한 학생의 반을 유지하며 나머지 빈자리를 채웁니다.':'OFF · 교사 지정 없이 자동 편성합니다. 기존 우선 배치 정보는 그대로 보관합니다.';
-  document.querySelector('[data-tab="preset"]').classList.toggle('priority-tab-off',!state.teacherPriorityOn);
-  document.querySelector('[data-tab="preset"]').setAttribute('aria-disabled',String(!state.teacherPriorityOn));
+  renderPlannerSettings();
+  renderOverview();
   $('statStudents').textContent=state.students.length+'명';$('statClasses').textContent=state.classCount+'개 반';$('statPairs').textContent=effectivePairs().length+'쌍';$('statDuplicates').textContent=duplicateNames().length+'건';
   $('rosterCount').textContent=state.students.length+'명';$('pairCount').textContent=state.pairs.length+'쌍';
   if(view==='setup')renderSetup();
@@ -488,7 +544,7 @@ function rosterGenderCheck(){
  return '<div class="helper" style="margin:10px 0"><b>학생별 성별 입력 현황</b> · 총 '+state.students.filter(s=>s.gender).length+'/'+state.students.length+'명 입력<div class="legend">'+diff.join('')+'</div><div>0단계의 인원은 참고용입니다. 성별을 학생 번호에서 추정하거나 자동 지정하지 않습니다.</div></div>';
 }
 function renderRoster(){
-  $('traitChips').innerHTML=state.traits.map(t=>`<span class="chip">${escapeHtml(t)} <button type="button" data-delete-trait="${escapeHtml(t)}" aria-label="${escapeHtml(t)} 유의 사항 항목 삭제" title="항목 삭제">×</button></span>`).join('');
+
   $('rosterHead').innerHTML='<tr><th>기존 학년 · 반 · 번호</th><th>이름</th><th>성별</th><th>학습지표 (0.00~)</th><th>유의 사항</th></tr>';
   $('rosterGenderSummary').innerHTML=rosterGenderCheck();
   const visible=state.students.filter(st=>!searchQuery||[st.oldGrade,st.oldClass,st.name,st.number].join(' ').toLowerCase().includes(searchQuery));
@@ -1293,7 +1349,7 @@ function isCompatibleMove(id,to,candidate){const student=findStudent(id);if(!stu
 function addStudent(){const room=state.sourceClassCount||1;const last=Math.max(0,...state.students.filter(st=>stageZeroRoom(st.oldClass)===room).map(st=>Number(st.number)||0));const s={id:makeId(),oldGrade:state.sourceGrade,oldClass:room+'반',number:String(last+1),name:'',gender:'',level:null,traits:[],fixed:0,note:''};state.students.push(s);invalidate();changeState();toast('현재 '+room+'반에 임시 학생 자리 1개를 추가했습니다. 0단계 인원과 차이가 생겼습니다.');const field=document.querySelector(`[data-student="${s.id}"] [data-key="name"]`);field?.focus()}
 function addTrait(){const t=$('newTrait').value.trim();if(!t)return;if(state.traits.includes(t)){toast('이미 있는 특징입니다.');return}if(state.traits.length>=64){toast('유의 사항은 최대 64개까지 추가할 수 있습니다.');return}state.traits.push(t);$('newTrait').value='';invalidate();changeState()}
 function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)return;const s=findStudent(tr.dataset.student);if(!s)return;
-  if(e.target.dataset.trait){const t=e.target.dataset.trait;s.traits=e.target.checked?[...new Set([...s.traits,t])]:s.traits.filter(x=>x!==t);const picker=e.target.closest('.notice-picker');if(picker){picker.querySelector('[data-notice-summary]').textContent=s.traits.length?s.traits.join(', '):'유의 사항 선택';picker.querySelector('.count-pill').textContent=s.traits.length+'개'}invalidate();saveState();return}
+  if(e.target.dataset.trait){const t=e.target.dataset.trait;s.traits=e.target.checked?[...new Set([...s.traits,t])]:s.traits.filter(x=>x!==t);const picker=e.target.closest('.notice-picker');if(picker){picker.querySelector('[data-notice-summary]').textContent=s.traits.length?s.traits.join(', '):'유의 사항 선택';picker.querySelector('.count-pill').textContent=s.traits.length+'개'}invalidate();saveState();renderOverview();return}
   else if(e.target.dataset.key){const key=e.target.dataset.key;const value=e.target.value;if(key==='level'){const parsed=parseStudyScore(value);if(value!==''&&parsed===null){toast('학습지표는 0.00 이상의 숫자로 입력해 주세요.');renderRoster();return}s.level=parsed}else if(key==='fixed'){tryPreset(s.id,Number(value));return}else s[key]=value.slice(0,key==='name'?80:50)}
   else return;
   invalidate();saveState();render();
