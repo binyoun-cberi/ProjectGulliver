@@ -115,6 +115,30 @@
 @media(max-width:850px){.planner-overview{grid-template-columns:1fr}}@media(max-width:720px){.planner-header-right{width:100%;justify-content:space-between}.planner-tool-btn{min-width:61px}.overview-pane{padding:14px}.planner-panel-dialog{padding:18px 16px}}@media print{.planner-tool-actions,.planner-panel-dialog,.setup-setting-hint{display:none!important}.planner-overview{box-shadow:none}}
 
 .planner-legacy-stats{display:none!important}.settings-data-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.settings-data-actions .btn{font-size:12px}
+
+/* Attention-first overview: category counts and original-room breakdown take priority. */
+.planner-overview{grid-template-columns:minmax(0,1.5fr) minmax(250px,.8fr)}
+.trait-overview{border-color:#b9dbce;background:#fcfefd}
+.trait-stat-row{border-top:1px solid #e4eeeb;padding:12px 0 10px}
+.trait-stat-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.trait-stat-top>strong{font-size:13px;min-width:66px;color:#265946}
+.trait-stat-value{font-size:18px;color:#246c55;font-weight:850}
+.trait-cap-pill{font-size:10px;color:#855e36;background:#fdf4e8;border:1px solid #f0d8b9;border-radius:99px;padding:3px 7px}
+.trait-stat-track{height:7px;border-radius:100px;background:#e8f1ed;overflow:hidden;margin-top:7px}
+.trait-stat-track span{display:block;min-height:7px;border-radius:100px;background:#5da88a}
+.trait-room-list{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.trait-room-pill{font-size:10px;color:#58766a;background:#f1f7f4;border:1px solid #e2ece6;border-radius:7px;padding:4px 7px}
+.trait-room-pill strong{color:#236147;font-size:11px}
+.compact-overview-total{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:12px 0}
+.compact-overview-total strong{font-size:24px;color:#285f50}
+.compact-overview-total span{font-size:11px;color:#5a706c}
+.compact-gender{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px;font-size:11px;color:#697a74}
+.compact-gender .overview-sexbar{height:8px}.compact-gender .overview-sexbar span{display:block}
+.compact-room-list{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0 16px}
+.compact-room-list span{font-size:10px;color:#5e7770;border:1px solid #e4eae7;border-radius:6px;padding:4px 6px}.compact-room-list b{font-size:11px}
+.compact-overview .overview-mini strong{font-size:15px}
+@media(max-width:850px){.planner-overview{grid-template-columns:1fr}}
+
 /* Stage 0: source enrollment and future class planning */
 .setup-year-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:13px 0 16px}
 .setup-year-grid .field{min-width:0}
@@ -451,31 +475,39 @@ function plannerSummaryData(current){
    tags:[...traitCounts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ko'))};
 }
 function renderOverview(){
- const d=plannerSummaryData(state),hasPlan=d.total>0,denom=d.total||1;
- const fixed=x=>Math.round(x*10)/10;
- const stacked=(boys,girls)=>{
-  const sum=boys+girls;
-  return '<div class="overview-sexbar" role="img" aria-label="남 '+boys+'명, 여 '+girls+'명">'+
-   (sum?'<div class="boys" style="width:'+(100*boys/sum)+'%"></div><div class="girls" style="width:'+(100*girls/sum)+'%"></div>':'')+'</div>';
- };
- const roomRows=hasPlan?d.rows.map(row=>{
-  const boys=Number(row.boys)||0,girls=Number(row.girls)||0,total=boys+girls;
-  return '<div class="overview-room"><strong>'+row.room+'반</strong>'+stacked(boys,girls)+'<b>'+total+'명</b></div>';
- }).join(''):'<div class="overview-empty">0단계에서 반별 남녀 수를 입력하면 여기에 분포가 표시됩니다.</div>';
- const tags=d.tags.length?d.tags.slice(0,7).map(([tag,count])=>
-   '<span class="overview-tag">'+escapeHtml(tag)+' <strong>'+count+'명</strong></span>').join(''):'<div class="overview-empty">학생별 유의 사항을 선택하면 항목별 인원을 볼 수 있습니다.</div>';
+ const d=plannerSummaryData(state),rooms=d.rows,entries=new Map(d.tags);
+ const tags=[...new Set(['다문화','특수',...d.tags.map(([x])=>x),...Object.keys(state.capRules)])]
+   .filter(tag=>entries.has(tag)||Object.hasOwn(state.capRules,tag)||tag==='다문화'||tag==='특수')
+   .sort((a,b)=>((a==='다문화'||a==='특수')?0:1)-((b==='다문화'||b==='특수')?0:1)||((entries.get(b)||0)-(entries.get(a)||0))||a.localeCompare(b,'ko'));
+ const genderTotal=d.total,sexPercent=genderTotal?Math.round(d.planned.boys*100/genderTotal):0;
+ const details=tags.map(tag=>{
+  const count=entries.get(tag)||0,cap=state.capRules[tag],fraction=d.registered?Math.min(100,count/d.registered*100):0;
+  const classCounts=rooms.map(row=>{
+   const n=state.students.filter(st=>stageZeroRoom(st.oldClass)===row.room&&
+     new Set(st.traits.map(v=>String(v).startsWith('다문화(')?'다문화':v)).has(tag)).length;
+   return '<span class="trait-room-pill">'+row.room+'반 <strong>'+n+'</strong></span>';
+  }).join('');
+  return '<div class="trait-stat-row"><div class="trait-stat-top"><strong>'+escapeHtml(tag)+'</strong>'+
+   '<span class="trait-stat-value">'+count+'명</span>'+
+   (cap===undefined?'':'<span class="trait-cap-pill">반당 최대 '+cap+'명</span>')+'</div>'+
+   '<div class="trait-stat-track"><span style="width:'+fraction+'%"></span></div>'+
+   '<div class="trait-room-list">'+classCounts+'</div></div>';
+ }).join('');
+ const status=(d.named+'/'+d.registered+'명');
  $('overviewDashboard').innerHTML=
-  '<div class="overview-pane"><div class="overview-head"><h2>기존 학급 한눈에</h2><small>'+escapeHtml(state.sourceGrade)+'학년 · '+state.sourceClassCount+'개 반 · 0단계 입력 기준</small></div>'+
-  '<div class="overview-kpis"><div class="overview-kpi"><small>전체 인원</small><strong>'+d.total+'명</strong></div><div class="overview-kpi"><small>남학생</small><strong>'+d.planned.boys+'명</strong></div><div class="overview-kpi"><small>여학생</small><strong>'+d.planned.girls+'명</strong></div></div>'+
-  (hasPlan?stacked(d.planned.boys,d.planned.girls):'')+
-  '<div class="overview-legend"><span><i class="overview-legend-dot boys"></i> 남 '+d.planned.boys+'명</span><span><i class="overview-legend-dot girls"></i> 여 '+d.planned.girls+'명</span></div>'+
-  roomRows+'</div>'+
-  '<div class="overview-pane"><div class="overview-head"><h2>학생 정보 현황</h2><small>1단계에서 입력한 정보 기준</small></div>'+
-  '<div class="overview-mini"><div><small>이름 입력</small><strong>'+d.named+' / '+d.registered+'명</strong></div><div><small>성별 입력</small><strong>'+(d.enteredBoys+d.enteredGirls)+' / '+d.registered+'명</strong></div>'+
-  '<div><small>학습지표 입력</small><strong>'+d.scored+'명</strong></div><div><small>학습지표 평균</small><strong>'+(d.avgScore===null?'—':d.avgScore.toFixed(2))+'</strong></div></div>'+
-  '<div class="overview-actual">확인된 성별 · 남 '+d.enteredBoys+'명 / 여 '+d.enteredGirls+'명 / 미입력 '+d.noGender+'명</div>'+
-  '<div class="overview-head" style="margin-top:15px;margin-bottom:6px"><h2>유의 사항</h2><small>학생별 선택 내역 · 중복 선택 가능</small></div>'+
-  '<div class="overview-tags">'+tags+'</div><div class="overview-actual">분리 관계 '+effectivePairs().length+'쌍 · 동명이인 '+duplicateNames().length+'건</div><div class="overview-actual">내년 '+escapeHtml(state.grade)+'학년 '+state.classCount+'개 반 · 반당 예상 '+fixed(d.total/state.classCount)+'명</div></div>';
+ '<div class="overview-pane trait-overview"><div class="overview-head"><h2>유의 사항별 현황</h2><small>등록된 학생 기준 · 같은 항목 중복 집계 없음</small></div>'+
+ (d.registered?details:'<div class="overview-empty">1단계에서 학생별 유의 사항을 입력하면 항목별 인원과 기존 반 분포가 나타납니다.</div>')+
+ '<div class="overview-actual">각 반의 인원 제한은 0단계에서 설정할 수 있습니다. <b>0명</b>은 현재 해당 항목을 선택한 학생이 없다는 뜻입니다.</div></div>'+
+ '<div class="overview-pane compact-overview"><div class="overview-head"><h2>학급·입력 현황</h2><small>'+escapeHtml(state.sourceGrade)+'학년 → '+escapeHtml(state.grade)+'학년</small></div>'+
+ '<div class="compact-overview-total"><strong>'+d.total+'명</strong><span>기존 '+state.sourceClassCount+'개 반 → 내년 '+state.classCount+'개 반</span></div>'+
+ '<div class="compact-gender"><span>남 '+d.planned.boys+'명</span><div class="overview-sexbar" role="img" aria-label="남 '+d.planned.boys+'명, 여 '+d.planned.girls+'명"><span class="boys" style="width:'+sexPercent+'%"></span><span class="girls" style="width:'+(100-sexPercent)+'%"></span></div><span>여 '+d.planned.girls+'명</span></div>'+
+ '<div class="compact-room-list">'+rooms.map(row=>'<span>'+row.room+'반 <b>'+(Number(row.boys)||0)+(Number(row.girls)||0)+'명</b></span>').join('')+'</div>'+
+ '<div class="overview-mini"><div><small>이름 입력</small><strong>'+status+'</strong></div>'+
+ '<div><small>성별 입력</small><strong>'+(d.enteredBoys+d.enteredGirls)+' / '+d.registered+'명</strong></div>'+
+ '<div><small>학습지표 입력</small><strong>'+d.scored+'명</strong></div>'+
+ '<div><small>학습지표 평균</small><strong>'+(d.avgScore===null?'—':d.avgScore.toFixed(2))+'</strong></div></div>'+
+ '<div class="overview-actual">성별 확인 · 남 '+d.enteredBoys+'명 / 여 '+d.enteredGirls+'명 / 미입력 '+d.noGender+'명</div>'+
+ '<div class="overview-actual">분리 관계 '+effectivePairs().length+'쌍 · 동명이인 '+duplicateNames().length+'건</div></div>';
 }
 function renderTraitSettings(){
  $('traitChips').innerHTML=state.traits.map(t=>'<span class="chip">'+escapeHtml(t)+' <button type="button" data-delete-trait="'+escapeHtml(t)+'" aria-label="'+escapeHtml(t)+' 유의 사항 삭제" title="항목 삭제">×</button></span>').join('');
