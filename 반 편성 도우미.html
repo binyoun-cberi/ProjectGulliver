@@ -242,8 +242,8 @@ function renderRoster(){
     <td><input class="score-input" data-key="level" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${hasStudyScore(st)?studyText(st.level):''}" aria-label="${escapeHtml(st.name)} 학습지표, 소수점 둘째 자리"></td>
     <td class="notice-cell"><details class="notice-picker"><summary><span data-notice-summary>${escapeHtml(st.traits.length?st.traits.join(', '):'유의 사항 선택')}</span><span class="count-pill">${st.traits.length}개</span></summary>
       <div class="notice-options">${state.traits.map(t=>`<label><input type="checkbox" data-trait="${escapeHtml(t)}" aria-label="${escapeHtml(st.name)} ${escapeHtml(t)}" ${st.traits.includes(t)?'checked':''}><span>${escapeHtml(t)}</span></label>`).join('')}</div>
-      <div class="notice-extra"><label class="field">교사 우선 배치 반 (ON 시 적용)<select data-key="fixed" aria-label="${escapeHtml(st.name)} 배정 반 고정"><option value="0">미고정</option>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${st.fixed===i+1?'selected':''}>${i+1}반 고정</option>`).join('')}</select></label><button class="btn small" data-note="${escapeHtml(st.id)}">${st.note?'참고 메모 수정':'참고 메모 작성'}</button></div></details>
-      ${st.fixed?'<span class="note-inline">◆ '+st.fixed+'반 고정</span>':''}${st.note?'<span class="note-inline">메모 있음</span>':''}
+      <div class="notice-extra"><label class="field">교사 우선 배치 반 (ON 시 적용)<select data-key="fixed" aria-label="${escapeHtml(st.name)} 배정 반 고정" ${!state.teacherPriorityOn?'disabled title="교사 우선 배치를 ON으로 전환해야 합니다"':''}><option value="0">미고정</option>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${st.fixed===i+1?'selected':''}>${i+1}반 고정</option>`).join('')}</select></label><button class="btn small" data-note="${escapeHtml(st.id)}">${st.note?'참고 메모 수정':'참고 메모 작성'}</button></div></details>
+      ${st.fixed?'<span class="note-inline">◆ '+st.fixed+'반 '+(state.teacherPriorityOn?'고정':'지정 보관 (OFF)')+'</span>':''}${st.note?'<span class="note-inline">메모 있음</span>':''}
     </td></tr>`).join(''):`<tr><td colspan="6" class="empty"><b>${state.students.length?'검색 결과가 없습니다.':'등록된 학생이 없습니다.'}</b>${state.students.length?'검색어를 바꿔 주세요.':'「+ 학생 추가」 또는 「스프레드시트 붙여넣기」로 시작하세요.'}</td></tr>`;
 }
 function presetPersonInfo(st){
@@ -949,7 +949,7 @@ function exportCSV(){
   const rows=[['새 학급','담당 교사','새 번호','기존 학년','기존 반','번호','이름','성별','학습지표','유의 사항','교사 메모','우선 배치']];
   for(let i=1;i<=state.classCount;i++){
     const pupils=state.students.filter(st=>c.assign[st.id]===i).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-    pupils.forEach((st,j)=>rows.push([displayClass(i),state.teacherNames[i]||'',j+1,st.oldGrade||'',st.oldClass,st.number,st.name,st.gender,hasStudyScore(st)?studyText(st.level):'',st.traits.join('; '),st.note,st.fixed?'교사 지정':'자동 편성']));
+    pupils.forEach((st,j)=>rows.push([displayClass(i),state.teacherNames[i]||'',j+1,st.oldGrade||'',st.oldClass,st.number,st.name,st.gender,hasStudyScore(st)?studyText(st.level):'',st.traits.join('; '),st.note,state.teacherPriorityOn&&st.fixed?'교사 지정':'자동 편성']));
   }
   download('반편성_결과_'+state.grade+'학년.csv','\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');toast('편성 결과 CSV를 저장했습니다.');
 }
