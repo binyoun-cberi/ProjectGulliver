@@ -82,6 +82,18 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.match(await page.locator('#overviewDashboard').textContent(),/남학생/);
     assert.match(await page.locator('#overviewDashboard').textContent(),/여학생/);
     assert.equal(await page.locator('#overviewDashboard .overview-room').count(),4);
+    await page.screenshot({path:'test-artifacts/time-tools-planner-overview-desktop.png',fullPage:false});
+    await page.setViewportSize({width:390,height:844});
+    assert.equal(await page.locator('#plannerHelpDialog').isVisible(),false);
+    const overviewBounds=await page.locator('#overviewDashboard').evaluate(el=>{
+      const box=el.getBoundingClientRect();
+      return {left:box.left,right:box.right,viewport:innerWidth};
+    });
+    assert.ok(overviewBounds.left>=0&&overviewBounds.right<=overviewBounds.viewport+2,
+      '인포그래픽이 모바일 가로 화면 밖으로 벗어나면 안 됩니다.');
+    assert.equal(await page.locator('#overviewDashboard .overview-pane').count(),2);
+    await page.screenshot({path:'test-artifacts/time-tools-planner-overview-mobile.png',fullPage:false});
+    await page.setViewportSize({width:1280,height:900});
     await page.locator('#openHelp').click();
     assert.equal(await page.locator('#plannerHelpDialog').isVisible(),true);
     await page.locator('#plannerHelpDialog details').nth(1).locator('summary').click();
@@ -136,6 +148,12 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.locator('#newTrait').fill('돌봄 필요');
     await page.locator('#addTrait').click();
     assert.match(await page.locator('#traitChips').textContent(),/돌봄 필요/);
+    await page.locator('#newTrait').fill('검수 임시');
+    await page.locator('#addTrait').click();
+    assert.match(await page.locator('#traitChips').textContent(),/검수 임시/);
+    page.once('dialog',dialog=>dialog.accept());
+    await page.locator('#traitChips [data-delete-trait="검수 임시"]').click();
+    assert.doesNotMatch(await page.locator('#traitChips').textContent(),/검수 임시/);
     await page.locator('#settingsDone').click();
     const nextFirst=page.locator('#rosterBody tr').first();
     await nextFirst.locator('.notice-picker summary').click();
