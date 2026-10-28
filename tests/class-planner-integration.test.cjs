@@ -208,3 +208,56 @@ test('일괄 배치 인원 초과·유의 사항 상한·변경된 명단의 되
  assert.equal(ui.applyPresets([people[0].id,people[4].id],1),false);assert.ok(people.every(st=>!st.fixed));
  assert.equal(ui.applyPresets([people[0].id],1),true);people.pop();ui.undoPresets();assert.equal(people[0].fixed,1);assert.equal(ui.presetUndo,null);
 });
+
+function sheetEngine(){
+ const a=html.indexOf('/* BULK_TABLE_START'),b=html.indexOf('/* BULK_TABLE_END */',a);
+ assert.ok(a>0&&b>a,'엑셀 입력표 해석 함수를 찾을 수 있어야 함');
+ const ctx={};vm.createContext(ctx);vm.runInContext(html.slice(a,b),ctx);return ctx;
+}
+test('엑셀 복사 6학년 4개 반 96행: 비어 있는 이름과 학생별 유의 사항을 보존, 요약 행 제외',()=>{
+ const sh=sheetEngine(),records=['학년\t반\t번호\t이름\t성별\t유의사항\t'];
+ for(let room=1;room<=4;room++)for(let num=1;num<=24;num++){
+  let note=room===1&&num===2?'다문화':room===1&&num===15?'다문화; 한부모':room===4&&num===17?'다문화(베트남)':'';
+  records.push([6,room,num,'','',note,num===1?'남:10+여:14=24명':''].join('\t'));
+ }
+ records.push('\t\t\t\t\t\t총: 96명','\t\t\t\t\t\t','');
+ const out=sh.bulkFormatRows(sh.parseSheetText(records.join('\n')));
+ assert.equal(out.rows.length,96);
+ assert.equal(out.rows[0][0],'6');assert.equal(out.rows[0][1],'1');
+ assert.equal(out.rows[95][1],'4');assert.equal(out.rows[95][2],'24');
+ assert.equal(out.rows[0][3],'');assert.equal(out.rows[0][6],'');
+ assert.equal(out.rows[14][5],'다문화; 한부모');
+ assert.equal(sh.bulkAttention(out.rows[14][5]).length,2);
+ assert.equal(out.rows.filter(row=>row[3].trim()).length,0,'익명화된 이름을 임의로 생성하지 않음');
+});
+test('엑셀 인용부호 안 줄바꿈, 다문화 세부 표기와 학습지표를 올바르게 가져옴',()=>{
+ const sh=sheetEngine();
+ const contents='학년\t반\t번호\t이름\t성별\t유의사항\t학습지표\n6\t1\t15\t김가람\t여\t"다문화\n한부모"\t83.75\n6\t4\t17\t이별\t남\t다문화(베트남)\t0.00';
+ const matrix=sh.bulkFormatRows(sh.parseSheetText(contents));
+ assert.equal(matrix.rows.length,2);assert.equal(matrix.rows[0][5],'다문화\n한부모');
+ assert.equal(matrix.rows[0][6],'83.75');assert.equal(matrix.rows[1][6],'0.00');
+ assert.deepEqual(Array.from(sh.bulkAttention(matrix.rows[0][5])),['다문화','한부모']);
+ assert.deepEqual(Array.from(sh.bulkAttention(matrix.rows[1][5])),['다문화','다문화(베트남)']);
+});
+test('마크다운 표의 <br> 복수 유의 사항, 머리말·합계·빈 행 제외',()=>{
+ const sh=sheetEngine();
+ const table='| 학년 | 반 | 번호 | 이름 | 성별 | 유의사항 |  |\n| --- | --- | --- | --- | --- | --- | --- |\n| 6 | 1 | 1 | 김하늘 | 여 | 다문화<br> 한부모 | 남:10+여:14=24명 |\n| 6 | 2 | 1 | 이도윤 | 남 | 운동부 | 남:11+여:13=24명 |\n| | | | | | | 총: 96명 |\n| | | | | | | |';
+ const out=sh.bulkFormatRows(sh.parseSheetText(table));
+ assert.equal(out.rows.length,2);
+ assert.equal(out.rows[0][3],'김하늘');
+ assert.deepEqual(Array.from(sh.bulkAttention(out.rows[0][5])),['다문화','한부모']);
+ assert.equal(out.rows[1][6],'');
+});
+test('이전 형식의 학습지표 및 한 열 이름 붙여넣기와 호환됨',()=>{
+ const sh=sheetEngine();
+ let old=sh.bulkFormatRows(sh.parseSheetText('1반\t1\t김하늘\t여\t82.50\t사회성'));
+ assert.equal(old.rows[0][1],'1반');assert.equal(old.rows[0][3],'김하늘');
+ assert.equal(old.rows[0][6],'82.50');
+ let names=sh.bulkFormatRows(sh.parseSheetText('김가람\n이별\n박하늘'));
+ assert.deepEqual(Array.from(names.rows.map(row=>row[3])),['김가람','이별','박하늘']);
+});
+test('명단 입력표 컨트롤과 로컬 저장용 기존 학년 필드가 존재함',()=>{
+ for(const id of ['bulkGridBody','bulkAddRows','bulkFocus','bulkParseText','bulkPreview','bulkText','commitBulk'])assert.ok(html.includes('id="'+id+'"'),id);
+ assert.match(html,/oldGrade:String\(st\.oldGrade/);
+ assert.match(html,/data-bulk-r/);
+});
