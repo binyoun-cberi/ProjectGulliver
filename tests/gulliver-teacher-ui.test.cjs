@@ -62,10 +62,54 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     }
     // Real browser smoke: demo import -> generate -> result preview -> download.
     await page.goto(base + encodeURIComponent('반 편성 도우미.html'), {waitUntil: 'domcontentloaded'});
+    // New stage zero sets current grade/class counts before any student names.
+    assert.equal(await page.locator('#view-setup').isVisible(),true);
+    assert.equal(await page.locator('[data-tab="setup"]').getAttribute('aria-selected'),'true');
+    await page.locator('#sourceGrade').fill('5');
+    await page.locator('#sourceGrade').press('Tab');
+    await page.locator('#sourceClassCount').fill('4');
+    await page.locator('#sourceClassCount').press('Tab');
+    await page.locator('#grade').fill('6');
+    await page.locator('#grade').press('Tab');
+    await page.locator('#classCount').fill('4');
+    await page.locator('#classCount').press('Tab');
+    for(let room=1;room<=4;room++)for(const [gender,value] of [['boys','10'],['girls','14']]){
+      const input=page.locator('[data-source-room="'+room+'"][data-source-gender="'+gender+'"]');
+      await input.fill(value);await input.press('Tab');
+    }
+    assert.match(await page.locator('#sourceClassTotals').textContent(),/96명/);
+    assert.match(await page.locator('#futureClassSummary').textContent(),/남 10명/);
+    assert.match(await page.locator('#futureClassSummary').textContent(),/여 14명/);
+    assert.equal(await page.locator('#teacherPriorityOn').isChecked(),false);
+    await page.locator('#applySetup').click();
+    assert.equal(await page.locator('#view-roster').isVisible(),true);
+    assert.equal(await page.locator('#rosterBody tr[data-student]').count(),96);
+    assert.match(await page.locator('#rosterBody tr').first().locator('.roster-identity').textContent(),/5학년.*1반.*1번/);
+    assert.match(await page.locator('#rosterBody tr').last().locator('.roster-identity').textContent(),/5학년.*4반.*24번/);
+    assert.equal(await page.locator('#rosterBody tr:first-child [data-key="gender"]').inputValue(),'');
+    const names96=Array.from({length:96},(_,i)=>'가상학생'+String(i+1).padStart(3,'0')).join('\r\n');
+    await page.locator('#rosterBody tr:first-child [data-key="name"]').evaluate((el,text)=>{
+      const data=new DataTransfer();data.setData('text/plain',text);
+      el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:data,bubbles:true,cancelable:true}));
+    },names96);
+    assert.equal(await page.locator('#rosterBody tr:first-child [data-key="name"]').inputValue(),'가상학생001');
+    assert.equal(await page.locator('#rosterBody tr:last-child [data-key="name"]').inputValue(),'가상학생096');
+    const savedStage=await page.evaluate(()=>({
+      students:state.students.length,
+      sourceClasses:state.sourceClasses.length,
+      slots:state.students.filter(st=>st.oldGrade==='5'&&st.oldClass&&st.number).length
+    }));
+    assert.deepEqual(savedStage,{students:96,sourceClasses:4,slots:96});
+    await page.reload({waitUntil:'domcontentloaded'});
+    assert.equal(await page.locator('#view-roster').isVisible(),true);
+    assert.equal(await page.locator('#rosterBody tr[data-student]').count(),96);
+    assert.equal(await page.locator('#rosterBody tr:last-child [data-key="name"]').inputValue(),'가상학생096');
+    // Existing demo still replaces the current roster after explicit confirmation.
+    page.once('dialog',dialog=>dialog.accept());
     await page.locator('#demo').click();
     assert.equal(await page.locator('#statStudents').textContent(),'36명');
     const headings=await page.locator('#rosterHead th').allTextContents();
-    assert.deepEqual(headings,['기존 반','번호','이름','성별','학습지표 (0.00~)','유의 사항']);
+    assert.deepEqual(headings,['기존 학년 · 반 · 번호','이름','성별','학습지표 (0.00~)','유의 사항']);
     const first=page.locator('#rosterBody tr').first();
     await first.locator('[data-key="level"]').fill('0.00');
     await first.locator('[data-key="level"]').press('Tab');
