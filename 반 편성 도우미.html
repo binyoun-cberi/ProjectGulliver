@@ -644,10 +644,11 @@ function bulkPastePlan(text,startColumn=0){
    return {rows:formatted.rows,full:true,column:0,header:formatted.header};
  }
  const oneColumn=source.every(row=>row.length<=1);
- const maybeNames=startColumn===0&&oneColumn&&source.filter(row=>bulkClean(row[0])).length>0&&
+ const nameHeader=oneColumn&&bulkHeaderColumn(source[0]?.[0])===3;
+ const maybeNames=startColumn===0&&oneColumn&&!nameHeader&&source.filter(row=>bulkClean(row[0])).length>0&&
    source.filter(row=>bulkClean(row[0])).every(row=>/^[가-힣]{2,7}$|^[A-Za-z][A-Za-z .'-]{1,70}$/.test(bulkClean(row[0]))) &&
    !/^(학년|이름|학생명)$/.test(bulkClean(first[0]));
- const column=maybeNames?3:startColumn;
+ const column=maybeNames||startColumn===0&&nameHeader?3:startColumn;
  const rows=source.map(row=>row.map(bulkClean));
  // A copied name column may include its own header; don't register it as a pupil.
  if(rows.length>1&&rows[0].length===1&&bulkHeaderColumn(rows[0][0])===column)rows.shift();
@@ -663,7 +664,7 @@ function bulkPasteIntoRows(existing,plan,selection,defaultGrade=''){
  if(!source.length)return {rows,count:0,range};
  const single=source.length===1&&source[0].length===1;
  const fill=single&&(range.r2>range.r1||range.c2>range.c1);
- const r1=plan.header?0:range.r1,c1=plan.full?0:plan.column;
+ const r1=range.r1,c1=plan.full?0:plan.column;
  const height=fill?range.r2-range.r1+1:source.length;
  const width=fill?range.c2-range.c1+1:Math.max(...source.map(row=>row.length));
  const writing=height>0&&width>0;
@@ -708,7 +709,7 @@ function bulkNormalizedGrade(value){
 function bulkStudentFromGrid(row){
   const values=row.map(bulkClean);
   return {
-    id:makeId(),oldGrade:values[0].slice(0,12),
+    id:makeId(),oldGrade:bulkNormalizedGrade(values[0]).slice(0,12),
     oldClass:(/^\d+$/.test(values[1])?values[1]+'반':values[1]).slice(0,50),
     number:values[2].slice(0,25),name:values[3].slice(0,80),
     gender:/^(남|남자|남학생)$/.test(values[4])?'남':/^(여|여자|여학생)$/.test(values[4])?'여':'',
