@@ -567,3 +567,79 @@ test('1단계 입력 화면은 실시간 엑셀형 표 하나만 표시하며 �
  assert.match(html,/function rosterUndo\(/);
  assert.match(html,/function rosterSelectedTSV\(/);
 });
+
+function resultLayoutApi(){
+ const start=html.indexOf('/* RESULTS_PRESENTATION_START'),end=html.indexOf('/* RESULTS_PRESENTATION_END */',start);
+ assert.ok(start>0&&end>start,'반 편성표 내보내기 엔진');
+ const scope={};vm.createContext(scope);vm.runInContext(html.slice(start,end),scope);return scope;
+}
+test('가로 비교형은 여러 반을 동일한 행의 독립된 엑셀 열로 복사하며 빈 학생칸은 비워 둠',()=>{
+ const api=resultLayoutApi();
+ const pupils=[
+  {id:'a',name:'김하늘',oldGrade:'5',oldClass:'1반',number:'1',gender:'여',level:0,traits:['다문화'],note:'메모 A'},
+  {id:'b',name:'박서준',oldGrade:'5',oldClass:'2반',number:'3',gender:'남',level:92.5,traits:[],note:''},
+  {id:'c',name:'이지안',oldGrade:'5',oldClass:'1반',number:'4',gender:'여',level:89,traits:['사회성'],note:''},
+  {id:'d',name:'최태민',oldGrade:'5',oldClass:'3반',number:'2',gender:'남',level:null,traits:['특수'],note:''}
+ ];
+ const candidate={assign:{a:1,b:2,c:1,d:4}};
+ const table=Array.from(api.resultExportMatrix(pupils,candidate,4,'6',{1:'교사 A'},false,'compare'));
+ assert.equal(table.length,4,'반 제목, 항목 제목, 최대 2명까지 2줄');
+ assert.equal(table[0].length,24,'4반 × 6열');
+ assert.equal(table[0][0],'6학년 1반 · 교사 A');
+ assert.equal(table[0][6],'6학년 2반');
+ assert.equal(table[1][0],'새 번호');
+ assert.equal(table[1][6],'새 번호');
+ assert.equal(table[2][1],'김하늘');
+ assert.equal(table[2][4],'0.00');
+ assert.equal(table[2][7],'박서준');
+ assert.equal(table[2][19],'최태민');
+ assert.equal(table[3][1],'이지안');
+ assert.equal(table[3][7],'','인원이 적은 반은 같은 행의 빈 칸');
+ assert.equal(table[3][13],'');
+ const tsv=api.resultMatrixToTsv(table);
+ assert.match(tsv,/김하늘/);assert.match(tsv,/\t박서준/);
+ assert.equal(tsv.split('\r\n').length,4);
+ assert.equal(pupils[0].name,'김하늘','자료 내보내기는 저장 명단을 변경하지 않음');
+});
+test('세로형은 반별 순서와 전체 학생을 보존하고 CSV/TSV에서 위험한 셀을 문자로 취급',()=>{
+ const api=resultLayoutApi();
+ const ppl=Array.from({length:96},(_,i)=>({
+  id:'p'+i,name:i===0?'=1+1':'예시'+i,oldGrade:'5',oldClass:(i%4+1)+'반',number:String(i%24+1),gender:i%2?'여':'남',
+  level:i%10===0?0:85,traits:i%5===0?['다문화']:[],note:'',fixed:0
+ }));
+ const assign=Object.fromEntries(ppl.map((st,i)=>[st.id,(i%4)+1]));
+ const rows=api.resultExportMatrix(ppl,{assign},4,'6',{},false,'vertical');
+ assert.equal(rows.length,97,'제목행 포함 모든 96명');
+ assert.equal(rows[0][0],'새 학급');
+ assert.equal(rows[1][0],'6학년 1반');
+ assert.equal(rows[1][6],'=1+1');
+ assert.equal(rows[1][8],'0.00');
+ assert.match(api.resultMatrixToTsv(rows),/\'=1\+1/,'엑셀 수식 실행 예방');
+});
+test('인쇄는 세로 한 반 한 장, 가로 한 장 최대 4반으로 나눠 학생 누락 없이 렌더링',()=>{
+ const api=resultLayoutApi(),ppl=Array.from({length:60},(_,i)=>({
+  id:'p'+i,name:'학생'+i,oldGrade:'5',oldClass:'1반',number:String(i+1),gender:i%2?'여':'남',
+  level:i%3===0?0:91.25,traits:i%7===0?['다문화']:[],note:i===0?'<script>':''
+ }));
+ const assign=Object.fromEntries(ppl.map((s,i)=>[s.id,i%6+1]));
+ const counts=Array.from({length:6},(_,i)=>({
+  total:10,boys:5,girls:5,levelN:10,levelSum:900,traitCounts:{다문화:1,특수:0}
+ }));
+ const escape=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+ const tall=api.resultPrintTables(ppl,{assign},counts,6,'6',{},false,'vertical',escape);
+ const wide=api.resultPrintTables(ppl,{assign},counts,6,'6',{},false,'compare',escape);
+ assert.equal((tall.match(/class="print-page print-vertical"/g)||[]).length,6);
+ assert.equal((wide.match(/class="print-page print-compare"/g)||[]).length,2);
+ assert.equal((wide.match(/class="print-student"/g)||[]).length,60);
+ assert.match(wide,/1~4반/);assert.match(wide,/5~6반/);
+ assert.ok(!wide.includes('<script>'));
+ assert.ok(wide.includes('&lt;script&gt;'));
+});
+test('가로/세로 전환과 엑셀 복사·인쇄 버튼은 결과 화면에 있고 선택이 저장됨',()=>{
+ for(const key of ['resultVertical','resultCompare','copyResultExcel','exportCsv','print','resultPrintSheet'])assert.ok(html.includes('id="'+key+'"'),key);
+ assert.match(html,/resultLayout:raw\.resultLayout==='compare'\?'compare':'vertical'/);
+ assert.match(html,/data-layout="vertical"/);
+ assert.match(html,/page:result-landscape/);
+ assert.match(html,/page:result-portrait/);
+ assert.match(html,/function setResultLayout\(/);
+});
