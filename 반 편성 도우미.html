@@ -57,6 +57,50 @@
 .basket-card .basket-add{width:100%;padding:6px;margin-top:10px;font-size:12px}
 .basket-card.basket-over{border-color:#d9a76b;background:#fff9ec}
 @media(max-width:860px){.basket-zone{grid-template-columns:1fr}.basket-source{position:static}.basket-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}}
+
+/* Interactive teacher review: cards can be dragged between class columns. */
+.move-guide{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;border:1px solid #cee0db;border-radius:10px;background:#f5faf8;padding:11px 13px;margin:13px 0;font-size:12px;color:#356457}
+.move-guide .btn{flex-shrink:0}.move-selection{margin:9px 0;font-size:12px}
+.move-selection:not(:empty){border:1px solid #b7d9ca;background:#f2faf5;border-radius:9px;padding:10px 12px}
+.move-preview:not(:empty){border:1px solid #bfd9ce;background:#f5fbf7;border-radius:11px;padding:13px 15px;margin:11px 0}
+.move-preview.invalid{border-color:#e1a9a5;background:#fff6f5}
+.move-preview strong{display:block;margin-bottom:6px;font-size:13px}
+.move-preview .move-preview-row{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;margin:3px 0}
+.move-preview .move-preview-row span{background:#fff;border:1px solid #e0e8e6;padding:3px 7px;border-radius:7px}
+.move-history{font-size:12px;margin:12px 0 4px}
+.move-history:not(:empty){border:1px solid #d9e4eb;border-radius:10px;padding:12px 15px;background:#fafcfd}
+.move-history strong{display:block;margin-bottom:8px}
+.move-diff{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:8px 0}
+.move-diff-column{padding:10px;border:1px solid #e1e9ee;background:white;border-radius:9px}
+.move-diff-column h4{font-size:12px;margin:0 0 7px}
+.move-diff-column p{font-size:11px;margin:5px 0;line-height:1.45}
+.move-delta{font-size:10px;font-weight:750;white-space:nowrap;margin-left:3px}
+.move-delta.positive{color:#a85a30}.move-delta.negative{color:#316e9c}
+.move-delta.neutral{color:#698074}
+.class-card{transition:border-color .13s,box-shadow .13s,background .13s}
+.class-card.move-accept{border-color:#2c9374;box-shadow:0 0 0 2px #a9deca;background:#f4fcf7}
+.class-card.move-reject{border-color:#cb8079;box-shadow:0 0 0 2px #f0c8c5;background:#fff7f6}
+.class-card.move-reject .class-top{background:#fff1ef}
+.class-card.move-accept .class-top{background:#ecf7f0}
+.class-card.move-selected-target{outline:2px dashed #5eaf91;outline-offset:2px}
+.class-summary-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+.class-summary-chips span{font-size:10px;font-weight:600;color:#3f6072;background:#eaf1f5;border-radius:7px;padding:5px 7px}
+.class-summary-chips .trait-metric{background:#eaf4ed;color:#416b53}
+.class-drop{padding:10px 13px;background:#f9fbfc;border-top:1px dashed #dce4e9}
+.class-drop button{width:100%;font-size:11px;padding:7px 8px}
+.assigned[draggable="true"]{cursor:grab}
+.assigned[draggable="true"]:active{cursor:grabbing}
+.assigned.dragging{opacity:.45}
+.assigned.move-selected{background:#e8f4ed;box-shadow:inset 3px 0 #4d9d7e}
+.assigned .person{flex:1}
+.assigned .move-controls{display:flex;gap:5px;align-items:center;flex-shrink:0}
+.assigned .move-select-btn{font-size:11px;padding:5px 7px;white-space:nowrap}
+.assigned .move-select-btn[aria-pressed="true"]{background:#dcf0e5;border-color:#70ae95;color:#2d7454}
+.assigned .drag-handle{font-size:14px;color:#8293a2;cursor:grab;user-select:none;touch-action:none}
+.assigned .move-locked{font-size:11px;color:#7a858f}
+@media(max-width:720px){.assigned{flex-wrap:wrap}.assigned .move-controls{margin-left:auto}.class-drop button{padding:10px}.move-preview .move-preview-row{gap:5px}}
+@media print{.move-guide,.move-selection,.move-preview,.move-history,.class-drop,.move-controls,.drag-handle{display:none!important}}
+
 /* Editable spreadsheet-style bulk roster. Data stays as a local draft until applied. */
 .bulk-grid-wrap{max-height:480px;overflow:auto;overscroll-behavior:contain;margin:12px 0}
 .bulk-sheet{border-collapse:separate;border-spacing:0;width:100%;min-width:865px;font-size:12px}
@@ -124,6 +168,7 @@
  <div class="basket-zone"><div class="basket-source"><label class="field">학생 찾기<input id="basketSearch" type="search" placeholder="이름, 기존 반, 번호 검색"></label><div id="basketPool" class="basket-pool"></div></div><div id="basketGrid" class="basket-grid"></div></div>
  <div class="section-head"><div><h2>개별 분리 관계 <span id="pairCount" class="count-pill">0쌍</span></h2><p>서로 다른 반이어야 하는 두 학생을 선택하세요. 자동 편성 때 이 조건을 우선 적용합니다.</p></div></div><div class="constraint-form"><label class="field">학생 A <select id="pairA" class="wide"></select></label><label class="field">학생 B <select id="pairB" class="wide"></select></label><button id="addPair" class="btn primary">분리 관계 추가</button></div><div class="helper">세 명이 각각 서로 다른 반이어야 한다면 A–B, A–C, B–C 세 관계를 모두 추가해야 합니다. 동명이인도 기존 반·번호로 구별합니다.</div><div id="pairList"></div></section>
  <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>지그재그 반 편성 결과</h2><p>학습지표 높은 순으로 1반→마지막 반→1반 순서로 지그재그 배정합니다. 유의 사항별 상한, 분리 관계, 반 고정 조건을 우선 지킵니다.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="exportCsv" class="btn" disabled>CSV 내려받기</button><button id="print" class="btn" disabled>결과 인쇄 · PDF</button></div></div>
+ <div class="move-guide no-print"><span>학생 카드를 다른 반으로 드래그하세요. 태블릿에서는 학생 선택 → 대상 반의 「여기로 이동」을 누르면 됩니다.</span><button id="undoMove" class="btn small" disabled>마지막 이동 되돌리기</button></div><div id="moveSelection" class="move-selection no-print" aria-live="polite"></div><div id="movePreview" class="move-preview no-print" aria-live="polite"></div><div id="moveHistoryResult" class="move-history" aria-live="polite"></div>
  <div id="resultMessage" class="helper result-help">먼저 학생 명단을 작성한 다음 자동 편성하기를 눌러 주세요. 결과에서 학생의 반을 직접 바꾸거나 다른 편성안을 선택할 수도 있습니다.</div><div id="alternatives" class="alternatives"></div><div id="validation"></div><div id="report"></div><div id="resultGrid" class="result-grid"></div><div class="helper result-help">자동 편성은 의사결정을 돕는 초안입니다. 최종 배정 전에 학교의 편성 원칙과 학생별 사정을 직접 검토하세요. 결과는 자동으로 이 브라우저에 임시 보관되며, JSON 백업 파일을 별도로 저장할 수 있습니다.</div></section>
  <div class="card"><div class="help-grid"><div><h3>① 명단과 특징 입력</h3><p>학생별 유의 사항을 체크하거나 시트 내용을 붙여넣습니다. 동명이인은 별개 학생으로 관리됩니다.</p></div><div><h3>② 교사 우선 배치</h3><p>담당 교사가 먼저 맡을 학생을 반별로 선택합니다. 분리·유의 사항별 최대 인원은 다음 탭에서 설정합니다.</p></div><div><h3>④ 지그재그 편성 결과 검토</h3><p>교사가 우선 배치한 학생은 그대로 두고 나머지를 학습지표 지그재그 순서로 채운 뒤 상한·분리 조건을 검토합니다.</p></div></div></div>
  <div class="foot">개인정보 보호: 유의 사항 중에는 매우 민감한 정보가 포함될 수 있습니다. 꼭 필요한 정보만 기록하고, 편성 작업은 권한이 있는 교직원만 수행하세요. 내용은 이 페이지를 이용하는 브라우저에 저장되며 학생 정보는 서버로 전송하지 않습니다. 다만 동일 기기를 쓰는 다른 사람이 브라우저 저장 내용을 볼 수 있을 수 있으므로, 공용 PC에서는 사용 후 「모두 지우기」를 눌러 주세요. JSON·CSV 파일에는 학생 정보가 포함되므로 학교의 보안 규정에 따라 보관하세요. 브라우저의 파일 저장 방식에 따라 자동 저장이 제한될 수 있어 중요한 명단은 JSON 백업을 권장합니다.</div>
@@ -146,6 +191,11 @@ let bulkUndoStack=[];
 let bulkPendingEdit=null;
 const presetSelected=new Set();
 let presetUndo=null;
+let moveSelectedId=null;
+let moveDraggingId=null;
+let moveLastResult=null;
+const moveUndoStack=[];
+let movePreviewClass=0;
 const $ = id => document.getElementById(id);
 const escapeHtml = v => String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 function makeId(){return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,9)}
