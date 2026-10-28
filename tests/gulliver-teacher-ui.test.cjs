@@ -78,6 +78,30 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
       await input.fill(value);await input.press('Tab');
     }
     assert.match(await page.locator('#sourceClassTotals').textContent(),/96명/);
+    assert.match(await page.locator('#overviewDashboard').textContent(),/96명/);
+    assert.match(await page.locator('#overviewDashboard').textContent(),/남학생/);
+    assert.match(await page.locator('#overviewDashboard').textContent(),/여학생/);
+    assert.equal(await page.locator('#overviewDashboard .overview-room').count(),4);
+    await page.screenshot({path:'test-artifacts/time-tools-planner-overview-desktop.png',fullPage:false});
+    await page.setViewportSize({width:390,height:844});
+    assert.equal(await page.locator('#plannerHelpDialog').isVisible(),false);
+    const overviewBounds=await page.locator('#overviewDashboard').evaluate(el=>{
+      const box=el.getBoundingClientRect();
+      return {left:box.left,right:box.right,viewport:innerWidth};
+    });
+    assert.ok(overviewBounds.left>=0&&overviewBounds.right<=overviewBounds.viewport+2,
+      '인포그래픽이 모바일 가로 화면 밖으로 벗어나면 안 됩니다.');
+    assert.equal(await page.locator('#overviewDashboard .overview-pane').count(),2);
+    await page.screenshot({path:'test-artifacts/time-tools-planner-overview-mobile.png',fullPage:false});
+    await page.setViewportSize({width:1280,height:900});
+    await page.locator('#openHelp').click();
+    assert.equal(await page.locator('#plannerHelpDialog').isVisible(),true);
+    await page.locator('#plannerHelpDialog details').nth(1).locator('summary').click();
+    assert.match(await page.locator('#plannerHelpDialog').textContent(),/엑셀/);
+    await page.locator('#helpDone').click();
+    assert.equal(await page.locator('#plannerHelpDialog').isVisible(),false);
+    assert.equal(await page.locator('[data-tab="preset"]').isVisible(),false,'OFF should hide optional teacher tab');
+
     assert.match(await page.locator('#futureClassSummary').textContent(),/남 10명/);
     assert.match(await page.locator('#futureClassSummary').textContent(),/여 14명/);
     assert.equal(await page.locator('#teacherPriorityOn').isChecked(),false);
@@ -119,8 +143,18 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.equal(await first.locator('input[data-trait="다문화"]').isChecked(),true);
     assert.equal(await first.locator('input[data-trait="사회성"]').isChecked(),true);
     await first.locator('.notice-picker summary').click();
+    await page.locator('#openSettings').click();
+    assert.equal(await page.locator('#plannerSettingsDialog').isVisible(),true);
     await page.locator('#newTrait').fill('돌봄 필요');
     await page.locator('#addTrait').click();
+    assert.match(await page.locator('#traitChips').textContent(),/돌봄 필요/);
+    await page.locator('#newTrait').fill('검수 임시');
+    await page.locator('#addTrait').click();
+    assert.match(await page.locator('#traitChips').textContent(),/검수 임시/);
+    page.once('dialog',dialog=>dialog.accept());
+    await page.locator('#traitChips [data-delete-trait="검수 임시"]').click();
+    assert.doesNotMatch(await page.locator('#traitChips').textContent(),/검수 임시/);
+    await page.locator('#settingsDone').click();
     const nextFirst=page.locator('#rosterBody tr').first();
     await nextFirst.locator('.notice-picker summary').click();
     await nextFirst.locator('input[data-trait="돌봄 필요"]').check();
@@ -154,9 +188,11 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.equal(await page.locator('[data-basket-drop]').nth(1).locator('.basket-chip').count(),2);
     // Schools without prior teacher choice start OFF; switching ON preserves future fixed picks.
     assert.equal(await page.locator('#teacherPriorityOn').isChecked(),false);
-    await page.locator('[data-tab="setup"]').click();
-    await page.locator('.priority-switch').click();
+    await page.locator('#openSettings').click();
+    await page.locator('#plannerSettingsDialog .priority-switch').click();
+    await page.locator('#settingsDone').click();
     assert.equal(await page.locator('#teacherPriorityOn').isChecked(),true);
+    assert.equal(await page.locator('[data-tab="preset"]').isVisible(),true,'ON should reveal teacher placement tab');
 
     // Teacher-first workflow: reserve willing teachers' pupils, then fill vacancies.
     await page.locator('[data-tab="preset"]').click();
@@ -188,7 +224,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
 
     assert.equal(await page.locator('#view-results').isVisible(),true,'편성 결과 화면으로 이동해야 합니다.');
     assert.ok(await page.locator('#alternatives .alt').count()>=1);
-    assert.match(await page.locator('#validation').textContent(),/조건 위반 없음/);
+    assert.match(await page.locator('#validation').textContent(),/지정한 배정 조건 충족/);
     assert.match(await page.locator('#report').textContent(),/운동부 \(반당 최대 2명\)/);
     const [classCsv] = await Promise.all([page.waitForEvent('download'),page.locator('#exportCsv').click()]);
     assert.ok(classCsv.suggestedFilename().startsWith('반편성_결과_') && classCsv.suggestedFilename().endsWith('.csv'));
@@ -198,8 +234,9 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
 
     // All basket members must be placed into different classes, even with teacher-first OFF.
     const preserved=await page.evaluate(()=>state.students.filter(st=>st.fixed).map(st=>[st.id,st.fixed]));
-    await page.locator('[data-tab="setup"]').click();
-    await page.locator('.priority-switch').click();
+    await page.locator('#openSettings').click();
+    await page.locator('#plannerSettingsDialog .priority-switch').click();
+    await page.locator('#settingsDone').click();
     assert.equal(await page.locator('#teacherPriorityOn').isChecked(),false);
     await page.locator('#generateQuick').click();
     assert.equal(await page.locator('#resultGrid select[data-move]:disabled').count(),0);
@@ -212,8 +249,9 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     for(const classes of offState.baskets)assert.equal(new Set(classes).size,classes.length,'같은 바구니 학생은 서로 다른 반');
     await page.reload({waitUntil:'domcontentloaded'});
     assert.equal(await page.locator('#teacherPriorityOn').isChecked(),false);
-    await page.locator('[data-tab="setup"]').click();
-    await page.locator('.priority-switch').click();
+    await page.locator('#openSettings').click();
+    await page.locator('#plannerSettingsDialog .priority-switch').click();
+    await page.locator('#settingsDone').click();
     await page.locator('#generateQuick').click();
     assert.equal(await page.locator('#resultGrid select[data-move]:disabled').count(),2);
 
