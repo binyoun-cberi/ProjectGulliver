@@ -176,7 +176,8 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     // Drag-to-class review: totals, sex, multicultural and learning score update immediately.
     const reviewChoice=await page.evaluate(()=>{
       const plan=state.candidates[state.activeCandidate];
-      for(const preferTags of [true,false])for(const st of state.students){
+      const visible=Array.from(document.querySelectorAll('#resultGrid .class-body')).flatMap(body=>Array.from(body.querySelectorAll('[data-result-student]')).slice(0,4)).map(el=>state.students.find(st=>st.id===el.dataset.resultStudent)).filter(Boolean);
+      for(const preferTags of [true,false])for(const st of visible){
         if(st.fixed||(preferTags&&!st.traits.includes('다문화')))continue;
         const from=plan.assign[st.id];
         for(let to=1;to<=state.classCount;to++){
@@ -201,7 +202,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
         }),true);
       }
     });
-    await page.locator('[data-result-student="'+reviewChoice.id+'"] .drag-handle').dragTo(page.locator('[data-drop-class="'+reviewChoice.to+'"]'));
+    await page.locator('[data-result-student="'+reviewChoice.id+'"] .drag-handle').dragTo(page.locator('[data-drop-class="'+reviewChoice.to+'"] .class-top'),{sourcePosition:{x:7,y:9},targetPosition:{x:24,y:26}});
     const dragDiagnostics=await page.evaluate(()=>({
       history:window.__moveDragEvents.slice(0,25),
       assigned:state.candidates[state.activeCandidate].assign,
