@@ -79,9 +79,10 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     }
     assert.match(await page.locator('#sourceClassTotals').textContent(),/96명/);
     assert.match(await page.locator('#overviewDashboard').textContent(),/96명/);
-    assert.match(await page.locator('#overviewDashboard').textContent(),/남학생/);
-    assert.match(await page.locator('#overviewDashboard').textContent(),/여학생/);
-    assert.equal(await page.locator('#overviewDashboard .overview-room').count(),4);
+    assert.match(await page.locator('#overviewDashboard').textContent(),/남 40명/);
+    assert.match(await page.locator('#overviewDashboard').textContent(),/여 56명/);
+    assert.equal(await page.locator('#overviewDashboard .compact-room-list span').count(),4);
+    assert.match(await page.locator('#overviewDashboard').textContent(),/유의 사항별 현황/);
     await page.screenshot({path:'test-artifacts/time-tools-planner-overview-desktop.png',fullPage:false});
     await page.setViewportSize({width:390,height:844});
     assert.equal(await page.locator('#plannerHelpDialog').isVisible(),false);
@@ -111,6 +112,28 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.match(await page.locator('#rosterBody tr').first().locator('.roster-identity').textContent(),/5학년.*1반.*1번/);
     assert.match(await page.locator('#rosterBody tr').last().locator('.roster-identity').textContent(),/5학년.*4반.*24번/);
     assert.equal(await page.locator('#rosterBody tr:first-child [data-key="gender"]').inputValue(),'');
+    // Excel 3-column paste and score-column paste, including headers and zero-point score.
+    const threeColumns='이름\t성별\t학습지표\n김가람\t여\t92.50\n이도현\t남\t0.00\n박하진\t여\t74.25'.replaceAll('\\t','\t').replaceAll('\\n','\n');
+    await page.locator('#rosterBody tr:first-child [data-key="name"]').evaluate((el,value)=>{
+      const data=new DataTransfer();data.setData('text/plain',value);
+      el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:data,bubbles:true,cancelable:true}));
+    },threeColumns);
+    assert.equal(await page.locator('#rosterBody tr:first-child [data-key="name"]').inputValue(),'김가람');
+    assert.equal(await page.locator('#rosterBody tr:first-child [data-key="gender"]').inputValue(),'여');
+    assert.equal(await page.locator('#rosterBody tr:nth-child(2) [data-key="gender"]').inputValue(),'남');
+    assert.equal(await page.locator('#rosterBody tr:nth-child(2) [data-key="level"]').inputValue(),'0.00');
+    await page.locator('#rosterBody tr:nth-child(3) [data-key="level"]').evaluate(el=>{
+      const data=new DataTransfer();data.setData('text/plain','85.25\n75.75');
+      el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:data,bubbles:true,cancelable:true}));
+    });
+    assert.equal(await page.locator('#rosterBody tr:nth-child(3) [data-key="level"]').inputValue(),'85.25');
+    assert.equal(await page.locator('#rosterBody tr:nth-child(4) [data-key="level"]').inputValue(),'75.75');
+    await page.locator('#rosterBody tr:first-child [data-key="name"]').evaluate(el=>{
+      const data=new DataTransfer();data.setData('text/plain','다른이름\t알수없음\t99.99\n다른이름2\t남\t88.00');
+      el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:data,bubbles:true,cancelable:true}));
+    });
+    assert.equal(await page.locator('#rosterBody tr:first-child [data-key="name"]').inputValue(),'김가람','잘못된 붙여넣기는 전체 취소');
+
     const names96=Array.from({length:96},(_,i)=>'가상학생'+String(i+1).padStart(3,'0')).join('\r\n');
     await page.locator('#rosterBody tr:first-child [data-key="name"]').evaluate((el,text)=>{
       const data=new DataTransfer();data.setData('text/plain',text);
@@ -128,6 +151,15 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.equal(await page.locator('#view-roster').isVisible(),true);
     assert.equal(await page.locator('#rosterBody tr[data-student]').count(),96);
     assert.equal(await page.locator('#rosterBody tr:last-child [data-key="name"]').inputValue(),'가상학생096');
+    // Settings can generate example names without changing gender, academic scores or original numbers.
+    await page.locator('#openSettings').click();
+    const beforeDemoNames=await page.evaluate(()=>state.students.map(st=>({gender:st.gender,level:st.level,oldClass:st.oldClass,number:st.number})));
+    page.once('dialog',dialog=>dialog.accept());
+    await page.locator('#replaceDemoNames').click();
+    const exampleNames=await page.evaluate(()=>state.students.map(st=>st.name));
+    assert.equal(new Set(exampleNames).size,96);
+    assert.ok(exampleNames.every(x=>/^[가-힣]{3,4}$/.test(x)));
+    assert.deepEqual(await page.evaluate(()=>state.students.map(st=>({gender:st.gender,level:st.level,oldClass:st.oldClass,number:st.number}))),beforeDemoNames);
     // Existing demo still replaces the current roster after explicit confirmation.
     page.once('dialog',dialog=>dialog.accept());
     await page.locator('#demo').click();
@@ -160,27 +192,33 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await nextFirst.locator('input[data-trait="돌봄 필요"]').check();
     await nextFirst.locator('.notice-picker summary').click();
     assert.equal(await nextFirst.locator('[data-key="level"]').inputValue(),'0.00');
-    // Teacher-defined note ceiling is stored and applied to snake allocation.
-    await page.locator('[data-tab="rules"]').click();
+    // Attention-category caps are configured in step zero, not the separation screen.
+    await page.locator('[data-tab="setup"]').click();
     await page.locator('input[data-cap="운동부"]').fill('2');
     await page.locator('input[data-cap="운동부"]').press('Tab');
     assert.equal(await page.locator('input[data-cap="운동부"]').inputValue(),'2');
     await page.reload({waitUntil:'domcontentloaded'});
-    await page.locator('[data-tab="rules"]').click();
+    await page.locator('[data-tab="setup"]').click();
     assert.equal(await page.locator('input[data-cap="운동부"]').inputValue(),'2','반당 인원 상한은 새로고침 후에도 보존해야 합니다.');
+    await page.locator('[data-tab="rules"]').click();
 
     // Visual separation baskets: build two independent groups with draggable students.
     const basketIds=await page.evaluate(()=>state.students.slice(0,5).map(st=>st.id));
     await page.locator('#addBasket').click();
     assert.equal(await page.locator('#basketCount').textContent(),'1개');
-    await page.locator('[data-basket-drop]').first().locator('[data-basket-add]').selectOption(basketIds[0]);
-    await page.locator('[data-basket-drop]').first().locator('[data-basket-add]').selectOption(basketIds[1]);
+    assert.equal(await page.locator('#basketPool select').count(),0,'학생 찾기에는 드롭다운이 없어야 함');
+    await page.locator('#basketPool [data-basket-pick="'+basketIds[0]+'"]').click();
+    await page.locator('[data-basket-drop]').first().locator('[data-basket-add-selected]').click();
+    await page.locator('#basketPool [data-basket-pick="'+basketIds[1]+'"]').click();
+    await page.locator('[data-basket-drop]').first().locator('[data-basket-add-selected]').click();
     await page.locator('#basketPool [data-drag-student="'+basketIds[2]+'"]').dragTo(page.locator('[data-basket-drop]').first());
     assert.equal(await page.locator('[data-basket-drop]').first().locator('.basket-chip').count(),3);
     await page.locator('#addBasket').click();
     assert.equal(await page.locator('#basketCount').textContent(),'2개');
-    await page.locator('[data-basket-drop]').nth(1).locator('[data-basket-add]').selectOption(basketIds[3]);
-    await page.locator('[data-basket-drop]').nth(1).locator('[data-basket-add]').selectOption(basketIds[4]);
+    await page.locator('#basketPool [data-basket-pick="'+basketIds[3]+'"]').click();
+    await page.locator('[data-basket-drop]').nth(1).locator('[data-basket-add-selected]').click();
+    await page.locator('#basketPool [data-basket-pick="'+basketIds[4]+'"]').click();
+    await page.locator('[data-basket-drop]').nth(1).locator('[data-basket-add-selected]').click();
     await page.reload({waitUntil:'domcontentloaded'});
     await page.locator('[data-tab="rules"]').click();
     assert.equal(await page.locator('[data-basket-drop]').count(),2);

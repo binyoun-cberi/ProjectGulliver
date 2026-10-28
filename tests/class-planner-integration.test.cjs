@@ -495,3 +495,60 @@ test('도움말·설정 버튼, 유의사항 편집, 완전히 숨겨지는 교�
  assert.match(html,/aria-haspopup="dialog"/);
  assert.match(html,/data-tab="preset"/);
 });
+
+function pasteEngine(){
+ const scope={};vm.createContext(scope);
+ const parseStart=html.indexOf('function parseSheetText('),parseEnd=html.indexOf('/* PASTE_RANGE_START',parseStart);
+ const begin=html.indexOf('/* ROSTER_EXCEL_PASTE_START'),end=html.indexOf('/* ROSTER_EXCEL_PASTE_END',begin);
+ assert.ok(parseStart>0&&parseEnd>parseStart&&begin>0&&end>begin);
+ vm.runInContext("function bulkClean(x){return String(x??'').trim()}; function parseStudyScore(v){if(v===null||v===undefined||v==='')return null;const n=Number(v);return Number.isFinite(n)&&n>=0?n:null};\n"+html.slice(parseStart,parseEnd)+"\n"+html.slice(begin,end),scope);
+ return scope;
+}
+test('1단계 엑셀: 이름·성별·학습지표 3열을 헤더 포함하여 일괄 붙여넣기',()=>{
+ const api=pasteEngine(),students=Array.from({length:96},(_,i)=>({
+  id:'s'+i,oldGrade:'5',oldClass:(Math.floor(i/24)+1)+'반',number:String(i%24+1),
+  name:'',gender:'',level:null,traits:[],note:'',fixed:0
+ }));
+ const ids=students.map(s=>s.id);
+ const txt='이름\t성별\t학습지표\r\n김하늘\t여\t92.50\r\n이도윤\t남\t0.00\r\n박서연\t여\t85.25';
+ const changes=api.rosterExcelChanges(txt,'name',ids,students);
+ assert.equal(changes.errors.length,0);assert.equal(changes.header,true);assert.equal(changes.changes.length,3);
+ assert.equal(changes.changes[0].next.name,'김하늘');
+ assert.equal(changes.changes[0].next.gender,'여');
+ assert.equal(changes.changes[0].next.level,92.5);
+ assert.equal(changes.changes[1].next.level,0);
+ assert.equal(changes.changes[0].next.oldGrade,'5');
+ assert.equal(changes.changes[0].next.oldClass,'1반');
+ assert.equal(changes.changes[0].next.number,'1');
+ assert.equal(students[0].name,'','검증 중에는 기존 명단을 변경하지 않음');
+});
+test('1단계 엑셀: 성별·학습지표 열 단독 붙여넣기 및 잘못된 성별 일괄 취소',()=>{
+ const api=pasteEngine(),students=[0,1,2,3].map(i=>({id:'s'+i,name:'기존'+i,gender:'',level:null,traits:[]}));
+ const gender=api.rosterExcelChanges('남\t80.25\n여\t0.00','gender',students.map(x=>x.id),students);
+ assert.equal(gender.errors.length,0);assert.equal(gender.changes[0].next.level,80.25);
+ assert.equal(gender.changes[1].next.gender,'여');
+ const scores=api.rosterExcelChanges('71.52\n65.25','level',students.map(x=>x.id),students);
+ assert.equal(scores.errors.length,0);assert.equal(scores.changes[0].next.level,71.52);
+ const invalid=api.rosterExcelChanges('다른이름\t알수없음\t82\n다른이름2\t여\t70','name',students.map(x=>x.id),students);
+ assert.equal(invalid.errors.length,1);
+ assert.equal(students[0].name,'기존0');
+ const tooMany=api.rosterExcelChanges('일\n이\n삼','name',['s0','s1'],students);
+ assert.equal(tooMany.errors.length,1);
+});
+test('예시 이름은 1000명까지 중복 없이 생성되며 기존 이름을 제외',()=>{
+ const a=html.indexOf('/* DEMO_NAMES_START'),b=html.indexOf('/* DEMO_NAMES_END',a);
+ assert.ok(a>0&&b>a);
+ const api={};vm.createContext(api);vm.runInContext(html.slice(a,b),api);
+ const names=Array.from(api.generateDemoNames(1000,['김하늘','이도윤']));
+ assert.equal(names.length,1000);assert.equal(new Set(names).size,1000);
+ assert.ok(!names.includes('김하늘')&&!names.includes('이도윤'));
+ assert.ok(names.every(x=>/^[가-힣]{3}$/.test(x)));
+});
+test('0단계에 인원 상한이 표시되고, 3단계 검색 목록에 드롭다운이 없으며 바구니는 버튼·드래그로 조작',()=>{
+ assert.match(html,/id="view-setup"[\s\S]*?id="capRules"/);
+ assert.match(html,/data-basket-pick/);
+ assert.match(html,/data-basket-add-selected/);
+ assert.doesNotMatch(html,/data-basket-assign/);
+ assert.match(html,/id="fillDemoNames"/);
+ assert.match(html,/trait-stat-track/);
+});
