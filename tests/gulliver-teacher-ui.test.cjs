@@ -224,7 +224,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
 
     assert.equal(await page.locator('#view-results').isVisible(),true,'편성 결과 화면으로 이동해야 합니다.');
     assert.ok(await page.locator('#alternatives .alt').count()>=1);
-    assert.match(await page.locator('#validation').textContent(),/조건 위반 없음/);
+    assert.match(await page.locator('#validation').textContent(),/지정한 배정 조건 충족/);
     assert.match(await page.locator('#report').textContent(),/운동부 \(반당 최대 2명\)/);
     const [classCsv] = await Promise.all([page.waitForEvent('download'),page.locator('#exportCsv').click()]);
     assert.ok(classCsv.suggestedFilename().startsWith('반편성_결과_') && classCsv.suggestedFilename().endsWith('.csv'));
