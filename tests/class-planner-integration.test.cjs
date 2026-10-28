@@ -311,3 +311,40 @@ test('Excel: 헤더 있는 전체 표와 이름만 한 열의 첫 셀 붙여넣�
  const grade=api.bulkNormalizedGrade('5학년');
  assert.equal(grade,'5');
 });
+
+function basketApi(){
+ const a=html.indexOf('/* SEPARATION_BASKETS_START */'),b=html.indexOf('/* SEPARATION_BASKETS_END */',a);
+ assert.ok(a>0&&b>a);
+ const context={};vm.createContext(context);vm.runInContext(html.slice(a,b),context);return context;
+}
+test('바구니 3명은 세 학생이 모두 다른 반에 있어야 한다',()=>{
+ const helper=basketApi(),api=engine(),people=students(36),ids=people.map(s=>s.id);
+ const baskets=[{id:'A',name:'바구니 A',members:ids.slice(0,3)}];
+ const pairs=helper.buildBasketPairs([],baskets);
+ assert.equal(pairs.length,3);
+ const result=api.generateCandidates(people,pairs,3,['학습 지원'],seed(713),{});
+ assert.ok(result.candidates?.length,result.error);
+ for(const c of result.candidates){
+  assert.equal(new Set(ids.slice(0,3).map(id=>c.assign[id])).size,3);
+  assert.equal(api.validateAssignment(people,pairs,c.assign).length,0);
+ }
+});
+test('여러 바구니는 서로 독립되고 중복 관계는 한 번만 검사',()=>{
+ const b=basketApi(),pairs=b.buildBasketPairs([{a:'a',b:'b'}],[
+  {members:['a','b','c']},{members:['c','d']},{members:['a','c']}
+ ]);
+ assert.deepEqual(Array.from(pairs.map(x=>[x.a,x.b].sort().join(':'))).sort(),['a:b','a:c','b:c','c:d']);
+});
+test('바구니 저장 데이터는 삭제된 학생·중복 학생을 정리한다',()=>{
+ const api=basketApi();
+ const b=api.normalizeBaskets([{id:'one',name:'분리 바구니',members:['a','a','b','missing']},{id:'two',members:['b','c']}],new Set(['a','b','c']));
+ assert.equal(b.length,2);
+ assert.deepEqual(Array.from(b[0].members),['a','b']);
+ assert.deepEqual(Array.from(b[1].members),['b','c']);
+});
+test('교사 우선 배치 ON/OFF 설정과 분리 바구니 입력 화면이 존재',()=>{
+ for(const id of ['teacherPriorityOn','basketGrid','basketPool','basketSearch','addBasket','basketCount'])assert.ok(html.includes('id="'+id+'"'),id);
+ assert.match(html,/teacherPriorityOn:false/);
+ assert.match(html,/function activeStudents\(\)/);
+ assert.match(html,/function effectivePairs\(\)/);
+});
