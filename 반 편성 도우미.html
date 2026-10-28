@@ -284,7 +284,7 @@ function stageZeroRoom(v){
 function stageZeroRows(value,count=3){
  const source=Array.isArray(value)?value:[];
  return Array.from({length:Math.max(1,Math.min(12,count))},(_,i)=>{
-  const row=source.find(r=>Number(r?.room)===i+1)||source[i]||{};
+  const row=source.find(r=>Number(r?.room)===i+1)||(!source.some(r=>Number(r?.room)>0)?source[i]:null)||{};
   const safe=n=>n===''||n===null||n===undefined?'':Number.isInteger(Number(n))&&Number(n)>=0&&Number(n)<=1000?Number(n):'';
   return {room:i+1,boys:safe(row.boys),girls:safe(row.girls)};
  });
@@ -310,7 +310,7 @@ function stageZeroInferRows(students){
   if(st.gender==='남')found.get(room).boys++;
   if(st.gender==='여')found.get(room).girls++;
  }
- return stageZeroRows([...found.values()],Math.max(1,Math.min(12,...found.keys(),3)));
+ return stageZeroRows([...found.values()],Math.min(12,Math.max(3,...found.keys())));
 }
 function stageZeroReconcile(students,sourceGrade,rows,idFactory){
  const requested=new Set(),next=[];
