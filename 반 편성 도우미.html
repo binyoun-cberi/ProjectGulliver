@@ -1463,7 +1463,7 @@ function generateDemoNames(count,usedNames=[],random=Math.random){
  const second=['늘','아','윤','우','현','빈','진','준','희','원','후','온','율','림','린','정','민','서','영','안','하','솔','담','연','영','원','린','윤','지','호'];
  const used=new Set(usedNames.map(v=>String(v).trim()).filter(Boolean)),pool=[];
  for(const surname of last)for(const a of first)for(const b of second){
-  const name=surname+a+b;if(!used.has(name))pool.push(name);
+  const name=surname+a+b;if(!used.has(name)){pool.push(name);used.add(name)}
  }
  for(let i=pool.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
  return pool.slice(0,count);
