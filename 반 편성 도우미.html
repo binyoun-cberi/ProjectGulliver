@@ -1679,7 +1679,7 @@ async function copyResultExcel(){
 function exportCSV(){
  const rows=selectedResultMatrix();if(!rows.length)return;
  const kind=state.resultLayout==='compare'?'가로비교':'세로형';
- download('반편성_'+state.grade+'학년_'+kind+'.csv','\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+ download('반편성_결과_'+state.grade+'학년_'+kind+'.csv','\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');
  toast(kind+' 편성표를 엑셀용 파일로 저장했습니다.');
 }
 /* DEMO_NAMES_START: nonidentifying sample names for rehearsal, no other pupil fields changed. */
