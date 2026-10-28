@@ -156,6 +156,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.reload({waitUntil:'domcontentloaded'});
     assert.equal(await page.locator('#statStudents').textContent(),'3명');
     await page.locator('#toggleBulk').click();
+    await page.locator('#bulkRawPanel summary').click();
     await page.locator('#bulkText').fill('| 학년 | 반 | 번호 | 이름 | 성별 | 유의사항 |\n| --- | --- | --- | --- | --- | --- |\n| 6 | 4 | 1 | 최가람 | 여 | 한부모<br> 다문화 |');
     await page.locator('#bulkParseText').click();
     assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="3"]').inputValue(),'최가람');
