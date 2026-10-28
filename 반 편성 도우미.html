@@ -1576,6 +1576,41 @@ function installEvents(){
   });
   $('newTrait').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTrait()}});$('addTrait').addEventListener('click',addTrait);
   $('traitChips').addEventListener('click',e=>{const b=e.target.closest('[data-delete-trait]');if(!b)return;const t=b.dataset.deleteTrait;if(!confirm(`「${t}」 유의 사항을 학생 명단에서도 삭제할까요?`))return;state.traits=state.traits.filter(x=>x!==t);delete state.capRules[t];state.students.forEach(s=>s.traits=s.traits.filter(x=>x!==t));invalidate();changeState()});
+  $('rosterBody').addEventListener('paste',e=>{
+    const target=e.target.closest('input[data-key="name"]');
+    if(!target)return;
+    const pasted=e.clipboardData?.getData('text/plain')||'';
+    if(!pasted)return;
+    const matrix=parseSheetText(pasted),many=matrix.length>1||matrix.some(r=>r.length>1);
+    if(!many)return;
+    e.preventDefault();
+    const entries=matrix.map(row=>row.map(bulkClean));
+    if(entries.length>1&&['이름','학생명','성명'].includes(entries[0][0]))entries.shift();
+    const domRows=Array.from($('rosterBody').querySelectorAll('tr[data-student]'));
+    const start=domRows.findIndex(tr=>tr.contains(target));
+    if(start<0||start+entries.length>domRows.length){
+      toast('붙여넣을 이름 '+entries.length+'행에 비해 화면에 남은 학생 칸이 부족합니다. 0단계 인원을 확인하고 검색을 해제해 주세요.');return;
+    }
+    let updated=0;
+    for(let i=0;i<entries.length;i++){
+      const student=findStudent(domRows[start+i].dataset.student),row=entries[i];
+      if(!student)continue;
+      student.name=(row[0]||'').slice(0,80);
+      if(row[1]&&['남','여'].includes(row[1]))student.gender=row[1];
+      if(row[2]){
+        const n=parseStudyScore(row[2]);
+        if(n!==null)student.level=n;
+      }
+      if(row[3]){
+        const tags=bulkAttention(row[3]);
+        for(const tag of tags)if(!state.traits.includes(tag)&&state.traits.length<64)state.traits.push(tag);
+        student.traits=tags.filter(tag=>state.traits.includes(tag));
+      }
+      updated++;
+    }
+    invalidate();changeState();
+    toast(updated+'개 학생의 이름 칸에 엑셀 데이터를 붙여넣었습니다. 학년·반·번호는 유지됐습니다.');
+  });
   $('rosterBody').addEventListener('change',updateStudent);
   $('rosterBody').addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');if(remove){const s=findStudent(remove.dataset.remove);if(!confirm(`「${studentTitle(s)}」 학생을 삭제할까요?`))return;state.students=state.students.filter(x=>x.id!==remove.dataset.remove);state.pairs=state.pairs.filter(p=>p.a!==remove.dataset.remove&&p.b!==remove.dataset.remove);state.baskets.forEach(b=>b.members=b.members.filter(id=>id!==remove.dataset.remove));invalidate();changeState();return}
     const note=e.target.closest('[data-note]');if(note){const s=findStudent(note.dataset.note);noteStudentId=s.id;$('noteTitle').textContent=`${s.name||'학생'} 메모`;$('noteText').value=s.note;$('noteDialog').showModal()}});
@@ -1670,6 +1705,9 @@ function installEvents(){
   $('addPair').addEventListener('click',()=>{const a=$('pairA').value,b=$('pairB').value;if(!a||!b){toast('두 학생을 모두 선택해 주세요.');return}if(a===b){toast('서로 다른 학생 두 명을 선택해 주세요.');return}if(state.pairs.some(p=>(p.a===a&&p.b===b)||(p.a===b&&p.b===a))){toast('이미 지정한 분리 관계입니다.');return}state.pairs.push({a,b});invalidate();changeState();toast('분리 관계를 추가했습니다.')});
   $('pairList').addEventListener('click',e=>{const b=e.target.closest('[data-pair-index]');if(!b)return;state.pairs.splice(Number(b.dataset.pairIndex),1);invalidate();changeState()});
   $('generate').addEventListener('click',()=>{
+    if(!state.setupCompleted){showTab('setup');toast('0단계 기본 정보를 먼저 설정해 주세요.');return}
+    const blank=state.students.filter(st=>!st.name.trim());
+    if(blank.length){showTab('roster');toast('이름을 입력하지 않은 학생 '+blank.length+'명의 이름을 먼저 입력해 주세요.');return}
     const problems=basketProblems();
     if(problems.length){invalidate();saveState();showTab('results');$('resultMessage').textContent=problems.join(' / ');toast(problems[0]);return}
     const outcome=generateCandidates(activeStudents(),effectivePairs(),state.classCount,state.traits,Math.random,state.capRules);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;moveUndoStack.length=0;moveSelectedId=null;moveDraggingId=null;moveLastResult=null;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
