@@ -84,6 +84,7 @@ let state = loadState();
 let view = 'roster';
 let noteStudentId = null;
 let searchQuery = '';
+let bulkRows=Array.from({length:12},()=>blankBulkRow());
 const presetSelected=new Set();
 let presetUndo=null;
 const $ = id => document.getElementById(id);
@@ -102,7 +103,7 @@ function normalize(raw){
  const teacherNames=Object.fromEntries(Object.entries(raw.teacherNames&&typeof raw.teacherNames==='object'&&!Array.isArray(raw.teacherNames)?raw.teacherNames:{}).filter(([n])=>/^(?:[1-9]|1[0-2])$/.test(n)&&Number(n)<=count).map(([n,name])=>[n,String(name??'').slice(0,40)]));
  const capRules=Object.fromEntries(Object.entries(raw.capRules&&typeof raw.capRules==='object'&&!Array.isArray(raw.capRules)?raw.capRules:{}).filter(([tag,max])=>traits.includes(tag)&&max!==''&&max!==null&&Number.isInteger(Number(max))&&Number(max)>=0&&Number(max)<=1000).map(([tag,max])=>[tag,Number(max)]));
  const students=(Array.isArray(raw.students)?raw.students:[]).slice(0,1000).filter(x=>x&&typeof x==='object').map(st=>({
-  id:String(st.id||makeId()),oldClass:String(st.oldClass??'').slice(0,50),number:String(st.number??'').slice(0,25),name:String(st.name??'').slice(0,80),
+  id:String(st.id||makeId()),oldGrade:String(st.oldGrade??'').slice(0,12),oldClass:String(st.oldClass??'').slice(0,50),number:String(st.number??'').slice(0,25),name:String(st.name??'').slice(0,80),
   gender:['남','여',''].includes(st.gender)?st.gender:'',level:parseStudyScore(st.level,legacy),
   traits:[...new Set((Array.isArray(st.traits)?st.traits:[]).filter(x=>traits.includes(x)))],
   fixed:Number(st.fixed)>=1&&Number(st.fixed)<=count?Number(st.fixed):0,note:String(st.note??'').slice(0,1000)
@@ -121,7 +122,7 @@ function changeState(){saveState();render()}
 function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),3700)}
 function uniquePairs(arr){const seen=new Set();return arr.filter(p=>{const key=[p.a,p.b].sort().join('|');if(seen.has(key))return false;seen.add(key);return true})}
 function findStudent(id){return state.students.find(s=>s.id===id)}
-function studentTitle(s){return s ? (s.name||'(이름 없음)')+' · '+(s.oldClass||'기존 반 미입력')+(s.number?' '+s.number+'번':'') : '알 수 없음'}
+function studentTitle(s){return s ? (s.name||'(이름 없음)')+' · '+(s.oldGrade?s.oldGrade+'학년 ':'')+(s.oldClass||'기존 반 미입력')+(s.number?' '+s.number+'번':'') : '알 수 없음'}
 function displayClass(num){return state.grade+'학년 '+num+'반'}
 function duplicateNames(){const m=new Map();state.students.forEach(s=>{const n=s.name.trim();if(n)m.set(n,(m.get(n)||0)+1)});return [...m.entries()].filter(([,count])=>count>1)}
 function showTab(tab){view=tab;document.querySelectorAll('.tab').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.tab===tab)));['roster','preset','rules','results'].forEach(key=>$('view-'+key).classList.toggle('hidden',tab!==key));render()}
@@ -134,9 +135,9 @@ function render(){
 function renderRoster(){
   $('traitChips').innerHTML=state.traits.map(t=>`<span class="chip">${escapeHtml(t)} <button type="button" data-delete-trait="${escapeHtml(t)}" aria-label="${escapeHtml(t)} 유의 사항 항목 삭제" title="항목 삭제">×</button></span>`).join('');
   $('rosterHead').innerHTML='<tr><th>기존 반</th><th>번호</th><th>이름</th><th>성별</th><th>학습지표 (0.00~)</th><th>유의 사항</th></tr>';
-  const visible=state.students.filter(st=>!searchQuery||[st.oldClass,st.name,st.number].join(' ').toLowerCase().includes(searchQuery));
+  const visible=state.students.filter(st=>!searchQuery||[st.oldGrade,st.oldClass,st.name,st.number].join(' ').toLowerCase().includes(searchQuery));
   $('rosterBody').innerHTML=visible.length?visible.map(st=>`<tr data-student="${escapeHtml(st.id)}">
-    <td><input data-key="oldClass" value="${escapeHtml(st.oldClass)}" aria-label="${escapeHtml(st.name)} 기존 반" placeholder="예: 1반"></td>
+    <td><div class="inline" style="min-width:150px;gap:4px"><input data-key="oldGrade" value="${escapeHtml(st.oldGrade||'')}" aria-label="${escapeHtml(st.name)} 기존 학년" placeholder="학년" style="width:55px;min-width:55px"><input data-key="oldClass" value="${escapeHtml(st.oldClass)}" aria-label="${escapeHtml(st.name)} 기존 반" placeholder="예: 1반" style="min-width:72px"></div></td>
     <td><input data-key="number" value="${escapeHtml(st.number)}" aria-label="${escapeHtml(st.name)} 번호" placeholder="번호" style="width:58px"></td>
     <td><div class="inline"><input data-key="name" value="${escapeHtml(st.name)}" aria-label="학생 이름" placeholder="이름" style="min-width:78px;max-width:150px"><button class="btn ghost danger small student-delete" data-remove="${escapeHtml(st.id)}" aria-label="${escapeHtml(st.name)} 삭제">×</button></div></td>
     <td><select data-key="gender" aria-label="${escapeHtml(st.name)} 성별"><option value="" ${st.gender===''?'selected':''}>선택</option><option ${st.gender==='남'?'selected':''}>남</option><option ${st.gender==='여'?'selected':''}>여</option></select></td>
@@ -601,29 +602,32 @@ function bulkAttention(value){
   return out;
 }
 /* BULK_TABLE_END */
-function parseBulk(text){
-  return bulkFormatRows(parseSheetText(text)).rows.filter(row=>row[3].trim()).map(row=>({
-    id:makeId(),oldGrade:row[0].slice(0,12),oldClass:(/^\d+$/.test(row[1])?row[1]+'반':row[1]).slice(0,50),
-    number:row[2].slice(0,25),name:row[3].slice(0,80),
-    gender:/^(남|남자|남학생)$/.test(row[4])?'남':/^(여|여자|여학생)$/.test(row[4])?'여':'',
-    level:parseStudyScore(row[6]),traits:bulkAttention(row[5]),fixed:0,note:''
-  }));
+function bulkStudentFromGrid(row){
+  const values=row.map(bulkClean);
+  return {
+    id:makeId(),oldGrade:values[0].slice(0,12),
+    oldClass:(/^\d+$/.test(values[1])?values[1]+'반':values[1]).slice(0,50),
+    number:values[2].slice(0,25),name:values[3].slice(0,80),
+    gender:/^(남|남자|남학생)$/.test(values[4])?'남':/^(여|여자|여학생)$/.test(values[4])?'여':'',
+    level:parseStudyScore(values[6]),traits:bulkAttention(values[5]),fixed:0,note:''
+  };
 }
+function parseBulk(text){return bulkFormatRows(parseSheetText(text)).rows.filter(row=>row[3].trim()).map(bulkStudentFromGrid)}
 function parseCSVLine(s,sep){const out=[];let value='',quoted=false;for(let i=0;i<s.length;i++){const ch=s[i];if(ch==='"'){if(quoted && s[i+1]==='"'){value+='"';i++}else quoted=!quoted}else if(ch===sep&&!quoted){out.push(value);value=''}else value+=ch}out.push(value);return out}
 function download(name,content,mime){const b=new Blob([content],{type:mime});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
 function csvCell(x){let s=String(x??'');if(/^\s*[=+\-@]/.test(s))s="'"+s;return /[",\n\r]/.test(s)?'"'+s.replaceAll('"','""')+'"':s}
 function exportCSV(){
   const c=state.candidates[state.activeCandidate];if(!c)return;
-  const rows=[['새 학급','담당 교사','새 번호','기존 반','번호','이름','성별','학습지표','유의 사항','교사 메모','우선 배치']];
+  const rows=[['새 학급','담당 교사','새 번호','기존 학년','기존 반','번호','이름','성별','학습지표','유의 사항','교사 메모','우선 배치']];
   for(let i=1;i<=state.classCount;i++){
     const pupils=state.students.filter(st=>c.assign[st.id]===i).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-    pupils.forEach((st,j)=>rows.push([displayClass(i),state.teacherNames[i]||'',j+1,st.oldClass,st.number,st.name,st.gender,hasStudyScore(st)?studyText(st.level):'',st.traits.join('; '),st.note,st.fixed?'교사 지정':'자동 편성']));
+    pupils.forEach((st,j)=>rows.push([displayClass(i),state.teacherNames[i]||'',j+1,st.oldGrade||'',st.oldClass,st.number,st.name,st.gender,hasStudyScore(st)?studyText(st.level):'',st.traits.join('; '),st.note,st.fixed?'교사 지정':'자동 편성']));
   }
   download('반편성_결과_'+state.grade+'학년.csv','\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');toast('편성 결과 CSV를 저장했습니다.');
 }
 function sampleData(){const surnames=['김','이','박','최','정','강','조','윤','장','임','한','오'];const names=['하늘','지우','도윤','민서','준우','서연','시우','하은','예준','다은','현우','윤서','지호','수아','건우','서준','나은','이안','채원','예은','유준','지안','서아','태윤','은우','시윤','다현','승우','윤호','서진','연우','수빈','민준','다온','현서','재윤'];return names.map((n,i)=>({id:makeId(),oldClass:(i%3+1)+'반',number:String(Math.floor(i/3)+1),name:surnames[i%12]+n,gender:i%2?'여':'남',level:Math.round((65+(i*13)%34+((i%4)*0.25))*100)/100,traits:[i%5===0?'사회성':null,i%7===0?'운동부':null].filter(Boolean),fixed:0,note:''}))}
 function isCompatibleMove(id,to,candidate){const student=findStudent(id);if(!student||student.fixed)return false;const proposal={...candidate.assign,[id]:to};return validateAssignment(state.students,state.pairs,proposal,state.capRules).length===0}
-function addStudent(){const s={id:makeId(),oldClass:'',number:'',name:'',gender:'',level:null,traits:[],fixed:0,note:''};state.students.push(s);invalidate();changeState();const field=document.querySelector(`[data-student="${s.id}"] [data-key="name"]`);field?.focus()}
+function addStudent(){const s={id:makeId(),oldGrade:'',oldClass:'',number:'',name:'',gender:'',level:null,traits:[],fixed:0,note:''};state.students.push(s);invalidate();changeState();const field=document.querySelector(`[data-student="${s.id}"] [data-key="name"]`);field?.focus()}
 function addTrait(){const t=$('newTrait').value.trim();if(!t)return;if(state.traits.includes(t)){toast('이미 있는 특징입니다.');return}if(state.traits.length>=64){toast('유의 사항은 최대 64개까지 추가할 수 있습니다.');return}state.traits.push(t);$('newTrait').value='';invalidate();changeState()}
 function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)return;const s=findStudent(tr.dataset.student);if(!s)return;
   if(e.target.dataset.trait){const t=e.target.dataset.trait;s.traits=e.target.checked?[...new Set([...s.traits,t])]:s.traits.filter(x=>x!==t);const picker=e.target.closest('.notice-picker');if(picker){picker.querySelector('[data-notice-summary]').textContent=s.traits.length?s.traits.join(', '):'유의 사항 선택';picker.querySelector('.count-pill').textContent=s.traits.length+'개'}invalidate();saveState();return}
