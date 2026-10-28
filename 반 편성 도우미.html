@@ -110,6 +110,7 @@ let bulkSelection={anchor:{r:0,c:0},focus:{r:0,c:0}};
 let bulkDragging=false;
 let bulkDefaultGrade='';
 let bulkUndoStack=[];
+let bulkPendingEdit=null;
 const presetSelected=new Set();
 let presetUndo=null;
 const $ = id => document.getElementById(id);
@@ -714,8 +715,87 @@ function bulkStudentFromGrid(row){
     level:parseStudyScore(values[6]),traits:bulkAttention(values[5]),fixed:0,note:''
   };
 }
+function bulkSaveUndo(snapshot){
+ const old=snapshot||{rows:bulkRows.map(row=>row.slice()),grade:bulkDefaultGrade};
+ bulkUndoStack.push(old);
+ if(bulkUndoStack.length>25)bulkUndoStack.shift();
+}
+function bulkUndo(){
+ const snapshot=bulkUndoStack.pop();
+ if(!snapshot){toast('되돌릴 입력 내역이 없습니다.');return}
+ bulkRows=snapshot.rows.map(row=>row.slice());
+ bulkDefaultGrade=snapshot.grade||'';
+ $('bulkFillGrade').value=bulkDefaultGrade;
+ bulkPendingEdit=null;
+ renderBulkGrid();
+ toast('직전 입력을 되돌렸습니다.');
+}
+function bulkSelectionBounds(){
+ const range=bulkRange(bulkSelection);
+ return {...range,r1:Math.max(0,Math.min(range.r1,bulkRows.length-1)),r2:Math.max(0,Math.min(range.r2,bulkRows.length-1))};
+}
+function bulkPaintSelection(){
+ const {r1,r2,c1,c2}=bulkSelectionBounds();
+ $('bulkGridBody').querySelectorAll('td.bulk-selected').forEach(td=>td.classList.remove('bulk-selected'));
+ $('bulkGridTable').querySelectorAll('th.bulk-head-selected').forEach(th=>th.classList.remove('bulk-head-selected'));
+ for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++){
+   $('bulkGridBody').querySelector('[data-bulk-r="'+r+'"][data-bulk-c="'+c+'"]')?.closest('td')?.classList.add('bulk-selected');
+ }
+ if(r1===0&&r2===bulkRows.length-1)for(let c=c1;c<=c2;c++)$('bulkGridTable').querySelector('th[data-bulk-head="'+c+'"]')?.classList.add('bulk-head-selected');
+}
+function bulkSelect(r,c,extend=false){
+ if(r<0||r>=bulkRows.length||c<0||c>6)return;
+ if(!extend)bulkSelection.anchor={r,c};
+ bulkSelection.focus={r,c};
+ bulkPaintSelection();
+}
+function bulkFocusCell(r,c,extend=false){
+ if(r<0||r>=1000||c<0||c>6)return;
+ if(r>=bulkRows.length){
+   while(bulkRows.length<=r)bulkRows.push([bulkDefaultGrade,'','','','','','']);
+   renderBulkGrid();
+ }
+ bulkSelect(r,c,extend);
+ $('bulkGridBody').querySelector('[data-bulk-r="'+r+'"][data-bulk-c="'+c+'"]')?.focus();
+}
+function bulkApplyPaste(text){
+ const range=bulkSelectionBounds(),plan=bulkPastePlan(text,range.c1);
+ if(!plan.rows.length){toast('붙여넣을 내용을 찾지 못했습니다.');return}
+ const result=bulkPasteIntoRows(bulkRows,plan,bulkSelection,bulkDefaultGrade);
+ if(!result.count){toast('이 위치에 붙여넣을 수 없습니다.');return}
+ bulkSaveUndo();bulkPendingEdit=null;bulkRows=result.rows;
+ bulkSelection={anchor:{r:result.range.r1,c:result.range.c1},focus:{r:result.range.r2,c:result.range.c2}};
+ renderBulkGrid();
+ const firstRow=bulkRows[result.range.r1];
+ if(firstRow)$('bulkGridBody').querySelector('[data-bulk-r="'+result.range.r1+'"][data-bulk-c="'+result.range.c1+'"]')?.focus();
+ // Restore the highlighted pasted range even when focusing the top-left cell.
+ bulkSelection={anchor:{r:result.range.r1,c:result.range.c1},focus:{r:result.range.r2,c:result.range.c2}};
+ bulkPaintSelection();
+ toast(Math.min(1000,result.range.r2-result.range.r1+1)+'개 행에 붙여넣었습니다.');
+}
+function bulkFillDown(){
+ const range=bulkSelectionBounds();
+ if(range.r1===range.r2){toast('먼저 시작 셀에서 아래쪽 마지막 셀까지 선택하거나 열 제목을 클릭하세요.');return}
+ const result=bulkFillDownRows(bulkRows,bulkSelection);
+ if(!result.count)return;
+ bulkSaveUndo();bulkRows=result.rows;bulkPendingEdit=null;renderBulkGrid();toast('선택한 '+(range.r2-range.r1+1)+'개 행을 첫 줄 값으로 채웠습니다.');
+}
+function bulkFillAllGrade(){
+ const grade=bulkNormalizedGrade($('bulkFillGrade').value);
+ if(!grade||grade.length>12){toast('전체 학년을 입력해 주세요. 예: 5');return}
+ bulkSaveUndo();bulkDefaultGrade=grade;
+ for(const row of bulkRows)row[0]=grade;
+ bulkSelection={anchor:{r:0,c:0},focus:{r:bulkRows.length-1,c:0}};
+ bulkPendingEdit=null;renderBulkGrid();
+ toast('현재 '+bulkRows.length+'개 행과 앞으로 추가할 행의 학년을 '+grade+'로 설정했습니다.');
+}
+function bulkClearSelected(){
+ const {r1,r2,c1,c2}=bulkSelectionBounds();bulkSaveUndo();
+ for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)bulkRows[r][c]='';
+ bulkPendingEdit=null;renderBulkGrid();toast('선택한 셀의 값을 비웠습니다.');
+}
 function renderBulkGrid(){
-  $('bulkGridBody').innerHTML=bulkRows.map((row,r)=>'<tr><td class="bulk-num">'+(r+1)+'</td>'+
+  $('bulkGridBody').innerHTML=bulkRows.map((row,r)=>'<tr><td class="bulk-num" data-bulk-row-head="'+r+'" title="이 행 선택" tabindex="0">'+(r+1)+'</td>'+
     row.map((value,c)=>{
       const title=['학년','반','번호','이름','성별','유의 사항','학습지표'][c];
       const cls=['bulk-grade','bulk-class','bulk-number','bulk-name','bulk-gender','bulk-note','bulk-score'][c];
@@ -726,6 +806,7 @@ function renderBulkGrid(){
     }).join('')+'<td class="bulk-delete-cell"><button type="button" data-bulk-delete="'+r+'" aria-label="'+(r+1)+'행 삭제">×</button></td></tr>').join('');
   $('bulkRowCount').textContent=bulkRows.length+'행';
   renderBulkPreview();
+  bulkPaintSelection();
 }
 function renderBulkPreview(){
   const entered=bulkRows.filter(row=>bulkRowIsStudent(row)||bulkClean(row[6]));
@@ -755,7 +836,7 @@ function putBulkRows(rows,start=0){
   renderBulkGrid();return imported;
 }
 function bulkClearDraft(){
-  bulkRows=Array.from({length:12},blankBulkRow);renderBulkGrid();
+  bulkRows=Array.from({length:12},blankBulkRow);bulkDefaultGrade='';bulkSelection={anchor:{r:0,c:0},focus:{r:0,c:0}};bulkUndoStack=[];bulkPendingEdit=null;$('bulkFillGrade').value='';renderBulkGrid();
 }
 function parseBulk(text){return bulkFormatRows(parseSheetText(text)).rows.filter(row=>row[3].trim()).map(bulkStudentFromGrid)}
 function parseCSVLine(s,sep){const out=[];let value='',quoted=false;for(let i=0;i<s.length;i++){const ch=s[i];if(ch==='"'){if(quoted && s[i+1]==='"'){value+='"';i++}else quoted=!quoted}else if(ch===sep&&!quoted){out.push(value);value=''}else value+=ch}out.push(value);return out}
