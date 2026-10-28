@@ -187,6 +187,53 @@
 .roster-sheet tr:hover .student-delete,.roster-sheet .student-delete:focus-visible{opacity:1}
 @media(max-width:730px){.roster-sheet-tools{align-items:start}.roster-sheet-wrap{max-height:62vh}}
 
+
+/* Results can be reviewed as a long vertical list or a same-row class comparison. */
+.result-layout-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:11px 13px;margin:13px 0;background:#f2f9f5;border:1px solid #d1e5d9;border-radius:11px}
+.result-layout-picker{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.result-layout-picker>span{font-size:12px;font-weight:750;color:#365b4f;margin-right:7px}
+.result-layout-picker button{border:1px solid #c3ddcf;border-radius:8px;background:white;color:#457363;font-size:12px;font-weight:750;padding:9px 13px;cursor:pointer}
+.result-layout-picker button[aria-pressed="true"]{background:#286d52;color:white;border-color:#286d52}
+.result-layout-picker button:focus-visible{outline:3px solid #8cceb3;outline-offset:2px}
+.result-layout-hint{font-size:11px;color:#5f7c70}
+.result-grid[data-layout="vertical"]{grid-template-columns:minmax(0,1fr)}
+.result-grid[data-layout="compare"]{grid-template-columns:repeat(var(--comparison-classes,3),minmax(238px,1fr));overflow-x:auto;align-items:stretch;padding:3px 3px 14px;scrollbar-gutter:stable}
+.result-grid[data-layout="vertical"] .class-body{max-height:none}
+.result-grid[data-layout="compare"] .class-card{min-width:0}
+.result-grid[data-layout="compare"] .class-top{padding:12px}
+.result-grid[data-layout="compare"] .class-top h3{font-size:16px}
+.result-grid[data-layout="compare"] .class-metrics{font-size:11px}
+.result-grid[data-layout="compare"] .class-body{max-height:620px;padding:4px 9px 8px}
+.result-grid[data-layout="compare"] .assigned{align-items:flex-start;flex-wrap:wrap;padding:7px 0;gap:5px}
+.result-grid[data-layout="compare"] .assigned .move-controls{margin-left:auto}
+.result-grid[data-layout="compare"] .assigned select{width:72px}
+.result-grid[data-layout="compare"] .assigned .person b{font-size:12px}
+.result-grid[data-layout="compare"] .assigned .person small{font-size:10px}
+#resultPrintSheet{display:none}
+@page result-portrait{size:A4 portrait;margin:11mm}
+@page result-landscape{size:A3 landscape;margin:10mm}
+@media print{
+ #view-results > :not(#resultPrintSheet){display:none!important}
+ #view-results #resultPrintSheet{display:block!important}
+ #resultPrintSheet .print-page{display:block!important;break-after:page;page-break-after:always;padding:0;overflow:visible}
+ #resultPrintSheet .print-page:last-child{break-after:auto;page-break-after:auto}
+ #resultPrintSheet .print-page.print-vertical{page:result-portrait}
+ #resultPrintSheet .print-page.print-compare{page:result-landscape}
+ #resultPrintSheet h2{font-size:17pt;margin:0 0 5mm;color:#1c2b28}
+ #resultPrintSheet .print-subtitle{font-size:10pt;margin:0 0 4mm;color:#3e5149}
+ #resultPrintSheet .print-summary{font-size:9pt;margin:0 0 5mm}
+ #resultPrintSheet table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8pt}
+ #resultPrintSheet thead{display:table-header-group}
+ #resultPrintSheet th,#resultPrintSheet td{border:1px solid #93a29b;padding:5px 4px;vertical-align:top;text-align:left;overflow-wrap:anywhere;word-break:keep-all}
+ #resultPrintSheet th{background:#eaf0ec!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ #resultPrintSheet tbody tr{break-inside:avoid}
+ #resultPrintSheet .print-compare table{font-size:7pt}
+ #resultPrintSheet .print-compare td.print-number{width:19px;text-align:center}
+ #resultPrintSheet .print-compare td.print-student{font-size:7pt;line-height:1.4}
+ #resultPrintSheet .print-compare td.print-student strong{font-size:8pt}
+ #resultPrintSheet .print-note{font-size:8pt;color:#516457}
+}
+
 /* Stage 0: source enrollment and future class planning */
 .setup-year-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:13px 0 16px}
 .setup-year-grid .field{min-width:0}
@@ -281,9 +328,10 @@
  <div id="basketNotice" class="helper">바구니에 학생을 넣거나 검색 목록에서 학생을 끌어다 놓으세요. 한 바구니의 학생 수는 편성할 반 수를 넘을 수 없습니다.</div>
  <div class="basket-zone"><div class="basket-source"><div class="basket-source-head"><strong>학생 찾기</strong><span>선택 또는 드래그</span></div><label class="field"><input id="basketSearch" type="search" placeholder="이름 · 기존 반 · 번호" aria-label="분리 학생 검색"></label><div id="basketSelected" class="basket-selected-label" aria-live="polite">학생을 선택해 바구니에 담으세요.</div><div id="basketPool" class="basket-pool"></div></div><div id="basketGrid" class="basket-grid"></div></div>
  <div class="section-head"><div><h2>개별 분리 관계 <span id="pairCount" class="count-pill">0쌍</span></h2><p>서로 다른 반에 배정할 두 학생을 선택하세요.</p></div></div><div class="constraint-form"><label class="field">학생 A <select id="pairA" class="wide"></select></label><label class="field">학생 B <select id="pairB" class="wide"></select></label><button id="addPair" class="btn primary">분리 관계 추가</button></div><div id="pairList"></div></section>
- <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>완성된 반 편성표</h2><p>편성 결과를 확인하고 필요한 학생을 옮겨 보세요.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="exportCsv" class="btn" disabled>엑셀용 파일 저장</button><button id="print" class="btn" disabled>결과 인쇄 · PDF</button></div></div>
+ <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>완성된 반 편성표</h2><p>편성 결과를 확인하고 필요한 학생을 옮겨 보세요.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="copyResultExcel" class="btn" disabled>엑셀에 복사</button><button id="exportCsv" class="btn" disabled>엑셀용 파일 저장</button><button id="print" class="btn" disabled>인쇄 · PDF 저장</button></div></div>
+ <div class="result-layout-bar no-print"><div class="result-layout-picker" role="group" aria-label="반 편성표 배치 방식"><span>반 배치</span><button id="resultVertical" type="button" data-result-layout="vertical" aria-pressed="true">세로형</button><button id="resultCompare" type="button" data-result-layout="compare" aria-pressed="false">가로 비교형</button></div><span id="resultLayoutHint" class="result-layout-hint">반을 세로로 펼쳐 봅니다.</span></div>
  <div class="move-guide no-print"><span>학생 카드를 다른 반으로 드래그하세요. 태블릿에서는 학생 선택 → 대상 반의 「여기로 이동」을 누르면 됩니다.</span><button id="undoMove" class="btn small" disabled>마지막 이동 되돌리기</button></div><div id="moveSelection" class="move-selection no-print" aria-live="polite"></div><div id="movePreview" class="move-preview no-print" aria-live="polite"></div><div id="moveHistoryResult" class="move-history" aria-live="polite"></div>
- <div id="resultMessage" class="helper result-help">먼저 학생 명단을 작성한 다음 자동 편성하기를 눌러 주세요. 결과에서 학생의 반을 직접 바꾸거나 다른 편성안을 선택할 수도 있습니다.</div><div id="alternatives" class="alternatives"></div><div id="validation"></div><div id="report"></div><div id="resultGrid" class="result-grid"></div><div class="helper result-help">최종 확정 전에 반별 구성을 확인하세요.</div></section>
+ <div id="resultMessage" class="helper result-help">먼저 학생 명단을 작성한 다음 자동 편성하기를 눌러 주세요. 결과에서 학생의 반을 직접 바꾸거나 다른 편성안을 선택할 수도 있습니다.</div><div id="alternatives" class="alternatives"></div><div id="validation"></div><div id="report"></div><div id="resultGrid" class="result-grid" data-layout="vertical" aria-label="반별 편성 학생 목록"></div><section id="resultPrintSheet" aria-label="인쇄용 반 편성표"></section><div class="helper result-help">최종 확정 전에 반별 구성을 확인하세요.</div></section>
  
  <div class="foot">학생 정보는 이 기기에 저장됩니다. 공동 PC에서는 사용 후 자료를 정리해 주세요. 자세한 내용은 상단 도움말에서 확인할 수 있습니다.</div>
 </main>
@@ -294,7 +342,7 @@
  <details><summary>1단계 · 학생 명단 작성</summary><p>학년·반·번호는 자동으로 준비됩니다. 이름, 성별, 학습지표, 유의 사항만 입력하세요. 엑셀의 이름 열을 한꺼번에 복사해 첫 번째 이름 칸에 붙여넣어도 됩니다. 학습지표의 빈칸과 0.00은 다릅니다.</p></details>
  <details><summary>교사 우선 배치(선택)</summary><p>설정에서 교사 우선 배치를 켜면 별도의 단계가 나타납니다. 미리 맡을 학생을 반마다 정할 수 있으며, 자동 편성에서도 유지됩니다. 끄면 단계가 숨겨지고 이전 지정은 보관됩니다.</p></details>
  <details><summary>3단계 · 함께 배정하지 않을 학생</summary><p>유의 사항별 최대 인원을 정하거나 '같은 반 금지 바구니'를 여러 개 만들 수 있습니다. 같은 바구니에 넣은 학생은 각각 다른 반에 배정됩니다.</p></details>
- <details><summary>4단계 · 결과 수정과 저장</summary><p>완성된 반에서 학생 카드를 다른 반으로 끌어 옮기고, 성별·유의 사항 인원과 학습지표 변화도 볼 수 있습니다. 편성 결과는 이 브라우저에 보관되므로 다른 PC에서 열려면 백업 파일을 이용하세요.</p></details>
+ <details><summary>4단계 · 결과 수정과 저장</summary><p>세로형 또는 가로 비교형으로 반을 펼쳐 볼 수 있습니다. 가로 비교형은 여러 반을 같은 줄에 나란히 표시합니다. 학생을 드래그해 옮겨도 반별 인원과 학습지표가 갱신됩니다. 「엑셀에 복사」를 누르고 엑셀의 첫 칸에 붙여넣으면 세로형은 한 목록으로, 가로형은 반별 열로 나란히 들어갑니다. 인쇄와 PDF 저장도 선택한 형태에 맞춰 만들어지며, 가로형 인쇄는 읽기 쉽도록 한 장에 최대 네 반을 배치합니다. 편성 결과는 이 브라우저에 보관되므로 다른 PC에서는 백업 파일을 이용하세요.</p></details>
  <details><summary>자료 보호와 유의 사항</summary><p>학생 정보는 이 도구의 브라우저 저장 공간에서 다루며 서버로 전송하지 않습니다. 공동으로 사용하는 PC에서는 사용 후 자료를 정리하고, 백업 파일은 학교의 개인정보 보호 규정에 따라 관리해 주세요. '분리조치' 항목만 체크하면 자동으로 학생 사이의 분리 관계가 지정되지는 않습니다. 바구니에서 학생을 직접 선택해야 합니다.</p></details>
  </div>
  <div class="dialog-actions"><button id="helpDone" class="btn primary" type="button">닫기</button></div>
@@ -438,7 +486,7 @@ function stageZeroReconcile(students,sourceGrade,rows,idFactory){
   created:next.length-requested.size,preserved:requested.size};
 }
 /* STAGE_ZERO_END */
-function defaultState(){return {version:6,grade:'6',classCount:3,sourceGrade:'5',sourceClassCount:3,sourceClasses:stageZeroRows([],3),setupCompleted:false,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},baskets:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
+function defaultState(){return {version:6,grade:'6',classCount:3,resultLayout:'vertical',sourceGrade:'5',sourceClassCount:3,sourceClasses:stageZeroRows([],3),setupCompleted:false,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},baskets:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
 function parseStudyScore(v,legacy=false){if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return !Number.isFinite(n)||n<0||n>1e9||(legacy&&n===0)?null:Math.round((n+Number.EPSILON)*100)/100}
 function hasStudyScore(s){return Number.isFinite(s.level)&&s.level>=0}
 function studyText(v){return Number.isFinite(v)?v.toFixed(2):'미입력'}
@@ -469,7 +517,7 @@ function normalize(raw){
  const candidates=(Number(raw.version||1)>=5&&Array.isArray(raw.candidates)?raw.candidates:[]).slice(0,3)
   .filter(c=>c&&c.assign&&typeof c.assign==='object'&&uniqueStudents.every(st=>Number.isInteger(Number(c.assign[st.id]))&&Number(c.assign[st.id])>=1&&Number(c.assign[st.id])<=count))
   .map(c=>({assign:Object.fromEntries(uniqueStudents.map(st=>[st.id,Number(c.assign[st.id])])),target:Array.from({length:count},(_,i)=>Number(c.target?.[i])||Math.floor(uniqueStudents.length/count)),score:Number(c.score)||0}));
- return {...base,grade:String(raw.grade??'6').slice(0,12),classCount:count,sourceGrade,sourceClassCount:countSource,sourceClasses,setupCompleted,teacherPriorityOn,traits,capRules,teacherNames,baskets,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
+ return {...base,grade:String(raw.grade??'6').slice(0,12),classCount:count,resultLayout:raw.resultLayout==='compare'?'compare':'vertical',sourceGrade,sourceClassCount:countSource,sourceClasses,setupCompleted,teacherPriorityOn,traits,capRules,teacherNames,baskets,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
 }
 function loadState(){try{return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY)))}catch(e){return defaultState()}}
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
@@ -1170,8 +1218,13 @@ function renderReviewCardChips(d){
 }
 function renderResults(){
   const has=state.candidates.length>0;
-  $('exportCsv').disabled=!has;$('print').disabled=!has;
-  if(!has){$('resultMessage').classList.remove('hidden');$('alternatives').innerHTML='';$('validation').innerHTML='';$('report').innerHTML='';$('resultGrid').innerHTML='';$('movePreview').innerHTML='';$('moveHistoryResult').innerHTML='';$('moveSelection').textContent='';$('undoMove').disabled=true;return}
+  $('exportCsv').disabled=!has;$('print').disabled=!has;$('copyResultExcel').disabled=!has;
+  $('resultVertical').setAttribute('aria-pressed',String(state.resultLayout!=='compare'));
+  $('resultCompare').setAttribute('aria-pressed',String(state.resultLayout==='compare'));
+  $('resultGrid').dataset.layout=state.resultLayout;
+  $('resultGrid').style.setProperty('--comparison-classes',String(state.classCount));
+  $('resultLayoutHint').textContent=state.resultLayout==='compare'?'반을 한 줄에 나란히 비교합니다. 반이 많으면 옆으로 스크롤하세요. 엑셀 복사·인쇄도 가로로 나옵니다.':'반을 위아래로 확인합니다. 먼 반으로 옮길 때는 학생 선택 후 대상 반의 이동 버튼을 사용하세요. 엑셀·인쇄도 세로형으로 나옵니다.';
+  if(!has){$('resultMessage').classList.remove('hidden');$('alternatives').innerHTML='';$('validation').innerHTML='';$('report').innerHTML='';$('resultGrid').innerHTML='';$('movePreview').innerHTML='';$('moveHistoryResult').innerHTML='';$('moveSelection').textContent='';$('undoMove').disabled=true;$('resultPrintSheet').innerHTML='';return}
   $('resultMessage').classList.add('hidden');
   renderReviewMoveTools();
   $('alternatives').innerHTML=state.candidates.map((c,i)=>`<button class="alt ${state.activeCandidate===i?'active':''}" data-candidate="${i}"><strong>편성안 ${String.fromCharCode(65+i)}</strong><small>${i===0?'추천안 · ':''}조건 위반 ${validateAssignment(activeStudents(),effectivePairs(),c.assign,state.capRules).length}건</small></button>`).join('');
@@ -1185,6 +1238,7 @@ function renderResults(){
     const c=index+1;const pupils=state.students.filter(s=>selected.assign[s.id]===c).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
     return `<div class="class-card" data-drop-class="${c}" aria-label="${escapeHtml(displayClass(c))} 학생 이동 대상"><div class="class-top"><h3>${escapeHtml(displayClass(c))}<small>${d.total}명</small></h3><div class="class-metrics">${state.teacherNames[c]?'담당 '+escapeHtml(state.teacherNames[c])+' · ':''}교사 우선 배치 ${state.teacherPriorityOn?pupils.filter(st=>st.fixed).length:0}명 · 남 ${d.boys} · 여 ${d.girls} · 학습지표 ${d.levelN?(d.levelSum/d.levelN).toFixed(2):'미입력'}</div>${renderReviewCardChips(d)}</div><div class="class-body">${pupils.map(s=>`<div class="assigned ${moveSelectedId===s.id?'move-selected':''}" data-result-student="${escapeHtml(s.id)}" draggable="${!(state.teacherPriorityOn&&s.fixed)}" aria-label="${escapeHtml(studentTitle(s))}"><div class="drag-handle" aria-hidden="true" title="드래그해서 다른 반으로 이동">⠿</div><div class="person"><b>${escapeHtml(s.name)}${state.teacherPriorityOn&&s.fixed?' <span class="warning-dot" title="교사가 우선 배치한 학생 · 자동 편성에서 유지">◆</span>':''}</b><small>${escapeHtml(s.oldClass||'기존 반 미입력')}${s.number?' · '+escapeHtml(s.number)+'번':''} · ${escapeHtml(s.gender||'성별 미입력')} · 학습 ${escapeHtml(studyText(s.level))}${s.traits.length?' · '+escapeHtml(s.traits.join(', ')):''}</small></div><div class="move-controls">${state.teacherPriorityOn&&s.fixed?'<span class="move-locked">고정</span>':`<button type="button" class="btn move-select-btn" data-select-move="${escapeHtml(s.id)}" aria-pressed="${moveSelectedId===s.id}">${moveSelectedId===s.id?'선택 해제':'이동 선택'}</button>`}<select data-move="${escapeHtml(s.id)}" aria-label="${escapeHtml(s.name)} 반 변경" ${state.teacherPriorityOn&&s.fixed?'disabled title="고정된 학생"':''}>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${i+1===c?'selected':''}>${i+1}반</option>`).join('')}</select></div></div>`).join('')||'<div class="empty">학생 없음</div>'}</div><div class="class-drop no-print"><button type="button" class="btn" data-drop-button="${c}" ${!moveSelectedId||selected.assign[moveSelectedId]===c?'disabled':''}>${moveSelectedId&&selected.assign[moveSelectedId]!==c?'선택한 학생 여기로 이동':'여기로 이동'}</button></div></div>`;
   }).join('');
+  renderResultPrint(selected,counts);
 }
 /* BULK_TABLE_START: pure input helpers shared by the grid and paste fallback */
 function blankBulkRow(){return Array(7).fill('')}
@@ -1529,14 +1583,104 @@ function parseBulk(text){return bulkFormatRows(parseSheetText(text)).rows.filter
 function parseCSVLine(s,sep){const out=[];let value='',quoted=false;for(let i=0;i<s.length;i++){const ch=s[i];if(ch==='"'){if(quoted && s[i+1]==='"'){value+='"';i++}else quoted=!quoted}else if(ch===sep&&!quoted){out.push(value);value=''}else value+=ch}out.push(value);return out}
 function download(name,content,mime){const b=new Blob([content],{type:mime});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
 function csvCell(x){let s=String(x??'');if(/^\s*[=+\-@]/.test(s))s="'"+s;return /[",\n\r]/.test(s)?'"'+s.replaceAll('"','""')+'"':s}
-function exportCSV(){
-  const c=state.candidates[state.activeCandidate];if(!c)return;
-  const rows=[['새 학급','담당 교사','새 번호','기존 학년','기존 반','번호','이름','성별','학습지표','유의 사항','교사 메모','우선 배치']];
-  for(let i=1;i<=state.classCount;i++){
-    const pupils=state.students.filter(st=>c.assign[st.id]===i).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-    pupils.forEach((st,j)=>rows.push([displayClass(i),state.teacherNames[i]||'',j+1,st.oldGrade||'',st.oldClass,st.number,st.name,st.gender,hasStudyScore(st)?studyText(st.level):'',st.traits.join('; '),st.note,state.teacherPriorityOn&&st.fixed?'교사 지정':'자동 편성']));
+/* RESULTS_PRESENTATION_START: copy/export always reflects current edited assignment. */
+function resultRoomPupils(students,candidate,classCount){
+ return Array.from({length:classCount},(_,i)=>students.filter(s=>candidate.assign[s.id]===i+1)
+  .slice().sort((a,b)=>a.name.localeCompare(b.name,'ko')||String(a.oldClass).localeCompare(String(b.oldClass),'ko',{numeric:true})||Number(a.number||0)-Number(b.number||0)));
+}
+function resultExportMatrix(students,candidate,classCount,grade,teacherNames,teacherFirst,layout){
+ const rooms=resultRoomPupils(students,candidate,classCount);
+ const cell=st=>[st.oldGrade||'',st.oldClass||'',st.number||'',st.name||'',st.gender||'',
+   Number.isFinite(st.level)&&st.level>=0?st.level.toFixed(2):'',(st.traits||[]).join('; '),st.note||'',teacherFirst&&st.fixed?'교사 지정':'자동 편성'];
+ if(layout==='compare'){
+  // Each original class becomes a group of the same six Excel columns, side by side.
+  const perRoom=6;
+  const names=rooms.flatMap((room,i)=>[grade+'학년 '+(i+1)+'반'+(teacherNames[i+1]?' · '+teacherNames[i+1]:''),...Array(perRoom-1).fill('')]);
+  const headers=rooms.flatMap(()=>['새 번호','이름','성별','기존 반·번호','학습지표','유의 사항·메모']);
+  const max=Math.max(0,...rooms.map(room=>room.length));
+  const rows=[names,headers];
+  for(let j=0;j<max;j++)rows.push(rooms.flatMap(room=>{
+   const st=room[j];
+   if(!st)return Array(perRoom).fill('');
+   return [j+1,st.name||'',st.gender||'',(st.oldGrade?st.oldGrade+'학년 ':'')+(st.oldClass||'')+(st.number?' '+st.number+'번':''),
+    Number.isFinite(st.level)&&st.level>=0?st.level.toFixed(2):'',(st.traits||[]).join('; ')+(st.note?' / '+st.note:'')];
+  }));
+  return rows;
+ }
+ const rows=[['새 학급','담당 교사','새 번호','기존 학년','기존 반','기존 번호','이름','성별','학습지표','유의 사항','교사 메모','우선 배치']];
+ for(let i=0;i<rooms.length;i++)rooms[i].forEach((st,j)=>{
+  const values=cell(st);
+  rows.push([grade+'학년 '+(i+1)+'반',teacherNames[i+1]||'',j+1,...values]);
+ });
+ return rows;
+}
+function safeExcelTextCell(value){
+ const text=String(value??'').replace(/[\r\n\t]+/g,' ').trim();
+ return /^[=+\-@]/.test(text)?"'"+text:text;
+}
+function resultMatrixToTsv(matrix){return matrix.map(row=>row.map(safeExcelTextCell).join('\t')).join('\r\n')}
+function resultPrintTables(students,candidate,counts,classCount,grade,teacherNames,teacherFirst,layout,escape){
+ const rooms=resultRoomPupils(students,candidate,classCount),title=i=>grade+'학년 '+(i+1)+'반';
+ const summary=i=>{const d=counts[i];return '전체 '+d.total+'명 · 남 '+d.boys+'명 · 여 '+d.girls+'명 · 다문화 '+(d.traitCounts['다문화']||0)+'명 · 특수 '+(d.traitCounts['특수']||0)+'명 · 학습지표 '+(d.levelN?(d.levelSum/d.levelN).toFixed(2):'미입력')};
+ const escaped=(v)=>escape(String(v??''));
+ if(layout==='compare'){
+  const sheets=[];
+  for(let first=0;first<classCount;first+=4){
+   const group=rooms.slice(first,first+4),max=Math.max(0,...group.map(r=>r.length));
+   const top=group.map((room,i)=>'<th colspan="2">'+escaped(title(first+i))+' · '+room.length+'명'+(teacherNames[first+i+1]?' · 담당 '+escaped(teacherNames[first+i+1]):'')+'</th>').join('');
+   const subs=group.map(()=>'<th style="width:25px">번호</th><th>학생 정보</th>').join('');
+   const body=Array.from({length:max},(_,j)=>'<tr>'+group.map(room=>{
+    const st=room[j];
+    if(!st)return '<td class="print-number"></td><td class="print-student"></td>';
+    const detail=(st.gender||'성별 미입력')+' · '+(st.oldGrade?st.oldGrade+'학년 ':'')+(st.oldClass||'')+(st.number?' '+st.number+'번':'')+
+     ' · 학습 '+(Number.isFinite(st.level)&&st.level>=0?st.level.toFixed(2):'미입력');
+    return '<td class="print-number">'+(j+1)+'</td><td class="print-student"><strong>'+escaped(st.name)+'</strong><div>'+escaped(detail)+'</div>'+
+      ((st.traits||[]).length?'<div>'+escaped(st.traits.join(', '))+'</div>':'')+
+      (st.note?'<div>메모 '+escaped(st.note)+'</div>':'')+
+      (teacherFirst&&st.fixed?'<div>교사 지정</div>':'')+'</td>';
+   }).join('')+'</tr>').join('');
+   sheets.push('<div class="print-page print-compare"><h2>반 편성표 · 가로 비교형</h2><p class="print-subtitle">'+escaped(grade)+'학년 '+(first+1)+'~'+Math.min(classCount,first+4)+'반 · '+classCount+'개 반 중 '+group.length+'개 반</p>'+
+     '<p class="print-summary">'+group.map((_,i)=>escaped(title(first+i))+': '+escaped(summary(first+i))).join('　/　')+'</p>'+
+     '<table><thead><tr>'+top+'</tr><tr>'+subs+'</tr></thead><tbody>'+body+'</tbody></table><p class="print-note">※ 한 페이지에 최대 4개 반씩 비교합니다. 인원 초과 시 표가 다음 인쇄 페이지로 이어집니다.</p></div>');
   }
-  download('반편성_결과_'+state.grade+'학년.csv','\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');toast('편성 결과 CSV를 저장했습니다.');
+  return sheets.join('');
+ }
+ return rooms.map((room,i)=>'<div class="print-page print-vertical"><h2>'+escaped(title(i))+' 편성표</h2><p class="print-subtitle">담당 교사: '+escaped(teacherNames[i+1]||'미지정')+' · '+escaped(summary(i))+'</p>'+
+  '<table><thead><tr><th style="width:6%">번호</th><th style="width:14%">이름</th><th style="width:8%">성별</th><th style="width:15%">기존 반·번호</th><th style="width:12%">학습지표</th><th>유의 사항</th><th>메모</th></tr></thead><tbody>'+
+  room.map((st,j)=>'<tr><td>'+(j+1)+'</td><td>'+escaped(st.name)+'</td><td>'+escaped(st.gender||'—')+'</td><td>'+escaped((st.oldGrade?st.oldGrade+'학년 ':'')+(st.oldClass||'')+(st.number?' '+st.number+'번':''))+'</td><td>'+(Number.isFinite(st.level)&&st.level>=0?st.level.toFixed(2):'—')+'</td><td>'+escaped((st.traits||[]).join(', '))+'</td><td>'+escaped(st.note||'')+'</td></tr>').join('')+
+  '</tbody></table></div>').join('');
+}
+/* RESULTS_PRESENTATION_END */
+function selectedResultMatrix(){
+ const c=state.candidates[state.activeCandidate];
+ return c?resultExportMatrix(state.students,c,state.classCount,state.grade,state.teacherNames,state.teacherPriorityOn,state.resultLayout):[];
+}
+function renderResultPrint(candidate,counts){
+ $('resultPrintSheet').innerHTML=resultPrintTables(state.students,candidate,counts,state.classCount,state.grade,state.teacherNames,state.teacherPriorityOn,state.resultLayout,escapeHtml);
+}
+function setResultLayout(layout){
+ state.resultLayout=layout==='compare'?'compare':'vertical';
+ saveState();renderResults();
+}
+async function copyResultExcel(){
+ const rows=selectedResultMatrix();if(!rows.length)return;
+ const data=resultMatrixToTsv(rows);
+ try{
+  if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(data);
+  else{
+   const field=document.createElement('textarea');field.value=data;field.style.position='fixed';field.style.left='-10000px';
+   document.body.append(field);field.select();
+   if(!document.execCommand('copy'))throw Error('clipboard unavailable');
+   field.remove();
+  }
+  toast(state.resultLayout==='compare'?'반별 열을 나란히 복사했습니다. 엑셀 첫 칸에 붙여넣으세요.':'편성표를 복사했습니다. 엑셀 첫 칸에 붙여넣으세요.');
+ }catch(e){toast('복사 권한이 허용되지 않았습니다. 「엑셀용 파일 저장」을 이용해 주세요.')}
+}
+function exportCSV(){
+ const rows=selectedResultMatrix();if(!rows.length)return;
+ const kind=state.resultLayout==='compare'?'가로비교':'세로형';
+ download('반편성_결과_'+state.grade+'학년_'+kind+'.csv','\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+ toast(kind+' 편성표를 엑셀용 파일로 저장했습니다.');
 }
 /* DEMO_NAMES_START: nonidentifying sample names for rehearsal, no other pupil fields changed. */
 function generateDemoNames(count,usedNames=[],random=Math.random){
@@ -1920,7 +2064,9 @@ function installEvents(){
   });
   $('resultGrid').addEventListener('change',manualMove);
 
-  $('exportCsv').addEventListener('click',exportCSV);$('print').addEventListener('click',()=>window.print());
+  document.querySelectorAll('[data-result-layout]').forEach(button=>button.addEventListener('click',()=>setResultLayout(button.dataset.resultLayout)));
+  $('copyResultExcel').addEventListener('click',copyResultExcel);
+  $('exportCsv').addEventListener('click',exportCSV);$('print').addEventListener('click',()=>{if(state.candidates.length)window.print()});
 }
 installEvents();showTab(view);
 </script>
