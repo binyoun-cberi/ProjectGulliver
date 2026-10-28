@@ -191,8 +191,23 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     const startMetrics=await page.evaluate(()=>reportData(state.candidates[state.activeCandidate]));
     assert.match(await page.locator('#report').textContent(),/다문화/);
     assert.match(await page.locator('#report').textContent(),/특수/);
-    await page.locator('[data-result-student="'+reviewChoice.id+'"]').dragTo(page.locator('[data-drop-class="'+reviewChoice.to+'"]'));
-    assert.equal(await page.locator('select[data-move="'+reviewChoice.id+'"]').inputValue(),String(reviewChoice.to));
+    await page.evaluate(()=>{
+      window.__moveDragEvents=[];
+      const root=document.getElementById('resultGrid');
+      for(const type of ['dragstart','dragenter','dragover','drop','dragend']){
+        root.addEventListener(type,e=>window.__moveDragEvents.push({
+          type,target:e.target?.tagName,room:e.target?.closest?.('[data-drop-class]')?.dataset.dropClass||null,
+          active:moveDraggingId,prevented:e.defaultPrevented
+        }),true);
+      }
+    });
+    await page.locator('[data-result-student="'+reviewChoice.id+'"] .drag-handle').dragTo(page.locator('[data-drop-class="'+reviewChoice.to+'"]'));
+    const dragDiagnostics=await page.evaluate(()=>({
+      history:window.__moveDragEvents.slice(0,25),
+      assigned:state.candidates[state.activeCandidate].assign,
+      preview:document.getElementById('movePreview').textContent
+    }));
+    assert.equal(await page.locator('select[data-move="'+reviewChoice.id+'"]').inputValue(),String(reviewChoice.to),JSON.stringify(dragDiagnostics.history)+' / '+dragDiagnostics.preview);
     assert.match(await page.locator('#moveHistoryResult').textContent(),/최근 이동/);
     assert.match(await page.locator('#moveHistoryResult').textContent(),/학습지표 평균/);
     assert.match(await page.locator('#moveHistoryResult').textContent(),/다문화/);
