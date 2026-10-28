@@ -708,6 +708,7 @@ function renderRoster(){
       <div class="notice-extra"><label class="field">교사 우선 배치 반 (ON 시 적용)<select data-key="fixed" aria-label="${escapeHtml(st.name)} 배정 반 고정" ${!state.teacherPriorityOn?'disabled title="교사 우선 배치를 ON으로 전환해야 합니다"':''}><option value="0">미고정</option>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${st.fixed===i+1?'selected':''}>${i+1}반 고정</option>`).join('')}</select></label><button class="btn small" data-note="${escapeHtml(st.id)}">${st.note?'참고 메모 수정':'참고 메모 작성'}</button></div></details>
       ${st.fixed?'<span class="note-inline">◆ '+st.fixed+'반 '+(state.teacherPriorityOn?'고정':'지정 보관 (OFF)')+'</span>':''}${st.note?'<span class="note-inline">메모 있음</span>':''}
     </td></tr>`).join(''):`<tr><td colspan="5" class="empty"><b>${state.students.length?'검색 결과가 없습니다.':'등록된 학생이 없습니다.'}</b>${state.students.length?'검색어를 바꿔 주세요.' : '「+ 학생 추가」로 시작하세요.'}</td></tr>`;
+  rosterPaintSelection();$('rosterUndo').disabled=!rosterUndoStack.length;
 }
 function presetPersonInfo(st){
   return [st.oldClass,st.gender,hasStudyScore(st)?'학습 '+studyText(st.level):'학습 미입력',...(st.traits||[])].filter(Boolean).join(' · ');
@@ -1353,7 +1354,7 @@ function rosterExcelPastePlan(text,startKey='name'){
  const rows=parseSheetText(text);
  if(!rows.length)return {rows:[],mapping:[],header:false};
  const columns={name:'name',gender:'gender',level:'level'};
- const startIndex=columns[startKey]==='name'?0:columns[startKey]==='gender'?1:2;
+ const startIndex=startKey==='name'?0:startKey==='gender'?1:startKey==='level'?2:3;
  const sequence=['name','gender','level','traits'];
  const recognized=rows[0].map(x=>{const key=bulkHeaderColumn(x);return key===3?'name':key===4?'gender':key===6?'level':key===5?'traits':null});
  const headers=recognized.filter(Boolean).length>=2||
@@ -1568,10 +1569,10 @@ function isCompatibleMove(id,to,candidate){const student=findStudent(id);if(!stu
 function addStudent(){const room=state.sourceClassCount||1;const last=Math.max(0,...state.students.filter(st=>stageZeroRoom(st.oldClass)===room).map(st=>Number(st.number)||0));const s={id:makeId(),oldGrade:state.sourceGrade,oldClass:room+'반',number:String(last+1),name:'',gender:'',level:null,traits:[],fixed:0,note:''};state.students.push(s);invalidate();changeState();toast('현재 '+room+'반에 임시 학생 자리 1개를 추가했습니다. 0단계 인원과 차이가 생겼습니다.');const field=document.querySelector(`[data-student="${s.id}"] [data-key="name"]`);field?.focus()}
 function addTrait(){const t=$('newTrait').value.trim();if(!t)return;if(state.traits.includes(t)){toast('이미 있는 특징입니다.');return}if(state.traits.length>=64){toast('유의 사항은 최대 64개까지 추가할 수 있습니다.');return}state.traits.push(t);$('newTrait').value='';invalidate();changeState()}
 function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)return;const s=findStudent(tr.dataset.student);if(!s)return;
-  if(e.target.dataset.trait){const t=e.target.dataset.trait;s.traits=e.target.checked?[...new Set([...s.traits,t])]:s.traits.filter(x=>x!==t);const picker=e.target.closest('.notice-picker');if(picker){picker.querySelector('[data-notice-summary]').textContent=s.traits.length?s.traits.join(', '):'유의 사항 선택';picker.querySelector('.count-pill').textContent=s.traits.length+'개'}invalidate();saveState();renderOverview();return}
-  else if(e.target.dataset.key){const key=e.target.dataset.key;const value=e.target.value;if(key==='level'){const parsed=parseStudyScore(value);if(value!==''&&parsed===null){toast('학습지표는 0.00 이상의 숫자로 입력해 주세요.');renderRoster();return}s.level=parsed}else if(key==='fixed'){tryPreset(s.id,Number(value));return}else s[key]=value.slice(0,key==='name'?80:50)}
+  if(e.target.dataset.trait){const t=e.target.dataset.trait;s.traits=e.target.checked?[...new Set([...s.traits,t])]:s.traits.filter(x=>x!==t);const picker=e.target.closest('.notice-picker');if(picker){picker.querySelector('[data-notice-summary]').textContent=s.traits.length?s.traits.join(', '):'유의 사항 선택';picker.querySelector('.count-pill').textContent=s.traits.length+'개';const input=picker.closest('[data-roster-cell]')?.querySelector('[data-key="traitsText"]');if(input)input.value=s.traits.join('; ')}invalidate();saveState();renderOverview();return}
+  else if(e.target.dataset.key){const key=e.target.dataset.key;const value=e.target.value;if(key==='fixed'){tryPreset(s.id,Number(value));return}if(key==='level'&&value!==''&&parseStudyScore(value)===null){toast('학습지표는 0.00 이상의 숫자로 입력해 주세요.');renderRoster();return}if(key==='gender'&&!['','남','여'].includes(value)){toast('성별은 남 또는 여로 선택해 주세요.');renderRoster();return}if(key==='traitsText'){const items=bulkAttention(value);const fresh=items.filter(x=>!state.traits.includes(x));if(state.traits.length+fresh.length>64){toast('유의 사항은 최대 64개까지 추가할 수 있습니다.');renderRoster();return}rosterSaveUndo();state.traits.push(...fresh);s.traits=items}else{rosterSaveUndo();if(key==='level')s.level=value===''?null:parseStudyScore(value);else s[key]=value.slice(0,key==='name'?80:50)}}
   else return;
-  invalidate();saveState();render();
+  invalidate();saveState();render();$('rosterUndo').disabled=!rosterUndoStack.length;
 }
 function previewResultMove(id,to){
  const candidate=state.candidates[state.activeCandidate];if(!candidate)return null;
@@ -1704,28 +1705,64 @@ function installEvents(){
   $('searchStudent').addEventListener('input',e=>{searchQuery=e.target.value.trim().toLowerCase();renderRoster()});
   $('newTrait').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTrait()}});$('addTrait').addEventListener('click',addTrait);
   $('traitChips').addEventListener('click',e=>{const b=e.target.closest('[data-delete-trait]');if(!b)return;const t=b.dataset.deleteTrait;if(!confirm(`「${t}」 유의 사항을 학생 명단에서도 삭제할까요?`))return;state.traits=state.traits.filter(x=>x!==t);delete state.capRules[t];state.students.forEach(s=>s.traits=s.traits.filter(x=>x!==t));invalidate();changeState()});
-  $('rosterBody').addEventListener('paste',e=>{
-    const field=e.target.closest('input[data-key="name"],select[data-key="gender"],input[data-key="level"]');
-    if(!field)return;
-    const pasted=e.clipboardData?.getData('text/plain')||'';
-    if(!pasted)return;
-    const rows=parseSheetText(pasted);
-    if(rows.length===1&&rows[0].length===1)return;
+  $('rosterFillDown').addEventListener('click',rosterFillDown);
+  $('rosterUndo').addEventListener('click',rosterUndo);
+  $('rosterHead').addEventListener('click',e=>{
+    const head=e.target.closest('[data-roster-header]');if(!head)return;
+    const c=ROSTER_COLUMNS.indexOf(head.dataset.rosterHeader),ids=rosterVisibleIds();
+    if(c<0||!ids.length)return;
+    rosterSelection={anchor:{r:0,c},focus:{r:ids.length-1,c}};
+    rosterPaintSelection();
+  });
+  $('rosterHead').addEventListener('keydown',e=>{
+    if(e.key==='Enter'||e.key===' '){
+      const h=e.target.closest('[data-roster-header]');if(h){e.preventDefault();h.click()}
+    }
+  });
+  $('rosterBody').addEventListener('mousedown',e=>{
+    if(!e.shiftKey)return;
+    const coords=rosterCellCoords(e.target);
+    if(coords){e.preventDefault();rosterSelect(coords.r,coords.c,true)}
+  });
+  $('rosterBody').addEventListener('focusin',e=>{
+    const coords=rosterCellCoords(e.target);
+    if(coords)rosterSelect(coords.r,coords.c);
+  });
+  $('rosterBody').addEventListener('copy',e=>{
+    const range=rosterBounds();
+    if(!range||(range.r1===range.r2&&range.c1===range.c2))return;
     e.preventDefault();
-    const visible=Array.from($('rosterBody').querySelectorAll('tr[data-student]'));
-    const start=visible.findIndex(tr=>tr.contains(field));
-    if(start<0)return;
-    const ids=visible.slice(start).map(tr=>tr.dataset.student);
-    const plan=rosterExcelChanges(pasted,field.dataset.key,ids,state.students);
-    if(plan.errors.length){toast(plan.errors.slice(0,3).join(' / '));return}
-    if(!plan.changes.length){toast('붙여넣을 정보를 찾지 못했습니다.');return}
-    const newTags=[...new Set(plan.changes.filter(x=>x.present.traits).flatMap(x=>x.next.traits))].filter(t=>!state.traits.includes(t));
-    if(state.traits.length+newTags.length>64){toast('유의 사항 항목 수가 너무 많습니다. 설정에서 항목을 정리해 주세요.');return}
-    state.traits.push(...newTags);
-    const map=new Map(plan.changes.map(x=>[x.id,x.next]));
-    state.students=state.students.map(st=>map.get(st.id)||st);
-    invalidate();changeState();
-    toast(plan.changes.length+'명 입력 완료 · 학년·반·번호는 그대로 유지됩니다.');
+    e.clipboardData?.setData('text/plain',rosterSelectedTSV());
+  });
+  $('rosterBody').addEventListener('keydown',e=>{
+    if(e.isComposing||!rosterCellCoords(e.target))return;
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'){e.preventDefault();rosterFillDown()}
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&rosterUndoStack.length){e.preventDefault();rosterUndo()}
+    if(e.key==='Enter'&&e.target.matches('[data-key="name"],[data-key="level"],[data-key="traitsText"]')){
+      const pos=rosterCellCoords(e.target),ids=rosterVisibleIds();
+      if(!pos||pos.r+1>=ids.length)return;
+      e.preventDefault();e.target.blur();
+      $('rosterBody').querySelector('tr[data-student="'+CSS.escape(ids[pos.r+1])+'"] [data-roster-cell="'+ROSTER_COLUMNS[pos.c]+'"] [data-key]')?.focus();
+    }
+  });
+  $('rosterBody').addEventListener('paste',e=>{
+    const field=e.target.closest('[data-key="name"],[data-key="gender"],[data-key="level"],[data-key="traitsText"]');
+    if(!field)return;
+    const text=e.clipboardData?.getData('text/plain')||'';
+    if(!text)return;
+    const parsed=parseSheetText(text),multiple=parsed.length>1||parsed.some(row=>row.length>1);
+    const range=rosterBounds(),selected=range&&(range.r2>range.r1||range.c2>range.c1);
+    if(!multiple&&!selected&&field.matches('input'))return;
+    e.preventDefault();
+    const ids=rosterVisibleIds(),coords=rosterCellCoords(field);
+    if(!coords)return;
+    if(selected&&!multiple){
+      if(range.c1!==range.c2){toast('한 번에 하나의 열을 선택해 채워 주세요.');return}
+      const repeated=Array(range.r2-range.r1+1).fill(text).join('\n');
+      rosterPasteText(repeated,ROSTER_COLUMNS[range.c1],ids.slice(range.r1,range.r2+1));
+    }else{
+      rosterPasteText(text,field.dataset.key==='traitsText'?'traits':field.dataset.key,ids.slice(coords.r));
+    }
   });
   $('rosterBody').addEventListener('change',updateStudent);
   $('rosterBody').addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');if(remove){const s=findStudent(remove.dataset.remove);if(!confirm(`「${studentTitle(s)}」 학생을 삭제할까요?`))return;state.students=state.students.filter(x=>x.id!==remove.dataset.remove);state.pairs=state.pairs.filter(p=>p.a!==remove.dataset.remove&&p.b!==remove.dataset.remove);state.baskets.forEach(b=>b.members=b.members.filter(id=>id!==remove.dataset.remove));invalidate();changeState();return}
