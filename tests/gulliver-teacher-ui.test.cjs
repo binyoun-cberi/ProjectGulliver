@@ -269,6 +269,56 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     const savedCsv=fs.readFileSync(await classCsv.path(),'utf8');
     assert.match(savedCsv,/담당교사 A/);
     assert.match(savedCsv,/교사 지정/);
+    // The final class list offers vertical and same-row side-by-side comparison.
+    assert.equal(await page.locator('#resultGrid').getAttribute('data-layout'),'vertical');
+    assert.equal(await page.locator('#resultVertical').getAttribute('aria-pressed'),'true');
+    const verticalMatrix=await page.evaluate(()=>selectedResultMatrix());
+    assert.equal(verticalMatrix.length,await page.evaluate(()=>state.students.length+1));
+    assert.equal(verticalMatrix[0][0],'새 학급');
+    await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{
+      configurable:true,value:{writeText:async value=>{window.__copiedResult=value}}
+    }));
+    await page.locator('#copyResultExcel').click();
+    const copiedVertical=await page.evaluate(()=>window.__copiedResult);
+    assert.match(copiedVertical,/새 학급\t담당 교사\t새 번호/);
+    assert.ok(copiedVertical.includes('\r\n'));
+    await page.locator('#resultCompare').click();
+    assert.equal(await page.locator('#resultGrid').getAttribute('data-layout'),'compare');
+    assert.equal(await page.locator('#resultCompare').getAttribute('aria-pressed'),'true');
+    const positions=await page.locator('#resultGrid .class-card').evaluateAll(cards=>cards.map(el=>{
+      const r=el.getBoundingClientRect();return {left:r.left,top:r.top,width:r.width}
+    }));
+    assert.ok(positions.length>=2);
+    assert.ok(positions.every(x=>Math.abs(x.top-positions[0].top)<4),'comparison class columns should line up');
+    assert.ok(positions[1].left>positions[0].left+50,'next class appears to the right');
+    const comparison=await page.evaluate(()=>selectedResultMatrix());
+    assert.equal(comparison[0].length,positions.length*6);
+    assert.equal(comparison[1][0],'새 번호');
+    assert.equal(comparison[1][6],'새 번호');
+    await page.locator('#copyResultExcel').click();
+    const copiedCompare=await page.evaluate(()=>window.__copiedResult);
+    assert.match(copiedCompare,/새 번호\t이름\t성별/);
+    assert.match(copiedCompare,/6학년 1반/);
+    const [wideDownload] = await Promise.all([page.waitForEvent('download'),page.locator('#exportCsv').click()]);
+    assert.match(wideDownload.suggestedFilename(),/가로비교\.csv$/);
+    const wideCsv=fs.readFileSync(await wideDownload.path(),'utf8');
+    assert.match(wideCsv,/새 번호,이름,성별/);
+    await page.emulateMedia({media:'print'});
+    assert.equal(await page.locator('#resultPrintSheet').isVisible(),true);
+    assert.equal(await page.locator('#resultGrid').isVisible(),false);
+    assert.equal(await page.locator('#resultPrintSheet .print-compare').count(),Math.ceil(positions.length/4));
+    assert.equal(await page.locator('#resultPrintSheet .print-vertical').count(),0);
+    assert.match(await page.locator('#resultPrintSheet').textContent(),/남/);
+    await page.emulateMedia({media:'screen'});
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.locator('[data-tab="results"]').click();
+    assert.equal(await page.locator('#resultGrid').getAttribute('data-layout'),'compare','comparison view must be saved');
+    await page.locator('#resultVertical').click();
+    await page.emulateMedia({media:'print'});
+    assert.equal(await page.locator('#resultPrintSheet .print-vertical').count(),positions.length);
+    assert.equal(await page.locator('#resultPrintSheet .print-compare').count(),0);
+    await page.emulateMedia({media:'screen'});
+
 
     // All basket members must be placed into different classes, even with teacher-first OFF.
     const preserved=await page.evaluate(()=>state.students.filter(st=>st.fixed).map(st=>[st.id,st.fixed]));
