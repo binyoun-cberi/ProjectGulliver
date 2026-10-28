@@ -1452,10 +1452,65 @@ function installEvents(){
   $('generate').addEventListener('click',()=>{
     const problems=basketProblems();
     if(problems.length){invalidate();saveState();showTab('results');$('resultMessage').textContent=problems.join(' / ');toast(problems[0]);return}
-    const outcome=generateCandidates(activeStudents(),effectivePairs(),state.classCount,state.traits,Math.random,state.capRules);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
+    const outcome=generateCandidates(activeStudents(),effectivePairs(),state.classCount,state.traits,Math.random,state.capRules);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;moveUndoStack.length=0;moveSelectedId=null;moveDraggingId=null;moveLastResult=null;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
   $('generateQuick').addEventListener('click',()=>$('generate').click());
-  $('alternatives').addEventListener('click',e=>{const b=e.target.closest('[data-candidate]');if(!b)return;state.activeCandidate=Number(b.dataset.candidate);saveState();renderResults()});
+  $('alternatives').addEventListener('click',e=>{const b=e.target.closest('[data-candidate]');if(!b)return;state.activeCandidate=Number(b.dataset.candidate);moveSelectedId=null;moveDraggingId=null;saveState();renderResults();clearReviewPreview()});
+  $('undoMove').addEventListener('click',undoResultMove);
+  $('resultGrid').addEventListener('click',e=>{
+    const select=e.target.closest('[data-select-move]');
+    if(select){
+      const id=select.dataset.selectMove;
+      moveSelectedId=moveSelectedId===id?null:id;
+      renderResults();clearReviewPreview();return;
+    }
+    const move=e.target.closest('[data-drop-button]');
+    if(move&&moveSelectedId)applyResultMove(moveSelectedId,Number(move.dataset.dropButton));
+  });
+  $('resultGrid').addEventListener('dragstart',e=>{
+    const el=e.target.closest('[data-result-student]');
+    if(!el||e.target.closest('button,select')||el.draggable===false){e.preventDefault();return}
+    const id=el.dataset.resultStudent;
+    if(!id||!state.candidates.length){e.preventDefault();return}
+    const st=findStudent(id);
+    if(state.teacherPriorityOn&&st?.fixed){e.preventDefault();toast('교사가 우선 배치한 학생은 이동할 수 없습니다.');return}
+    moveDraggingId=id;
+    e.dataTransfer.effectAllowed='move';
+    e.dataTransfer.setData('text/plain',id);
+    el.classList.add('dragging');
+  });
+  $('resultGrid').addEventListener('dragover',e=>{
+    const card=e.target.closest('[data-drop-class]');
+    if(!card||!moveDraggingId)return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect='move';
+    const to=Number(card.dataset.dropClass);
+    if(movePreviewClass!==to)showReviewPreview(moveDraggingId,to);
+  });
+  $('resultGrid').addEventListener('dragleave',e=>{
+    const card=e.target.closest('[data-drop-class]');
+    if(!card||card.contains(e.relatedTarget))return;
+    card.classList.remove('move-accept','move-reject');
+    if(movePreviewClass===Number(card.dataset.dropClass)){
+      movePreviewClass=0;
+      $('movePreview').innerHTML='';$('movePreview').classList.remove('invalid');
+    }
+  });
+  $('resultGrid').addEventListener('drop',e=>{
+    const card=e.target.closest('[data-drop-class]');
+    if(!card)return;
+    e.preventDefault();
+    const id=e.dataTransfer?.getData('text/plain')||moveDraggingId;
+    moveDraggingId=null;
+    if(id&&state.students.some(s=>s.id===id))applyResultMove(id,Number(card.dataset.dropClass));
+    else clearReviewPreview();
+  });
+  $('resultGrid').addEventListener('dragend',()=>{
+    moveDraggingId=null;
+    document.querySelectorAll('#resultGrid .assigned.dragging').forEach(x=>x.classList.remove('dragging'));
+    clearReviewPreview();
+  });
   $('resultGrid').addEventListener('change',manualMove);
+
   $('exportCsv').addEventListener('click',exportCSV);$('print').addEventListener('click',()=>window.print());
 }
 installEvents();render();
