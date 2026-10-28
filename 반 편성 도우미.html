@@ -1223,7 +1223,7 @@ function renderResults(){
   $('resultCompare').setAttribute('aria-pressed',String(state.resultLayout==='compare'));
   $('resultGrid').dataset.layout=state.resultLayout;
   $('resultGrid').style.setProperty('--comparison-classes',String(state.classCount));
-  $('resultLayoutHint').textContent=state.resultLayout==='compare'?'반을 한 줄에 나란히 비교합니다. 반이 많으면 옆으로 스크롤하세요. 엑셀 복사·인쇄도 가로로 나옵니다.':'반별 학생을 세로로 확인합니다. 엑셀 복사·인쇄도 세로형으로 나옵니다.';
+  $('resultLayoutHint').textContent=state.resultLayout==='compare'?'반을 한 줄에 나란히 비교합니다. 반이 많으면 옆으로 스크롤하세요. 엑셀 복사·인쇄도 가로로 나옵니다.':'반을 위아래로 확인합니다. 먼 반으로 옮길 때는 학생 선택 후 대상 반의 이동 버튼을 사용하세요. 엑셀·인쇄도 세로형으로 나옵니다.';
   if(!has){$('resultMessage').classList.remove('hidden');$('alternatives').innerHTML='';$('validation').innerHTML='';$('report').innerHTML='';$('resultGrid').innerHTML='';$('movePreview').innerHTML='';$('moveHistoryResult').innerHTML='';$('moveSelection').textContent='';$('undoMove').disabled=true;$('resultPrintSheet').innerHTML='';return}
   $('resultMessage').classList.add('hidden');
   renderReviewMoveTools();
