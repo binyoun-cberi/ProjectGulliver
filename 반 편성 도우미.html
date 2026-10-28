@@ -261,7 +261,7 @@ function normalize(raw){
 }
 function loadState(){try{return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY)))}catch(e){return defaultState()}}
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
-function invalidate(){state.candidates=[];state.activeCandidate=0}
+function invalidate(){state.candidates=[];state.activeCandidate=0;moveSelectedId=null;moveDraggingId=null;moveLastResult=null;moveUndoStack.length=0;movePreviewClass=0}
 function changeState(){saveState();render()}
 function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),3700)}
 function uniquePairs(arr){const seen=new Set();return arr.filter(p=>{const key=[p.a,p.b].sort().join('|');if(seen.has(key))return false;seen.add(key);return true})}
@@ -742,7 +742,7 @@ function renderReviewChange(analysis,title){
 }
 function renderReviewMoveTools(){
  const selected=moveSelectedId&&findStudent(moveSelectedId),has=state.candidates.length>0;
- $('undoMove').disabled=!has||!moveUndoStack.length||moveUndoStack[moveUndoStack.length-1].candidate!==state.activeCandidate;
+ $('undoMove').disabled=!has||!moveUndoStack.some(h=>h.candidate===state.activeCandidate);
  $('moveSelection').textContent=selected&&has?'이동할 학생: '+studentTitle(selected)+' · 원하는 반 카드 아래의 「여기로 이동」 버튼을 누르세요. 학생 선택 버튼을 다시 누르면 해제됩니다.':'';
  $('moveHistoryResult').innerHTML=moveLastResult&&moveLastResult.candidate===state.activeCandidate?
    renderReviewChange(moveLastResult.analysis,'최근 이동 · '+(moveLastResult.undone?'되돌림 완료':'반영 완료')):'';
@@ -1091,10 +1091,76 @@ function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)ret
   else return;
   invalidate();saveState();render();
 }
-function manualMove(e){const select=e.target.closest('[data-move]');if(!select)return;const id=select.dataset.move,to=Number(select.value),c=state.candidates[state.activeCandidate];if(!c)return;
-  if(!isCompatibleMove(id,to,c)){toast('분리 관계·반 고정·유의 사항별 최대 인원 조건에 어긋나 이동할 수 없습니다.');renderResults();return}
-  c.assign[id]=to;c.score=calcScore(state.students,c.assign,state.classCount,state.traits,c.target);saveState();renderResults();toast('학생의 배정 반을 변경했습니다. 인원 균형을 다시 확인해 주세요.')
+function previewResultMove(id,to){
+ const candidate=state.candidates[state.activeCandidate];if(!candidate)return null;
+ return reviewStudentMove(state.students,effectivePairs(),candidate.assign,state.classCount,state.traits,state.capRules,id,to,state.teacherPriorityOn);
 }
+function highlightMoveTarget(targetId,valid){
+ document.querySelectorAll('#resultGrid .class-card').forEach(card=>{
+  const match=Number(card.dataset.dropClass)===targetId;
+  card.classList.toggle('move-accept',match&&valid);
+  card.classList.toggle('move-reject',match&&!valid);
+ });
+}
+function clearReviewPreview(){
+ movePreviewClass=0;
+ $('movePreview').innerHTML='';$('movePreview').classList.remove('invalid');
+ document.querySelectorAll('#resultGrid .class-card').forEach(card=>card.classList.remove('move-accept','move-reject'));
+}
+function showReviewPreview(id,to){
+ const candidate=state.candidates[state.activeCandidate];if(!candidate||!id)return;
+ const plan=previewResultMove(id,to);
+ if(!plan)return;
+ const label=plan.ok?'드래그하여 이동할 경우의 예상 변화':'이동할 수 없는 위치';
+ $('movePreview').classList.toggle('invalid',!plan.ok);
+ $('movePreview').innerHTML=renderReviewChange(plan,label);
+ highlightMoveTarget(to,!!plan.ok);
+ movePreviewClass=to;
+}
+function applyResultMove(id,to){
+ const candidate=state.candidates[state.activeCandidate];
+ if(!candidate)return false;
+ const analysis=previewResultMove(id,to);
+ if(!analysis||!analysis.ok){
+  const reason=analysis?.error||'이동을 처리할 수 없습니다.';
+  $('movePreview').classList.add('invalid');
+  $('movePreview').innerHTML='<strong>이동하지 않았습니다</strong>'+escapeHtml(reason);
+  highlightMoveTarget(to,false);
+  toast(reason);return false;
+ }
+ moveUndoStack.push({candidate:state.activeCandidate,id,from:analysis.from,to:analysis.to});
+ if(moveUndoStack.length>60)moveUndoStack.shift();
+ candidate.assign=analysis.proposed;
+ candidate.score=calcScore(state.students,candidate.assign,state.classCount,state.traits,candidate.target);
+ moveLastResult={candidate:state.activeCandidate,analysis,undone:false};
+ moveSelectedId=null;moveDraggingId=null;
+ saveState();renderResults();clearReviewPreview();
+ toast(analysis.student.name+' 학생을 '+analysis.from+'반에서 '+analysis.to+'반으로 옮겼습니다. 성별·유의 사항 변화가 반영됐습니다.');
+ return true;
+}
+function undoResultMove(){
+ const candidateIndex=state.activeCandidate;
+ let idx=-1;
+ for(let i=moveUndoStack.length-1;i>=0;i--)if(moveUndoStack[i].candidate===candidateIndex){idx=i;break}
+ if(idx<0){toast('되돌릴 수 있는 이동이 없습니다.');return false}
+ const h=moveUndoStack[idx],candidate=state.candidates[candidateIndex];
+ if(!candidate||Number(candidate.assign[h.id])!==h.to){toast('이후 배정이 변경되어 마지막 이동을 되돌릴 수 없습니다.');return false}
+ const analysis=previewResultMove(h.id,h.from);
+ if(!analysis||!analysis.ok){toast('현재 분리·고정·상한 조건에 따라 되돌릴 수 없습니다.');return false}
+ moveUndoStack.splice(idx,1);
+ candidate.assign=analysis.proposed;
+ candidate.score=calcScore(state.students,candidate.assign,state.classCount,state.traits,candidate.target);
+ moveLastResult={candidate:candidateIndex,analysis,undone:true};
+ moveSelectedId=null;moveDraggingId=null;saveState();renderResults();clearReviewPreview();
+ toast('마지막 학생 이동을 되돌렸습니다.');
+ return true;
+}
+function manualMove(e){
+ const select=e.target.closest('[data-move]');if(!select)return;
+ const id=select.dataset.move,to=Number(select.value);
+ if(!applyResultMove(id,to))renderResults();
+}
+
 function installEvents(){
   document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
   $('teacherPriorityOn').addEventListener('change',e=>{
