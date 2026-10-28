@@ -364,10 +364,10 @@
  <div class="panel-dialog-head"><div class="panel-head-icon" aria-hidden="true">?</div><div><h2 id="plannerHelpTitle">반 편성 도움말</h2><p>필요할 때만 펼쳐서 읽어 보세요.</p></div><button id="closeHelp" class="btn ghost small" type="button" aria-label="도움말 닫기">✕</button></div>
  <div class="panel-dialog-body">
  <details open><summary>0단계 · 기본 정보 입력</summary><p>현재 학년과 반별 남학생·여학생 수를 입력합니다. 내년에 편성할 학년과 반 수도 정하면 예상 인원 분포가 나타납니다. 숫자만으로 특정 학생의 성별을 자동 지정하지 않습니다.</p></details>
- <details><summary>1단계 · 학생 명단 작성</summary><p>학년·반·번호는 자동으로 준비됩니다. 이름, 성별, 학습지표, 유의 사항만 입력하세요. 엑셀의 이름 열을 한꺼번에 복사해 첫 번째 이름 칸에 붙여넣어도 됩니다. 학습지표의 빈칸과 0.00은 다릅니다.</p></details>
+ <details><summary>1단계 · 학생 명단 작성</summary><p>학년·반·번호는 자동으로 준비됩니다. 이름, 성별, 학습지표, 유의 사항을 입력하세요. 학생 이름 옆의 「색」 버튼으로 학생별 이름 칸 색을 지정할 수 있습니다. 색은 반을 옮겨도 유지됩니다. 엑셀의 이름 열을 한꺼번에 복사해 첫 번째 이름 칸에 붙여넣어도 됩니다. 학습지표의 빈칸과 0.00은 다릅니다.</p></details>
  <details><summary>교사 우선 배치(선택)</summary><p>설정에서 교사 우선 배치를 켜면 별도의 단계가 나타납니다. 미리 맡을 학생을 반마다 정할 수 있으며, 자동 편성에서도 유지됩니다. 끄면 단계가 숨겨지고 이전 지정은 보관됩니다.</p></details>
  <details><summary>3단계 · 함께 배정하지 않을 학생</summary><p>유의 사항별 최대 인원을 정하거나 '같은 반 금지 바구니'를 여러 개 만들 수 있습니다. 같은 바구니에 넣은 학생은 각각 다른 반에 배정됩니다.</p></details>
- <details><summary>4단계 · 결과 수정과 저장</summary><p>세로형 또는 가로 비교형으로 반을 펼쳐 볼 수 있습니다. 가로 비교형은 여러 반을 같은 줄에 나란히 표시합니다. 학생을 드래그해 옮겨도 반별 인원과 학습지표가 갱신됩니다. 「엑셀에 복사」를 누르고 엑셀의 첫 칸에 붙여넣으면 세로형은 한 목록으로, 가로형은 반별 열로 나란히 들어갑니다. 인쇄와 PDF 저장도 선택한 형태에 맞춰 만들어지며, 가로형 인쇄는 읽기 쉽도록 한 장에 최대 네 반을 배치합니다. 편성 결과는 이 브라우저에 보관되므로 다른 PC에서는 백업 파일을 이용하세요.</p></details>
+ <details><summary>4단계 · 결과 수정과 저장</summary><p>세로형 또는 가로 비교형으로 반을 펼쳐 볼 수 있습니다. 가로 비교형은 여러 반을 같은 줄에 나란히 표시합니다. 학생을 드래그해 옮겨도 반별 인원과 학습지표가 갱신됩니다. 학생 이름 옆 「색」 버튼에서 배경색을 정하거나 없앨 수 있고, 1단계에서 지정한 색도 그대로 나타납니다. 「엑셀에 복사」를 누르고 엑셀의 첫 칸에 붙여넣으면 세로형은 한 목록으로, 가로형은 반별 열로 나란히 들어갑니다. 인쇄와 PDF 저장도 선택한 형태에 맞춰 만들어지며, 가로형 인쇄는 읽기 쉽도록 한 장에 최대 네 반을 배치합니다. 편성 결과는 이 브라우저에 보관되므로 다른 PC에서는 백업 파일을 이용하세요.</p></details>
  <details><summary>자료 보호와 유의 사항</summary><p>학생 정보는 이 도구의 브라우저 저장 공간에서 다루며 서버로 전송하지 않습니다. 공동으로 사용하는 PC에서는 사용 후 자료를 정리하고, 백업 파일은 학교의 개인정보 보호 규정에 따라 관리해 주세요. '분리조치' 항목만 체크하면 자동으로 학생 사이의 분리 관계가 지정되지는 않습니다. 바구니에서 학생을 직접 선택해야 합니다.</p></details>
  </div>
  <div class="dialog-actions"><button id="helpDone" class="btn primary" type="button">닫기</button></div>
@@ -415,6 +415,7 @@ const DEFAULT_TRAITS = ['다문화','특수','쌍생아','분리조치','운동�
 let state = loadState();
 let view = state.setupCompleted ? 'roster' : 'setup';
 let noteStudentId = null;
+let nameColorStudentId = null;
 let searchQuery = '';
 let rosterSelection=null;
 const rosterUndoStack=[];
@@ -1842,6 +1843,39 @@ function manualMove(e){
  if(!applyResultMove(id,to))renderResults();
 }
 
+/* STUDENT_NAME_COLOR_CONTROLS_START */
+function renderNameColorDialog(){
+ const student=findStudent(nameColorStudentId);
+ if(!student)return;
+ const active=normalizeNameColor(student.color);
+ $('nameColorStudent').textContent=studentTitle(student)+' · 두 화면에 동일하게 표시됩니다.';
+ $('nameColorPreview').innerHTML='<span style="'+studentNameStyle(active)+'">'+escapeHtml(student.name||'(이름 미입력)')+'</span>';
+ $('nameColorPalette').innerHTML=NAME_COLOR_PRESETS.map(p=>
+  '<button type="button" class="name-color-swatch" data-pick-name-color="'+p.hex+'" aria-pressed="'+(active===p.hex)+'" aria-label="'+p.name+' 배경색 지정"><span style="background:'+p.hex+'"></span>'+p.name+'</button>'
+ ).join('');
+ $('customNameColor').value=active||'#dff7e8';
+ $('clearNameColor').disabled=!active;
+}
+function openNameColorDialog(id){
+ if(!findStudent(id))return;
+ nameColorStudentId=id;
+ renderNameColorDialog();
+ $('nameColorDialog').showModal();
+}
+function changeStudentNameColor(value){
+ const student=findStudent(nameColorStudentId);
+ if(!student)return;
+ const color=normalizeNameColor(value);
+ if(value&&color===''){toast('올바른 색상 값을 선택해 주세요.');return}
+ if(student.color===color)return;
+ student.color=color;
+ saveState(); // Presentation-only change: preserve every generated candidate and manual move.
+ if(view==='roster')renderRoster();
+ else if(view==='results')renderResults();
+ else render();
+ renderNameColorDialog();
+}
+/* STUDENT_NAME_COLOR_CONTROLS_END */
 function showPlannerDialog(id){
  const dialog=$(id);
  if(dialog&&!dialog.open)dialog.showModal();
@@ -1849,6 +1883,11 @@ function showPlannerDialog(id){
 function closePlannerDialog(id){const dialog=$(id);if(dialog?.open)dialog.close()}
 function installEvents(){
   $('openHelp').addEventListener('click',()=>showPlannerDialog('plannerHelpDialog'));
+  $('closeNameColor').addEventListener('click',()=>$('nameColorDialog').close());
+  $('nameColorDone').addEventListener('click',()=>$('nameColorDialog').close());
+  $('clearNameColor').addEventListener('click',()=>changeStudentNameColor(''));
+  $('nameColorPalette').addEventListener('click',e=>{const button=e.target.closest('[data-pick-name-color]');if(button)changeStudentNameColor(button.dataset.pickNameColor)});
+  $('customNameColor').addEventListener('change',e=>changeStudentNameColor(e.target.value));
   $('openSettings').addEventListener('click',()=>showPlannerDialog('plannerSettingsDialog'));
   $('setupOpenSettings').addEventListener('click',()=>showPlannerDialog('plannerSettingsDialog'));
   for(const [button,dialog] of [['closeHelp','plannerHelpDialog'],['helpDone','plannerHelpDialog'],['closeSettings','plannerSettingsDialog'],['settingsDone','plannerSettingsDialog']])$(button).addEventListener('click',()=>closePlannerDialog(dialog));
@@ -1963,7 +2002,7 @@ function installEvents(){
     }
   });
   $('rosterBody').addEventListener('change',updateStudent);
-  $('rosterBody').addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');if(remove){const s=findStudent(remove.dataset.remove);if(!confirm(`「${studentTitle(s)}」 학생을 삭제할까요?`))return;state.students=state.students.filter(x=>x.id!==remove.dataset.remove);state.pairs=state.pairs.filter(p=>p.a!==remove.dataset.remove&&p.b!==remove.dataset.remove);state.baskets.forEach(b=>b.members=b.members.filter(id=>id!==remove.dataset.remove));invalidate();changeState();return}
+  $('rosterBody').addEventListener('click',e=>{const color=e.target.closest('[data-student-color]');if(color){openNameColorDialog(color.dataset.studentColor);return}const remove=e.target.closest('[data-remove]');if(remove){const s=findStudent(remove.dataset.remove);if(!confirm(`「${studentTitle(s)}」 학생을 삭제할까요?`))return;state.students=state.students.filter(x=>x.id!==remove.dataset.remove);state.pairs=state.pairs.filter(p=>p.a!==remove.dataset.remove&&p.b!==remove.dataset.remove);state.baskets.forEach(b=>b.members=b.members.filter(id=>id!==remove.dataset.remove));invalidate();changeState();return}
     const note=e.target.closest('[data-note]');if(note){const s=findStudent(note.dataset.note);noteStudentId=s.id;$('noteTitle').textContent=`${s.name||'학생'} 메모`;$('noteText').value=s.note;$('noteDialog').showModal()}});
   $('cancelNote').addEventListener('click',()=>$('noteDialog').close());$('saveNote').addEventListener('click',()=>{const s=findStudent(noteStudentId);if(s){s.note=$('noteText').value.slice(0,1000);invalidate();changeState()}$('noteDialog').close()});
   $('presetSearch').addEventListener('input',renderPreset);
@@ -2064,6 +2103,8 @@ function installEvents(){
   $('alternatives').addEventListener('click',e=>{const b=e.target.closest('[data-candidate]');if(!b)return;state.activeCandidate=Number(b.dataset.candidate);moveSelectedId=null;moveDraggingId=null;saveState();renderResults();clearReviewPreview()});
   $('undoMove').addEventListener('click',undoResultMove);
   $('resultGrid').addEventListener('click',e=>{
+    const color=e.target.closest('[data-student-color]');
+    if(color){openNameColorDialog(color.dataset.studentColor);return}
     const select=e.target.closest('[data-select-move]');
     if(select){
       const id=select.dataset.selectMove;
