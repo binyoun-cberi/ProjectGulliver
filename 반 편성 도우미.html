@@ -516,22 +516,98 @@ function renderResults(){
     return `<div class="class-card"><div class="class-top"><h3>${escapeHtml(displayClass(c))}<small>${d.total}명</small></h3><div class="class-metrics">${state.teacherNames[c]?'담당 '+escapeHtml(state.teacherNames[c])+' · ':''}교사 우선 배치 ${pupils.filter(st=>st.fixed).length}명 · 남 ${d.boys} · 여 ${d.girls} · 학습지표 ${d.levelN?(d.levelSum/d.levelN).toFixed(2):'미입력'}</div></div><div class="class-body">${pupils.map(s=>`<div class="assigned"><div class="person"><b>${escapeHtml(s.name)}${s.fixed?' <span class="warning-dot" title="교사가 우선 배치한 학생 · 자동 편성에서 유지">◆</span>':''}</b><small>${escapeHtml(s.oldClass||'기존 반 미입력')}${s.number?' · '+escapeHtml(s.number)+'번':''} · ${escapeHtml(s.gender||'성별 미입력')} · 학습 ${escapeHtml(studyText(s.level))}${s.traits.length?' · '+escapeHtml(s.traits.join(', ')):''}</small></div><select data-move="${escapeHtml(s.id)}" aria-label="${escapeHtml(s.name)} 반 변경" ${s.fixed?'disabled title="고정된 학생"':''}>${Array.from({length:state.classCount},(_,i)=>`<option value="${i+1}" ${i+1===c?'selected':''}>${i+1}반</option>`).join('')}</select></div>`).join('')||'<div class="empty">학생 없음</div>'}</div></div>`;
   }).join('');
 }
-function parseBulk(text){
-  const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(x=>x.trim());if(!lines.length)return [];
-  const delimiter=lines.some(x=>x.includes('\t'))?'\t':lines.some(x=>x.includes(','))?',':null;
-  let columns=lines.map(line=>delimiter?parseCSVLine(line,delimiter):[line.trim()]);
-  if(columns[0]&&columns[0].some(x=>/^(이름|학생명|성별|기존\s?반|현재\s?반|번호|학습지표(?:\s*\(.*\))?|유의\s?사항|특징|메모)$/i.test(x.trim())))columns.shift();
-  const results=[];
-  for(const row of columns){let oldClass='',number='',name='',gender='',level=null,traits=[],note='';
-    if(row.length===1){name=row[0]||''}
-    else if(row.length===2){[oldClass,name]=row}
-    else if(row.length===3){[oldClass,name,gender]=row}
-    else if(row.length===4){[oldClass,number,name,gender]=row}
-    else{[oldClass,number,name,gender]=row;level=parseStudyScore(row[4]);traits=String(row[5]||'').split(/[;,，、|/]/).map(x=>x.trim()).filter(Boolean);note=row.slice(6).join(' / ')}
-    if(!String(name||'').trim())continue;
-    results.push({id:makeId(),oldClass:String(oldClass||'').trim(),number:String(number||'').trim(),name:String(name).trim(),gender:['남','여'].includes(String(gender||'').trim())?String(gender).trim():'',level,traits,fixed:0,note:String(note||'')})
+/* BULK_TABLE_START: pure input helpers shared by the grid and paste fallback */
+function blankBulkRow(){return Array(7).fill('')}
+function bulkClean(value){return String(value??'').replace(/\u00a0|\u3000/g,' ').replace(/<br\s*\/?>/gi,'\n').replace(/&nbsp;|&#x20;|&#32;/gi,' ').trim()}
+function bulkSummary(row){return row.some(v=>/^(?:총\s*[:：]?\s*\d+\s*명|합계\s*[:：]?\s*\d+\s*명)$/.test(bulkClean(v)))}
+function parseSheetText(text){
+  const raw=String(text??'').replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n');
+  if(!raw.trim())return [];
+  const lines=raw.split('\n'),first=lines.find(line=>line.trim());
+  if(first&&first.trim().startsWith('|')&&first.split('|').length>=5){
+    return lines.filter(line=>line.trim().startsWith('|')).map(line=>{
+      const trimmed=line.trim().replace(/^\|/,'').replace(/\|$/,'');
+      return trimmed.split(/(?<!\\)\|/).map(v=>bulkClean(v.replace(/\\\|/g,'|')));
+    }).filter(row=>!row.every(v=>/^:?-{2,}:?$/.test(v)||!v));
   }
-  return results;
+  const separator=raw.includes('\t')?'\t':lines[0].split(',').length>=4?',':null;
+  if(!separator)return lines.map(line=>[bulkClean(line)]).filter(row=>row.some(Boolean));
+  const rows=[];let row=[],cell='',quoted=false;
+  for(let i=0;i<raw.length;i++){
+    const ch=raw[i];
+    if(ch==='"'){
+      if(quoted&&raw[i+1]==='"'){cell+='"';i++;continue}
+      if(quoted||!cell.trim()){quoted=!quoted;continue}
+    }
+    if(!quoted&&ch===separator){row.push(bulkClean(cell));cell='';continue}
+    if(!quoted&&ch==='\n'){row.push(bulkClean(cell));rows.push(row);row=[];cell='';continue}
+    cell+=ch;
+  }
+  row.push(bulkClean(cell));rows.push(row);
+  while(rows.length&&rows[rows.length-1].every(v=>!v))rows.pop();
+  return rows;
+}
+function bulkHeaderColumn(value){
+  const name=bulkClean(value).toLowerCase().replace(/\s+/g,'').replace(/[()（）]/g,'');
+  if(['학년','기존학년','현재학년'].includes(name))return 0;
+  if(['반','기존반','현재반','학급'].includes(name))return 1;
+  if(['번호','기존번호','출석번호'].includes(name))return 2;
+  if(['이름','학생이름','학생명','성명'].includes(name))return 3;
+  if(['성별','성'].includes(name))return 4;
+  if(['유의사항','특징','특이사항','비고'].includes(name))return 5;
+  if(name.startsWith('학습지표')||['학습점수','성적','점수'].includes(name))return 6;
+  return -1;
+}
+function bulkRowIsStudent(row){
+  return row.some((value,i)=>i<6&&bulkClean(value));
+}
+function bulkFormatRows(matrix,startColumn=0){
+  if(!matrix.length)return {rows:[],header:false,skipped:0};
+  const keys=matrix[0].map(bulkHeaderColumn);
+  const header=keys.filter(x=>x>=0).length>=3&&keys.includes(3);
+  const source=header?matrix.slice(1):matrix;
+  const first=source.find(row=>row.some(v=>bulkClean(v)))||[];
+  // Six columns from old imports: class / number / name / gender / score / attention.
+  const legacy=!header&&first.length>=5&&/^(남|여|남자|여자|남학생|여학생)$/.test(bulkClean(first[3]))&&
+    !/^(남|여|남자|여자|남학생|여학생)$/.test(bulkClean(first[4]));
+  const mapping=header?keys:legacy?[1,2,3,4,6,5,-1]:
+    first.length>=6?[0,1,2,3,4,5,6]:
+    first.length===5?[1,2,3,4,5]:
+    Array.from({length:first.length},(_,i)=>startColumn+i);
+  const rows=[];let skipped=0;
+  for(const sourceRow of source){
+    if(sourceRow.every(v=>!bulkClean(v))||bulkSummary(sourceRow)){skipped++;continue}
+    const formatted=blankBulkRow();
+    for(let i=0;i<sourceRow.length;i++){
+      const dest=mapping[i]??(header?-1:startColumn+i);
+      if(dest>=0&&dest<7){
+        const value=bulkClean(sourceRow[i]);
+        if(dest===6&&value&&!/^\d+(?:\.\d+)?$/.test(value))continue; // e.g. "남:10+여:14=24명" summary column
+        formatted[dest]=value;
+      }
+    }
+    if(!bulkRowIsStudent(formatted)){skipped++;continue}
+    rows.push(formatted);
+  }
+  return {rows,header,skipped};
+}
+function bulkAttention(value){
+  const parts=bulkClean(value).split(/[;,\n，、|]/).map(v=>v.trim()).filter(Boolean),out=[];
+  for(const item of parts){
+    // Preserve the original detail while also grouping qualifying "다문화(...)" under the base cap.
+    if(/^다문화\s*\(/.test(item)&&!out.includes('다문화'))out.push('다문화');
+    if(!out.includes(item))out.push(item);
+  }
+  return out;
+}
+/* BULK_TABLE_END */
+function parseBulk(text){
+  return bulkFormatRows(parseSheetText(text)).rows.filter(row=>row[3].trim()).map(row=>({
+    id:makeId(),oldGrade:row[0].slice(0,12),oldClass:(/^\d+$/.test(row[1])?row[1]+'반':row[1]).slice(0,50),
+    number:row[2].slice(0,25),name:row[3].slice(0,80),
+    gender:/^(남|남자|남학생)$/.test(row[4])?'남':/^(여|여자|여학생)$/.test(row[4])?'여':'',
+    level:parseStudyScore(row[6]),traits:bulkAttention(row[5]),fixed:0,note:''
+  }));
 }
 function parseCSVLine(s,sep){const out=[];let value='',quoted=false;for(let i=0;i<s.length;i++){const ch=s[i];if(ch==='"'){if(quoted && s[i+1]==='"'){value+='"';i++}else quoted=!quoted}else if(ch===sep&&!quoted){out.push(value);value=''}else value+=ch}out.push(value);return out}
 function download(name,content,mime){const b=new Blob([content],{type:mime});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
