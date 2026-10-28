@@ -660,7 +660,7 @@ test('학생별 이름 색상은 안전한 6자리 HEX만 저장하고 기본값
  assert.equal(a.normalizeNameColor(''), '');
  assert.equal(a.normalizeNameColor(undefined),'');
  assert.equal(a.studentNameStyle(undefined),'');
- assert.equal(a.studentNameStyle('#ffead6'),'background-color:#ffead6;color:#16251e;');
+ assert.equal(a.studentNameStyle('#ffead6'),'--student-name-bg:#ffead6;background-color:#ffead6;color:#16251e;');
 });
 test('짙은 사용자 지정 색은 흰색 글자, 밝은 배경은 어두운 글자로 대비 조절',()=>{
  const a=nameColorApi();
