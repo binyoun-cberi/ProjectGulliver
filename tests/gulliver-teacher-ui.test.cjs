@@ -165,7 +165,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.locator('#demo').click();
     assert.equal(await page.locator('#statStudents').textContent(),'36명');
     const headings=await page.locator('#rosterHead th').allTextContents();
-    assert.deepEqual(headings,['기존 학년 · 반 · 번호','이름','성별','학습지표 (0.00~)','유의 사항']);
+    assert.deepEqual(headings,['기존 학년 · 반 · 번호','이름','성별','학습지표','유의 사항']);
     const first=page.locator('#rosterBody tr').first();
     await first.locator('[data-key="level"]').fill('0.00');
     await first.locator('[data-key="level"]').press('Tab');
@@ -354,73 +354,38 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.equal(await page.locator('select[data-move="'+reviewChoice.id+'"]').inputValue(),String(reviewChoice.to),'drag changes persist after reload');
     await page.setViewportSize({width:1280,height:900});
 
-    // Real Excel-like grid: paste a header, quoted multiline attention notes, and a summary column.
+    // One Excel-style roster replaces the duplicate pop-up bulk import mode.
     await page.locator('[data-tab="roster"]').click();
-    await page.locator('#toggleBulk').click();
-    const workbook='학년\t반\t번호\t이름\t성별\t유의사항\t\n6\t1\t1\t\t\t\t남:10+여:14=24명\n6\t1\t2\t김하늘\t여\t"다문화\n한부모"\t\n6\t2\t1\t이도윤\t남\t다문화(모)\t\n\t\t\t\t\t\t총: 96명';
-    await page.locator('[data-bulk-r="0"][data-bulk-c="0"]').evaluate((element,raw)=>{
-      const data=new DataTransfer();data.setData('text/plain',raw);
-      element.dispatchEvent(new ClipboardEvent('paste',{clipboardData:data,bubbles:true,cancelable:true}));
-    },workbook);
-    assert.match(await page.locator('#bulkPreview').textContent(),/입력된 학생 행 3개/);
-    assert.match(await page.locator('#bulkPreview').textContent(),/이름 미입력 1행/);
-    assert.equal(await page.locator('[data-bulk-r="1"][data-bulk-c="5"]').inputValue(),'다문화\n한부모');
-    await page.locator('[data-bulk-r="0"][data-bulk-c="3"]').fill('박서연');
-    assert.match(await page.locator('#bulkPreview').textContent(),/이름 입력 완료 3명/);
-    await page.locator('input[name="bulkMode"][value="replace"]').check();
-    page.once('dialog',dialog=>dialog.accept());
-    await page.locator('#commitBulk').click();
-    assert.equal(await page.locator('#statStudents').textContent(),'3명');
-    const importState=await page.evaluate(()=>state.students.map(st=>({grade:st.oldGrade,oldClass:st.oldClass,name:st.name,traits:st.traits})));
-    assert.deepEqual(importState.map(st=>st.name),['박서연','김하늘','이도윤']);
-    assert.equal(importState[1].grade,'6');
-    assert.equal(importState[2].oldClass,'2반');
-    assert.ok(importState[1].traits.includes('다문화')&&importState[1].traits.includes('한부모'));
-    assert.ok(importState[2].traits.includes('다문화(모)'));
-    await page.reload({waitUntil:'domcontentloaded'});
-    assert.equal(await page.locator('#statStudents').textContent(),'3명');
-    await page.locator('#toggleBulk').click();
-    await page.locator('#bulkRawPanel summary').click();
-    await page.locator('#bulkText').fill('| 학년 | 반 | 번호 | 이름 | 성별 | 유의사항 |\n| --- | --- | --- | --- | --- | --- |\n| 6 | 4 | 1 | 최가람 | 여 | 한부모<br> 다문화 |');
-    await page.locator('#bulkParseText').click();
-    assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="3"]').inputValue(),'최가람');
-    assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="5"]').inputValue(),'한부모\n 다문화');
-
-    // Regression: a teacher fills grade 5 for every row, then pastes an Excel names-only column.
-    page.once('dialog',dialog=>dialog.accept());
-    await page.locator('#bulkClearGrid').click();
-    await page.locator('#bulkAdd50Rows').click();
-    assert.equal(await page.locator('#bulkRowCount').textContent(),'62행');
-    await page.locator('#bulkFillGrade').fill('5학년');
-    await page.locator('#bulkFillGradeAll').click();
-    assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="0"]').inputValue(),'5');
-    assert.equal(await page.locator('[data-bulk-r="61"][data-bulk-c="0"]').inputValue(),'5');
-    const columnNames=['김하늘','이도윤','박서연','최유리'].join('\r\n');
-    await page.locator('[data-bulk-r="0"][data-bulk-c="3"]').evaluate((el,raw)=>{
-      const clipboard=new DataTransfer();clipboard.setData('text/plain',raw);
-      el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:clipboard,bubbles:true,cancelable:true}));
-    },columnNames);
-    assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="3"]').inputValue(),'김하늘');
-    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="3"]').inputValue(),'최유리');
-    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="0"]').inputValue(),'5');
-    // Shift-click range selection followed by fill-down and undo.
-    await page.locator('[data-bulk-r="0"][data-bulk-c="1"]').fill('2');
-    await page.locator('[data-bulk-r="0"][data-bulk-c="1"]').click();
-    await page.locator('[data-bulk-r="3"][data-bulk-c="1"]').click({modifiers:['Shift']});
-    await page.locator('#bulkFillDown').click();
-    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="1"]').inputValue(),'2');
-    await page.locator('#bulkUndo').click();
-    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="1"]').inputValue(),'');
-    // One pasted value fills a selected multi-cell range, as in Excel.
-    await page.locator('[data-bulk-r="0"][data-bulk-c="4"]').click();
-    await page.locator('[data-bulk-r="3"][data-bulk-c="4"]').click({modifiers:['Shift']});
-    await page.locator('[data-bulk-r="3"][data-bulk-c="4"]').evaluate(el=>{
-      const data=new DataTransfer();data.setData('text/plain','여');
+    assert.equal(await page.locator('#toggleBulk').count(),0,'no duplicate Excel-mode toggle');
+    assert.equal(await page.locator('#bulkPanel').count(),0,'no separate Excel import panel');
+    assert.equal(await page.locator('.roster-sheet').count(),1);
+    assert.ok(await page.locator('#rosterBody tr[data-student]').count()>=3);
+    const beforeIdentity=await page.evaluate(()=>state.students.map(s=>[s.id,s.oldGrade,s.oldClass,s.number]));
+    const copied='이름\t성별\t학습지표\t유의 사항\n김하늘\t여\t92.50\t다문화; 사회성\n이도윤\t남\t0.00\t특수\n박서연\t여\t85.25\t사회성';
+    await page.locator('#rosterBody tr:first-child [data-key="name"]').evaluate((el,value)=>{
+      const data=new DataTransfer();data.setData('text/plain',value);
       el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:data,bubbles:true,cancelable:true}));
-    });
-    assert.equal(await page.locator('[data-bulk-r="0"][data-bulk-c="4"]').inputValue(),'여');
-    assert.equal(await page.locator('[data-bulk-r="3"][data-bulk-c="4"]').inputValue(),'여');
-
+    },copied);
+    assert.equal(await page.locator('#rosterBody tr:first-child [data-key="name"]').inputValue(),'김하늘');
+    assert.equal(await page.locator('#rosterBody tr:nth-child(2) [data-key="gender"]').inputValue(),'남');
+    assert.equal(await page.locator('#rosterBody tr:nth-child(2) [data-key="level"]').inputValue(),'0.00');
+    assert.match(await page.locator('#rosterBody tr:first-child [data-key="traitsText"]').inputValue(),/다문화/);
+    assert.deepEqual(await page.evaluate(()=>state.students.map(s=>[s.id,s.oldGrade,s.oldClass,s.number])),beforeIdentity);
+    assert.equal(await page.locator('#rosterBody tr').count(),beforeIdentity.length,'no duplicate students created');
+    // Select name cells and fill down in the one grid; undo must restore values.
+    await page.locator('#rosterBody tr:first-child [data-key="name"]').click();
+    await page.locator('#rosterBody tr:nth-child(3) [data-key="name"]').click({modifiers:['Shift']});
+    assert.equal(await page.locator('#rosterFillDown').isEnabled(),true);
+    const selectedTSV=await page.evaluate(()=>rosterSelectedTSV());
+    assert.match(selectedTSV,/김하늘/);
+    await page.locator('#rosterFillDown').click();
+    assert.equal(await page.locator('#rosterBody tr:nth-child(3) [data-key="name"]').inputValue(),'김하늘');
+    await page.locator('#rosterUndo').click();
+    assert.equal(await page.locator('#rosterBody tr:nth-child(3) [data-key="name"]').inputValue(),'박서연');
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.locator('[data-tab="roster"]').click();
+    assert.equal(await page.locator('#rosterBody tr:nth-child(2) [data-key="level"]').inputValue(),'0.00');
+    assert.equal(await page.locator('#rosterBody tr:nth-child(3) [data-key="name"]').inputValue(),'박서연');
 
     await page.goto(base + encodeURIComponent('지도안식 원형 타이머.html'), {waitUntil: 'domcontentloaded'});
     await page.locator('.gt-shell').waitFor({state: 'attached'});
