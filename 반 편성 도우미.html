@@ -139,6 +139,32 @@
 .compact-overview .overview-mini strong{font-size:15px}
 @media(max-width:850px){.planner-overview{grid-template-columns:1fr}}
 
+
+/* Separation workspace: searchable selectable pupils and clear drag/tap drop baskets. */
+.basket-zone{grid-template-columns:minmax(220px,.72fr) minmax(0,2fr);gap:16px}
+.basket-source{background:#f4f9f6;border:1px solid #cadfd3;border-radius:16px;padding:14px}
+.basket-source-head{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:9px}
+.basket-source-head strong{font-size:14px;color:#2f6651}.basket-source-head span{font-size:10px;color:#6e847a}
+.basket-selected-label{font-size:11px;color:#4b745d;background:#e7f5eb;border-radius:7px;padding:9px;margin-top:9px;line-height:1.45}
+.basket-pool-item{padding:3px;border:1px solid transparent;border-radius:9px;margin:4px 0;background:#fff;cursor:grab}
+.basket-pool-item:hover{background:#eef7f0;border-color:#b6d7c0}.basket-pool-item.is-selected{background:#e4f5ea;border-color:#66b18a}
+.basket-person-select{display:flex;gap:9px;align-items:center;text-align:left;width:100%;border:0;background:none;cursor:pointer;font-family:inherit;padding:7px 6px}
+.basket-person-mark{display:grid;place-items:center;width:24px;height:24px;background:#edf4ef;border:1px solid #cedfd6;color:#6f907b;border-radius:50%;flex-shrink:0;font-size:13px;font-weight:900}
+.is-selected .basket-person-mark{background:#378467;color:white;border-color:#378467}
+.basket-person-select b{font-size:12px;color:#345547}
+.basket-card{border-radius:16px;border:1px solid #c9dfd1;padding:15px;background:linear-gradient(165deg,#f8fcfa,#fff 40%);box-shadow:0 2px 10px #17472a0b;min-height:210px}
+.basket-card:hover{border-color:#8fc3a6}.basket-card.drag-over{border:2px dashed #20885e;background:#e8f9ee;box-shadow:0 0 0 3px #b4e2c5}
+.basket-head{border-bottom:1px solid #e4efe7;padding-bottom:10px}
+.basket-head input{background:transparent;color:#275e44;font-size:14px}
+.basket-info{display:flex;align-items:center;gap:8px;font-size:11px;margin:11px 0;color:#6a8372;flex-wrap:wrap}
+.basket-count-pill{background:#e1f3e6;border-radius:99px;color:#27714d;padding:4px 10px;font-weight:800}
+.basket-members{min-height:52px}
+.basket-chip{background:#ebf6f0;border:1px solid #d0e6d7;border-radius:10px;padding:9px 10px;margin:6px 0}
+.basket-empty{background:#f7faf8;border:2px dashed #d4e6d9;border-radius:12px;padding:26px 11px;color:#678776}
+.basket-place-btn{width:100%;margin-top:12px;min-height:37px;color:#25694d;border-color:#b8dac7;background:#e8f5ee}
+.basket-place-btn:disabled{opacity:.47;cursor:default}
+@media(max-width:860px){.basket-zone{grid-template-columns:1fr}.basket-source{position:static}.basket-pool{max-height:250px}}
+
 /* Stage 0: source enrollment and future class planning */
 .setup-year-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:13px 0 16px}
 .setup-year-grid .field{min-width:0}
@@ -250,7 +276,7 @@
  <section id="view-preset" class="card hidden" aria-label="교사가 먼저 배치할 학생"><div class="section-head"><div><h2>교사가 먼저 학생 배치하기 <span id="presetCount" class="count-pill">0명 확정</span></h2><p>고정할 학생을 선택하세요.</p></div><div class="actions"><button id="undoPreset" class="btn" disabled>최근 배치 되돌리기</button><button id="clearPresets" class="btn danger">우선 배치 전체 해제</button><button id="fillRemaining" class="btn primary">남은 학생 자동 채우기</button></div></div><div id="presetStatus" class="helper"></div><div class="preset-workspace"><div class="preset-list"><div class="section-head"><h3>학생 찾아 배치하기</h3><span id="presetRemaining" class="count-pill">0명</span></div><input id="presetSearch" class="wide" aria-label="우선 배치 학생 검색" placeholder="이름 · 유의 사항 · 기존 반 검색"><div class="preset-filters"><label>배치 상태<select id="presetFilterStatus"><option value="free">미배치 학생</option><option value="all">모든 학생</option><option value="fixed">배치한 학생</option></select></label><label>기존 반<select id="presetFilterClass"></select></label><label>유의 사항<select id="presetFilterTrait"></select></label><label>정렬<select id="presetSort"><option value="name">이름순</option><option value="score">학습지표 높은순</option><option value="oldClass">기존 반·번호순</option></select></label></div><div class="preset-selection"><label><input type="checkbox" id="presetSelectAll"> 표시된 학생 선택</label><span id="presetVisibleCount" class="muted"></span></div><div id="presetUnassigned" class="preset-people"></div></div><div id="presetClassGrid" class="preset-classes"></div></div><div class="preset-batch"><strong id="presetSelectedCount" aria-live="polite">0명 선택</strong><label for="presetTarget">배치할 반</label><select id="presetTarget"></select><button id="assignSelected" class="btn primary" disabled>선택 학생 배치</button><button id="clearSelection" class="btn">선택 취소</button><button id="fillRemainingBottom" class="btn">남은 학생 자동 채우기</button></div><div id="presetFeedback" class="preset-feedback" role="status" aria-live="polite"></div></section>
  <section id="view-rules" class="card hidden" aria-label="반 편성 조건"><div class="section-head"><div><h2>같은 반 금지 바구니 <span id="basketCount" class="count-pill">0개</span></h2><p>바구니에 함께 넣은 학생은 서로 다른 반으로 배정됩니다.</p></div><div class="actions"><button id="addBasket" class="btn primary">+ 바구니 만들기</button></div></div>
  <div id="basketNotice" class="helper">바구니에 학생을 넣거나 검색 목록에서 학생을 끌어다 놓으세요. 한 바구니의 학생 수는 편성할 반 수를 넘을 수 없습니다.</div>
- <div class="basket-zone"><div class="basket-source"><label class="field">학생 찾기<input id="basketSearch" type="search" placeholder="이름, 기존 반, 번호 검색"></label><div id="basketPool" class="basket-pool"></div></div><div id="basketGrid" class="basket-grid"></div></div>
+ <div class="basket-zone"><div class="basket-source"><div class="basket-source-head"><strong>학생 찾기</strong><span>선택 또는 드래그</span></div><label class="field"><input id="basketSearch" type="search" placeholder="이름 · 기존 반 · 번호" aria-label="분리 학생 검색"></label><div id="basketSelected" class="basket-selected-label" aria-live="polite">학생을 선택해 바구니에 담으세요.</div><div id="basketPool" class="basket-pool"></div></div><div id="basketGrid" class="basket-grid"></div></div>
  <div class="section-head"><div><h2>개별 분리 관계 <span id="pairCount" class="count-pill">0쌍</span></h2><p>서로 다른 반에 배정할 두 학생을 선택하세요.</p></div></div><div class="constraint-form"><label class="field">학생 A <select id="pairA" class="wide"></select></label><label class="field">학생 B <select id="pairB" class="wide"></select></label><button id="addPair" class="btn primary">분리 관계 추가</button></div><div id="pairList"></div></section>
  <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>완성된 반 편성표</h2><p>편성 결과를 확인하고 필요한 학생을 옮겨 보세요.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="exportCsv" class="btn" disabled>엑셀용 파일 저장</button><button id="print" class="btn" disabled>결과 인쇄 · PDF</button></div></div>
  <div class="move-guide no-print"><span>학생 카드를 다른 반으로 드래그하세요. 태블릿에서는 학생 선택 → 대상 반의 「여기로 이동」을 누르면 됩니다.</span><button id="undoMove" class="btn small" disabled>마지막 이동 되돌리기</button></div><div id="moveSelection" class="move-selection no-print" aria-live="polite"></div><div id="movePreview" class="move-preview no-print" aria-live="polite"></div><div id="moveHistoryResult" class="move-history" aria-live="polite"></div>
@@ -316,6 +342,7 @@ let moveDraggingId=null;
 let moveLastResult=null;
 const moveUndoStack=[];
 let movePreviewClass=0;
+let selectedBasketStudentId=null;
 const $ = id => document.getElementById(id);
 const escapeHtml = v => String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 function makeId(){return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,9)}
@@ -699,15 +726,15 @@ function renderBaskets(){
   const q=($('basketSearch').value||'').trim().toLowerCase();
   const pupils=state.students.filter(st=>[st.name,st.oldGrade,st.oldClass,st.number].join(' ').toLowerCase().includes(q));
   const shown=pupils.slice(0,100);
-  $('basketPool').innerHTML=shown.map(st=>`<div class="basket-pool-item" draggable="true" data-drag-student="${escapeHtml(st.id)}"><div><b>${escapeHtml(st.name||'(이름 미입력)')}</b><small>${escapeHtml(st.oldClass||'반 미입력')}${st.number?' · '+escapeHtml(st.number)+'번':''}</small></div><select data-basket-assign="${escapeHtml(st.id)}" aria-label="${escapeHtml(st.name)} 분리 바구니 선택"><option value="">바구니에 넣기…</option>${state.baskets.map(b=>`<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)}</option>`).join('')}</select></div>`).join('')||'<div class="empty">표시할 학생이 없습니다.</div>';
+  $('basketPool').innerHTML=shown.map(st=>`<div class="basket-pool-item ${selectedBasketStudentId===st.id?'is-selected':''}" draggable="true" data-drag-student="${escapeHtml(st.id)}"><button class="basket-person-select" type="button" data-basket-pick="${escapeHtml(st.id)}" aria-pressed="${selectedBasketStudentId===st.id}" title="이 학생 선택"><span class="basket-person-mark" aria-hidden="true">${selectedBasketStudentId===st.id?'✓':'+'}</span><span><b>${escapeHtml(st.name||'(이름 미입력)')}</b><small>${escapeHtml(st.oldClass||'반 미입력')}${st.number?' · '+escapeHtml(st.number)+'번':''}</small></span></button></div>`).join('')||'<div class="empty">표시할 학생이 없습니다.</div>';
+  const chosen=findStudent(selectedBasketStudentId);$('basketSelected').textContent=chosen?'선택됨: '+studentTitle(chosen)+' · 담을 바구니의 버튼을 누르세요.':'학생을 선택하거나 바구니로 끌어 넣으세요.';
   if(pupils.length>shown.length)$('basketPool').insertAdjacentHTML('beforeend','<div class="helper">100명만 표시했습니다. 검색하여 학생을 찾으세요.</div>');
   $('basketGrid').innerHTML=state.baskets.map((b,i)=>{
-    const opts=state.students.filter(st=>!b.members.includes(st.id));
     return `<div class="basket-card ${b.members.length>state.classCount?'basket-over':''}" data-basket-drop="${escapeHtml(b.id)}" aria-label="${escapeHtml(b.name)}">
       <div class="basket-head"><input data-basket-name="${escapeHtml(b.id)}" aria-label="${i+1}번 바구니 이름" maxlength="40" value="${escapeHtml(b.name)}"><button type="button" class="btn ghost danger small" data-basket-remove="${escapeHtml(b.id)}" title="바구니 삭제">삭제</button></div>
-      <div class="basket-info">${b.members.length}명 · ${state.classCount}개 반에 모두 분리 ${b.members.length>state.classCount?'· 인원 초과':''}</div>
-      <div class="basket-members">${b.members.map(id=>{const st=findStudent(id);if(!st)return '';return `<div class="basket-chip" draggable="true" data-drag-student="${escapeHtml(st.id)}"><div><b>${escapeHtml(st.name)}</b><small>${escapeHtml(st.oldClass||'기존 반 미입력')}${st.number?' · '+escapeHtml(st.number)+'번':''}</small></div><button type="button" data-basket-unpin="${escapeHtml(b.id)}" data-student-id="${escapeHtml(st.id)}" aria-label="${escapeHtml(st.name)} 바구니에서 빼기">×</button></div>`}).join('')||'<div class="basket-empty">여기로 학생을 드래그하거나 아래에서 선택하세요</div>'}</div>
-      <select class="basket-add" data-basket-add="${escapeHtml(b.id)}" aria-label="${escapeHtml(b.name)} 학생 추가"><option value="">+ 학생 선택하여 넣기</option>${opts.map(st=>`<option value="${escapeHtml(st.id)}">${escapeHtml(studentTitle(st))}</option>`).join('')}</select>
+      <div class="basket-info"><span class="basket-count-pill">${b.members.length} / ${state.classCount}명</span><span>서로 다른 반으로 편성</span></div>
+      <div class="basket-members">${b.members.map(id=>{const st=findStudent(id);if(!st)return '';return `<div class="basket-chip" draggable="true" data-drag-student="${escapeHtml(st.id)}"><div><b>${escapeHtml(st.name)}</b><small>${escapeHtml(st.oldClass||'기존 반 미입력')}${st.number?' · '+escapeHtml(st.number)+'번':''}</small></div><button type="button" data-basket-unpin="${escapeHtml(b.id)}" data-student-id="${escapeHtml(st.id)}" aria-label="${escapeHtml(st.name)} 바구니에서 빼기">×</button></div>`}).join('')||'<div class="basket-empty">학생 카드를 여기로 끌어 놓으세요</div>'}</div>
+      <button type="button" class="btn basket-place-btn" data-basket-add-selected="${escapeHtml(b.id)}" ${!selectedBasketStudentId||b.members.includes(selectedBasketStudentId)||b.members.length>=state.classCount?'disabled':''}>+ 선택한 학생 담기</button>
     </div>`;
   }).join('')||'<div class="basket-empty">아직 바구니가 없습니다. 「+ 바구니 만들기」를 누르세요.</div>';
 }
@@ -1863,20 +1890,18 @@ function installEvents(){
     $('basketGrid').querySelector('[data-basket-name="'+id+'"]')?.focus();
   });
   $('basketSearch').addEventListener('input',renderBaskets);
-  $('basketPool').addEventListener('change',e=>{
-    const select=e.target.closest('[data-basket-assign]');
-    if(select&&select.value&&!addBasketMember(select.value,select.dataset.basketAssign))select.value='';
-  });
+  $('basketPool').addEventListener('click',e=>{const b=e.target.closest('[data-basket-pick]');if(!b)return;selectedBasketStudentId=selectedBasketStudentId===b.dataset.basketPick?null:b.dataset.basketPick;renderBaskets()});
   $('basketGrid').addEventListener('change',e=>{
     const rename=e.target.closest('[data-basket-name]');
     if(rename){
       const b=state.baskets.find(b=>b.id===rename.dataset.basketName);
       if(b){b.name=rename.value.trim().slice(0,40)||b.name;invalidate();changeState()}return;
     }
-    const select=e.target.closest('[data-basket-add]');
-    if(select&&select.value&&!addBasketMember(select.dataset.basketAdd,select.value))select.value='';
+
   });
   $('basketGrid').addEventListener('click',e=>{
+    const place=e.target.closest('[data-basket-add-selected]');
+    if(place&&selectedBasketStudentId){addBasketMember(place.dataset.basketAddSelected,selectedBasketStudentId);return}
     const remove=e.target.closest('[data-basket-remove]');
     if(remove){
       const b=state.baskets.find(x=>x.id===remove.dataset.basketRemove);
