@@ -406,3 +406,62 @@ test('완성된 편성표의 드래그·이동 미리보기·되돌리기 인터
  assert.match(html,/addEventListener\('drop'/);
  assert.match(html,/function undoResultMove\(/);
 });
+
+function stageZeroApi(){
+ const a=html.indexOf('/* STAGE_ZERO_START'),b=html.indexOf('/* STAGE_ZERO_END */',a);
+ assert.ok(a>0&&b>a,'0단계 학생 명단 생성 함수를 찾을 수 있어야 함');
+ const ctx={};vm.createContext(ctx);vm.runInContext(html.slice(a,b),ctx);return ctx;
+}
+test('0단계: 5학년 1~4반 남10 여14씩 입력하면 96개 학년·반·번호를 만듦',()=>{
+ const api=stageZeroApi();
+ const rows=api.stageZeroRows(Array.from({length:4},(_,i)=>({room:i+1,boys:10,girls:14})),4);
+ const targets=api.stageZeroTargets(rows,4),plan=api.stageZeroReconcile([],'5',rows,(()=>{let i=0;return ()=>'p'+ ++i})());
+ assert.equal(targets.total,96);
+ assert.equal(targets.average.boys,10);
+ assert.equal(targets.average.girls,14);
+ assert.equal(targets.average.total,24);
+ assert.equal(plan.students.length,96);
+ assert.equal(plan.created,96);assert.equal(plan.preserved,0);
+ assert.deepEqual(Array.from(plan.students.slice(0,2).map(x=>[x.oldGrade,x.oldClass,x.number,x.name,x.gender])),
+   [['5','1반','1','',''],['5','1반','2','','']]);
+ assert.deepEqual(Array.from(plan.students.slice(-1).map(x=>[x.oldGrade,x.oldClass,x.number])),[['5','4반','24']]);
+});
+test('0단계 인원을 늘리면 같은 반/번호에 기입된 이름·성별·유의 사항·고정 정보가 보존됨',()=>{
+ const api=stageZeroApi(),rows=api.stageZeroRows([{room:1,boys:2,girls:1},{room:2,boys:2,girls:1}],2);
+ let i=0,plan=api.stageZeroReconcile([],'5',rows,()=>'p'+(++i));
+ plan.students[0].name='김하늘';plan.students[0].gender='여';plan.students[0].level=0;plan.students[0].traits=['다문화'];plan.students[0].fixed=2;
+ rows[0].girls=2;
+ const next=api.stageZeroReconcile(plan.students,'5',rows,()=>'p'+(++i));
+ assert.equal(next.students.length,7);assert.equal(next.created,1);
+ assert.equal(next.preserved,6);assert.equal(next.removed.length,0);
+ assert.equal(next.students[0].id,'p1');assert.equal(next.students[0].name,'김하늘');
+ assert.equal(next.students[0].gender,'여');assert.equal(next.students[0].level,0);
+ assert.deepEqual(Array.from(next.students[0].traits),['다문화']);
+ assert.equal(next.students[0].fixed,2);
+ assert.ok(next.students.some(x=>x.oldClass==='1반'&&x.number==='4'&&x.name===''));
+});
+test('0단계 명단을 줄이면 제거 대상 명단을 반환해 사용자 확인을 거치게 함',()=>{
+ const api=stageZeroApi(),rows=api.stageZeroRows([{room:1,boys:2,girls:1}],1);
+ const old=api.stageZeroReconcile([],'5',rows,(()=>{let i=0;return ()=>'p'+ ++i})()).students;
+ old[2].name='기존 학생';rows[0].boys=1;
+ const next=api.stageZeroReconcile(old,'5',rows,()=> 'new');
+ assert.equal(next.removed.length,1);assert.equal(next.removed[0].name,'기존 학생');
+ assert.equal(next.students.length,2);assert.equal(old.length,3);
+});
+test('0단계 내년 학급 수 변경 시 남녀 평균과 반별 참고 목표 합계가 일치',()=>{
+ const api=stageZeroApi(),rows=api.stageZeroRows([
+  {room:1,boys:10,girls:14},{room:2,boys:11,girls:13},
+  {room:3,boys:10,girls:14},{room:4,boys:10,girls:14}],4);
+ const dist=api.stageZeroTargets(rows,5),sum=dist.rows.reduce((a,row)=>({boys:a.boys+row.boys,girls:a.girls+row.girls}),{boys:0,girls:0});
+ assert.equal(dist.total,96);assert.equal(dist.rows.length,5);
+ assert.equal(sum.boys,41);assert.equal(sum.girls,55);
+ assert.equal(dist.average.boys,8.2);assert.equal(dist.average.girls,11);
+ assert.ok(dist.rows.every(row=>row.boys+row.girls>=18&&row.boys+row.girls<=20));
+});
+test('0단계 인터페이스와 1단계 학년·반·번호 읽기 전용 표시',()=>{
+ for(const id of ['view-setup','sourceGrade','sourceClassCount','sourceClassRows','sourceClassTotals','futureClassSummary','applySetup','continueSetup','rosterGenderSummary'])assert.ok(html.includes('id="'+id+'"'),id);
+ assert.match(html,/data-tab="setup"/);
+ assert.match(html,/function stageZeroReconcile\(/);
+ assert.match(html,/roster-identity/);
+ assert.match(html,/data-key="name"/);
+});
