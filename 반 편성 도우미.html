@@ -969,6 +969,12 @@ function manualMove(e){const select=e.target.closest('[data-move]');if(!select)r
 }
 function installEvents(){
   document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+  $('teacherPriorityOn').addEventListener('change',e=>{
+    state.teacherPriorityOn=e.target.checked;
+    invalidate();saveState();
+    if(!state.teacherPriorityOn&&view==='preset')showTab('roster');else render();
+    toast(state.teacherPriorityOn?'교사 우선 배치 ON · 기존 지정 학생을 유지해 편성합니다.':'교사 우선 배치 OFF · 저장된 학생 지정은 삭제하지 않고 자동 편성에서 제외합니다.');
+  });
   $('grade').addEventListener('change',e=>{state.grade=e.target.value.trim()||'1';changeState()});
   $('classCount').addEventListener('change',e=>{const n=Number(e.target.value);if(!Number.isInteger(n)||n<2||n>12){toast('학급 수는 2~12로 설정해 주세요.');render();return}state.classCount=n;state.students.forEach(s=>{if(s.fixed>n)s.fixed=0});state.teacherNames=Object.fromEntries(Object.entries(state.teacherNames).filter(([id])=>Number(id)<=n));invalidate();changeState()});
   $('demo').addEventListener('click',()=>{if(state.students.length&&!confirm('현재 학생 명단을 예시 데이터로 교체할까요? 먼저 JSON 백업을 저장할 수 있습니다.'))return;state=defaultState();state.students=sampleData();state.pairs=[{a:state.students[0].id,b:state.students[3].id},{a:state.students[7].id,b:state.students[19].id}];view='roster';showTab('roster');changeState();toast('가상의 학생 36명과 분리 관계 2쌍을 불러왔습니다.')});
@@ -1184,9 +1190,69 @@ function installEvents(){
   $('fillRemaining').addEventListener('click',()=>$('generate').click());
   $('fillRemainingBottom').addEventListener('click',()=>$('generate').click());
   $('capRules').addEventListener('change',e=>{const el=e.target.closest('[data-cap]');if(!el)return;const tag=el.dataset.cap,value=el.value.trim();if(!state.traits.includes(tag))return;if(value!==''&&(!/^\d+$/.test(value)||Number(value)>1000)){toast('반당 최대 인원은 0~1000 사이의 정수를 입력해 주세요.');renderCaps();return}if(value==='')delete state.capRules[tag];else state.capRules[tag]=Number(value);invalidate();changeState();toast(value===''?`「${tag}」 인원 제한을 해제했습니다.`:`「${tag}」 반당 최대 ${value}명으로 설정했습니다.`)});
+  $('addBasket').addEventListener('click',()=>{
+    if(state.baskets.length>=40){toast('바구니는 최대 40개까지 만들 수 있습니다.');return}
+    const id=makeId(),name='분리 바구니 '+(state.baskets.length+1);
+    state.baskets.push({id,name,members:[]});invalidate();changeState();
+    $('basketGrid').querySelector('[data-basket-name="'+id+'"]')?.focus();
+  });
+  $('basketSearch').addEventListener('input',renderBaskets);
+  $('basketPool').addEventListener('change',e=>{
+    const select=e.target.closest('[data-basket-assign]');
+    if(select&&select.value&&!addBasketMember(select.value,select.dataset.basketAssign))select.value='';
+  });
+  $('basketGrid').addEventListener('change',e=>{
+    const rename=e.target.closest('[data-basket-name]');
+    if(rename){
+      const b=state.baskets.find(b=>b.id===rename.dataset.basketName);
+      if(b){b.name=rename.value.trim().slice(0,40)||b.name;invalidate();changeState()}return;
+    }
+    const select=e.target.closest('[data-basket-add]');
+    if(select&&select.value&&!addBasketMember(select.dataset.basketAdd,select.value))select.value='';
+  });
+  $('basketGrid').addEventListener('click',e=>{
+    const remove=e.target.closest('[data-basket-remove]');
+    if(remove){
+      const b=state.baskets.find(x=>x.id===remove.dataset.basketRemove);
+      if(!b||!confirm('「'+b.name+'」 바구니를 삭제할까요? 이 바구니에만 적용된 분리 규칙이 해제됩니다.'))return;
+      state.baskets=state.baskets.filter(x=>x.id!==b.id);invalidate();changeState();return;
+    }
+    const unpin=e.target.closest('[data-basket-unpin]');
+    if(unpin){
+      const b=state.baskets.find(x=>x.id===unpin.dataset.basketUnpin);
+      if(b){b.members=b.members.filter(id=>id!==unpin.dataset.studentId);invalidate();changeState()}
+    }
+  });
+  function basketDropId(e){
+    const id=e.dataTransfer?.getData('text/plain');
+    return id&&findStudent(id)?id:null;
+  }
+  $('basketPool').addEventListener('dragstart',e=>{
+    const item=e.target.closest('[data-drag-student]');if(!item)return;
+    e.dataTransfer.effectAllowed='copy';e.dataTransfer.setData('text/plain',item.dataset.dragStudent);
+  });
+  $('basketGrid').addEventListener('dragstart',e=>{
+    const item=e.target.closest('[data-drag-student]');if(!item)return;
+    e.dataTransfer.effectAllowed='copy';e.dataTransfer.setData('text/plain',item.dataset.dragStudent);
+  });
+  $('basketGrid').addEventListener('dragover',e=>{
+    const b=e.target.closest('[data-basket-drop]');if(!b)return;
+    e.preventDefault();e.dataTransfer.dropEffect='copy';b.classList.add('drag-over');
+  });
+  $('basketGrid').addEventListener('dragleave',e=>{
+    const b=e.target.closest('[data-basket-drop]');if(b&&!b.contains(e.relatedTarget))b.classList.remove('drag-over');
+  });
+  $('basketGrid').addEventListener('drop',e=>{
+    const basket=e.target.closest('[data-basket-drop]');if(!basket)return;
+    e.preventDefault();basket.classList.remove('drag-over');
+    const id=basketDropId(e);if(id)addBasketMember(basket.dataset.basketDrop,id);
+  });
   $('addPair').addEventListener('click',()=>{const a=$('pairA').value,b=$('pairB').value;if(!a||!b){toast('두 학생을 모두 선택해 주세요.');return}if(a===b){toast('서로 다른 학생 두 명을 선택해 주세요.');return}if(state.pairs.some(p=>(p.a===a&&p.b===b)||(p.a===b&&p.b===a))){toast('이미 지정한 분리 관계입니다.');return}state.pairs.push({a,b});invalidate();changeState();toast('분리 관계를 추가했습니다.')});
   $('pairList').addEventListener('click',e=>{const b=e.target.closest('[data-pair-index]');if(!b)return;state.pairs.splice(Number(b.dataset.pairIndex),1);invalidate();changeState()});
-  $('generate').addEventListener('click',()=>{const outcome=generateCandidates(activeStudents(),effectivePairs(),state.classCount,state.traits,Math.random,state.capRules);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
+  $('generate').addEventListener('click',()=>{
+    const problems=basketProblems();
+    if(problems.length){invalidate();saveState();showTab('results');$('resultMessage').textContent=problems.join(' / ');toast(problems[0]);return}
+    const outcome=generateCandidates(activeStudents(),effectivePairs(),state.classCount,state.traits,Math.random,state.capRules);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
   $('generateQuick').addEventListener('click',()=>$('generate').click());
   $('alternatives').addEventListener('click',e=>{const b=e.target.closest('[data-candidate]');if(!b)return;state.activeCandidate=Number(b.dataset.candidate);saveState();renderResults()});
   $('resultGrid').addEventListener('change',manualMove);
