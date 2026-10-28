@@ -28,6 +28,35 @@
 .bulk-sheet td.bulk-num[data-bulk-row-head]{cursor:pointer;user-select:none}
 .bulk-sheet td.bulk-num[data-bulk-row-head]:hover{background:#dcefea}
 
+
+.priority-mode{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#f8fafb;border:1px solid #dce5ed;border-radius:13px;padding:11px 16px;margin:14px 0}
+.priority-mode strong{font-size:13px}.priority-mode #priorityModeHelp{font-size:12px;color:var(--muted)}
+.priority-switch{display:flex;align-items:center;gap:9px;cursor:pointer}
+.priority-switch input{position:absolute;width:1px;height:1px;opacity:0}
+.switch-track{position:relative;display:inline-block;width:38px;height:22px;border-radius:30px;background:#bcc7d3;transition:background .18s}
+.switch-track:after{position:absolute;content:"";left:3px;top:3px;width:16px;height:16px;background:white;border-radius:50%;transition:transform .18s}
+.priority-switch input:checked+.switch-track{background:#2a8a72}
+.priority-switch input:checked+.switch-track:after{transform:translateX(16px)}
+.priority-switch input:focus-visible+.switch-track{outline:3px solid #468fc5}
+.priority-tab-off{opacity:.58}
+.basket-zone{display:grid;grid-template-columns:minmax(230px,.82fr) minmax(0,2fr);gap:14px;align-items:start;margin:17px 0}
+.basket-source{border:1px solid var(--line);border-radius:13px;background:#f8fafc;padding:13px;position:sticky;top:80px}
+.basket-source .field{font-size:12px}.basket-pool{max-height:370px;overflow:auto;margin-top:8px}
+.basket-pool-item{display:flex;align-items:center;gap:8px;justify-content:space-between;border-bottom:1px solid #e8eff1;padding:8px 3px;cursor:grab}
+.basket-pool-item b{font-size:12px}.basket-pool-item small{font-size:10px;color:var(--muted);display:block}
+.basket-pool-item select{width:112px;padding:6px;font-size:11px}
+.basket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.basket-card{border:1px solid #c9dcd7;background:#fff;border-radius:14px;padding:14px;min-height:156px;transition:border-color .14s,background .14s}
+.basket-card.drag-over{border-color:#25866f;background:#edf8f3;box-shadow:0 0 0 2px #b5dfd0}
+.basket-head{display:flex;align-items:center;gap:7px}.basket-head input{font-weight:800;min-width:0;flex:1;border-color:transparent;background:#f5f8f7}
+.basket-head .btn{font-size:11px}.basket-info{font-size:11px;color:var(--muted);margin:8px 0}
+.basket-chip{display:flex;justify-content:space-between;align-items:center;gap:5px;background:#edf6f2;border-radius:8px;padding:7px 8px;margin:5px 0}
+.basket-chip b{font-size:12px}.basket-chip small{display:block;color:#596b65;font-size:10px}
+.basket-chip button{border:0;background:transparent;color:#8c5757;font-weight:850;cursor:pointer}
+.basket-empty{border:1px dashed #c5d9d1;padding:19px 10px;border-radius:10px;font-size:11px;color:#7a8b83;text-align:center}
+.basket-card .basket-add{width:100%;padding:6px;margin-top:10px;font-size:12px}
+.basket-card.basket-over{border-color:#d9a76b;background:#fff9ec}
+@media(max-width:860px){.basket-zone{grid-template-columns:1fr}.basket-source{position:static}.basket-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}}
 /* Editable spreadsheet-style bulk roster. Data stays as a local draft until applied. */
 .bulk-grid-wrap{max-height:480px;overflow:auto;overscroll-behavior:contain;margin:12px 0}
 .bulk-sheet{border-collapse:separate;border-spacing:0;width:100%;min-width:865px;font-size:12px}
@@ -65,7 +94,8 @@
  <div class="top"><div class="identity"><div class="mark" aria-hidden="true">반</div><div><div class="eyebrow">CLASS PLANNER</div><h1>반편성 도우미</h1><p class="subtitle">학습지표 높은 순으로 지그재그 배정하고 유의 사항별 인원 상한을 적용합니다.</p></div></div><div class="privacy">기기에서만 처리 · 외부 서버로 전송하지 않음</div></div>
  <div class="stats" aria-live="polite"><div class="stat"><small>등록한 학생</small><strong id="statStudents">0명</strong></div><div class="stat"><small>편성할 학급</small><strong id="statClasses">3개 반</strong></div><div class="stat"><small>분리해야 할 관계</small><strong id="statPairs">0쌍</strong></div><div class="stat"><small>중복 이름</small><strong id="statDuplicates">0건</strong></div></div>
  <div class="card setup"><div class="formfields"><label class="field">새 학년 <input id="grade" type="text" value="1" maxlength="12" aria-label="새 학년"></label><label class="field">새 학급 수 <input id="classCount" type="number" min="2" max="12" value="3"></label></div><div class="actions"><button id="demo" class="btn soft">예시 데이터 보기</button><button id="generateQuick" class="btn primary">바로 반 편성하기</button><button id="saveJson" class="btn">설정 백업 (.json)</button><button id="openJson" class="btn">백업 불러오기</button><input type="file" id="jsonFile" accept=".json,application/json" hidden><button id="reset" class="btn danger">모두 지우기</button></div></div>
- <nav class="tabs" aria-label="기능 선택"><button class="tab" data-tab="roster" aria-selected="true">01 학생 명단 · 유의 사항</button><button class="tab" data-tab="preset" aria-selected="false">02 교사 우선 배치</button><button class="tab" data-tab="rules" aria-selected="false">03 편성 조건 · 분리</button><button class="tab" data-tab="results" aria-selected="false">04 완성된 반 · 검토</button></nav>
+ <div class="priority-mode no-print" id="priorityModePanel"><label class="priority-switch"><input id="teacherPriorityOn" type="checkbox" role="switch" aria-label="교사 우선 배치 사용"><span class="switch-track" aria-hidden="true"></span><strong>교사 우선 배치 사용</strong></label><span id="priorityModeHelp">OFF · 반 고정 없이 지그재그 편성합니다. 이전 지정은 보관됩니다.</span></div>
+ <nav class="tabs" aria-label="기능 선택"><button class="tab" data-tab="roster" aria-selected="true">01 학생 명단 · 유의 사항</button><button class="tab" data-tab="preset" aria-selected="false">02 교사 우선 배치 (선택)</button><button class="tab" data-tab="rules" aria-selected="false">03 편성 조건 · 분리</button><button class="tab" data-tab="results" aria-selected="false">04 완성된 반 · 검토</button></nav>
  <section id="view-roster" class="card" aria-label="학생 명단"><div class="section-head"><div><h2>학생 명단 <span id="rosterCount" class="count-pill">0명</span></h2><p>기존 반·번호·이름·성별·학습지표(소수점 둘째 자리)·유의 사항을 입력하세요.</p></div><div class="actions"><input id="searchStudent" aria-label="학생 검색" placeholder="이름 · 기존 반 검색" style="width:160px"><button id="toggleBulk" class="btn">스프레드시트 붙여넣기</button><button id="addStudent" class="btn primary">+ 학생 추가</button></div></div>
  <div id="bulkPanel" class="bulk hidden">
   <div class="bulk-head"><strong>엑셀형 학생 명단 한 번에 입력</strong><button id="closeBulk" class="btn ghost small">닫기</button></div>
@@ -89,7 +119,10 @@
  <div class="table-wrap"><table class="student-table"><thead id="rosterHead"></thead><tbody id="rosterBody"></tbody></table></div><div class="helper privacy-note">학습지표는 0.00 이상의 점수를 소수점 둘째 자리까지 입력할 수 있으며, 미입력과 0.00은 구분됩니다. 유의 사항은 여러 개를 선택하거나 새 항목을 추가할 수 있습니다. 「분리조치」를 선택하는 것만으로 두 학생이 자동 분리되지는 않으므로, 반드시 「분리할 학생 지정」에서 실제 분리 관계를 설정해 주세요.</div>
  </section>
  <section id="view-preset" class="card hidden" aria-label="교사가 먼저 배치할 학생"><div class="section-head"><div><h2>교사가 먼저 학생 배치하기 <span id="presetCount" class="count-pill">0명 확정</span></h2><p>담당 교사가 우선 맡기로 한 학생을 원하는 반에 고정하세요. 나머지는 빈 자리를 자동으로 채웁니다.</p></div><div class="actions"><button id="undoPreset" class="btn" disabled>최근 배치 되돌리기</button><button id="clearPresets" class="btn danger">우선 배치 전체 해제</button><button id="fillRemaining" class="btn primary">남은 학생 자동 채우기</button></div></div><div id="presetStatus" class="helper"></div><div class="preset-workspace"><div class="preset-list"><div class="section-head"><h3>학생 찾아 배치하기</h3><span id="presetRemaining" class="count-pill">0명</span></div><input id="presetSearch" class="wide" aria-label="우선 배치 학생 검색" placeholder="이름 · 유의 사항 · 기존 반 검색"><div class="preset-filters"><label>배치 상태<select id="presetFilterStatus"><option value="free">미배치 학생</option><option value="all">모든 학생</option><option value="fixed">배치한 학생</option></select></label><label>기존 반<select id="presetFilterClass"></select></label><label>유의 사항<select id="presetFilterTrait"></select></label><label>정렬<select id="presetSort"><option value="name">이름순</option><option value="score">학습지표 높은순</option><option value="oldClass">기존 반·번호순</option></select></label></div><div class="preset-selection"><label><input type="checkbox" id="presetSelectAll"> 표시된 학생 선택</label><span id="presetVisibleCount" class="muted"></span></div><div id="presetUnassigned" class="preset-people"></div></div><div id="presetClassGrid" class="preset-classes"></div></div><div class="preset-batch"><strong id="presetSelectedCount" aria-live="polite">0명 선택</strong><label for="presetTarget">배치할 반</label><select id="presetTarget"></select><button id="assignSelected" class="btn primary" disabled>선택 학생 배치</button><button id="clearSelection" class="btn">선택 취소</button><button id="fillRemainingBottom" class="btn">남은 학생 자동 채우기</button></div><div id="presetFeedback" class="preset-feedback" role="status" aria-live="polite"></div><div class="helper">학생을 선택한 뒤 반을 누르면 배치할 반이 바뀝니다. 선택 학생을 한 번에 배치하거나, 배치된 학생의 반을 바로 변경할 수 있습니다.<br>우선 배치한 학생은 자동 편성과 다른 편성안에서도 이동하지 않습니다. 학생의 학습지표·성별·유의 사항을 확인하되, 개인을 낙인찍는 용도로 사용하지 마세요. 인원 상한이나 분리 관계에 맞지 않는 지정은 적용되지 않습니다.</div></section>
- <section id="view-rules" class="card hidden" aria-label="반 편성 조건"><div class="section-head"><div><h2>유의 사항별 반당 최대 인원</h2><p>필요한 항목에만 숫자를 입력하세요. 빈칸은 인원 제한이 없다는 뜻입니다.</p></div></div><div id="capRules" class="cap-grid"></div><div class="helper">예: ‘특수 2명’으로 지정하면 어느 반도 해당 유의 사항 학생이 2명을 넘지 않도록 배정합니다. 서로 떨어져야 하는 학생은 아래 분리 관계를 별도로 지정해야 합니다.</div><div class="section-head"><div><h2>같은 반에 배정하지 않을 학생 <span id="pairCount" class="count-pill">0쌍</span></h2><p>서로 다른 반이어야 하는 두 학생을 선택하세요. 자동 편성 때 이 조건을 우선 적용합니다.</p></div></div><div class="constraint-form"><label class="field">학생 A <select id="pairA" class="wide"></select></label><label class="field">학생 B <select id="pairB" class="wide"></select></label><button id="addPair" class="btn primary">분리 관계 추가</button></div><div class="helper">세 명이 각각 서로 다른 반이어야 한다면 A–B, A–C, B–C 세 관계를 모두 추가해야 합니다. 동명이인도 기존 반·번호로 구별합니다.</div><div id="pairList"></div></section>
+ <section id="view-rules" class="card hidden" aria-label="반 편성 조건"><div class="section-head"><div><h2>유의 사항별 반당 최대 인원</h2><p>필요한 항목에만 숫자를 입력하세요. 빈칸은 인원 제한이 없다는 뜻입니다.</p></div></div><div id="capRules" class="cap-grid"></div><div class="helper">예: ‘특수 2명’으로 지정하면 어느 반도 해당 유의 사항 학생이 2명을 넘지 않도록 배정합니다. 서로 떨어져야 하는 학생은 아래 분리 관계를 별도로 지정해야 합니다.</div><div class="section-head"><div><h2>같은 반 금지 바구니 <span id="basketCount" class="count-pill">0개</span></h2><p>같은 바구니에 넣은 학생은 서로 다른 반에 배정됩니다. 바구니는 여러 개 만들 수 있고 다른 바구니끼리는 별도 규칙입니다.</p></div><div class="actions"><button id="addBasket" class="btn primary">+ 바구니 만들기</button></div></div>
+ <div id="basketNotice" class="helper">바구니에 학생을 넣거나 검색 목록에서 학생을 끌어다 놓으세요. 한 바구니의 학생 수는 편성할 반 수를 넘을 수 없습니다.</div>
+ <div class="basket-zone"><div class="basket-source"><label class="field">학생 찾기<input id="basketSearch" type="search" placeholder="이름, 기존 반, 번호 검색"></label><div id="basketPool" class="basket-pool"></div></div><div id="basketGrid" class="basket-grid"></div></div>
+ <div class="section-head"><div><h2>개별 분리 관계 <span id="pairCount" class="count-pill">0쌍</span></h2><p>서로 다른 반이어야 하는 두 학생을 선택하세요. 자동 편성 때 이 조건을 우선 적용합니다.</p></div></div><div class="constraint-form"><label class="field">학생 A <select id="pairA" class="wide"></select></label><label class="field">학생 B <select id="pairB" class="wide"></select></label><button id="addPair" class="btn primary">분리 관계 추가</button></div><div class="helper">세 명이 각각 서로 다른 반이어야 한다면 A–B, A–C, B–C 세 관계를 모두 추가해야 합니다. 동명이인도 기존 반·번호로 구별합니다.</div><div id="pairList"></div></section>
  <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>지그재그 반 편성 결과</h2><p>학습지표 높은 순으로 1반→마지막 반→1반 순서로 지그재그 배정합니다. 유의 사항별 상한, 분리 관계, 반 고정 조건을 우선 지킵니다.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="exportCsv" class="btn" disabled>CSV 내려받기</button><button id="print" class="btn" disabled>결과 인쇄 · PDF</button></div></div>
  <div id="resultMessage" class="helper result-help">먼저 학생 명단을 작성한 다음 자동 편성하기를 눌러 주세요. 결과에서 학생의 반을 직접 바꾸거나 다른 편성안을 선택할 수도 있습니다.</div><div id="alternatives" class="alternatives"></div><div id="validation"></div><div id="report"></div><div id="resultGrid" class="result-grid"></div><div class="helper result-help">자동 편성은 의사결정을 돕는 초안입니다. 최종 배정 전에 학교의 편성 원칙과 학생별 사정을 직접 검토하세요. 결과는 자동으로 이 브라우저에 임시 보관되며, JSON 백업 파일을 별도로 저장할 수 있습니다.</div></section>
  <div class="card"><div class="help-grid"><div><h3>① 명단과 특징 입력</h3><p>학생별 유의 사항을 체크하거나 시트 내용을 붙여넣습니다. 동명이인은 별개 학생으로 관리됩니다.</p></div><div><h3>② 교사 우선 배치</h3><p>담당 교사가 먼저 맡을 학생을 반별로 선택합니다. 분리·유의 사항별 최대 인원은 다음 탭에서 설정합니다.</p></div><div><h3>④ 지그재그 편성 결과 검토</h3><p>교사가 우선 배치한 학생은 그대로 두고 나머지를 학습지표 지그재그 순서로 채운 뒤 상한·분리 조건을 검토합니다.</p></div></div></div>
@@ -116,7 +149,7 @@ let presetUndo=null;
 const $ = id => document.getElementById(id);
 const escapeHtml = v => String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 function makeId(){return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,9)}
-function defaultState(){return {version:4,grade:'1',classCount:3,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},students:[],pairs:[],candidates:[],activeCandidate:0}}
+function defaultState(){return {version:5,grade:'1',classCount:3,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},baskets:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
 function parseStudyScore(v,legacy=false){if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return !Number.isFinite(n)||n<0||n>1e9||(legacy&&n===0)?null:Math.round((n+Number.EPSILON)*100)/100}
 function hasStudyScore(s){return Number.isFinite(s.level)&&s.level>=0}
 function studyText(v){return Number.isFinite(v)?v.toFixed(2):'미입력'}
@@ -126,6 +159,7 @@ function normalize(raw){
  const oldTraits=Array.isArray(raw.traits)?raw.traits:[];
  const traits=[...new Set([...DEFAULT_TRAITS,...oldTraits.filter(x=>typeof x==='string').map(x=>x.trim()).filter(Boolean).map(x=>x.slice(0,20))])].slice(0,64);
  const legacy=Number(raw.version||1)<2;
+ const teacherPriorityOn=typeof raw.teacherPriorityOn==='boolean'?raw.teacherPriorityOn:(Array.isArray(raw.students)&&raw.students.some(st=>Number(st?.fixed)>0));
  const teacherNames=Object.fromEntries(Object.entries(raw.teacherNames&&typeof raw.teacherNames==='object'&&!Array.isArray(raw.teacherNames)?raw.teacherNames:{}).filter(([n])=>/^(?:[1-9]|1[0-2])$/.test(n)&&Number(n)<=count).map(([n,name])=>[n,String(name??'').slice(0,40)]));
  const capRules=Object.fromEntries(Object.entries(raw.capRules&&typeof raw.capRules==='object'&&!Array.isArray(raw.capRules)?raw.capRules:{}).filter(([tag,max])=>traits.includes(tag)&&max!==''&&max!==null&&Number.isInteger(Number(max))&&Number(max)>=0&&Number(max)<=1000).map(([tag,max])=>[tag,Number(max)]));
  const students=(Array.isArray(raw.students)?raw.students:[]).slice(0,1000).filter(x=>x&&typeof x==='object').map(st=>({
@@ -136,10 +170,11 @@ function normalize(raw){
  }));
  const ids=new Set(),uniqueStudents=[];for(const st of students){if(ids.has(st.id))st.id=makeId();ids.add(st.id);uniqueStudents.push(st)}
  const pairs=(Array.isArray(raw.pairs)?raw.pairs:[]).filter(p=>p&&ids.has(p.a)&&ids.has(p.b)&&p.a!==p.b).map(p=>({a:String(p.a),b:String(p.b)}));
- const candidates=(Number(raw.version||1)>=4&&Array.isArray(raw.candidates)?raw.candidates:[]).slice(0,3)
+ const baskets=normalizeBaskets(raw.baskets,ids);
+ const candidates=(Number(raw.version||1)>=5&&Array.isArray(raw.candidates)?raw.candidates:[]).slice(0,3)
   .filter(c=>c&&c.assign&&typeof c.assign==='object'&&uniqueStudents.every(st=>Number.isInteger(Number(c.assign[st.id]))&&Number(c.assign[st.id])>=1&&Number(c.assign[st.id])<=count))
   .map(c=>({assign:Object.fromEntries(uniqueStudents.map(st=>[st.id,Number(c.assign[st.id])])),target:Array.from({length:count},(_,i)=>Number(c.target?.[i])||Math.floor(uniqueStudents.length/count)),score:Number(c.score)||0}));
- return {...base,grade:String(raw.grade??'1').slice(0,12),classCount:count,traits,capRules,teacherNames,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
+ return {...base,grade:String(raw.grade??'1').slice(0,12),classCount:count,teacherPriorityOn,traits,capRules,teacherNames,baskets,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
 }
 function loadState(){try{return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY)))}catch(e){return defaultState()}}
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
@@ -154,9 +189,12 @@ function duplicateNames(){const m=new Map();state.students.forEach(s=>{const n=s
 function showTab(tab){view=tab;document.querySelectorAll('.tab').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.tab===tab)));['roster','preset','rules','results'].forEach(key=>$('view-'+key).classList.toggle('hidden',tab!==key));render()}
 function render(){
   $('grade').value=state.grade;$('classCount').value=state.classCount;
+  $('teacherPriorityOn').checked=!!state.teacherPriorityOn;
+  $('priorityModeHelp').textContent=state.teacherPriorityOn?'ON · 교사가 지정한 학생의 반을 유지하며 나머지 빈자리를 채웁니다.':'OFF · 교사 지정 없이 자동 편성합니다. 기존 우선 배치 정보는 그대로 보관합니다.';
+  document.querySelector('[data-tab="preset"]').classList.toggle('priority-tab-off',!state.teacherPriorityOn);
   $('statStudents').textContent=state.students.length+'명';$('statClasses').textContent=state.classCount+'개 반';$('statPairs').textContent=state.pairs.length+'쌍';$('statDuplicates').textContent=duplicateNames().length+'건';
   $('rosterCount').textContent=state.students.length+'명';$('pairCount').textContent=state.pairs.length+'쌍';
-  if(view==='roster')renderRoster();if(view==='preset')renderPreset();if(view==='rules'){renderCaps();renderPairs();}if(view==='results')renderResults();
+  if(view==='roster')renderRoster();if(view==='preset')renderPreset();if(view==='rules'){renderCaps();renderPairs();renderBaskets();}if(view==='results')renderResults();
 }
 function renderRoster(){
   $('traitChips').innerHTML=state.traits.map(t=>`<span class="chip">${escapeHtml(t)} <button type="button" data-delete-trait="${escapeHtml(t)}" aria-label="${escapeHtml(t)} 유의 사항 항목 삭제" title="항목 삭제">×</button></span>`).join('');
