@@ -187,6 +187,53 @@
 .roster-sheet tr:hover .student-delete,.roster-sheet .student-delete:focus-visible{opacity:1}
 @media(max-width:730px){.roster-sheet-tools{align-items:start}.roster-sheet-wrap{max-height:62vh}}
 
+
+/* Results can be reviewed as a long vertical list or a same-row class comparison. */
+.result-layout-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:11px 13px;margin:13px 0;background:#f2f9f5;border:1px solid #d1e5d9;border-radius:11px}
+.result-layout-picker{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.result-layout-picker>span{font-size:12px;font-weight:750;color:#365b4f;margin-right:7px}
+.result-layout-picker button{border:1px solid #c3ddcf;border-radius:8px;background:white;color:#457363;font-size:12px;font-weight:750;padding:9px 13px;cursor:pointer}
+.result-layout-picker button[aria-pressed="true"]{background:#286d52;color:white;border-color:#286d52}
+.result-layout-picker button:focus-visible{outline:3px solid #8cceb3;outline-offset:2px}
+.result-layout-hint{font-size:11px;color:#5f7c70}
+.result-grid[data-layout="vertical"]{grid-template-columns:minmax(0,1fr)}
+.result-grid[data-layout="compare"]{grid-template-columns:repeat(var(--comparison-classes,3),minmax(238px,1fr));overflow-x:auto;align-items:stretch;padding:3px 3px 14px;scrollbar-gutter:stable}
+.result-grid[data-layout="vertical"] .class-body{max-height:none}
+.result-grid[data-layout="compare"] .class-card{min-width:0}
+.result-grid[data-layout="compare"] .class-top{padding:12px}
+.result-grid[data-layout="compare"] .class-top h3{font-size:16px}
+.result-grid[data-layout="compare"] .class-metrics{font-size:11px}
+.result-grid[data-layout="compare"] .class-body{max-height:620px;padding:4px 9px 8px}
+.result-grid[data-layout="compare"] .assigned{align-items:flex-start;flex-wrap:wrap;padding:7px 0;gap:5px}
+.result-grid[data-layout="compare"] .assigned .move-controls{margin-left:auto}
+.result-grid[data-layout="compare"] .assigned select{width:72px}
+.result-grid[data-layout="compare"] .assigned .person b{font-size:12px}
+.result-grid[data-layout="compare"] .assigned .person small{font-size:10px}
+#resultPrintSheet{display:none}
+@page result-portrait{size:A4 portrait;margin:11mm}
+@page result-landscape{size:A3 landscape;margin:10mm}
+@media print{
+ #view-results > :not(#resultPrintSheet){display:none!important}
+ #view-results #resultPrintSheet{display:block!important}
+ #resultPrintSheet .print-page{display:block!important;break-after:page;page-break-after:always;padding:0;overflow:visible}
+ #resultPrintSheet .print-page:last-child{break-after:auto;page-break-after:auto}
+ #resultPrintSheet .print-page.print-vertical{page:result-portrait}
+ #resultPrintSheet .print-page.print-compare{page:result-landscape}
+ #resultPrintSheet h2{font-size:17pt;margin:0 0 5mm;color:#1c2b28}
+ #resultPrintSheet .print-subtitle{font-size:10pt;margin:0 0 4mm;color:#3e5149}
+ #resultPrintSheet .print-summary{font-size:9pt;margin:0 0 5mm}
+ #resultPrintSheet table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8pt}
+ #resultPrintSheet thead{display:table-header-group}
+ #resultPrintSheet th,#resultPrintSheet td{border:1px solid #93a29b;padding:5px 4px;vertical-align:top;text-align:left;overflow-wrap:anywhere;word-break:keep-all}
+ #resultPrintSheet th{background:#eaf0ec!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ #resultPrintSheet tbody tr{break-inside:avoid}
+ #resultPrintSheet .print-compare table{font-size:7pt}
+ #resultPrintSheet .print-compare td.print-number{width:19px;text-align:center}
+ #resultPrintSheet .print-compare td.print-student{font-size:7pt;line-height:1.4}
+ #resultPrintSheet .print-compare td.print-student strong{font-size:8pt}
+ #resultPrintSheet .print-note{font-size:8pt;color:#516457}
+}
+
 /* Stage 0: source enrollment and future class planning */
 .setup-year-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:13px 0 16px}
 .setup-year-grid .field{min-width:0}
@@ -281,9 +328,10 @@
  <div id="basketNotice" class="helper">바구니에 학생을 넣거나 검색 목록에서 학생을 끌어다 놓으세요. 한 바구니의 학생 수는 편성할 반 수를 넘을 수 없습니다.</div>
  <div class="basket-zone"><div class="basket-source"><div class="basket-source-head"><strong>학생 찾기</strong><span>선택 또는 드래그</span></div><label class="field"><input id="basketSearch" type="search" placeholder="이름 · 기존 반 · 번호" aria-label="분리 학생 검색"></label><div id="basketSelected" class="basket-selected-label" aria-live="polite">학생을 선택해 바구니에 담으세요.</div><div id="basketPool" class="basket-pool"></div></div><div id="basketGrid" class="basket-grid"></div></div>
  <div class="section-head"><div><h2>개별 분리 관계 <span id="pairCount" class="count-pill">0쌍</span></h2><p>서로 다른 반에 배정할 두 학생을 선택하세요.</p></div></div><div class="constraint-form"><label class="field">학생 A <select id="pairA" class="wide"></select></label><label class="field">학생 B <select id="pairB" class="wide"></select></label><button id="addPair" class="btn primary">분리 관계 추가</button></div><div id="pairList"></div></section>
- <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>완성된 반 편성표</h2><p>편성 결과를 확인하고 필요한 학생을 옮겨 보세요.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="exportCsv" class="btn" disabled>엑셀용 파일 저장</button><button id="print" class="btn" disabled>결과 인쇄 · PDF</button></div></div>
+ <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>완성된 반 편성표</h2><p>편성 결과를 확인하고 필요한 학생을 옮겨 보세요.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="copyResultExcel" class="btn" disabled>엑셀에 복사</button><button id="exportCsv" class="btn" disabled>엑셀용 파일 저장</button><button id="print" class="btn" disabled>인쇄 · PDF 저장</button></div></div>
+ <div class="result-layout-bar no-print"><div class="result-layout-picker" role="group" aria-label="반 편성표 배치 방식"><span>반 배치</span><button id="resultVertical" type="button" data-result-layout="vertical" aria-pressed="true">세로형</button><button id="resultCompare" type="button" data-result-layout="compare" aria-pressed="false">가로 비교형</button></div><span id="resultLayoutHint" class="result-layout-hint">반을 세로로 펼쳐 봅니다.</span></div>
  <div class="move-guide no-print"><span>학생 카드를 다른 반으로 드래그하세요. 태블릿에서는 학생 선택 → 대상 반의 「여기로 이동」을 누르면 됩니다.</span><button id="undoMove" class="btn small" disabled>마지막 이동 되돌리기</button></div><div id="moveSelection" class="move-selection no-print" aria-live="polite"></div><div id="movePreview" class="move-preview no-print" aria-live="polite"></div><div id="moveHistoryResult" class="move-history" aria-live="polite"></div>
- <div id="resultMessage" class="helper result-help">먼저 학생 명단을 작성한 다음 자동 편성하기를 눌러 주세요. 결과에서 학생의 반을 직접 바꾸거나 다른 편성안을 선택할 수도 있습니다.</div><div id="alternatives" class="alternatives"></div><div id="validation"></div><div id="report"></div><div id="resultGrid" class="result-grid"></div><div class="helper result-help">최종 확정 전에 반별 구성을 확인하세요.</div></section>
+ <div id="resultMessage" class="helper result-help">먼저 학생 명단을 작성한 다음 자동 편성하기를 눌러 주세요. 결과에서 학생의 반을 직접 바꾸거나 다른 편성안을 선택할 수도 있습니다.</div><div id="alternatives" class="alternatives"></div><div id="validation"></div><div id="report"></div><div id="resultGrid" class="result-grid" data-layout="vertical" aria-label="반별 편성 학생 목록"></div><section id="resultPrintSheet" aria-label="인쇄용 반 편성표"></section><div class="helper result-help">최종 확정 전에 반별 구성을 확인하세요.</div></section>
  
  <div class="foot">학생 정보는 이 기기에 저장됩니다. 공동 PC에서는 사용 후 자료를 정리해 주세요. 자세한 내용은 상단 도움말에서 확인할 수 있습니다.</div>
 </main>
@@ -438,7 +486,7 @@ function stageZeroReconcile(students,sourceGrade,rows,idFactory){
   created:next.length-requested.size,preserved:requested.size};
 }
 /* STAGE_ZERO_END */
-function defaultState(){return {version:6,grade:'6',classCount:3,sourceGrade:'5',sourceClassCount:3,sourceClasses:stageZeroRows([],3),setupCompleted:false,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},baskets:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
+function defaultState(){return {version:6,grade:'6',classCount:3,resultLayout:'vertical',sourceGrade:'5',sourceClassCount:3,sourceClasses:stageZeroRows([],3),setupCompleted:false,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},baskets:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
 function parseStudyScore(v,legacy=false){if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return !Number.isFinite(n)||n<0||n>1e9||(legacy&&n===0)?null:Math.round((n+Number.EPSILON)*100)/100}
 function hasStudyScore(s){return Number.isFinite(s.level)&&s.level>=0}
 function studyText(v){return Number.isFinite(v)?v.toFixed(2):'미입력'}
@@ -469,7 +517,7 @@ function normalize(raw){
  const candidates=(Number(raw.version||1)>=5&&Array.isArray(raw.candidates)?raw.candidates:[]).slice(0,3)
   .filter(c=>c&&c.assign&&typeof c.assign==='object'&&uniqueStudents.every(st=>Number.isInteger(Number(c.assign[st.id]))&&Number(c.assign[st.id])>=1&&Number(c.assign[st.id])<=count))
   .map(c=>({assign:Object.fromEntries(uniqueStudents.map(st=>[st.id,Number(c.assign[st.id])])),target:Array.from({length:count},(_,i)=>Number(c.target?.[i])||Math.floor(uniqueStudents.length/count)),score:Number(c.score)||0}));
- return {...base,grade:String(raw.grade??'6').slice(0,12),classCount:count,sourceGrade,sourceClassCount:countSource,sourceClasses,setupCompleted,teacherPriorityOn,traits,capRules,teacherNames,baskets,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
+ return {...base,grade:String(raw.grade??'6').slice(0,12),classCount:count,resultLayout:raw.resultLayout==='compare'?'compare':'vertical',sourceGrade,sourceClassCount:countSource,sourceClasses,setupCompleted,teacherPriorityOn,traits,capRules,teacherNames,baskets,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
 }
 function loadState(){try{return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY)))}catch(e){return defaultState()}}
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
