@@ -735,7 +735,7 @@ function renderReviewChange(analysis,title){
       return '<p><b>'+escapeHtml(label)+'</b> '+metricDiff(a,b)+'</p>';
     }).join('');
     const avgBefore=reviewMetricValue(before,'average'),avgAfter=reviewMetricValue(after,'average');
-    const average='<p><b>학습지표 평균</b> '+(avgBefore===null?'미입력':metricDiff(avgBefore,avgAfter,true))+'</p>';
+    const average='<p><b>학습지표 평균</b> '+(avgBefore===null?'미입력':avgBefore.toFixed(2))+' → '+(avgAfter===null?'미입력':avgAfter.toFixed(2))+(avgBefore!==null&&avgAfter!==null&&Math.abs(avgAfter-avgBefore)>0.000001?' <span class="move-delta '+(avgAfter>avgBefore?'positive':'negative')+'">('+(avgAfter>avgBefore?'+':'')+(avgAfter-avgBefore).toFixed(2)+')</span>':'')+'</p>';
     return '<div class="move-diff-column"><h4>'+escapeHtml(displayClass(num))+' '+(num===analysis.from?'(출발)':'(도착)')+'</h4>'+lines+average+'</div>';
   }).join('')+'</div>'+
   (analysis.notices.length?'<div class="helper">'+analysis.notices.map(escapeHtml).join(' / ')+'</div>':'');
