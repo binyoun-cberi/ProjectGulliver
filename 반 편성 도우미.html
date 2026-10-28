@@ -259,6 +259,11 @@
   <div class="feature-add"><input id="newTrait" maxlength="20" placeholder="새 유의 사항" aria-label="새 유의 사항 선택지"><button id="addTrait" class="btn primary small">추가</button></div>
   <p class="settings-warning">항목을 삭제하면 해당 항목을 선택한 학생의 정보에서도 삭제됩니다. 삭제 전에 확인합니다.</p>
  </section>
+ <section class="settings-block" aria-labelledby="demoNameTitle"><h3 id="demoNameTitle">예시 이름 자동 채우기</h3>
+  <p>가상의 한국어 이름을 만들어 넣습니다. 연습할 때만 사용하세요. 학생의 성별·점수·유의 사항은 바꾸지 않습니다.</p>
+  <div class="settings-data-actions"><button id="fillDemoNames" class="btn soft" type="button">빈 이름만 채우기</button><button id="replaceDemoNames" class="btn" type="button">모든 이름을 예시로 바꾸기</button></div>
+  <p class="settings-warning">기존 이름을 바꾸는 경우 확인 후 진행합니다. 중요한 명단은 먼저 백업해 주세요.</p>
+ </section>
  <section class="settings-block" aria-labelledby="backupSettingTitle"><h3 id="backupSettingTitle">자료 관리</h3><p>학생 명단과 편성 조건을 백업하거나 불러옵니다.</p>
   <div class="settings-data-actions"><button id="saveJson" class="btn">백업 저장</button><button id="openJson" class="btn">백업 불러오기</button><input type="file" id="jsonFile" accept=".json,application/json" hidden><button id="reset" class="btn danger">모든 자료 지우기</button></div>
  </section></div>
@@ -1392,6 +1397,32 @@ function exportCSV(){
   }
   download('반편성_결과_'+state.grade+'학년.csv','\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');toast('편성 결과 CSV를 저장했습니다.');
 }
+/* DEMO_NAMES_START: nonidentifying sample names for rehearsal, no other pupil fields changed. */
+function generateDemoNames(count,usedNames=[],random=Math.random){
+ const last=['김','이','박','최','정','강','조','윤','장','임','한','오','신','서','권','황','안','송','류','홍'];
+ const first=['하','서','도','시','유','지','예','민','다','준','태','현','수','채','재','연','은','승','주','가','소','혜','보','나','아','우','성','정','윤','선'];
+ const second=['늘','아','윤','우','현','빈','진','준','희','원','후','온','율','림','린','정','민','서','영','안','하','솔','담','연','영','원','린','윤','지','호'];
+ const used=new Set(usedNames.map(v=>String(v).trim()).filter(Boolean)),pool=[];
+ for(const surname of last)for(const a of first)for(const b of second){
+  const name=surname+a+b;if(!used.has(name))pool.push(name);
+ }
+ for(let i=pool.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
+ return pool.slice(0,count);
+}
+/* DEMO_NAMES_END */
+function fillSampleNames(replaceAll=false){
+ if(!state.students.length){toast('0단계에서 먼저 학생 명단을 만들어 주세요.');return}
+ const targets=state.students.filter(st=>replaceAll||!st.name.trim());
+ if(!targets.length){toast('이름이 비어 있는 학생이 없습니다.');return}
+ if(replaceAll&&!confirm('학생 '+targets.length+'명의 기존 이름을 모두 가상 예시 이름으로 변경할까요? 이전 이름은 사라집니다.'))return;
+ const keep=state.students.filter(st=>!targets.includes(st)).map(st=>st.name);
+ const names=generateDemoNames(targets.length,keep);
+ if(names.length<targets.length){toast('필요한 예시 이름을 모두 만들지 못했습니다.');return}
+ targets.forEach((st,i)=>st.name=names[i]);
+ invalidate();changeState();
+ closePlannerDialog('plannerSettingsDialog');
+ toast('가상 예시 이름 '+targets.length+'명을 입력했습니다. 학생별 성별·점수·유의 사항은 유지됩니다.');
+}
 function sampleData(){const surnames=['김','이','박','최','정','강','조','윤','장','임','한','오'];const names=['하늘','지우','도윤','민서','준우','서연','시우','하은','예준','다은','현우','윤서','지호','수아','건우','서준','나은','이안','채원','예은','유준','지안','서아','태윤','은우','시윤','다현','승우','윤호','서진','연우','수빈','민준','다온','현서','재윤'];return names.map((n,i)=>({id:makeId(),oldClass:(i%3+1)+'반',number:String(Math.floor(i/3)+1),name:surnames[i%12]+n,gender:i%2?'여':'남',level:Math.round((65+(i*13)%34+((i%4)*0.25))*100)/100,traits:[i%5===0?'사회성':null,i%7===0?'운동부':null].filter(Boolean),fixed:0,note:''}))}
 function isCompatibleMove(id,to,candidate){const student=findStudent(id);if(!student||(state.teacherPriorityOn&&student.fixed))return false;const proposal={...candidate.assign,[id]:to};return validateAssignment(activeStudents(),effectivePairs(),proposal,state.capRules).length===0}
 function addStudent(){const room=state.sourceClassCount||1;const last=Math.max(0,...state.students.filter(st=>stageZeroRoom(st.oldClass)===room).map(st=>Number(st.number)||0));const s={id:makeId(),oldGrade:state.sourceGrade,oldClass:room+'반',number:String(last+1),name:'',gender:'',level:null,traits:[],fixed:0,note:''};state.students.push(s);invalidate();changeState();toast('현재 '+room+'반에 임시 학생 자리 1개를 추가했습니다. 0단계 인원과 차이가 생겼습니다.');const field=document.querySelector(`[data-student="${s.id}"] [data-key="name"]`);field?.focus()}
@@ -1483,6 +1514,8 @@ function installEvents(){
   $('setupOpenSettings').addEventListener('click',()=>showPlannerDialog('plannerSettingsDialog'));
   for(const [button,dialog] of [['closeHelp','plannerHelpDialog'],['helpDone','plannerHelpDialog'],['closeSettings','plannerSettingsDialog'],['settingsDone','plannerSettingsDialog']])$(button).addEventListener('click',()=>closePlannerDialog(dialog));
   for(const id of ['plannerHelpDialog','plannerSettingsDialog'])$(id).addEventListener('click',e=>{if(e.target===$(id))closePlannerDialog(id)});
+  $('fillDemoNames').addEventListener('click',()=>fillSampleNames(false));
+  $('replaceDemoNames').addEventListener('click',()=>fillSampleNames(true));
   $('newTrait').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTrait()}});
   document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
   $('backToSetup').addEventListener('click',()=>showTab('setup'));
