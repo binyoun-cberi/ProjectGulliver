@@ -234,6 +234,31 @@
  #resultPrintSheet .print-note{font-size:8pt;color:#516457}
 }
 
+
+/* Pupil-specific name background highlighting. Same color follows pupil across views. */
+.name-color-dialog{width:min(490px,calc(100vw - 24px))}
+.name-color-palette{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:13px 0 20px}
+.name-color-swatch{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;border:2px solid transparent;border-radius:11px;background:#f6f8f7;padding:9px 4px;font-size:11px;cursor:pointer;color:#40584e}
+.name-color-swatch>span{width:40px;height:32px;border-radius:8px;border:1px solid #59696135}
+.name-color-swatch[aria-pressed="true"]{border-color:#277a5b;background:#ebf7ef}
+.name-color-swatch:focus-visible{outline:2px solid #2e8863;outline-offset:2px}
+.name-color-preview{display:grid;place-items:center;min-height:60px;background:#f4f7f5;border-radius:11px;padding:12px}
+.name-color-preview span{display:inline-flex;align-items:center;padding:9px 18px;border-radius:8px;font-size:16px;font-weight:800;border:1px solid #74887d25}
+.name-color-custom{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;font-weight:700}
+.name-color-custom input{min-width:64px;width:78px;height:39px;padding:2px;cursor:pointer;border:1px solid #bdd7c6;border-radius:7px;background:#fff}
+.name-color-note{font-size:12px;color:#687d71;line-height:1.65;margin:12px 0}
+.roster-sheet td[data-roster-cell="name"]{transition:background-color .13s}
+.roster-sheet td[data-roster-cell="name"] input[data-key="name"]{background:transparent!important;color:inherit}
+.student-name-highlight{display:inline-block;padding:5px 8px;border-radius:7px;font-weight:800;min-width:46px;max-width:100%;overflow-wrap:anywhere;border:1px solid #4e604d18}
+.student-color-action{flex-shrink:0;padding:5px 7px;display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:11px;min-width:32px}
+.student-color-action .color-dot{width:13px;height:13px;border-radius:4px;border:1px solid #75877b55;background:conic-gradient(#ffdae0 0 25%,#fff0b9 0 50%,#c8f1de 0 75%,#d8eeff 0 100%)}
+.student-color-action[title]{cursor:pointer}
+.assigned .person .student-name-highlight{font-size:12px}
+.assigned .person .name-and-color{display:flex;align-items:center;gap:5px;min-width:0;flex-wrap:wrap}
+.roster-sheet td.roster-cell-selected[data-roster-cell="name"]{box-shadow:inset 0 0 0 2px #398d68}
+@media print{.student-color-action{display:none!important}.student-name-highlight,#resultPrintSheet .print-student .print-student-name,#resultPrintSheet .print-name-cell{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}
+@media(max-width:480px){.name-color-palette{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
 /* Stage 0: source enrollment and future class planning */
 .setup-year-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:13px 0 16px}
 .setup-year-grid .field{min-width:0}
@@ -370,11 +395,22 @@
  </section></div>
  <div class="dialog-actions"><button id="settingsDone" class="btn primary" type="button">완료</button></div>
 </dialog>
+<dialog id="nameColorDialog" class="planner-panel-dialog name-color-dialog" aria-labelledby="nameColorTitle">
+ <div class="panel-dialog-head"><div class="panel-head-icon" aria-hidden="true">◉</div><div><h2 id="nameColorTitle">이름 배경색</h2><p id="nameColorStudent">학생의 이름 칸에 표시할 색을 고르세요.</p></div><button id="closeNameColor" type="button" class="btn ghost small" aria-label="색상 선택 닫기">✕</button></div>
+ <div class="panel-dialog-body">
+  <div id="nameColorPreview" class="name-color-preview" aria-live="polite"></div>
+  <div id="nameColorPalette" class="name-color-palette" role="group" aria-label="이름 배경색 선택"></div>
+  <label class="name-color-custom">원하는 색 직접 선택 <input id="customNameColor" type="color" value="#dff7e8" aria-label="사용자 지정 이름 배경색"></label>
+  <p class="name-color-note">색은 학생별로 저장되며, 다른 반으로 옮겨도 유지됩니다. 진한 색을 선택하면 글자색도 자동으로 바뀝니다.</p>
+ </div>
+ <div class="dialog-actions"><button id="clearNameColor" type="button" class="btn">색상 없애기</button><button id="nameColorDone" type="button" class="btn primary">완료</button></div>
+</dialog>
 <dialog id="noteDialog"><h3 id="noteTitle">학생 메모</h3><label class="field">참고 사항 (선택) <textarea id="noteText" placeholder="편성 시 교사가 참고할 사항을 짧게 적어 주세요."></textarea></label><div class="dialog-actions"><button id="cancelNote" class="btn">취소</button><button id="saveNote" class="btn primary">저장</button></div></dialog>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 'use strict';
 const STORAGE_KEY = 'classplanner-v1-local';
+const NAME_COLOR_PRESETS = [{name:'분홍',hex:'#ffe0e6'},{name:'살구',hex:'#ffead6'},{name:'노랑',hex:'#fff0b9'},{name:'연두',hex:'#e4f7ce'},{name:'초록',hex:'#c8f1de'},{name:'하늘',hex:'#d8eeff'},{name:'보라',hex:'#e9e0ff'},{name:'회색',hex:'#e9edf2'}];
 const DEFAULT_TRAITS = ['다문화','특수','쌍생아','분리조치','운동부','교권침해','성 사안','범법','연애관계','사회성'];
 let state = loadState();
 let view = state.setupCompleted ? 'roster' : 'setup';
@@ -501,7 +537,7 @@ function normalize(raw){
  const capRules=Object.fromEntries(Object.entries(raw.capRules&&typeof raw.capRules==='object'&&!Array.isArray(raw.capRules)?raw.capRules:{}).filter(([tag,max])=>traits.includes(tag)&&max!==''&&max!==null&&Number.isInteger(Number(max))&&Number(max)>=0&&Number(max)<=1000).map(([tag,max])=>[tag,Number(max)]));
  const students=(Array.isArray(raw.students)?raw.students:[]).slice(0,1000).filter(x=>x&&typeof x==='object').map(st=>({
   id:String(st.id||makeId()),oldGrade:String(st.oldGrade??'').slice(0,12),oldClass:String(st.oldClass??'').slice(0,50),number:String(st.number??'').slice(0,25),name:String(st.name??'').slice(0,80),
-  gender:['남','여',''].includes(st.gender)?st.gender:'',level:parseStudyScore(st.level,legacy),
+  gender:['남','여',''].includes(st.gender)?st.gender:'',level:parseStudyScore(st.level,legacy),color:normalizeNameColor(st.color),
   traits:[...new Set((Array.isArray(st.traits)?st.traits:[]).filter(x=>traits.includes(x)))],
   fixed:Number(st.fixed)>=1&&Number(st.fixed)<=count?Number(st.fixed):0,note:String(st.note??'').slice(0,1000)
  }));
