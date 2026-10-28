@@ -3,7 +3,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 let JSDOM;try{({JSDOM}=require(process.env.WORKSHEET_JSDOM||'jsdom'));}catch{}
 test('dictation UI separates hidden answers, grade changes, saved selections and unsupported voices',{skip:!JSDOM},()=>{
  const raw=fs.readFileSync(path.join(__dirname,'../받아쓰기.html'),'utf8');
- function load(search,voiceList=[]){const dom=new JSDOM(raw.replace(/<script[\s\S]*?<\/script>/g,''),{url:'https://clasheet.test/받아쓰기.html'+search,runScripts:'outside-only'}),w=dom.window;
+ function load(search,voiceList=[{lang:'ko-KR',name:'Google 한국어',voiceURI:'google-ko'},{lang:'en-US',name:'English',voiceURI:'en'}]){const dom=new JSDOM(raw.replace(/<script[\s\S]*?<\/script>/g,''),{url:'https://clasheet.test/받아쓰기.html'+search,runScripts:'outside-only'}),w=dom.window;
   w.speechSynthesis={getVoices:()=>voiceList,cancel:()=>{},speak:u=>{w.lastSpoken=u;},resume:()=>{},addEventListener:()=>{}};w.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};w.print=()=>{w.printed=true;};
   for(const f of ['worksheet-dictation-topics.js','worksheet-dictation-levels.js','worksheet-dictation-data.js','worksheet-english-dictation.js','worksheet-dictation-player.js','worksheet-dictation-custom.js','worksheet-dictation-ui.js'])w.eval(fs.readFileSync(path.join(__dirname,'..',f),'utf8'));return w;
  }
