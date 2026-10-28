@@ -1202,6 +1202,49 @@ function bulkNormalizedGrade(value){
 }
 /* PASTE_RANGE_END */
 /* BULK_TABLE_END */
+/* ROSTER_EXCEL_PASTE_START: Excel columns name, gender, learning score and optional notes. */
+function rosterExcelPastePlan(text,startKey='name'){
+ const rows=parseSheetText(text);
+ if(!rows.length)return {rows:[],mapping:[],header:false};
+ const columns={name:'name',gender:'gender',level:'level'};
+ const startIndex=columns[startKey]==='name'?0:columns[startKey]==='gender'?1:2;
+ const sequence=['name','gender','level','traits'];
+ const recognized=rows[0].map(x=>{const key=bulkHeaderColumn(x);return key===3?'name':key===4?'gender':key===6?'level':key===5?'traits':null});
+ const headers=recognized.filter(Boolean).length>=2||
+  (rows[0].length===1&&recognized[0]&&rows.length>1);
+ const mapping=headers?recognized:rows[0].map((_,i)=>sequence[startIndex+i]||null);
+ return {rows:headers?rows.slice(1):rows,mapping,header:headers};
+}
+function rosterExcelChanges(text,startKey,ids,students){
+ const plan=rosterExcelPastePlan(text,startKey),errors=[],changes=[];
+ const limit=Math.max(0,ids.length);
+ if(!plan.rows.length)return {changes,errors:['붙여넣을 학생 정보가 없습니다.'],header:plan.header};
+ if(plan.rows.length>limit)return {changes,errors:['붙여넣을 '+plan.rows.length+'행에 비해 학생 자리가 '+limit+'개뿐입니다. 검색을 해제하거나 0단계에서 인원을 확인해 주세요.'],header:plan.header};
+ for(let i=0;i<plan.rows.length;i++){
+  const original=students.find(st=>st.id===ids[i]),row=plan.rows[i];
+  if(!original){errors.push((i+1)+'행의 학생 자리를 찾지 못했습니다.');continue}
+  const next={...original},present={};
+  for(let j=0;j<row.length;j++){
+   const key=plan.mapping[j],raw=bulkClean(row[j]);
+   if(!key||!raw)continue;
+   if(key==='name'){next.name=raw.slice(0,80);present.name=true}
+   if(key==='gender'){
+    const sex=/^(남|남자|남학생|m|male)$/i.test(raw)?'남':/^(여|여자|여학생|f|female)$/i.test(raw)?'여':'';
+    if(!sex){errors.push((i+1)+'행: 성별 "'+raw+'"을 남/여로 확인해 주세요.');continue}
+    next.gender=sex;present.gender=true;
+   }
+   if(key==='level'){
+    const score=parseStudyScore(raw.replace(/,/g,''));
+    if(score===null){errors.push((i+1)+'행: 학습지표 "'+raw+'"을 확인해 주세요.');continue}
+    next.level=score;present.level=true;
+   }
+   if(key==='traits'){next.traits=bulkAttention(raw);present.traits=true}
+  }
+  changes.push({id:ids[i],next,present});
+ }
+ return {changes,errors,header:plan.header};
+}
+/* ROSTER_EXCEL_PASTE_END */
 function bulkStudentFromGrid(row){
   const values=row.map(bulkClean);
   return {
@@ -1691,39 +1734,27 @@ function installEvents(){
   $('newTrait').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTrait()}});$('addTrait').addEventListener('click',addTrait);
   $('traitChips').addEventListener('click',e=>{const b=e.target.closest('[data-delete-trait]');if(!b)return;const t=b.dataset.deleteTrait;if(!confirm(`「${t}」 유의 사항을 학생 명단에서도 삭제할까요?`))return;state.traits=state.traits.filter(x=>x!==t);delete state.capRules[t];state.students.forEach(s=>s.traits=s.traits.filter(x=>x!==t));invalidate();changeState()});
   $('rosterBody').addEventListener('paste',e=>{
-    const target=e.target.closest('input[data-key="name"]');
-    if(!target)return;
+    const field=e.target.closest('input[data-key="name"],select[data-key="gender"],input[data-key="level"]');
+    if(!field)return;
     const pasted=e.clipboardData?.getData('text/plain')||'';
     if(!pasted)return;
-    const matrix=parseSheetText(pasted),many=matrix.length>1||matrix.some(r=>r.length>1);
-    if(!many)return;
+    const rows=parseSheetText(pasted);
+    if(rows.length===1&&rows[0].length===1)return;
     e.preventDefault();
-    const entries=matrix.map(row=>row.map(bulkClean));
-    if(entries.length>1&&['이름','학생명','성명'].includes(entries[0][0]))entries.shift();
-    const domRows=Array.from($('rosterBody').querySelectorAll('tr[data-student]'));
-    const start=domRows.findIndex(tr=>tr.contains(target));
-    if(start<0||start+entries.length>domRows.length){
-      toast('붙여넣을 이름 '+entries.length+'행에 비해 화면에 남은 학생 칸이 부족합니다. 0단계 인원을 확인하고 검색을 해제해 주세요.');return;
-    }
-    let updated=0;
-    for(let i=0;i<entries.length;i++){
-      const student=findStudent(domRows[start+i].dataset.student),row=entries[i];
-      if(!student)continue;
-      student.name=(row[0]||'').slice(0,80);
-      if(row[1]&&['남','여'].includes(row[1]))student.gender=row[1];
-      if(row[2]){
-        const n=parseStudyScore(row[2]);
-        if(n!==null)student.level=n;
-      }
-      if(row[3]){
-        const tags=bulkAttention(row[3]);
-        for(const tag of tags)if(!state.traits.includes(tag)&&state.traits.length<64)state.traits.push(tag);
-        student.traits=tags.filter(tag=>state.traits.includes(tag));
-      }
-      updated++;
-    }
+    const visible=Array.from($('rosterBody').querySelectorAll('tr[data-student]'));
+    const start=visible.findIndex(tr=>tr.contains(field));
+    if(start<0)return;
+    const ids=visible.slice(start).map(tr=>tr.dataset.student);
+    const plan=rosterExcelChanges(pasted,field.dataset.key,ids,state.students);
+    if(plan.errors.length){toast(plan.errors.slice(0,3).join(' / '));return}
+    if(!plan.changes.length){toast('붙여넣을 정보를 찾지 못했습니다.');return}
+    const newTags=[...new Set(plan.changes.filter(x=>x.present.traits).flatMap(x=>x.next.traits))].filter(t=>!state.traits.includes(t));
+    if(state.traits.length+newTags.length>64){toast('유의 사항 항목 수가 너무 많습니다. 설정에서 항목을 정리해 주세요.');return}
+    state.traits.push(...newTags);
+    const map=new Map(plan.changes.map(x=>[x.id,x.next]));
+    state.students=state.students.map(st=>map.get(st.id)||st);
     invalidate();changeState();
-    toast(updated+'개 학생의 이름 칸에 엑셀 데이터를 붙여넣었습니다. 학년·반·번호는 유지됐습니다.');
+    toast(plan.changes.length+'명 입력 완료 · 학년·반·번호는 그대로 유지됩니다.');
   });
   $('rosterBody').addEventListener('change',updateStudent);
   $('rosterBody').addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');if(remove){const s=findStudent(remove.dataset.remove);if(!confirm(`「${studentTitle(s)}」 학생을 삭제할까요?`))return;state.students=state.students.filter(x=>x.id!==remove.dataset.remove);state.pairs=state.pairs.filter(p=>p.a!==remove.dataset.remove&&p.b!==remove.dataset.remove);state.baskets.forEach(b=>b.members=b.members.filter(id=>id!==remove.dataset.remove));invalidate();changeState();return}
