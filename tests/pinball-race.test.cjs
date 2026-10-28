@@ -99,23 +99,36 @@ test('the two game types have distinct settings for finishing rank versus balanc
 test('crossings use within-step time, not final depth or roster order',()=>{
  const ball=(index,previousY,y)=>({index,previousY,finished:false,body:{position:{y}}});
  // A crosses at .8, B at .2; A ends deeper but B arrived first.
- const a=ball(0,550,580),b=ball(1,572,582);
+ const a=ball(0,core.FINISH_Y-24,core.FINISH_Y+6),b=ball(1,core.FINISH_Y-2,core.FINISH_Y+8);
  assert.deepEqual(core.crossingOrder([a,b]).map(b=>b.index),[1,0]);
  b.finished=true;assert.deepEqual(core.crossingOrder([a,b]).map(b=>b.index),[0]);
 });
-test('30-player races finish naturally within thirty simulation seconds',()=>{
+test('30-player races finish naturally within sixty simulation seconds',()=>{
  const M=require('../vendor/matter.min.js');
  for(let seed=1;seed<=24;seed++){
    const world=core.createWorld(M,Array.from({length:30},(_,i)=>'학생'+i),seeded(seed));
    assert.equal(new Set(world.balls.map(b=>b.body.position.y)).size,1);
-   let count=0;
-   for(let frame=0;frame<1800&&count<30;frame++){
+   let count=0,firstFrame=null;
+   for(let frame=0;frame<3600&&count<30;frame++){
      world.step();
      for(const b of core.crossingOrder(world.balls)){
+       if(firstFrame===null)firstFrame=frame;
        b.finished=true;count++;M.Composite.remove(world.engine.world,b.body);
      }
    }
    assert.equal(count,30,'natural finish, seed '+seed);
+   assert.ok(firstFrame>=12*60,'Extended route must prevent an early straight fall to the finish');
    M.Engine.clear(world.engine);
+ }
+});
+
+test('sparse races also finish by real crossings on the extended course',()=>{
+ const M=require('../vendor/matter.min.js');
+ for(const n of [2,4,8,16])for(let seed=1;seed<=6;seed++){
+  const w=core.createWorld(M,Array.from({length:n},(_,i)=>'학생'+i),seeded(n*100+seed));let count=0;
+  for(let f=0;f<4800&&count<n;f++){
+   w.step();for(const ball of core.crossingOrder(w.balls)){ball.finished=true;count++;M.Composite.remove(w.engine.world,ball.body);}
+  }
+  assert.equal(count,n,`n=${n}, seed=${seed}`);M.Engine.clear(w.engine);
  }
 });

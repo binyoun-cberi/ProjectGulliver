@@ -124,3 +124,7 @@ legend.field-label{margin:0 0 10px}
 .marble-legend-item{border:1px solid transparent;cursor:pointer;text-align:left;color:#263b50;font-family:inherit}
 .marble-legend-item[aria-pressed="true"]{border-color:#168675;background:#dcfff5;box-shadow:0 0 0 1px #168675}
 .gate-pill{flex-wrap:wrap}.team-members{flex:0 0 100%;line-height:1.6;color:#37556c;overflow-wrap:anywhere}
+
+.camera-status{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:2;max-width:82%;padding:7px 12px;border:1px solid #6d84ad66;border-radius:10px;background:#0a1228ed;color:#eef5ff;text-align:center;font-size:13px;font-weight:700;pointer-events:none;overflow-wrap:anywhere}
+.camera-status[hidden]{display:none}
+@media(max-width:780px){.camera-status{font-size:11px;top:6px;padding:5px 8px}}

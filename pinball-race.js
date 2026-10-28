@@ -8,7 +8,9 @@
   const teamNames=['파랑 팀','노랑 팀','초록 팀','보라 팀'];
   let current=null, startedAt=0, elapsedMs=0, lastFrame=0, accumulator=0, finishAfter=0;
   let toastDeadline=0, audio=null, muted=false, lastRankPaint=0, lastImpactSound=0;
-  let previousLeader=null,lastLeadToast=0, focusedName=null;
+  let previousLeader=null,lastLeadToast=0, focusedName=null, cameraY=0, currentZone=-1;
+  const VIEW_H=canvas.height;
+  const zones=[[118,470,"1 / 갈림길","#fead5c"],[472,940,"2 / 회전 급류","#65e2cf"],[942,C.FINISH_Y,"3 / 결승 범퍼","#b7a1ff"]];
   const fx=[];
   const state={mode:'winner',k:2,balanced:true,labels:[],world:null,allocator:null,counts:[],capacities:[],
     arrivals:[],finished:false,timeoutAnnounced:false,target:1,speed:1.55};
@@ -88,7 +90,7 @@
     $('live-rank-list').replaceChildren();
     $('marble-legend').hidden=true;
     $('marble-legend-list').replaceChildren();
-    previousLeader=null;lastLeadToast=0;
+    previousLeader=null;lastLeadToast=0;cameraY=0;currentZone=-1;
     $('result-overlay').hidden=true;
     $('stop-btn').hidden=true;
     $('start-btn').hidden=false;
@@ -168,7 +170,7 @@
     const col=(count-1)%maxPerRow, row=Math.floor((count-1)/maxPerRow);
     const within=Math.min(maxPerRow,isTeams?state.capacities[team]||maxPerRow:maxPerRow);
     const cols=Math.min(within,maxPerRow);
-    const tx=center+(col-(cols-1)/2)*30,ty=636+row*23;
+    const tx=center+(col-(cols-1)/2)*30,ty=C.FINISH_Y+62+row*23;
     ball.finishFx={sx:ball.body.position.x,sy:ball.body.position.y,tx,ty,started:performance.now()};
     M.Composite.remove(state.world.engine.world,ball.body);
   }
@@ -309,7 +311,7 @@
     ctx.beginPath();ctx.roundRect(x,y,w,h,r);
   }
   function drawBoard() {
-    const g=ctx.createLinearGradient(0,0,900,690);
+    const g=ctx.createLinearGradient(0,0,C.W,C.H);
     g.addColorStop(0,'#152444');g.addColorStop(.55,'#1c2b50');g.addColorStop(1,'#10182d');
     ctx.fillStyle=g;ctx.fillRect(0,0,C.W,C.H);
     ctx.save();
@@ -318,24 +320,19 @@
       ctx.fillStyle='rgba(185,215,255,.18)';ctx.fill();
     }
     // Bright visible arcade zones and movement lanes, rather than an empty falling-ball board.
-    const zones=[
-      [118,252,'1 / 갈림길','#fead5c'],
-      [254,419,'2 / 범퍼 추월','#65e2cf'],
-      [421,574,'3 / 마지막 회전문','#b7a1ff']
-    ];
     for(const [top,bottom,label,color] of zones){
       ctx.fillStyle=color+'0D';drawPill(92,top,716,bottom-top,17);ctx.fill();
       ctx.fillStyle=color;ctx.textAlign='right';ctx.font='bold 13px system-ui';
       ctx.fillText(label,796,top+24);
     }
-    for(let i=0;i<14;i++){
+    for(let i=0;i<38;i++){
       const y=160+i*28;
       ctx.strokeStyle='rgba(255,255,255,.065)';ctx.lineWidth=2;
       ctx.beginPath();ctx.moveTo(95,y);ctx.lineTo(130,y+11);ctx.stroke();
       ctx.beginPath();ctx.moveTo(772,y);ctx.lineTo(807,y+11);ctx.stroke();
     }
     ctx.strokeStyle='rgba(125,186,245,.20)';ctx.lineWidth=4;
-    drawPill(46,32,808,637,32);ctx.stroke();
+    drawPill(46,32,808,C.H-53,32);ctx.stroke();
     ctx.font='900 19px system-ui';ctx.textAlign='center';ctx.fillStyle='rgba(235,244,255,.73)';
     ctx.fillText('PINBALL RACE',450,52);
     ctx.textAlign='left';ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='bold 12px system-ui';
@@ -348,17 +345,17 @@
     for(let i=0;i<teamCount;i++){
       const w=740/teamCount, x=80+i*w, full=state.mode==='teams'&&state.balanced&&state.counts[i]>=state.capacities[i];
       ctx.fillStyle=full?'rgba(225,123,94,.25)':'rgba(76,206,162,.13)';
-      drawPill(x+5,597,w-10,75,10);ctx.fill();
+      drawPill(x+5,C.FINISH_Y+23,w-10,75,10);ctx.fill();
       ctx.strokeStyle=full?'#f39b86':'#50d3a9';ctx.lineWidth=2;ctx.stroke();
       ctx.font='bold 13px system-ui';ctx.textAlign='center';
       ctx.fillStyle=full?'#ffc0af':'#b6ffe6';
       const label=state.mode==='teams'?state.labels[i]:'결승선';
-      ctx.fillText(label,x+w/2,614,w-14);
+      ctx.fillText(label,x+w/2,C.FINISH_Y+40,w-14);
       if(state.mode==='teams'){
         const message=full?'마감':state.balanced?state.counts[i]+' / '+state.capacities[i]:state.counts[i]+'명';
-        ctx.font='bold 11px system-ui';ctx.fillText(message,x+w/2,667);
+        ctx.font='bold 11px system-ui';ctx.fillText(message,x+w/2,C.FINISH_Y+93);
         if(full){
-          ctx.beginPath();ctx.moveTo(x+12,590);ctx.lineTo(x+w-12,590);
+          ctx.beginPath();ctx.moveTo(x+12,C.FINISH_Y+16);ctx.lineTo(x+w-12,C.FINISH_Y+16);
           ctx.strokeStyle='#fda38d';ctx.lineWidth=7;ctx.stroke();
         }
       }
@@ -416,7 +413,7 @@
   }
   function drawNames(now,leaders) {
     const occupied=[];
-    const balls=current.world.balls.filter(b=>!b.finished).sort((a,b)=>
+    const balls=current.world.balls.filter(b=>!b.finished&&b.body.position.y>=cameraY-20&&b.body.position.y<=cameraY+VIEW_H+20).sort((a,b)=>
       Number(b.name===focusedName)-Number(a.name===focusedName)||Number(leaders.has(b))-Number(leaders.has(a))||a.index-b.index);
     ctx.save();ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
     for(const ball of balls){
@@ -425,7 +422,7 @@
       const w=Math.min(138,ctx.measureText(text).width+14),h=22;
       let chosen=null;
       for(const dy of [-28,28,-53,53]){
-        const box={x:Math.max(5,Math.min(C.W-w-5,x-w/2)),y:Math.max(4,Math.min(550,y+dy-h/2)),w,h};
+        const box={x:Math.max(5,Math.min(C.W-w-5,x-w/2)),y:Math.max(cameraY+44,Math.min(cameraY+VIEW_H-30,y+dy-h/2)),w,h};
         if(!occupied.some(o=>box.x<o.x+o.w+3&&box.x+box.w+3>o.x&&box.y<o.y+o.h+3&&box.y+box.h+3>o.y)){chosen=box;break;}
       }
       if(!chosen)continue;
@@ -436,16 +433,49 @@
     }
     ctx.restore();
   }
+  function drawCourseMap() {
+    const x=856,y=65,w=28,h=VIEW_H-130,scale=h/C.H;
+    ctx.save();ctx.fillStyle='#0a1228e8';drawPill(x-7,y-10,w+14,h+20,12);ctx.fill();
+    for(const [top,bottom,,color] of zones){ctx.fillStyle=color+'50';ctx.fillRect(x,y+top*scale,w,(bottom-top)*scale);}
+    ctx.strokeStyle='#fff9';ctx.lineWidth=1;
+    ctx.strokeRect(x-2,y+cameraY*scale,w+4,VIEW_H*scale);
+    for(const ball of current.world.balls){
+      if(ball.finished)continue;
+      ctx.fillStyle=ball.color;ctx.beginPath();
+      ctx.arc(x+3+(ball.body.position.x/C.W)*(w-6),y+ball.body.position.y*scale,ball.name===focusedName?4:2.5,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
+  }
   function draw(now) {
-    ctx.clearRect(0,0,C.W,C.H);
+    ctx.clearRect(0,0,C.W,VIEW_H);
+    const active=current?.world.balls.filter(b=>!b.finished).sort((a,b)=>b.body.position.y-a.body.position.y)||[];
+    const follow=active.find(b=>b.name===focusedName)||active[0];
+    const target=finishAfter?C.H-VIEW_H:follow?Math.max(0,Math.min(C.H-VIEW_H,follow.body.position.y-VIEW_H*.55)):current?C.H-VIEW_H:0;
+    cameraY+=(target-cameraY)*.08;
+    if(current&&follow){
+      const zone=follow.body.position.y<472?0:follow.body.position.y<942?1:2;
+      if(zone>currentZone){
+        currentZone=zone;
+        if(zone>0)showToast(zone===1?'회전 급류 진입! 가운데와 옆길, 누가 빠를까요?':'마지막 범퍼 구간! 결승까지 역전 기회!');
+      }
+    }
+    ctx.save();ctx.translate(0,-cameraY);
     drawBoard();
-    if(!current) return;
-    for(const body of current.world.staticBodies)drawBody(body);
-    const leaders=new Set(current.world.balls.filter(b=>!b.finished)
-      .sort((a,b)=>b.body.position.y-a.body.position.y).slice(0,6));
-    for(const ball of current.world.balls)drawBall(ball,now,leaders.has(ball));
-    drawEffects(now);
-    drawNames(now,leaders);
+    if(current){
+      for(const body of current.world.staticBodies)drawBody(body);
+      const leaders=new Set(active.slice(0,6));
+      for(const ball of current.world.balls)drawBall(ball,now,leaders.has(ball));
+      drawEffects(now);drawNames(now,leaders);
+    }
+    ctx.restore();
+    $('camera-status').hidden=!current;
+    if(current){
+      drawCourseMap();
+      const zone=follow?Math.min(2,follow.body.position.y<472?0:follow.body.position.y<942?1:2):2;
+      const caption=zones[zone][2]+' · '+(focusedName&&follow?.name===focusedName?focusedName+' 따라가는 중':'선두 따라가는 중');
+      if($('camera-status').textContent!==caption)$('camera-status').textContent=caption;
+      $('camera-status').hidden=false;
+    }
   }
   function loop(now) {
     requestAnimationFrame(loop);
@@ -470,7 +500,7 @@
       pullImpacts(now);
       if(!finishAfter)resolveArrival();
       if(now-lastRankPaint>175){updateLiveRankings();lastRankPaint=now;}
-      const cap=state.mode==='winner'?35000:40000;
+      const cap=80000/state.speed+1800;
       if(!finishAfter&&elapsedMs>=cap&&!state.timeoutAnnounced)timeoutRescue();
       if(finishAfter&&now>=finishAfter)finish();
       $('race-clock').textContent=String(Math.floor(elapsedMs/60000)).padStart(2,'0')+':'+
