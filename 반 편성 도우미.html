@@ -274,7 +274,67 @@ function effectivePairs(){return buildBasketPairs(state.pairs,state.baskets)}
 function basketProblems(baskets=state.baskets,k=state.classCount){
  return baskets.filter(b=>b.members.length>k).map(b=>'「'+b.name+'」에 '+b.members.length+'명: '+k+'개 반에 나눌 수 없습니다.');
 }
-function defaultState(){return {version:5,grade:'1',classCount:3,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},baskets:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
+/* STAGE_ZERO_START: automatic slots, non-destructive roster reconciliation, gender targets. */
+function stageZeroRoom(v){
+ const text=String(v??'').trim();
+ const found=text.match(/^(?:제\s*)?(\d{1,2})\s*(?:반)?$/);
+ return found?Number(found[1]):0;
+}
+function stageZeroRows(value,count=3){
+ const source=Array.isArray(value)?value:[];
+ return Array.from({length:Math.max(1,Math.min(12,count))},(_,i)=>{
+  const row=source.find(r=>Number(r?.room)===i+1)||source[i]||{};
+  const safe=n=>n===''||n===null||n===undefined?'':Number.isInteger(Number(n))&&Number(n)>=0&&Number(n)<=1000?Number(n):'';
+  return {room:i+1,boys:safe(row.boys),girls:safe(row.girls)};
+ });
+}
+function stageZeroTotals(rows){
+ return rows.reduce((o,row)=>{o.boys+=Number(row.boys)||0;o.girls+=Number(row.girls)||0;return o},{boys:0,girls:0});
+}
+function stageZeroTargets(rows,k){
+ const {boys,girls}=stageZeroTotals(rows);
+ const target=Math.max(2,Math.min(12,k));
+ const avg={boys:boys/target,girls:girls/target,total:(boys+girls)/target};
+ return {average:avg,total:boys+girls,rows:Array.from({length:target},(_,i)=>({
+  room:i+1,boys:Math.floor(boys/target)+(i<boys%target?1:0),
+  girls:Math.floor(girls/target)+(i>=target-girls%target&&girls%target>0?1:0)
+ }))};
+}
+function stageZeroInferRows(students){
+ const found=new Map();
+ for(const st of students||[]){
+  const room=stageZeroRoom(st.oldClass);
+  if(!room||room>12)continue;
+  if(!found.has(room))found.set(room,{room,boys:0,girls:0});
+  if(st.gender==='남')found.get(room).boys++;
+  if(st.gender==='여')found.get(room).girls++;
+ }
+ return stageZeroRows([...found.values()],Math.max(1,Math.min(12,...found.keys(),3)));
+}
+function stageZeroReconcile(students,sourceGrade,rows,idFactory){
+ const requested=new Set(),next=[];
+ const inSlots=new Map();
+ for(const st of students||[]){
+  const room=stageZeroRoom(st.oldClass),n=Number(String(st.number||'').trim());
+  if(room>0&&Number.isInteger(n)&&n>=1){
+   const key=room+':'+n;
+   if(!inSlots.has(key))inSlots.set(key,[]);
+   inSlots.get(key).push(st);
+  }
+ }
+ for(const row of rows){
+  const count=(Number(row.boys)||0)+(Number(row.girls)||0);
+  for(let n=1;n<=count;n++){
+   const key=row.room+':'+n,matched=inSlots.get(key)?.shift();
+   if(matched){requested.add(matched.id);next.push({...matched,oldGrade:String(sourceGrade),oldClass:row.room+'반',number:String(n)})}
+   else next.push({id:idFactory(),oldGrade:String(sourceGrade),oldClass:row.room+'반',number:String(n),name:'',gender:'',level:null,traits:[],fixed:0,note:''});
+  }
+ }
+ return {students:next,removed:(students||[]).filter(st=>!requested.has(st.id)),
+  created:next.length-requested.size,preserved:requested.size};
+}
+/* STAGE_ZERO_END */
+function defaultState(){return {version:6,grade:'6',classCount:3,sourceGrade:'5',sourceClassCount:3,sourceClasses:stageZeroRows([],3),setupCompleted:false,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},baskets:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
 function parseStudyScore(v,legacy=false){if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return !Number.isFinite(n)||n<0||n>1e9||(legacy&&n===0)?null:Math.round((n+Number.EPSILON)*100)/100}
 function hasStudyScore(s){return Number.isFinite(s.level)&&s.level>=0}
 function studyText(v){return Number.isFinite(v)?v.toFixed(2):'미입력'}
