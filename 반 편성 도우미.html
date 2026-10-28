@@ -62,7 +62,7 @@
 .move-guide{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;border:1px solid #cee0db;border-radius:10px;background:#f5faf8;padding:11px 13px;margin:13px 0;font-size:12px;color:#356457}
 .move-guide .btn{flex-shrink:0}.move-selection{margin:9px 0;font-size:12px}
 .move-selection:not(:empty){border:1px solid #b7d9ca;background:#f2faf5;border-radius:9px;padding:10px 12px}
-.move-preview:not(:empty){border:1px solid #bfd9ce;background:#f5fbf7;border-radius:11px;padding:13px 15px;margin:11px 0}
+.move-preview:not(:empty){position:fixed;right:14px;bottom:14px;z-index:20;width:min(440px,calc(100vw - 28px));max-height:48vh;overflow-y:auto;pointer-events:none;box-shadow:0 14px 40px #1c382e33;border:1px solid #bfd9ce;background:#f5fbf7;border-radius:11px;padding:13px 15px;margin:0}
 .move-preview.invalid{border-color:#e1a9a5;background:#fff6f5}
 .move-preview strong{display:block;margin-bottom:6px;font-size:13px}
 .move-preview .move-preview-row{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;margin:3px 0}
