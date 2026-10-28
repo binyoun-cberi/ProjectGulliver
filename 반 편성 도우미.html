@@ -13,6 +13,26 @@
 .preset-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}.preset-filters label{font-size:11px;color:var(--muted)}.preset-filters select{width:100%;font-size:12px}.preset-batch{position:sticky;bottom:10px;z-index:2;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px;border:1px solid #c5dfd4;border-radius:13px;background:#f0faf5;box-shadow:0 8px 28px #193d2d16;margin-top:16px}.preset-batch select{max-width:210px}.preset-selection{display:flex;align-items:center;gap:9px;margin:10px 0;font-size:12px}.preset-classes{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.preset-class.active{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}.preset-room{border:0;background:transparent;color:var(--blue);font-weight:800;padding:4px 0;text-align:left}.preset-locked select{width:85px;font-size:12px;padding:5px}.preset-locked-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}.preset-feedback{margin:12px 0;font-size:13px;overflow-wrap:anywhere}.preset-members{max-height:320px;overflow:auto}.preset-person input[type=checkbox]{flex-shrink:0}.preset-list{min-width:0}.preset-sort{width:100%;font-size:12px;margin-top:8px}.preset-batch .btn{min-height:42px}.preset-person:has(input:checked){background:#e8f5ef}.preset-person select{width:85px}.preset-class h3{overflow-wrap:anywhere}.preset-room small{font-weight:400;color:var(--muted)}
 @media(min-width:841px){.preset-list{position:sticky;top:80px}.preset-people{max-height:480px}.preset-workspace{grid-template-columns:minmax(320px,1fr) minmax(0,2fr)}}
 @media(max-width:540px){.preset-batch{bottom:8px;gap:7px;padding:10px}.preset-batch strong{width:100%}.preset-batch select{flex:1;min-width:100px}.preset-person select{width:82px}.preset-classes{grid-template-columns:1fr}.preset-locked{flex-wrap:wrap}.preset-filters{grid-template-columns:1fr 1fr}}
+
+/* Editable spreadsheet-style bulk roster. Data stays as a local draft until applied. */
+.bulk-grid-wrap{max-height:480px;overflow:auto;overscroll-behavior:contain;margin:12px 0}
+.bulk-sheet{border-collapse:separate;border-spacing:0;width:100%;min-width:865px;font-size:12px}
+.bulk-sheet th{background:#eef4f5;border-bottom:1px solid #d7e4e0;position:sticky;top:0;z-index:1;padding:10px 7px;text-align:left;white-space:nowrap}
+.bulk-sheet td{padding:0;border-bottom:1px solid #e4e9ef;border-right:1px solid #edf1f6;background:white}
+.bulk-sheet td.bulk-num{font-variant-numeric:tabular-nums;text-align:center;color:#8190a0;width:42px;background:#f6f8fa}
+.bulk-sheet td input,.bulk-sheet td textarea{display:block;width:100%;height:37px;border:0;border-radius:0;padding:7px 8px;font-size:12px;background:transparent;resize:vertical}
+.bulk-sheet td textarea{min-height:37px;height:37px;line-height:1.3}
+.bulk-sheet td input:focus,.bulk-sheet td textarea:focus{outline:2px solid var(--blue);outline-offset:-2px;background:#eff8f4}
+.bulk-sheet .bulk-delete-col,.bulk-sheet .bulk-delete-cell{width:38px;text-align:center}
+.bulk-sheet .bulk-delete-cell button{font-size:14px;padding:4px 8px;color:#9e5661;border:0;background:transparent}
+.bulk-sheet .bulk-name{min-width:120px}.bulk-sheet .bulk-note{min-width:215px}
+.bulk-sheet .bulk-score{min-width:115px}.bulk-sheet .bulk-grade,.bulk-sheet .bulk-class,.bulk-sheet .bulk-number{min-width:65px}
+.bulk-toolbar{margin:10px 0 4px}.bulk-commit{margin-top:14px}.bulk-raw{border-top:1px solid #dfe6f0;margin:15px 0 0;padding-top:11px}
+.bulk-raw summary{cursor:pointer;font-size:12px;font-weight:750;color:#2c6e62}
+.bulk-raw p{margin-top:10px}.bulk-raw textarea{height:110px;margin-bottom:8px}
+.bulk-preview{margin:10px 0 0}.bulk-preview strong{font-weight:800}
+.bulk-preview.has-warnings{background:#fff9ee;border-color:#f0ddbb;color:#765734}
+@media(max-width:720px){.bulk-sheet{min-width:780px}.bulk-grid-wrap{max-height:360px}}
 </style>
 <link rel="stylesheet" href="gulliver-design.css?v=1.2.0">
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
@@ -33,7 +53,17 @@
  <div class="card setup"><div class="formfields"><label class="field">새 학년 <input id="grade" type="text" value="1" maxlength="12" aria-label="새 학년"></label><label class="field">새 학급 수 <input id="classCount" type="number" min="2" max="12" value="3"></label></div><div class="actions"><button id="demo" class="btn soft">예시 데이터 보기</button><button id="generateQuick" class="btn primary">바로 반 편성하기</button><button id="saveJson" class="btn">설정 백업 (.json)</button><button id="openJson" class="btn">백업 불러오기</button><input type="file" id="jsonFile" accept=".json,application/json" hidden><button id="reset" class="btn danger">모두 지우기</button></div></div>
  <nav class="tabs" aria-label="기능 선택"><button class="tab" data-tab="roster" aria-selected="true">01 학생 명단 · 유의 사항</button><button class="tab" data-tab="preset" aria-selected="false">02 교사 우선 배치</button><button class="tab" data-tab="rules" aria-selected="false">03 편성 조건 · 분리</button><button class="tab" data-tab="results" aria-selected="false">04 완성된 반 · 검토</button></nav>
  <section id="view-roster" class="card" aria-label="학생 명단"><div class="section-head"><div><h2>학생 명단 <span id="rosterCount" class="count-pill">0명</span></h2><p>기존 반·번호·이름·성별·학습지표(소수점 둘째 자리)·유의 사항을 입력하세요.</p></div><div class="actions"><input id="searchStudent" aria-label="학생 검색" placeholder="이름 · 기존 반 검색" style="width:160px"><button id="toggleBulk" class="btn">스프레드시트 붙여넣기</button><button id="addStudent" class="btn primary">+ 학생 추가</button></div></div>
- <div id="bulkPanel" class="bulk hidden"><div class="bulk-head"><strong>여러 명 한 번에 입력</strong><button id="closeBulk" class="btn ghost small">닫기</button></div><p>구글 스프레드시트에서 복사하여 붙여넣으세요. 순서: <b>기존 반 / 번호 / 이름 / 성별 / 학습지표(0.00~) / 유의 사항</b>. 유의 사항이 여러 개면 세미콜론(;)으로 구분하세요. 기존 7열 형식(마지막에 메모 추가)과 이름만 한 열도 지원합니다. 첫 줄 제목은 자동으로 건너뜁니다.</p><textarea id="bulkText" placeholder="1반&#9;1&#9;김하늘&#9;여&#9;82.50&#9;다문화;사회성\n1반&#9;2&#9;이도윤&#9;남&#9;90.25&#9;운동부"></textarea><div class="inline"><label style="font-size:12px"><input type="radio" name="bulkMode" value="append" checked> 기존 명단에 추가</label><label style="font-size:12px"><input type="radio" name="bulkMode" value="replace"> 기존 명단 교체</label><button id="commitBulk" class="btn primary">명단 적용</button></div></div>
+ <div id="bulkPanel" class="bulk hidden">
+  <div class="bulk-head"><strong>엑셀형 학생 명단 한 번에 입력</strong><button id="closeBulk" class="btn ghost small">닫기</button></div>
+  <p>엑셀·스프레드시트의 <b>학년 / 반 / 번호 / 이름 / 성별 / 유의사항</b> 표 전체를 복사한 뒤, 아래 첫 번째 셀에 <b>Ctrl+V</b>로 붙여넣으세요. 학습지표는 필요할 때 마지막 열에 추가하면 됩니다. 표에 있는 제목·반별 남녀 인원 요약·마지막 총원 행은 학생 명단에 포함하지 않습니다.</p>
+  <div class="bulk-toolbar actions no-print"><button id="bulkFocus" class="btn soft">표 첫 칸 선택</button><button id="bulkAddRows" class="btn">+ 10행 추가</button><button id="bulkClearGrid" class="btn danger">입력표 비우기</button><span id="bulkRowCount" class="count-pill">12행</span></div>
+  <div class="table-wrap bulk-grid-wrap"><table id="bulkGridTable" class="bulk-sheet" aria-label="엑셀형 학생 명단 입력표"><thead><tr><th class="bulk-num">행</th><th>학년</th><th>반</th><th>번호</th><th>이름</th><th>성별</th><th>유의 사항 (복수 가능)</th><th>학습지표 (선택)</th><th class="bulk-delete-col"></th></tr></thead><tbody id="bulkGridBody"></tbody></table></div>
+  <div id="bulkPreview" class="helper bulk-preview" aria-live="polite">이름까지 입력한 학생만 명단에 적용됩니다.</div>
+  <details id="bulkRawPanel" class="bulk-raw"><summary>텍스트로 한꺼번에 붙여넣기 (표로 변환)</summary><p>엑셀에서 복사한 탭 구분 표, CSV, 마크다운 표도 붙여넣을 수 있습니다. 셀 속 줄바꿈이나 ‘다문화; 한부모’와 같은 복수 유의 사항을 지원합니다.</p><textarea id="bulkText" aria-label="학생 명단 표 텍스트 붙여넣기" placeholder="학년&#9;반&#9;번호&#9;이름&#9;성별&#9;유의사항
+6&#9;1&#9;1&#9;김하늘&#9;여&#9;다문화; 한부모
+6&#9;1&#9;2&#9;이도윤&#9;남&#9;사회성"></textarea><button id="bulkParseText" class="btn small">붙여넣은 내용 표로 변환</button></details>
+  <div class="inline bulk-commit"><label style="font-size:12px"><input type="radio" name="bulkMode" value="append" checked> 기존 명단에 추가</label><label style="font-size:12px"><input type="radio" name="bulkMode" value="replace"> 기존 명단 교체</label><button id="commitBulk" class="btn primary">입력된 학생 명단 적용</button></div>
+</div>
  <div class="tagline"><b style="font-size:12px">유의 사항 선택지</b><div id="traitChips" class="inline"></div><div class="feature-add"><input id="newTrait" maxlength="20" placeholder="유의 사항 항목 추가"><button id="addTrait" class="btn small">추가</button></div></div>
  <div class="table-wrap"><table class="student-table"><thead id="rosterHead"></thead><tbody id="rosterBody"></tbody></table></div><div class="helper privacy-note">학습지표는 0.00 이상의 점수를 소수점 둘째 자리까지 입력할 수 있으며, 미입력과 0.00은 구분됩니다. 유의 사항은 여러 개를 선택하거나 새 항목을 추가할 수 있습니다. 「분리조치」를 선택하는 것만으로 두 학생이 자동 분리되지는 않으므로, 반드시 「분리할 학생 지정」에서 실제 분리 관계를 설정해 주세요.</div>
  </section>
