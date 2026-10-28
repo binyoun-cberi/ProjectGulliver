@@ -199,11 +199,11 @@
   <div id="setupNotice" class="helper" role="status" aria-live="polite">현재 반별 남녀 수를 입력하면 학생 명단의 기본 칸을 만들 수 있습니다.</div>
   <div class="actions setup-apply"><button id="applySetup" class="btn primary">학생 명단 틀 만들고 1단계로</button><button id="continueSetup" class="btn soft">기존 학생 명단 그대로 1단계로</button></div>
  </section>
- <section id="view-roster" class="card hidden" aria-label="학생 명단"><div class="section-head"><div><h2>학생 명단 <span id="rosterCount" class="count-pill">0명</span></h2><p>이름·성별·학습지표·유의 사항을 입력하세요.</p></div><div class="actions"><button id="backToSetup" class="btn soft">0단계 수정</button><input id="searchStudent" aria-label="학생 검색" placeholder="이름 · 기존 반 검색" style="width:160px"><button id="toggleBulk" class="btn">스프레드시트 붙여넣기</button><button id="addStudent" class="btn primary">+ 학생 추가</button></div></div>
+ <section id="view-roster" class="card hidden" aria-label="학생 명단"><div class="section-head"><div><h2>학생 명단 <span id="rosterCount" class="count-pill">0명</span></h2><p>이름·성별·학습지표·유의 사항을 입력하세요.</p></div><div class="actions"><button id="backToSetup" class="btn soft">0단계 수정</button><input id="searchStudent" aria-label="학생 검색" placeholder="이름 · 기존 반 검색" style="width:160px"><button id="toggleBulk" class="btn">엑셀로 여러 명 입력</button><button id="addStudent" class="btn primary">+ 학생 추가</button></div></div>
  <div id="rosterGenderSummary" aria-live="polite"></div><div class="helper no-print" style="margin:8px 0">엑셀에서 여러 이름을 복사해 첫 이름 칸에 붙여넣을 수 있습니다.</div>
  <div id="bulkPanel" class="bulk hidden">
   <div class="bulk-head"><strong>엑셀형 학생 명단 한 번에 입력</strong><button id="closeBulk" class="btn ghost small">닫기</button></div>
-  <p>엑셀·스프레드시트의 <b>학년 / 반 / 번호 / 이름 / 성별 / 유의사항</b> 표 전체를 복사한 뒤, 아래 첫 번째 셀에 <b>Ctrl+V</b>로 붙여넣으세요. 학습지표는 필요할 때 마지막 열에 추가하면 됩니다. 표에 있는 제목·반별 남녀 인원 요약·마지막 총원 행은 학생 명단에 포함하지 않습니다.</p>
+  <p>엑셀에서 복사한 학생 목록을 붙여넣으세요.</p>
   <div class="bulk-toolbar actions no-print"><button id="bulkFocus" class="btn soft">표 첫 칸 선택</button><button id="bulkAddRows" class="btn">+ 10행 추가</button><button id="bulkAdd50Rows" class="btn">+ 50행 추가</button><button id="bulkClearGrid" class="btn danger">입력표 비우기</button><span id="bulkRowCount" class="count-pill">12행</span></div>
   <div class="bulk-spreadsheet-tools">
     <label for="bulkFillGrade">전체 학년</label><input id="bulkFillGrade" type="text" inputmode="numeric" placeholder="예: 5" maxlength="12"><button id="bulkFillGradeAll" class="btn soft">모든 행 학년 채우기</button>
@@ -220,17 +220,17 @@
   <div class="inline bulk-commit"><label style="font-size:12px"><input type="radio" name="bulkMode" value="fill" checked> 0단계 명단의 입력 칸 채우기</label><label style="font-size:12px"><input type="radio" name="bulkMode" value="append"> 기존 명단에 추가</label><label style="font-size:12px"><input type="radio" name="bulkMode" value="replace"> 기존 명단 교체</label><button id="commitBulk" class="btn primary">입력된 학생 명단 적용</button></div>
 </div>
  
- <div class="table-wrap"><table class="student-table"><thead id="rosterHead"></thead><tbody id="rosterBody"></tbody></table></div><div class="helper privacy-note">학습지표는 0.00 이상의 점수를 소수점 둘째 자리까지 입력할 수 있으며, 미입력과 0.00은 구분됩니다. 유의 사항은 여러 개를 선택하거나 새 항목을 추가할 수 있습니다. 「분리조치」를 선택하는 것만으로 두 학생이 자동 분리되지는 않으므로, 반드시 「분리할 학생 지정」에서 실제 분리 관계를 설정해 주세요.</div>
+ <div class="table-wrap"><table class="student-table"><thead id="rosterHead"></thead><tbody id="rosterBody"></tbody></table></div><div class="helper privacy-note">같은 반에 배정하면 안 되는 학생은 3단계에서 지정해 주세요.</div>
  </section>
  <section id="view-preset" class="card hidden" aria-label="교사가 먼저 배치할 학생"><div class="section-head"><div><h2>교사가 먼저 학생 배치하기 <span id="presetCount" class="count-pill">0명 확정</span></h2><p>고정할 학생을 선택하세요.</p></div><div class="actions"><button id="undoPreset" class="btn" disabled>최근 배치 되돌리기</button><button id="clearPresets" class="btn danger">우선 배치 전체 해제</button><button id="fillRemaining" class="btn primary">남은 학생 자동 채우기</button></div></div><div id="presetStatus" class="helper"></div><div class="preset-workspace"><div class="preset-list"><div class="section-head"><h3>학생 찾아 배치하기</h3><span id="presetRemaining" class="count-pill">0명</span></div><input id="presetSearch" class="wide" aria-label="우선 배치 학생 검색" placeholder="이름 · 유의 사항 · 기존 반 검색"><div class="preset-filters"><label>배치 상태<select id="presetFilterStatus"><option value="free">미배치 학생</option><option value="all">모든 학생</option><option value="fixed">배치한 학생</option></select></label><label>기존 반<select id="presetFilterClass"></select></label><label>유의 사항<select id="presetFilterTrait"></select></label><label>정렬<select id="presetSort"><option value="name">이름순</option><option value="score">학습지표 높은순</option><option value="oldClass">기존 반·번호순</option></select></label></div><div class="preset-selection"><label><input type="checkbox" id="presetSelectAll"> 표시된 학생 선택</label><span id="presetVisibleCount" class="muted"></span></div><div id="presetUnassigned" class="preset-people"></div></div><div id="presetClassGrid" class="preset-classes"></div></div><div class="preset-batch"><strong id="presetSelectedCount" aria-live="polite">0명 선택</strong><label for="presetTarget">배치할 반</label><select id="presetTarget"></select><button id="assignSelected" class="btn primary" disabled>선택 학생 배치</button><button id="clearSelection" class="btn">선택 취소</button><button id="fillRemainingBottom" class="btn">남은 학생 자동 채우기</button></div><div id="presetFeedback" class="preset-feedback" role="status" aria-live="polite"></div></section>
  <section id="view-rules" class="card hidden" aria-label="반 편성 조건"><div class="section-head"><div><h2>유의 사항별 반당 최대 인원</h2><p>유의 사항별 최대 인원을 설정하세요.</p></div></div><div id="capRules" class="cap-grid"></div><div class="section-head"><div><h2>같은 반 금지 바구니 <span id="basketCount" class="count-pill">0개</span></h2><p>바구니에 함께 넣은 학생은 서로 다른 반으로 배정됩니다.</p></div><div class="actions"><button id="addBasket" class="btn primary">+ 바구니 만들기</button></div></div>
  <div id="basketNotice" class="helper">바구니에 학생을 넣거나 검색 목록에서 학생을 끌어다 놓으세요. 한 바구니의 학생 수는 편성할 반 수를 넘을 수 없습니다.</div>
  <div class="basket-zone"><div class="basket-source"><label class="field">학생 찾기<input id="basketSearch" type="search" placeholder="이름, 기존 반, 번호 검색"></label><div id="basketPool" class="basket-pool"></div></div><div id="basketGrid" class="basket-grid"></div></div>
  <div class="section-head"><div><h2>개별 분리 관계 <span id="pairCount" class="count-pill">0쌍</span></h2><p>서로 다른 반에 배정할 두 학생을 선택하세요.</p></div></div><div class="constraint-form"><label class="field">학생 A <select id="pairA" class="wide"></select></label><label class="field">학생 B <select id="pairB" class="wide"></select></label><button id="addPair" class="btn primary">분리 관계 추가</button></div><div id="pairList"></div></section>
- <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>지그재그 반 편성 결과</h2><p>편성 결과를 확인하고 필요한 학생을 옮겨 보세요.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="exportCsv" class="btn" disabled>CSV 내려받기</button><button id="print" class="btn" disabled>결과 인쇄 · PDF</button></div></div>
+ <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>완성된 반 편성표</h2><p>편성 결과를 확인하고 필요한 학생을 옮겨 보세요.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="exportCsv" class="btn" disabled>엑셀용 파일 저장</button><button id="print" class="btn" disabled>결과 인쇄 · PDF</button></div></div>
  <div class="move-guide no-print"><span>학생 카드를 다른 반으로 드래그하세요. 태블릿에서는 학생 선택 → 대상 반의 「여기로 이동」을 누르면 됩니다.</span><button id="undoMove" class="btn small" disabled>마지막 이동 되돌리기</button></div><div id="moveSelection" class="move-selection no-print" aria-live="polite"></div><div id="movePreview" class="move-preview no-print" aria-live="polite"></div><div id="moveHistoryResult" class="move-history" aria-live="polite"></div>
  <div id="resultMessage" class="helper result-help">먼저 학생 명단을 작성한 다음 자동 편성하기를 눌러 주세요. 결과에서 학생의 반을 직접 바꾸거나 다른 편성안을 선택할 수도 있습니다.</div><div id="alternatives" class="alternatives"></div><div id="validation"></div><div id="report"></div><div id="resultGrid" class="result-grid"></div><div class="helper result-help">최종 확정 전에 반별 구성을 확인하세요.</div></section>
- <div class="card"><div class="help-grid"><div><h3>⓪ 기존 학급 기본 설정</h3><p>현재 학년과 학급별 남녀 인원을 입력하고 내년 학급 수, 교사 우선 배치 사용 여부를 정합니다.</p></div><div><h3>① 학생 명단 작성</h3><p>학년·반·번호는 자동 생성되므로 이름·성별·학습지표·유의 사항만 입력합니다.</p></div><div><h3>②~④ 조건과 편성 결과 검토</h3><p>교사 우선 배치는 필요한 학교만 사용하고, 학생 분리 조건을 지정한 뒤 자동 편성 결과를 조정합니다.</p></div></div></div>
+ 
  <div class="foot">학생 정보는 이 기기에 저장됩니다. 공동 PC에서는 사용 후 자료를 정리해 주세요. 자세한 내용은 상단 도움말에서 확인할 수 있습니다.</div>
 </main>
 <dialog id="plannerHelpDialog" class="planner-panel-dialog" aria-labelledby="plannerHelpTitle">
@@ -259,7 +259,7 @@
   <p class="settings-warning">항목을 삭제하면 해당 항목을 선택한 학생의 정보에서도 삭제됩니다. 삭제 전에 확인합니다.</p>
  </section>
  <section class="settings-block" aria-labelledby="backupSettingTitle"><h3 id="backupSettingTitle">자료 관리</h3><p>학생 명단과 편성 조건을 백업하거나 불러옵니다.</p>
-  <div class="settings-data-actions"><button id="saveJson" class="btn">JSON 백업 저장</button><button id="openJson" class="btn">백업 불러오기</button><input type="file" id="jsonFile" accept=".json,application/json" hidden><button id="reset" class="btn danger">모든 자료 지우기</button></div>
+  <div class="settings-data-actions"><button id="saveJson" class="btn">백업 저장</button><button id="openJson" class="btn">백업 불러오기</button><input type="file" id="jsonFile" accept=".json,application/json" hidden><button id="reset" class="btn danger">모든 자료 지우기</button></div>
  </section></div>
  <div class="dialog-actions"><button id="settingsDone" class="btn primary" type="button">완료</button></div>
 </dialog>
@@ -529,7 +529,7 @@ function applyStageZero(){
  const plan=stageZeroReconcile(state.students,state.sourceGrade,rooms,makeId);
  if(plan.removed.length){
   const named=plan.removed.filter(s=>s.name.trim()||s.traits.length||s.note||s.fixed);
-  if(!confirm('새 편성 인원에 맞지 않는 기존 학생 '+plan.removed.length+'명이 명단에서 빠집니다.'+(named.length?' (이름·유의 사항 등이 입력된 '+named.length+'명 포함)':'')+' 기존 명단을 JSON으로 백업한 뒤 진행하는 것이 좋습니다. 적용할까요?'))return;
+  if(!confirm('새 편성 인원에 맞지 않는 기존 학생 '+plan.removed.length+'명이 명단에서 빠집니다.'+(named.length?' (이름·유의 사항 등이 입력된 '+named.length+'명 포함)':'')+' 기존 명단을 백업한 뒤 진행하는 것이 좋습니다. 적용할까요?'))return;
  }
  const actual=plan.students.filter(s=>s.name).length;
  state.students=plan.students;state.pairs=state.pairs.filter(p=>state.students.some(s=>s.id===p.a)&&state.students.some(s=>s.id===p.b));
@@ -1031,7 +1031,7 @@ function renderResults(){
   const selected=state.candidates[state.activeCandidate];if(!selected)return;
   const violations=validateAssignment(activeStudents(),effectivePairs(),selected.assign,state.capRules);
   const counts=reportData(selected);const totals=counts.map(d=>d.total);const diff=Math.max(...totals)-Math.min(...totals);
-  const over=diff>1?`반별 인원 차이가 ${diff}명입니다. 편성 결과를 직접 검토하세요.`: `반별 인원 차이 ${diff}명 · 분리·고정·인원 상한 조건 위반 없음`;
+  const over=diff>1?`반별 인원 차이가 ${diff}명입니다. 편성 결과를 직접 검토하세요.`: `반별 인원 차이 ${diff}명 · 지정한 배정 조건 충족`;
   $('validation').innerHTML=violations.length?`<div class="alert"><b>분리 조건 위반 ${violations.length}건</b><div>${violations.map(escapeHtml).join('<br>')}</div></div>`:`<div class="success">${escapeHtml(over)}${duplicateNames().length?' · 동명이인이 있어 기존 반과 번호를 함께 확인하세요.':''}</div>`;
   $('report').innerHTML=`<div class="report"><table><thead><tr><th>반</th><th>전체</th><th>남</th><th>여</th><th>성별 미입력</th><th>다문화</th><th>특수</th><th>학습지표 평균</th></tr></thead><tbody>${counts.map((d,i)=>`<tr><td>${escapeHtml(displayClass(i+1))}</td><td>${d.total}명</td><td>${d.boys}명</td><td>${d.girls}명</td><td>${d.total-d.boys-d.girls}명</td><td>${d.traitCounts['다문화']||0}명</td><td>${d.traitCounts['특수']||0}명</td><td>${d.levelN?(d.levelSum/d.levelN).toFixed(2):'—'}</td></tr>`).join('')}</tbody></table></div><div class="legend">${state.traits.filter(t=>counts.some(d=>d.traitCounts[t]>0)||Number.isInteger(state.capRules[t])).map(t=>`<span>${escapeHtml(t)}${Number.isInteger(state.capRules[t])?' (반당 최대 '+state.capRules[t]+'명)':''}: ${counts.map((d,i)=>`${i+1}반 ${d.traitCounts[t]}`).join(' / ')}</span>`).join('')}</div>`;
   $('resultGrid').innerHTML=counts.map((d,index)=>{
@@ -1413,7 +1413,7 @@ function undoResultMove(){
  const h=moveUndoStack[idx],candidate=state.candidates[candidateIndex];
  if(!candidate||Number(candidate.assign[h.id])!==h.to){toast('이후 배정이 변경되어 마지막 이동을 되돌릴 수 없습니다.');return false}
  const analysis=previewResultMove(h.id,h.from);
- if(!analysis||!analysis.ok){toast('현재 분리·고정·상한 조건에 따라 되돌릴 수 없습니다.');return false}
+ if(!analysis||!analysis.ok){toast('현재 지정된 배정 조건 때문에 되돌릴 수 없습니다.');return false}
  moveUndoStack.splice(idx,1);
  candidate.assign=analysis.proposed;
  candidate.score=calcScore(state.students,candidate.assign,state.classCount,state.traits,candidate.target);
