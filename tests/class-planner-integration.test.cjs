@@ -465,3 +465,33 @@ test('0단계 인터페이스와 1단계 학년·반·번호 읽기 전용 표�
  assert.match(html,/roster-identity/);
  assert.match(html,/data-key="name"/);
 });
+
+function plannerDashboardApi(){
+ const start=html.indexOf('/* PLANNER_DASHBOARD_START'),end=html.indexOf('/* PLANNER_DASHBOARD_END */',start);
+ assert.ok(start>0&&end>start);
+ const ctx={};vm.createContext(ctx);vm.runInContext(html.slice(start,end),ctx);
+ return ctx;
+}
+test('0단계 남녀 수와 실제 입력 학생의 성별을 서로 구별해 집계한다',()=>{
+ const {plannerSummaryData}=plannerDashboardApi();
+ const report=plannerSummaryData({
+  sourceClasses:[{room:1,boys:10,girls:14},{room:2,boys:10,girls:14}],
+  students:[
+   {name:'김하늘',gender:'여',level:0,traits:['다문화(모)','특수']},
+   {name:'이도윤',gender:'남',level:80,traits:['다문화','다문화(모)']},
+   {name:'',gender:'',level:null,traits:[]}
+  ]
+ });
+ assert.equal(report.total,48);assert.equal(report.planned.boys,20);assert.equal(report.planned.girls,28);
+ assert.equal(report.registered,3);assert.equal(report.named,2);
+ assert.equal(report.enteredBoys,1);assert.equal(report.enteredGirls,1);assert.equal(report.noGender,1);
+ assert.equal(report.scored,2);assert.equal(report.avgScore,40);
+ assert.equal(Object.fromEntries(report.tags).다문화,2);
+ assert.equal(Object.fromEntries(report.tags).특수,1);
+});
+test('도움말·설정 버튼, 유의사항 편집, 완전히 숨겨지는 교사 우선배치 탭 구조',()=>{
+ for(const id of ['openHelp','openSettings','plannerHelpDialog','plannerSettingsDialog','traitChips','newTrait','teacherPriorityOn','overviewDashboard'])assert.ok(html.includes('id="'+id+'"'),id);
+ assert.match(html,/presetTab.hidden=!state.teacherPriorityOn/);
+ assert.match(html,/aria-haspopup="dialog"/);
+ assert.match(html,/data-tab="preset"/);
+});
