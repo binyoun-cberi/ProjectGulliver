@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id),query=new URLSearchParams(location.search),synth=window.speechSynthesis;
-let sheet,voices=[],voiceMissing=false,preference={};
+let sheet,voices=[],voiceMissing=false,preference={},manualVoice=false;
 const Custom=window.WorksheetDictationCustom,customStore='clasheet-dictation-custom-sheets.v1',draftStore='clasheet-dictation-custom-drafts.v1';
 const customMode=()=>$('dictSource').value==='custom';
 $('dictSource').value=query.get('mode')==='custom'?'custom':'bank';
@@ -67,11 +67,17 @@ function render(){
 function draw(){if(customMode()){applyCustom();return;}$('dictNotice').hidden=true;const seed=window.crypto?.getRandomValues?crypto.getRandomValues(new Uint32Array(1))[0]:Date.now();sheet=D.generate({grade:Number($('dictGrade').value),topic:$('dictTopic').value,seed,excludeIds:sheet?.grade===Number($('dictGrade').value)?sheet.items.map(q=>q.id):[]});render();}
 function refreshVoices(){
  let all=[];try{all=synth?.getVoices()||[];}catch{}
- const prefix=subject==='english'?/^en(?:[-_]|$)/i:/^ko(?:[-_]|$)/i;voices=all.filter(v=>prefix.test(v.lang));voiceMissing=all.length>0&&!voices.length;
- const selected=$('dictVoice').value;$('dictVoice').replaceChildren(new Option('기본 '+languages[subject].voice+' 음성',''));
- for(const v of voices)$('dictVoice').append(new Option(v.name+' ('+v.lang+')',v.voiceURI));if(voices.some(v=>v.voiceURI===selected))$('dictVoice').value=selected;
+ const korean=subject==='korean',prefix=korean?/^ko(?:[-_]|$)/i:/^en(?:[-_]|$)/i;
+ voices=all.filter(v=>prefix.test(v.lang));
+ if(korean)voices.sort((a,b)=>Number(/google/i.test(b.name+' '+b.voiceURI))-Number(/google/i.test(a.name+' '+a.voiceURI)));
+ voiceMissing=korean?!voices.length:all.length>0&&!voices.length;
+ const selected=$('dictVoice').value;
+ $('dictVoice').replaceChildren(...(korean?[]:[new Option('기본 영어 음성','')]));
+ for(const v of voices)$('dictVoice').append(new Option(v.name+' ('+v.lang+')',v.voiceURI));
+ if(voices.some(v=>v.voiceURI===selected)&&(!korean||manualVoice))$('dictVoice').value=selected;
+ if(korean&&!voices.length)$('dictVoice').append(new Option('한국어 목소리를 불러오는 중이에요',''));
  const label=languages[subject].voice;
- $('voiceNote').textContent=voiceMissing?`기기의 음성 설정에서 ${label} 음성을 추가한 뒤 다시 열어 주세요.`:voices.length?`선택한 ${label} 음성으로 읽어요. 시작 전 기기 소리를 확인해 주세요.`:`기본 ${label} 음성으로 시작합니다. 소리가 나지 않으면 기기의 ${label} 음성 설정을 확인해 주세요.`;
+ $('voiceNote').textContent=korean?(voices.length?(/google/i.test(voices.find(v=>v.voiceURI===$('dictVoice').value)?.name||'')?'Google 한국어 목소리로 읽어요.':(voices.some(v=>/google/i.test(v.name+' '+v.voiceURI))?'선택한 한국어 목소리로 읽어요.':'이 기기에는 Google 한국어 목소리가 없어 제공되는 한국어 목소리로 읽어요.')):'한국어 목소리가 나타나지 않으면 기기의 음성 설정을 확인한 뒤 다시 열어 주세요.'):(voiceMissing?`기기의 음성 설정에서 ${label} 음성을 추가한 뒤 다시 열어 주세요.`:voices.length?`선택한 ${label} 음성으로 읽어요. 시작 전 기기 소리를 확인해 주세요.`:`기본 ${label} 음성으로 시작합니다. 소리가 나지 않으면 기기의 ${label} 음성 설정을 확인해 주세요.`);
  if(sheet&&!['speaking','waiting','paused'].includes(player.snapshot().state))reloadPlayer();else stateChanged(player.snapshot());
 }
 function clearCustom(){player.stop();sheet=null;$('dictWritingList').replaceChildren();$('dictAnswerList').replaceChildren();$('dictTeacher').open=false;$('dictPaperTitle').textContent='직접 입력 문장을 준비해 주세요';$('dictSheetNumber').textContent='';$('gradeFocus').textContent='입력한 문장을 순서대로 듣고 써요.';$('poolInfo').textContent='';stateChanged(player.snapshot());}
@@ -89,9 +95,9 @@ $('dictSource').onchange=()=>{player.stop();const grade=$('dictGrade').value,top
 $('dictCustomText').oninput=()=>{saveDraft();clearCustom();customControls();$('dictNotice').hidden=true;const url=new URL(location.href);url.search=new URLSearchParams({subject,grade:$('dictGrade').value,mode:'custom'});history.replaceState(null,'',url);};
 $('applyCustomDictation').onclick=applyCustom;
 refreshVoices();synth?.addEventListener('voiceschanged',refreshVoices);
-$('dictSubject').onchange=()=>{const grade=$('dictGrade').value,topic=$('dictTopic').value;player.stop();subject=$('dictSubject').value;sheet=null;configureLanguage(grade,topic);customControls();refreshVoices();if(customMode()){loadDraft();customControls();clearCustom();const url=new URL(location.href);url.search=new URLSearchParams({subject,grade:$('dictGrade').value,mode:'custom'});history.replaceState(null,'',url);}else draw();};
+$('dictSubject').onchange=()=>{const grade=$('dictGrade').value,topic=$('dictTopic').value;player.stop();subject=$('dictSubject').value;manualVoice=false;sheet=null;configureLanguage(grade,topic);customControls();refreshVoices();if(customMode()){loadDraft();customControls();clearCustom();const url=new URL(location.href);url.search=new URLSearchParams({subject,grade:$('dictGrade').value,mode:'custom'});history.replaceState(null,'',url);}else draw();};
 $('dictGrade').onchange=()=>{const topic=$('dictTopic').value;configureLanguage($('dictGrade').value,topic);draw();};$('dictTopic').onchange=draw;$('newDictation').onclick=draw;
-for(const id of [...Object.values(controls),'dictVoice'])$(id).onchange=()=>{reloadPlayer();save();};
+for(const id of [...Object.values(controls),'dictVoice'])$(id).onchange=()=>{if(id==='dictVoice'){manualVoice=true;$('voiceNote').textContent='선택한 목소리로 읽어요.';}reloadPlayer();save();};
 $('dictStart').onclick=()=>{if(!sheet)return;if($('dictTeacher').open)$('dictTeacher').open=false;player.start();};
 $('dictPause').onclick=()=>player.pause();$('dictStop').onclick=()=>player.stop();$('dictPrevious').onclick=()=>player.jump(player.snapshot().index-1);$('dictNext').onclick=()=>player.jump(player.snapshot().index+1);$('dictReplay').onclick=()=>{ $('dictTeacher').open=false;player.repeat();};
 function print(teacher){if(!sheet)return;player.pause();document.body.classList.toggle('dictation-print-teacher',teacher);try{window.print();}catch{document.body.classList.remove('dictation-print-teacher');$('dictStatus').textContent='인쇄 창을 열지 못했어요. 브라우저의 인쇄 메뉴를 이용해 주세요.';}}
