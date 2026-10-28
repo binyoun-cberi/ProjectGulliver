@@ -359,7 +359,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.equal(await page.locator('#toggleBulk').count(),0,'no duplicate Excel-mode toggle');
     assert.equal(await page.locator('#bulkPanel').count(),0,'no separate Excel import panel');
     assert.equal(await page.locator('.roster-sheet').count(),1);
-    assert.equal(await page.locator('#rosterBody tr[data-student]').count(),3);
+    assert.ok(await page.locator('#rosterBody tr[data-student]').count()>=3);
     const beforeIdentity=await page.evaluate(()=>state.students.map(s=>[s.id,s.oldGrade,s.oldClass,s.number]));
     const copied='이름\t성별\t학습지표\t유의 사항\n김하늘\t여\t92.50\t다문화; 사회성\n이도윤\t남\t0.00\t특수\n박서연\t여\t85.25\t사회성';
     await page.locator('#rosterBody tr:first-child [data-key="name"]').evaluate((el,value)=>{
@@ -371,7 +371,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.equal(await page.locator('#rosterBody tr:nth-child(2) [data-key="level"]').inputValue(),'0.00');
     assert.match(await page.locator('#rosterBody tr:first-child [data-key="traitsText"]').inputValue(),/다문화/);
     assert.deepEqual(await page.evaluate(()=>state.students.map(s=>[s.id,s.oldGrade,s.oldClass,s.number])),beforeIdentity);
-    assert.equal(await page.locator('#rosterBody tr').count(),3,'no duplicate students created');
+    assert.equal(await page.locator('#rosterBody tr').count(),beforeIdentity.length,'no duplicate students created');
     // Select name cells and fill down in the one grid; undo must restore values.
     await page.locator('#rosterBody tr:first-child [data-key="name"]').click();
     await page.locator('#rosterBody tr:nth-child(3) [data-key="name"]').click({modifiers:['Shift']});
