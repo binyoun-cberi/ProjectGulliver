@@ -172,6 +172,8 @@ const assert=require('node:assert/strict');
  assert.equal(await directPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  await directPage.locator('[data-tab="roster"]').click();if(await directPage.locator('#collapseTraitRemote').getAttribute('aria-expanded')==='false')await directPage.locator('#collapseTraitRemote').click();
  await directPage.locator('[data-key="name"]').first().click();
+ assert.ok(await directPage.locator('#traitRemoteBody').evaluate(el=>el.getBoundingClientRect().height)>250);
+ assert.equal(await directPage.locator('[data-remote-color="#d5e9f8"]').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(213, 233, 248)');
  await directPage.locator('[data-remote-color="#d5e9f8"]').click();
  assert.equal(await directPage.evaluate(()=>state.students[0].color),'#d5e9f8');
  await directPage.locator('#rosterUndo').click();

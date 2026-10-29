@@ -37,7 +37,8 @@ function positionTraitRemote(){
  const header=document.querySelector('.gx-header')?.getBoundingClientRect(),nav=document.querySelector('.tabs')?.getBoundingClientRect();
  const guard=(header?.bottom||0)+8,grip=$('traitRemoteGrip').getBoundingClientRect().height;
  const x=Math.max(8,Math.min(innerWidth-box.width-8,point.x));
- let y=Math.max(guard,Math.min(innerHeight-grip-16,point.y)),bottom=innerHeight-8;
+ const desiredBody=traitRemoteUI.collapsed?0:Math.min(innerHeight*.62,500);
+ let y=Math.max(guard,Math.min(innerHeight-grip-desiredBody-16,point.y)),bottom=innerHeight-8;
  if(nav&&nav.top<innerHeight-80&&nav.bottom>guard&&nav.right>x&&nav.left<x+box.width&&nav.top<y+box.height&&nav.bottom>y){
   if(innerHeight-nav.bottom>150)y=nav.bottom+8;
   else {y=guard;bottom=Math.max(guard+grip+70,nav.top-8)}
