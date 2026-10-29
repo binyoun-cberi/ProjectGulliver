@@ -113,6 +113,11 @@
     for(const [x,y] of [[450,580],[450,770],[180,940],[440,970],[730,950],[360,1135],[540,1145]]){
       add(Bodies.circle(x,y,10,pegOpts));
     }
+    // Moving bumper lanes create visible, shared opportunities to overtake.
+    for(const body of staticBodies.filter(b=>b.label==='bumper'&&b.position.y>500&&b.position.y<1000)){
+      body.render.fillStyle='#ff845f';
+      animated.push({body,x:body.position.x,y:body.position.y,sway:55,speed:.018,phase:body.position.y*.01});
+    }
     // A single finish sensor line, followed by UI capacity gates for team mode.
     const order=shuffled(roster,random);
     const columns=order.length;
@@ -139,7 +144,8 @@
         const sign=Math.abs(dx)<3?(random()<.5?-1:1):Math.sign(dx);
         if(obstacle.label==='bumper'){
           const vel=ballBody.velocity;
-          Body.setVelocity(ballBody,{x:Math.max(-3.8,Math.min(3.8,vel.x+sign*1.65)),y:Math.max(-2.5,vel.y-.85)});
+          const kick=obstacle.position.y>1050?.85:2.4;
+          Body.setVelocity(ballBody,{x:Math.max(-3.8,Math.min(3.8,vel.x+sign*(kick===.85?1.65:2.4))),y:Math.max(-4.2,vel.y-kick)});
         }
         if(impacts.length<160)impacts.push({x:ballBody.position.x,y:ballBody.position.y,
           type:obstacle.label,energy:Math.min(1.7,Math.max(.6,ballBody.speed/4))});
@@ -149,7 +155,10 @@
     function step() {
       frame++;
       for (const ball of balls) ball.previousY=ball.body.position.y;
-      for (const part of animated) Body.setAngle(part.body,part.angle+part.speed*frame);
+      for (const part of animated) {
+        if(part.sway)Body.setPosition(part.body,{x:part.x+Math.sin(part.phase+part.speed*frame)*part.sway,y:part.y});
+        else Body.setAngle(part.body,part.angle+part.speed*frame);
+      }
       Engine.update(engine,1000/60);
       // Universal stuck-ball recovery, independent of identity or rank.
       for (const ball of balls) {

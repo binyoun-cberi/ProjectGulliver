@@ -103,13 +103,13 @@ test('crossings use within-step time, not final depth or roster order',()=>{
  assert.deepEqual(core.crossingOrder([a,b]).map(b=>b.index),[1,0]);
  b.finished=true;assert.deepEqual(core.crossingOrder([a,b]).map(b=>b.index),[0]);
 });
-test('30-player races finish naturally within sixty simulation seconds',()=>{
+test('30-player races finish naturally within seventy simulation seconds',()=>{
  const M=require('../vendor/matter.min.js');
  for(let seed=1;seed<=24;seed++){
    const world=core.createWorld(M,Array.from({length:30},(_,i)=>'학생'+i),seeded(seed));
    assert.equal(new Set(world.balls.map(b=>b.body.position.y)).size,1);
    let count=0,firstFrame=null;
-   for(let frame=0;frame<3600&&count<30;frame++){
+   for(let frame=0;frame<4200&&count<30;frame++){
      world.step();
      for(const b of core.crossingOrder(world.balls)){
        if(firstFrame===null)firstFrame=frame;
@@ -131,4 +131,23 @@ test('sparse races also finish by real crossings on the extended course',()=>{
   }
   assert.equal(count,n,`n=${n}, seed=${seed}`);M.Engine.clear(w.engine);
  }
+});
+
+test('30-player races have sustained leadership changes before the first finish',()=>{
+ const M=require('../vendor/matter.min.js');let swaps=0;
+ for(let seed=1;seed<=30;seed++){
+  const w=core.createWorld(M,Array.from({length:30},(_,i)=>'학생'+i),seeded(seed));
+  let leader=null,candidate=null,held=0,finished=false;
+  for(let f=0;f<4200&&!finished;f++){
+   w.step();
+   if(f>210){
+    const next=w.balls.slice().sort((a,b)=>b.body.position.y-a.body.position.y)[0].index;
+    if(candidate===next)held++;else{candidate=next;held=1;}
+    if(held===30&&leader!==candidate){if(leader!==null)swaps++;leader=candidate;}
+   }
+   finished=core.crossingOrder(w.balls).length>0;
+  }
+  assert.equal(finished,true);M.Engine.clear(w.engine);
+ }
+ assert.ok(swaps>=90,'At least three sustained lead changes per race on average');
 });

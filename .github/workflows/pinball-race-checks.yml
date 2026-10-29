@@ -33,6 +33,8 @@ jobs:
           node-version: '22'
       - name: Static and Matter.js regression tests
         run: node --test tests/pinball-race.test.cjs
+      - name: Install Korean fonts for readable screenshots
+        run: sudo apt-get update -qq && sudo apt-get install -y fonts-noto-cjk
       - name: Chromium browser smoke tests
         env:
           PINBALL_SCREENSHOTS: test-results/pinball

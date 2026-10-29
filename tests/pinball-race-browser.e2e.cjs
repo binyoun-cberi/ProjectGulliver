@@ -43,7 +43,11 @@ test('real Chrome: balanced teams complete, roster transfers into unchanged bump
   await page.locator('#roster-input').fill('민준\n서연\n도윤\n하은\n지호\n수아\n현우\n윤서');
   await page.locator('#team-count').selectOption('3');
   await page.locator('#start-btn').click();
-  await page.locator('#result-overlay:not([hidden])').waitFor({timeout:48000});
+  assert.equal(await page.locator('#pre-start').isVisible(),false,'Settings must leave the table when racing');
+  assert.equal(await page.locator('#race-options').isVisible(),false);
+  assert.equal(await page.locator('#race-toast,#camera-status').count(),0,'No commentary overlays');
+
+  await page.locator('#result-overlay:not([hidden])').waitFor({timeout:65000});
   const labels=await page.locator('.group-result strong').allTextContents();
   assert.equal(labels.length,3);
   const counts=labels.map(s=>Number(s.match(/(\d+)명/)?.[1]));
@@ -66,13 +70,21 @@ test('real Chrome: first arrival wins and class list remains editable',async()=>
   await page.goto(base+'/핀볼 레이스.html',{waitUntil:'load'});
   await page.locator('#roster-input').fill('가\n나\n다\n라');
   await page.locator('#start-btn').click();
-  await page.locator('#result-overlay:not([hidden])').waitFor({timeout:43000});
+  assert.equal(await page.locator('#pre-start').isVisible(),false,'Settings must leave the table when racing');
+  assert.equal(await page.locator('#race-options').isVisible(),false);
+  assert.equal(await page.locator('#race-toast,#camera-status').count(),0,'No commentary overlays');
+
+  await page.locator('#result-overlay:not([hidden])').waitFor({timeout:60000});
   assert.match(await page.locator('#result-heading').textContent(),/1등/);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
   if(screenshots)await page.screenshot({path:path.join(screenshots,'pinball-mobile-result.png')});
   assert.match(await page.locator('.winner-result').textContent(),/가|나|다|라/);
   await page.locator('#edit-btn').click();
   assert.ok(await page.locator('#start-btn').isVisible());
+  assert.ok(await page.locator('#pre-start').isVisible());
+  assert.equal(await page.locator('#roster-input').inputValue(),'가\n나\n다\n라');
+  assert.equal(await page.locator('#race-options').isDisabled(),false);
+
   assert.deepEqual(errors,[]);
   await page.close();
 });
@@ -86,6 +98,10 @@ test('real Chrome: rank cutoff selects exactly the requested top seven out of 30
   await page.locator('#finish-target').fill('7');
   await page.locator('#race-speed').selectOption('1.9');
   await page.locator('#start-btn').click();
+  assert.equal(await page.locator('#pre-start').isVisible(),false,'Settings must leave the table when racing');
+  assert.equal(await page.locator('#race-options').isVisible(),false);
+  assert.equal(await page.locator('#race-toast,#camera-status').count(),0,'No commentary overlays');
+
   await page.locator('#result-overlay:not([hidden])').waitFor({timeout:50000});
   const places=await page.locator('#result-entries > div').allTextContents();
   assert.equal(places.length,7,'Stop at seventh arrival; do not include eighth');
@@ -108,15 +124,18 @@ test('real Chrome: thirty players are evenly divided among four teams', {timeout
   await page.locator('#team-count').selectOption('4');
   await page.locator('#race-speed').selectOption('1.9');
   await page.locator('#start-btn').click();
+  assert.equal(await page.locator('#pre-start').isVisible(),false,'Settings must leave the table when racing');
+  assert.equal(await page.locator('#race-options').isVisible(),false);
+  assert.equal(await page.locator('#race-toast,#camera-status').count(),0,'No commentary overlays');
+
   const focus=page.locator('#marble-legend-list button').first();
-  const focused=await focus.locator('span').textContent();
+  await page.locator('#marble-legend summary').click();
   await focus.click();
-  await page.waitForFunction(name=>document.getElementById('camera-status').textContent.includes(name+' 따라가는 중'),focused);
   assert.equal(await focus.getAttribute('aria-pressed'),'true');
   await page.waitForTimeout(10000);
   if(screenshots)await page.screenshot({path:path.join(screenshots,'pinball-follow.png')});
   await focus.click();
-  await page.waitForFunction(()=>document.getElementById('camera-status').textContent.includes('선두 따라가는 중'));
+  assert.equal(await focus.getAttribute('aria-pressed'),'false');
   await page.waitForTimeout(7000);
   if(screenshots)await page.screenshot({path:path.join(screenshots,'pinball-lower-course.png')});
   await page.locator('#result-overlay:not([hidden])').waitFor({timeout:53000});
@@ -130,3 +149,35 @@ test('real Chrome: thirty players are evenly divided among four teams', {timeout
   assert.deepEqual(errors,[]);
   await page.close();
 });
+
+for(const viewport of [{width:1450,height:930},{width:768,height:1024},{width:430,height:920}]){
+ test('single pinball cabinet setup and stop: '+viewport.width,async()=>{
+  const page=await browser.newPage({viewport});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/핀볼 레이스.html',{waitUntil:'load'});
+  assert.ok(await page.locator('.arena-surface #pre-start').isVisible());
+  const startBox=await page.locator('#start-btn').boundingBox();
+  assert.ok(startBox.y>=0&&startBox.y+startBox.height<=viewport.height,'Start stays inside the screen');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+  await page.locator('#roster-input').fill('가\n나\n다\n라');
+  await page.locator('#finish-target').fill('3');
+  if(screenshots)await page.screenshot({path:path.join(screenshots,'cabinet-setup-'+viewport.width+'.png')});
+  if(screenshots&&viewport.width===430)console.log('PINBALL_SETUP_JPEG:'+Buffer.from(await page.screenshot({type:'jpeg',quality:55})).toString('base64'));
+
+  await page.locator('#start-btn').click();
+  assert.equal(await page.locator('#pre-start').isVisible(),false);
+  assert.ok(await page.locator('#pinball-canvas').isVisible());
+  assert.ok(await page.locator('#stop-btn').isVisible());
+  assert.equal(await page.locator('#marble-legend').getAttribute('open'),null);
+  await page.waitForTimeout(3000);
+  if(screenshots)await page.screenshot({path:path.join(screenshots,'cabinet-race-'+viewport.width+'.png')});
+  if(screenshots&&viewport.width===1450)console.log('PINBALL_RACE_JPEG:'+Buffer.from(await page.screenshot({type:'jpeg',quality:45})).toString('base64'));
+
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+  await page.locator('#stop-btn').click();
+  assert.ok(await page.locator('#pre-start').isVisible());
+  assert.equal(await page.locator('#roster-input').inputValue(),'가\n나\n다\n라');
+  assert.equal(await page.locator('#finish-target').inputValue(),'3');
+  assert.equal(await page.locator('#stop-btn').isVisible(),false);
+  assert.deepEqual(errors,[]);await page.close();
+ });
+}
