@@ -101,7 +101,7 @@ function installTraitRemote(){
   if(Date.now()<traitRemoteUI.suppressClickUntil)return;
   const button=e.target.closest('[data-remote-trait]');if(!button)return;
   traitRemoteUI.tag=traitRemoteUI.tag===button.dataset.remoteTrait?null:button.dataset.remoteTrait;
-  if(matchMedia('(max-width: 700px)').matches&&traitRemoteUI.tag)traitRemoteUI.collapsed=true;
+  if(matchMedia('(max-width: 700px)').matches&&traitRemoteUI.tag){traitRemoteUI.collapsed=true;traitRemoteUI.position={x:$('traitRemote').getBoundingClientRect().left,y:innerHeight-64}}
   renderTraitRemote();$('traitRemotePalette').querySelector('[data-remote-trait="'+CSS.escape(button.dataset.remoteTrait)+'"]')?.focus();
  });
  $('traitRemotePalette').addEventListener('dragstart',e=>{const button=e.target.closest('[data-remote-trait]');if(!button)return;traitRemoteUI.dragTag=button.dataset.remoteTrait;e.dataTransfer.setData(TRAIT_REMOTE_MIME,traitRemoteUI.dragTag);e.dataTransfer.effectAllowed='copy'});
