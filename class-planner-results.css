@@ -1,0 +1,22 @@
+/* Give pupil information its own width; controls never squeeze names into a vertical stack. */
+.result-grid .assigned,.result-grid[data-layout="compare"] .assigned{display:grid;grid-template-columns:15px minmax(0,1fr);align-items:start;gap:5px 7px;padding:10px 0}
+.result-grid .assigned .drag-handle{grid-row:1 / span 2;grid-column:1;padding-top:6px}
+.result-grid .assigned .person{grid-column:2;min-width:0;width:100%;max-width:100%}
+.result-grid .assigned .person .name-and-color{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;min-width:0}
+.result-grid .assigned .person b.student-name-highlight{font-size:13px;line-height:1.45;min-width:0;max-width:100%;word-break:keep-all;overflow-wrap:anywhere;padding:4px 7px}
+.result-grid .assigned .student-color-action{min-width:27px;min-height:27px;padding:3px 5px;font-size:10px;margin-left:auto}
+.result-grid .assigned .person small,.result-grid[data-layout="compare"] .assigned .person small{display:block;margin:5px 0 0;font-size:11px;line-height:1.6;word-break:keep-all;overflow-wrap:anywhere;color:#607467}
+.result-grid .assigned .move-controls,.result-grid[data-layout="compare"] .assigned .move-controls{grid-column:2;display:flex;gap:5px;justify-content:flex-end;align-items:center;margin:2px 0 0;min-width:0;width:100%}
+.result-grid .assigned .move-select-btn{min-height:29px;padding:4px 8px;font-size:11px;white-space:nowrap}
+.result-grid .assigned select,.result-grid[data-layout="compare"] .assigned select{width:80px;min-width:72px;min-height:29px;padding:4px 7px;font-size:11px}
+.result-grid[data-layout="compare"]{grid-template-columns:repeat(var(--comparison-classes,3),minmax(255px,1fr))}
+.result-grid .class-top{position:relative}.result-grid .class-top h3{gap:8px;align-items:baseline}
+.result-grid .class-metrics{line-height:1.65}.result-grid .class-body{scrollbar-width:thin}
+.result-grid[data-layout="vertical"] .class-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:0 20px;max-height:none;padding:5px 15px 12px}
+.result-grid[data-layout="vertical"] .assigned{min-width:0;border-bottom:1px solid #e8eeea}
+@media(max-width:620px){.result-grid[data-layout="vertical"] .class-body{grid-template-columns:minmax(0,1fr)}.result-grid[data-layout="compare"]{grid-template-columns:repeat(var(--comparison-classes,3),minmax(255px,1fr))}}
+@media print{.result-grid .assigned .move-controls,.result-grid .assigned .drag-handle{display:none!important}}
+
+/* Keep stage navigation reachable while the modeless palette follows the roster. */
+.tabs{position:sticky;top:76px;z-index:45;background:var(--bg,#f5f7fb);padding-top:2px;margin-bottom:0}
+@media print{.tabs{display:none!important}}
