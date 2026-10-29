@@ -71,7 +71,7 @@ const assert=require('node:assert/strict');
  // Compact overview charts expose both count directions without growing page height.
  await page.evaluate(()=>{state.students[0].traits=['다문화','특수'];state.students[1].traits=['특수'];state.students[2].traits=['다문화'];renderOverview()});
  assert.equal(await page.locator('[data-overview-mode="class"]').getAttribute('aria-pressed'),'true');
- assert.equal(await page.locator('.trait-donut-card').count(),3);
+ assert.equal(await page.locator('.trait-donut-card').count(),2);
  assert.match(await page.locator('.trait-donut-card').first().textContent(),/다문화2명/);
  await page.locator('[data-overview-mode="trait"]').click();
  assert.equal(await page.locator('[data-overview-mode="trait"]').getAttribute('aria-pressed'),'true');

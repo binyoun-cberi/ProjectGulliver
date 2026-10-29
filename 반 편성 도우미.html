@@ -365,7 +365,7 @@
   <div class="setup-limit-box"><div class="section-head setup-subhead"><div><h3>유의 사항별 반당 최대 인원</h3><p>각 반에 몇 명까지 배정할지 정하세요. 비워 두면 제한하지 않습니다.</p></div></div><div id="capRules" class="table-wrap"></div></div>
   <div id="prioritySetupHint" class="setup-setting-hint">교사 우선 배치는 우측 상단 <button type="button" id="setupOpenSettings">설정</button>에서 선택할 수 있습니다.</div>
   <div id="setupNotice" class="helper" role="status" aria-live="polite">현재 반별 남녀 수를 입력하면 학생 명단의 기본 칸을 만들 수 있습니다.</div>
-  <div class="actions setup-apply"><button id="applySetup" class="btn primary">학생 명단 틀 만들고 1단계로</button><button id="continueSetup" class="btn soft">기존 학생 명단 그대로 1단계로</button></div>
+  <div class="actions setup-apply"><button id="startRosterDirect" type="button" class="btn soft">엑셀 명단부터 입력</button><button id="applySetup" class="btn primary">학생 명단 틀 만들고 1단계로</button><button id="continueSetup" class="btn soft">기존 학생 명단 그대로 1단계로</button></div>
  </section>
  <section id="view-roster" class="card hidden" aria-label="학생 명단"><div class="section-head"><div><h2>학생 명단 <span id="rosterCount" class="count-pill">0명</span></h2><p>이름·성별·학습지표·유의 사항을 입력하세요.</p></div><div class="actions"><button id="backToSetup" class="btn soft">0단계 수정</button><input id="searchStudent" aria-label="학생 검색" placeholder="이름 · 기존 반 검색" style="width:160px"><button id="addStudent" class="btn primary">+ 학생 추가</button></div></div>
  <div id="rosterGenderSummary" aria-live="polite"></div><div class="helper no-print" style="margin:8px 0">0단계 입력 없이 엑셀 명단을 바로 붙여넣을 수 있습니다. 학년·반·번호·이름·성별 제목 행도 인식하며, 인원은 0단계에 자동 반영됩니다.</div>
@@ -2186,6 +2186,7 @@ function installEvents(){
     if(arrow){const rail=$('overviewDashboard').querySelector('.trait-donut-rail');rail.scrollBy({left:Number(arrow.dataset.overviewScroll)*Math.max(240,rail.clientWidth),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}
   });
   $('overviewDashboard').addEventListener('change',e=>{if(e.target.id==='overviewScope'){state.overviewScope=e.target.value;saveState();renderOverview();$('overviewScope').focus()}});
+  $('startRosterDirect').addEventListener('click',()=>showTab('roster'));
   $('applySetup').addEventListener('click',applyStageZero);
   $('continueSetup').addEventListener('click',()=>{if(state.setupCompleted)showTab('roster')});
   $('sourceGrade').addEventListener('change',e=>{
