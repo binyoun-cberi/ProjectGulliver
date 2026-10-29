@@ -7,22 +7,17 @@
   const roster=$('roster-input'), modeOptions=$('race-options');
   const teamNames=['파랑 팀','노랑 팀','초록 팀','보라 팀'];
   let current=null, startedAt=0, elapsedMs=0, lastFrame=0, accumulator=0, finishAfter=0;
-  let toastDeadline=0, audio=null, muted=false, lastRankPaint=0, lastImpactSound=0;
-  let previousLeader=null,lastLeadToast=0, focusedName=null, cameraY=0, currentZone=-1;
+  let audio=null, muted=false, lastRankPaint=0, lastImpactSound=0;
+  let focusedName=null, cameraY=0;
   const VIEW_H=canvas.height;
   const zones=[[118,470,"1 / 갈림길","#fead5c"],[472,940,"2 / 회전 급류","#65e2cf"],[942,C.FINISH_Y,"3 / 결승 범퍼","#b7a1ff"]];
   const fx=[];
   const state={mode:'winner',k:2,balanced:true,labels:[],world:null,allocator:null,counts:[],capacities:[],
-    arrivals:[],finished:false,timeoutAnnounced:false,target:1,speed:1.55};
+    arrivals:[],finished:false,target:1,speed:1.55};
 
   function say(message,bad=false) {
     $('form-message').textContent=message||'';
     $('form-message').style.color=bad?'#b83737':'#178365';
-  }
-  function showToast(message) {
-    $('race-toast').textContent=message;
-    $('race-toast').classList.add('show');
-    toastDeadline=performance.now()+1700;
   }
   function playNote(freq=520,duration=.10) {
     if(muted)return;
@@ -90,7 +85,8 @@
     $('live-rank-list').replaceChildren();
     $('marble-legend').hidden=true;
     $('marble-legend-list').replaceChildren();
-    previousLeader=null;lastLeadToast=0;cameraY=0;currentZone=-1;
+    focusedName=null;cameraY=0;
+    document.body.classList.remove('pinball-running');
     $('result-overlay').hidden=true;
     $('stop-btn').hidden=true;
     $('start-btn').hidden=false;
@@ -101,6 +97,7 @@
     $('race-clock').textContent='00:00';
     $('play-title').textContent='핀볼 아레나';
     updateDescription();
+    if(showSetup)$('roster-input').focus({preventScroll:true});
   }
   function showTeamStatus() {
     const box=$('team-status');
@@ -125,7 +122,7 @@
     saveConfig();stopRun(false);
     state.mode=config.mode;state.k=config.k;state.balanced=config.balanced;state.labels=config.labels;
     state.target=config.target;state.speed=config.speed;
-    state.arrivals=[];state.finished=false;state.timeoutAnnounced=false;
+    state.arrivals=[];state.finished=false;
     state.allocator=config.mode==='teams'&&config.balanced?C.createAllocator(config.names.length,config.k):null;
     state.counts=state.allocator?state.allocator.counts:Array(config.k).fill(0);
     state.capacities=state.allocator?state.allocator.capacities:Array(config.k).fill(Infinity);
@@ -137,11 +134,11 @@
     $('start-btn').hidden=true;$('stop-btn').hidden=false;modeOptions.disabled=true;
     $('race-count').textContent='0 / '+current.total+' 도착';
     $('play-title').textContent=state.mode==='teams'?'팀 나누기 레이스':'상위 '+state.target+'명 뽑기';
-    $('play-description').textContent='⚡ 범퍼에 맞으면 튕겨 나가요!';
+    document.body.classList.add('pinball-running');
     $('live-rankings').hidden=false;
     $('marble-legend').hidden=false;
     $('marble-legend-heading').textContent='응원할 친구 선택 · '+config.names.length+'명';
-    $('marble-legend').open=true;
+    $('marble-legend').open=false;
     const namesBox=$('marble-legend-list');
     for(const ball of state.world.balls){
       const item=document.createElement('button');item.type='button';item.className='marble-legend-item';
@@ -155,7 +152,9 @@
       item.append(dot,number,label);namesBox.append(item);
     }
     updateLiveRankings();
-    say('');showTeamStatus();showToast('핀볼 레이스 시작!');playNote(660,.2);
+    say('');showTeamStatus();playNote(660,.2);
+    $('stop-btn').focus({preventScroll:true});
+    canvas.scrollIntoView({block:'nearest',behavior:'instant'});
   }
   function chooseTeam(x) {
     if(state.balanced)return state.allocator.assign(x/C.W);
@@ -183,9 +182,8 @@
     $('race-count').textContent=state.arrivals.length+' / '+current.total+' 도착';
     showTeamStatus();
     if(state.arrivals.length===1) {
-      showToast('🏆 '+ball.name+' 1등 도착!');playNote(880,.18);
+      playNote(880,.18);
     } else {
-      showToast(''+state.arrivals.length+'등 '+ball.name+' 골인!');
       if(state.arrivals.length%2===0)playNote(630+state.arrivals.length*8,.085);
     }
     if(state.mode==='winner'&&state.arrivals.length>=state.target) {
@@ -203,11 +201,6 @@
       if(state.mode==='winner'&&state.arrivals.length>=state.target)break;
       arrival(ball);
     }
-  }
-  function timeoutRescue() {
-    if(state.timeoutAnnounced)return;
-    state.timeoutAnnounced=true;
-    showToast('구슬이 잠시 막혔어요. 설정으로 돌아가 다시 시작할 수 있어요.');
   }
   function finish() {
     if(!current||state.finished)return;
@@ -254,21 +247,10 @@
     if(!current)return;
     const entries=state.world.balls.filter(b=>!b.finished).sort((a,b)=>b.body.position.y-a.body.position.y);
     const list=$('live-rank-list');list.replaceChildren();
-    const lead=entries[0];
-    if(lead){
-      if(previousLeader&&previousLeader!==lead.name&&performance.now()-lastLeadToast>2800
-        &&current&&performance.now()-current.launchedAt>3500&&state.arrivals.length===0){
-        showToast('⚡ 역전! '+lead.name+' 선두!');
-        lastLeadToast=performance.now();
-        playNote(790,.095);
-      }
-      previousLeader=lead.name;
-    }
     if(!finishAfter){
       const left=state.mode==='winner'?state.target-state.arrivals.length:current.total-state.arrivals.length;
       $('play-description').textContent=state.mode==='winner'?
-        (state.target+'명 중 '+state.arrivals.length+'명 도착 · '+(left===1?'마지막 1자리!':left+'자리 남았어요')):
-        ('남은 친구 '+left+'명 · 도착한 입구의 모둠으로 들어가요');
+        ('남은 자리 '+left):('남은 '+left+'명');
     }
     const top=entries.slice(0,5);
     top.forEach((b,i)=>{
@@ -323,7 +305,7 @@
     for(const [top,bottom,label,color] of zones){
       ctx.fillStyle=color+'0D';drawPill(92,top,716,bottom-top,17);ctx.fill();
       ctx.fillStyle=color;ctx.textAlign='right';ctx.font='bold 13px system-ui';
-      ctx.fillText(label,796,top+24);
+
     }
     for(let i=0;i<38;i++){
       const y=160+i*28;
@@ -376,6 +358,14 @@
     }
     ctx.fillStyle=tint;ctx.fill();
     ctx.shadowBlur=0;ctx.strokeStyle='rgba(255,255,255,.27)';ctx.lineWidth=2;ctx.stroke();
+    if(body.label==='bumper'){
+      const {x,y}=body.position;
+      ctx.strokeStyle='#fff2c6';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,body.circleRadius*.68,0,Math.PI*2);ctx.stroke();
+      ctx.fillStyle='#a94d2e';ctx.beginPath();ctx.arc(x,y,body.circleRadius*.3,0,Math.PI*2);ctx.fill();
+    }
+    if(body.label==='spinner'){
+      ctx.fillStyle='#dffaff';ctx.beginPath();ctx.arc(body.position.x,body.position.y,5,0,Math.PI*2);ctx.fill();
+    }
     ctx.restore();
   }
   function drawBall(ball,now,showName=false) {
@@ -452,13 +442,6 @@
     const follow=active.find(b=>b.name===focusedName)||active[0];
     const target=finishAfter?C.H-VIEW_H:follow?Math.max(0,Math.min(C.H-VIEW_H,follow.body.position.y-VIEW_H*.55)):current?C.H-VIEW_H:0;
     cameraY+=(target-cameraY)*.08;
-    if(current&&follow){
-      const zone=follow.body.position.y<472?0:follow.body.position.y<942?1:2;
-      if(zone>currentZone){
-        currentZone=zone;
-        if(zone>0)showToast(zone===1?'회전 급류 진입! 가운데와 옆길, 누가 빠를까요?':'마지막 범퍼 구간! 결승까지 역전 기회!');
-      }
-    }
     ctx.save();ctx.translate(0,-cameraY);
     drawBoard();
     if(current){
@@ -468,18 +451,11 @@
       drawEffects(now);drawNames(now,leaders);
     }
     ctx.restore();
-    $('camera-status').hidden=!current;
-    if(current){
-      drawCourseMap();
-      const zone=follow?Math.min(2,follow.body.position.y<472?0:follow.body.position.y<942?1:2):2;
-      const caption=zones[zone][2]+' · '+(focusedName&&follow?.name===focusedName?focusedName+' 따라가는 중':'선두 따라가는 중');
-      if($('camera-status').textContent!==caption)$('camera-status').textContent=caption;
-      $('camera-status').hidden=false;
-    }
+    if(current)drawCourseMap();
   }
+
   function loop(now) {
     requestAnimationFrame(loop);
-    if(toastDeadline&&now>toastDeadline){$('race-toast').classList.remove('show');toastDeadline=0;}
     if(current&&!state.finished){
       if(!lastFrame)lastFrame=now;
       const delta=Math.min(70,Math.max(0,now-lastFrame));
@@ -500,8 +476,6 @@
       pullImpacts(now);
       if(!finishAfter)resolveArrival();
       if(now-lastRankPaint>175){updateLiveRankings();lastRankPaint=now;}
-      const cap=80000/state.speed+1800;
-      if(!finishAfter&&elapsedMs>=cap&&!state.timeoutAnnounced)timeoutRescue();
       if(finishAfter&&now>=finishAfter)finish();
       $('race-clock').textContent=String(Math.floor(elapsedMs/60000)).padStart(2,'0')+':'+
         String(Math.floor(elapsedMs/1000)%60).padStart(2,'0');
