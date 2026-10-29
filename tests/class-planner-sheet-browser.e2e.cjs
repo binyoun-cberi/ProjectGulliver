@@ -35,6 +35,39 @@ const assert=require('node:assert/strict');
  // Normal typing followed by Tab must retain the next cell's focus.
  await page.locator('[data-key="name"]').first().fill('수정이름');await page.keyboard.press('Tab');
  assert.equal(await page.locator('[data-key="name"]').first().inputValue(),'수정이름');
+ // The palette follows scrolling and applies traits to any part of a pupil row.
+ assert.equal(await page.locator('#traitRemote').isVisible(),true);
+ assert.equal(await page.locator('#rosterBody .notice-picker').count(),0);
+ const firstRow=page.locator('#rosterBody tr[data-student]').first(),traitCell=firstRow.locator('[data-roster-cell="traits"]');
+ await page.locator('[data-remote-trait="다문화"]').dragTo(firstRow.locator('[data-key="name"]'));
+ assert.equal(await firstRow.locator('[data-remove-trait="다문화"]').count(),1);
+ await page.locator('[data-remote-trait="다문화"]').dragTo(traitCell);
+ assert.equal(await firstRow.locator('[data-remove-trait="다문화"]').count(),1);
+ await firstRow.locator('[data-remove-trait="다문화"]').click();
+ assert.equal(await firstRow.locator('[data-remove-trait="다문화"]').count(),0);
+ await page.locator('#rosterUndo').click();
+ assert.equal(await firstRow.locator('[data-remove-trait="다문화"]').count(),1);
+ await page.locator('[data-remote-trait="특수"]').click();await traitCell.click();
+ assert.equal(await firstRow.locator('[data-remove-trait="특수"]').count(),1);
+ await page.locator('[data-remote-trait="특수"]').click();
+ // A trait cell accepts one-column Excel paste without a permanent text box.
+ await paste('[data-roster-cell="traits"]','다문화; 특수');
+ assert.equal(await firstRow.locator('.student-trait-chip').count(),2);
+ const topBefore=await page.locator('#traitRemote').evaluate(el=>el.getBoundingClientRect().top);
+ await page.evaluate(()=>window.scrollBy(0,150));
+ assert.ok(Math.abs((await page.locator('#traitRemote').evaluate(el=>el.getBoundingClientRect().top))-topBefore)<2);
+ await page.locator('#traitRemoteGrip').focus();await page.keyboard.press('ArrowLeft');
+ const moved=await page.locator('#traitRemote').evaluate(el=>el.getBoundingClientRect().left);
+ await page.locator('#collapseTraitRemote').click();assert.equal(await page.locator('#traitRemoteBody').isVisible(),false);
+ await page.locator('#collapseTraitRemote').click();
+ await page.locator('#traitRemoteSearch').fill('사회');assert.equal(await page.locator('[data-remote-trait]').count(),1);
+ await page.locator('#traitRemoteSearch').fill('');
+ await page.reload();
+ assert.ok(Math.abs((await page.locator('#traitRemote').evaluate(el=>el.getBoundingClientRect().left))-moved)<2);
+ await page.locator('#closeTraitRemote').click();assert.equal(await page.locator('#traitRemote').isVisible(),false);
+ await page.locator('#toggleTraitRemote').click();assert.equal(await page.locator('#traitRemote').isVisible(),true);
+ await page.locator('[data-tab="setup"]').click();assert.equal(await page.locator('#traitRemote').isVisible(),false);
+ await page.locator('[data-tab="roster"]').click();
  // Compact overview charts expose both count directions without growing page height.
  await page.evaluate(()=>{state.students[0].traits=['다문화','특수'];state.students[1].traits=['특수'];state.students[2].traits=['다문화'];renderOverview()});
  assert.equal(await page.locator('[data-overview-mode="class"]').getAttribute('aria-pressed'),'true');
@@ -88,6 +121,13 @@ const assert=require('node:assert/strict');
  assert.ok(await page.evaluate(()=>state.candidates.length)>0);
  await page.setViewportSize({width:390,height:844});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await page.locator('[data-tab="roster"]').click();
+ await page.locator('[data-remote-trait="다문화"]').click();
+ await page.locator('#rosterBody [data-roster-cell="traits"]').first().click();
+ assert.equal(await page.locator('#rosterBody tr').first().locator('[data-remove-trait="다문화"]').count(),1);
+ const remoteBounds=await page.locator('#traitRemote').evaluate(el=>{const b=el.getBoundingClientRect();return {left:b.left,right:b.right,bottom:b.bottom}});
+ assert.ok(remoteBounds.left>=0&&remoteBounds.right<=390&&remoteBounds.bottom<=844);
+
  assert.deepEqual(errors,[]);console.log('PASS: spreadsheet editing, charts, five-person basket, sixth-person guard, best-effort generation and saved results');
  await browser.close();server.close();
 })().catch(e=>{console.error(e);process.exit(1)});

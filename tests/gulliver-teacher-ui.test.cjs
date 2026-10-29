@@ -188,12 +188,11 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     const first=page.locator('#rosterBody tr').first();
     await first.locator('[data-key="level"]').fill('0.00');
     await first.locator('[data-key="level"]').press('Tab');
-    await first.locator('.notice-picker summary').click();
-    await first.locator('input[data-trait="다문화"]').check();
-    await first.locator('input[data-trait="사회성"]').check();
-    assert.equal(await first.locator('input[data-trait="다문화"]').isChecked(),true);
-    assert.equal(await first.locator('input[data-trait="사회성"]').isChecked(),true);
-    await first.locator('.notice-picker summary').click();
+    await page.locator('#traitRemotePalette [data-remote-trait="다문화"]').dragTo(first.locator('[data-roster-cell="traits"]'));
+    await page.locator('#traitRemotePalette [data-remote-trait="사회성"]').dragTo(first.locator('[data-key="name"]'));
+    assert.equal(await first.locator('[data-remove-trait="다문화"]').count(),1);
+    assert.equal(await first.locator('[data-remove-trait="사회성"]').count(),1);
+    assert.equal(await page.locator('#rosterBody .notice-picker').count(),0);
     await page.locator('#openSettings').click();
     assert.equal(await page.locator('#plannerSettingsDialog').isVisible(),true);
     await page.locator('#newTrait').fill('돌봄 필요');
@@ -207,9 +206,8 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.doesNotMatch(await page.locator('#traitChips').textContent(),/검수 임시/);
     await page.locator('#settingsDone').click();
     const nextFirst=page.locator('#rosterBody tr').first();
-    await nextFirst.locator('.notice-picker summary').click();
-    await nextFirst.locator('input[data-trait="돌봄 필요"]').check();
-    await nextFirst.locator('.notice-picker summary').click();
+    await page.locator('#traitRemotePalette [data-remote-trait="돌봄 필요"]').dragTo(nextFirst.locator('[data-roster-cell="traits"]'));
+    assert.equal(await nextFirst.locator('[data-remove-trait="돌봄 필요"]').count(),1);
     assert.equal(await nextFirst.locator('[data-key="level"]').inputValue(),'0.00');
     // Attention-category caps are configured in step zero, not the separation screen.
     await page.locator('[data-tab="setup"]').click();

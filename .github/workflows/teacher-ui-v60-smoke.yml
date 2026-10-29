@@ -5,6 +5,8 @@ on:
       - 'gulliver-teacher-*'
       - 'gulliver-app-shell.js'
       - 'gulliver-design.css'
+      - 'class-planner-*'
+      - 'tests/class-planner-*'
       - 'classroom-workspace.js'
       - 'lesson-circle-timer.js'
       - 'tests/gulliver-teacher-ui.test.cjs'
