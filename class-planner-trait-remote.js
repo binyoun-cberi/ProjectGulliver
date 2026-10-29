@@ -72,6 +72,10 @@ function renderTraitRemote(){
  if(traitRemoteUI.studentId)$('rosterBody').querySelector('[data-student="'+CSS.escape(traitRemoteUI.studentId)+'"]')?.classList.add('trait-current-row');
  positionTraitRemote();
 }
+function collapseMobileRemote(){
+ if(!matchMedia('(max-width: 700px)').matches)return;
+ traitRemoteUI.collapsed=true;traitRemoteUI.position={x:$('traitRemote').getBoundingClientRect().left,y:innerHeight-64};
+}
 function clearTraitDrop(){
  traitRemoteUI.dragTag=null;
  $('rosterBody').querySelectorAll('.trait-drop-target').forEach(tr=>tr.classList.remove('trait-drop-target'));
@@ -92,7 +96,7 @@ function installTraitRemote(){
  $('toggleTraitRemote').addEventListener('click',()=>{traitRemoteUI.open=!traitRemoteUI.open;renderTraitRemote();saveTraitRemoteUI()});
  $('closeTraitRemote').addEventListener('click',()=>{traitRemoteUI.open=false;renderTraitRemote();saveTraitRemoteUI();$('toggleTraitRemote').focus()});
  $('collapseTraitRemote').addEventListener('click',()=>{traitRemoteUI.collapsed=!traitRemoteUI.collapsed;renderTraitRemote();saveTraitRemoteUI()});
- $('traitRemoteBody').addEventListener('click',e=>{const button=e.target.closest('[data-remote-color]');if(button){$('rosterFillColor').value=button.dataset.remoteColor;rosterApplyFormat('background',button.dataset.remoteColor)}});
+ $('traitRemoteBody').addEventListener('click',e=>{const button=e.target.closest('[data-remote-color]');if(button){$('rosterFillColor').value=button.dataset.remoteColor;rosterApplyFormat('background',button.dataset.remoteColor);collapseMobileRemote();renderTraitRemote()}});
  $('traitRemoteSearch').addEventListener('input',renderTraitRemote);
  $('traitRemote').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();traitRemoteUI.open=false;renderTraitRemote();saveTraitRemoteUI();$('toggleTraitRemote').focus()}});
  $('traitRemoteNote').addEventListener('click',()=>{const s=findStudent(traitRemoteUI.studentId);if(!s)return;noteStudentId=s.id;$('noteTitle').textContent=(s.name||'학생')+' 메모';$('noteText').value=s.note;$('noteDialog').showModal()});
@@ -101,7 +105,7 @@ function installTraitRemote(){
   if(Date.now()<traitRemoteUI.suppressClickUntil)return;
   const button=e.target.closest('[data-remote-trait]');if(!button)return;
   traitRemoteUI.tag=traitRemoteUI.tag===button.dataset.remoteTrait?null:button.dataset.remoteTrait;
-  if(matchMedia('(max-width: 700px)').matches&&traitRemoteUI.tag){traitRemoteUI.collapsed=true;traitRemoteUI.position={x:$('traitRemote').getBoundingClientRect().left,y:innerHeight-64}}
+  if(traitRemoteUI.tag)collapseMobileRemote();
   renderTraitRemote();$('traitRemotePalette').querySelector('[data-remote-trait="'+CSS.escape(button.dataset.remoteTrait)+'"]')?.focus();
  });
  $('traitRemotePalette').addEventListener('dragstart',e=>{const button=e.target.closest('[data-remote-trait]');if(!button)return;traitRemoteUI.dragTag=button.dataset.remoteTrait;e.dataTransfer.setData(TRAIT_REMOTE_MIME,traitRemoteUI.dragTag);e.dataTransfer.effectAllowed='copy'});
