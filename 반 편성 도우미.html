@@ -654,8 +654,9 @@ function plannerSummaryData(current){
 /* OVERVIEW_DONUT_START: counts are trait memberships, not mutually exclusive pupils. */
 const OVERVIEW_COLORS=['#448d73','#d58b47','#738ac6','#ba6990','#579bb0','#a19a42','#926fc0','#bf7660','#6f9d48','#608194','#ad8658','#9d7182'];
 function overviewDonutData(current,mode='class',scope='source'){
- const students=current.students||[],candidate=current.candidates?.[current.activeCandidate||0];
+ const candidate=current.candidates?.[current.activeCandidate||0];
  const useResult=scope==='result'&&!!candidate;
+ const students=(current.students||[]).filter(st=>!useResult||(Number(candidate.assign[st.id])>=1&&Number(candidate.assign[st.id])<=current.classCount));
  const normalized=students.map(st=>({
   room:useResult?Number(candidate.assign[st.id])||0:Number(String(st.oldClass||'').match(/\d+/)?.[0])||0,
   tags:[...new Set((st.traits||[]).map(t=>String(t).startsWith('다문화(')?'다문화':String(t)))]
