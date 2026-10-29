@@ -53,9 +53,9 @@ const assert=require('node:assert/strict');
  // A trait cell accepts one-column Excel paste without a permanent text box.
  await paste('[data-roster-cell="traits"]','다문화; 특수');
  assert.equal(await firstRow.locator('.student-trait-chip').count(),2);
- const topBefore=await page.locator('#traitRemote').evaluate(el=>el.getBoundingClientRect().top);
+ assert.equal(await page.locator('#traitRemote').evaluate(el=>getComputedStyle(el).position),'fixed');
  await page.evaluate(()=>window.scrollBy(0,150));
- assert.ok(Math.abs((await page.locator('#traitRemote').evaluate(el=>el.getBoundingClientRect().top))-topBefore)<2);
+ assert.ok(await page.locator('#traitRemote').evaluate(el=>{const b=el.getBoundingClientRect();return b.top>=0&&b.bottom<=innerHeight}));
  await page.locator('#traitRemoteGrip').focus();await page.keyboard.press('ArrowLeft');
  const moved=await page.locator('#traitRemote').evaluate(el=>el.getBoundingClientRect().left);
  await page.locator('#collapseTraitRemote').click();assert.equal(await page.locator('#traitRemoteBody').isVisible(),false);

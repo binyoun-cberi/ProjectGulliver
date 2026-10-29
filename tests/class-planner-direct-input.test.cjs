@@ -27,3 +27,9 @@ test('잘못된 메타데이터·성별·검색 중 확장·1000명 초과는 �
 test('제목 없는 학년·반·번호·이름·성별·유의 사항·점수 표와 단일 이름 열 호환',()=>{
  const a=api(),out=a.expandedRosterPaste('6\t3\t2\t김하늘\t여\t특수\t91.5','name',[],[],'5',factory());assert.equal(out.students[0].oldGrade,'6');assert.equal(out.students[0].oldClass,'3반');assert.equal(out.students[0].traits[0],'특수');assert.equal(out.students[0].level,91.5);
 });
+
+test('명단 되돌리기는 자동 갱신된 기존·내년 학년과 0단계 인원을 함께 복원',()=>{
+ const a=api(),scope=a;scope.rosterUndoStack=[];scope.$=()=>({disabled:false});scope.invalidate=()=>{};scope.changeState=()=>{};scope.toast=()=>{};scope.state.traits=[];scope.state.sourceClassCount=1;scope.state.sourceClasses=[{room:1,boys:0,girls:0,unknown:0}];
+ vm.runInContext(segment('function rosterSaveUndo(','function rosterColumnValue('),scope);scope.rosterSaveUndo();scope.state.grade='7';scope.state.sourceGrade='6';scope.state.sourceClasses=[{room:1,boys:1,girls:0,unknown:0}];scope.rosterUndo();
+ assert.equal(scope.state.grade,'6');assert.equal(scope.state.sourceGrade,'5');assert.equal(scope.state.sourceClasses[0].boys,0);
+});

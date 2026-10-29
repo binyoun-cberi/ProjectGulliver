@@ -32,8 +32,18 @@ function saveTraitRemoteUI(){
  try{localStorage.setItem('classplanner-trait-remote-ui-v1',JSON.stringify({open:traitRemoteUI.open,collapsed:traitRemoteUI.collapsed,position:traitRemoteUI.position}))}catch{}
 }
 function positionTraitRemote(){
- const panel=$('traitRemote'),point=traitRemoteUI.position;if(!point||panel.hidden)return;
- const box=panel.getBoundingClientRect(),x=Math.max(8,Math.min(innerWidth-box.width-8,point.x)),y=Math.max(8,Math.min(innerHeight-box.height-8,point.y));
+ const panel=$('traitRemote');if(panel.hidden)return;
+ const box=panel.getBoundingClientRect(),point=traitRemoteUI.position||{x:box.left,y:box.top};
+ const header=document.querySelector('.gx-header')?.getBoundingClientRect(),nav=document.querySelector('.tabs')?.getBoundingClientRect();
+ const guard=(header?.bottom||0)+8,grip=$('traitRemoteGrip').getBoundingClientRect().height;
+ const x=Math.max(8,Math.min(innerWidth-box.width-8,point.x));
+ let y=Math.max(guard,Math.min(innerHeight-grip-16,point.y)),bottom=innerHeight-8;
+ if(nav&&nav.top<innerHeight-80&&nav.bottom>guard&&nav.right>x&&nav.left<x+box.width&&nav.top<y+box.height&&nav.bottom>y){
+  if(innerHeight-nav.bottom>150)y=nav.bottom+8;
+  else {y=guard;bottom=Math.max(guard+grip+70,nav.top-8)}
+ }
+ $('traitRemoteBody').style.maxHeight=Math.max(70,Math.min(innerHeight*.62,500,bottom-y-grip))+'px';
+ const height=panel.getBoundingClientRect().height;y=Math.max(guard,Math.min(innerHeight-height-8,y));
  panel.style.left=x+'px';panel.style.top=y+'px';panel.style.right='auto';panel.style.bottom='auto';
 }
 function renderTraitRemote(){
@@ -132,5 +142,5 @@ function installTraitRemote(){
   clearTraitDrop();if(tr)changeRosterTrait(tr.dataset.student,pointer.tag);
  }
  document.addEventListener('pointerup',pointerEnd);document.addEventListener('pointercancel',pointerEnd);
- window.addEventListener('resize',positionTraitRemote);
+ window.addEventListener('resize',positionTraitRemote);window.addEventListener('scroll',positionTraitRemote,{passive:true});
 }

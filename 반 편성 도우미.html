@@ -828,14 +828,14 @@ function rosterPaintSelection(){
  $('rosterFillDown').disabled=count<2||rosterExtraCells.size>0;
 }
 function rosterSaveUndo(){
- rosterUndoStack.push({students:state.students.map(s=>({...s,traits:[...s.traits]})),traits:[...state.traits],sourceGrade:state.sourceGrade,sourceClassCount:state.sourceClassCount,sourceClasses:(state.sourceClasses||[]).map(r=>({...r})),setupCompleted:state.setupCompleted});
+ rosterUndoStack.push({students:state.students.map(s=>({...s,traits:[...s.traits]})),traits:[...state.traits],grade:state.grade,sourceGrade:state.sourceGrade,sourceClassCount:state.sourceClassCount,sourceClasses:(state.sourceClasses||[]).map(r=>({...r})),setupCompleted:state.setupCompleted});
  if(rosterUndoStack.length>20)rosterUndoStack.shift();
  $('rosterUndo').disabled=false;
 }
 function rosterUndo(){
  const old=rosterUndoStack.pop();
  if(!old){toast('되돌릴 입력 내역이 없습니다.');return}
- state.students=old.students;state.traits=old.traits;if(old.sourceClasses){state.sourceClasses=old.sourceClasses;state.sourceClassCount=old.sourceClassCount;state.sourceGrade=old.sourceGrade;state.setupCompleted=old.setupCompleted;}
+ state.students=old.students;state.traits=old.traits;if(old.sourceClasses){if(old.grade)state.grade=old.grade;state.sourceClasses=old.sourceClasses;state.sourceClassCount=old.sourceClassCount;state.sourceGrade=old.sourceGrade;state.setupCompleted=old.setupCompleted;}
  invalidate();changeState();$('rosterUndo').disabled=!rosterUndoStack.length;toast('마지막 명단 수정을 되돌렸습니다.');
 }
 function rosterColumnValue(student,col){
