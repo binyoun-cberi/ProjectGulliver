@@ -187,3 +187,14 @@ legend.field-label{margin:0 0 10px}
 .gate-pill strong,.team-members{color:#d9e8fb}
 .gate-pill span{color:#9ab5d8}
 @media(max-width:640px){#pinball-canvas{max-height:none}.play-toolbar{min-height:64px;padding:9px}.play-card{border-width:3px;border-radius:17px}.play-toolbar .soft-button{padding:7px 9px}.clock-wrap{font-size:10px}}
+
+/* Keep the cabinet and its start control within the available screen. */
+.arena-surface:has(.setup-panel:not([hidden])){height:min(740px,var(--arena-space,550px));min-height:300px}
+.setup-panel{overflow:hidden}
+.setup-content{height:100%;display:flex;flex-direction:column}
+.setup-content h2{flex-shrink:0}
+.setup-panel #race-options{flex:1;min-height:0;overflow:auto;align-content:start;padding:2px 4px 10px}
+.setup-panel .start-area{position:static;flex-shrink:0;margin-top:10px;padding:12px 0 0}
+body:not(.pinball-running) .play-bottom{display:none}
+#pinball-canvas{max-height:var(--arena-space,calc(100dvh - 240px))}
+.pinball-running .pinball-page{width:min(780px,calc((100dvh - 220px)*.9 + 60px),calc(100% - 24px))}

@@ -15,6 +15,13 @@
   const state={mode:'winner',k:2,balanced:true,labels:[],world:null,allocator:null,counts:[],capacities:[],
     arrivals:[],finished:false,target:1,speed:1.55};
 
+  function fitArena() {
+    const surface=canvas.parentElement;
+    const top=surface.getBoundingClientRect().top+window.scrollY;
+    const footer=[document.querySelector('.spectator-tray'),document.querySelector('.play-bottom'),$('team-status')]
+      .reduce((height,node)=>height+(node?.offsetHeight||0),0);
+    surface.style.setProperty('--arena-space',Math.max(300,Math.floor(window.innerHeight-top-footer-18))+'px');
+  }
   function say(message,bad=false) {
     $('form-message').textContent=message||'';
     $('form-message').style.color=bad?'#b83737':'#178365';
@@ -98,6 +105,7 @@
     $('play-title').textContent='핀볼 아레나';
     updateDescription();
     if(showSetup)$('roster-input').focus({preventScroll:true});
+    requestAnimationFrame(fitArena);
   }
   function showTeamStatus() {
     const box=$('team-status');
@@ -146,6 +154,7 @@
       item.addEventListener('click',()=>{
         focusedName=focusedName===ball.name?null:ball.name;
         for(const button of namesBox.children)button.setAttribute('aria-pressed',String(button===item&&focusedName!==null));
+        canvas.scrollIntoView({block:'nearest',behavior:'instant'});
       });
       const dot=document.createElement('i'),number=document.createElement('b'),label=document.createElement('span');
       dot.style.background=ball.color;number.textContent=ball.index+1;label.textContent=ball.name;
@@ -153,6 +162,7 @@
     }
     updateLiveRankings();
     say('');showTeamStatus();playNote(660,.2);
+    fitArena();
     $('stop-btn').focus({preventScroll:true});
     canvas.scrollIntoView({block:'nearest',behavior:'instant'});
   }
@@ -520,5 +530,8 @@
     }catch(_){say('전체 화면을 사용할 수 없는 브라우저예요.',true);}
   });
   if(!C||!M){say('핀볼 물리 엔진을 불러오지 못했습니다. 새로고침해 주세요.',true);$('start-btn').disabled=true;return;}
-  restore();requestAnimationFrame(loop);
+  window.addEventListener('resize',fitArena);
+  const layoutObserver=new ResizeObserver(fitArena);
+  for(const node of document.querySelectorAll('.page-heading,.play-toolbar,.spectator-tray,#team-status'))layoutObserver.observe(node);
+  restore();requestAnimationFrame(fitArena);requestAnimationFrame(loop);
 })();

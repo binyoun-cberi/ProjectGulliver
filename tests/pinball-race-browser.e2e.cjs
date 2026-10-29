@@ -155,6 +155,8 @@ for(const viewport of [{width:1450,height:930},{width:768,height:1024},{width:43
   const page=await browser.newPage({viewport});const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/핀볼 레이스.html',{waitUntil:'load'});
   assert.ok(await page.locator('.arena-surface #pre-start').isVisible());
+  const startBox=await page.locator('#start-btn').boundingBox();
+  assert.ok(startBox.y>=0&&startBox.y+startBox.height<=viewport.height,'Start stays inside the screen');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
   await page.locator('#roster-input').fill('가\n나\n다\n라');
   await page.locator('#finish-target').fill('3');
