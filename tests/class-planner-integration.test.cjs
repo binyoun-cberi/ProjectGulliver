@@ -95,7 +95,7 @@ test('학습지표의 0.00, 소수점, 미입력과 옛 데이터 변환',()=>{
  assert.equal(scope.parseStudyScore(3,true),3);
  for(const item of ['다문화','특수','쌍생아','분리조치','운동부','교권침해','성 사안','범법','연애관계','사회성'])assert.ok(html.includes(item));
  assert.match(html,/id="rosterHead"/);
- assert.match(html,/학습지표 \(0\.00~/);
+ assert.match(html,/학습지표, 소수점 둘째 자리/);
 });
 test('실제 점수 0.00과 90.75가 포함된 편성 점수는 유한하며 분리조건 위반 없음',()=>{
  const api=engine(),people=students(36);
@@ -131,18 +131,19 @@ test('유의 사항별 반당 최대 인원을 초과하지 않으며 0명 제�
   for(let room=1;room<=3;room++)assert.ok(list.filter(s=>c.assign[s.id]===room&&s.traits.includes('사회성')).length<=2);
  }
  list[0].traits.push('운동부');
- assert.match(E.generateCandidates(list,[],3,['사회성','운동부'],seed(41),caps).error,/운동부/);
+ const unavoidable=E.generateCandidates(list,[],3,['사회성','운동부'],seed(41),caps);
+ assert.ok(unavoidable.candidates?.length);assert.equal(E.preferencePenalty(list,unavoidable.candidates[0].assign,3,caps,[]).total,1);
 });
-test('총 학생 수가 반별 상한의 합을 넘으면 구체적으로 안내',()=>{
+test('총 학생 수가 반별 상한의 합을 넘으면 최소 초과로 배정',()=>{
  const E=engine(),list=Array.from({length:7},(_,i)=>({id:'rank'+i,name:'학생'+i,gender:'',oldClass:'',level:99-i,traits:['사회성'],fixed:0}));
  const out=E.generateCandidates(list,[],3,['사회성'],seed(4),{'사회성':2});
- assert.match(out.error,/사회성/);
- assert.match(out.error,/최대 2명/);
+ assert.ok(out.candidates?.length,out.error);
+ for(const c of out.candidates)assert.equal(E.preferencePenalty(list,c.assign,3,{'사회성':2},[]).total,1);
 });
-test('고정 반에 같은 유의 사항 학생이 최대 인원을 넘으면 거부',()=>{
+test('고정 반의 인원 상한을 넘으면 고정을 보존하며 초과를 최소화',()=>{
  const E=engine(),list=Array.from({length:12},(_,i)=>({id:'rank'+i,name:'학생'+i,gender:'',oldClass:'',level:99-i,traits:i<3?['사회성']:[],fixed:i<3?1:0}));
  const out=E.generateCandidates(list,[],3,['사회성'],seed(8),{'사회성':2});
- assert.match(out.error,/1반/);assert.match(out.error,/사회성/);
+ assert.ok(out.candidates?.length,out.error);assert.equal(E.preferencePenalty(list,out.candidates[0].assign,3,{'사회성':2},[]).total,1);
 });
 
 test('교사 우선 배치 5명을 유지하면서 남은 학생으로 학습지표 평균을 맞춘다',()=>{
@@ -170,12 +171,12 @@ test('일부 반을 거의 채운 교사 우선 배치를 그대로 두고 빈 �
   assert.deepEqual(sizes,[20,20,20]);
  }
 });
-test('교사가 먼저 지정한 반의 분리·상한 충돌은 명시적으로 거부',()=>{
+test('교사가 지정한 직접 분리는 지키고 유의 사항 상한은 최대한 맞춘다',()=>{
  const E=engine(),list=Array.from({length:12},(_,i)=>({id:'pre'+i,name:'학생'+i,oldClass:'',gender:'',level:90-i,traits:i<2?['사회성']:[],fixed:i<2?1:0}));
  const pair=E.generateCandidates(list,[{a:list[0].id,b:list[1].id}],3,['사회성'],seed(42),{'사회성':2});
  assert.match(pair.error,/분리 조건/);
  const over=E.generateCandidates(list,[],3,['사회성'],seed(42),{'사회성':1});
- assert.match(over.error,/1반/);
+ assert.ok(over.candidates?.length,over.error);assert.equal(E.preferencePenalty(list,over.candidates[0].assign,3,{'사회성':1},[]).total,1);
 });
 test('우선 배치 없는 기존 지그재그 동작을 유지',()=>{
  const E=engine(),list=Array.from({length:24},(_,i)=>({id:'s'+i,name:'학생'+i,oldClass:'',gender:'',level:100-i,traits:[],fixed:0}));
@@ -202,10 +203,10 @@ test('일괄 배치 및 반 이동을 한 단계 되돌리고 자동 편성에 �
  const out=ui.generateCandidates(people,[],3,[],seed(25),{});assert.ok(out.candidates.length);
  for(const c of out.candidates)for(const id of ids)assert.equal(c.assign[id],1);
 });
-test('일괄 배치 인원 초과·유의 사항 상한·변경된 명단의 되돌리기 방지',()=>{
+test('일괄 배치는 유의 사항 상한 초과를 허용하고 정원·되돌리기는 보호',()=>{
  const people=students(12),ui=presetUI(people,[],{'학습 지원':1});
  assert.equal(ui.applyPresets(people.slice(0,5).map(st=>st.id),1),false);assert.ok(people.every(st=>!st.fixed));
- assert.equal(ui.applyPresets([people[0].id,people[4].id],1),false);assert.ok(people.every(st=>!st.fixed));
+ assert.equal(ui.applyPresets([people[0].id,people[4].id],1),true);assert.equal(people[4].fixed,1);
  assert.equal(ui.applyPresets([people[0].id],1),true);people.pop();ui.undoPresets();assert.equal(people[0].fixed,1);assert.equal(ui.presetUndo,null);
 });
 
@@ -257,9 +258,9 @@ test('이전 형식의 학습지표 및 한 열 이름 붙여넣기와 호환됨
  assert.deepEqual(Array.from(names.rows.map(row=>row[3])),['김가람','이별','박하늘']);
 });
 test('명단 입력표 컨트롤과 로컬 저장용 기존 학년 필드가 존재함',()=>{
- for(const id of ['bulkGridBody','bulkAddRows','bulkFocus','bulkParseText','bulkPreview','bulkText','commitBulk'])assert.ok(html.includes('id="'+id+'"'),id);
+ for(const id of ['rosterBody','rosterHead','rosterFillDown','rosterUndo','rosterFormatTools'])assert.ok(html.includes('id="'+id+'"'),id);
  assert.match(html,/oldGrade:String\(st\.oldGrade/);
- assert.match(html,/data-bulk-r/);
+ assert.match(html,/data-roster-cell/);
 });
 
 function sheetPasteAPI(){
@@ -368,8 +369,8 @@ test('드래그 이동은 출발·도착 반의 남녀·다문화·특수 수와
  assert.equal(result.proposed.p0,2);
  assert.equal(result.before[0].total,4);assert.equal(result.after[0].total,3);
  assert.equal(result.before[1].total,4);assert.equal(result.after[1].total,5);
- assert.equal(result.before[0].boys,4);assert.equal(result.after[0].boys,3);
- assert.equal(result.before[1].boys,0);assert.equal(result.after[1].boys,1);
+ assert.equal(result.before[0].boys,2);assert.equal(result.after[0].boys,1);
+ assert.equal(result.before[1].boys,2);assert.equal(result.after[1].boys,3);
  assert.equal(result.before[0].traitCounts['다문화'],2);assert.equal(result.after[0].traitCounts['다문화'],1);
  assert.equal(result.before[1].traitCounts['다문화'],0);assert.equal(result.after[1].traitCounts['다문화'],1);
  assert.equal(result.after[1].traitCounts['특수'],1);

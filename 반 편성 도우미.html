@@ -391,7 +391,7 @@
  <details open><summary>0단계 · 기본 정보 입력</summary><p>현재 학년과 반별 남학생·여학생 수를 입력합니다. 내년에 편성할 학년과 반 수도 정하면 예상 인원 분포가 나타납니다. 숫자만으로 특정 학생의 성별을 자동 지정하지 않습니다.</p></details>
  <details><summary>1단계 · 학생 명단 작성</summary><p>학년·반·번호는 자동으로 준비됩니다. 이름, 성별, 학습지표, 유의 사항을 입력하세요. 칸을 클릭하고 위쪽 도구에서 채우기 색·굵게·기울임·밑줄·취소선을 적용하세요. Ctrl(맥은 ⌘)+클릭으로 여러 칸을, Shift+클릭으로 연속 범위를 선택합니다. 색은 반을 옮겨도 유지됩니다. 엑셀의 이름 열을 한꺼번에 복사해 첫 번째 이름 칸에 붙여넣어도 됩니다. 학습지표의 빈칸과 0.00은 다릅니다.</p></details>
  <details><summary>교사 우선 배치(선택)</summary><p>설정에서 교사 우선 배치를 켜면 별도의 단계가 나타납니다. 미리 맡을 학생을 반마다 정할 수 있으며, 자동 편성에서도 유지됩니다. 끄면 단계가 숨겨지고 이전 지정은 보관됩니다.</p></details>
- <details><summary>3단계 · 함께 배정하지 않을 학생</summary><p>유의 사항별 최대 인원을 정하거나 '같은 반 금지 바구니'를 여러 개 만들 수 있습니다. 같은 바구니에 넣은 학생은 각각 다른 반에 배정됩니다.</p></details>
+ <details><summary>3단계 · 함께 배정하지 않을 학생</summary><p>유의 사항별 최대 인원을 정하거나 '같은 반 금지 바구니'를 여러 개 만들 수 있습니다. 같은 바구니에는 최대 5명까지 담을 수 있습니다.</p></details>
  <details><summary>4단계 · 결과 수정과 저장</summary><p>세로형 또는 가로 비교형으로 반을 펼쳐 볼 수 있습니다. 가로 비교형은 여러 반을 같은 줄에 나란히 표시합니다. 학생을 드래그해 옮겨도 반별 인원과 학습지표가 갱신됩니다. 학생 이름 옆 「색」 버튼에서 배경색을 정하거나 없앨 수 있고, 1단계에서 지정한 색도 그대로 나타납니다. 「엑셀에 복사」를 누르고 엑셀의 첫 칸에 붙여넣으면 세로형은 한 목록으로, 가로형은 반별 열로 나란히 들어갑니다. 인쇄와 PDF 저장도 선택한 형태에 맞춰 만들어지며, 가로형 인쇄는 읽기 쉽도록 한 장에 최대 네 반을 배치합니다. 편성 결과는 이 브라우저에 보관되므로 다른 PC에서는 백업 파일을 이용하세요.</p></details>
  <details><summary>자료 보호와 유의 사항</summary><p>학생 정보는 이 도구의 브라우저 저장 공간에서 다루며 서버로 전송하지 않습니다. 공동으로 사용하는 PC에서는 사용 후 자료를 정리하고, 백업 파일은 학교의 개인정보 보호 규정에 따라 관리해 주세요. '분리조치' 항목만 체크하면 자동으로 학생 사이의 분리 관계가 지정되지는 않습니다. 바구니에서 학생을 직접 선택해야 합니다.</p></details>
  </div>
@@ -487,7 +487,7 @@ function buildBasketPairs(pairs,baskets){
 function activeStudents(){return state.teacherPriorityOn?state.students:state.students.map(st=>({...st,fixed:0}))}
 function effectivePairs(){return buildBasketPairs(state.pairs,state.baskets)}
 function basketProblems(baskets=state.baskets,k=state.classCount){
- return baskets.filter(b=>b.members.length>k).map(b=>'「'+b.name+'」에 '+b.members.length+'명: '+k+'개 반에 나눌 수 없습니다.');
+ return baskets.filter(b=>b.members.length>5).map(b=>'「'+b.name+'」에는 최대 5명까지 담을 수 있습니다.');
 }
 /* STAGE_ZERO_START: automatic slots, non-destructive roster reconciliation, gender targets. */
 function stageZeroRoom(v){
@@ -954,7 +954,7 @@ function applyPresets(ids,to){
   if(!pupils.length||pupils.some(st=>!st)||!Number.isInteger(to)||to<0||to>state.classCount)return false;
   const before=Object.fromEntries(state.students.map(st=>[st.id,st.fixed]));
   pupils.forEach(st=>st.fixed=to);
-  const errors=to?presetIssues(state.students,effectivePairs(),state.classCount,state.capRules):[];
+  const errors=to?presetIssues(state.students,state.pairs,state.classCount,{}):[];
   if(errors.length){state.students.forEach(st=>st.fixed=before[st.id]);presetFeedback('배치할 수 없습니다. '+errors[0]+' 선택한 학생은 그대로 유지됩니다.',true);return false}
   presetUndo={before,after:Object.fromEntries(state.students.map(st=>[st.id,st.fixed]))};
   pupils.forEach(st=>presetSelected.delete(st.id));invalidate();changeState();
@@ -966,7 +966,7 @@ function undoPresets(){
   const {before,after}=presetUndo;
   if(state.students.length!==Object.keys(after).length||state.students.some(st=>!(st.id in after)||st.fixed!==after[st.id])){presetUndo=null;renderPreset();presetFeedback('학생 명단이나 배치가 변경되어 되돌릴 수 없습니다.',true);return}
   const restored=state.students.map(st=>({...st,fixed:before[st.id]}));
-  if(restored.some(st=>st.fixed>state.classCount)||presetIssues(restored,effectivePairs(),state.classCount,state.capRules).length){presetFeedback('현재 편성 조건과 충돌하여 되돌릴 수 없습니다.',true);return}
+  if(restored.some(st=>st.fixed>state.classCount)||presetIssues(restored,state.pairs,state.classCount,{}).length){presetFeedback('현재 편성 조건과 충돌하여 되돌릴 수 없습니다.',true);return}
   state.students.forEach(st=>st.fixed=before[st.id]);presetUndo=null;presetSelected.clear();invalidate();changeState();presetFeedback('최근 배치를 되돌렸습니다.');
 }
 function presetVisibleStudents(){
@@ -982,7 +982,7 @@ function renderPreset(){
   const fixed=state.students.filter(st=>st.fixed),free=state.students.filter(st=>!st.fixed);
   $('presetCount').textContent=fixed.length+'명 확정';$('presetRemaining').textContent=free.length+'명';
   const capacity=Math.ceil(state.students.length/state.classCount);
-  const errors=presetIssues(state.students,effectivePairs(),state.classCount,state.capRules);
+  const errors=presetIssues(state.students,state.pairs,state.classCount,{});
   $('presetStatus').className=errors.length?'alert':'helper';
   $('presetStatus').textContent=errors.length?errors.join(' / '):'우선 배치 '+fixed.length+'명 · 남은 학생 '+free.length+'명 · 학급당 '+Math.floor(state.students.length/state.classCount)+'~'+capacity+'명 기준 · 우선 배치는 자동 편성에서 유지됩니다.';
   const setOptions=(id,values,label)=>{const el=$(id),value=el.value;el.innerHTML='<option value="">'+label+'</option>'+values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');if(values.includes(value))el.value=value};
@@ -1021,7 +1021,7 @@ function addBasketMember(basketId,studentId){
   const basket=state.baskets.find(b=>b.id===basketId),student=findStudent(studentId);
   if(!basket||!student)return false;
   if(basket.members.includes(studentId)){toast('이미 이 바구니에 들어 있는 학생입니다.');return false}
-  if(basket.members.length>=state.classCount){toast('한 바구니에 '+state.classCount+'명까지 넣을 수 있습니다. 서로 다른 반에 배정해야 하기 때문입니다.');return false}
+  if(basket.members.length>=5){toast('한 바구니에 최대 5명까지 담을 수 있습니다.');return false}
   basket.members.push(studentId);invalidate();changeState();
   toast('「'+basket.name+'」에 '+student.name+' 학생을 추가했습니다.');return true;
 }
@@ -1030,7 +1030,7 @@ function renderBaskets(){
   const errors=basketProblems();
   $('basketNotice').className=errors.length?'alert':'helper';
   $('basketNotice').textContent=errors.length?errors.join(' / '):
-    state.baskets.length+'개 바구니 · '+'같은 바구니의 학생은 반드시 서로 다른 반으로 편성됩니다. 여러 바구니에 같은 학생을 넣을 수도 있습니다.';
+    state.baskets.length+'개 바구니 · '+'같은 바구니에는 최대 5명까지 담을 수 있습니다. 여러 바구니에 같은 학생을 넣을 수도 있습니다.';
   const q=($('basketSearch').value||'').trim().toLowerCase();
   const pupils=state.students.filter(st=>[st.name,st.oldGrade,st.oldClass,st.number].join(' ').toLowerCase().includes(q));
   const shown=pupils.slice(0,100);
@@ -1038,11 +1038,11 @@ function renderBaskets(){
   const chosen=findStudent(selectedBasketStudentId);$('basketSelected').textContent=chosen?'선택됨: '+studentTitle(chosen)+' · 담을 바구니의 버튼을 누르세요.':'학생을 선택하거나 바구니로 끌어 넣으세요.';
   if(pupils.length>shown.length)$('basketPool').insertAdjacentHTML('beforeend','<div class="helper">100명만 표시했습니다. 검색하여 학생을 찾으세요.</div>');
   $('basketGrid').innerHTML=state.baskets.map((b,i)=>{
-    return `<div class="basket-card ${b.members.length>state.classCount?'basket-over':''}" data-basket-drop="${escapeHtml(b.id)}" aria-label="${escapeHtml(b.name)}">
+    return `<div class="basket-card ${b.members.length>5?'basket-over':''}" data-basket-drop="${escapeHtml(b.id)}" aria-label="${escapeHtml(b.name)}">
       <div class="basket-head"><input data-basket-name="${escapeHtml(b.id)}" aria-label="${i+1}번 바구니 이름" maxlength="40" value="${escapeHtml(b.name)}"><button type="button" class="btn ghost danger small" data-basket-remove="${escapeHtml(b.id)}" title="바구니 삭제">삭제</button></div>
-      <div class="basket-info"><span class="basket-count-pill">${b.members.length} / ${state.classCount}명</span><span>서로 다른 반으로 편성</span></div>
+      <div class="basket-info"><span class="basket-count-pill">${b.members.length} / 5명</span><span>서로 다른 반으로 편성</span></div>
       <div class="basket-members">${b.members.map(id=>{const st=findStudent(id);if(!st)return '';return `<div class="basket-chip" draggable="true" data-drag-student="${escapeHtml(st.id)}"><div><b>${escapeHtml(st.name)}</b><small>${escapeHtml(st.oldClass||'기존 반 미입력')}${st.number?' · '+escapeHtml(st.number)+'번':''}</small></div><button type="button" data-basket-unpin="${escapeHtml(b.id)}" data-student-id="${escapeHtml(st.id)}" aria-label="${escapeHtml(st.name)} 바구니에서 빼기">×</button></div>`}).join('')||'<div class="basket-empty">학생 카드를 여기로 끌어 놓으세요</div>'}</div>
-      <button type="button" class="btn basket-place-btn" data-basket-add-selected="${escapeHtml(b.id)}" ${!selectedBasketStudentId||b.members.includes(selectedBasketStudentId)||b.members.length>=state.classCount?'disabled':''}>+ 선택한 학생 담기</button>
+      <button type="button" class="btn basket-place-btn" data-basket-add-selected="${escapeHtml(b.id)}" ${!selectedBasketStudentId||b.members.includes(selectedBasketStudentId)||b.members.length>=5?'disabled':''}>+ 선택한 학생 담기</button>
     </div>`;
   }).join('')||'<div class="basket-empty">아직 바구니가 없습니다. 「+ 바구니 만들기」를 누르세요.</div>';
 }
@@ -1114,7 +1114,7 @@ function snakeClass(rank,k,variant=0){
   return num;
 }
 function snakeTargets(students,k,preferred){
-  const n=students.length,base=Math.floor(n/k),extra=n%k,fixed=Array(k).fill(0),demand=Array(k).fill(0);
+  const n=students.length,base=Math.floor(n/k);let extra=n%k;const fixed=Array(k).fill(0),demand=Array(k).fill(0);
   for(const s of students)if(s.fixed)fixed[s.fixed-1]++;
   for(const c of preferred)demand[c-1]++;
   if(fixed.some(x=>x>base+1))return null;
@@ -1276,7 +1276,149 @@ function polishTeacherFirst(students,pairs,k,traits,capRules,ordered,candidate,r
   }
   return changed?{...candidate,assign,score:calcScore(students,assign,k,traits,candidate.target)}:candidate;
 }
-function generateCandidates(students,pairs,k,traits,random=Math.random,capRules={}){
+/* BEST_EFFORT_START: fixed placements and explicit pairs stay hard; caps and basket edges are minimized. */
+function preferencePenalty(students,assign,k,capRules,softPairs=[]){
+ const counts=Array.from({length:k},()=>({}));
+ for(const s of students)if(assign[s.id])for(const tag of new Set(s.traits||[]))counts[assign[s.id]-1][tag]=(counts[assign[s.id]-1][tag]||0)+1;
+ let total=0,square=0;
+ for(const [tag,cap] of Object.entries(capRules))if(Number.isInteger(cap)&&cap>=0)for(const row of counts){const n=Math.max(0,(row[tag]||0)-cap);total+=n;square+=n*n}
+ for(const p of softPairs)if(assign[p.a]&&assign[p.a]===assign[p.b]){total++;square++}
+ return {total,square};
+}
+function preferenceLess(a,b){return a.total<b.total||(a.total===b.total&&a.square<b.square)}
+function preferenceLowerBound(students,k,capRules,softPairs){
+ let total=0,square=0;
+ for(const [tag,cap] of Object.entries(capRules))if(Number.isInteger(cap)&&cap>=0){
+  const people=students.filter(s=>(s.traits||[]).includes(tag)),over=Array(k).fill(0);
+  for(let c=1;c<=k;c++)over[c-1]=Math.max(0,people.filter(s=>s.fixed===c).length-cap);
+  const required=Math.max(people.length-cap*k,over.reduce((n,x)=>n+x,0));
+  for(let n=over.reduce((v,x)=>v+x,0);n<required;n++){const min=Math.min(...over);over[over.indexOf(min)]++}
+  total+=required;square+=over.reduce((n,x)=>n+x*x,0);
+ }
+ // A complete basket of n pupils in k rooms inevitably leaves these pairs together.
+ const graph=makeNeighborMap(students,softPairs),seen=new Set();
+ for(const s of students){
+  if(seen.has(s.id)||!graph[s.id].length)continue;
+  const group=[],queue=[s.id];seen.add(s.id);
+  for(let i=0;i<queue.length;i++){const id=queue[i];group.push(id);for(const next of graph[id])if(!seen.has(next)){seen.add(next);queue.push(next)}}
+  if(group.every(id=>graph[id].length===group.length-1)){
+   const base=Math.floor(group.length/k),extra=group.length%k;
+   const unavoidable=(k-extra)*base*(base-1)/2+extra*(base+1)*base/2;
+   total+=unavoidable;square+=unavoidable;
+  }
+ }
+ return {total,square};
+}
+function polishPreferences(students,hardPairs,k,traits,capRules,softPairs,candidate,random,budget=8000){
+ const assign={...candidate.assign},free=students.filter(s=>!s.fixed),hard=makeNeighborMap(students,hardPairs);
+ const caps=Object.entries(capRules).filter(([,n])=>Number.isInteger(n)&&n>=0),tagIndex=new Map(caps.map(([t],i)=>[t,i]));
+ const tags=new Map(students.map(s=>[s.id,[...new Set(s.traits||[])].filter(t=>tagIndex.has(t)).map(t=>tagIndex.get(t))]));
+ const counts=Array.from({length:k},()=>Array(caps.length).fill(0)),edges=new Map(students.map(s=>[s.id,[]]));
+ for(const s of students)for(const t of tags.get(s.id))counts[assign[s.id]-1][t]++;
+ softPairs.forEach((p,i)=>{edges.get(p.a)?.push(i);edges.get(p.b)?.push(i)});
+ let penalty=preferencePenalty(students,assign,k,capRules,softPairs),checks=0;
+ const lower=preferenceLowerBound(students,k,capRules,softPairs);
+ const capLower=caps.map(([tag,limit])=>preferenceLowerBound(students,k,{[tag]:limit},[]));
+ function attempt(pupils,destinations){
+  if(++checks>budget)return false;
+  const old=pupils.map(s=>assign[s.id]);
+  if(old.every((n,i)=>n===destinations[i]))return false;
+  const changed=new Map(),affected=new Set();
+  pupils.forEach((s,i)=>{assign[s.id]=destinations[i];for(const t of tags.get(s.id)){
+   const a=(old[i]-1)*caps.length+t,b=(destinations[i]-1)*caps.length+t;
+   changed.set(a,(changed.get(a)||0)-1);changed.set(b,(changed.get(b)||0)+1);
+  }for(const edge of edges.get(s.id))affected.add(edge)});
+  if(pupils.some(s=>!canEnter(s.id,assign[s.id],assign,hard))){pupils.forEach((s,i)=>assign[s.id]=old[i]);return false}
+  let total=penalty.total,square=penalty.square;
+  for(const [key,delta] of changed){const c=Math.floor(key/caps.length),t=key%caps.length,cap=caps[t][1],before=Math.max(0,counts[c][t]-cap),after=Math.max(0,counts[c][t]+delta-cap);total+=after-before;square+=after*after-before*before}
+  const previous=new Map(pupils.map((s,i)=>[s.id,old[i]]));
+  for(const index of affected){const p=softPairs[index],before=(previous.get(p.a)||assign[p.a])===(previous.get(p.b)||assign[p.b]),after=assign[p.a]===assign[p.b];const d=Number(after)-Number(before);total+=d;square+=d}
+  const next={total,square};
+  if(preferenceLess(next,penalty)){
+   for(const [key,delta] of changed)counts[Math.floor(key/caps.length)][key%caps.length]+=delta;
+   penalty=next;return true;
+  }
+  pupils.forEach((s,i)=>assign[s.id]=old[i]);return false;
+ }
+ for(let pass=0;pass<8&&checks<budget;pass++){
+  if(penalty.total===lower.total&&penalty.square===lower.square)break;
+  let changed=false;
+  const activeCaps=caps.map(([,cap],t)=>{const excess=counts.map(row=>Math.max(0,row[t]-cap));return excess.reduce((n,x)=>n+x,0)>capLower[t].total||excess.reduce((n,x)=>n+x*x,0)>capLower[t].square});
+  const priorities=new Map(free.map(s=>[s.id,tags.get(s.id).reduce((n,t)=>n+(activeCaps[t]?Math.max(0,counts[assign[s.id]-1][t]-caps[t][1]):0),0)+edges.get(s.id).filter(i=>assign[softPairs[i].a]===assign[softPairs[i].b]).length]));
+  const order=free.filter(s=>priorities.get(s.id)>0).sort((a,b)=>priorities.get(b.id)-priorities.get(a.id));
+  if(!order.length)break;
+  for(const a of order){
+   if(checks>=budget)break;
+   for(let n=0;n<free.length&&checks<budget;n++){
+    const b=free[(n+pass*17)%free.length];if(a===b||assign[a.id]===assign[b.id])continue;
+    if(attempt([a,b],[assign[b.id],assign[a.id]])){changed=true;break}
+   }
+  }
+  if(!changed&&k>2&&free.length>=3){
+   for(let n=0;n<Math.min(2000,budget-checks);n++){
+    const a=order[n%order.length],b=free[Math.floor(random()*free.length)],c=free[Math.floor(random()*free.length)];
+    if(a===b||b===c||a===c||new Set([assign[a.id],assign[b.id],assign[c.id]]).size<3)continue;
+    if(attempt([a,b,c],[assign[b.id],assign[c.id],assign[a.id]])){changed=true;break}
+   }
+  }
+  if(!changed)break;
+ }
+ return {...candidate,assign,preference:penalty,score:calcScore(students,assign,k,traits,candidate.target)};
+}
+/* Small rosters get bounded branch-and-bound after local swaps, including alternate balanced room sizes. */
+function exactPreferenceRepair(students,hardPairs,k,traits,caps,softPairs,best){
+ if(students.length>22)return best;
+ const neighbors=makeNeighborMap(students,hardPairs),assign={},counts=Array(k).fill(0),base=Math.floor(students.length/k),ceiling=Math.ceil(students.length/k);
+ for(const s of students)if(s.fixed){assign[s.id]=s.fixed;counts[s.fixed-1]++}
+ const free=students.filter(s=>!s.fixed),taken=new Set(),soft=makeNeighborMap(students,softPairs),lower=preferenceLowerBound(students,k,caps,softPairs);
+ let nodes=0;const deadline=Date.now()+350;
+ const optimal=()=>best.preference.total===lower.total&&best.preference.square===lower.square;
+ function visit(depth){
+  if(++nodes>70000||Date.now()>deadline||optimal())return;
+  const partial=preferencePenalty(students,assign,k,caps,softPairs);
+  if(partial.total>best.preference.total||(partial.total===best.preference.total&&partial.square>=best.preference.square))return;
+  if(counts.reduce((n,c)=>n+Math.max(0,base-c),0)>free.length-depth)return;
+  if(depth===free.length){
+   if(counts.some(c=>c<base))return;
+   best={assign:{...assign},target:[...counts],preference:partial,score:calcScore(students,assign,k,traits,counts)};return;
+  }
+  let chosen,choices,bestPriority=Infinity;
+  for(const s of free){
+   if(taken.has(s.id))continue;
+   const possible=[];for(let c=1;c<=k;c++)if(counts[c-1]<ceiling&&canEnter(s.id,c,assign,neighbors))possible.push(c);
+   if(!possible.length)return;
+   const priority=possible.length*1000-(neighbors[s.id].length+soft[s.id].length)*10-(s.traits||[]).filter(t=>Number.isInteger(caps[t])).length;
+   if(priority<bestPriority){bestPriority=priority;chosen=s;choices=possible}
+  }
+  const cost=c=>{assign[chosen.id]=c;const p=preferencePenalty(students,assign,k,caps,softPairs);delete assign[chosen.id];return p.total*1000+p.square+counts[c-1]*.01};
+  choices=choices.map(c=>({c,cost:cost(c)})).sort((a,b)=>a.cost-b.cost||a.c-b.c);
+  taken.add(chosen.id);
+  for(const {c} of choices){assign[chosen.id]=c;counts[c-1]++;visit(depth+1);counts[c-1]--;delete assign[chosen.id];if(optimal()||nodes>70000||Date.now()>deadline)break}
+  taken.delete(chosen.id);
+ }
+ visit(0);return best;
+}
+function bestEffortCandidates(students,hardPairs,k,traits,caps,softPairs,ordered,random){
+ const solutions=[],seen=new Set(),lower=preferenceLowerBound(students,k,caps,softPairs);
+ const attempts=students.length>350?6:12,budget=students.length>350?24000:students.length>120?20000:12000;
+ let best=null;
+ for(let trial=0;trial<attempts;trial++){
+  const order=trial?ordered.map(s=>({s,r:random()})).sort((a,b)=>a.r-b.r).map(x=>x.s):ordered;
+  const initial=greedySnake(students,hardPairs,k,traits,{},order,trial%3,trial,random)||(trial===0?searchFeasibleAssignment(students,hardPairs,k,traits,{},order,random):null);
+  if(!initial)continue;
+  const result=polishPreferences(students,hardPairs,k,traits,caps,softPairs,initial,random,budget);
+  const signature=ordered.map(s=>result.assign[s.id]).join(',');if(!seen.has(signature)){seen.add(signature);solutions.push(result)}
+  if(!best||preferenceLess(result.preference,best.preference)||(result.preference.total===best.preference.total&&result.preference.square===best.preference.square&&result.score<best.score))best=result;
+  if(best.preference.total===lower.total&&best.preference.square===lower.square&&solutions.length>=3)break;
+ }
+ if(!best)return [];
+ best=exactPreferenceRepair(students,hardPairs,k,traits,caps,softPairs,best);solutions.push(best);
+ const ranked=solutions.filter(c=>c.preference.total===best.preference.total&&c.preference.square===best.preference.square).sort((a,b)=>a.score-b.score),unique=new Set();
+ return ranked.filter(c=>{const sig=ordered.map(s=>c.assign[s.id]).join(',');if(unique.has(sig))return false;unique.add(sig);return true}).slice(0,3);
+}
+/* BEST_EFFORT_END */
+
+function generateCandidates(students,pairs,k,traits,random=Math.random,capRules={},softPairs=[]){
   if(!students.length)return {error:'학생 명단을 먼저 입력해 주세요.'};
   if(students.some(s=>!s.name.trim()))return {error:'이름이 비어 있는 학생이 있습니다. 이름을 모두 입력해 주세요.'};
   const locked=new Map(students.filter(s=>s.fixed).map(s=>[s.id,s.fixed]));
@@ -1285,29 +1427,21 @@ function generateCandidates(students,pairs,k,traits,random=Math.random,capRules=
   const fixedRoom=Array(k).fill(0);for(const s of students)if(s.fixed)fixedRoom[s.fixed-1]++;
   if(fixedRoom.some(x=>x>Math.ceil(students.length/k)))
     return {error:'반별 적정 인원보다 고정 배정 학생이 많습니다. 새 반 고정을 수정해 주세요.'};
-  for(const [tag,cap] of Object.entries(capRules||{})){
-    if(!Number.isInteger(cap)||cap<0)continue;
-    const members=students.filter(s=>(s.traits||[]).includes(tag));
-    if(members.length>cap*k)return {error:'「'+tag+'」 학생 '+members.length+'명은 반당 최대 '+cap+'명 × '+k+'개 반 조건을 초과합니다. 최대 인원을 높이거나 제한을 해제해 주세요.'};
-    for(let c=1;c<=k;c++){
-      const fixed=members.filter(s=>s.fixed===c).length;
-      if(fixed>cap)return {error:c+'반에 고정된 「'+tag+'」 학생 '+fixed+'명이 반당 최대 '+cap+'명 조건을 초과합니다.'};
-    }
-  }
+  const pairKeys=new Set(pairs.map(p=>[p.a,p.b].sort().join('\u001f'))),softSeen=new Set();
+  softPairs=softPairs.filter(p=>{const key=[p.a,p.b].sort().join('\u001f');if(pairKeys.has(key)||softSeen.has(key))return false;softSeen.add(key);return students.some(s=>s.id===p.a)&&students.some(s=>s.id===p.b)&&p.a!==p.b});
+  const allPairs=[...pairs,...softPairs],lower=preferenceLowerBound(students,k,capRules,softPairs);
   const ordered=snakeOrder(students),solutions=[],seen=new Set();
-  // Prefer the canonical 1→k→1 order. If greedy assignment cannot satisfy
-  // the hard rules, repair that same order before offering reverse/rotated alternatives.
-  const primary=greedySnake(students,pairs,k,traits,capRules,ordered,0,0,random)
-    ||searchFeasibleAssignment(students,pairs,k,traits,capRules,ordered,random);
-  if(primary){const tuned=polishTeacherFirst(students,pairs,k,traits,capRules,ordered,primary,random);solutions.push(tuned);seen.add(ordered.map(st=>tuned.assign[st.id]).join(','))}
-  for(let trial=1;trial<6&&solutions.length<3;trial++){
-    const variant=trial===1?1:trial===2?2:trial%3;
-    const candidate=greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,random);
-    if(!candidate)continue;
-    const tuned=polishTeacherFirst(students,pairs,k,traits,capRules,ordered,candidate,random);
-    const sig=ordered.map(st=>tuned.assign[st.id]).join(',');
-    if(!seen.has(sig)){solutions.push(tuned);seen.add(sig)}
+  // Try diverse strict placements before relaxing any preference.
+  if(lower.total===0){
+    for(let trial=0;trial<9&&solutions.length<3;trial++){
+      const candidate=greedySnake(students,allPairs,k,traits,capRules,ordered,trial%3,trial,random);
+      if(!candidate)continue;
+      const tuned=polishTeacherFirst(students,allPairs,k,traits,capRules,ordered,candidate,random),sig=ordered.map(st=>tuned.assign[st.id]).join(',');
+      if(!seen.has(sig)){solutions.push(tuned);seen.add(sig)}
+    }
+    if(!solutions.length){const candidate=searchFeasibleAssignment(students,allPairs,k,traits,capRules,ordered,random);if(candidate)solutions.push(polishTeacherFirst(students,allPairs,k,traits,capRules,ordered,candidate,random))}
   }
+  if(!solutions.length)solutions.push(...bestEffortCandidates(students,pairs,k,traits,capRules,softPairs,ordered,random));
   if(!solutions.length)return {error:'지정한 분리 관계·반 고정·유의 사항별 최대 인원을 모두 만족하는 편성안을 찾지 못했습니다. 조건을 확인해 주세요. 탐색 한도 때문에 실제로 가능한 편성안이 있을 수도 있습니다.'};
   return {candidates:solutions,successes:solutions.length};
 }
@@ -1325,7 +1459,7 @@ function reviewClassStats(students,assign,k,traits){
  }
  return data;
 }
-function reviewStudentMove(students,pairs,assign,k,traits,capRules,id,to,teacherPriorityOn){
+function reviewStudentMove(students,pairs,assign,k,traits,capRules,id,to,teacherPriorityOn,softPairs=[]){
  const student=students.find(s=>s.id===id);
  if(!student)return {ok:false,error:'학생을 찾지 못했습니다.'};
  const from=Number(assign[id]);
@@ -1336,7 +1470,9 @@ function reviewStudentMove(students,pairs,assign,k,traits,capRules,id,to,teacher
  const before=reviewClassStats(students,assign,k,traits);
  const proposed={...assign,[id]:to};
  const active=teacherPriorityOn?students:students.map(s=>({...s,fixed:0}));
- const violations=validateAssignment(active,pairs,proposed,capRules);
+ const violations=validateAssignment(active,pairs,proposed,{});
+ const priorPenalty=preferencePenalty(active,assign,k,capRules,softPairs),nextPenalty=preferencePenalty(active,proposed,k,capRules,softPairs);
+ if(preferenceLess(priorPenalty,nextPenalty))violations.push(...validateAssignment(active,[...pairs,...softPairs],proposed,capRules));
  if(violations.length)return {ok:false,error:violations[0],violations,from,to};
  const after=reviewClassStats(students,proposed,k,traits);
  const counts=after.map(d=>d.total),average=students.length/k;
@@ -1889,7 +2025,7 @@ function fillSampleNames(replaceAll=false){
  toast('가상 예시 이름 '+targets.length+'명을 입력했습니다. 학생별 성별·점수·유의 사항은 유지됩니다.');
 }
 function sampleData(){const surnames=['김','이','박','최','정','강','조','윤','장','임','한','오'];const names=['하늘','지우','도윤','민서','준우','서연','시우','하은','예준','다은','현우','윤서','지호','수아','건우','서준','나은','이안','채원','예은','유준','지안','서아','태윤','은우','시윤','다현','승우','윤호','서진','연우','수빈','민준','다온','현서','재윤'];return names.map((n,i)=>({id:makeId(),oldClass:(i%3+1)+'반',number:String(Math.floor(i/3)+1),name:surnames[i%12]+n,gender:i%2?'여':'남',level:Math.round((65+(i*13)%34+((i%4)*0.25))*100)/100,traits:[i%5===0?'사회성':null,i%7===0?'운동부':null].filter(Boolean),fixed:0,note:''}))}
-function isCompatibleMove(id,to,candidate){const student=findStudent(id);if(!student||(state.teacherPriorityOn&&student.fixed))return false;const proposal={...candidate.assign,[id]:to};return validateAssignment(activeStudents(),effectivePairs(),proposal,state.capRules).length===0}
+function isCompatibleMove(id,to,candidate){return reviewStudentMove(state.students,state.pairs,candidate.assign,state.classCount,state.traits,state.capRules,id,to,state.teacherPriorityOn,buildBasketPairs([],state.baskets)).ok}
 function addStudent(){const room=state.sourceClassCount||1;const last=Math.max(0,...state.students.filter(st=>stageZeroRoom(st.oldClass)===room).map(st=>Number(st.number)||0));const s={id:makeId(),oldGrade:state.sourceGrade,oldClass:room+'반',number:String(last+1),name:'',gender:'',level:null,traits:[],fixed:0,note:''};state.students.push(s);invalidate();changeState();toast('현재 '+room+'반에 임시 학생 자리 1개를 추가했습니다. 0단계 인원과 차이가 생겼습니다.');const field=document.querySelector(`[data-student="${s.id}"] [data-key="name"]`);field?.focus()}
 function addTrait(){const t=$('newTrait').value.trim();if(!t)return;if(state.traits.includes(t)){toast('이미 있는 특징입니다.');return}if(state.traits.length>=64){toast('유의 사항은 최대 64개까지 추가할 수 있습니다.');return}state.traits.push(t);$('newTrait').value='';invalidate();changeState()}
 function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)return;const s=findStudent(tr.dataset.student);if(!s)return;
@@ -1905,7 +2041,7 @@ function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)ret
 }
 function previewResultMove(id,to){
  const candidate=state.candidates[state.activeCandidate];if(!candidate)return null;
- return reviewStudentMove(state.students,effectivePairs(),candidate.assign,state.classCount,state.traits,state.capRules,id,to,state.teacherPriorityOn);
+ return reviewStudentMove(state.students,state.pairs,candidate.assign,state.classCount,state.traits,state.capRules,id,to,state.teacherPriorityOn,buildBasketPairs([],state.baskets));
 }
 function highlightMoveTarget(targetId,valid){
  document.querySelectorAll('#resultGrid .class-card').forEach(card=>{
@@ -2267,7 +2403,7 @@ function installEvents(){
     if(blank.length){showTab('roster');toast('이름을 입력하지 않은 학생 '+blank.length+'명의 이름을 먼저 입력해 주세요.');return}
     const problems=basketProblems();
     if(problems.length){invalidate();saveState();showTab('results');$('resultMessage').textContent=problems.join(' / ');toast(problems[0]);return}
-    const outcome=generateCandidates(activeStudents(),effectivePairs(),state.classCount,state.traits,Math.random,state.capRules);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;moveUndoStack.length=0;moveSelectedId=null;moveDraggingId=null;moveLastResult=null;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
+    const outcome=generateCandidates(activeStudents(),state.pairs,state.classCount,state.traits,Math.random,state.capRules,buildBasketPairs([],state.baskets));if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;moveUndoStack.length=0;moveSelectedId=null;moveDraggingId=null;moveLastResult=null;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
   $('generateQuick').addEventListener('click',()=>$('generate').click());
   $('alternatives').addEventListener('click',e=>{const b=e.target.closest('[data-candidate]');if(!b)return;state.activeCandidate=Number(b.dataset.candidate);moveSelectedId=null;moveDraggingId=null;saveState();renderResults();clearReviewPreview()});
   $('undoMove').addEventListener('click',undoResultMove);
