@@ -91,6 +91,7 @@ function installTraitRemote(){
  $('toggleTraitRemote').addEventListener('click',()=>{traitRemoteUI.open=!traitRemoteUI.open;renderTraitRemote();saveTraitRemoteUI()});
  $('closeTraitRemote').addEventListener('click',()=>{traitRemoteUI.open=false;renderTraitRemote();saveTraitRemoteUI();$('toggleTraitRemote').focus()});
  $('collapseTraitRemote').addEventListener('click',()=>{traitRemoteUI.collapsed=!traitRemoteUI.collapsed;renderTraitRemote();saveTraitRemoteUI()});
+ $('traitRemoteBody').addEventListener('click',e=>{const button=e.target.closest('[data-remote-color]');if(button){$('rosterFillColor').value=button.dataset.remoteColor;rosterApplyFormat('background',button.dataset.remoteColor)}});
  $('traitRemoteSearch').addEventListener('input',renderTraitRemote);
  $('traitRemote').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();traitRemoteUI.open=false;renderTraitRemote();saveTraitRemoteUI();$('toggleTraitRemote').focus()}});
  $('traitRemoteNote').addEventListener('click',()=>{const s=findStudent(traitRemoteUI.studentId);if(!s)return;noteStudentId=s.id;$('noteTitle').textContent=(s.name||'학생')+' 메모';$('noteText').value=s.note;$('noteDialog').showModal()});
