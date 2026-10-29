@@ -571,7 +571,7 @@ test('1단계 입력 화면은 실시간 엑셀형 표 하나만 표시하며 �
 function resultLayoutApi(){
  const start=html.indexOf('/* RESULTS_PRESENTATION_START'),end=html.indexOf('/* RESULTS_PRESENTATION_END */',start);
  assert.ok(start>0&&end>start,'반 편성표 내보내기 엔진');
- const scope={};vm.createContext(scope);vm.runInContext(html.slice(start,end),scope);return scope;
+ const scope={};vm.createContext(scope);const colors=html.slice(html.indexOf('/* STUDENT_NAME_COLORS_START'),html.indexOf('/* STUDENT_NAME_COLORS_END */'));vm.runInContext(colors+'\n'+html.slice(start,end),scope);return scope;
 }
 test('가로 비교형은 여러 반을 동일한 행의 독립된 엑셀 열로 복사하며 빈 학생칸은 비워 둠',()=>{
  const api=resultLayoutApi();
@@ -672,10 +672,10 @@ test('짙은 사용자 지정 색은 흰색 글자, 밝은 배경은 어두운 �
 test('1단계 이름 배경색, 최종 가로·세로 편성표, 인쇄와 백업에 동일한 학생별 색이 연결',()=>{
  for(const id of ['nameColorDialog','nameColorPalette','customNameColor','clearNameColor','nameColorPreview'])assert.ok(html.includes('id="'+id+'"'),id);
  assert.match(html,/color:normalizeNameColor\(st\.color\)/,'저장 자료를 불러올 때 색을 검증');
- assert.match(html,/data-student-color="\$\{escapeHtml\(st\.id\)\}"/,'1단계 편집 버튼');
+ assert.ok(html.includes('id="rosterFormatTools"'),'1단계 셀 서식 도구');
  assert.match(html,/data-student-color="\$\{escapeHtml\(s\.id\)\}"/,'결과 단계 편집 버튼');
  assert.match(html,/style="\$\{studentNameStyle\(st\.color\)\}"/,'이름 칸 배경');
- assert.match(html,/style="\$\{studentNameStyle\(s\.color\)\}"/,'완성된 반 이름 배경');
+ assert.match(html,/style="\$\{studentNameStyle\(s\.color\)\+cellFormatStyle/,'완성된 반 이름 배경');
  assert.match(html,/studentNameStyle\(st\.color\)/,'인쇄 배경색');
  assert.match(html,/function changeStudentNameColor\(/);
 });

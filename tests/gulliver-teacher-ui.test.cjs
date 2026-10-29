@@ -165,20 +165,18 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.locator('#demo').click();
     assert.equal(await page.locator('#statStudents').textContent(),'36명');
 
-    // Individual name colors in the live roster, including palette and arbitrary custom colors.
+    // Individual name colors are edited in the inline spreadsheet toolbar.
     const coloredStudentId=await page.evaluate(()=>state.students[0].id);
     const secondColoredStudentId=await page.evaluate(()=>state.students[1].id);
-    await page.locator('#rosterBody [data-student="'+coloredStudentId+'"] [data-student-color]').click();
-    assert.equal(await page.locator('#nameColorDialog').isVisible(),true);
-    await page.locator('#nameColorPalette [data-pick-name-color="#ffe0e6"]').click();
+    await page.locator('#rosterBody [data-student="'+coloredStudentId+'"] [data-key="name"]').click();
+    await page.locator('#rosterFillColor').fill('#ffe0e6');
+    await page.locator('#rosterFillColor').dispatchEvent('change');
     assert.equal(await page.evaluate(id=>state.students.find(s=>s.id===id).color,coloredStudentId),'#ffe0e6');
-    assert.match(await page.locator('#nameColorPreview').innerHTML(),/#ffe0e6/);
-    await page.locator('#nameColorDone').click();
-    await page.locator('#rosterBody [data-student="'+secondColoredStudentId+'"] [data-student-color]').click();
-    await page.locator('#customNameColor').fill('#162b4d');
-    await page.locator('#customNameColor').dispatchEvent('change');
+    assert.match(await page.locator('#rosterBody [data-student="'+coloredStudentId+'"] [data-roster-cell="name"]').getAttribute('style'),/#ffe0e6/);
+    await page.locator('#rosterBody [data-student="'+secondColoredStudentId+'"] [data-key="name"]').click();
+    await page.locator('#rosterFillColor').fill('#162b4d');
+    await page.locator('#rosterFillColor').dispatchEvent('change');
     assert.equal(await page.evaluate(id=>state.students.find(s=>s.id===id).color,secondColoredStudentId),'#162b4d');
-    await page.locator('#nameColorDone').click();
     const nameColorsBeforeReload=await page.evaluate(()=>state.students.slice(0,2).map(s=>s.color));
     assert.deepEqual(nameColorsBeforeReload,['#ffe0e6','#162b4d']);
     await page.reload({waitUntil:'domcontentloaded'});
