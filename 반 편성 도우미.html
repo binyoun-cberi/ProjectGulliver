@@ -321,6 +321,21 @@
 .roster-sheet td.roster-cell-selected{background-color:var(--student-name-bg,#e0f4e8)!important;box-shadow:inset 0 0 0 2px #398d68}
 .roster-sheet td [data-key]{color:inherit!important;background:transparent!important}
 </style>
+<style>
+/* Compact, horizontally browsable trait distribution; card count never grows page height. */
+.trait-overview{min-width:0;padding:14px}.trait-overview .overview-head{margin-bottom:9px}.trait-overview .overview-head select{font-size:11px;padding:5px 7px;max-width:150px}
+.trait-chart-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.trait-chart-controls>span{font-size:11px;color:#667d70}
+.trait-chart-modes{display:flex;border:1px solid #bfd9cc;border-radius:8px;overflow:hidden}.trait-chart-modes button{border:0;background:white;color:#567162;font-size:12px;padding:6px 10px}.trait-chart-modes button[aria-pressed=true]{background:#2e765c;color:white;font-weight:750}
+.trait-chart-navigation{display:flex;align-items:center;gap:5px;min-width:0}.trait-chart-navigation>button{width:24px;min-width:24px;height:35px;border:1px solid #d6e4dc;border-radius:7px;background:#f6faf7;font-size:23px;color:#48745b;padding:0}
+.trait-donut-rail{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;min-width:0;flex:1;padding:2px 2px 9px;scrollbar-width:thin;scrollbar-color:#a9cbb9 #f4f8f5}
+.trait-donut-card{flex:0 0 254px;min-width:0;border:1px solid #e0eae4;border-radius:11px;padding:11px;background:white;scroll-snap-align:start;height:178px}
+.trait-donut-card-head{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-bottom:10px}.trait-donut-card-head h3{font-size:13px;margin:0;overflow-wrap:anywhere;max-width:145px}.trait-donut-card-head small{font-size:10px;color:#708173;flex-shrink:0}
+.trait-donut-content{display:flex;align-items:center;gap:12px}.trait-donut{flex:0 0 88px;height:88px;border-radius:50%;display:grid;place-items:center}.trait-donut>span{display:flex;align-items:baseline;justify-content:center;gap:3px;width:61px;height:61px;background:white;border-radius:50%;padding-top:17px}.trait-donut b{font-size:20px;line-height:1}.trait-donut small{font-size:10px;color:#778279}
+.trait-donut-legend{list-style:none;margin:0;padding:1px 3px 1px 0;flex:1;min-width:0;height:104px;overflow-y:auto;scrollbar-width:thin}.trait-donut-legend li{display:flex;gap:5px;align-items:center;font-size:11px;line-height:1.4;margin-bottom:7px}.trait-donut-legend li>span:nth-child(2){min-width:0;overflow-wrap:anywhere;flex:1}.trait-donut-legend b{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:11px}.trait-donut-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.trait-chart-note{font-size:10px;line-height:1.6;color:#748276;margin:7px 0 0}.trait-donut-empty{font-size:10px;color:#8a968c;margin:3px 0 0}
+@media(min-width:851px){.planner-overview{align-items:start}.compact-overview .overview-mini{margin:8px 0;gap:6px}.compact-overview .overview-mini>div{padding:6px 9px}.compact-overview .compact-overview-total{margin:7px 0}}
+@media(max-width:480px){.trait-donut-card{flex-basis:244px}.trait-chart-controls>span{display:none}.trait-overview{padding:12px 10px}.trait-chart-navigation{gap:3px}.trait-chart-navigation>button{width:21px;min-width:21px}}
+</style>
 </head>
 <body>
 <main class="shell">
@@ -566,7 +581,7 @@ function studentNameStyle(value){
  return color?'--student-name-bg:'+color+';background-color:'+color+';color:'+nameColorTextColor(color)+';':'';
 }
 /* STUDENT_NAME_COLORS_END */
-function defaultState(){return {version:6,grade:'6',classCount:3,resultLayout:'vertical',sourceGrade:'5',sourceClassCount:3,sourceClasses:stageZeroRows([],3),setupCompleted:false,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},baskets:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
+function defaultState(){return {version:6,overviewMode:'class',overviewScope:'source',grade:'6',classCount:3,resultLayout:'vertical',sourceGrade:'5',sourceClassCount:3,sourceClasses:stageZeroRows([],3),setupCompleted:false,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},baskets:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
 function parseStudyScore(v,legacy=false){if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return !Number.isFinite(n)||n<0||n>1e9||(legacy&&n===0)?null:Math.round((n+Number.EPSILON)*100)/100}
 function hasStudyScore(s){return Number.isFinite(s.level)&&s.level>=0}
 function studyText(v){return Number.isFinite(v)?v.toFixed(2):'미입력'}
@@ -597,7 +612,7 @@ function normalize(raw){
  const candidates=(Number(raw.version||1)>=5&&Array.isArray(raw.candidates)?raw.candidates:[]).slice(0,3)
   .filter(c=>c&&c.assign&&typeof c.assign==='object'&&uniqueStudents.every(st=>Number.isInteger(Number(c.assign[st.id]))&&Number(c.assign[st.id])>=1&&Number(c.assign[st.id])<=count))
   .map(c=>({assign:Object.fromEntries(uniqueStudents.map(st=>[st.id,Number(c.assign[st.id])])),target:Array.from({length:count},(_,i)=>Number(c.target?.[i])||Math.floor(uniqueStudents.length/count)),score:Number(c.score)||0}));
- return {...base,grade:String(raw.grade??'6').slice(0,12),classCount:count,resultLayout:raw.resultLayout==='compare'?'compare':'vertical',sourceGrade,sourceClassCount:countSource,sourceClasses,setupCompleted,teacherPriorityOn,traits,capRules,teacherNames,baskets,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
+ return {...base,overviewMode:raw.overviewMode==='trait'?'trait':'class',overviewScope:raw.overviewScope==='result'?'result':'source',grade:String(raw.grade??'6').slice(0,12),classCount:count,resultLayout:raw.resultLayout==='compare'?'compare':'vertical',sourceGrade,sourceClassCount:countSource,sourceClasses,setupCompleted,teacherPriorityOn,traits,capRules,teacherNames,baskets,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
 }
 function loadState(){try{return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY)))}catch(e){return defaultState()}}
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
@@ -628,34 +643,58 @@ function plannerSummaryData(current){
    scored:scored.length,avgScore:scored.length?scored.reduce((a,b)=>a+b.level,0)/scored.length:null,
    tags:[...traitCounts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ko'))};
 }
+/* OVERVIEW_DONUT_START: counts are trait memberships, not mutually exclusive pupils. */
+const OVERVIEW_COLORS=['#448d73','#d58b47','#738ac6','#ba6990','#579bb0','#a19a42','#926fc0','#bf7660','#6f9d48','#608194','#ad8658','#9d7182'];
+function overviewDonutData(current,mode='class',scope='source'){
+ const students=current.students||[],candidate=current.candidates?.[current.activeCandidate||0];
+ const useResult=scope==='result'&&!!candidate;
+ const normalized=students.map(st=>({
+  room:useResult?Number(candidate.assign[st.id])||0:Number(String(st.oldClass||'').match(/\d+/)?.[0])||0,
+  tags:[...new Set((st.traits||[]).map(t=>String(t).startsWith('다문화(')?'다문화':String(t)))]
+ }));
+ const totals=new Map();for(const st of normalized)for(const tag of st.tags)totals.set(tag,(totals.get(tag)||0)+1);
+ const tagOrder=[...new Set(['다문화','특수',...(current.traits||[]),...totals.keys(),...Object.keys(current.capRules||{})])];
+ const tags=tagOrder.filter(tag=>tag==='다문화'||tag==='특수'||totals.has(tag)||Object.hasOwn(current.capRules||{},tag));
+ const rooms=[...new Set([...(useResult?Array.from({length:current.classCount||0},(_,i)=>i+1):(current.sourceClasses||[]).map(r=>r.room)),...normalized.map(st=>st.room)])].sort((a,b)=>a===0?1:b===0?-1:a-b);
+ const roomLabel=room=>room?room+'반':'반 미입력';
+ const cards=mode==='trait'?tags.map(tag=>({
+  key:tag,title:tag,total:totals.get(tag)||0,unit:'명',cap:current.capRules?.[tag],
+  entries:rooms.map((room,i)=>({label:roomLabel(room),count:normalized.filter(st=>st.room===room&&st.tags.includes(tag)).length,color:room?OVERVIEW_COLORS[(room-1)%OVERVIEW_COLORS.length]:'#85918a'}))
+ })):rooms.map(room=>{
+  const pupils=normalized.filter(st=>st.room===room),entries=tags.map(tag=>({label:tag,count:pupils.filter(st=>st.tags.includes(tag)).length,color:OVERVIEW_COLORS[tagOrder.indexOf(tag)%OVERVIEW_COLORS.length]}));
+  return {key:String(room),title:roomLabel(room),total:entries.reduce((n,e)=>n+e.count,0),unit:'건',pupils:pupils.length,entries};
+ });
+ return {cards,useResult,registered:students.length};
+}
+function overviewDonutGradient(entries){
+ const total=entries.reduce((n,e)=>n+e.count,0);if(!total)return '#e8eeeb';
+ let end=0;
+ return 'conic-gradient('+entries.filter(e=>e.count>0).map(e=>{const start=end;end+=e.count/total*100;return e.color+' '+start.toFixed(5)+'% '+end.toFixed(5)+'%'}).join(',')+')';
+}
+/* OVERVIEW_DONUT_END */
 function renderOverview(){
- const d=plannerSummaryData(state),rooms=d.rows,entries=new Map(d.tags);
- const tags=[...new Set(['다문화','특수',...d.tags.map(([x])=>x),...Object.keys(state.capRules)])]
-   .filter(tag=>entries.has(tag)||Object.hasOwn(state.capRules,tag)||tag==='다문화'||tag==='특수')
-   .sort((a,b)=>((a==='다문화'||a==='특수')?0:1)-((b==='다문화'||b==='특수')?0:1)||((entries.get(b)||0)-(entries.get(a)||0))||a.localeCompare(b,'ko'));
+ const d=plannerSummaryData(state),rooms=d.rows;
+ const mode=state.overviewMode==='trait'?'trait':'class',chart=overviewDonutData(state,mode,state.overviewScope);
  const genderTotal=d.total,sexPercent=genderTotal?Math.round(d.planned.boys*100/genderTotal):0;
- const details=tags.map(tag=>{
-  const count=entries.get(tag)||0,cap=state.capRules[tag],fraction=d.registered?Math.min(100,count/d.registered*100):0;
-  const classCounts=rooms.map(row=>{
-   const n=state.students.filter(st=>stageZeroRoom(st.oldClass)===row.room&&
-     new Set(st.traits.map(v=>String(v).startsWith('다문화(')?'다문화':v)).has(tag)).length;
-   return '<span class="trait-room-pill">'+row.room+'반 <strong>'+n+'</strong></span>';
-  }).join('');
-  return '<div class="trait-stat-row"><div class="trait-stat-top"><strong>'+escapeHtml(tag)+'</strong>'+
-   '<span class="trait-stat-value">'+count+'명</span>'+
-   (cap===undefined?'':'<span class="trait-cap-pill">반당 최대 '+cap+'명</span>')+'</div>'+
-   '<div class="trait-stat-track"><span style="width:'+fraction+'%"></span></div>'+
-   '<div class="trait-room-list">'+classCounts+'</div></div>';
+ const charts=chart.cards.map(card=>{
+  const description=card.title+' · '+card.entries.map(e=>e.label+' '+e.count+'명').join(', ');
+  return '<article class="trait-donut-card"><div class="trait-donut-card-head"><h3>'+escapeHtml(card.title)+'</h3><small>'+
+   (card.pupils===undefined?(card.cap===undefined?'':'반당 최대 '+card.cap+'명'):'등록 '+card.pupils+'명')+'</small></div>'+
+   '<div class="trait-donut-content"><div class="trait-donut" role="img" aria-label="'+escapeHtml(description)+'" style="background:'+overviewDonutGradient(card.entries)+'"><span><b>'+card.total+'</b><small>'+card.unit+'</small></span></div>'+
+   '<ul class="trait-donut-legend" tabindex="0" aria-label="'+escapeHtml(card.title)+' 상세 인원">'+card.entries.map(e=>'<li><span class="trait-donut-dot" style="background:'+e.color+'" aria-hidden="true"></span><span>'+escapeHtml(e.label)+'</span><b>'+e.count+'명</b></li>').join('')+'</ul></div>'+
+   (!card.total?'<p class="trait-donut-empty">입력된 유의 사항 없음</p>':'')+'</article>';
  }).join('');
+ const chartPanel='<div class="overview-pane trait-overview"><div class="overview-head"><h2>유의 사항별 현황</h2><select id="overviewScope" aria-label="그래프의 반 기준"><option value="source" '+(!chart.useResult?'selected':'')+'>기존 반 기준</option><option value="result" '+(chart.useResult?'selected':'')+' '+(!state.candidates[state.activeCandidate]?'disabled':'')+'>편성 결과 기준</option></select></div>'+
+  '<div class="trait-chart-controls"><div class="trait-chart-modes" role="group" aria-label="원그래프 보기 방식"><button type="button" data-overview-mode="class" aria-pressed="'+(mode==='class')+'">반별 보기</button><button type="button" data-overview-mode="trait" aria-pressed="'+(mode==='trait')+'">유의 사항별 보기</button></div><span>'+(mode==='class'?'반마다 유의 사항 구성':'유의 사항마다 반별 인원')+'</span></div>'+
+  '<div class="trait-chart-navigation"><button type="button" data-overview-scroll="-1" aria-label="이전 원그래프">‹</button><div class="trait-donut-rail" tabindex="0" aria-label="'+(mode==='class'?'반별':'유의 사항별')+' 원그래프 · 좌우로 이동">'+(charts||'<div class="overview-empty">0단계에서 반을 설정해 주세요.</div>')+'</div><button type="button" data-overview-scroll="1" aria-label="다음 원그래프">›</button></div>'+
+  '<p class="trait-chart-note">'+(mode==='class'?'여러 항목에 해당하는 학생은 각각 집계합니다. 원의 합계는 학생 수가 아닌 유의 사항 건수입니다.':'각 유의 사항의 학생 수를 반별로 나눠 표시합니다.')+'</p></div>';
  const status=(d.named+'/'+d.registered+'명');
  $('overviewDashboard').innerHTML=
- '<div class="overview-pane trait-overview"><div class="overview-head"><h2>유의 사항별 현황</h2><small>등록된 학생 기준 · 같은 항목 중복 집계 없음</small></div>'+
- (d.registered?details:'<div class="overview-empty">1단계에서 학생별 유의 사항을 입력하면 항목별 인원과 기존 반 분포가 나타납니다.</div>')+
- '<div class="overview-actual">각 반의 인원 제한은 0단계에서 설정할 수 있습니다. <b>0명</b>은 현재 해당 항목을 선택한 학생이 없다는 뜻입니다.</div></div>'+
+ chartPanel+
  '<div class="overview-pane compact-overview"><div class="overview-head"><h2>학급·입력 현황</h2><small>'+escapeHtml(state.sourceGrade)+'학년 → '+escapeHtml(state.grade)+'학년</small></div>'+
  '<div class="compact-overview-total"><strong>'+d.total+'명</strong><span>기존 '+state.sourceClassCount+'개 반 → 내년 '+state.classCount+'개 반</span></div>'+
  '<div class="compact-gender"><span>남 '+d.planned.boys+'명</span><div class="overview-sexbar" role="img" aria-label="남 '+d.planned.boys+'명, 여 '+d.planned.girls+'명"><span class="boys" style="width:'+sexPercent+'%"></span><span class="girls" style="width:'+(100-sexPercent)+'%"></span></div><span>여 '+d.planned.girls+'명</span></div>'+
- '<div class="compact-room-list">'+rooms.map(row=>'<span>'+row.room+'반 <b>'+(Number(row.boys)||0)+(Number(row.girls)||0)+'명</b></span>').join('')+'</div>'+
+ '<div class="compact-room-list">'+rooms.map(row=>'<span>'+row.room+'반 <b>'+((Number(row.boys)||0)+(Number(row.girls)||0))+'명</b></span>').join('')+'</div>'+
  '<div class="overview-mini"><div><small>이름 입력</small><strong>'+status+'</strong></div>'+
  '<div><small>성별 입력</small><strong>'+(d.enteredBoys+d.enteredGirls)+' / '+d.registered+'명</strong></div>'+
  '<div><small>학습지표 입력</small><strong>'+d.scored+'명</strong></div>'+
@@ -681,7 +720,7 @@ function render(){
   $('sourceGrade').value=state.sourceGrade;$('sourceClassCount').value=state.sourceClassCount;
   document.querySelectorAll('.tab').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.tab===view)));
   renderPlannerSettings();
-  renderOverview();
+  if(view!=='results')renderOverview();
   $('statStudents').textContent=state.students.length+'명';$('statClasses').textContent=state.classCount+'개 반';$('statPairs').textContent=effectivePairs().length+'쌍';$('statDuplicates').textContent=duplicateNames().length+'건';
   $('rosterCount').textContent=state.students.length+'명';$('pairCount').textContent=state.pairs.length+'쌍';
   if(view==='setup'){renderSetup();renderCaps();}
@@ -1356,6 +1395,7 @@ function renderReviewCardChips(d){
   '<span class="'+(label==='남'||label==='여'?'':'trait-metric')+'">'+escapeHtml(label)+' '+value+'명</span>').join('')+'</div>';
 }
 function renderResults(){
+  renderOverview();
   const has=state.candidates.length>0;
   $('exportCsv').disabled=!has;$('print').disabled=!has;$('copyResultExcel').disabled=!has;
   $('resultVertical').setAttribute('aria-pressed',String(state.resultLayout!=='compare'));
@@ -1987,6 +2027,13 @@ function installEvents(){
   $('newTrait').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTrait()}});
   document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
   $('backToSetup').addEventListener('click',()=>showTab('setup'));
+  $('overviewDashboard').addEventListener('click',e=>{
+    const mode=e.target.closest('[data-overview-mode]');
+    if(mode){state.overviewMode=mode.dataset.overviewMode;saveState();renderOverview();$('overviewDashboard').querySelector('[data-overview-mode="'+state.overviewMode+'"]').focus();return}
+    const arrow=e.target.closest('[data-overview-scroll]');
+    if(arrow){const rail=$('overviewDashboard').querySelector('.trait-donut-rail');rail.scrollBy({left:Number(arrow.dataset.overviewScroll)*Math.max(240,rail.clientWidth),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}
+  });
+  $('overviewDashboard').addEventListener('change',e=>{if(e.target.id==='overviewScope'){state.overviewScope=e.target.value;saveState();renderOverview();$('overviewScope').focus()}});
   $('applySetup').addEventListener('click',applyStageZero);
   $('continueSetup').addEventListener('click',()=>{if(state.setupCompleted)showTab('roster')});
   $('sourceGrade').addEventListener('change',e=>{
