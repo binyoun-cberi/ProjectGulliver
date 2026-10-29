@@ -8,9 +8,11 @@
   const teamNames=['파랑 팀','노랑 팀','초록 팀','보라 팀'];
   let current=null, startedAt=0, elapsedMs=0, lastFrame=0, accumulator=0, finishAfter=0;
   let audio=null, muted=false, lastRankPaint=0, lastImpactSound=0;
-  let focusedName=null, cameraY=0;
-  const VIEW_H=canvas.height;
-  const zones=[[118,470,"1 / 갈림길","#fead5c"],[472,940,"2 / 회전 급류","#65e2cf"],[942,C.FINISH_Y,"3 / 결승 범퍼","#b7a1ff"]];
+  let focusedName=null,lastDraw=0;
+  let VIEW_H=canvas.height;
+  const V=window.ClasheetPinballView, director=V.createCamera(), camera=director.camera;
+  let previewWorld=null;
+
   const fx=[];
   const state={mode:'winner',k:2,balanced:true,labels:[],world:null,allocator:null,counts:[],capacities:[],
     arrivals:[],finished:false,target:1,speed:1.55};
@@ -18,9 +20,12 @@
   function fitArena() {
     const surface=canvas.parentElement;
     const top=surface.getBoundingClientRect().top+window.scrollY;
-    const footer=[document.querySelector('.spectator-tray'),document.querySelector('.play-bottom'),$('team-status')]
-      .reduce((height,node)=>height+(node?.offsetHeight||0),0);
-    surface.style.setProperty('--arena-space',Math.max(300,Math.floor(window.innerHeight-top-footer-18))+'px');
+    const height=Math.max(320,Math.floor(window.innerHeight-top-(current?0:12)));
+    surface.style.setProperty('--arena-space',height+'px');
+    const width=Math.max(320,Math.round(surface.clientWidth));
+    if(canvas.width!==width)canvas.width=width;
+    if(canvas.height!==height)canvas.height=height;
+    VIEW_H=canvas.height;
   }
   function say(message,bad=false) {
     $('form-message').textContent=message||'';
@@ -92,7 +97,7 @@
     $('live-rank-list').replaceChildren();
     $('marble-legend').hidden=true;
     $('marble-legend-list').replaceChildren();
-    focusedName=null;cameraY=0;
+    focusedName=null;director.reset();
     document.body.classList.remove('pinball-running');
     $('result-overlay').hidden=true;
     $('stop-btn').hidden=true;
@@ -255,7 +260,7 @@
   }
   function updateLiveRankings() {
     if(!current)return;
-    const entries=state.world.balls.filter(b=>!b.finished).sort((a,b)=>b.body.position.y-a.body.position.y);
+    const entries=state.world.ranked();
     const list=$('live-rank-list');list.replaceChildren();
     if(!finishAfter){
       const left=state.mode==='winner'?state.target-state.arrivals.length:current.total-state.arrivals.length;
@@ -303,36 +308,13 @@
     ctx.beginPath();ctx.roundRect(x,y,w,h,r);
   }
   function drawBoard() {
-    const g=ctx.createLinearGradient(0,0,C.W,C.H);
-    g.addColorStop(0,'#152444');g.addColorStop(.55,'#1c2b50');g.addColorStop(1,'#10182d');
-    ctx.fillStyle=g;ctx.fillRect(0,0,C.W,C.H);
     ctx.save();
-    for(let i=0;i<48;i++){
-      ctx.beginPath();ctx.arc((i*157+91)%C.W,(i*83+39)%C.H,1.25,0,Math.PI*2);
-      ctx.fillStyle='rgba(185,215,255,.18)';ctx.fill();
-    }
-    // Bright visible arcade zones and movement lanes, rather than an empty falling-ball board.
-    for(const [top,bottom,label,color] of zones){
-      ctx.fillStyle=color+'0D';drawPill(92,top,716,bottom-top,17);ctx.fill();
-      ctx.fillStyle=color;ctx.textAlign='right';ctx.font='bold 13px system-ui';
-
-    }
-    for(let i=0;i<38;i++){
-      const y=160+i*28;
-      ctx.strokeStyle='rgba(255,255,255,.065)';ctx.lineWidth=2;
-      ctx.beginPath();ctx.moveTo(95,y);ctx.lineTo(130,y+11);ctx.stroke();
-      ctx.beginPath();ctx.moveTo(772,y);ctx.lineTo(807,y+11);ctx.stroke();
-    }
-    ctx.strokeStyle='rgba(125,186,245,.20)';ctx.lineWidth=4;
-    drawPill(46,32,808,C.H-53,32);ctx.stroke();
-    ctx.font='900 19px system-ui';ctx.textAlign='center';ctx.fillStyle='rgba(235,244,255,.73)';
-    ctx.fillText('PINBALL RACE',450,52);
-    ctx.textAlign='left';ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='bold 12px system-ui';
-    ctx.fillText('START',92,103);
+    ctx.strokeStyle='#34516c';ctx.lineWidth=1;
+    for(let y=0;y<C.H;y+=80){ctx.beginPath();ctx.moveTo(55,y);ctx.lineTo(845,y);ctx.stroke();}
+    ctx.font='bold 20px system-ui';ctx.textAlign='center';ctx.fillStyle='#8caec8';ctx.fillText('PINBALL RACE',450,35);
     ctx.beginPath();ctx.moveTo(80,C.FINISH_Y);ctx.lineTo(820,C.FINISH_Y);
-    ctx.setLineDash([12,9]);ctx.strokeStyle='rgba(237,245,255,.74)';ctx.lineWidth=3;ctx.stroke();
-    ctx.setLineDash([]);ctx.font='bold 13px system-ui';ctx.fillStyle='rgba(255,255,255,.7)';
-    ctx.fillText('FINISH',92,C.FINISH_Y-12);
+    ctx.setLineDash([12,9]);ctx.strokeStyle='#c5ffe5';ctx.lineWidth=4;ctx.stroke();ctx.setLineDash([]);
+    ctx.font='bold 14px system-ui';ctx.fillStyle='#c5ffe5';ctx.fillText('FINISH',450,C.FINISH_Y-16);
     const teamCount=state.mode==='teams'?state.k:1;
     for(let i=0;i<teamCount;i++){
       const w=740/teamCount, x=80+i*w, full=state.mode==='teams'&&state.balanced&&state.counts[i]>=state.capacities[i];
@@ -358,7 +340,7 @@
     const isCircle=Number.isFinite(body.circleRadius)&&body.circleRadius>0;
     const tint=body.render?.fillStyle||'#879bb9';
     ctx.save();
-    ctx.shadowBlur=body.label==='bumper'?18:body.label==='spinner'?10:0;
+    ctx.shadowBlur=body.label==='bumper'?18:body.label==='spinner'?10:body.label==='rail'?5:0;
     ctx.shadowColor=tint;
     ctx.beginPath();
     if(isCircle)ctx.arc(body.position.x,body.position.y,body.circleRadius,0,Math.PI*2);
@@ -367,7 +349,7 @@
       ctx.closePath();
     }
     ctx.fillStyle=tint;ctx.fill();
-    ctx.shadowBlur=0;ctx.strokeStyle='rgba(255,255,255,.27)';ctx.lineWidth=2;ctx.stroke();
+    ctx.shadowBlur=0;ctx.strokeStyle=body.label==='rail'?'#8fdfdb':'rgba(255,255,255,.4)';ctx.lineWidth=2;ctx.stroke();
     if(body.label==='bumper'){
       const {x,y}=body.position;
       ctx.strokeStyle='#fff2c6';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,body.circleRadius*.68,0,Math.PI*2);ctx.stroke();
@@ -413,16 +395,19 @@
   }
   function drawNames(now,leaders) {
     const occupied=[];
-    const balls=current.world.balls.filter(b=>!b.finished&&b.body.position.y>=cameraY-20&&b.body.position.y<=cameraY+VIEW_H+20).sort((a,b)=>
+    const left=camera.x-canvas.width/(camera.zoom*2),top=camera.y-VIEW_H/(camera.zoom*2);
+    const right=left+canvas.width/camera.zoom,bottom=top+VIEW_H/camera.zoom;
+    const balls=current.world.balls.filter(b=>!b.finished&&b.body.position.x>left-20&&b.body.position.x<right+20&&b.body.position.y>top-20&&b.body.position.y<bottom+20).sort((a,b)=>
       Number(b.name===focusedName)-Number(a.name===focusedName)||Number(leaders.has(b))-Number(leaders.has(a))||a.index-b.index);
-    ctx.save();ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.save();ctx.font='bold '+(14/camera.zoom)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
     for(const ball of balls){
       const x=ball.body.position.x,y=ball.body.position.y;
       const text=ball.name.length>9?ball.name.slice(0,8)+'…':ball.name;
-      const w=Math.min(138,ctx.measureText(text).width+14),h=22;
+      const w=Math.min(180/camera.zoom,ctx.measureText(text).width+14/camera.zoom),h=22/camera.zoom;
       let chosen=null;
-      for(const dy of [-28,28,-53,53]){
-        const box={x:Math.max(5,Math.min(C.W-w-5,x-w/2)),y:Math.max(cameraY+44,Math.min(cameraY+VIEW_H-30,y+dy-h/2)),w,h};
+      for(const offset of [-28,28,-53,53]){
+        const dy=offset/camera.zoom;
+        const box={x:Math.max(left+5/camera.zoom,Math.min(right-w-5/camera.zoom,x-w/2)),y:Math.max(top+10/camera.zoom,Math.min(bottom-30/camera.zoom,y+dy-h/2)),w,h};
         if(!occupied.some(o=>box.x<o.x+o.w+3&&box.x+box.w+3>o.x&&box.y<o.y+o.h+3&&box.y+box.h+3>o.y)){chosen=box;break;}
       }
       if(!chosen)continue;
@@ -434,28 +419,34 @@
     ctx.restore();
   }
   function drawCourseMap() {
-    const x=856,y=65,w=28,h=VIEW_H-130,scale=h/C.H;
-    ctx.save();ctx.fillStyle='#0a1228e8';drawPill(x-7,y-10,w+14,h+20,12);ctx.fill();
-    for(const [top,bottom,,color] of zones){ctx.fillStyle=color+'50';ctx.fillRect(x,y+top*scale,w,(bottom-top)*scale);}
-    ctx.strokeStyle='#fff9';ctx.lineWidth=1;
-    ctx.strokeRect(x-2,y+cameraY*scale,w+4,VIEW_H*scale);
-    for(const ball of current.world.balls){
-      if(ball.finished)continue;
-      ctx.fillStyle=ball.color;ctx.beginPath();
-      ctx.arc(x+3+(ball.body.position.x/C.W)*(w-6),y+ball.body.position.y*scale,ball.name===focusedName?4:2.5,0,Math.PI*2);ctx.fill();
+    const x=14,y=14,w=Math.min(90,canvas.width*.14),h=Math.min(VIEW_H*.65,420),scale=Math.min(w/C.W,h/C.H);
+    ctx.save();ctx.fillStyle='#091527dc';drawPill(x-5,y-5,C.W*scale+10,C.H*scale+10,8);ctx.fill();
+    ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);ctx.strokeStyle='#829ab4';ctx.lineWidth=2/scale;
+    for(const body of current.world.staticBodies){
+      if(body.label!=='rail'&&body.label!=='island')continue;
+      ctx.beginPath();body.vertices.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.stroke();
     }
+    ctx.restore();
+    ctx.strokeStyle='#e6f6ff88';ctx.lineWidth=1;
+    ctx.strokeRect(x+(camera.x-canvas.width/(2*camera.zoom))*scale,y+(camera.y-VIEW_H/(2*camera.zoom))*scale,canvas.width/camera.zoom*scale,VIEW_H/camera.zoom*scale);
+    for(const ball of current.world.balls){if(ball.finished)continue;ctx.fillStyle=ball.color;ctx.beginPath();ctx.arc(x+ball.body.position.x*scale,y+ball.body.position.y*scale,ball.name===focusedName?4:2.5,0,Math.PI*2);ctx.fill();}
     ctx.restore();
   }
   function draw(now) {
-    ctx.clearRect(0,0,C.W,VIEW_H);
-    const active=current?.world.balls.filter(b=>!b.finished).sort((a,b)=>b.body.position.y-a.body.position.y)||[];
-    const follow=active.find(b=>b.name===focusedName)||active[0];
-    const target=finishAfter?C.H-VIEW_H:follow?Math.max(0,Math.min(C.H-VIEW_H,follow.body.position.y-VIEW_H*.55)):current?C.H-VIEW_H:0;
-    cameraY+=(target-cameraY)*.08;
-    ctx.save();ctx.translate(0,-cameraY);
+    const drawDelta=Math.min(70,now-lastDraw||16.67);lastDraw=now;
+    ctx.fillStyle='#080f1c';ctx.fillRect(0,0,canvas.width,VIEW_H);
+    const active=current?current.world.ranked():[];
+    if(current&&now-current.launchedAt<1800){
+      camera.x=450;camera.y=250;camera.zoom=Math.min(canvas.width/900,VIEW_H/550);camera.slowMotion=1;
+    }else if(current){
+      director.update({ranked:active,focusedName,remaining:state.mode==='winner'?state.target-state.arrivals.length:1,
+        arrived:state.arrivals.length,viewWidth:canvas.width,viewHeight:VIEW_H,finishY:C.FINISH_Y,worldHeight:C.H,dt:drawDelta,finished:Boolean(finishAfter)});
+    }else{camera.x=450;camera.y=560;camera.zoom=Math.min(canvas.width/1000,VIEW_H/1250);}
+    ctx.save();ctx.translate(canvas.width/2,VIEW_H/2);ctx.scale(camera.zoom,camera.zoom);ctx.translate(-camera.x,-camera.y);
     drawBoard();
+    const board=current?.world||previewWorld;
+    if(board)for(const body of board.staticBodies)drawBody(body);
     if(current){
-      for(const body of current.world.staticBodies)drawBody(body);
       const leaders=new Set(active.slice(0,6));
       for(const ball of current.world.balls)drawBall(ball,now,leaders.has(ball));
       drawEffects(now);drawNames(now,leaders);
@@ -469,7 +460,7 @@
     if(current&&!state.finished){
       if(!lastFrame)lastFrame=now;
       const delta=Math.min(70,Math.max(0,now-lastFrame));
-      if(!finishAfter&&now-current.launchedAt>1800) accumulator+=delta*state.speed;
+      if(!finishAfter&&now-current.launchedAt>1800) accumulator+=delta*state.speed*camera.slowMotion;
       elapsedMs=now-startedAt;
       let steps=0;
       while(!finishAfter&&accumulator>=1000/60&&steps<6){
@@ -533,5 +524,6 @@
   window.addEventListener('resize',fitArena);
   const layoutObserver=new ResizeObserver(fitArena);
   for(const node of document.querySelectorAll('.page-heading,.play-toolbar,.spectator-tray,#team-status'))layoutObserver.observe(node);
+  previewWorld=C.createWorld(M,['미리보기1','미리보기2'],()=>.5);
   restore();requestAnimationFrame(fitArena);requestAnimationFrame(loop);
 })();
