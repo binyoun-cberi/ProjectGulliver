@@ -1,0 +1,54 @@
+const {chromium}=require('playwright');
+const assert=require('node:assert/strict');
+(async()=>{
+ const fs=require('fs'),path=require('path');const root=path.resolve(__dirname,'..');const server=require('http').createServer((req,res)=>{try{const f=path.join(root,decodeURIComponent(req.url.split('?')[0]));res.setHeader('Content-Type',f.endsWith('.js')?'application/javascript':f.endsWith('.css')?'text/css':'text/html; charset=utf-8');res.end(fs.readFileSync(f));}catch{res.statusCode=404;res.end()}});await new Promise(r=>server.listen(8765,'127.0.0.1',r));
+ const browser=await chromium.launch({...(process.env.CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.CHROMIUM_EXECUTABLE_PATH}:{}),headless:true,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1440,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://localhost:8765/'+encodeURIComponent('반 편성 도우미.html'));
+ const paste=async(sel,text)=>page.locator(sel).first().evaluate((el,text)=>{el.focus();const d=new DataTransfer();d.setData('text/plain',text);el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:d,bubbles:true,cancelable:true}));},text);
+ await paste('[data-source-room="1"]','남학생\t여학생\n2\t2\n1\t1\n0\t0');
+ assert.equal(await page.locator('[data-source-room="2"][data-source-gender="girls"]').inputValue(),'1');
+ await page.locator('[data-source-room="1"]').first().focus();await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>document.activeElement.dataset.sourceRoom),'2');
+ await page.locator('#applySetup').click();
+ await paste('[data-key="name"]','이름\t성별\t학습지표\n김하늘\t남\t90\n박봄\t여자\t0\n이솔\tM\t88\n최별\tF\t77\n한빛\t남학생\t86\n윤해\t여학생\t100');
+ assert.equal(await page.locator('[data-key="gender"]').nth(3).inputValue(),'여');
+ await paste('[data-key="gender"]','여\n남\nF');
+ assert.deepEqual(await page.locator('[data-key="gender"]').evaluateAll(els=>els.map(el=>el.value)),['여','남','여','여','남','여']);
+ await page.locator('[data-key="name"]').nth(0).click();await page.locator('[data-key="name"]').nth(2).click({modifiers:['Control']});
+ assert.equal(await page.locator('.roster-cell-selected').count(),2);
+ await page.locator('[data-roster-format="bold"]').click();await page.locator('[data-roster-format="italic"]').click();await page.locator('[data-roster-format="underline"]').click();await page.locator('[data-roster-format="strike"]').click();
+ await page.locator('#rosterApplyColor').click();
+ const style=await page.locator('[data-key="name"]').nth(2).evaluate(el=>({weight:getComputedStyle(el).fontWeight,style:getComputedStyle(el).fontStyle,dec:getComputedStyle(el).textDecorationLine}));
+ assert.equal(style.weight,'700');assert.equal(style.style,'italic');assert.match(style.dec,/underline/);assert.match(style.dec,/line-through/);
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('classplanner-v1-local')));assert.equal(saved.students[0].color,'#fff0b9');assert.ok(!saved.students[1].color);assert.equal(saved.students[2].cellFormats.name.bold,true);
+ await page.locator('[data-key="gender"]').nth(0).click();await page.locator('[data-key="level"]').nth(2).click({modifiers:['Shift']});assert.equal(await page.locator('.roster-cell-selected').count(),6);
+ await page.locator('[data-roster-format="bold"]').click();
+ await page.reload();assert.equal(await page.locator('[data-key="name"]').nth(2).evaluate(el=>getComputedStyle(el).fontStyle),'italic');
+
+ // Formatting is reversible and survives normalized backup restore.
+ await page.locator('[data-key="name"]').first().click();
+ await page.locator('[data-roster-format="bold"]').click();
+ assert.equal(await page.locator('[data-key="name"]').first().evaluate(el=>getComputedStyle(el).fontWeight),'400');
+ await page.locator('#rosterUndo').click();
+ assert.equal(await page.locator('[data-key="name"]').first().evaluate(el=>getComputedStyle(el).fontWeight),'700');
+ assert.equal(await page.evaluate(()=>normalize(JSON.parse(localStorage.getItem('classplanner-v1-local'))).students[0].cellFormats.name.italic),true);
+ // Normal typing followed by Tab must retain the next cell's focus.
+ await page.locator('[data-key="name"]').first().fill('수정이름');await page.keyboard.press('Tab');
+ assert.equal(await page.locator('[data-key="name"]').first().inputValue(),'수정이름');
+ await page.context().grantPermissions(['clipboard-read','clipboard-write']);
+ await page.evaluate(()=>navigator.clipboard.writeText('M\nF'));
+ await page.locator('[data-key="gender"]').first().click();await page.keyboard.press('Control+V');
+ assert.equal(await page.locator('[data-key="gender"]').first().inputValue(),'남');
+ assert.equal(await page.locator('[data-key="gender"]').nth(1).inputValue(),'여');
+ await page.locator('#generateQuick').click();
+ await page.locator('.assigned').first().waitFor();
+ assert.equal(await page.locator('.student-name-highlight').filter({hasText:'수정이름'}).evaluate(el=>getComputedStyle(el).fontStyle),'italic');
+ await page.locator('[data-tab="roster"]').click();
+ const before=await page.evaluate(()=>state.candidates.length);
+ await page.locator('[data-key="name"]').first().click();await page.locator('#rosterClearColor').click();
+ assert.equal(await page.evaluate(()=>state.candidates.length),before);
+ assert.ok(before>0);
+ await page.setViewportSize({width:390,height:844});
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ assert.deepEqual(errors,[]);console.log('PASS: setup paste / navigation / six student import / gender paste / Ctrl and Shift selection / four styles / selected color / refresh persistence');
+ await browser.close();server.close();
+})().catch(e=>{console.error(e);process.exit(1)});
