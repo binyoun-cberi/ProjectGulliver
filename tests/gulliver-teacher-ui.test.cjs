@@ -385,6 +385,8 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
 
     // Drag-to-class review: use same-row comparison view, where both classes are visible at once.
     await page.locator('#resultCompare').click();
+    // Keep source handles and class headers together below the sticky stage navigation.
+    await page.evaluate(()=>{const grid=document.getElementById('resultGrid').getBoundingClientRect(),nav=document.querySelector('.tabs').getBoundingClientRect();window.scrollTo(0,scrollY+grid.top-nav.bottom-16)});
     const reviewChoice=await page.evaluate(()=>{
       const plan=state.candidates[state.activeCandidate];
       const visible=Array.from(document.querySelectorAll('#resultGrid .class-body')).flatMap(body=>Array.from(body.querySelectorAll('[data-result-student]')).slice(0,4)).map(el=>state.students.find(st=>st.id===el.dataset.resultStudent)).filter(Boolean);

@@ -42,3 +42,11 @@ test('항목 추가·인원 변경에도 기존 항목과 기존 반의 색은 �
  f.students[0].traits.push('사회성');const after=api.overviewDonutData(f,'class');
  for(const e of before.cards[0].entries)assert.equal(after.cards[0].entries.find(x=>x.label===e.label).color,e.color);
 });
+
+test('결과 인포그래픽은 명단의 빈 틀·미배정 학생을 인원에 섞지 않는다',()=>{
+ const f=fixture();f.students.push({id:'blank',oldClass:'1반',traits:['특수']});
+ const d=api.overviewDonutData(f,'class','result');
+ assert.equal(d.registered,4);assert.equal(d.cards.length,2);
+ assert.equal(d.cards.reduce((n,c)=>n+c.pupils,0),4);
+ assert.equal(api.overviewDonutData(f,'trait','result').cards.find(c=>c.title==='특수').total,2);
+});

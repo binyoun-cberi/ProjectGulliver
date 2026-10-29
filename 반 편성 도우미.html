@@ -369,10 +369,7 @@
  </section>
  <section id="view-roster" class="card hidden" aria-label="학생 명단"><div class="section-head"><div><h2>학생 명단 <span id="rosterCount" class="count-pill">0명</span></h2><p>이름·성별·학습지표·유의 사항을 입력하세요.</p></div><div class="actions"><button id="backToSetup" class="btn soft">0단계 수정</button><input id="searchStudent" aria-label="학생 검색" placeholder="이름 · 기존 반 검색" style="width:160px"><button id="addStudent" class="btn primary">+ 학생 추가</button></div></div>
  <div id="rosterGenderSummary" aria-live="polite"></div><div class="helper no-print" style="margin:8px 0">0단계 입력 없이 엑셀 명단을 바로 붙여넣을 수 있습니다. 학년·반·번호·이름·성별 제목 행도 인식하며, 인원은 0단계에 자동 반영됩니다.</div>
- <div class="roster-sheet-tools no-print"><div><strong>엑셀처럼 바로 입력</strong><span id="rosterRangeStatus">셀을 선택하거나 엑셀에서 여러 행을 붙여넣으세요.</span></div><button id="toggleTraitRemote" class="btn small" type="button" aria-controls="traitRemote" aria-expanded="true">유의 사항 리모컨</button><div id="rosterFormatTools" class="actions" role="group" aria-label="선택 셀 서식">
- <label>채우기 <input id="rosterFillColor" type="color" value="#fff0b9" aria-label="선택 셀 배경색"></label><button id="rosterApplyColor" class="btn small" type="button">색 적용</button><button id="rosterClearColor" class="btn small" type="button">색 지우기</button>
- <button data-roster-format="bold" class="btn small" type="button" aria-label="굵게" aria-pressed="false"><b>B</b></button><button data-roster-format="italic" class="btn small" type="button" aria-label="기울임" aria-pressed="false"><i>I</i></button><button data-roster-format="underline" class="btn small" type="button" aria-label="밑줄" aria-pressed="false"><u>U</u></button><button data-roster-format="strike" class="btn small" type="button" aria-label="취소선" aria-pressed="false"><s>S</s></button>
- </div><div class="actions"><button id="rosterFillDown" class="btn small" type="button" disabled>아래로 채우기 (Ctrl+D)</button><button id="rosterUndo" class="btn small" type="button" disabled>되돌리기 (Ctrl+Z)</button></div></div><div class="table-wrap roster-sheet-wrap"><datalist id="rosterGenderOptions"><option value="남"><option value="여"></datalist><table class="student-table roster-sheet" aria-label="엑셀형 학생 명단 입력표"><thead id="rosterHead"></thead><tbody id="rosterBody"></tbody></table></div><div class="helper privacy-note">같은 반에 배정하면 안 되는 학생은 3단계에서 지정해 주세요.</div>
+ <div class="roster-sheet-tools no-print"><div><strong>엑셀처럼 바로 입력</strong><span id="rosterRangeStatus">셀을 선택하거나 엑셀에서 여러 행을 붙여넣으세요.</span></div><button id="toggleTraitRemote" class="btn small" type="button" aria-controls="traitRemote" aria-expanded="true">편집 리모컨</button><div class="actions"><button id="rosterFillDown" class="btn small" type="button" disabled>아래로 채우기 (Ctrl+D)</button><button id="rosterUndo" class="btn small" type="button" disabled>되돌리기 (Ctrl+Z)</button></div></div><div class="table-wrap roster-sheet-wrap"><datalist id="rosterGenderOptions"><option value="남"><option value="여"></datalist><table class="student-table roster-sheet" aria-label="엑셀형 학생 명단 입력표"><thead id="rosterHead"></thead><tbody id="rosterBody"></tbody></table></div><div class="helper privacy-note">같은 반에 배정하면 안 되는 학생은 3단계에서 지정해 주세요.</div>
  </section>
  <section id="view-preset" class="card hidden" aria-label="교사가 먼저 배치할 학생"><div class="section-head"><div><h2>교사가 먼저 학생 배치하기 <span id="presetCount" class="count-pill">0명 확정</span></h2><p>고정할 학생을 선택하세요.</p></div><div class="actions"><button id="undoPreset" class="btn" disabled>최근 배치 되돌리기</button><button id="clearPresets" class="btn danger">우선 배치 전체 해제</button><button id="fillRemaining" class="btn primary">남은 학생 자동 채우기</button></div></div><div id="presetStatus" class="helper"></div><div class="preset-workspace"><div class="preset-list"><div class="section-head"><h3>학생 찾아 배치하기</h3><span id="presetRemaining" class="count-pill">0명</span></div><input id="presetSearch" class="wide" aria-label="우선 배치 학생 검색" placeholder="이름 · 유의 사항 · 기존 반 검색"><div class="preset-filters"><label>배치 상태<select id="presetFilterStatus"><option value="free">미배치 학생</option><option value="all">모든 학생</option><option value="fixed">배치한 학생</option></select></label><label>기존 반<select id="presetFilterClass"></select></label><label>유의 사항<select id="presetFilterTrait"></select></label><label>정렬<select id="presetSort"><option value="name">이름순</option><option value="score">학습지표 높은순</option><option value="oldClass">기존 반·번호순</option></select></label></div><div class="preset-selection"><label><input type="checkbox" id="presetSelectAll"> 표시된 학생 선택</label><span id="presetVisibleCount" class="muted"></span></div><div id="presetUnassigned" class="preset-people"></div></div><div id="presetClassGrid" class="preset-classes"></div></div><div class="preset-batch"><strong id="presetSelectedCount" aria-live="polite">0명 선택</strong><label for="presetTarget">배치할 반</label><select id="presetTarget"></select><button id="assignSelected" class="btn primary" disabled>선택 학생 배치</button><button id="clearSelection" class="btn">선택 취소</button><button id="fillRemainingBottom" class="btn">남은 학생 자동 채우기</button></div><div id="presetFeedback" class="preset-feedback" role="status" aria-live="polite"></div></section>
  <section id="view-rules" class="card hidden" aria-label="반 편성 조건"><div class="section-head"><div><h2>같은 반 금지 바구니 <span id="basketCount" class="count-pill">0개</span></h2><p>바구니에 함께 넣은 학생은 서로 다른 반으로 배정됩니다.</p></div><div class="actions"><button id="addBasket" class="btn primary">+ 바구니 만들기</button></div></div>
@@ -380,6 +377,7 @@
  <div class="basket-zone"><div class="basket-source"><div class="basket-source-head"><strong>학생 찾기</strong><span>선택 또는 드래그</span></div><label class="field"><input id="basketSearch" type="search" placeholder="이름 · 기존 반 · 번호" aria-label="분리 학생 검색"></label><div id="basketSelected" class="basket-selected-label" aria-live="polite">학생을 선택해 바구니에 담으세요.</div><div id="basketPool" class="basket-pool"></div></div><div id="basketGrid" class="basket-grid"></div></div>
  <div class="section-head"><div><h2>개별 분리 관계 <span id="pairCount" class="count-pill">0쌍</span></h2><p>서로 다른 반에 배정할 두 학생을 선택하세요.</p></div></div><div class="constraint-form"><label class="field">학생 A <select id="pairA" class="wide"></select></label><label class="field">학생 B <select id="pairB" class="wide"></select></label><button id="addPair" class="btn primary">분리 관계 추가</button></div><div id="pairList"></div></section>
  <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>완성된 반 편성표</h2><p>편성 결과를 확인하고 필요한 학생을 옮겨 보세요.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="copyResultExcel" class="btn" disabled>엑셀에 복사</button><button id="exportCsv" class="btn" disabled>엑셀용 파일 저장</button><button id="print" class="btn" disabled>인쇄 · PDF 저장</button></div></div>
+ <div id="resultOverview" class="result-overview no-print" aria-label="편성 결과 인포그래픽" hidden></div>
  <div class="result-layout-bar no-print"><div class="result-layout-picker" role="group" aria-label="반 편성표 배치 방식"><span>반 배치</span><button id="resultVertical" type="button" data-result-layout="vertical" aria-pressed="true">세로형</button><button id="resultCompare" type="button" data-result-layout="compare" aria-pressed="false">가로 비교형</button></div><span id="resultLayoutHint" class="result-layout-hint">반을 세로로 펼쳐 봅니다.</span></div>
  <div class="move-guide no-print"><span>학생 카드를 다른 반으로 드래그하세요. 태블릿에서는 학생 선택 → 대상 반의 「여기로 이동」을 누르면 됩니다.</span><button id="undoMove" class="btn small" disabled>마지막 이동 되돌리기</button></div><div id="moveSelection" class="move-selection no-print" aria-live="polite"></div><div id="movePreview" class="move-preview no-print" aria-live="polite"></div><div id="moveHistoryResult" class="move-history" aria-live="polite"></div>
  <div id="resultMessage" class="helper result-help">먼저 학생 명단을 작성한 다음 자동 편성하기를 눌러 주세요. 결과에서 학생의 반을 직접 바꾸거나 다른 편성안을 선택할 수도 있습니다.</div><div id="alternatives" class="alternatives"></div><div id="validation"></div><div id="report"></div><div id="resultGrid" class="result-grid" data-layout="vertical" aria-label="반별 편성 학생 목록"></div><section id="resultPrintSheet" aria-label="인쇄용 반 편성표"></section><div class="helper result-help">최종 확정 전에 반별 구성을 확인하세요.</div></section>
@@ -433,9 +431,12 @@
 </dialog>
 <dialog id="noteDialog"><h3 id="noteTitle">학생 메모</h3><label class="field">참고 사항 (선택) <textarea id="noteText" placeholder="편성 시 교사가 참고할 사항을 짧게 적어 주세요."></textarea></label><div class="dialog-actions"><button id="cancelNote" class="btn">취소</button><button id="saveNote" class="btn primary">저장</button></div></dialog>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<aside id="traitRemote" class="trait-remote no-print" aria-label="유의 사항 리모컨" hidden>
- <div id="traitRemoteGrip" class="trait-remote-grip" tabindex="0" aria-label="리모컨 이동 · 방향키로도 이동"><strong>⠿ 유의 사항</strong><div class="actions"><button id="collapseTraitRemote" class="btn small" type="button" aria-controls="traitRemoteBody" aria-expanded="true">접기</button><button id="closeTraitRemote" class="btn ghost small" type="button" aria-label="유의 사항 리모컨 닫기">×</button></div></div>
- <div id="traitRemoteBody" class="trait-remote-body"><input id="traitRemoteSearch" type="search" placeholder="유의 사항 검색" aria-label="리모컨 유의 사항 검색"><div id="traitRemotePalette" class="trait-remote-palette" role="group" aria-label="끌어 놓을 유의 사항"></div><p id="traitRemoteStatus" class="trait-remote-status" role="status"></p><div class="trait-remote-context"><strong id="traitRemoteStudent">학생 행을 선택하세요</strong><button id="traitRemoteNote" class="btn small" type="button" disabled>참고 메모</button><label id="traitRemoteFixedWrap" hidden>교사 우선 배치<select id="traitRemoteFixed" disabled></select></label></div></div>
+<aside id="traitRemote" class="trait-remote no-print" aria-label="학생 편집 리모컨" hidden>
+ <div id="traitRemoteGrip" class="trait-remote-grip" tabindex="0" aria-label="리모컨 이동 · 방향키로도 이동"><strong>⠿ 편집 리모컨</strong><div class="actions"><button id="collapseTraitRemote" class="btn small" type="button" aria-controls="traitRemoteBody" aria-expanded="true">접기</button><button id="closeTraitRemote" class="btn ghost small" type="button" aria-label="편집 리모컨 닫기">×</button></div></div>
+ <div id="traitRemoteBody" class="trait-remote-body"><section class="remote-section remote-format"><div class="remote-section-head"><h3>색상 · 글씨</h3><span id="remoteSelectionCount">셀을 선택하세요</span></div><div class="remote-swatches" role="group" aria-label="빠른 채우기 색상"><button type="button" class="remote-swatch" data-remote-color="#fff0b9" style="--swatch:#fff0b9" aria-label="노랑 채우기"></button><button type="button" class="remote-swatch" data-remote-color="#f8d4d4" style="--swatch:#f8d4d4" aria-label="분홍 채우기"></button><button type="button" class="remote-swatch" data-remote-color="#dcebd8" style="--swatch:#dcebd8" aria-label="초록 채우기"></button><button type="button" class="remote-swatch" data-remote-color="#d5e9f8" style="--swatch:#d5e9f8" aria-label="파랑 채우기"></button><button type="button" class="remote-swatch" data-remote-color="#e8ddf3" style="--swatch:#e8ddf3" aria-label="보라 채우기"></button><button type="button" class="remote-swatch" data-remote-color="#e8ecef" style="--swatch:#e8ecef" aria-label="회색 채우기"></button></div><div id="rosterFormatTools" class="actions" role="group" aria-label="선택 셀 서식">
+ <label>채우기 <input id="rosterFillColor" type="color" value="#fff0b9" aria-label="선택 셀 배경색"></label><button id="rosterApplyColor" class="btn small" type="button">색 적용</button><button id="rosterClearColor" class="btn small" type="button">색 지우기</button>
+ <button data-roster-format="bold" class="btn small" type="button" aria-label="굵게" aria-pressed="false"><b>B</b></button><button data-roster-format="italic" class="btn small" type="button" aria-label="기울임" aria-pressed="false"><i>I</i></button><button data-roster-format="underline" class="btn small" type="button" aria-label="밑줄" aria-pressed="false"><u>U</u></button><button data-roster-format="strike" class="btn small" type="button" aria-label="취소선" aria-pressed="false"><s>S</s></button>
+ </div><p class="remote-tip">Ctrl·⌘로 여러 칸, Shift로 범위 선택</p></section><section class="remote-section"><div class="remote-section-head"><h3>유의 사항</h3><span>행에 끌어 놓기</span></div><input id="traitRemoteSearch" type="search" placeholder="유의 사항 검색" aria-label="리모컨 유의 사항 검색"><div id="traitRemotePalette" class="trait-remote-palette" role="group" aria-label="끌어 놓을 유의 사항"></div><p id="traitRemoteStatus" class="trait-remote-status" role="status"></p></section><div class="trait-remote-context"><strong id="traitRemoteStudent">학생 행을 선택하세요</strong><button id="traitRemoteNote" class="btn small" type="button" disabled>참고 메모</button><label id="traitRemoteFixedWrap" hidden>교사 우선 배치<select id="traitRemoteFixed" disabled></select></label></div></div>
 </aside>
 <script src="class-planner-direct-input.js"></script><script src="class-planner-trait-remote.js"></script>
 <script>
@@ -653,8 +654,9 @@ function plannerSummaryData(current){
 /* OVERVIEW_DONUT_START: counts are trait memberships, not mutually exclusive pupils. */
 const OVERVIEW_COLORS=['#448d73','#d58b47','#738ac6','#ba6990','#579bb0','#a19a42','#926fc0','#bf7660','#6f9d48','#608194','#ad8658','#9d7182'];
 function overviewDonutData(current,mode='class',scope='source'){
- const students=current.students||[],candidate=current.candidates?.[current.activeCandidate||0];
+ const candidate=current.candidates?.[current.activeCandidate||0];
  const useResult=scope==='result'&&!!candidate;
+ const students=(current.students||[]).filter(st=>!useResult||(Number(candidate.assign[st.id])>=1&&Number(candidate.assign[st.id])<=current.classCount));
  const normalized=students.map(st=>({
   room:useResult?Number(candidate.assign[st.id])||0:Number(String(st.oldClass||'').match(/\d+/)?.[0])||0,
   tags:[...new Set((st.traits||[]).map(t=>String(t).startsWith('다문화(')?'다문화':String(t)))]
@@ -679,10 +681,7 @@ function overviewDonutGradient(entries){
  return 'conic-gradient('+entries.filter(e=>e.count>0).map(e=>{const start=end;end+=e.count/total*100;return e.color+' '+start.toFixed(5)+'% '+end.toFixed(5)+'%'}).join(',')+')';
 }
 /* OVERVIEW_DONUT_END */
-function renderOverview(){
- const d=plannerSummaryData(state),rooms=d.rows;
- const mode=state.overviewMode==='trait'?'trait':'class',chart=overviewDonutData(state,mode,state.overviewScope);
- const genderTotal=d.planned.boys+d.planned.girls,sexPercent=genderTotal?Math.round(d.planned.boys*100/genderTotal):0;
+function renderDonutPanel(chart,mode,result=false){
  const charts=chart.cards.map(card=>{
   const description=card.title+' · '+card.entries.map(e=>e.label+' '+e.count+'명').join(', ');
   return '<article class="trait-donut-card"><div class="trait-donut-card-head"><h3>'+escapeHtml(card.title)+'</h3><small>'+
@@ -691,10 +690,16 @@ function renderOverview(){
    '<ul class="trait-donut-legend" tabindex="0" aria-label="'+escapeHtml(card.title)+' 상세 인원">'+card.entries.map(e=>'<li><span class="trait-donut-dot" style="background:'+e.color+'" aria-hidden="true"></span><span>'+escapeHtml(e.label)+'</span><b>'+e.count+'명</b></li>').join('')+'</ul></div>'+
    (!card.total?'<p class="trait-donut-empty">입력된 유의 사항 없음</p>':'')+'</article>';
  }).join('');
- const chartPanel='<div class="overview-pane trait-overview"><div class="overview-head"><h2>유의 사항별 현황</h2><select id="overviewScope" aria-label="그래프의 반 기준"><option value="source" '+(!chart.useResult?'selected':'')+'>기존 반 기준</option><option value="result" '+(chart.useResult?'selected':'')+' '+(!state.candidates[state.activeCandidate]?'disabled':'')+'>편성 결과 기준</option></select></div>'+
+ return '<div class="overview-pane trait-overview"><div class="overview-head"><h2>'+(result?'편성 결과 · 유의 사항':'유의 사항별 현황')+'</h2>'+(result?'<small>선택한 편성안 기준</small>':'<select id="overviewScope" aria-label="그래프의 반 기준"><option value="source" '+(!chart.useResult?'selected':'')+'>기존 반 기준</option><option value="result" '+(chart.useResult?'selected':'')+' '+(!state.candidates[state.activeCandidate]?'disabled':'')+'>편성 결과 기준</option></select>')+'</div>'+
   '<div class="trait-chart-controls"><div class="trait-chart-modes" role="group" aria-label="원그래프 보기 방식"><button type="button" data-overview-mode="class" aria-pressed="'+(mode==='class')+'">반별 보기</button><button type="button" data-overview-mode="trait" aria-pressed="'+(mode==='trait')+'">유의 사항별 보기</button></div><span>'+(mode==='class'?'반마다 유의 사항 구성':'유의 사항마다 반별 인원')+'</span></div>'+
   '<div class="trait-chart-navigation"><button type="button" data-overview-scroll="-1" aria-label="이전 원그래프">‹</button><div class="trait-donut-rail" tabindex="0" aria-label="'+(mode==='class'?'반별':'유의 사항별')+' 원그래프 · 좌우로 이동">'+(charts||'<div class="overview-empty">0단계에서 반을 설정해 주세요.</div>')+'</div><button type="button" data-overview-scroll="1" aria-label="다음 원그래프">›</button></div>'+
   '<p class="trait-chart-note">'+(mode==='class'?'여러 항목에 해당하는 학생은 각각 집계합니다. 원의 합계는 학생 수가 아닌 유의 사항 건수입니다.':'각 유의 사항의 학생 수를 반별로 나눠 표시합니다.')+'</p></div>';
+}
+function renderOverview(){
+ const d=plannerSummaryData(state),rooms=d.rows;
+ const mode=state.overviewMode==='trait'?'trait':'class',chart=overviewDonutData(state,mode,state.overviewScope);
+ const genderTotal=d.planned.boys+d.planned.girls,sexPercent=genderTotal?Math.round(d.planned.boys*100/genderTotal):0;
+ const chartPanel=renderDonutPanel(chart,mode);
  const status=(d.named+'/'+d.registered+'명');
  $('overviewDashboard').innerHTML=
  chartPanel+
@@ -883,6 +888,7 @@ function rosterCellFormat(id,key){
 }
 function rosterPaintFormatControls(){
  const cells=rosterSelectedCells();
+ $('remoteSelectionCount').textContent=cells.length?cells.length+'칸 선택':'셀을 선택하세요';
  document.querySelectorAll('[data-roster-format]').forEach(b=>b.setAttribute('aria-pressed',String(cells.length>0&&cells.every(([id,key])=>rosterCellFormat(id,key)[b.dataset.rosterFormat]===true))));
  const color=cells.length?rosterCellFormat(...cells[0]).background:'';
  if(color)$('rosterFillColor').value=color;
@@ -1537,8 +1543,18 @@ function renderReviewCardChips(d){
  return '<div class="class-summary-chips">'+chips.map(([label,value])=>
   '<span class="'+(label==='남'||label==='여'?'':'trait-metric')+'">'+escapeHtml(label)+' '+value+'명</span>').join('')+'</div>';
 }
+function renderResultOverview(){
+ const host=$('resultOverview'),candidate=state.candidates[state.activeCandidate];
+ host.hidden=!candidate;if(!candidate){host.innerHTML='';return}
+ const rows=reportData(candidate),mode=state.overviewMode==='trait'?'trait':'class';
+ host.innerHTML='<div class="result-overview-heading"><div><span>RESULT OVERVIEW</span><h3>우리 반 구성 한눈에</h3></div><span>편성안 '+String.fromCharCode(65+state.activeCandidate)+' · '+rows.reduce((n,r)=>n+r.total,0)+'명</span></div>'+renderDonutPanel(overviewDonutData(state,mode,'result'),mode,true)+
+ '<div class="result-room-stats">'+rows.map((r,i)=>{
+ const unknown=r.total-r.boys-r.girls,pct=r.total?r.boys/r.total*100:0,gpct=r.total?r.girls/r.total*100:0;
+ return '<article><div class="result-room-title"><h4>'+escapeHtml(displayClass(i+1))+'</h4><strong>'+r.total+'<small>명</small></strong></div><div class="overview-sexbar" role="img" aria-label="남 '+r.boys+'명, 여 '+r.girls+'명, 성별 미입력 '+unknown+'명"><span class="boys" style="width:'+pct+'%"></span><span class="girls" style="width:'+gpct+'%"></span></div><p><span>남 '+r.boys+' · 여 '+r.girls+(unknown?' · 미입력 '+unknown:'')+'</span><span>학습 평균 <b>'+(r.levelN?(r.levelSum/r.levelN).toFixed(2):'—')+'</b></span></p></article>';
+ }).join('')+'</div>';
+}
 function renderResults(){
-  renderOverview();
+  renderOverview();renderResultOverview();
   const has=state.candidates.length>0;
   $('exportCsv').disabled=!has;$('print').disabled=!has;$('copyResultExcel').disabled=!has;
   $('resultVertical').setAttribute('aria-pressed',String(state.resultLayout!=='compare'));
@@ -2179,11 +2195,11 @@ function installEvents(){
   $('newTrait').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTrait()}});
   document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
   $('backToSetup').addEventListener('click',()=>showTab('setup'));
-  $('overviewDashboard').addEventListener('click',e=>{
+  for(const dashboard of [$('overviewDashboard'),$('resultOverview')])dashboard.addEventListener('click',e=>{
     const mode=e.target.closest('[data-overview-mode]');
-    if(mode){state.overviewMode=mode.dataset.overviewMode;saveState();renderOverview();$('overviewDashboard').querySelector('[data-overview-mode="'+state.overviewMode+'"]').focus();return}
+    if(mode){state.overviewMode=mode.dataset.overviewMode;saveState();renderOverview();renderResultOverview();dashboard.querySelector('[data-overview-mode="'+state.overviewMode+'"]').focus();return}
     const arrow=e.target.closest('[data-overview-scroll]');
-    if(arrow){const rail=$('overviewDashboard').querySelector('.trait-donut-rail');rail.scrollBy({left:Number(arrow.dataset.overviewScroll)*Math.max(240,rail.clientWidth),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}
+    if(arrow){const rail=dashboard.querySelector('.trait-donut-rail');rail.scrollBy({left:Number(arrow.dataset.overviewScroll)*Math.max(240,rail.clientWidth),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}
   });
   $('overviewDashboard').addEventListener('change',e=>{if(e.target.id==='overviewScope'){state.overviewScope=e.target.value;saveState();renderOverview();$('overviewScope').focus()}});
   $('startRosterDirect').addEventListener('click',()=>showTab('roster'));

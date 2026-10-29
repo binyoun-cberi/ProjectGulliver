@@ -14,3 +14,23 @@
 @media print{.trait-remote,#toggleTraitRemote{display:none!important}}
 
 @media(min-width:1700px){.trait-remote-space .roster-sheet-wrap{margin-right:0}}
+/* One compact editing surface for selection formatting and student traits. */
+.trait-remote{width:260px;border-color:#cbded6;border-radius:18px;box-shadow:0 16px 48px #173e2c24,0 2px 6px #173e2c0c}
+.trait-remote-grip{padding:12px;background:#eff7f3;border-bottom:1px solid #dceae3}.trait-remote-grip strong{color:#24624f;letter-spacing:-.03em}
+.trait-remote-body{padding:12px}.remote-section+.remote-section{margin-top:14px;padding-top:13px;border-top:1px solid #e4ece7}
+.remote-section-head{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-bottom:9px}.remote-section-head h3{margin:0;font-size:12px;color:#355b4c}.remote-section-head span{font-size:10px;color:#7a8d83}
+.remote-swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:10px}.remote-swatch{height:26px;border:1px solid #00000014;border-radius:7px;background:var(--swatch);box-shadow:inset 0 0 0 2px #ffffff65}.remote-swatch:hover{transform:translateY(-2px);border-color:#729b88}
+.trait-remote #rosterFormatTools{display:flex;flex-wrap:wrap;gap:5px}.trait-remote #rosterFormatTools label{font-size:11px;flex:1}.trait-remote #rosterFillColor{width:32px;height:27px;padding:2px;border-radius:6px}.trait-remote #rosterFormatTools button{font-size:11px;min-height:29px;padding:4px 7px}.trait-remote #rosterFormatTools [data-roster-format]{flex:1;min-width:40px}
+.remote-tip{margin:8px 0 0;color:#8b9a91;font-size:10px}.remote-section>input{width:100%;font-size:11px;padding:7px 9px;margin-bottom:8px;border-radius:8px}
+.trait-remote-palette button{padding:6px 9px;border-radius:99px;background:#f5f9f6;border-color:#dce8df;font-size:11px}.trait-remote-context{background:#f5f8f6;border:0;border-radius:10px;margin-top:12px;padding:10px}.trait-remote-context>strong{color:#315e4a}
+@media(min-width:1100px) and (max-width:1699px){.trait-remote-space .roster-sheet-wrap{margin-right:270px}}
+@media(max-width:700px){.trait-remote{width:250px}.trait-remote.is-collapsed{width:auto}.remote-section-head{margin-bottom:7px}}
+
+/* Keep palette colors and compact targets after the shared app button enhancement. */
+#traitRemote .remote-swatch{background:var(--swatch);min-height:26px;height:26px;padding:0;border-radius:7px;box-shadow:inset 0 0 0 2px #ffffff65}
+#traitRemote .trait-remote-palette button{background:#f5f9f6;border-color:#dce8df;min-height:30px;padding:6px 9px;border-radius:99px;font-size:11px}
+#traitRemote .trait-remote-palette button[aria-pressed=true]{background:#2e7b59;border-color:#2e7b59;color:#fff}
+
+#traitRemote #rosterFormatTools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+#traitRemote #rosterFormatTools label{grid-column:span 2;justify-content:space-between;white-space:nowrap}
+#traitRemote #rosterFormatTools button{min-width:0;padding:4px}
