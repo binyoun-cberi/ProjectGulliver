@@ -1,8 +1,9 @@
-const {chromium}=require('playwright');
+const {chromium}=require('playwright-core');
 const assert=require('node:assert/strict');
 (async()=>{
  const fs=require('fs'),path=require('path');const root=path.resolve(__dirname,'..');const server=require('http').createServer((req,res)=>{try{const f=path.join(root,decodeURIComponent(req.url.split('?')[0]));res.setHeader('Content-Type',f.endsWith('.js')?'application/javascript':f.endsWith('.css')?'text/css':'text/html; charset=utf-8');res.end(fs.readFileSync(f));}catch{res.statusCode=404;res.end()}});await new Promise(r=>server.listen(8765,'127.0.0.1',r));
- const browser=await chromium.launch({...(process.env.CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.CHROMIUM_EXECUTABLE_PATH}:{}),headless:true,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1440,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const executablePath=process.env.CHROMIUM_EXECUTABLE_PATH||['/opt/google/chrome/chrome','/usr/bin/google-chrome','/usr/bin/google-chrome-stable'].find(p=>fs.existsSync(p));
+ const browser=await chromium.launch({...(executablePath?{executablePath}:{}),headless:true,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1440,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://localhost:8765/'+encodeURIComponent('반 편성 도우미.html'));
  const paste=async(sel,text)=>page.locator(sel).first().evaluate((el,text)=>{el.focus();const d=new DataTransfer();d.setData('text/plain',text);el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:d,bubbles:true,cancelable:true}));},text);
  await paste('[data-source-room="1"]','남학생\t여학생\n2\t2\n1\t1\n0\t0');
@@ -66,8 +67,27 @@ const assert=require('node:assert/strict');
  await page.locator('[data-key="name"]').first().click();await page.locator('#rosterClearColor').click();
  assert.equal(await page.evaluate(()=>state.candidates.length),before);
  assert.ok(before>0);
+ // Five pupils fit in a basket even with only three classes; the sixth is blocked.
+ await page.evaluate(()=>{state.students.forEach(s=>s.traits=['특수']);state.capRules={특수:1};state.baskets=[];state.pairs=[];invalidate();saveState();showTab('rules')});
+ await page.locator('#addBasket').click();
+ const ids=await page.evaluate(()=>state.students.map(s=>s.id));
+ for(const id of ids.slice(0,5)){
+  await page.locator('#basketPool [data-basket-pick="'+id+'"]').click();
+  await page.locator('[data-basket-add-selected]').first().click();
+ }
+ assert.equal(await page.locator('.basket-chip').count(),5);
+ assert.match(await page.locator('.basket-count-pill').first().textContent(),/5 \/ 5명/);
+ await page.locator('#basketPool [data-basket-pick="'+ids[5]+'"]').click();
+ assert.equal(await page.locator('[data-basket-add-selected]').first().isDisabled(),true);
+ await page.locator('#generateQuick').click();
+ await page.locator('.assigned').first().waitFor();
+ const result=await page.evaluate(()=>({count:Object.keys(state.candidates[0].assign).length,penalty:preferencePenalty(activeStudents(),state.candidates[0].assign,state.classCount,state.capRules,buildBasketPairs([],state.baskets))}));
+ assert.equal(result.count,6);assert.equal(result.penalty.total,5);
+ await page.reload();
+ assert.equal(await page.evaluate(()=>state.baskets[0].members.length),5);
+ assert.ok(await page.evaluate(()=>state.candidates.length)>0);
  await page.setViewportSize({width:390,height:844});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
- assert.deepEqual(errors,[]);console.log('PASS: setup paste / navigation / six student import / gender paste / Ctrl and Shift selection / four styles / selected color / refresh persistence');
+ assert.deepEqual(errors,[]);console.log('PASS: spreadsheet editing, charts, five-person basket, sixth-person guard, best-effort generation and saved results');
  await browser.close();server.close();
 })().catch(e=>{console.error(e);process.exit(1)});
