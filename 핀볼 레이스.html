@@ -9,14 +9,15 @@
 <link rel="icon" type="image/svg+xml" href="clasheet-mark.svg">
 <link rel="stylesheet" href="gulliver-design.css?v=1.2.0">
 <link rel="stylesheet" href="gulliver-teacher-ui.css?v=20261019-dual1">
-<link rel="stylesheet" href="pinball-race.css?v=5">
+<link rel="stylesheet" href="pinball-race.css?v=6">
 <script src="gulliver-shared.js?v=20261020-ui"></script>
 <script src="gulliver-app-shell.js?v=1.2.0"></script>
 <script defer src="gulliver-teacher-components.js?v=20261018-v60"></script>
 <script defer src="gulliver-teacher-shell.js?v=20261020-ui"></script>
 <script src="vendor/matter.min.js"></script>
-<script src="pinball-race-core.js?v=5"></script>
-<script defer src="pinball-race.js?v=5"></script>
+<script src="pinball-race-progress.js?v=6"></script>
+<script src="pinball-race-core.js?v=6"></script>
+<script defer src="pinball-race.js?v=6"></script>
 </head>
 <body>
 <main class="pinball-page">
@@ -82,7 +83,7 @@
           <option value="1">🎱 일반 속도</option>
           <option value="1.9">🚀 초고속</option>
         </select>
-        <p class="field-help">긴 코스에서 갈림길 → 회전 급류 → 결승 범퍼를 지나가요. 응원할 친구를 선택하면 화면이 따라가요.</p>
+        <p class="field-help">응원할 친구를 선택하면 화면이 따라가요.</p>
         </div>
       </fieldset>
       <div class="start-area">
@@ -91,6 +92,15 @@
       </div>
 
     </div></aside>
+      <div class="spectator-tray">
+      <section id="live-rankings" class="live-rankings" hidden><h3>실시간 레이스 순위</h3><ol id="live-rank-list"></ol></section>
+      <details id="marble-legend" class="marble-legend" hidden>
+        <summary id="marble-legend-heading">내 구슬 번호 찾기</summary>
+        <div id="marble-legend-list"></div>
+      </details>
+
+      </div>
+      <div id="team-status" class="team-status" aria-live="polite" hidden></div>
         <div id="arrival-flash" class="arrival-flash" aria-hidden="true"></div>
         <div id="result-overlay" class="result-overlay" hidden>
           <div class="result-card">
@@ -106,18 +116,7 @@
           </div>
         </div>
       </div>
-      <div class="spectator-tray">
-      <section id="live-rankings" class="live-rankings" hidden><h3>실시간 레이스 순위</h3><ol id="live-rank-list"></ol></section>
-      <details id="marble-legend" class="marble-legend" hidden>
-        <summary id="marble-legend-heading">내 구슬 번호 찾기</summary>
-        <div id="marble-legend-list"></div>
-      </details>
 
-      </div>
-      <div class="play-bottom">
-        <span class="mini-key"><span class="key-dot orange"></span>범퍼 <span class="key-dot mint"></span>회전 장애물 <span class="key-dot violet"></span>마지막 관문</span>
-      </div>
-      <div id="team-status" class="team-status" aria-live="polite" hidden></div>
     </section>
   </div>
 </main>

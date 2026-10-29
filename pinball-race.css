@@ -198,3 +198,45 @@ legend.field-label{margin:0 0 10px}
 body:not(.pinball-running) .play-bottom{display:none}
 #pinball-canvas{max-height:var(--arena-space,calc(100dvh - 240px))}
 .pinball-running .pinball-page{width:min(780px,calc((100dvh - 220px)*.9 + 60px),calc(100% - 24px))}
+
+/* Marble-race view: the course is the screen; controls float above it. */
+.pinball-page{width:min(1320px,calc(100% - 24px))}
+.play-card{border:1px solid #23354b;border-radius:16px;background:#080f1c;box-shadow:0 16px 42px #0c182933}
+.play-toolbar{min-height:54px;padding:8px 14px;border-bottom:1px solid #24374c;background:#0c1829}
+.arena-surface{border:0;background:#080f1c;box-shadow:none}
+#pinball-canvas{width:100%;height:var(--arena-space,600px);aspect-ratio:auto;max-height:none;min-height:0;object-fit:fill}
+.spectator-tray{background:none}
+.live-rankings{position:absolute;top:12px;right:12px;width:150px;z-index:1;margin:0;padding:10px;background:#0b192bd9;border-radius:12px;pointer-events:none}
+.live-rankings h3{font-size:11px}
+#live-rank-list{display:grid;gap:4px}
+#live-rank-list li{padding:5px 7px;min-width:0;box-shadow:none;background:#182e4566;border:0}
+.marble-legend{position:absolute;bottom:12px;left:12px;width:min(350px,calc(100% - 24px));z-index:2;max-height:230px;overflow:auto;border:1px solid #34506b;border-radius:12px;background:#0b192bed}
+.marble-legend summary{padding:10px 12px}
+#marble-legend-list{max-height:170px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.team-status{position:absolute;bottom:60px;right:12px;width:250px;max-height:160px;overflow:auto;z-index:1;padding:8px;background:#0b192bd9;border:1px solid #34506b;border-radius:12px;grid-template-columns:1fr 1fr;gap:5px}
+.setup-panel{inset:auto;left:14px;bottom:14px;width:min(520px,calc(100% - 28px));height:min(570px,calc(100% - 28px));border:1px solid #d4e2eb;border-radius:16px;box-shadow:0 12px 40px #0005;padding:18px}
+.setup-content{max-width:none}
+.setup-content h2{font-size:17px;margin-bottom:12px}
+.setup-panel #race-options{gap:8px 16px;grid-template-columns:minmax(0,1fr) minmax(180px,.85fr)}
+.setup-panel #roster-input{min-height:160px;max-height:220px}
+.setup-panel .field-help{font-size:10px}
+.setup-panel .mode-face{min-height:62px;padding:9px}
+.setup-panel .start-area{background:transparent}
+.pinball-running{overflow:hidden}
+.pinball-running .gx-header{display:none!important}
+.pinball-running .pinball-page{position:fixed;inset:0;z-index:100;width:100%;height:100dvh;margin:0;padding:0;background:#080f1c}
+.pinball-running .pinball-layout{height:100%}
+.pinball-running .play-card{display:flex;flex-direction:column;height:100%;border:0;border-radius:0;box-shadow:none}
+.pinball-running .play-toolbar{flex-shrink:0}
+.pinball-running .arena-surface{flex:1;min-height:0;overflow:hidden}
+.pinball-running #pinball-canvas{width:100%;height:100%}
+@media(max-width:640px){
+ .setup-panel{left:10px;bottom:10px;width:calc(100% - 20px);height:calc(100% - 20px);padding:14px}
+ .setup-panel #race-options{display:flex}
+ .setup-panel #roster-input{min-height:110px}
+ .live-rankings{top:8px;right:8px;width:124px;padding:7px}
+ #live-rank-list li{font-size:11px}
+ .team-status{width:190px;bottom:56px;right:8px}
+ .marble-legend{left:8px;bottom:8px;width:calc(100% - 16px)}
+ .pinball-running .play-toolbar{min-height:52px}
+}
