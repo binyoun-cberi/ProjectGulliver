@@ -329,7 +329,7 @@ const assert=require('node:assert/strict');
  assert.ok(downloaded.Sheets['명단']);assert.ok(downloaded.Sheets['입력안내']);
  const uploadBook=XLSX.utils.book_new();
  XLSX.utils.book_append_sheet(uploadBook,XLSX.utils.aoa_to_sheet([['기존 학년','기존 반','기존 번호','이름','성별','학습지표','유의 사항'],[5,2,3,'학교학생','여',0,'급식지원; 통학지원'],[5,1,7,'다른학생','남',88,'급식지원']]),'명단');
- await excelPage.locator('#rosterExcelFile').setInputFiles({name:'명단.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer:XLSX.write(uploadBook,{type:'buffer',bookType:'xlsx'})});
+ await excelPage.locator('#rosterExcelFile').setInputFiles({name:'명단.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer:Buffer.from(XLSX.write(uploadBook,{type:'buffer',bookType:'xlsx'}))});
  await excelPage.locator('#rosterExcelDialog').waitFor({state:'visible'});
  assert.match(await excelPage.locator('#rosterExcelPreview').textContent(),/2명 적용.*새 유의 사항 2개/);
  await excelPage.locator('#applyRosterExcel').click();

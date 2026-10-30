@@ -7,7 +7,7 @@ function newRosterStudent(students,grade,id){
 function expandedRosterPaste(text,startKey,ids,students,grade,idFactory,allowGrowth=true){
  const plan=rosterExcelPastePlan(text,startKey),next=students.slice(),targets=ids.filter(id=>students.some(s=>s.id===id));
  const needed=Math.max(0,plan.rows.length-targets.length);
- if(needed&&(!allowGrowth||!plan.mapping.includes('name')))return {errors:['학생 자리가 부족합니다. 검색을 해제하거나 이름 열과 함께 붙여넣어 주세요.']};
+ if(needed&&(!allowGrowth||!plan.mapping.some(key=>['name','oldGrade','oldClass','number'].includes(key))))return {errors:['학생 자리가 부족합니다. 검색을 해제하거나 이름 열과 함께 붙여넣어 주세요.']};
  if(next.length+needed>1000)return {errors:['학생 명단은 최대 1000명까지 입력할 수 있습니다.']};
  for(let i=0;i<needed;i++){const st=newRosterStudent(next,grade,idFactory());next.push(st);targets.push(st.id)}
  const result=rosterExcelChanges(text,startKey,targets,next);

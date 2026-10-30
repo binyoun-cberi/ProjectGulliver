@@ -40,3 +40,8 @@ test('엑셀 전학 시기 열은 전학 예정 태그와 함께 왕복하고 �
  const out=a.rosterExcelImportPlan(workbook,[p],['전학 예정'],'5',factory());assert.equal(out.errors.length,0);assert.equal(out.students[0].transferTiming,'before');
  workbook.Sheets['명단'].H2={t:'s',v:'잘못됨'};assert.ok(a.rosterExcelImportPlan(workbook,[p],['전학 예정'],'5',factory()).errors.length);
 });
+
+test('명단이 없어도 학년·반·번호부터 붙여넣어 이름을 입력할 자리를 만든다',()=>{
+ const a=api(),out=a.expandedRosterPaste('5\t2\t1\n5\t2\t2','oldGrade',[],[],'5',factory());
+ assert.equal(out.errors.length,0);assert.equal(out.students.length,2);assert.equal(out.students[1].oldClass,'2반');assert.equal(out.students[1].number,'2');assert.equal(out.students[1].name,'');
+});
