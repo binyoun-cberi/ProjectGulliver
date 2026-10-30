@@ -33,7 +33,7 @@ function saveTraitRemoteUI(){
 }
 function positionTraitRemote(){
  const panel=$('traitRemote');if(panel.hidden)return;
- const box=panel.getBoundingClientRect(),point=traitRemoteUI.position||{x:box.left,y:box.top};
+ const box=panel.getBoundingClientRect(),point=traitRemoteUI.position||{x:innerWidth-box.width-18,y:Math.min(250,Math.max(95,innerHeight*.24))};
  const header=document.querySelector('.gx-header')?.getBoundingClientRect(),nav=document.querySelector('.tabs')?.getBoundingClientRect();
  const stageHead=$('view-'+view)?.querySelector('.section-head')?.getBoundingClientRect();
  const guard=Math.max((header?.bottom||0)+8,stageHead&&stageHead.bottom>0&&stageHead.bottom<innerHeight-160?stageHead.bottom+8:0),grip=$('traitRemoteGrip').getBoundingClientRect().height;

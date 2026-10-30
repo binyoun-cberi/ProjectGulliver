@@ -21,6 +21,7 @@ const assert=require('node:assert/strict');
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  await page.screenshot({path:require('path').join(root,'test-artifacts/time-tools-planner-basic-settings-mobile.png')});
  await page.setViewportSize({width:1440,height:1000});
+ await page.waitForFunction(()=>document.getElementById('traitRemote').getBoundingClientRect().left>innerWidth-300);
  await page.screenshot({path:require('path').join(root,'test-artifacts/time-tools-planner-unified-empty.png')});
  await page.locator('#blankRosterSetup > summary').click();
  const paste=async(sel,text)=>page.locator(sel).first().evaluate((el,text)=>{el.focus();const d=new DataTransfer();d.setData('text/plain',text);el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:d,bubbles:true,cancelable:true}));},text);
