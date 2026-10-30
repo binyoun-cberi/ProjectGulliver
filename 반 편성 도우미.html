@@ -397,7 +397,7 @@
  <details><summary>1단계 · 명단과 기본 설정</summary><p>기존 학년·새 학년·새 학급 수를 정하고 엑셀 명단을 표에 바로 붙여넣으세요. 기존 학년·반·번호·이름·성별·학습지표·유의 사항 제목 행도 인식하며 인원은 명단에서 자동 집계됩니다. 명단이 없으면 「반별 인원으로 빈 명단 만들기」를 펼쳐 자리를 만드세요. 유의 사항별 최대 인원과 중요도는 「편성 조건」에서, 원그래프는 표 위의 「명단 통계」를 펼쳐 확인합니다. 「엑셀 양식 다운로드」로 현재 명단을 받아 수정하고 「엑셀 업로드」로 적용할 수 있습니다. 처음 입력한 유의 사항도 이 기기에 저장되어 리모컨에 표시됩니다. 전학 예정 학생은 리모컨에서 편성 전/후를 선택하세요. 편성 전은 배정에서 제외하고, 편성 후는 배정하되 균형 계산에서 중립으로 처리합니다.</p></details>
  <details><summary>교사 우선 배치(선택)</summary><p>설정에서 교사 우선 배치를 켜면 별도의 단계가 나타납니다. 미리 맡을 학생을 반마다 정할 수 있으며, 자동 편성에서도 유지됩니다. 끄면 단계가 숨겨지고 이전 지정은 보관됩니다.</p></details>
  <details><summary>3단계 · 함께 배정하지 않을 학생</summary><p>유의 사항별 최대 인원을 정하거나 '같은 반 금지 바구니'를 여러 개 만들 수 있습니다. 같은 바구니에는 최대 5명까지 담을 수 있습니다.</p></details>
- <details><summary>4단계 · 결과 수정과 저장</summary><p>세로형 또는 가로 비교형으로 반을 펼쳐 볼 수 있습니다. 가로 비교형은 여러 반을 같은 줄에 나란히 표시합니다. 학생을 드래그해 옮겨도 반별 인원과 학습지표가 갱신됩니다. 편집 리모컨에서 이름 배경색을 정하거나 없앨 수 있고, 1단계에서 지정한 색도 그대로 나타납니다. 「엑셀에 복사」를 누르고 엑셀의 첫 칸에 붙여넣으면 세로형은 한 목록으로, 가로형은 반별 열로 나란히 들어갑니다. 인쇄와 PDF 저장도 선택한 형태에 맞춰 만들어지며, 가로형 인쇄는 읽기 쉽도록 한 장에 최대 네 반을 배치합니다. 편성 결과는 이 브라우저에 보관되므로 다른 PC에서는 백업 파일을 이용하세요.</p></details>
+ <details><summary>4단계 · 결과 수정과 저장</summary><p>세로형 또는 가로 비교형으로 반을 펼쳐 볼 수 있습니다. 가로 비교형은 여러 반을 같은 줄에 나란히 맞추고, 반별 내부 스크롤 없이 전체 명단을 펼칩니다. 작은 화면에서는 좌우로 밀어 다른 반을 볼 수 있습니다. 학생을 드래그해 옮겨도 반별 인원과 학습지표가 갱신됩니다. 편집 리모컨에서 이름 배경색을 정하거나 없앨 수 있고, 1단계에서 지정한 색도 그대로 나타납니다. 「엑셀에 복사」를 누르고 엑셀의 첫 칸에 붙여넣으면 세로형은 한 목록으로, 가로형은 반별 열로 나란히 들어갑니다. 인쇄와 PDF 저장도 선택한 형태에 맞춰 만들어지며, 가로형 인쇄는 읽기 쉽도록 한 장에 최대 네 반을 배치합니다. 편성 결과는 이 브라우저에 보관되므로 다른 PC에서는 백업 파일을 이용하세요.</p></details>
  <details><summary>자료 보호와 유의 사항</summary><p>학생 정보는 이 도구의 브라우저 저장 공간에서 다루며 서버로 전송하지 않습니다. 공동으로 사용하는 PC에서는 사용 후 자료를 정리하고, 백업 파일은 학교의 개인정보 보호 규정에 따라 관리해 주세요. '분리조치' 항목만 체크하면 자동으로 학생 사이의 분리 관계가 지정되지는 않습니다. 바구니에서 학생을 직접 선택해야 합니다.</p></details>
  </div>
  <div class="dialog-actions"><button id="helpDone" class="btn primary" type="button">닫기</button></div>
@@ -1711,14 +1711,17 @@ function renderResults(){
   $('resultCompare').setAttribute('aria-pressed',String(state.resultLayout==='compare'));
   $('resultGrid').dataset.layout=state.resultLayout;
   $('resultGrid').style.setProperty('--comparison-classes',String(state.classCount));
-  $('resultLayoutHint').textContent=state.resultLayout==='compare'?'반을 한 줄에 나란히 비교합니다. 반이 많으면 옆으로 스크롤하세요. 엑셀 복사·인쇄도 가로로 나옵니다.':'반을 위아래로 확인합니다. 먼 반으로 옮길 때는 학생 선택 후 대상 반의 이동 버튼을 사용하세요. 엑셀·인쇄도 세로형으로 나옵니다.';
+  positionComparisonHeaders();
+  $('resultLayoutHint').textContent=state.resultLayout==='compare'?'반별 열과 학생 행을 맞춰 한 시트로 펼칩니다. 명단 전체를 아래로 이어서 볼 수 있습니다.':'반을 위아래로 확인합니다. 먼 반으로 옮길 때는 학생 선택 후 대상 반의 이동 버튼을 사용하세요. 엑셀·인쇄도 세로형으로 나옵니다.';
   if(!has){$('resultMessage').classList.remove('hidden');$('alternatives').innerHTML='';$('validation').innerHTML='';$('report').innerHTML='';$('resultGrid').innerHTML='';$('movePreview').innerHTML='';$('moveHistoryResult').innerHTML='';$('moveSelection').textContent='';$('undoMove').disabled=true;$('resultPrintSheet').innerHTML='';return}
   $('resultMessage').classList.add('hidden');
   renderReviewMoveTools();
   $('alternatives').innerHTML=state.candidates.map((c,i)=>`<button class="alt ${state.activeCandidate===i?'active':''}" data-candidate="${i}"><strong>편성안 ${String.fromCharCode(65+i)}</strong><small>${i===0?'추천안 · ':''}조건 위반 ${validateAssignment(activeStudents(),effectivePairs(),c.assign,state.capRules).length}건</small></button>`).join('');
   const selected=state.candidates[state.activeCandidate];if(!selected)return;
   const violations=validateAssignment(activeStudents(),effectivePairs(),selected.assign,state.capRules);
-  const counts=reportData(selected);const totals=counts.map(d=>d.total);const diff=Math.max(...totals)-Math.min(...totals);
+  const counts=reportData(selected);const totals=counts.map(d=>d.total);
+  $('resultGrid').style.setProperty('--comparison-students',String(Math.max(1,...totals)));
+  const diff=Math.max(...totals)-Math.min(...totals);
   const over=diff>2?`반별 인원 차이가 ${diff}명입니다. 편성 결과를 직접 검토하세요.`: `반별 인원 차이 ${diff}명 · 지정한 배정 조건 충족`;
   $('validation').innerHTML=violations.length?`<div class="alert"><b>분리 조건 위반 ${violations.length}건</b><div>${violations.map(escapeHtml).join('<br>')}</div></div>`:`<div class="success">${escapeHtml(over)}${duplicateNames().length?' · 동명이인이 있어 기존 반과 번호를 함께 확인하세요.':''}</div>`;
   $('report').innerHTML=`<div class="report"><table><thead><tr><th>반</th><th>전체</th><th>남</th><th>여</th><th>성별 미입력</th><th>다문화</th><th>특수</th><th>학습지표 평균</th></tr></thead><tbody>${counts.map((d,i)=>`<tr><td>${escapeHtml(displayClass(i+1))}</td><td>${d.total}명</td><td>${d.boys}명</td><td>${d.girls}명</td><td>${d.total-d.boys-d.girls}명</td><td>${d.traitCounts['다문화']||0}명</td><td>${d.traitCounts['특수']||0}명</td><td>${d.levelN?(d.levelSum/d.levelN).toFixed(2):'—'}</td></tr>`).join('')}</tbody></table></div><div class="legend">${state.traits.filter(t=>counts.some(d=>d.traitCounts[t]>0)||Number.isInteger(state.capRules[t])).map(t=>`<span>${escapeHtml(t)}${Number.isInteger(state.capRules[t])?' (반당 최대 '+state.capRules[t]+'명)':''}: ${counts.map((d,i)=>`${i+1}반 ${d.traitCounts[t]}`).join(' / ')}</span>`).join('')}</div>`;
@@ -2334,6 +2337,7 @@ function showPlannerDialog(id){
 }
 function closePlannerDialog(id){const dialog=$(id);if(dialog?.open)dialog.close()}
 function installEvents(){
+  window.addEventListener('resize',positionComparisonHeaders);
   installTraitRemote();installTraitColors();installTwinGroups();installFeedbackSettings();installUnifiedRoster();installRosterExcel();installTransferControls();installRulesRemote();
   $('openHelp').addEventListener('click',()=>showPlannerDialog('plannerHelpDialog'));
   $('closeNameColor').addEventListener('click',()=>$('nameColorDialog').close());
