@@ -50,8 +50,8 @@ function installRulesRemote(){
  targets.append(basketHead,$('basketNotice'),$('basketGrid'),twin,pairHead,form,$('pairList'));
  workspace.append(source,targets);zone.replaceWith(workspace);
  for(const id of ['pairA','pairB']){
-  const label=$(id).closest('label');label.dataset.rulePairDrop=id;label.classList.add('rule-pair-drop');
-  const hint=document.createElement('small');hint.textContent='학생을 여기에 놓으세요';label.prepend(hint);
+  const label=$(id).closest('label');label.classList.add('rule-pair-drop');
+  const hint=document.createElement('span');hint.className='rule-pair-pad';hint.dataset.rulePairDrop=id;hint.textContent='학생을 여기에 놓으세요';label.prepend(hint);
   const button=document.createElement('button');button.type='button';button.className='btn small';button.dataset.sharedPairAdd=id;button.textContent='선택 학생 연결';button.disabled=true;label.append(button);
   $(id).addEventListener('change',renderRulesRemoteControls);
  }
