@@ -18,7 +18,7 @@ test('드롭/삭제는 저장·편성안 초기화·되돌리기에 연결되며
 test('행에는 선택된 태그만 표시하고 악성 문자와 직접 입력·메모·고정 표시를 보존',()=>{
  const a=api(),row=a.scope.renderStudentTraits({id:'a',name:'<img>',traits:['<script>'],fixed:2,note:'내용'});
  assert.ok(row.includes('&lt;script&gt;'));assert.ok(!row.includes('<script>'));assert.ok(row.includes('data-remove-trait'));
- assert.ok(row.includes('hidden tabindex="-1" data-key="traitsText"'));assert.ok(row.includes('2반'));assert.ok(row.includes('data-note'));
+ assert.ok(row.includes('class="student-traits-input" data-key="traitsText"'));assert.ok(row.includes('2반'));assert.ok(row.includes('data-note'));
  assert.ok(!row.includes('notice-picker'));assert.ok(!row.includes('checkbox'));
 });
 test('비모달 리모컨·드롭·터치 입력과 자산이 연결되고 기존 반복 선택창은 제거',()=>{

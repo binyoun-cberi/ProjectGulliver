@@ -3,7 +3,7 @@ const TRAIT_REMOTE_MIME='application/x-clasheet-trait';
 const traitRemoteUI={open:true,collapsed:typeof matchMedia==='function'&&matchMedia('(max-width: 700px)').matches,position:null,studentId:null,tag:null,dragTag:null,pointer:null,suppressClickUntil:0};
 function setStudentTrait(student,tag,add){
  const next=new Set(student.traits||[]);add?next.add(tag):next.delete(tag);
- return {...student,traits:[...next]};
+ return {...student,traits:[...next],...(tag==='전학 예정'?{transferTiming:add?(student.transferTiming==='before'?'before':'after'):''}:{})};
 }
 function changeRosterTrait(id,tag,add=true){
  const student=findStudent(id);
@@ -22,9 +22,9 @@ function traitRemoteTarget(id){
  renderTraitRemote();
 }
 function renderStudentTraits(st){
- return '<div class="student-trait-tags">'+st.traits.map(tag=>'<span class="student-trait-chip"><span>'+escapeHtml(tag)+'</span><button type="button" data-remove-trait="'+escapeHtml(tag)+'" aria-label="'+escapeHtml(st.name||'학생')+' '+escapeHtml(tag)+' 삭제">×</button></span>').join('')+
+ return '<div class="student-trait-tags">'+st.traits.map(tag=>'<span class="student-trait-chip"><span>'+escapeHtml(tag)+(tag==='전학 예정'?' · '+(st.transferTiming==='before'?'편성 전':'편성 후'):'')+'</span><button type="button" data-remove-trait="'+escapeHtml(tag)+'" aria-label="'+escapeHtml(st.name||'학생')+' '+escapeHtml(tag)+' 삭제">×</button></span>').join('')+
  (st.traits.length?'':'<span class="student-trait-placeholder">유의 사항 놓기</span>')+'</div>'+
- '<input hidden tabindex="-1" data-key="traitsText" value="'+escapeHtml(st.traits.join('; '))+'" aria-label="'+escapeHtml(st.name)+' 유의 사항 직접 입력">'+
+ '<input class="student-traits-input" data-key="traitsText" placeholder="직접 입력 · 여러 항목은 쉼표로 구분" value="'+escapeHtml(st.traits.join('; '))+'" aria-label="'+escapeHtml(st.name)+' 유의 사항 직접 입력">'+
  (st.fixed?'<span class="note-inline">◆ '+st.fixed+'반 '+(state.teacherPriorityOn?'고정':'지정 보관')+'</span>':'')+
  (st.note?'<button type="button" class="btn ghost small" data-note="'+escapeHtml(st.id)+'" aria-label="'+escapeHtml(st.name)+' 참고 메모 수정">메모</button>':'');
 }
@@ -73,6 +73,8 @@ function renderTraitRemote(){
  $('resultRemoteMove').innerHTML=Array.from({length:state.classCount},(_,i)=>'<option value="'+(i+1)+'" '+(shown&&state.candidates[state.activeCandidate]?.assign[student.id]===i+1?'selected':'')+'>'+(i+1)+'반'+(locked?' · 고정':'으로 이동')+'</option>').join('');
  $('traitRemoteStudent').textContent=shown?studentTitle(student):'학생 행을 선택하세요';
  $('traitRemoteNote').disabled=!shown;
+ $('remoteTransferWrap').hidden=results||!shown||!student.traits.includes('전학 예정');
+ $('remoteTransferTiming').value=shown&&student.transferTiming==='before'?'before':'after';
  $('traitRemoteFixedWrap').hidden=results||!state.teacherPriorityOn;
  $('traitRemoteFixed').disabled=!shown;
  $('traitRemoteFixed').innerHTML='<option value="0">미고정</option>'+Array.from({length:state.classCount},(_,i)=>'<option value="'+(i+1)+'" '+(shown&&student.fixed===i+1?'selected':'')+'>'+(i+1)+'반 고정</option>').join('');
@@ -135,7 +137,7 @@ function installTraitRemote(){
  });
  $('rosterBody').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-roster-cell="traits"]')&&traitRemoteUI.tag){e.preventDefault();changeRosterTrait(e.target.closest('[data-student]').dataset.student,traitRemoteUI.tag)}});
  $('rosterBody').addEventListener('dblclick',e=>{const td=e.target.closest('[data-roster-cell="traits"]');if(!td||e.target.closest('button'))return;const field=td.querySelector('[data-key="traitsText"]');field.hidden=false;field.focus();field.select()});
- $('rosterBody').addEventListener('focusout',e=>{if(e.target.dataset.key==='traitsText')e.target.hidden=true});
+
  // Touch/pen dragging uses pointer capture; a tap selects a button for tap-to-apply.
  $('traitRemotePalette').addEventListener('pointerdown',e=>{
   if(e.pointerType==='mouse')return;const button=e.target.closest('[data-remote-trait]');if(!button)return;
