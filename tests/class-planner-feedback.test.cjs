@@ -23,3 +23,28 @@ test('항목별 남녀 균형은 전체 성비 가중치 0에도 적용하고 �
  const on=a.generateCandidates(p,pairs,2,['학습지원'],seed(),caps,[],{gender:0,traitGenderBalance:['학습지원']});
  assert.ok(on.candidates?.length,on.error);for(const c of on.candidates){assert.equal(c.assign.g0,1);assert.notEqual(c.assign.g1,c.assign.g2);assert.equal(a.validateAssignment(p,pairs,c.assign,caps).length,0)}
 });
+test('기존 반·남녀 중요도도 표시값뿐 아니라 실제 추천 배정을 바꾼다',()=>{
+ const a=api(),zero={oldClass:0,basket:1,learning:0,gender:0};
+ for(const key of ['oldClass','gender']){
+  const p=Array.from({length:8},(_,i)=>({id:'w'+i,name:'학생'+i,oldClass:key==='oldClass'?(i%2?'2반':'1반'):'',gender:key==='gender'?(i%2?'여':'남'):'',level:null,traits:[],fixed:0}));
+  const low=a.generateCandidates(p,[],2,[],seed(),{},[],zero),high=a.generateCandidates(p,[],2,[],seed(),{},[],{...zero,[key]:5});
+  assert.ok(low.candidates?.length&&high.candidates?.length);
+  const target=p.filter(st=>key==='gender'?st.gender==='남':st.oldClass==='1반');
+  const gap=c=>Math.abs(target.filter(st=>c.assign[st.id]===1).length-target.filter(st=>c.assign[st.id]===2).length);
+  assert.ok(gap(high.candidates[0])<gap(low.candidates[0]),key);assert.equal(gap(high.candidates[0]),0);
+ }
+});
+test('바구니 5배는 실제 절충에 적용되지만 개별 분리는 바구니·상한·성비보다 항상 우선',()=>{
+ const a=api(),p=Array.from({length:4},(_,i)=>({id:'p'+i,name:'학생'+i,gender:i%2?'여':'남',oldClass:'1반',level:100-i,traits:i===0||i===2?['지원']:[],fixed:i===0?1:i===1?2:0}));
+ const soft=[{a:'p1',b:'p2'}],caps={지원:1},low=a.generateCandidates(p,[],2,['지원'],seed(),caps,soft,{basket:0}),high=a.generateCandidates(p,[],2,['지원'],seed(),caps,soft,{basket:5});
+ assert.ok(low.candidates?.length&&high.candidates?.length);assert.equal(low.candidates[0].assign.p2,2);assert.equal(high.candidates[0].assign.p2,1);
+ const hard=[{a:'p0',b:'p2'}];
+ for(const basket of [0,1,5]){
+  const out=a.generateCandidates(p,hard,2,['지원'],seed(),caps,soft,{basket,learning:5,gender:5,oldClass:5,traitGenderBalance:['지원']});
+  assert.ok(out.candidates?.length,out.error);for(const c of out.candidates){assert.equal(c.assign.p0,1);assert.equal(c.assign.p1,2);assert.equal(c.assign.p2,2);assert.equal(a.validateAssignment(p,hard,c.assign).length,0)}
+ }
+});
+test('불가능한 개별 분리는 다른 가중치가 높아도 위반 결과를 반환하지 않는다',()=>{
+ const a=api(),p=students().slice(0,6),hard=[{a:'s0',b:'s1'},{a:'s1',b:'s2'},{a:'s0',b:'s2'}];
+ const out=a.generateCandidates(p,hard,2,[],seed(),{},[],{basket:5,oldClass:5,gender:5,learning:5});assert.ok(out.error);assert.equal(out.candidates,undefined);
+});
