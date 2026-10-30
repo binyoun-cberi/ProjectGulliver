@@ -417,6 +417,18 @@ const assert=require('node:assert/strict');
  const balancedTraits=await genderPage.evaluate(()=>[1,2].flatMap(room=>['남','여'].map(sex=>state.students.filter(st=>st.traits.includes('느린학습자')&&st.gender===sex&&state.candidates[0].assign[st.id]===room).length)));
  assert.deepEqual(balancedTraits,[2,2,2,2]);
  await genderPage.close();
+ // Reproduce the user's 47-boy/56-girl example and retain the improved gaps after reload.
+ const gapPage=await browser.newPage({viewport:{width:1440,height:1000}});gapPage.on('pageerror',e=>errors.push(e.message));
+ await gapPage.goto('http://localhost:8765/'+encodeURIComponent('반 편성 도우미.html'));
+ await gapPage.evaluate(()=>{state=defaultState();state.classCount=6;const boys=[8,8,8,7,8,8],seen=Array(6).fill(0);state.students=Array.from({length:103},(_,i)=>{const room=snakeClass(i,6,0)%6+1;return {id:'gap'+i,name:'성비학생'+String(i).padStart(3,'0'),oldGrade:'5',oldClass:'1반',number:String(i+1),gender:seen[room-1]++<boys[room-1]?'남':'여',level:null,traits:[],fixed:0,note:''}});syncSourceFromRoster();changeState()});
+ await gapPage.locator('#closeTraitRemote').click();await gapPage.locator('#generateQuick').click();
+ const gapSummary=()=>gapPage.evaluate(()=>reportData(state.candidates[state.activeCandidate]).map(r=>({n:r.total,gap:r.girls-r.boys})));
+ let gapRows=await gapSummary();assert.deepEqual(gapRows.map(r=>r.gap).sort(),[1,1,1,2,2,2]);assert.deepEqual(gapRows.map(r=>r.n).sort((a,b)=>a-b),[16,17,17,17,18,18]);
+ assert.equal(await gapPage.locator('#validation .alert').count(),0);
+ assert.match(await gapPage.locator('.result-room-stats').textContent(),/여−남/);
+ await gapPage.reload();await gapPage.locator('[data-tab="results"]').click();gapRows=await gapSummary();assert.deepEqual(gapRows.map(r=>r.gap).sort(),[1,1,1,2,2,2]);
+ await gapPage.locator('#resultOverview').scrollIntoViewIfNeeded();await gapPage.screenshot({path:require('path').join(root,'test-artifacts/time-tools-planner-gender-gap.png')});
+ await gapPage.setViewportSize({width:390,height:844});assert.equal(await gapPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await gapPage.close();
  assert.deepEqual(errors,[]);console.log('PASS: spreadsheet editing, charts, five-person basket, sixth-person guard, best-effort generation and saved results');
  await browser.close();server.close();
 })().catch(e=>{console.error(e);process.exit(1)});

@@ -4,7 +4,7 @@ const api={};vm.createContext(api);vm.runInContext('function hasStudyScore(s){re
 function seed(n){return()=>((n=Math.imul(n,1664525)+1013904223>>>0)/4294967296)}
 function pupils(n){return Array.from({length:n},(_,i)=>({id:'s'+i,name:'학생'+i,gender:i%2?'남':'여',level:100-i,oldClass:(i%3+1)+'반',traits:[],fixed:0}))}
 function objective(list,assign,k,caps,soft){return api.preferencePenalty(list,assign,k,caps,soft)}
-function checkHard(list,pairs,c,k){assert.equal(Object.keys(c.assign).length,list.length);assert.equal(api.validateAssignment(list,pairs,c.assign,{}).length,0);const counts=Array.from({length:k},(_,i)=>list.filter(s=>c.assign[s.id]===i+1).length);assert.ok(Math.max(...counts)-Math.min(...counts)<=1,counts.join(','))}
+function checkHard(list,pairs,c,k){assert.equal(Object.keys(c.assign).length,list.length);assert.equal(api.validateAssignment(list,pairs,c.assign,{}).length,0);const counts=Array.from({length:k},(_,i)=>list.filter(s=>c.assign[s.id]===i+1).length);assert.ok(Math.max(...counts)-Math.min(...counts)<=2,counts.join(','))}
 test('상한 합계를 1~2명 넘겨도 중단하지 않고 초과를 균등하게 최소화',()=>{
  for(const n of [7,8]){const list=pupils(n);list.forEach(s=>s.traits=['특수']);const out=api.generateCandidates(list,[],3,['특수'],seed(n),{특수:2});assert.ok(out.candidates?.length,out.error);for(const c of out.candidates){checkHard(list,[],c,3);assert.equal(objective(list,c.assign,3,{특수:2},[]).total,n-6);assert.equal(objective(list,c.assign,3,{특수:2},[]).square,n-6)}}
 });

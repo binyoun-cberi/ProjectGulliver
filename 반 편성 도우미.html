@@ -525,10 +525,24 @@ function stageZeroTargets(rows,k){
  const {boys,girls,unknown}=stageZeroTotals(rows);
  const target=Math.max(2,Math.min(12,k));
  const avg={boys:boys/target,girls:girls/target,total:(boys+girls+unknown)/target};
- return {average:avg,total:boys+girls+unknown,rows:Array.from({length:target},(_,i)=>({
+ const rooms=Array.from({length:target},(_,i)=>({
   room:i+1,boys:Math.floor(boys/target)+(i<boys%target?1:0),
   girls:Math.floor(girls/target)+(i>=target-girls%target&&girls%target>0?1:0),unknown:Math.floor(unknown/target)+(i<unknown%target?1:0)
- }))};
+ }));
+ for(let pass=0;pass<target*2;pass++){
+  let changed=false;
+  for(let from=0;from<target&&!changed;from++)for(let to=0;to<target&&!changed;to++)for(const sex of ['girls','boys']){
+   if(from===to||!rooms[from][sex])continue;
+   const sign=sex==='girls'?1:-1,gapFrom=rooms[from].girls-rooms[from].boys,gapTo=rooms[to].girls-rooms[to].boys;
+   if(2*sign*(gapTo-gapFrom)+2>=0)continue;
+   rooms[from][sex]--;rooms[to][sex]++;
+   const counts=rooms.map(row=>row.boys+row.girls+row.unknown);
+   if(Math.min(...counts)>=(boys+girls+unknown>=target?1:0)&&Math.max(...counts)-Math.min(...counts)<=2){changed=true;break}
+   rooms[from][sex]++;rooms[to][sex]--;
+  }
+  if(!changed)break;
+ }
+ return {average:avg,total:boys+girls+unknown,rows:rooms};
 }
 function stageZeroInferRows(students){
  const found=new Map();
@@ -1149,8 +1163,7 @@ function calcScore(students,assign,k,traits,target,weights={}){
   const deviation=totals.levelN?Math.max(1,Math.sqrt(Math.max(0,totals.levelSumSq/totals.levelN-avg*avg))):1;
   for(let j=0;j<k;j++){
     const t=target[j]||N/k;loss+=85*Math.pow((count[j]-t),2)/Math.max(1,t);
-    loss+=18*w.gender*Math.pow(boys[j]-(totals.boys*t/N),2)/Math.max(1,totals.boys/k);
-    loss+=18*w.gender*Math.pow(girls[j]-(totals.girls*t/N),2)/Math.max(1,totals.girls/k);
+    loss+=18*w.gender*Math.pow((girls[j]-boys[j])-(totals.girls-totals.boys)/k,2);
     if(totals.levelN){
       loss+=12*w.learning*Math.pow((scoreSum[j]-avg*scoreN[j])/(deviation*Math.sqrt(Math.max(1,scoreN[j]))),2);
       loss+=4*w.learning*Math.pow(scoreN[j]-totals.levelN*t/N,2)/Math.max(1,totals.levelN/k);
@@ -1514,6 +1527,50 @@ function polishTraitGenderBalance(students,pairs,k,traits,caps,softPairs,candida
  }
  return {...candidate,assign,score:quality};
 }
+/* Balance each room's female-minus-male gap, permitting at most two pupils' size spread. */
+function polishGenderGap(students,pairs,k,traits,caps,softPairs,candidate,weights={}){
+ if(!normalizeAllocationWeights(weights).gender)return candidate;
+ const assign={...candidate.assign},counts=Array(k).fill(0),gaps=Array(k).fill(0),neighbors=makeNeighborMap(students,pairs);
+ const sign=st=>st.gender==='여'?1:st.gender==='남'?-1:0;
+ for(const st of students){const c=assign[st.id]-1;counts[c]++;gaps[c]+=sign(st)}
+ const free=students.filter(st=>!st.fixed&&sign(st)),baseline=preferencePenalty(students,assign,k,caps,softPairs,weights);
+ let quality=calcScore(students,assign,k,traits,candidate.target,weights),changed=false,checks=0;
+ const budget=students.length<=150?3500:students.length<=350?1400:700;
+ function attempt(pupils,destinations){
+  if(++checks>budget)return false;
+  const previous=pupils.map(st=>assign[st.id]);
+  for(let i=0;i<pupils.length;i++){const st=pupils[i],from=previous[i]-1,to=destinations[i]-1;assign[st.id]=to+1;counts[from]--;counts[to]++;gaps[from]-=sign(st);gaps[to]+=sign(st)}
+  let accepted=false;
+  if(Math.min(...counts)>=(students.length>=k?1:0)&&Math.max(...counts)-Math.min(...counts)<=2&&pupils.every(st=>canEnter(st.id,assign[st.id],assign,neighbors))){
+   const penalty=preferencePenalty(students,assign,k,caps,softPairs,weights);
+   if(penalty.total===baseline.total&&penalty.square===baseline.square){
+    const score=calcScore(students,assign,k,traits,candidate.target,weights);
+    if(score+1e-7<quality){quality=score;accepted=true;changed=true}
+   }
+  }
+  if(!accepted)for(let i=0;i<pupils.length;i++){const st=pupils[i],from=previous[i]-1,to=destinations[i]-1;assign[st.id]=from+1;counts[from]++;counts[to]--;gaps[from]+=sign(st);gaps[to]-=sign(st)}
+  return accepted;
+ }
+ for(let pass=0;pass<6&&checks<budget;pass++){
+  let improved=false;
+  // Try exchanges first so equal-size rooms stay equal wherever possible.
+  for(let i=0;i<free.length&&checks<budget;i++)for(let j=i+1;j<free.length&&checks<budget;j++){
+   const a=free[i],b=free[j],from=assign[a.id]-1,to=assign[b.id]-1,d=sign(a);
+   if(from===to||d===sign(b)||4*d*(gaps[to]-gaps[from])+8>=0)continue;
+   if(attempt([a,b],[to+1,from+1]))improved=true;
+  }
+  for(const st of free){
+   if(checks>=budget)break;
+   const from=assign[st.id]-1,d=sign(st);
+   for(let to=0;to<k&&checks<budget;to++){
+    if(to===from||2*d*(gaps[to]-gaps[from])+2>=0)continue;
+    if(attempt([st],[to+1])){improved=true;break}
+   }
+  }
+  if(!improved)break;
+ }
+ return changed?{...candidate,assign,score:quality}:candidate;
+}
 function generateCandidates(students,pairs,k,traits,random=Math.random,capRules={},softPairs=[],weights={}){
   if(!students.length)return {error:'학생 명단을 먼저 입력해 주세요.'};
   if(students.some(s=>!s.name.trim()))return {error:'이름이 비어 있는 학생이 있습니다. 이름을 모두 입력해 주세요.'};
@@ -1541,7 +1598,9 @@ function generateCandidates(students,pairs,k,traits,random=Math.random,capRules=
   if(!solutions.length)solutions.push(...bestEffortCandidates(students,pairs,k,traits,capRules,softPairs,ordered,random,weights));
   if(!solutions.length)return {error:'지정한 분리 관계·반 고정·유의 사항별 최대 인원을 모두 만족하는 편성안을 찾지 못했습니다. 조건을 확인해 주세요. 탐색 한도 때문에 실제로 가능한 편성안이 있을 수도 있습니다.'};
   if((weights.traitGenderBalance||[]).length)for(let i=0;i<solutions.length;i++)solutions[i]=polishTraitGenderBalance(students,pairs,k,traits,capRules,softPairs,solutions[i],weights);
-  if(Object.values(normalizeAllocationWeights(weights)).some(n=>n!==1)||(weights.traitGenderBalance||[]).length)solutions.sort((a,b)=>a.score-b.score);
+  let genderImproved=false;
+  for(let i=0;i<solutions.length;i++){const next=polishGenderGap(students,pairs,k,traits,capRules,softPairs,solutions[i],weights);genderImproved=genderImproved||next!==solutions[i];solutions[i]=next;}
+  if(genderImproved||Object.values(normalizeAllocationWeights(weights)).some(n=>n!==1)||(weights.traitGenderBalance||[]).length)solutions.sort((a,b)=>a.score-b.score);
   return {candidates:solutions,successes:solutions.length};
 }
 /* ENGINE_END */
@@ -1579,9 +1638,9 @@ function reviewStudentMove(students,pairs,assign,k,traits,capRules,id,to,teacher
  if(preferenceLess(priorPenalty,nextPenalty))violations.push(...validateAssignment(active,[...pairs,...softPairs],proposed,capRules));
  if(violations.length)return {ok:false,error:violations[0],violations,from,to};
  const after=reviewClassStats(students,proposed,k,traits);
- const counts=after.map(d=>d.total),average=students.length/k;
+ const counts=after.map(d=>d.total);
  const notices=[];
- if(counts.some(n=>Math.abs(n-average)>1))notices.push('반별 인원 차이가 커졌습니다. 이동 후 인원 균형을 확인하세요.');
+ if(Math.max(...counts)-Math.min(...counts)>2)notices.push('반별 인원 차이가 커졌습니다. 이동 후 인원 균형을 확인하세요.');
  return {ok:true,from,to,id,student,proposed,before,after,notices,movedIds:[...movingIds],displayName:moving.map(s=>s.name).join(' · '),
    affectedTraits:[...new Set(moving.flatMap(s=>s.traits||[]))].filter(t=>traits.includes(t))};
 }
@@ -1641,7 +1700,7 @@ function renderResultOverview(){
  host.innerHTML='<div class="result-overview-heading"><div><span>RESULT OVERVIEW</span><h3>우리 반 구성 한눈에</h3></div><span>편성안 '+String.fromCharCode(65+state.activeCandidate)+' · '+rows.reduce((n,r)=>n+r.total,0)+'명</span></div>'+renderDonutPanel(overviewDonutData(state,mode,'result'),mode,true)+
  '<div class="result-room-stats">'+rows.map((r,i)=>{
  const unknown=r.total-r.boys-r.girls,pct=r.total?r.boys/r.total*100:0,gpct=r.total?r.girls/r.total*100:0;
- return '<article><div class="result-room-title"><h4>'+escapeHtml(displayClass(i+1))+'</h4><strong>'+r.total+'<small>명</small></strong></div><div class="overview-sexbar" role="img" aria-label="남 '+r.boys+'명, 여 '+r.girls+'명, 성별 미입력 '+unknown+'명"><span class="boys" style="width:'+pct+'%"></span><span class="girls" style="width:'+gpct+'%"></span></div><p><span>남 '+r.boys+' · 여 '+r.girls+(unknown?' · 미입력 '+unknown:'')+'</span><span>학습 평균 <b>'+(r.levelN?(r.levelSum/r.levelN).toFixed(2):'—')+'</b></span></p></article>';
+ return '<article><div class="result-room-title"><h4>'+escapeHtml(displayClass(i+1))+'</h4><strong>'+r.total+'<small>명</small></strong></div><div class="overview-sexbar" role="img" aria-label="남 '+r.boys+'명, 여 '+r.girls+'명, 성별 미입력 '+unknown+'명"><span class="boys" style="width:'+pct+'%"></span><span class="girls" style="width:'+gpct+'%"></span></div><p><span>남 '+r.boys+' · 여 '+r.girls+(unknown?' · 미입력 '+unknown:'')+' · 여−남 '+(r.girls-r.boys>0?'+':'')+(r.girls-r.boys)+'</span><span>학습 평균 <b>'+(r.levelN?(r.levelSum/r.levelN).toFixed(2):'—')+'</b></span></p></article>';
  }).join('')+'</div>';
 }
 function renderResults(){
@@ -1660,7 +1719,7 @@ function renderResults(){
   const selected=state.candidates[state.activeCandidate];if(!selected)return;
   const violations=validateAssignment(activeStudents(),effectivePairs(),selected.assign,state.capRules);
   const counts=reportData(selected);const totals=counts.map(d=>d.total);const diff=Math.max(...totals)-Math.min(...totals);
-  const over=diff>1?`반별 인원 차이가 ${diff}명입니다. 편성 결과를 직접 검토하세요.`: `반별 인원 차이 ${diff}명 · 지정한 배정 조건 충족`;
+  const over=diff>2?`반별 인원 차이가 ${diff}명입니다. 편성 결과를 직접 검토하세요.`: `반별 인원 차이 ${diff}명 · 지정한 배정 조건 충족`;
   $('validation').innerHTML=violations.length?`<div class="alert"><b>분리 조건 위반 ${violations.length}건</b><div>${violations.map(escapeHtml).join('<br>')}</div></div>`:`<div class="success">${escapeHtml(over)}${duplicateNames().length?' · 동명이인이 있어 기존 반과 번호를 함께 확인하세요.':''}</div>`;
   $('report').innerHTML=`<div class="report"><table><thead><tr><th>반</th><th>전체</th><th>남</th><th>여</th><th>성별 미입력</th><th>다문화</th><th>특수</th><th>학습지표 평균</th></tr></thead><tbody>${counts.map((d,i)=>`<tr><td>${escapeHtml(displayClass(i+1))}</td><td>${d.total}명</td><td>${d.boys}명</td><td>${d.girls}명</td><td>${d.total-d.boys-d.girls}명</td><td>${d.traitCounts['다문화']||0}명</td><td>${d.traitCounts['특수']||0}명</td><td>${d.levelN?(d.levelSum/d.levelN).toFixed(2):'—'}</td></tr>`).join('')}</tbody></table></div><div class="legend">${state.traits.filter(t=>counts.some(d=>d.traitCounts[t]>0)||Number.isInteger(state.capRules[t])).map(t=>`<span>${escapeHtml(t)}${Number.isInteger(state.capRules[t])?' (반당 최대 '+state.capRules[t]+'명)':''}: ${counts.map((d,i)=>`${i+1}반 ${d.traitCounts[t]}`).join(' / ')}</span>`).join('')}</div>`;
   $('resultGrid').innerHTML=counts.map((d,index)=>{
