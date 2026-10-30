@@ -266,16 +266,16 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.equal(await page.locator('#presetCount').textContent(),'2명 확정');
     await page.locator('#fillRemaining').click();
     assert.equal(await page.locator('#view-results').isVisible(),true);
-    assert.equal(await page.locator('#resultGrid select[data-move]:disabled').count(),2,'교사 지정 학생은 결과에서 이동 불가');
+    assert.equal(await page.locator('#resultGrid [data-locked="true"]').count(),2,'교사 지정 학생은 결과에서 이동 불가');
     assert.match(await page.locator('#resultGrid').textContent(),/담당 담당교사 A/);
-    const firstClass=await page.locator('select[data-move="'+firstId+'"]').inputValue();
-    const secondClass=await page.locator('select[data-move="'+secondId+'"]').inputValue();
+    const firstClass=await page.locator('[data-result-student="'+firstId+'"]').getAttribute('data-assigned-class');
+    const secondClass=await page.locator('[data-result-student="'+secondId+'"]').getAttribute('data-assigned-class');
     assert.equal(firstClass,'1');
     assert.equal(secondClass,'2');
     await page.locator('[data-tab="roster"]').click();
     await page.locator('#generateQuick').click();
-    assert.equal(await page.locator('select[data-move="'+firstId+'"]').inputValue(),'1');
-    assert.equal(await page.locator('select[data-move="'+secondId+'"]').inputValue(),'2');
+    assert.equal(await page.locator('[data-result-student="'+firstId+'"]').getAttribute('data-assigned-class'),'1');
+    assert.equal(await page.locator('[data-result-student="'+secondId+'"]').getAttribute('data-assigned-class'),'2');
 
     assert.equal(await page.locator('#view-results').isVisible(),true,'편성 결과 화면으로 이동해야 합니다.');
 
@@ -283,10 +283,12 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     const initialCandidateCount=await page.evaluate(()=>state.candidates.length);
     assert.match(await page.locator('#resultGrid [data-result-student="'+coloredStudentId+'"] .student-name-highlight').getAttribute('style'),/#ffe0e6/);
     assert.match(await page.locator('#resultGrid [data-result-student="'+secondColoredStudentId+'"] .student-name-highlight').getAttribute('style'),/#162b4d/);
-    await page.locator('#resultGrid [data-result-student="'+coloredStudentId+'"] [data-student-color]').click();
-    assert.equal(await page.locator('#nameColorDialog').isVisible(),true);
-    await page.locator('#nameColorPalette [data-pick-name-color="#fff0b9"]').click();
-    await page.locator('#nameColorDone').click();
+    await page.locator('#resultGrid [data-result-student="'+coloredStudentId+'"] .student-name-highlight').click();
+    if(!await page.locator('#traitRemote').isVisible())await page.locator('#toggleResultRemote').click();
+    if(!await page.locator('#traitRemoteBody').isVisible())await page.locator('#collapseTraitRemote').click();
+    await page.locator('#traitRemote [data-remote-color="#fff0b9"]').click();
+    // Close the floating editor while exercising exports and native drag review.
+    await page.locator('#closeTraitRemote').click();
     assert.equal(await page.evaluate(()=>state.candidates.length),initialCandidateCount,'색상만 변경하면 편성안을 다시 계산하지 않아야 함');
     assert.equal(await page.evaluate(id=>state.students.find(s=>s.id===id).color,coloredStudentId),'#fff0b9');
     await page.locator('#resultCompare').click();
@@ -364,7 +366,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.locator('#settingsDone').click();
     assert.equal(await page.locator('#teacherPriorityOn').isChecked(),false);
     await page.locator('#generateQuick').click();
-    assert.equal(await page.locator('#resultGrid select[data-move]:disabled').count(),0);
+    assert.equal(await page.locator('#resultGrid [data-locked="true"]').count(),0);
     const offState=await page.evaluate(()=>{
       const assigned=state.candidates[state.activeCandidate].assign;
       return {pins:state.students.filter(st=>st.fixed).map(st=>[st.id,st.fixed]),
@@ -378,7 +380,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.locator('#plannerSettingsDialog .priority-switch').click();
     await page.locator('#settingsDone').click();
     await page.locator('#generateQuick').click();
-    assert.equal(await page.locator('#resultGrid select[data-move]:disabled').count(),2);
+    assert.equal(await page.locator('#resultGrid [data-locked="true"]').count(),2);
 
 
 
@@ -422,7 +424,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
       undo:moveUndoStack.slice(),lastMove:moveLastResult?.analysis?.id||null,
       preview:document.getElementById('movePreview').textContent
     }));
-    assert.equal(await page.locator('select[data-move="'+reviewChoice.id+'"]').inputValue(),String(reviewChoice.to),reviewChoice.id+' / '+JSON.stringify(dragDiagnostics.history)+' / '+JSON.stringify(dragDiagnostics.undo)+' / '+dragDiagnostics.preview);
+    assert.equal(await page.locator('[data-result-student="'+reviewChoice.id+'"]').getAttribute('data-assigned-class'),String(reviewChoice.to),reviewChoice.id+' / '+JSON.stringify(dragDiagnostics.history)+' / '+JSON.stringify(dragDiagnostics.undo)+' / '+dragDiagnostics.preview);
     assert.match(await page.locator('#moveHistoryResult').textContent(),/최근 이동/);
     assert.match(await page.locator('#moveHistoryResult').textContent(),/학습지표 평균/);
     assert.match(await page.locator('#moveHistoryResult').textContent(),/다문화/);
@@ -431,7 +433,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.equal(changedMetrics[reviewChoice.to-1].total,startMetrics[reviewChoice.to-1].total+1);
     assert.equal(await page.locator('#undoMove').isEnabled(),true);
     await page.locator('#undoMove').click();
-    assert.equal(await page.locator('select[data-move="'+reviewChoice.id+'"]').inputValue(),String(reviewChoice.from));
+    assert.equal(await page.locator('[data-result-student="'+reviewChoice.id+'"]').getAttribute('data-assigned-class'),String(reviewChoice.from));
     assert.match(await page.locator('#moveHistoryResult').textContent(),/되돌림 완료/);
     // In vertical mode the destination may be far away: use the touch-friendly select-and-move controls.
     await page.locator('#resultVertical').click();
@@ -440,10 +442,10 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.locator('[data-result-student="'+reviewChoice.id+'"] [data-select-move]').click();
     assert.match(await page.locator('#moveSelection').textContent(),/이동할 학생/);
     await page.locator('[data-drop-button="'+reviewChoice.to+'"]').click();
-    assert.equal(await page.locator('select[data-move="'+reviewChoice.id+'"]').inputValue(),String(reviewChoice.to));
+    assert.equal(await page.locator('[data-result-student="'+reviewChoice.id+'"]').getAttribute('data-assigned-class'),String(reviewChoice.to));
     await page.reload({waitUntil:'domcontentloaded'});
     await page.locator('[data-tab="results"]').click();
-    assert.equal(await page.locator('select[data-move="'+reviewChoice.id+'"]').inputValue(),String(reviewChoice.to),'drag changes persist after reload');
+    assert.equal(await page.locator('[data-result-student="'+reviewChoice.id+'"]').getAttribute('data-assigned-class'),String(reviewChoice.to),'drag changes persist after reload');
     await page.setViewportSize({width:1280,height:900});
 
     // One Excel-style roster replaces the duplicate pop-up bulk import mode.

@@ -1,22 +1,21 @@
-/* Give pupil information its own width; controls never squeeze names into a vertical stack. */
-.result-grid .assigned,.result-grid[data-layout="compare"] .assigned{display:grid;grid-template-columns:15px minmax(0,1fr);align-items:start;gap:5px 7px;padding:10px 0}
-.result-grid .assigned .drag-handle{grid-row:1 / span 2;grid-column:1;padding-top:6px}
-.result-grid .assigned .person{grid-column:2;min-width:0;width:100%;max-width:100%}
-.result-grid .assigned .person .name-and-color{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;min-width:0}
-.result-grid .assigned .person b.student-name-highlight{font-size:13px;line-height:1.45;min-width:0;max-width:100%;word-break:keep-all;overflow-wrap:anywhere;padding:4px 7px}
-.result-grid .assigned .student-color-action{min-width:27px;min-height:27px;padding:3px 5px;font-size:10px;margin-left:auto}
-.result-grid .assigned .person small,.result-grid[data-layout="compare"] .assigned .person small{display:block;margin:5px 0 0;font-size:11px;line-height:1.6;word-break:keep-all;overflow-wrap:anywhere;color:#607467}
-.result-grid .assigned .move-controls,.result-grid[data-layout="compare"] .assigned .move-controls{grid-column:2;display:flex;gap:5px;justify-content:flex-end;align-items:center;margin:2px 0 0;min-width:0;width:100%}
-.result-grid .assigned .move-select-btn{min-height:29px;padding:4px 8px;font-size:11px;white-space:nowrap}
-.result-grid .assigned select,.result-grid[data-layout="compare"] .assigned select{width:80px;min-width:72px;min-height:29px;padding:4px 7px;font-size:11px}
-.result-grid[data-layout="compare"]{grid-template-columns:repeat(var(--comparison-classes,3),minmax(255px,1fr))}
-.result-grid .class-top{position:relative}.result-grid .class-top h3{gap:8px;align-items:baseline}
-.result-grid .class-metrics{line-height:1.65}.result-grid .class-body{scrollbar-width:thin}
-.result-grid[data-layout="vertical"] .class-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:0 20px;max-height:none;padding:5px 15px 12px}
-.result-grid[data-layout="vertical"] .assigned{min-width:0;border-bottom:1px solid #e8eeea}
-@media(max-width:620px){.result-grid[data-layout="vertical"] .class-body{grid-template-columns:minmax(0,1fr)}.result-grid[data-layout="compare"]{grid-template-columns:repeat(var(--comparison-classes,3),minmax(255px,1fr))}}
-@media print{.result-grid .assigned .move-controls,.result-grid .assigned .drag-handle{display:none!important}}
-
+/* A full-width name row, with distinct identity and attention rows. */
+.result-grid .assigned,.result-grid[data-layout="compare"] .assigned{display:block;padding:0;margin:9px 0;border:1px solid #98b1a4;border-radius:9px;background:#fff;overflow:hidden;min-width:0;box-shadow:0 1px 2px #2449370b}
+.result-grid .assigned .person{display:block;min-width:0;width:100%;max-width:none}
+.result-grid .student-line{display:grid;grid-template-columns:35px minmax(0,1fr) 32px;align-items:stretch;min-height:45px;border-bottom:1px solid #a7bdb1}
+.result-grid .assigned .student-number{display:flex;align-items:center;justify-content:center;position:relative;padding:8px 2px 8px 7px;border-right:1px solid #b3c7bb;background:#eef4f0;font-size:12px;font-weight:750;color:#456654;cursor:grab;user-select:none;touch-action:none}
+.result-grid .student-number::before{content:'⠿';position:absolute;left:1px;top:50%;transform:translateY(-50%);font-size:10px;color:#739280}
+.result-grid .assigned[data-locked="true"] .student-number{cursor:pointer}
+.result-grid .assigned b.student-name-highlight{display:flex;align-items:center;justify-content:center;width:100%;min-width:0;max-width:none;border:0;border-radius:0;padding:8px 5px;font-size:18px;line-height:1.35;font-weight:700;text-align:center;word-break:keep-all;overflow-wrap:anywhere}
+.result-grid .student-gender{display:flex;align-items:center;justify-content:center;background:#f4f7f5;border-left:1px solid #b3c7bb;color:#486452;font-size:12px;font-weight:700}
+.result-grid .student-traits-line{display:grid;grid-template-columns:59px minmax(0,1fr);min-height:32px;border-bottom:1px solid #bacbc1;font-size:11px;line-height:1.6}
+.result-grid .student-line-label{display:flex;align-items:center;justify-content:center;background:#f0f5f2;border-right:1px solid #bacbc1;color:#506b59;font-weight:650}
+.result-grid .student-traits-value{display:flex;gap:3px 8px;flex-wrap:wrap;align-items:center;padding:6px 9px;color:#36563f;overflow-wrap:anywhere;word-break:keep-all}.result-grid .no-traits{color:#9aa99e}
+.result-grid .assigned .student-origin{display:block;padding:5px 9px;margin:0;color:#65776c;font-size:10px;line-height:1.4;word-break:keep-all;overflow-wrap:anywhere;background:#fbfcfb}
+.result-grid .assigned.format-selected{outline:2px solid #34845e;outline-offset:1px;border-color:#34845e}.result-grid .assigned.move-selected{box-shadow:0 0 0 1px #34845e;background:#fff}
+.result-grid[data-layout="compare"]{grid-template-columns:repeat(var(--comparison-classes,3),minmax(255px,1fr))}.result-grid .class-card{border-color:#a9c0b3}.result-grid .class-top{position:relative;border-bottom:1px solid #b6c9be}.result-grid .class-top h3{gap:8px;align-items:baseline}.result-grid .class-body{scrollbar-width:thin;padding:1px 10px 8px}
+.result-grid[data-layout="vertical"] .class-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));align-items:start;gap:0 14px;max-height:none;padding:2px 14px 10px}
+@media(min-width:1100px) and (max-width:1699px){.results-remote-space #resultGrid{margin-right:270px}}
+@media(max-width:620px){.result-grid[data-layout="vertical"] .class-body{grid-template-columns:minmax(0,1fr)}}
 /* Keep stage navigation reachable while the modeless palette follows the roster. */
 .tabs{position:sticky;top:76px;z-index:45;background:var(--bg,#f5f7fb);padding-top:2px;margin-bottom:0}
 @media print{.tabs{display:none!important}}
@@ -24,3 +23,5 @@
 .result-overview-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}.result-overview-heading div>span{font-size:9px;letter-spacing:.12em;color:#65917d;font-weight:750}.result-overview-heading h3{margin:3px 0 0;font-size:19px;letter-spacing:-.04em;color:#285744}.result-overview-heading>span{padding:5px 9px;border-radius:99px;background:#e3efe8;font-size:11px;color:#4f725f;white-space:nowrap}
 .result-overview .overview-pane{box-shadow:none;background:#fff}.result-overview .trait-donut-rail{grid-auto-columns:280px}.result-room-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:12px}.result-room-stats article{padding:13px 15px;border:1px solid #e0e9e3;border-radius:11px;background:#fff;min-width:0}.result-room-title{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}.result-room-title h4{margin:0;font-size:12px;color:#4e6e5b}.result-room-title strong{font-size:23px;line-height:1.2;color:#2d6049}.result-room-title small{font-size:11px;margin-left:3px;font-weight:500}.result-room-stats .overview-sexbar{height:8px}.result-room-stats p{display:flex;flex-wrap:wrap;justify-content:space-between;gap:5px;margin:8px 0 0;font-size:10px;color:#7a8b80}.result-room-stats p b{color:#4b6f59}
 @media(max-width:620px){.result-overview{padding:12px}.result-overview-heading h3{font-size:16px}.result-overview-heading>span{font-size:10px}.result-room-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.result-room-stats article{padding:10px}.result-overview .trait-donut-rail{grid-auto-columns:min(280px,70vw)}}
+.result-grid[data-layout="compare"] .assigned .person b.student-name-highlight{font-size:18px}
+.student-number:focus-visible{outline:3px solid #397b5e;outline-offset:-3px}
