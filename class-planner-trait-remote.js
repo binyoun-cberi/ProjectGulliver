@@ -35,7 +35,8 @@ function positionTraitRemote(){
  const panel=$('traitRemote');if(panel.hidden)return;
  const box=panel.getBoundingClientRect(),point=traitRemoteUI.position||{x:box.left,y:box.top};
  const header=document.querySelector('.gx-header')?.getBoundingClientRect(),nav=document.querySelector('.tabs')?.getBoundingClientRect();
- const guard=(header?.bottom||0)+8,grip=$('traitRemoteGrip').getBoundingClientRect().height;
+ const stageHead=$('view-'+view)?.querySelector('.section-head')?.getBoundingClientRect();
+ const guard=Math.max((header?.bottom||0)+8,stageHead&&stageHead.bottom>0&&stageHead.bottom<innerHeight-160?stageHead.bottom+8:0),grip=$('traitRemoteGrip').getBoundingClientRect().height;
  const x=Math.max(8,Math.min(innerWidth-box.width-8,point.x));
  const desiredBody=traitRemoteUI.collapsed?0:Math.min(innerHeight*.62,500);
  let y=Math.max(guard,Math.min(innerHeight-grip-desiredBody-16,point.y)),bottom=innerHeight-8;

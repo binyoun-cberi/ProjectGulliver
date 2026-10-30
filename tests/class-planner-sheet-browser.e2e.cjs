@@ -5,15 +5,27 @@ const assert=require('node:assert/strict');
  const executablePath=process.env.CHROMIUM_EXECUTABLE_PATH||['/opt/google/chrome/chrome','/usr/bin/google-chrome','/usr/bin/google-chrome-stable'].find(p=>fs.existsSync(p));
  const browser=await chromium.launch({...(executablePath?{executablePath}:{}),headless:true,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1440,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://localhost:8765/'+encodeURIComponent('반 편성 도우미.html'));
- assert.equal(await page.locator('#view-setup > #overviewDashboard').count(),1);
+ assert.equal(await page.locator('[data-tab="setup"]').count(),0);
+ assert.equal(await page.locator('#view-roster').isVisible(),true);
+ assert.equal(await page.locator('#blankRosterSetup').getAttribute('open'),null);
+ assert.equal(await page.locator('#rosterAdvanced').getAttribute('open'),null);
+ assert.equal(await page.locator('#rosterOverview').getAttribute('open'),null);
+ assert.equal(await page.locator('[data-key="name"]').first().isVisible(),true);
+ assert.match(await page.locator('#rosterSummary').textContent(),/명단 0명/);
+ await page.screenshot({path:require('path').join(root,'test-artifacts/time-tools-planner-unified-empty.png')});
+ await page.locator('#blankRosterSetup > summary').click();
  const paste=async(sel,text)=>page.locator(sel).first().evaluate((el,text)=>{el.focus();const d=new DataTransfer();d.setData('text/plain',text);el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:d,bubbles:true,cancelable:true}));},text);
  await paste('[data-source-room="1"]','남학생\t여학생\n2\t2\n1\t1\n0\t0');
  assert.equal(await page.locator('[data-source-room="2"][data-source-gender="girls"]').inputValue(),'1');
  await page.locator('[data-source-room="1"]').first().focus();await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>document.activeElement.dataset.sourceRoom),'2');
  await page.locator('#applySetup').click();
- assert.equal(await page.locator('#view-roster > #overviewDashboard').count(),1);
+ assert.equal(await page.locator('#rosterOverviewContent > #overviewDashboard').count(),1);
+ assert.equal(await page.locator('#blankRosterSetup').getAttribute('open'),null);
  await paste('[data-key="name"]','이름\t성별\t학습지표\n김하늘\t남\t90\n박봄\t여자\t0\n이솔\tM\t88\n최별\tF\t77\n한빛\t남학생\t86\n윤해\t여학생\t100');
  assert.equal(await page.locator('[data-key="gender"]').nth(3).inputValue(),'여');
+ await page.locator('#startRosterDirect').click();
+ assert.equal(await page.evaluate(()=>document.activeElement.dataset.key),'name');
+ await page.screenshot({path:require('path').join(root,'test-artifacts/time-tools-planner-unified-roster.png')});
  await paste('[data-key="gender"]','여\n남\nF');
  assert.deepEqual(await page.locator('[data-key="gender"]').evaluateAll(els=>els.map(el=>el.value)),['여','남','여','여','남','여']);
  await page.locator('[data-key="name"]').nth(0).click();await page.locator('[data-key="name"]').nth(2).click({modifiers:['Control']});
@@ -70,8 +82,9 @@ const assert=require('node:assert/strict');
  assert.ok(Math.abs((await page.locator('#traitRemote').evaluate(el=>el.getBoundingClientRect().left))-moved)<2);
  await page.locator('#closeTraitRemote').click();assert.equal(await page.locator('#traitRemote').isVisible(),false);
  await page.locator('#toggleTraitRemote').click();assert.equal(await page.locator('#traitRemote').isVisible(),true);
- await page.locator('[data-tab="setup"]').click();assert.equal(await page.locator('#traitRemote').isVisible(),false);
+ await page.locator('[data-tab="rules"]').click();assert.equal(await page.locator('#traitRemote').isVisible(),false);
  await page.locator('[data-tab="roster"]').click();
+ await page.locator('#rosterOverview > summary').click();
  // Compact overview charts expose both count directions without growing page height.
  await page.evaluate(()=>{state.students[0].traits=['다문화','특수'];state.students[1].traits=['특수'];state.students[2].traits=['다문화'];renderOverview()});
  assert.equal(await page.locator('[data-overview-mode="class"]').getAttribute('aria-pressed'),'true');
@@ -146,7 +159,7 @@ const assert=require('node:assert/strict');
  assert.equal(await directPage.evaluate(()=>state.sourceClassCount),7);
  assert.equal(await directPage.evaluate(()=>state.sourceGrade),'6');
  assert.equal(await directPage.evaluate(()=>state.sourceClasses.reduce((n,r)=>n+r.unknown,0)),11);
- await directPage.locator('[data-tab="setup"]').click();
+ assert.match(await directPage.locator('#rosterSummary').textContent(),/명단 120명/);
  assert.match(await directPage.locator('#sourceClassTotals').textContent(),/120명/);
  await directPage.locator('#classCount').fill('7');await directPage.keyboard.press('Tab');
  await directPage.locator('[data-tab="roster"]').click();await directPage.locator('[data-key="gender"]').first().fill('남');await directPage.keyboard.press('Tab');
@@ -204,12 +217,18 @@ const assert=require('node:assert/strict');
  assert.equal(await directPage.evaluate(()=>state.students[0].color||''),'');
  // Regenerate after roster undo invalidates the prior assignment.
  await directPage.locator('#generateQuick').click();await directPage.locator('.assigned').first().waitFor();
- // A summary lives inside the current stage, with a single result overview at step 4.
- for(const stage of ['setup','roster','rules','results','setup']){
+ // The merged roster has one compact summary; other stages have one infographic.
+ for(const stage of ['roster','rules','results','roster']){
   await directPage.locator('[data-tab="'+stage+'"]').click();
-  assert.equal(await directPage.locator('.planner-overview:visible,#resultOverview:visible').count(),1,stage);
-  if(stage==='results')assert.equal(await directPage.locator('#overviewDashboard').isVisible(),false);
-  else assert.equal(await directPage.locator('#view-'+stage+' > #overviewDashboard').count(),1,stage);
+  if(stage==='roster'){
+   assert.equal(await directPage.locator('#rosterSummary').isVisible(),true);
+   assert.equal(await directPage.locator('#rosterOverviewContent > #overviewDashboard').count(),1);
+   assert.equal(await directPage.locator('.planner-overview:visible,#resultOverview:visible').count(),0);
+  }else{
+   assert.equal(await directPage.locator('.planner-overview:visible,#resultOverview:visible').count(),1,stage);
+   if(stage==='results')assert.equal(await directPage.locator('#overviewDashboard').isVisible(),false);
+   else assert.equal(await directPage.locator('#view-'+stage+' > #overviewDashboard').count(),1,stage);
+  }
  }
  await directPage.evaluate(()=>{state.teacherPriorityOn=true;showTab('preset')});
  assert.equal(await directPage.locator('#view-preset > #overviewDashboard').count(),1);
@@ -253,12 +272,19 @@ const assert=require('node:assert/strict');
  const feedbackPage=await browser.newPage({viewport:{width:1440,height:1000}});feedbackPage.on('pageerror',e=>errors.push(e.message));
  await feedbackPage.goto('http://localhost:8765/'+encodeURIComponent('반 편성 도우미.html'));
  assert.equal(await feedbackPage.locator('#allocationWeightsSetup [data-allocation-weight]').count(),4);
+ await feedbackPage.locator('#rosterAdvanced > summary').click();
  assert.ok(await feedbackPage.evaluate(()=>state.traits.includes('느린학습자')));
  for(const [key,value] of Object.entries({oldClass:5,basket:0,learning:3,gender:4}))await feedbackPage.locator('#allocationWeightsSetup [data-allocation-weight="'+key+'"]').evaluate((el,value)=>{el.value=String(value);el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));},value);
  assert.deepEqual(await feedbackPage.evaluate(()=>normalize(JSON.parse(localStorage.getItem('classplanner-v1-local'))).allocationWeights),{oldClass:5,basket:0,learning:3,gender:4});
  await feedbackPage.locator('#allocationWeightsSetup').scrollIntoViewIfNeeded();
  await feedbackPage.screenshot({path:require('path').join(root,'test-artifacts/time-tools-planner-priorities.png')});
  await feedbackPage.evaluate(()=>{state.students=Array.from({length:12},(_,i)=>({id:'f'+i,name:'피드백'+String.fromCharCode(65+i),oldGrade:'5',oldClass:(i%3+1)+'반',number:String(i+1),gender:i%2?'여':'남',level:95-i,traits:i===3?['느린학습자']:[],fixed:i===0?1:0,note:'',color:'',cellFormats:{}}));state.teacherPriorityOn=true;syncSourceFromRoster();saveState();showTab('roster')});
+ await feedbackPage.locator('#sourceGrade').fill('6');await feedbackPage.locator('#sourceGrade').press('Tab');
+ assert.ok(await feedbackPage.evaluate(()=>state.students.every(s=>s.oldGrade==='6')));
+ assert.equal(await feedbackPage.locator('#grade').inputValue(),'7');
+ await feedbackPage.locator('#rosterUndo').click();
+ assert.ok(await feedbackPage.evaluate(()=>state.students.every(s=>s.oldGrade==='5')));
+ assert.equal(await feedbackPage.locator('#grade').inputValue(),'6');
  const sourcePaste=async(text)=>feedbackPage.locator('[data-key="oldClass"]').first().evaluate((el,text)=>{el.focus();const d=new DataTransfer();d.setData('text/plain',text);el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:d,bubbles:true,cancelable:true}));},text);
  await sourcePaste('기존 반\n2반\n2반\n2반\n2반\n2반\n2반');
  assert.deepEqual(await feedbackPage.evaluate(()=>state.students.slice(0,6).map(s=>s.oldClass)),Array(6).fill('2반'));
