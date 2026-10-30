@@ -1243,7 +1243,7 @@ function greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,rand
   const scored=students.filter(hasStudyScore),avg=scored.length?scored.reduce((sum,st)=>sum+st.level,0)/scored.length:0;
   const sd=scored.length?Math.max(1,Math.sqrt(scored.reduce((sum,st)=>sum+(st.level-avg)**2,0)/scored.length)):1;
   const academic=Array(k).fill(0),boys=Array(k).fill(0),genderCount=Array(k).fill(0);
-  const boyRatio=students.length?students.filter(st=>st.gender==='남').length/students.length:0.5;
+  const desiredGenderGap=students.reduce((n,st)=>n+(st.gender==='여'?1:st.gender==='남'?-1:0),0)/k;
   const oldCount=Array.from({length:k},()=>({}));
   for(const st of students)if(st.fixed){
     const i=st.fixed-1;
@@ -1267,8 +1267,8 @@ function greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,rand
       if(hasPresets){
         const z=hasStudyScore(s)?(s.level-avg)/sd:0;
         const academicCost=3.2*((academic[i]+z)**2-academic[i]**2);
-        const genderCost=s.gender==='남'||s.gender==='여'?
-          1.7*((boys[i]+(s.gender==='남'?1:0)-(genderCount[i]+1)*boyRatio)**2-(boys[i]-genderCount[i]*boyRatio)**2):0;
+        const currentGap=genderCount[i]-2*boys[i],step=s.gender==='여'?1:s.gender==='남'?-1:0;
+        const genderCost=step?1.7*((currentGap+step-desiredGenderGap)**2-(currentGap-desiredGenderGap)**2):0;
         const traitCost=(s.traits||[]).reduce((sum,tag)=>sum+(traitCounts[i][tag]||0)*1.2,0);
         const oldCost=s.oldClass?(oldCount[i][s.oldClass]||0)*0.6:0;
         const traitGenderCost=sexKeys(s).reduce((sum,key)=>{const total=tagSexTotals.get(key),current=tagSexCounts[i].get(key)||0;return sum+60*(2*current+1-2*total*target[i]/students.length)/Math.max(1,total/k)},0);
