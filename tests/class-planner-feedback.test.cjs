@@ -2,6 +2,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const html=fs.readFileSync(path.join(__dirname,'..','반 편성 도우미.html'),'utf8'),feedback=fs.readFileSync(path.join(__dirname,'..','class-planner-feedback.js'),'utf8');
 function api(){const a={};vm.createContext(a);vm.runInContext('function hasStudyScore(s){return Number.isFinite(s.level)&&s.level>=0}\n'+html.slice(html.indexOf('function validateAssignment('),html.indexOf('/* ENGINE_END */'))+'\n'+feedback+'\n'+fs.readFileSync(path.join(__dirname,'..','class-planner-twins.js'),'utf8'),a);return a}
 const students=()=>Array.from({length:8},(_,i)=>({id:'s'+i,name:'학생'+i,oldClass:[0,3,4,7].includes(i)?'1반':'2반',gender:i%2?'여':'남',traits:[],fixed:0,level:[100,98,91,20,19,18,11,10][i]}));
+const traitPupils=()=>Array.from({length:16},(_,i)=>({id:'g'+i,name:'학생'+i,oldClass:'1반',gender:([0,3,4,7].includes(i%8)!==(i>=8))?'남':'여',traits:i<8?['학습지원']:[],fixed:0,level:100-i}));
 function seed(){let n=23;return()=>((n=Math.imul(n,1664525)+1013904223>>>0)/4294967296)}
 test('중요도는 기본 1배로 복원되며 0~5 정수와 실제 숫자만 허용',()=>{const a=api();assert.deepEqual(JSON.parse(JSON.stringify(a.normalizeAllocationWeights(null))),{oldClass:1,basket:1,learning:1,gender:1});const w=a.normalizeAllocationWeights({oldClass:99,basket:-2,learning:2.7,gender:'5'});assert.equal(w.oldClass,5);assert.equal(w.basket,0);assert.equal(w.learning,3);assert.equal(w.gender,1);});
 test('학습·남녀·기존 반 중요도는 각각 해당 손실만 바꾸며 0은 점수에서 제외',()=>{const a=api(),p=students(),assign=Object.fromEntries(p.map((s,i)=>[s.id,i<4?1:2])),zero={oldClass:0,basket:1,learning:0,gender:0};assert.equal(a.calcScore(p,assign,2,[],[4,4],zero),0);for(const key of ['oldClass','learning','gender']){if(key==='oldClass')p.forEach((s,i)=>s.oldClass=i<4?'1반':'2반');if(key==='gender')p.forEach((s,i)=>s.gender=i<4?'남':'여');const low=a.calcScore(p,assign,2,[],[4,4],{...zero,[key]:1}),high=a.calcScore(p,assign,2,[],[4,4],{...zero,[key]:5});assert.ok(low>0,key);assert.ok(Math.abs(high-low*5)<1e-8,key);}});
@@ -9,3 +10,16 @@ test('학습 중요도를 높이면 실제 편성안의 학습지표 평균 차�
 test('바구니 중요도는 가중 페널티·불가피한 하한에 함께 적용되고 0이어도 개별 분리는 유지',()=>{const a=api(),p=students().slice(0,6),pairs=[{a:'s0',b:'s1'},{a:'s0',b:'s2'},{a:'s1',b:'s2'}],assign=Object.fromEntries(p.map((s,i)=>[s.id,i<3?1:2]));assert.equal(a.preferencePenalty(p,assign,2,{},pairs,{basket:5}).total,15);assert.equal(a.preferenceLowerBound(p,2,{},pairs,{basket:5}).total,5);assert.equal(a.preferencePenalty(p,assign,2,{},pairs,{basket:0}).total,0);p[0].fixed=1;const r=a.generateCandidates(p,[pairs[0]],2,[],seed(),{},pairs,{basket:0,oldClass:0,gender:0,learning:0});assert.ok(r.candidates?.length,r.error);for(const c of r.candidates){assert.equal(c.assign.s0,1);assert.notEqual(c.assign.s0,c.assign.s1);}});
 test('중요도 변경에도 쌍생아 동반 배정·다른 반 관계는 유지',()=>{const a=api(),p=students(),groups=[{id:'g',members:['s0','s1','s2'],rules:[{a:'s0',b:'s1',mode:'together'},{a:'s0',b:'s2',mode:'apart'}]}];const r=a.generateTwinCandidates(p,[],2,[],seed(),{},[],groups,{basket:0,oldClass:5,learning:0,gender:5});assert.ok(r.candidates?.length,r.error);for(const c of r.candidates){assert.equal(c.assign.s0,c.assign.s1);assert.notEqual(c.assign.s0,c.assign.s2);}});
 test('기존 반 색은 새 반·정렬·이름 색과 무관하며 미입력도 구분한다',()=>{const a=api();assert.equal(a.sourceRoomColor({oldClass:'1반',color:'#000000'}),a.sourceRoomColor({oldClass:'1반',color:'#ffffff'}));assert.notEqual(a.sourceRoomColor({oldClass:'1반'}),a.sourceRoomColor({oldClass:'2반'}));assert.equal(a.sourceRoomColor({oldClass:''}),'#e8ecef');assert.equal(a.sourceRoomLabel({oldGrade:'5',oldClass:'3반'}),'5학년 3반');});
+test('선택한 유의사항의 남녀를 각각 반마다 고르게 배치하며 기본 뱀 배정은 유지',()=>{
+ const a=api(),p=traitPupils(),off=a.generateCandidates(p,[],2,['학습지원'],seed()),on=a.generateCandidates(p,[],2,['학습지원'],seed(),{},[],{traitGenderBalance:['학습지원']});
+ assert.ok(on.candidates?.length,on.error);
+ const loss=c=>a.traitGenderBalanceLoss(p,c.assign,2,['학습지원'],c.target);
+ assert.ok(loss(off.candidates[0])>0);assert.equal(loss(on.candidates[0]),0);
+ for(const room of [1,2])for(const sex of ['남','여'])assert.equal(p.filter(st=>st.traits.length&&st.gender===sex&&on.candidates[0].assign[st.id]===room).length,2);
+ assert.equal(a.traitGenderBalanceLoss(p,off.candidates[0].assign,2,[],[8,8]),0);
+});
+test('항목별 남녀 균형은 전체 성비 가중치 0에도 적용하고 고정·분리·최대 인원은 보존',()=>{
+ const a=api(),p=traitPupils();p[0].fixed=1;const pairs=[{a:'g1',b:'g2'}],caps={학습지원:4};
+ const on=a.generateCandidates(p,pairs,2,['학습지원'],seed(),caps,[],{gender:0,traitGenderBalance:['학습지원']});
+ assert.ok(on.candidates?.length,on.error);for(const c of on.candidates){assert.equal(c.assign.g0,1);assert.notEqual(c.assign.g1,c.assign.g2);assert.equal(a.validateAssignment(p,pairs,c.assign,caps).length,0)}
+});

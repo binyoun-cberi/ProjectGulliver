@@ -366,7 +366,7 @@
  <div id="setupNotice" class="helper" role="status" aria-live="polite"></div><div class="actions"><button id="applySetup" class="btn primary" type="button">빈 명단 만들기</button></div></div></details>
  <div class="merged-roster-hint no-print">기존 학년·반·번호·이름·성별·학습지표·유의 사항 제목을 포함한 엑셀 명단도 붙여넣을 수 있습니다.</div>
  <div class="roster-sheet-tools no-print"><div><strong>엑셀처럼 바로 입력</strong><span id="rosterRangeStatus">셀을 선택하거나 엑셀에서 여러 행을 붙여넣으세요.</span></div><button id="toggleTraitRemote" class="btn small" type="button" aria-controls="traitRemote" aria-expanded="true">편집 리모컨</button><div class="actions"><button id="rosterFillDown" class="btn small" type="button" disabled>아래로 채우기 (Ctrl+D)</button><button id="rosterUndo" class="btn small" type="button" disabled>되돌리기 (Ctrl+Z)</button></div></div><div class="table-wrap roster-sheet-wrap"><datalist id="rosterGenderOptions"><option value="남"><option value="여"></datalist><table class="student-table roster-sheet" aria-label="엑셀형 학생 명단 입력표"><thead id="rosterHead"></thead><tbody id="rosterBody"></tbody></table></div><div class="helper privacy-note">같은 반에 배정하면 안 되는 학생은 3단계에서 지정해 주세요.</div>
- <details id="rosterAdvanced" class="merged-details no-print"><summary>편성 조건 · 유의 사항별 최대 인원과 중요도</summary><div class="merged-details-body">  <div class="setup-limit-box"><div class="section-head setup-subhead"><div><h3>유의 사항별 반당 최대 인원</h3><p>각 반에 몇 명까지 배정할지 정하세요. 비워 두면 제한하지 않습니다.</p></div></div><div id="capRules" class="table-wrap"></div></div>
+ <details id="rosterAdvanced" class="merged-details no-print"><summary>편성 조건 · 최대 인원·남녀 균형·중요도</summary><div class="merged-details-body">  <div class="setup-limit-box"><div class="section-head setup-subhead"><div><h3>유의 사항별 편성 조건</h3><p>반당 최대 인원을 정하고, 남녀를 고르게 나눌 항목을 선택하세요.</p></div></div><div id="capRules" class="table-wrap"></div></div>
   <section class="allocation-preferences" aria-label="반 편성 중요도"><h3>반 편성 중요도</h3><p>0은 사용 안 함, 1은 기본, 5는 가장 중요하게 반영합니다. 개별 분리·쌍생아 관계와 교사 고정은 유지합니다.</p><div id="allocationWeightsSetup" class="allocation-weight-grid"></div></section>
   <div id="prioritySetupHint" class="setup-setting-hint">교사 우선 배치는 우측 상단 <button type="button" id="setupOpenSettings">설정</button>에서 선택할 수 있습니다.</div>
 </div></details>
@@ -594,7 +594,7 @@ function studentNameStyle(value){
  return color?'--student-name-bg:'+color+';background-color:'+color+';color:'+nameColorTextColor(color)+';':'';
 }
 /* STUDENT_NAME_COLORS_END */
-function defaultState(){return {version:6,overviewMode:'class',overviewScope:'source',grade:'6',classCount:3,resultLayout:'vertical',sourceGrade:'5',sourceClassCount:3,sourceClasses:stageZeroRows([],3),setupCompleted:false,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],allocationWeights:normalizeAllocationWeights(),showSourceColors:true,capRules:{},teacherNames:{},baskets:[],twinGroups:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
+function defaultState(){return {version:6,overviewMode:'class',overviewScope:'source',grade:'6',classCount:3,resultLayout:'vertical',sourceGrade:'5',sourceClassCount:3,sourceClasses:stageZeroRows([],3),setupCompleted:false,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],allocationWeights:normalizeAllocationWeights(),traitGenderBalance:[],showSourceColors:true,capRules:{},teacherNames:{},baskets:[],twinGroups:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
 function parseStudyScore(v,legacy=false){if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return !Number.isFinite(n)||n<0||n>1e9||(legacy&&n===0)?null:Math.round((n+Number.EPSILON)*100)/100}
 function hasStudyScore(s){return Number.isFinite(s.level)&&s.level>=0}
 function studyText(v){return Number.isFinite(v)?v.toFixed(2):'미입력'}
@@ -626,7 +626,7 @@ function normalize(raw){
  const candidates=(Number(raw.version||1)>=5&&Array.isArray(raw.candidates)?raw.candidates:[]).slice(0,3)
   .filter(c=>c&&c.assign&&typeof c.assign==='object'&&uniqueStudents.filter(st=>studentTransferTiming(st)!=='before').every(st=>Number.isInteger(Number(c.assign[st.id]))&&Number(c.assign[st.id])>=1&&Number(c.assign[st.id])<=count))
   .map(c=>({assign:Object.fromEntries(uniqueStudents.filter(st=>studentTransferTiming(st)!=='before').map(st=>[st.id,Number(c.assign[st.id])])),target:Array.from({length:count},(_,i)=>Number(c.target?.[i])||Math.floor(uniqueStudents.filter(st=>studentTransferTiming(st)!=='before').length/count)),score:Number(c.score)||0})).filter(c=>!twinAssignmentProblems(twinGroups,c.assign).length);
- return {...base,allocationWeights:normalizeAllocationWeights(raw.allocationWeights),showSourceColors:raw.showSourceColors!==false,overviewMode:raw.overviewMode==='trait'?'trait':'class',overviewScope:raw.overviewScope==='result'?'result':'source',grade:String(raw.grade??'6').slice(0,12),classCount:count,resultLayout:raw.resultLayout==='compare'?'compare':'vertical',sourceGrade,sourceClassCount:countSource,sourceClasses,setupCompleted,teacherPriorityOn,traits,capRules,teacherNames,baskets,twinGroups,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
+ return {...base,traitGenderBalance:[...new Set((Array.isArray(raw.traitGenderBalance)?raw.traitGenderBalance:[]).filter(tag=>traits.includes(tag)))],allocationWeights:normalizeAllocationWeights(raw.allocationWeights),showSourceColors:raw.showSourceColors!==false,overviewMode:raw.overviewMode==='trait'?'trait':'class',overviewScope:raw.overviewScope==='result'?'result':'source',grade:String(raw.grade??'6').slice(0,12),classCount:count,resultLayout:raw.resultLayout==='compare'?'compare':'vertical',sourceGrade,sourceClassCount:countSource,sourceClasses,setupCompleted,teacherPriorityOn,traits,capRules,teacherNames,baskets,twinGroups,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
 }
 function loadState(){try{return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY)))}catch(e){return defaultState()}}
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
@@ -1058,7 +1058,7 @@ function renderPreset(){
   }).join('');
 }
 function renderCaps(){
-  $('capRules').innerHTML='<table class="setup-source-table"><thead><tr><th>유의 사항</th><th>반당 최대 인원</th></tr></thead><tbody>'+state.traits.map(tag=>`<tr><td>${escapeHtml(tag)}</td><td><input type="number" min="0" max="1000" step="1" inputmode="numeric" data-cap="${escapeHtml(tag)}" aria-label="${escapeHtml(tag)} 반당 최대 인원" placeholder="제한 없음" value="${state.capRules[tag]??''}"></td></tr>`).join('')+'</tbody></table>';
+  $('capRules').innerHTML='<table class="setup-source-table"><thead><tr><th>유의 사항</th><th>반당 최대 인원</th><th>남녀 고르게 배치</th></tr></thead><tbody>'+state.traits.map(tag=>`<tr><td>${escapeHtml(tag)}</td><td><input type="number" min="0" max="1000" step="1" inputmode="numeric" data-cap="${escapeHtml(tag)}" aria-label="${escapeHtml(tag)} 반당 최대 인원" placeholder="제한 없음" value="${state.capRules[tag]??''}"></td><td><label class="trait-gender-choice"><input type="checkbox" data-trait-gender="${escapeHtml(tag)}" aria-label="${escapeHtml(tag)} 남녀 고르게 배치" ${(state.traitGenderBalance||[]).includes(tag)?'checked':''}> 고르게</label></td></tr>`).join('')+'</tbody></table>';
 }
 function addBasketMember(basketId,studentId){
   const basket=state.baskets.find(b=>b.id===basketId),student=findStudent(studentId);
@@ -1120,6 +1120,14 @@ function normalizeAllocationWeights(value={}){
  const raw=value&&typeof value==='object'?value:{};
  return Object.fromEntries(['oldClass','basket','learning','gender'].map(key=>[key,typeof raw[key]==='number'&&Number.isFinite(raw[key])?Math.max(0,Math.min(5,Math.round(raw[key]))):1]));
 }
+function traitGenderBalanceLoss(students,assign,k,tags,target){
+ const selected=[...new Set(Array.isArray(tags)?tags:[])];if(!selected.length)return 0;
+ const counts=Array.from({length:k},()=>Object.fromEntries(selected.map(t=>[t,{남:0,여:0}]))),totals=Object.fromEntries(selected.map(t=>[t,{남:0,여:0}]));
+ for(const st of students){const i=assign[st.id]-1;if(!counts[i]||!['남','여'].includes(st.gender))continue;for(const t of st.traits||[])if(Object.hasOwn(totals,t)){counts[i][t][st.gender]++;totals[t][st.gender]++}}
+ const n=target.reduce((a,b)=>a+b,0)||1;let loss=0;
+ for(let i=0;i<k;i++)for(const tag of selected)for(const sex of ['남','여'])if(totals[tag][sex])loss+=60*Math.pow(counts[i][tag][sex]-totals[tag][sex]*target[i]/n,2)/Math.max(1,totals[tag][sex]/k);
+ return loss;
+}
 function calcScore(students,assign,k,traits,target,weights={}){
   const w=normalizeAllocationWeights(weights);
   const count=Array(k).fill(0),boys=Array(k).fill(0),girls=Array(k).fill(0),scoreSum=Array(k).fill(0),scoreN=Array(k).fill(0);
@@ -1147,7 +1155,7 @@ function calcScore(students,assign,k,traits,target,weights={}){
     for(const trait of traits){const total=totals.traits[trait];if(total)loss+=12*Math.pow(traitCounts[j][trait]-total*t/N,2)/Math.max(1,total/k)}
     for(const old of Object.keys(totals.old)){const total=totals.old[old];if(total)loss+=8*w.oldClass*Math.pow((oldCounts[j][old]||0)-total*t/N,2)/Math.max(1,total/k)}
   }
-  return loss;
+  return loss+traitGenderBalanceLoss(students,assign,k,(weights.traitGenderBalance||[]).filter(t=>traits.includes(t)),target);
 }
 /* Highest first, then class 1…k, k…1, preserving equal scores' roster order. */
 function snakeOrder(students){
@@ -1474,6 +1482,29 @@ function bestEffortCandidates(students,hardPairs,k,traits,caps,softPairs,ordered
 }
 /* BEST_EFFORT_END */
 
+function polishTraitGenderBalance(students,pairs,k,traits,caps,softPairs,candidate,weights){
+ const selected=new Set((weights.traitGenderBalance||[]).filter(tag=>traits.includes(tag)));if(!selected.size)return candidate;
+ const relevant=st=>(st.traits||[]).some(tag=>selected.has(tag));
+ const free=students.filter(st=>!st.fixed),sources=free.filter(relevant),assign={...candidate.assign};
+ const penalty=preferencePenalty(students,assign,k,caps,softPairs,weights);
+ let quality=calcScore(students,assign,k,traits,candidate.target,weights),checks=0;
+ const budget=students.length<=120?5000:students.length<=350?1800:650;
+ for(let pass=0;pass<4&&checks<budget;pass++){
+  let improved=false;
+  for(const a of sources)for(let j=0;j<free.length&&checks<budget;j++){
+   const b=free[(j+pass*17)%free.length],ca=assign[a.id],cb=assign[b.id];if(a===b||ca===cb)continue;checks++;
+   assign[a.id]=cb;assign[b.id]=ca;
+   const nextPenalty=preferencePenalty(students,assign,k,caps,softPairs,weights);
+   if(nextPenalty.total===penalty.total&&nextPenalty.square===penalty.square&&!validateAssignment(students,pairs,assign,{}).length){
+    const next=calcScore(students,assign,k,traits,candidate.target,weights);
+    if(next+1e-7<quality){quality=next;improved=true;continue}
+   }
+   assign[a.id]=ca;assign[b.id]=cb;
+  }
+  if(!improved)break;
+ }
+ return {...candidate,assign,score:quality};
+}
 function generateCandidates(students,pairs,k,traits,random=Math.random,capRules={},softPairs=[],weights={}){
   if(!students.length)return {error:'학생 명단을 먼저 입력해 주세요.'};
   if(students.some(s=>!s.name.trim()))return {error:'이름이 비어 있는 학생이 있습니다. 이름을 모두 입력해 주세요.'};
@@ -1500,7 +1531,8 @@ function generateCandidates(students,pairs,k,traits,random=Math.random,capRules=
   }
   if(!solutions.length)solutions.push(...bestEffortCandidates(students,pairs,k,traits,capRules,softPairs,ordered,random,weights));
   if(!solutions.length)return {error:'지정한 분리 관계·반 고정·유의 사항별 최대 인원을 모두 만족하는 편성안을 찾지 못했습니다. 조건을 확인해 주세요. 탐색 한도 때문에 실제로 가능한 편성안이 있을 수도 있습니다.'};
-  if(Object.values(normalizeAllocationWeights(weights)).some(n=>n!==1))solutions.sort((a,b)=>a.score-b.score);
+  if((weights.traitGenderBalance||[]).length)for(let i=0;i<solutions.length;i++)solutions[i]=polishTraitGenderBalance(students,pairs,k,traits,capRules,softPairs,solutions[i],weights);
+  if(Object.values(normalizeAllocationWeights(weights)).some(n=>n!==1)||(weights.traitGenderBalance||[]).length)solutions.sort((a,b)=>a.score-b.score);
   return {candidates:solutions,successes:solutions.length};
 }
 /* ENGINE_END */
@@ -2109,7 +2141,7 @@ function fillSampleNames(replaceAll=false){
  toast('가상 예시 이름 '+targets.length+'명을 입력했습니다. 학생별 성별·점수·유의 사항은 유지됩니다.');
 }
 function sampleData(){const surnames=['김','이','박','최','정','강','조','윤','장','임','한','오'];const names=['하늘','지우','도윤','민서','준우','서연','시우','하은','예준','다은','현우','윤서','지호','수아','건우','서준','나은','이안','채원','예은','유준','지안','서아','태윤','은우','시윤','다현','승우','윤호','서진','연우','수빈','민준','다온','현서','재윤'];return names.map((n,i)=>({id:makeId(),oldClass:(i%3+1)+'반',number:String(Math.floor(i/3)+1),name:surnames[i%12]+n,gender:i%2?'여':'남',level:Math.round((65+(i*13)%34+((i%4)*0.25))*100)/100,traits:[i%5===0?'사회성':null,i%7===0?'운동부':null].filter(Boolean),fixed:0,note:''}))}
-function isCompatibleMove(id,to,candidate){return reviewTransferMove(state.students,hardSeparationPairs(),candidate.assign,state.classCount,state.traits,state.capRules,id,to,state.teacherPriorityOn,buildBasketPairs([],state.baskets),twinRelations(state.twinGroups).together,state.allocationWeights).ok}
+function isCompatibleMove(id,to,candidate){return reviewTransferMove(state.students,hardSeparationPairs(),candidate.assign,state.classCount,state.traits,state.capRules,id,to,state.teacherPriorityOn,buildBasketPairs([],state.baskets),twinRelations(state.twinGroups).together,allocationOptions()).ok}
 function addStudent(){const room=state.sourceClassCount||1;const last=Math.max(0,...state.students.filter(st=>stageZeroRoom(st.oldClass)===room).map(st=>Number(st.number)||0));const s={id:makeId(),oldGrade:state.sourceGrade,oldClass:room+'반',number:String(last+1),name:'',gender:'',level:null,traits:[],fixed:0,note:''};state.students.push(s);syncSourceFromRoster();invalidate();changeState();toast('학생 자리 1개를 추가했습니다.');const field=document.querySelector(`[data-student="${s.id}"] [data-key="name"]`);field?.focus()}
 function addTrait(){const t=$('newTrait').value.trim();if(!t)return;if(state.traits.includes(t)){toast('이미 있는 특징입니다.');return}if(state.traits.length>=64){toast('유의 사항은 최대 64개까지 추가할 수 있습니다.');return}state.traits.push(t);$('newTrait').value='';invalidate();changeState()}
 function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)return;const fresh=tr.dataset.student==='roster-new-row';const s=fresh?newRosterStudent([],state.sourceGrade,makeId()):findStudent(tr.dataset.student);if(!s)return;
@@ -2127,7 +2159,7 @@ function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)ret
 }
 function previewResultMove(id,to){
  const candidate=state.candidates[state.activeCandidate];if(!candidate)return null;
- return reviewTransferMove(state.students,hardSeparationPairs(),candidate.assign,state.classCount,state.traits,state.capRules,id,to,state.teacherPriorityOn,buildBasketPairs([],state.baskets),twinRelations(state.twinGroups).together,state.allocationWeights);
+ return reviewTransferMove(state.students,hardSeparationPairs(),candidate.assign,state.classCount,state.traits,state.capRules,id,to,state.teacherPriorityOn,buildBasketPairs([],state.baskets),twinRelations(state.twinGroups).together,allocationOptions());
 }
 function highlightMoveTarget(targetId,valid){
  document.querySelectorAll('#resultGrid .class-card').forEach(card=>{
@@ -2165,7 +2197,7 @@ function applyResultMove(id,to){
  moveUndoStack.push({candidate:state.activeCandidate,id,from:analysis.from,to:analysis.to});
  if(moveUndoStack.length>60)moveUndoStack.shift();
  candidate.assign=analysis.proposed;
- candidate.score=calcScore(state.students,candidate.assign,state.classCount,state.traits,candidate.target,state.allocationWeights);
+ candidate.score=calcScore(activeStudents(),candidate.assign,state.classCount,state.traits,candidate.target,allocationOptions());
  moveLastResult={candidate:state.activeCandidate,analysis,undone:false};
  moveSelectedId=null;moveDraggingId=null;
  saveState();renderResults();clearReviewPreview();
@@ -2183,7 +2215,7 @@ function undoResultMove(){
  if(!analysis||!analysis.ok){toast('현재 지정된 배정 조건 때문에 되돌릴 수 없습니다.');return false}
  moveUndoStack.splice(idx,1);
  candidate.assign=analysis.proposed;
- candidate.score=calcScore(state.students,candidate.assign,state.classCount,state.traits,candidate.target,state.allocationWeights);
+ candidate.score=calcScore(activeStudents(),candidate.assign,state.classCount,state.traits,candidate.target,allocationOptions());
  moveLastResult={candidate:candidateIndex,analysis,undone:true};
  moveSelectedId=null;moveDraggingId=null;saveState();renderResults();clearReviewPreview();
  toast('마지막 학생 이동을 되돌렸습니다.');
@@ -2426,7 +2458,7 @@ function installEvents(){
   });
   $('fillRemaining').addEventListener('click',()=>$('generate').click());
   $('fillRemainingBottom').addEventListener('click',()=>$('generate').click());
-  $('capRules').addEventListener('change',e=>{const el=e.target.closest('[data-cap]');if(!el)return;const tag=el.dataset.cap,value=el.value.trim();if(!state.traits.includes(tag))return;if(value!==''&&(!/^\d+$/.test(value)||Number(value)>1000)){toast('반당 최대 인원은 0~1000 사이의 정수를 입력해 주세요.');renderCaps();return}if(value==='')delete state.capRules[tag];else state.capRules[tag]=Number(value);invalidate();changeState();toast(value===''?`「${tag}」 인원 제한을 해제했습니다.`:`「${tag}」 반당 최대 ${value}명으로 설정했습니다.`)});
+  $('capRules').addEventListener('change',e=>{const gender=e.target.closest('[data-trait-gender]');if(gender){const tags=new Set(state.traitGenderBalance||[]);gender.checked?tags.add(gender.dataset.traitGender):tags.delete(gender.dataset.traitGender);state.traitGenderBalance=[...tags];invalidate();changeState();return}const el=e.target.closest('[data-cap]');if(!el)return;const tag=el.dataset.cap,value=el.value.trim();if(!state.traits.includes(tag))return;if(value!==''&&(!/^\d+$/.test(value)||Number(value)>1000)){toast('반당 최대 인원은 0~1000 사이의 정수를 입력해 주세요.');renderCaps();return}if(value==='')delete state.capRules[tag];else state.capRules[tag]=Number(value);invalidate();changeState();toast(value===''?`「${tag}」 인원 제한을 해제했습니다.`:`「${tag}」 반당 최대 ${value}명으로 설정했습니다.`)});
   $('addBasket').addEventListener('click',()=>{
     if(state.baskets.length>=40){toast('바구니는 최대 40개까지 만들 수 있습니다.');return}
     const id=makeId(),name='분리 바구니 '+(state.baskets.length+1);
@@ -2490,7 +2522,7 @@ function installEvents(){
     if(blank.length){showTab('roster');toast('이름을 입력하지 않은 학생 '+blank.length+'명의 이름을 먼저 입력해 주세요.');return}
     const problems=basketProblems();
     if(problems.length){invalidate();saveState();showTab('results');$('resultMessage').textContent=problems.join(' / ');toast(problems[0]);return}
-    const outcome=generateTransferCandidates(state.students,state.pairs,state.classCount,state.traits,Math.random,state.capRules,buildBasketPairs([],state.baskets),state.twinGroups,state.allocationWeights,state.teacherPriorityOn);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;moveUndoStack.length=0;moveSelectedId=null;moveDraggingId=null;moveLastResult=null;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
+    const outcome=generateTransferCandidates(state.students,state.pairs,state.classCount,state.traits,Math.random,state.capRules,buildBasketPairs([],state.baskets),state.twinGroups,allocationOptions(),state.teacherPriorityOn);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;moveUndoStack.length=0;moveSelectedId=null;moveDraggingId=null;moveLastResult=null;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
   $('generateQuick').addEventListener('click',()=>$('generate').click());
   $('alternatives').addEventListener('click',e=>{const b=e.target.closest('[data-candidate]');if(!b)return;state.activeCandidate=Number(b.dataset.candidate);moveSelectedId=null;moveDraggingId=null;saveState();renderResults();clearReviewPreview()});
   $('undoMove').addEventListener('click',undoResultMove);
