@@ -26,5 +26,44 @@
 .result-grid[data-layout="compare"] .assigned .person b.student-name-highlight{font-size:18px}
 .student-number:focus-visible{outline:3px solid #397b5e;outline-offset:-3px}
 
+/* Comparison is one continuous sheet: page scrolling, shared student rows. */
+@media screen{
+ .result-grid[data-layout="compare"]{grid-template-columns:repeat(var(--comparison-classes,3),minmax(0,1fr));gap:0;padding:0;overflow:visible;scrollbar-gutter:auto;border:1px solid #a9c0b3;border-radius:0;align-items:stretch}
+ .result-grid[data-layout="compare"] .class-card{min-width:0;overflow:visible;border:0;border-right:1px solid #a9c0b3;border-radius:0;box-shadow:none;background:#fff}
+ .result-grid[data-layout="compare"] .class-card:last-child{border-right:0}
+ .result-grid[data-layout="compare"] .class-top{position:sticky;top:var(--comparison-sticky-top,140px);z-index:3;padding:9px 6px;background:#edf5f0;min-width:0;overflow-wrap:anywhere}
+ .result-grid[data-layout="compare"] .class-top h3{font-size:clamp(11px,calc(100px / var(--comparison-classes,3)),16px);flex-wrap:wrap;gap:2px 5px;margin-bottom:5px}
+ .result-grid[data-layout="compare"] .class-top h3 small{font-size:10px}
+ .result-grid[data-layout="compare"] .class-metrics{font-size:9px;line-height:1.5}
+ .result-grid[data-layout="compare"] .class-summary-chips{gap:3px;margin-top:6px}
+ .result-grid[data-layout="compare"] .class-summary-chips span{font-size:8px;padding:3px 4px;border-radius:4px;max-width:100%;overflow-wrap:anywhere}
+ .result-grid[data-layout="compare"] .class-body{max-height:none;overflow:visible;padding:0}
+ .result-grid[data-layout="compare"] .assigned{margin:0;border:0;border-bottom:1px solid #b9cfc1;border-radius:0;box-shadow:none;padding:0;align-self:stretch}
+ .result-grid[data-layout="compare"] .student-line{grid-template-columns:clamp(18px,calc(150px / var(--comparison-classes,3)),22px) minmax(0,1fr) clamp(16px,calc(130px / var(--comparison-classes,3)),22px);min-height:34px}
+ .result-grid[data-layout="compare"] .assigned .student-number{font-size:10px;padding:4px 1px}
+ .result-grid[data-layout="compare"] .student-number::before{display:none}
+ .result-grid[data-layout="compare"] .assigned .person b.student-name-highlight{font-size:clamp(11px,calc(110px / var(--comparison-classes,3)),17px);padding:5px 2px;line-height:1.4}
+ .result-grid[data-layout="compare"] .student-gender{font-size:10px}
+ .result-grid[data-layout="compare"] .student-traits-line{grid-template-columns:36px minmax(0,1fr);min-height:25px;font-size:9px;line-height:1.5}
+ .result-grid[data-layout="compare"] .student-line-label{font-size:8px}
+ .result-grid[data-layout="compare"] .student-traits-value{padding:4px;gap:2px 4px}
+ .result-grid[data-layout="compare"] .assigned .student-origin{font-size:9px;padding:4px 5px;line-height:1.5}
+ .result-grid[data-layout="compare"] .class-drop{padding:6px;min-width:0}
+ .result-grid[data-layout="compare"] .class-drop .btn{width:100%;min-width:0;max-width:100%;white-space:normal;font-size:10px;padding:6px 2px}
+ .result-grid[data-layout="compare"] .empty{padding:12px 4px;font-size:10px;overflow-wrap:anywhere}
+ @supports(grid-template-rows:subgrid){
+  .result-grid[data-layout="compare"]{grid-template-rows:auto repeat(var(--comparison-students,1),auto) auto}
+  .result-grid[data-layout="compare"] .class-card{display:grid;grid-row:1/-1;grid-template-rows:subgrid}
+  .result-grid[data-layout="compare"] .class-body{display:contents}
+  .result-grid[data-layout="compare"] .class-drop{grid-row:-2/-1}
+ }
+}
+@media screen and (max-width:1023px){
+ .result-grid[data-layout="compare"]{grid-template-columns:repeat(var(--comparison-classes,3),minmax(165px,1fr));overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+ .result-grid[data-layout="compare"]::-webkit-scrollbar{display:none}
+ .result-grid[data-layout="compare"] .class-top{position:static}
+ .result-grid[data-layout="compare"] .assigned .person b.student-name-highlight{font-size:15px}
+}
+
 /* Each stage owns its summary. Results use only their assignment infographic. */
 #overviewDashboard[hidden]{display:none!important}

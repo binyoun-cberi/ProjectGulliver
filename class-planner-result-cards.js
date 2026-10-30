@@ -39,3 +39,9 @@ function undoResultNameFormat(){
  student.color=previous.color;student.cellFormats={...student.cellFormats,name:previous.format};
  traitRemoteUI.resultStudentId=student.id;saveState();renderResults();
 }
+
+function positionComparisonHeaders(){
+ const grid=document.getElementById('resultGrid');if(!grid)return;
+ const header=document.querySelector('.gx-header')?.getBoundingClientRect().height||72,nav=document.querySelector('.tabs')?.getBoundingClientRect().height||56;
+ grid.style.setProperty('--comparison-sticky-top',(header+nav+10)+'px');
+}
