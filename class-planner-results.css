@@ -25,3 +25,6 @@
 @media(max-width:620px){.result-overview{padding:12px}.result-overview-heading h3{font-size:16px}.result-overview-heading>span{font-size:10px}.result-room-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.result-room-stats article{padding:10px}.result-overview .trait-donut-rail{grid-auto-columns:min(280px,70vw)}}
 .result-grid[data-layout="compare"] .assigned .person b.student-name-highlight{font-size:18px}
 .student-number:focus-visible{outline:3px solid #397b5e;outline-offset:-3px}
+
+/* Each stage owns its summary. Results use only their assignment infographic. */
+#overviewDashboard[hidden]{display:none!important}
