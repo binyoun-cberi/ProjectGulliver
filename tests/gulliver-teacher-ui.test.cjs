@@ -113,8 +113,9 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     await page.locator('#applySetup').click();
     assert.equal(await page.locator('#view-roster').isVisible(),true);
     assert.equal(await page.locator('#rosterBody tr[data-student]').count(),96);
-    assert.match(await page.locator('#rosterBody tr').first().locator('.roster-identity').textContent(),/5학년.*1번/);
-    assert.match(await page.locator('#rosterBody tr').last().locator('.roster-identity').textContent(),/5학년.*24번/);
+    assert.equal(await page.locator('#rosterBody tr').first().locator('[data-key="oldGrade"]').inputValue(),'5');
+    assert.equal(await page.locator('#rosterBody tr').first().locator('[data-key="number"]').inputValue(),'1');
+    assert.equal(await page.locator('#rosterBody tr').last().locator('[data-key="number"]').inputValue(),'24');
     assert.equal(await page.locator('#rosterBody tr').first().locator('[data-key="oldClass"]').inputValue(),'1반');
     assert.equal(await page.locator('#rosterBody tr').last().locator('[data-key="oldClass"]').inputValue(),'4반');
     assert.equal(await page.locator('#rosterBody tr:first-child [data-key="gender"]').inputValue(),'');
@@ -190,7 +191,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.match(await page.locator('#rosterBody [data-student="'+secondColoredStudentId+'"] [data-roster-cell="name"]').getAttribute('style'),/#162b4d/);
 
     const headings=await page.locator('#rosterHead th').allTextContents();
-    assert.deepEqual(headings,['기존 학년 · 번호','기존 반','이름','성별','학습지표','유의 사항']);
+    assert.deepEqual(headings,['기존 학년','기존 반','기존 번호','이름','성별','학습지표','유의 사항']);
     const first=page.locator('#rosterBody tr').first();
     await first.locator('[data-key="level"]').fill('0.00');
     await first.locator('[data-key="level"]').press('Tab');

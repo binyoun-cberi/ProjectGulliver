@@ -554,11 +554,12 @@ test('0단계에 인원 상한이 표시되고, 3단계 검색 목록에 드롭�
  assert.match(html,/trait-stat-track/);
 });
 
-test('1단계 입력 화면은 실시간 엑셀형 표 하나만 표시하며 기존 반·번호는 고정',()=>{
+test('1단계 입력 화면은 실시간 엑셀형 표 하나로 학년·반·번호도 편집',()=>{
  assert.match(html,/class="student-table roster-sheet"/);
  assert.match(html,/id="rosterFillDown"/);
  assert.match(html,/id="rosterUndo"/);
- assert.match(html,/data-roster-header="name"/);
+ assert.match(html,/ROSTER_COLUMNS.map/);
+ for(const key of ['oldGrade','oldClass','number'])assert.ok(html.includes('data-key="'+key+'"'));
  assert.match(html,/data-roster-cell="traits"/);
  assert.doesNotMatch(html,/id="toggleBulk"/);
  assert.doesNotMatch(html,/id="bulkPanel"/);

@@ -1,3 +1,4 @@
+function allocationOptions(){return {...state.allocationWeights,traitGenderBalance:state.traitGenderBalance||[]}}
 /* Teacher preferences and deterministic source-class colors. */
 const SOURCE_ROOM_COLORS=['#dcecf8','#f7dfcb','#e3e5fa','#d8eee2','#f7dfe9','#f2eccb','#e3def2','#d4eeee','#f2dfd3','#e7edce','#e2e8ee','#f2dfef'];
 function sourceRoomColor(student){
