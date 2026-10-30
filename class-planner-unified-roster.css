@@ -2,3 +2,4 @@
 @media(min-width:1100px) and (max-width:1699px){.trait-remote-space>.merged-basic-fields,.trait-remote-space>.roster-summary,.trait-remote-space>.roster-start-actions,.trait-remote-space>.merged-details{margin-right:270px}}
 @media(max-width:720px){.merged-basic-fields{gap:8px;padding:10px}.merged-basic-fields label{grid-template-columns:1fr;gap:5px;font-size:11px}.merged-basic-fields input{width:100%;font-size:14px}.roster-summary{gap:5px 10px}.merged-details-body{padding:10px}}
 @media print{.merged-basic-fields,.roster-summary,.roster-start-actions,.merged-details,.merged-roster-hint{display:none!important}}
+@media(min-width:1100px) and (max-width:1699px){.trait-remote-space>.roster-sheet-tools,.trait-remote-space>.merged-roster-hint{margin-right:270px}}
