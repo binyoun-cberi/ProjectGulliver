@@ -230,6 +230,8 @@ const assert=require('node:assert/strict');
  await twinPage.locator('.twin-section').scrollIntoViewIfNeeded();
  await twinPage.screenshot({path:require('path').join(root,'test-artifacts/time-tools-planner-triplet-rules.png')});
  await twinPage.reload();
+ assert.equal(await twinPage.evaluate(()=>state.twinGroups[0].members.length),3);
+ await twinPage.locator('[data-tab="rules"]').click();
  assert.equal(await twinPage.locator('[data-twin-rule]').count(),3);
  assert.equal(await twinPage.locator('[data-twin-rule][data-a="t0"][data-b="t1"]').inputValue(),'together');
  await twinPage.locator('#generateQuick').click();await twinPage.locator('.assigned').first().waitFor();
