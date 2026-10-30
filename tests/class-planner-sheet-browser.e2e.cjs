@@ -26,6 +26,7 @@ const assert=require('node:assert/strict');
  await page.locator('#blankRosterSetup > summary').click();
  const paste=async(sel,text)=>page.locator(sel).first().evaluate((el,text)=>{el.focus();const d=new DataTransfer();d.setData('text/plain',text);el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:d,bubbles:true,cancelable:true}));},text);
  await paste('[data-source-room="1"]','남학생\t여학생\n2\t2\n1\t1\n0\t0');
+ assert.deepEqual(errors,[]);
  assert.equal(await page.locator('[data-source-room="2"][data-source-gender="girls"]').inputValue(),'1');
  await page.locator('[data-source-room="1"]').first().focus();await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>document.activeElement.dataset.sourceRoom),'2');
  await page.locator('#applySetup').click();
