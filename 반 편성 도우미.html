@@ -442,7 +442,7 @@
  <button data-roster-format="bold" class="btn small" type="button" aria-label="굵게" aria-pressed="false"><b>B</b></button><button data-roster-format="italic" class="btn small" type="button" aria-label="기울임" aria-pressed="false"><i>I</i></button><button data-roster-format="underline" class="btn small" type="button" aria-label="밑줄" aria-pressed="false"><u>U</u></button><button data-roster-format="strike" class="btn small" type="button" aria-label="취소선" aria-pressed="false"><s>S</s></button>
  </div><p id="remoteFormatTip" class="remote-tip">Ctrl·⌘로 여러 칸, Shift로 범위 선택</p></section><section id="remoteTraitsSection" class="remote-section"><div class="remote-section-head"><h3>유의 사항</h3><span>행에 끌어 놓기</span></div><input id="traitRemoteSearch" type="search" placeholder="유의 사항 검색" aria-label="리모컨 유의 사항 검색"><div id="traitRemotePalette" class="trait-remote-palette" role="group" aria-label="끌어 놓을 유의 사항"></div><p id="traitRemoteStatus" class="trait-remote-status" role="status"></p></section><div class="trait-remote-context"><strong id="traitRemoteStudent">학생 행을 선택하세요</strong><label id="resultRemoteMoveWrap" hidden>선택 학생 이동<select id="resultRemoteMove" disabled aria-label="선택 학생을 다른 반으로 이동"></select></label><button id="resultRemoteUndo" class="btn small" type="button" hidden disabled>색상·서식 되돌리기</button><button id="traitRemoteNote" class="btn small" type="button" disabled>참고 메모</button><label id="remoteTransferWrap" hidden>전학 시기<select id="remoteTransferTiming" aria-label="전학 시기"><option value="before">편성 전 · 배정 제외</option><option value="after">편성 후 · 배정 포함</option></select></label><label id="traitRemoteFixedWrap" hidden>교사 우선 배치<select id="traitRemoteFixed" disabled></select></label></div></div>
 </aside>
-<link rel="stylesheet" href="class-planner-unified-roster.css"><script src="class-planner-unified-roster.js"></script><script src="class-planner-xlsx.min.js"></script><script src="class-planner-excel.js"></script><script src="class-planner-transfers.js"></script><link rel="stylesheet" href="class-planner-feedback.css"><script src="class-planner-feedback.js"></script><link rel="stylesheet" href="class-planner-twins.css"><script src="class-planner-twins.js"></script><script src="class-planner-result-cards.js"></script><script src="class-planner-direct-input.js"></script><script src="class-planner-trait-remote.js"></script>
+<link rel="stylesheet" href="class-planner-unified-roster.css"><script src="class-planner-unified-roster.js"></script><script src="class-planner-xlsx.min.js"></script><script src="class-planner-excel.js"></script><script src="class-planner-transfers.js"></script><link rel="stylesheet" href="class-planner-rules-remote.css"><script src="class-planner-rules-remote.js"></script><link rel="stylesheet" href="class-planner-feedback.css"><script src="class-planner-feedback.js"></script><link rel="stylesheet" href="class-planner-twins.css"><script src="class-planner-twins.js"></script><script src="class-planner-result-cards.js"></script><script src="class-planner-direct-input.js"></script><script src="class-planner-trait-remote.js"></script>
 <script>
 'use strict';
 const STORAGE_KEY = 'classplanner-v1-local';
@@ -759,7 +759,7 @@ function render(){
   placeStageOverview();if(view!=='results')renderOverview();
   $('statStudents').textContent=state.students.length+'명';$('statClasses').textContent=state.classCount+'개 반';$('statPairs').textContent=effectivePairs().length+'쌍';$('statDuplicates').textContent=duplicateNames().length+'건';
   $('rosterCount').textContent=state.students.length+'명';$('pairCount').textContent=state.pairs.length+'쌍';
-  if(view==='roster'){renderSetup();renderCaps();renderRoster();}if(view==='preset')renderPreset();if(view==='rules'){renderPairs();renderBaskets();renderTwinGroups();}if(view==='results')renderResults();
+  if(view==='roster'){renderSetup();renderCaps();renderRoster();}if(view==='preset')renderPreset();if(view==='rules'){renderPairs();renderBaskets();renderTwinGroups();renderRulesRemoteControls();}if(view==='results')renderResults();
   renderTraitRemote();
 }
 function renderSetup(keepRows=false){
@@ -1069,6 +1069,7 @@ function addBasketMember(basketId,studentId){
   toast('「'+basket.name+'」에 '+student.name+' 학생을 추가했습니다.');return true;
 }
 function renderBaskets(){
+  const poolScroll=$('basketPool').scrollTop;
   $('basketCount').textContent=state.baskets.length+'개';
   const errors=basketProblems();
   $('basketNotice').className=errors.length?'alert':'helper';
@@ -1078,7 +1079,8 @@ function renderBaskets(){
   const pupils=state.students.filter(st=>[st.name,st.oldGrade,st.oldClass,st.number].join(' ').toLowerCase().includes(q));
   const shown=pupils.slice(0,100);
   $('basketPool').innerHTML=shown.map(st=>`<div class="basket-pool-item ${selectedBasketStudentId===st.id?'is-selected':''}" draggable="true" data-drag-student="${escapeHtml(st.id)}"><button class="basket-person-select" type="button" data-basket-pick="${escapeHtml(st.id)}" aria-pressed="${selectedBasketStudentId===st.id}" title="이 학생 선택"><span class="basket-person-mark" aria-hidden="true">${selectedBasketStudentId===st.id?'✓':'+'}</span><span><b>${escapeHtml(st.name||'(이름 미입력)')}</b><small>${escapeHtml(st.oldClass||'반 미입력')}${st.number?' · '+escapeHtml(st.number)+'번':''}</small></span></button></div>`).join('')||'<div class="empty">표시할 학생이 없습니다.</div>';
-  const chosen=findStudent(selectedBasketStudentId);$('basketSelected').textContent=chosen?'선택됨: '+studentTitle(chosen)+' · 담을 바구니의 버튼을 누르세요.':'학생을 선택하거나 바구니로 끌어 넣으세요.';
+  $('basketPool').scrollTop=poolScroll;
+  const chosen=findStudent(selectedBasketStudentId);$('basketSelected').textContent=chosen?'선택됨: '+studentTitle(chosen)+' · 연결할 관계의 버튼을 누르세요.':'학생을 선택하거나 바구니·쌍생아·개별 분리로 끌어 놓으세요.';
   if(pupils.length>shown.length)$('basketPool').insertAdjacentHTML('beforeend','<div class="helper">100명만 표시했습니다. 검색하여 학생을 찾으세요.</div>');
   $('basketGrid').innerHTML=state.baskets.map((b,i)=>{
     return `<div class="basket-card ${b.members.length>5?'basket-over':''}" data-basket-drop="${escapeHtml(b.id)}" aria-label="${escapeHtml(b.name)}">
@@ -1088,6 +1090,7 @@ function renderBaskets(){
       <button type="button" class="btn basket-place-btn" data-basket-add-selected="${escapeHtml(b.id)}" ${!selectedBasketStudentId||b.members.includes(selectedBasketStudentId)||b.members.length>=5?'disabled':''}>+ 선택한 학생 담기</button>
     </div>`;
   }).join('')||'<div class="basket-empty">아직 바구니가 없습니다. 「+ 바구니 만들기」를 누르세요.</div>';
+  renderRulesRemoteControls();
 }
 function renderPairs(){
   const opts='<option value="">학생 선택</option>'+state.students.map(s=>`<option value="${escapeHtml(s.id)}">${escapeHtml(studentTitle(s))}</option>`).join('');
@@ -2231,7 +2234,7 @@ function showPlannerDialog(id){
 }
 function closePlannerDialog(id){const dialog=$(id);if(dialog?.open)dialog.close()}
 function installEvents(){
-  installTraitRemote();installTwinGroups();installFeedbackSettings();installUnifiedRoster();installRosterExcel();installTransferControls();
+  installTraitRemote();installTwinGroups();installFeedbackSettings();installUnifiedRoster();installRosterExcel();installTransferControls();installRulesRemote();
   $('openHelp').addEventListener('click',()=>showPlannerDialog('plannerHelpDialog'));
   $('closeNameColor').addEventListener('click',()=>$('nameColorDialog').close());
   $('nameColorDone').addEventListener('click',()=>$('nameColorDialog').close());
