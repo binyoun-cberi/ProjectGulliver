@@ -186,7 +186,7 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.match(await page.locator('#rosterBody [data-student="'+secondColoredStudentId+'"] [data-roster-cell="name"]').getAttribute('style'),/#162b4d/);
 
     const headings=await page.locator('#rosterHead th').allTextContents();
-    assert.deepEqual(headings,['기존 학년 · 반 · 번호','이름','성별','학습지표','유의 사항']);
+    assert.deepEqual(headings,['기존 학년 · 번호','기존 반','이름','성별','학습지표','유의 사항']);
     const first=page.locator('#rosterBody tr').first();
     await first.locator('[data-key="level"]').fill('0.00');
     await first.locator('[data-key="level"]').press('Tab');
