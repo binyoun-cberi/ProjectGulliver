@@ -34,3 +34,5 @@
 #traitRemote #rosterFormatTools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
 #traitRemote #rosterFormatTools label{grid-column:span 2;justify-content:space-between;white-space:nowrap}
 #traitRemote #rosterFormatTools button{min-width:0;padding:4px}
+
+.trait-color-tools{border:1px solid #d4e3da;border-radius:8px;margin-top:10px;padding:8px;background:#f7fbf8}.trait-color-tools summary{font-size:11px;font-weight:700;cursor:pointer;color:#38694e}.trait-color-tools label{display:flex;align-items:center;justify-content:space-between;gap:7px;font-size:10px;margin-top:8px}.trait-color-tools select{width:100%;max-width:155px;font-size:11px;padding:6px;min-width:0}.trait-color-tools small{display:block;font-size:10px;color:#748b7b;margin:7px 0}.trait-color-tools input[type=color]{width:42px;height:29px;padding:2px}.trait-color-tools .actions{margin-top:8px;gap:5px}

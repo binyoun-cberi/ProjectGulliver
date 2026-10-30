@@ -7,7 +7,7 @@ function sourceRoomColor(student){
 }
 function sourceRoomLabel(student){return (student.oldGrade?student.oldGrade+'학년 ':'')+(student.oldClass||'반 미입력')}
 function renderFeedbackSettings(){
- const definitions=[['oldClass','기존 같은 반 분리','기존 반 학생들을 새 반에 고르게 분산'],['basket','분리바구니 중요도','바구니 안의 학생을 다른 반으로 배정'],['learning','학습지표 중요도','반별 학습지표 균형'],['gender','남녀 비율 중요도','반별 남녀 비율 균형']];
+ const definitions=[['oldClass','기존 같은 반 분리','기존 반 학생들을 새 반에 고르게 분산'],['basket','분리바구니 중요도','바구니 안의 학생을 다른 반으로 배정'],['learning','학습지표 중요도','반별 학습지표 균형'],['gender','반 안의 남녀 차이 중요도','각 반의 여학생 수 − 남학생 수 차이를 고르게']];
  for(const id of ['allocationWeightsSetup','allocationWeightsSettings']){
   const host=$(id);if(!host)continue;
   if(!host.firstElementChild)host.innerHTML=definitions.map(([key,label,hint])=>'<label class="allocation-weight"><span><strong>'+label+'</strong><output data-weight-output="'+key+'">1배</output></span><input type="range" min="0" max="5" step="1" value="1" data-allocation-weight="'+key+'" aria-label="'+label+'"><small>'+hint+'</small></label>').join('')+'<button type="button" class="btn small" data-reset-weights>기본 중요도로</button>';

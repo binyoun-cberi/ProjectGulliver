@@ -443,9 +443,9 @@
  <div id="traitRemoteBody" class="trait-remote-body"><section class="remote-section remote-format"><div class="remote-section-head"><h3>색상 · 글씨</h3><span id="remoteSelectionCount">셀을 선택하세요</span></div><div class="remote-swatches" role="group" aria-label="빠른 채우기 색상"><button type="button" class="remote-swatch" data-remote-color="#fff0b9" style="--swatch:#fff0b9" aria-label="노랑 채우기"></button><button type="button" class="remote-swatch" data-remote-color="#f8d4d4" style="--swatch:#f8d4d4" aria-label="분홍 채우기"></button><button type="button" class="remote-swatch" data-remote-color="#dcebd8" style="--swatch:#dcebd8" aria-label="초록 채우기"></button><button type="button" class="remote-swatch" data-remote-color="#d5e9f8" style="--swatch:#d5e9f8" aria-label="파랑 채우기"></button><button type="button" class="remote-swatch" data-remote-color="#e8ddf3" style="--swatch:#e8ddf3" aria-label="보라 채우기"></button><button type="button" class="remote-swatch" data-remote-color="#e8ecef" style="--swatch:#e8ecef" aria-label="회색 채우기"></button></div><div id="rosterFormatTools" class="actions" role="group" aria-label="선택 셀 서식">
  <label>채우기 <input id="rosterFillColor" type="color" value="#fff0b9" aria-label="선택 셀 배경색"></label><button id="rosterApplyColor" class="btn small" type="button">색 적용</button><button id="rosterClearColor" class="btn small" type="button">색 지우기</button>
  <button data-roster-format="bold" class="btn small" type="button" aria-label="굵게" aria-pressed="false"><b>B</b></button><button data-roster-format="italic" class="btn small" type="button" aria-label="기울임" aria-pressed="false"><i>I</i></button><button data-roster-format="underline" class="btn small" type="button" aria-label="밑줄" aria-pressed="false"><u>U</u></button><button data-roster-format="strike" class="btn small" type="button" aria-label="취소선" aria-pressed="false"><s>S</s></button>
- </div><p id="remoteFormatTip" class="remote-tip">Ctrl·⌘로 여러 칸, Shift로 범위 선택</p></section><section id="remoteTraitsSection" class="remote-section"><div class="remote-section-head"><h3>유의 사항</h3><span>행에 끌어 놓기</span></div><input id="traitRemoteSearch" type="search" placeholder="유의 사항 검색" aria-label="리모컨 유의 사항 검색"><div id="traitRemotePalette" class="trait-remote-palette" role="group" aria-label="끌어 놓을 유의 사항"></div><p id="traitRemoteStatus" class="trait-remote-status" role="status"></p></section><div class="trait-remote-context"><strong id="traitRemoteStudent">학생 행을 선택하세요</strong><label id="resultRemoteMoveWrap" hidden>선택 학생 이동<select id="resultRemoteMove" disabled aria-label="선택 학생을 다른 반으로 이동"></select></label><button id="resultRemoteUndo" class="btn small" type="button" hidden disabled>색상·서식 되돌리기</button><button id="traitRemoteNote" class="btn small" type="button" disabled>참고 메모</button><label id="remoteTransferWrap" hidden>전학 시기<select id="remoteTransferTiming" aria-label="전학 시기"><option value="before">편성 전 · 배정 제외</option><option value="after">편성 후 · 배정 포함</option></select></label><label id="traitRemoteFixedWrap" hidden>교사 우선 배치<select id="traitRemoteFixed" disabled></select></label></div></div>
+ </div><details id="traitColorTools" class="trait-color-tools"><summary>유의사항별 이름 색상</summary><label>대상 항목<select id="traitColorTag" aria-label="색칠할 유의 사항"><option value="">유의 사항 선택</option></select></label><small id="traitColorCount" aria-live="polite"></small><label>이름 배경색<input id="traitBatchColor" type="color" value="#fff0b9" aria-label="유의 사항별 이름 배경색"></label><div class="actions"><button id="applyTraitColor" class="btn small" type="button" disabled>항목 학생에 적용</button><button id="clearTraitColor" class="btn small" type="button" disabled>해제</button></div></details><p id="remoteFormatTip" class="remote-tip">Ctrl·⌘로 여러 칸, Shift로 범위 선택</p></section><section id="remoteTraitsSection" class="remote-section"><div class="remote-section-head"><h3>유의 사항</h3><span>행에 끌어 놓기</span></div><input id="traitRemoteSearch" type="search" placeholder="유의 사항 검색" aria-label="리모컨 유의 사항 검색"><div id="traitRemotePalette" class="trait-remote-palette" role="group" aria-label="끌어 놓을 유의 사항"></div><p id="traitRemoteStatus" class="trait-remote-status" role="status"></p></section><div class="trait-remote-context"><strong id="traitRemoteStudent">학생 행을 선택하세요</strong><label id="resultRemoteMoveWrap" hidden>선택 학생 이동<select id="resultRemoteMove" disabled aria-label="선택 학생을 다른 반으로 이동"></select></label><button id="resultRemoteUndo" class="btn small" type="button" hidden disabled>색상·서식 되돌리기</button><button id="traitRemoteNote" class="btn small" type="button" disabled>참고 메모</button><label id="remoteTransferWrap" hidden>전학 시기<select id="remoteTransferTiming" aria-label="전학 시기"><option value="before">편성 전 · 배정 제외</option><option value="after">편성 후 · 배정 포함</option></select></label><label id="traitRemoteFixedWrap" hidden>교사 우선 배치<select id="traitRemoteFixed" disabled></select></label></div></div>
 </aside>
-<link rel="stylesheet" href="class-planner-unified-roster.css"><script src="class-planner-unified-roster.js"></script><script src="class-planner-xlsx.min.js"></script><script src="class-planner-excel.js"></script><script src="class-planner-transfers.js"></script><link rel="stylesheet" href="class-planner-rules-remote.css"><script src="class-planner-rules-remote.js"></script><link rel="stylesheet" href="class-planner-feedback.css"><script src="class-planner-feedback.js"></script><link rel="stylesheet" href="class-planner-twins.css"><script src="class-planner-twins.js"></script><script src="class-planner-result-cards.js"></script><script src="class-planner-direct-input.js"></script><script src="class-planner-trait-remote.js"></script>
+<link rel="stylesheet" href="class-planner-unified-roster.css"><script src="class-planner-unified-roster.js"></script><script src="class-planner-xlsx.min.js"></script><script src="class-planner-excel.js"></script><script src="class-planner-transfers.js"></script><link rel="stylesheet" href="class-planner-rules-remote.css"><script src="class-planner-rules-remote.js"></script><link rel="stylesheet" href="class-planner-feedback.css"><script src="class-planner-feedback.js"></script><link rel="stylesheet" href="class-planner-twins.css"><script src="class-planner-twins.js"></script><script src="class-planner-result-cards.js"></script><script src="class-planner-trait-colors.js"></script><script src="class-planner-direct-input.js"></script><script src="class-planner-trait-remote.js"></script>
 <script>
 'use strict';
 const STORAGE_KEY = 'classplanner-v1-local';
@@ -525,10 +525,24 @@ function stageZeroTargets(rows,k){
  const {boys,girls,unknown}=stageZeroTotals(rows);
  const target=Math.max(2,Math.min(12,k));
  const avg={boys:boys/target,girls:girls/target,total:(boys+girls+unknown)/target};
- return {average:avg,total:boys+girls+unknown,rows:Array.from({length:target},(_,i)=>({
+ const rooms=Array.from({length:target},(_,i)=>({
   room:i+1,boys:Math.floor(boys/target)+(i<boys%target?1:0),
   girls:Math.floor(girls/target)+(i>=target-girls%target&&girls%target>0?1:0),unknown:Math.floor(unknown/target)+(i<unknown%target?1:0)
- }))};
+ }));
+ for(let pass=0;pass<target*2;pass++){
+  let changed=false;
+  for(let from=0;from<target&&!changed;from++)for(let to=0;to<target&&!changed;to++)for(const sex of ['girls','boys']){
+   if(from===to||!rooms[from][sex])continue;
+   const sign=sex==='girls'?1:-1,gapFrom=rooms[from].girls-rooms[from].boys,gapTo=rooms[to].girls-rooms[to].boys;
+   if(2*sign*(gapTo-gapFrom)+2>=0)continue;
+   rooms[from][sex]--;rooms[to][sex]++;
+   const counts=rooms.map(row=>row.boys+row.girls+row.unknown);
+   if(Math.min(...counts)>=(boys+girls+unknown>=target?1:0)&&Math.max(...counts)-Math.min(...counts)<=2){changed=true;break}
+   rooms[from][sex]++;rooms[to][sex]--;
+  }
+  if(!changed)break;
+ }
+ return {average:avg,total:boys+girls+unknown,rows:rooms};
 }
 function stageZeroInferRows(students){
  const found=new Map();
@@ -582,7 +596,7 @@ function normalizeCellFormats(value){
  const out={};
  for(const key of ['oldGrade','oldClass','number','name','gender','level','traits']){
   const raw=value?.[key];if(!raw||typeof raw!=='object')continue;
-  out[key]={background:normalizeNameColor(raw.background),bold:raw.bold===true,italic:raw.italic===true,underline:raw.underline===true,strike:raw.strike===true};
+  out[key]={background:normalizeNameColor(raw.background),...(raw.bold===undefined?{}:{bold:raw.bold===true}),italic:raw.italic===true,underline:raw.underline===true,strike:raw.strike===true};
  }
  return out;
 }
@@ -1149,8 +1163,7 @@ function calcScore(students,assign,k,traits,target,weights={}){
   const deviation=totals.levelN?Math.max(1,Math.sqrt(Math.max(0,totals.levelSumSq/totals.levelN-avg*avg))):1;
   for(let j=0;j<k;j++){
     const t=target[j]||N/k;loss+=85*Math.pow((count[j]-t),2)/Math.max(1,t);
-    loss+=18*w.gender*Math.pow(boys[j]-(totals.boys*t/N),2)/Math.max(1,totals.boys/k);
-    loss+=18*w.gender*Math.pow(girls[j]-(totals.girls*t/N),2)/Math.max(1,totals.girls/k);
+    loss+=18*w.gender*Math.pow((girls[j]-boys[j])-(totals.girls-totals.boys)/k,2);
     if(totals.levelN){
       loss+=12*w.learning*Math.pow((scoreSum[j]-avg*scoreN[j])/(deviation*Math.sqrt(Math.max(1,scoreN[j]))),2);
       loss+=4*w.learning*Math.pow(scoreN[j]-totals.levelN*t/N,2)/Math.max(1,totals.levelN/k);
@@ -1230,7 +1243,7 @@ function greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,rand
   const scored=students.filter(hasStudyScore),avg=scored.length?scored.reduce((sum,st)=>sum+st.level,0)/scored.length:0;
   const sd=scored.length?Math.max(1,Math.sqrt(scored.reduce((sum,st)=>sum+(st.level-avg)**2,0)/scored.length)):1;
   const academic=Array(k).fill(0),boys=Array(k).fill(0),genderCount=Array(k).fill(0);
-  const boyRatio=students.length?students.filter(st=>st.gender==='남').length/students.length:0.5;
+  const desiredGenderGap=students.reduce((n,st)=>n+(st.gender==='여'?1:st.gender==='남'?-1:0),0)/k;
   const oldCount=Array.from({length:k},()=>({}));
   for(const st of students)if(st.fixed){
     const i=st.fixed-1;
@@ -1254,8 +1267,8 @@ function greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,rand
       if(hasPresets){
         const z=hasStudyScore(s)?(s.level-avg)/sd:0;
         const academicCost=3.2*((academic[i]+z)**2-academic[i]**2);
-        const genderCost=s.gender==='남'||s.gender==='여'?
-          1.7*((boys[i]+(s.gender==='남'?1:0)-(genderCount[i]+1)*boyRatio)**2-(boys[i]-genderCount[i]*boyRatio)**2):0;
+        const currentGap=genderCount[i]-2*boys[i],step=s.gender==='여'?1:s.gender==='남'?-1:0;
+        const genderCost=step?1.7*((currentGap+step-desiredGenderGap)**2-(currentGap-desiredGenderGap)**2):0;
         const traitCost=(s.traits||[]).reduce((sum,tag)=>sum+(traitCounts[i][tag]||0)*1.2,0);
         const oldCost=s.oldClass?(oldCount[i][s.oldClass]||0)*0.6:0;
         const traitGenderCost=sexKeys(s).reduce((sum,key)=>{const total=tagSexTotals.get(key),current=tagSexCounts[i].get(key)||0;return sum+60*(2*current+1-2*total*target[i]/students.length)/Math.max(1,total/k)},0);
@@ -1514,6 +1527,50 @@ function polishTraitGenderBalance(students,pairs,k,traits,caps,softPairs,candida
  }
  return {...candidate,assign,score:quality};
 }
+/* Balance each room's female-minus-male gap, permitting at most two pupils' size spread. */
+function polishGenderGap(students,pairs,k,traits,caps,softPairs,candidate,weights={}){
+ if(!normalizeAllocationWeights(weights).gender)return candidate;
+ const assign={...candidate.assign},counts=Array(k).fill(0),gaps=Array(k).fill(0),neighbors=makeNeighborMap(students,pairs);
+ const sign=st=>st.gender==='여'?1:st.gender==='남'?-1:0;
+ for(const st of students){const c=assign[st.id]-1;counts[c]++;gaps[c]+=sign(st)}
+ const free=students.filter(st=>!st.fixed&&sign(st)),baseline=preferencePenalty(students,assign,k,caps,softPairs,weights);
+ let quality=calcScore(students,assign,k,traits,candidate.target,weights),changed=false,checks=0;
+ const budget=students.length<=150?3500:students.length<=350?1400:700;
+ function attempt(pupils,destinations){
+  if(++checks>budget)return false;
+  const previous=pupils.map(st=>assign[st.id]);
+  for(let i=0;i<pupils.length;i++){const st=pupils[i],from=previous[i]-1,to=destinations[i]-1;assign[st.id]=to+1;counts[from]--;counts[to]++;gaps[from]-=sign(st);gaps[to]+=sign(st)}
+  let accepted=false;
+  if(Math.min(...counts)>=(students.length>=k?1:0)&&Math.max(...counts)-Math.min(...counts)<=2&&pupils.every(st=>canEnter(st.id,assign[st.id],assign,neighbors))){
+   const penalty=preferencePenalty(students,assign,k,caps,softPairs,weights);
+   if(penalty.total===baseline.total&&penalty.square===baseline.square){
+    const score=calcScore(students,assign,k,traits,candidate.target,weights);
+    if(score+1e-7<quality){quality=score;accepted=true;changed=true}
+   }
+  }
+  if(!accepted)for(let i=0;i<pupils.length;i++){const st=pupils[i],from=previous[i]-1,to=destinations[i]-1;assign[st.id]=from+1;counts[from]++;counts[to]--;gaps[from]+=sign(st);gaps[to]-=sign(st)}
+  return accepted;
+ }
+ for(let pass=0;pass<6&&checks<budget;pass++){
+  let improved=false;
+  // Try exchanges first so equal-size rooms stay equal wherever possible.
+  for(let i=0;i<free.length&&checks<budget;i++)for(let j=i+1;j<free.length&&checks<budget;j++){
+   const a=free[i],b=free[j],from=assign[a.id]-1,to=assign[b.id]-1,d=sign(a);
+   if(from===to||d===sign(b)||4*d*(gaps[to]-gaps[from])+8>=0)continue;
+   if(attempt([a,b],[to+1,from+1]))improved=true;
+  }
+  for(const st of free){
+   if(checks>=budget)break;
+   const from=assign[st.id]-1,d=sign(st);
+   for(let to=0;to<k&&checks<budget;to++){
+    if(to===from||2*d*(gaps[to]-gaps[from])+2>=0)continue;
+    if(attempt([st],[to+1])){improved=true;break}
+   }
+  }
+  if(!improved)break;
+ }
+ return changed?{...candidate,assign,score:quality}:candidate;
+}
 function generateCandidates(students,pairs,k,traits,random=Math.random,capRules={},softPairs=[],weights={}){
   if(!students.length)return {error:'학생 명단을 먼저 입력해 주세요.'};
   if(students.some(s=>!s.name.trim()))return {error:'이름이 비어 있는 학생이 있습니다. 이름을 모두 입력해 주세요.'};
@@ -1541,7 +1598,9 @@ function generateCandidates(students,pairs,k,traits,random=Math.random,capRules=
   if(!solutions.length)solutions.push(...bestEffortCandidates(students,pairs,k,traits,capRules,softPairs,ordered,random,weights));
   if(!solutions.length)return {error:'지정한 분리 관계·반 고정·유의 사항별 최대 인원을 모두 만족하는 편성안을 찾지 못했습니다. 조건을 확인해 주세요. 탐색 한도 때문에 실제로 가능한 편성안이 있을 수도 있습니다.'};
   if((weights.traitGenderBalance||[]).length)for(let i=0;i<solutions.length;i++)solutions[i]=polishTraitGenderBalance(students,pairs,k,traits,capRules,softPairs,solutions[i],weights);
-  if(Object.values(normalizeAllocationWeights(weights)).some(n=>n!==1)||(weights.traitGenderBalance||[]).length)solutions.sort((a,b)=>a.score-b.score);
+  let genderImproved=false;
+  for(let i=0;i<solutions.length;i++){const next=polishGenderGap(students,pairs,k,traits,capRules,softPairs,solutions[i],weights);genderImproved=genderImproved||next!==solutions[i];solutions[i]=next;}
+  if(genderImproved||Object.values(normalizeAllocationWeights(weights)).some(n=>n!==1)||(weights.traitGenderBalance||[]).length)solutions.sort((a,b)=>a.score-b.score);
   return {candidates:solutions,successes:solutions.length};
 }
 /* ENGINE_END */
@@ -1579,9 +1638,9 @@ function reviewStudentMove(students,pairs,assign,k,traits,capRules,id,to,teacher
  if(preferenceLess(priorPenalty,nextPenalty))violations.push(...validateAssignment(active,[...pairs,...softPairs],proposed,capRules));
  if(violations.length)return {ok:false,error:violations[0],violations,from,to};
  const after=reviewClassStats(students,proposed,k,traits);
- const counts=after.map(d=>d.total),average=students.length/k;
+ const counts=after.map(d=>d.total);
  const notices=[];
- if(counts.some(n=>Math.abs(n-average)>1))notices.push('반별 인원 차이가 커졌습니다. 이동 후 인원 균형을 확인하세요.');
+ if(Math.max(...counts)-Math.min(...counts)>2)notices.push('반별 인원 차이가 커졌습니다. 이동 후 인원 균형을 확인하세요.');
  return {ok:true,from,to,id,student,proposed,before,after,notices,movedIds:[...movingIds],displayName:moving.map(s=>s.name).join(' · '),
    affectedTraits:[...new Set(moving.flatMap(s=>s.traits||[]))].filter(t=>traits.includes(t))};
 }
@@ -1641,7 +1700,7 @@ function renderResultOverview(){
  host.innerHTML='<div class="result-overview-heading"><div><span>RESULT OVERVIEW</span><h3>우리 반 구성 한눈에</h3></div><span>편성안 '+String.fromCharCode(65+state.activeCandidate)+' · '+rows.reduce((n,r)=>n+r.total,0)+'명</span></div>'+renderDonutPanel(overviewDonutData(state,mode,'result'),mode,true)+
  '<div class="result-room-stats">'+rows.map((r,i)=>{
  const unknown=r.total-r.boys-r.girls,pct=r.total?r.boys/r.total*100:0,gpct=r.total?r.girls/r.total*100:0;
- return '<article><div class="result-room-title"><h4>'+escapeHtml(displayClass(i+1))+'</h4><strong>'+r.total+'<small>명</small></strong></div><div class="overview-sexbar" role="img" aria-label="남 '+r.boys+'명, 여 '+r.girls+'명, 성별 미입력 '+unknown+'명"><span class="boys" style="width:'+pct+'%"></span><span class="girls" style="width:'+gpct+'%"></span></div><p><span>남 '+r.boys+' · 여 '+r.girls+(unknown?' · 미입력 '+unknown:'')+'</span><span>학습 평균 <b>'+(r.levelN?(r.levelSum/r.levelN).toFixed(2):'—')+'</b></span></p></article>';
+ return '<article><div class="result-room-title"><h4>'+escapeHtml(displayClass(i+1))+'</h4><strong>'+r.total+'<small>명</small></strong></div><div class="overview-sexbar" role="img" aria-label="남 '+r.boys+'명, 여 '+r.girls+'명, 성별 미입력 '+unknown+'명"><span class="boys" style="width:'+pct+'%"></span><span class="girls" style="width:'+gpct+'%"></span></div><p><span>남 '+r.boys+' · 여 '+r.girls+(unknown?' · 미입력 '+unknown:'')+' · 여−남 '+(r.girls-r.boys>0?'+':'')+(r.girls-r.boys)+'</span><span>학습 평균 <b>'+(r.levelN?(r.levelSum/r.levelN).toFixed(2):'—')+'</b></span></p></article>';
  }).join('')+'</div>';
 }
 function renderResults(){
@@ -1660,7 +1719,7 @@ function renderResults(){
   const selected=state.candidates[state.activeCandidate];if(!selected)return;
   const violations=validateAssignment(activeStudents(),effectivePairs(),selected.assign,state.capRules);
   const counts=reportData(selected);const totals=counts.map(d=>d.total);const diff=Math.max(...totals)-Math.min(...totals);
-  const over=diff>1?`반별 인원 차이가 ${diff}명입니다. 편성 결과를 직접 검토하세요.`: `반별 인원 차이 ${diff}명 · 지정한 배정 조건 충족`;
+  const over=diff>2?`반별 인원 차이가 ${diff}명입니다. 편성 결과를 직접 검토하세요.`: `반별 인원 차이 ${diff}명 · 지정한 배정 조건 충족`;
   $('validation').innerHTML=violations.length?`<div class="alert"><b>분리 조건 위반 ${violations.length}건</b><div>${violations.map(escapeHtml).join('<br>')}</div></div>`:`<div class="success">${escapeHtml(over)}${duplicateNames().length?' · 동명이인이 있어 기존 반과 번호를 함께 확인하세요.':''}</div>`;
   $('report').innerHTML=`<div class="report"><table><thead><tr><th>반</th><th>전체</th><th>남</th><th>여</th><th>성별 미입력</th><th>다문화</th><th>특수</th><th>학습지표 평균</th></tr></thead><tbody>${counts.map((d,i)=>`<tr><td>${escapeHtml(displayClass(i+1))}</td><td>${d.total}명</td><td>${d.boys}명</td><td>${d.girls}명</td><td>${d.total-d.boys-d.girls}명</td><td>${d.traitCounts['다문화']||0}명</td><td>${d.traitCounts['특수']||0}명</td><td>${d.levelN?(d.levelSum/d.levelN).toFixed(2):'—'}</td></tr>`).join('')}</tbody></table></div><div class="legend">${state.traits.filter(t=>counts.some(d=>d.traitCounts[t]>0)||Number.isInteger(state.capRules[t])).map(t=>`<span>${escapeHtml(t)}${Number.isInteger(state.capRules[t])?' (반당 최대 '+state.capRules[t]+'명)':''}: ${counts.map((d,i)=>`${i+1}반 ${d.traitCounts[t]}`).join(' / ')}</span>`).join('')}</div>`;
   $('resultGrid').innerHTML=counts.map((d,index)=>{
@@ -2275,7 +2334,7 @@ function showPlannerDialog(id){
 }
 function closePlannerDialog(id){const dialog=$(id);if(dialog?.open)dialog.close()}
 function installEvents(){
-  installTraitRemote();installTwinGroups();installFeedbackSettings();installUnifiedRoster();installRosterExcel();installTransferControls();installRulesRemote();
+  installTraitRemote();installTraitColors();installTwinGroups();installFeedbackSettings();installUnifiedRoster();installRosterExcel();installTransferControls();installRulesRemote();
   $('openHelp').addEventListener('click',()=>showPlannerDialog('plannerHelpDialog'));
   $('closeNameColor').addEventListener('click',()=>$('nameColorDialog').close());
   $('nameColorDone').addEventListener('click',()=>$('nameColorDialog').close());

@@ -83,7 +83,7 @@ function renderTraitRemote(){
  $('traitRemoteStatus').textContent=traitRemoteUI.tag?'선택: '+traitRemoteUI.tag+' · 학생 행에 놓거나 유의 사항 칸을 누르세요.':'버튼을 학생 행에 끌어 놓으세요.';
  if(traitRemoteUI.studentId)$('rosterBody').querySelector('[data-student="'+CSS.escape(traitRemoteUI.studentId)+'"]')?.classList.add('trait-current-row');
  if(results)rosterPaintFormatControls();
- positionTraitRemote();
+ renderTraitColorControls();positionTraitRemote();
 }
 function collapseMobileRemote(){
  if(!matchMedia('(max-width: 700px)').matches)return;
