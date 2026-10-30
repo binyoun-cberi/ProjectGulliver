@@ -202,6 +202,8 @@ const assert=require('node:assert/strict');
  assert.equal(await directPage.locator('#traitRemoteBody').isVisible(),false);
  await directPage.locator('#rosterUndo').click();
  assert.equal(await directPage.evaluate(()=>state.students[0].color||''),'');
+ // Regenerate after roster undo invalidates the prior assignment.
+ await directPage.locator('#generateQuick').click();await directPage.locator('.assigned').first().waitFor();
  // A summary lives inside the current stage, with a single result overview at step 4.
  for(const stage of ['setup','roster','rules','results','setup']){
   await directPage.locator('[data-tab="'+stage+'"]').click();
