@@ -33,3 +33,11 @@ test('명단 되돌리기는 자동 갱신된 기존·내년 학년과 0단계 �
  vm.runInContext(segment('function rosterSaveUndo(','function rosterColumnValue('),scope);scope.rosterSaveUndo();scope.state.grade='7';scope.state.sourceGrade='6';scope.state.sourceClasses=[{room:1,boys:1,girls:0,unknown:0}];scope.rosterUndo();
  assert.equal(scope.state.grade,'6');assert.equal(scope.state.sourceGrade,'5');assert.equal(scope.state.sourceClasses[0].boys,0);
 });
+
+test('1단계 기존 반 열의 한 열·여러 행·반 이름 포함 붙여넣기가 0단계 집계에 반영',()=>{
+ const a=api(),initial=Array.from({length:4},(_,i)=>({id:'c'+i,name:'학생'+i,oldGrade:'5',oldClass:'1반',number:String(i+1),gender:i%2?'여':'남',level:null,traits:[]}));
+ const out=a.expandedRosterPaste('기존 반\n2반\n2\n3반\n3','oldClass',initial.map(s=>s.id),initial,'5',factory());
+ assert.equal(out.errors.length,0);assert.equal(out.created,0);assert.deepEqual(Array.from(out.students,s=>s.oldClass),['2반','2반','3반','3반']);assert.equal(initial[0].oldClass,'1반');
+ a.state.students=out.students;a.syncSourceFromRoster();assert.equal(a.state.sourceClassCount,3);assert.equal(a.state.sourceClasses[1].boys,1);assert.equal(a.state.sourceClasses[1].girls,1);
+ const invalid=a.expandedRosterPaste('2\n13','oldClass',initial.map(s=>s.id),initial,'5',factory());assert.ok(invalid.errors.length);assert.equal(initial[1].oldClass,'1반');
+});

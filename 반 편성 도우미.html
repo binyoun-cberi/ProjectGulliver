@@ -363,12 +363,13 @@
   <div class="section-head setup-subhead"><div><h3>내년 반 구성 참고 목표</h3></div></div>
   <div id="futureClassSummary" class="setup-targets" aria-live="polite"></div>
   <div class="setup-limit-box"><div class="section-head setup-subhead"><div><h3>유의 사항별 반당 최대 인원</h3><p>각 반에 몇 명까지 배정할지 정하세요. 비워 두면 제한하지 않습니다.</p></div></div><div id="capRules" class="table-wrap"></div></div>
+  <section class="allocation-preferences" aria-label="반 편성 중요도"><h3>반 편성 중요도</h3><p>0은 사용 안 함, 1은 기본, 5는 가장 중요하게 반영합니다. 개별 분리·쌍생아 관계와 교사 고정은 유지합니다.</p><div id="allocationWeightsSetup" class="allocation-weight-grid"></div></section>
   <div id="prioritySetupHint" class="setup-setting-hint">교사 우선 배치는 우측 상단 <button type="button" id="setupOpenSettings">설정</button>에서 선택할 수 있습니다.</div>
   <div id="setupNotice" class="helper" role="status" aria-live="polite">현재 반별 남녀 수를 입력하면 학생 명단의 기본 칸을 만들 수 있습니다.</div>
   <div class="actions setup-apply"><button id="startRosterDirect" type="button" class="btn soft">엑셀 명단부터 입력</button><button id="applySetup" class="btn primary">학생 명단 틀 만들고 1단계로</button><button id="continueSetup" class="btn soft">기존 학생 명단 그대로 1단계로</button></div>
  </section>
- <section id="view-roster" class="card hidden" aria-label="학생 명단"><div class="section-head"><div><h2>학생 명단 <span id="rosterCount" class="count-pill">0명</span></h2><p>이름·성별·학습지표·유의 사항을 입력하세요.</p></div><div class="actions"><button id="backToSetup" class="btn soft">0단계 수정</button><input id="searchStudent" aria-label="학생 검색" placeholder="이름 · 기존 반 검색" style="width:160px"><button id="addStudent" class="btn primary">+ 학생 추가</button></div></div>
- <div id="rosterGenderSummary" aria-live="polite"></div><div class="helper no-print" style="margin:8px 0">0단계 입력 없이 엑셀 명단을 바로 붙여넣을 수 있습니다. 학년·반·번호·이름·성별 제목 행도 인식하며, 인원은 0단계에 자동 반영됩니다.</div>
+ <section id="view-roster" class="card hidden" aria-label="학생 명단"><div class="section-head"><div><h2>학생 명단 <span id="rosterCount" class="count-pill">0명</span></h2><p>기존 반·이름·성별·학습지표·유의 사항을 입력하세요.</p></div><div class="actions"><button id="backToSetup" class="btn soft">0단계 수정</button><input id="searchStudent" aria-label="학생 검색" placeholder="이름 · 기존 반 검색" style="width:160px"><button id="addStudent" class="btn primary">+ 학생 추가</button></div></div>
+ <div id="rosterGenderSummary" aria-live="polite"></div><div class="helper no-print" style="margin:8px 0">0단계 입력 없이 엑셀 명단을 바로 붙여넣을 수 있습니다. 기존 반 열에 여러 반을 붙여넣거나 범위를 선택해 한 반으로 채울 수 있습니다. 학년·반·번호·이름·성별 제목 행도 인식하며, 인원은 0단계에 자동 반영됩니다.</div>
  <div class="roster-sheet-tools no-print"><div><strong>엑셀처럼 바로 입력</strong><span id="rosterRangeStatus">셀을 선택하거나 엑셀에서 여러 행을 붙여넣으세요.</span></div><button id="toggleTraitRemote" class="btn small" type="button" aria-controls="traitRemote" aria-expanded="true">편집 리모컨</button><div class="actions"><button id="rosterFillDown" class="btn small" type="button" disabled>아래로 채우기 (Ctrl+D)</button><button id="rosterUndo" class="btn small" type="button" disabled>되돌리기 (Ctrl+Z)</button></div></div><div class="table-wrap roster-sheet-wrap"><datalist id="rosterGenderOptions"><option value="남"><option value="여"></datalist><table class="student-table roster-sheet" aria-label="엑셀형 학생 명단 입력표"><thead id="rosterHead"></thead><tbody id="rosterBody"></tbody></table></div><div class="helper privacy-note">같은 반에 배정하면 안 되는 학생은 3단계에서 지정해 주세요.</div>
  </section>
  <section id="view-preset" class="card hidden" aria-label="교사가 먼저 배치할 학생"><div class="section-head"><div><h2>교사가 먼저 학생 배치하기 <span id="presetCount" class="count-pill">0명 확정</span></h2><p>고정할 학생을 선택하세요.</p></div><div class="actions"><button id="undoPreset" class="btn" disabled>최근 배치 되돌리기</button><button id="clearPresets" class="btn danger">우선 배치 전체 해제</button><button id="fillRemaining" class="btn primary">남은 학생 자동 채우기</button></div></div><div id="presetStatus" class="helper"></div><div class="preset-workspace"><div class="preset-list"><div class="section-head"><h3>학생 찾아 배치하기</h3><span id="presetRemaining" class="count-pill">0명</span></div><input id="presetSearch" class="wide" aria-label="우선 배치 학생 검색" placeholder="이름 · 유의 사항 · 기존 반 검색"><div class="preset-filters"><label>배치 상태<select id="presetFilterStatus"><option value="free">미배치 학생</option><option value="all">모든 학생</option><option value="fixed">배치한 학생</option></select></label><label>기존 반<select id="presetFilterClass"></select></label><label>유의 사항<select id="presetFilterTrait"></select></label><label>정렬<select id="presetSort"><option value="name">이름순</option><option value="score">학습지표 높은순</option><option value="oldClass">기존 반·번호순</option></select></label></div><div class="preset-selection"><label><input type="checkbox" id="presetSelectAll"> 표시된 학생 선택</label><span id="presetVisibleCount" class="muted"></span></div><div id="presetUnassigned" class="preset-people"></div></div><div id="presetClassGrid" class="preset-classes"></div></div><div class="preset-batch"><strong id="presetSelectedCount" aria-live="polite">0명 선택</strong><label for="presetTarget">배치할 반</label><select id="presetTarget"></select><button id="assignSelected" class="btn primary" disabled>선택 학생 배치</button><button id="clearSelection" class="btn">선택 취소</button><button id="fillRemainingBottom" class="btn">남은 학생 자동 채우기</button></div><div id="presetFeedback" class="preset-feedback" role="status" aria-live="polite"></div></section>
@@ -379,7 +380,8 @@
  <div class="section-head"><div><h2>개별 분리 관계 <span id="pairCount" class="count-pill">0쌍</span></h2><p>서로 다른 반에 배정할 두 학생을 선택하세요.</p></div></div><div class="constraint-form"><label class="field">학생 A <select id="pairA" class="wide"></select></label><label class="field">학생 B <select id="pairB" class="wide"></select></label><button id="addPair" class="btn primary">분리 관계 추가</button></div><div id="pairList"></div></section>
  <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>완성된 반 편성표</h2><p>편성 결과를 확인하고 필요한 학생을 옮겨 보세요.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="copyResultExcel" class="btn" disabled>엑셀에 복사</button><button id="exportCsv" class="btn" disabled>엑셀용 파일 저장</button><button id="print" class="btn" disabled>인쇄 · PDF 저장</button></div></div>
  <div id="resultOverview" class="result-overview no-print" aria-label="편성 결과 인포그래픽" hidden></div>
- <div class="result-layout-bar no-print"><div class="result-layout-picker" role="group" aria-label="반 편성표 배치 방식"><span>반 배치</span><button id="resultVertical" type="button" data-result-layout="vertical" aria-pressed="true">세로형</button><button id="resultCompare" type="button" data-result-layout="compare" aria-pressed="false">가로 비교형</button></div><button id="toggleResultRemote" class="btn small" type="button" aria-controls="traitRemote" aria-expanded="true">색상 · 편집 리모컨</button><span id="resultLayoutHint" class="result-layout-hint">반을 세로로 펼쳐 봅니다.</span></div>
+ <div class="result-layout-bar no-print"><div class="result-layout-picker" role="group" aria-label="반 편성표 배치 방식"><span>반 배치</span><button id="resultVertical" type="button" data-result-layout="vertical" aria-pressed="true">세로형</button><button id="resultCompare" type="button" data-result-layout="compare" aria-pressed="false">가로 비교형</button></div><label class="source-color-toggle"><input id="showSourceColors" type="checkbox" checked>기존 반 색상 표시</label><button id="toggleResultRemote" class="btn small" type="button" aria-controls="traitRemote" aria-expanded="true">색상 · 편집 리모컨</button><span id="resultLayoutHint" class="result-layout-hint">반을 세로로 펼쳐 봅니다.</span></div>
+ <div id="sourceColorLegend" class="source-color-legend no-print" aria-label="기존 반별 색상 범례" hidden></div>
  <div class="move-guide no-print"><span>번호·손잡이를 잡아 다른 반으로 옮기세요. 번호를 누른 뒤 대상 반의 「여기로 이동」이나 리모컨으로도 이동할 수 있습니다.</span><button id="undoMove" class="btn small" disabled>마지막 이동 되돌리기</button></div><div id="moveSelection" class="move-selection no-print" aria-live="polite"></div><div id="movePreview" class="move-preview no-print" aria-live="polite"></div><div id="moveHistoryResult" class="move-history" aria-live="polite"></div>
  <div id="resultMessage" class="helper result-help">먼저 학생 명단을 작성한 다음 자동 편성하기를 눌러 주세요. 결과에서 학생의 반을 직접 바꾸거나 다른 편성안을 선택할 수도 있습니다.</div><div id="alternatives" class="alternatives"></div><div id="validation"></div><div id="report"></div><div id="resultGrid" class="result-grid" data-layout="vertical" aria-label="반별 편성 학생 목록"></div><section id="resultPrintSheet" aria-label="인쇄용 반 편성표"></section><div class="helper result-help">최종 확정 전에 반별 구성을 확인하세요.</div></section>
  
@@ -392,7 +394,7 @@
  <details><summary>1단계 · 학생 명단 작성</summary><p>학년·반·번호는 자동으로 준비됩니다. 이름·성별·학습지표를 입력하고, 리모컨의 유의 사항 버튼을 학생 행에 끌어 놓으세요. 칸을 클릭하고 위쪽 도구에서 채우기 색·굵게·기울임·밑줄·취소선을 적용하세요. Ctrl(맥은 ⌘)+클릭으로 여러 칸을, Shift+클릭으로 연속 범위를 선택합니다. 색은 반을 옮겨도 유지됩니다. 엑셀의 이름 열을 한꺼번에 복사해 첫 번째 이름 칸에 붙여넣어도 됩니다. 학습지표의 빈칸과 0.00은 다릅니다.</p></details>
  <details><summary>교사 우선 배치(선택)</summary><p>설정에서 교사 우선 배치를 켜면 별도의 단계가 나타납니다. 미리 맡을 학생을 반마다 정할 수 있으며, 자동 편성에서도 유지됩니다. 끄면 단계가 숨겨지고 이전 지정은 보관됩니다.</p></details>
  <details><summary>3단계 · 함께 배정하지 않을 학생</summary><p>유의 사항별 최대 인원을 정하거나 '같은 반 금지 바구니'를 여러 개 만들 수 있습니다. 같은 바구니에는 최대 5명까지 담을 수 있습니다.</p></details>
- <details><summary>4단계 · 결과 수정과 저장</summary><p>세로형 또는 가로 비교형으로 반을 펼쳐 볼 수 있습니다. 가로 비교형은 여러 반을 같은 줄에 나란히 표시합니다. 학생을 드래그해 옮겨도 반별 인원과 학습지표가 갱신됩니다. 학생 이름 옆 「색」 버튼에서 배경색을 정하거나 없앨 수 있고, 1단계에서 지정한 색도 그대로 나타납니다. 「엑셀에 복사」를 누르고 엑셀의 첫 칸에 붙여넣으면 세로형은 한 목록으로, 가로형은 반별 열로 나란히 들어갑니다. 인쇄와 PDF 저장도 선택한 형태에 맞춰 만들어지며, 가로형 인쇄는 읽기 쉽도록 한 장에 최대 네 반을 배치합니다. 편성 결과는 이 브라우저에 보관되므로 다른 PC에서는 백업 파일을 이용하세요.</p></details>
+ <details><summary>4단계 · 결과 수정과 저장</summary><p>세로형 또는 가로 비교형으로 반을 펼쳐 볼 수 있습니다. 가로 비교형은 여러 반을 같은 줄에 나란히 표시합니다. 학생을 드래그해 옮겨도 반별 인원과 학습지표가 갱신됩니다. 편집 리모컨에서 이름 배경색을 정하거나 없앨 수 있고, 1단계에서 지정한 색도 그대로 나타납니다. 「엑셀에 복사」를 누르고 엑셀의 첫 칸에 붙여넣으면 세로형은 한 목록으로, 가로형은 반별 열로 나란히 들어갑니다. 인쇄와 PDF 저장도 선택한 형태에 맞춰 만들어지며, 가로형 인쇄는 읽기 쉽도록 한 장에 최대 네 반을 배치합니다. 편성 결과는 이 브라우저에 보관되므로 다른 PC에서는 백업 파일을 이용하세요.</p></details>
  <details><summary>자료 보호와 유의 사항</summary><p>학생 정보는 이 도구의 브라우저 저장 공간에서 다루며 서버로 전송하지 않습니다. 공동으로 사용하는 PC에서는 사용 후 자료를 정리하고, 백업 파일은 학교의 개인정보 보호 규정에 따라 관리해 주세요. '분리조치' 항목만 체크하면 자동으로 학생 사이의 분리 관계가 지정되지는 않습니다. 바구니에서 학생을 직접 선택해야 합니다.</p></details>
  </div>
  <div class="dialog-actions"><button id="helpDone" class="btn primary" type="button">닫기</button></div>
@@ -404,6 +406,7 @@
   <div class="priority-mode" id="priorityModePanel"><label class="priority-switch"><input id="teacherPriorityOn" type="checkbox" role="switch" aria-label="교사 우선 배치 사용"><span class="switch-track" aria-hidden="true"></span><strong>사용하기</strong></label><span id="priorityModeHelp">OFF · 전체 자동 편성</span></div>
   <p>사용하지 않으면 관련 단계가 화면에서 사라집니다. 다시 켜면 이전에 지정한 학생을 확인할 수 있습니다.</p>
  </section>
+ <section class="settings-block" aria-labelledby="allocationSettingTitle"><h3 id="allocationSettingTitle">반 편성 중요도</h3><div id="allocationWeightsSettings" class="allocation-weight-grid"></div></section>
  <section class="settings-block" aria-labelledby="traitSettingTitle"><h3 id="traitSettingTitle">유의 사항 선택지</h3>
   <p>학생별로 선택할 항목을 추가하거나 삭제합니다.</p>
   <div id="traitChips" class="settings-trait-list" aria-live="polite"></div>
@@ -439,12 +442,12 @@
  <button data-roster-format="bold" class="btn small" type="button" aria-label="굵게" aria-pressed="false"><b>B</b></button><button data-roster-format="italic" class="btn small" type="button" aria-label="기울임" aria-pressed="false"><i>I</i></button><button data-roster-format="underline" class="btn small" type="button" aria-label="밑줄" aria-pressed="false"><u>U</u></button><button data-roster-format="strike" class="btn small" type="button" aria-label="취소선" aria-pressed="false"><s>S</s></button>
  </div><p id="remoteFormatTip" class="remote-tip">Ctrl·⌘로 여러 칸, Shift로 범위 선택</p></section><section id="remoteTraitsSection" class="remote-section"><div class="remote-section-head"><h3>유의 사항</h3><span>행에 끌어 놓기</span></div><input id="traitRemoteSearch" type="search" placeholder="유의 사항 검색" aria-label="리모컨 유의 사항 검색"><div id="traitRemotePalette" class="trait-remote-palette" role="group" aria-label="끌어 놓을 유의 사항"></div><p id="traitRemoteStatus" class="trait-remote-status" role="status"></p></section><div class="trait-remote-context"><strong id="traitRemoteStudent">학생 행을 선택하세요</strong><label id="resultRemoteMoveWrap" hidden>선택 학생 이동<select id="resultRemoteMove" disabled aria-label="선택 학생을 다른 반으로 이동"></select></label><button id="resultRemoteUndo" class="btn small" type="button" hidden disabled>색상·서식 되돌리기</button><button id="traitRemoteNote" class="btn small" type="button" disabled>참고 메모</button><label id="traitRemoteFixedWrap" hidden>교사 우선 배치<select id="traitRemoteFixed" disabled></select></label></div></div>
 </aside>
-<link rel="stylesheet" href="class-planner-twins.css"><script src="class-planner-twins.js"></script><script src="class-planner-result-cards.js"></script><script src="class-planner-direct-input.js"></script><script src="class-planner-trait-remote.js"></script>
+<link rel="stylesheet" href="class-planner-feedback.css"><script src="class-planner-feedback.js"></script><link rel="stylesheet" href="class-planner-twins.css"><script src="class-planner-twins.js"></script><script src="class-planner-result-cards.js"></script><script src="class-planner-direct-input.js"></script><script src="class-planner-trait-remote.js"></script>
 <script>
 'use strict';
 const STORAGE_KEY = 'classplanner-v1-local';
 const NAME_COLOR_PRESETS = [{name:'분홍',hex:'#ffe0e6'},{name:'살구',hex:'#ffead6'},{name:'노랑',hex:'#fff0b9'},{name:'연두',hex:'#e4f7ce'},{name:'초록',hex:'#c8f1de'},{name:'하늘',hex:'#d8eeff'},{name:'보라',hex:'#e9e0ff'},{name:'회색',hex:'#e9edf2'}];
-const DEFAULT_TRAITS = ['다문화','특수','쌍생아','분리조치','운동부','교권침해','성 사안','범법','연애관계','사회성'];
+const DEFAULT_TRAITS = ['다문화','특수','쌍생아','분리조치','운동부','느린학습자','교권침해','성 사안','범법','연애관계','사회성'];
 let state = loadState();
 let view = state.setupCompleted ? 'roster' : 'setup';
 let noteStudentId = null;
@@ -574,7 +577,7 @@ function nameColorTextColor(value){
 }
 function normalizeCellFormats(value){
  const out={};
- for(const key of ['name','gender','level','traits']){
+ for(const key of ['oldClass','name','gender','level','traits']){
   const raw=value?.[key];if(!raw||typeof raw!=='object')continue;
   out[key]={background:normalizeNameColor(raw.background),bold:raw.bold===true,italic:raw.italic===true,underline:raw.underline===true,strike:raw.strike===true};
  }
@@ -591,7 +594,7 @@ function studentNameStyle(value){
  return color?'--student-name-bg:'+color+';background-color:'+color+';color:'+nameColorTextColor(color)+';':'';
 }
 /* STUDENT_NAME_COLORS_END */
-function defaultState(){return {version:6,overviewMode:'class',overviewScope:'source',grade:'6',classCount:3,resultLayout:'vertical',sourceGrade:'5',sourceClassCount:3,sourceClasses:stageZeroRows([],3),setupCompleted:false,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],capRules:{},teacherNames:{},baskets:[],twinGroups:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
+function defaultState(){return {version:6,overviewMode:'class',overviewScope:'source',grade:'6',classCount:3,resultLayout:'vertical',sourceGrade:'5',sourceClassCount:3,sourceClasses:stageZeroRows([],3),setupCompleted:false,teacherPriorityOn:false,traits:[...DEFAULT_TRAITS],allocationWeights:normalizeAllocationWeights(),showSourceColors:true,capRules:{},teacherNames:{},baskets:[],twinGroups:[],students:[],pairs:[],candidates:[],activeCandidate:0}}
 function parseStudyScore(v,legacy=false){if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return !Number.isFinite(n)||n<0||n>1e9||(legacy&&n===0)?null:Math.round((n+Number.EPSILON)*100)/100}
 function hasStudyScore(s){return Number.isFinite(s.level)&&s.level>=0}
 function studyText(v){return Number.isFinite(v)?v.toFixed(2):'미입력'}
@@ -599,7 +602,7 @@ function normalize(raw){
  const base=defaultState();if(!raw||typeof raw!=='object')return base;
  const count=Math.max(2,Math.min(12,Number(raw.classCount)||3));
  const oldTraits=Array.isArray(raw.traits)?raw.traits:[];
- const traits=[...new Set([...DEFAULT_TRAITS,...oldTraits.filter(x=>typeof x==='string').map(x=>x.trim()).filter(Boolean).map(x=>x.slice(0,20))])].slice(0,64);
+ const traits=[...new Set([...oldTraits.filter(x=>typeof x==='string').map(x=>x.trim()).filter(Boolean).map(x=>x.slice(0,20)),...DEFAULT_TRAITS])].slice(0,64);
  const legacy=Number(raw.version||1)<2;
  const teacherPriorityOn=typeof raw.teacherPriorityOn==='boolean'?raw.teacherPriorityOn:(Array.isArray(raw.students)&&raw.students.some(st=>Number(st?.fixed)>0));
  const teacherNames=Object.fromEntries(Object.entries(raw.teacherNames&&typeof raw.teacherNames==='object'&&!Array.isArray(raw.teacherNames)?raw.teacherNames:{}).filter(([n])=>/^(?:[1-9]|1[0-2])$/.test(n)&&Number(n)<=count).map(([n,name])=>[n,String(name??'').slice(0,40)]));
@@ -623,7 +626,7 @@ function normalize(raw){
  const candidates=(Number(raw.version||1)>=5&&Array.isArray(raw.candidates)?raw.candidates:[]).slice(0,3)
   .filter(c=>c&&c.assign&&typeof c.assign==='object'&&uniqueStudents.every(st=>Number.isInteger(Number(c.assign[st.id]))&&Number(c.assign[st.id])>=1&&Number(c.assign[st.id])<=count))
   .map(c=>({assign:Object.fromEntries(uniqueStudents.map(st=>[st.id,Number(c.assign[st.id])])),target:Array.from({length:count},(_,i)=>Number(c.target?.[i])||Math.floor(uniqueStudents.length/count)),score:Number(c.score)||0})).filter(c=>!twinAssignmentProblems(twinGroups,c.assign).length);
- return {...base,overviewMode:raw.overviewMode==='trait'?'trait':'class',overviewScope:raw.overviewScope==='result'?'result':'source',grade:String(raw.grade??'6').slice(0,12),classCount:count,resultLayout:raw.resultLayout==='compare'?'compare':'vertical',sourceGrade,sourceClassCount:countSource,sourceClasses,setupCompleted,teacherPriorityOn,traits,capRules,teacherNames,baskets,twinGroups,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
+ return {...base,allocationWeights:normalizeAllocationWeights(raw.allocationWeights),showSourceColors:raw.showSourceColors!==false,overviewMode:raw.overviewMode==='trait'?'trait':'class',overviewScope:raw.overviewScope==='result'?'result':'source',grade:String(raw.grade??'6').slice(0,12),classCount:count,resultLayout:raw.resultLayout==='compare'?'compare':'vertical',sourceGrade,sourceClassCount:countSource,sourceClasses,setupCompleted,teacherPriorityOn,traits,capRules,teacherNames,baskets,twinGroups,students:uniqueStudents,pairs:uniquePairs(pairs),candidates,activeCandidate:Math.max(0,Math.min(candidates.length-1,Number(raw.activeCandidate)||0))};
 }
 function loadState(){try{return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY)))}catch(e){return defaultState()}}
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
@@ -730,6 +733,7 @@ function renderTraitSettings(){
  $('traitChips').innerHTML=state.traits.map(t=>'<span class="chip">'+escapeHtml(t)+' <button type="button" data-delete-trait="'+escapeHtml(t)+'" aria-label="'+escapeHtml(t)+' 유의 사항 삭제" title="항목 삭제">×</button></span>').join('');
 }
 function renderPlannerSettings(){
+ renderFeedbackSettings();
  $('teacherPriorityOn').checked=!!state.teacherPriorityOn;
  $('priorityModeHelp').textContent=state.teacherPriorityOn?'켜짐 · 지정한 학생은 해당 반에 유지됩니다.':'꺼짐 · 전체 학생을 자동 편성합니다.';
  renderTraitSettings();
@@ -804,7 +808,7 @@ function rosterGenderCheck(){
  return '<div class="helper" style="margin:10px 0"><b>학생별 성별 입력 현황</b> · 총 '+state.students.filter(s=>s.gender).length+'/'+state.students.length+'명 입력<div class="legend">'+diff.join('')+'</div><div>0단계의 인원은 참고용입니다. 성별을 학생 번호에서 추정하거나 자동 지정하지 않습니다.</div></div>';
 }
 /* ROSTER_SHEET_START: one live Excel-like grid connected directly to saved student records. */
-const ROSTER_COLUMNS=['name','gender','level','traits'];
+const ROSTER_COLUMNS=['oldClass','name','gender','level','traits'];
 function rosterVisibleIds(){return Array.from($('rosterBody').querySelectorAll('tr[data-student]')).map(tr=>tr.dataset.student)}
 function rosterCellCoords(node){
  const td=node?.closest?.('[data-roster-cell]'),tr=node?.closest?.('tr[data-student]');
@@ -950,16 +954,17 @@ function setupPastePlan(text,startRow,startColumn,rows){
 /* ROSTER_SHEET_END */
 function renderRoster(){
 
-  $('rosterHead').innerHTML='<tr><th>기존 학년 · 반 · 번호</th><th data-roster-header="name" tabindex="0" title="이름 열 선택">이름</th><th data-roster-header="gender" tabindex="0" title="성별 열 선택">성별</th><th data-roster-header="level" tabindex="0" title="학습지표 열 선택">학습지표</th><th data-roster-header="traits" tabindex="0" title="유의 사항 열 선택">유의 사항</th></tr>';
+  $('rosterHead').innerHTML='<tr><th>기존 학년 · 번호</th><th data-roster-header="oldClass" tabindex="0" title="기존 반 열 선택">기존 반</th><th data-roster-header="name" tabindex="0" title="이름 열 선택">이름</th><th data-roster-header="gender" tabindex="0" title="성별 열 선택">성별</th><th data-roster-header="level" tabindex="0" title="학습지표 열 선택">학습지표</th><th data-roster-header="traits" tabindex="0" title="유의 사항 열 선택">유의 사항</th></tr>';
   $('rosterGenderSummary').innerHTML=rosterGenderCheck();
   const visible=state.students.filter(st=>!searchQuery||[st.oldGrade,st.oldClass,st.name,st.number].join(' ').toLowerCase().includes(searchQuery));
   if(!state.students.length)visible.push(newRosterStudent([],state.sourceGrade,'roster-new-row'));
   $('rosterBody').innerHTML=visible.length?visible.map(st=>`<tr data-student="${escapeHtml(st.id)}">
-    <td><div class="roster-identity"><span>${escapeHtml(st.oldGrade||state.sourceGrade)}학년</span><span>${escapeHtml(st.oldClass||"반 미입력")}</span><span>${escapeHtml(st.number||"번호 미입력")}번</span></div></td>
+    <td><div class="roster-identity"><span>${escapeHtml(st.oldGrade||state.sourceGrade)}학년</span><span>${escapeHtml(st.number||"번호 미입력")}번</span></div></td>
+    <td data-roster-cell="oldClass"><input data-key="oldClass" inputmode="numeric" value="${escapeHtml(st.oldClass)}" aria-label="${escapeHtml(st.name||'학생')} 기존 반" placeholder="1반"></td>
     <td data-roster-cell="name" style="${studentNameStyle(st.color)}"><div class="inline"><input data-key="name" value="${escapeHtml(st.name)}" aria-label="학생 이름" placeholder="이름" style="min-width:78px;max-width:150px">${st.id==='roster-new-row'?'':`<button class="btn ghost danger small student-delete" data-remove="${escapeHtml(st.id)}" aria-label="${escapeHtml(st.name)} 삭제">×</button>`}</div></td>
     <td data-roster-cell="gender"><input data-key="gender" list="rosterGenderOptions" value="${escapeHtml(st.gender)}" placeholder="남 / 여" aria-label="${escapeHtml(st.name)} 성별" autocomplete="off"></td>
     <td data-roster-cell="level"><input class="score-input" data-key="level" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${hasStudyScore(st)?studyText(st.level):''}" aria-label="${escapeHtml(st.name)} 학습지표, 소수점 둘째 자리"></td>
-    <td class="notice-cell" data-roster-cell="traits" tabindex="0" aria-label="${escapeHtml(st.name||'학생')} 유의 사항 · 항목 놓기">${renderStudentTraits(st)}</td></tr>`).join(''):`<tr><td colspan="5" class="empty"><b>${state.students.length?'검색 결과가 없습니다.':'등록된 학생이 없습니다.'}</b>${state.students.length?'검색어를 바꿔 주세요.' : '「+ 학생 추가」로 시작하세요.'}</td></tr>`;
+    <td class="notice-cell" data-roster-cell="traits" tabindex="0" aria-label="${escapeHtml(st.name||'학생')} 유의 사항 · 항목 놓기">${renderStudentTraits(st)}</td></tr>`).join(''):`<tr><td colspan="6" class="empty"><b>${state.students.length?'검색 결과가 없습니다.':'등록된 학생이 없습니다.'}</b>${state.students.length?'검색어를 바꿔 주세요.' : '「+ 학생 추가」로 시작하세요.'}</td></tr>`;
   rosterPaintFormats();rosterPaintSelection();renderTraitRemote();$('rosterUndo').disabled=!rosterUndoStack.length;
 }
 function presetPersonInfo(st){
@@ -1096,7 +1101,12 @@ function validateAssignment(students,pairs,assign,capRules={}){
   }
   return violations;
 }
-function calcScore(students,assign,k,traits,target){
+function normalizeAllocationWeights(value={}){
+ const raw=value&&typeof value==='object'?value:{};
+ return Object.fromEntries(['oldClass','basket','learning','gender'].map(key=>[key,typeof raw[key]==='number'&&Number.isFinite(raw[key])?Math.max(0,Math.min(5,Math.round(raw[key]))):1]));
+}
+function calcScore(students,assign,k,traits,target,weights={}){
+  const w=normalizeAllocationWeights(weights);
   const count=Array(k).fill(0),boys=Array(k).fill(0),girls=Array(k).fill(0),scoreSum=Array(k).fill(0),scoreN=Array(k).fill(0);
   const traitCounts=Array.from({length:k},()=>Object.fromEntries(traits.map(t=>[t,0])));
   const oldCounts=Array.from({length:k},()=>({}));const totals={boys:0,girls:0,levelSum:0,levelSumSq:0,levelN:0,traits:{},old:{}};
@@ -1113,14 +1123,14 @@ function calcScore(students,assign,k,traits,target){
   const deviation=totals.levelN?Math.max(1,Math.sqrt(Math.max(0,totals.levelSumSq/totals.levelN-avg*avg))):1;
   for(let j=0;j<k;j++){
     const t=target[j]||N/k;loss+=85*Math.pow((count[j]-t),2)/Math.max(1,t);
-    loss+=18*Math.pow(boys[j]-(totals.boys*t/N),2)/Math.max(1,totals.boys/k);
-    loss+=18*Math.pow(girls[j]-(totals.girls*t/N),2)/Math.max(1,totals.girls/k);
+    loss+=18*w.gender*Math.pow(boys[j]-(totals.boys*t/N),2)/Math.max(1,totals.boys/k);
+    loss+=18*w.gender*Math.pow(girls[j]-(totals.girls*t/N),2)/Math.max(1,totals.girls/k);
     if(totals.levelN){
-      loss+=12*Math.pow((scoreSum[j]-avg*scoreN[j])/(deviation*Math.sqrt(Math.max(1,scoreN[j]))),2);
-      loss+=4*Math.pow(scoreN[j]-totals.levelN*t/N,2)/Math.max(1,totals.levelN/k);
+      loss+=12*w.learning*Math.pow((scoreSum[j]-avg*scoreN[j])/(deviation*Math.sqrt(Math.max(1,scoreN[j]))),2);
+      loss+=4*w.learning*Math.pow(scoreN[j]-totals.levelN*t/N,2)/Math.max(1,totals.levelN/k);
     }
     for(const trait of traits){const total=totals.traits[trait];if(total)loss+=12*Math.pow(traitCounts[j][trait]-total*t/N,2)/Math.max(1,total/k)}
-    for(const old of Object.keys(totals.old)){const total=totals.old[old];if(total)loss+=8*Math.pow((oldCounts[j][old]||0)-total*t/N,2)/Math.max(1,total/k)}
+    for(const old of Object.keys(totals.old)){const total=totals.old[old];if(total)loss+=8*w.oldClass*Math.pow((oldCounts[j][old]||0)-total*t/N,2)/Math.max(1,total/k)}
   }
   return loss;
 }
@@ -1179,14 +1189,15 @@ function prepareSnake(students,pairs,k,capRules,preferred){
   return {target,counts,traitCounts,assign,neighbors};
 }
 /* The first plan follows the exact score-ordered snake unless a hard constraint requires another class. */
-function greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,random){
+function greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,random,weights={}){
+  const w=normalizeAllocationWeights(weights),custom=Object.values(w).some(n=>n!==1);
   const preferred=ordered.map((_,rank)=>snakeClass(rank,k,variant));
   const ctx=prepareSnake(students,pairs,k,capRules,preferred);
   if(!ctx)return null;
   const {target,counts,traitCounts,assign,neighbors}=ctx;
   const ranking=new Map(ordered.map((s,i)=>[s.id,i]));
   const free=ordered.filter(s=>!s.fixed);
-  const hasPresets=free.length<ordered.length;
+  const hasPresets=free.length<ordered.length||custom;
   const scored=students.filter(hasStudyScore),avg=scored.length?scored.reduce((sum,st)=>sum+st.level,0)/scored.length:0;
   const sd=scored.length?Math.max(1,Math.sqrt(scored.reduce((sum,st)=>sum+(st.level-avg)**2,0)/scored.length)):1;
   const academic=Array(k).fill(0),boys=Array(k).fill(0),genderCount=Array(k).fill(0);
@@ -1218,7 +1229,7 @@ function greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,rand
           1.7*((boys[i]+(s.gender==='남'?1:0)-(genderCount[i]+1)*boyRatio)**2-(boys[i]-genderCount[i]*boyRatio)**2):0;
         const traitCost=(s.traits||[]).reduce((sum,tag)=>sum+(traitCounts[i][tag]||0)*1.2,0);
         const oldCost=s.oldClass?(oldCount[i][s.oldClass]||0)*0.6:0;
-        penalty=distance*7+fill*3+academicCost+genderCost+traitCost+oldCost+(trial?random()*3:0);
+        penalty=distance*7*w.learning+fill*3+academicCost*w.learning+genderCost*w.gender+traitCost+oldCost*w.oldClass+(trial?random()*3:0);
       }
       options.push({c,penalty});
     }
@@ -1232,10 +1243,10 @@ function greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,rand
     if(s.oldClass)oldCount[to-1][s.oldClass]=(oldCount[to-1][s.oldClass]||0)+1;
   }
   if(counts.some((count,i)=>count!==target[i])||validateAssignment(students,pairs,assign,capRules).length)return null;
-  return {assign,target,score:calcScore(students,assign,k,traits,target)};
+  return {assign,target,score:calcScore(students,assign,k,traits,target,weights)};
 }
 /* Bounded MRV fallback to resolve overlapping hard constraints. No false assertion of impossibility. */
-function searchFeasibleAssignment(students,pairs,k,traits,capRules,ordered,random){
+function searchFeasibleAssignment(students,pairs,k,traits,capRules,ordered,random,weights={}){
   const preferred=ordered.map((_,rank)=>snakeClass(rank,k,0));
   const ranking=new Map(ordered.map((s,i)=>[s.id,i]));
   const ctx=prepareSnake(students,pairs,k,capRules,preferred);if(!ctx)return null;
@@ -1266,18 +1277,19 @@ function searchFeasibleAssignment(students,pairs,k,traits,capRules,ordered,rando
     taken.delete(chosen.id);return false;
   }
   if(!recurse(0))return null;
-  return {assign:{...assign},target,score:calcScore(students,assign,k,traits,target)};
+  return {assign:{...assign},target,score:calcScore(students,assign,k,traits,target,weights)};
 }
 /* Improve the empty seats around teacher choices without ever moving a preset pupil.
    A low snake-distance penalty preserves the user's rank-order intent while reducing
    academic, gender, and attention imbalance when the preset picks were uneven. */
-function polishTeacherFirst(students,pairs,k,traits,capRules,ordered,candidate,random){
-  if(!candidate||!students.some(s=>s.fixed))return candidate;
+function polishTeacherFirst(students,pairs,k,traits,capRules,ordered,candidate,random,weights={}){
+  const w=normalizeAllocationWeights(weights),custom=Object.values(w).some(n=>n!==1);
+  if(!candidate||(!custom&&!students.some(s=>s.fixed)))return candidate;
   const free=ordered.filter(s=>!s.fixed);
   if(free.length<2)return candidate;
   const assign={...candidate.assign},preferred=new Map(ordered.map((s,i)=>[s.id,snakeClass(i,k,0)]));
   const snakePenalty=()=>free.reduce((sum,s)=>sum+Math.abs(assign[s.id]-preferred.get(s.id)),0);
-  let quality=calcScore(students,assign,k,traits,candidate.target)+.12*snakePenalty();
+  let quality=calcScore(students,assign,k,traits,candidate.target,weights)+.12*w.learning*snakePenalty();
   let changed=false,checks=0;
   const budget=students.length<=80?1300:students.length<=180?600:students.length<=350?220:90;
   const maxPasses=students.length<=80?6:3;
@@ -1292,7 +1304,7 @@ function polishTeacherFirst(students,pairs,k,traits,capRules,ordered,candidate,r
         checks++;
         const ca=assign[a.id],cb=assign[b.id];assign[a.id]=cb;assign[b.id]=ca;
         if(validateAssignment(students,pairs,assign,capRules).length===0){
-          const next=calcScore(students,assign,k,traits,candidate.target)+.12*snakePenalty();
+          const next=calcScore(students,assign,k,traits,candidate.target,weights)+.12*w.learning*snakePenalty();
           if(next+1e-7<quality){quality=next;improved=true;changed=true;continue}
         }
         assign[a.id]=ca;assign[b.id]=cb;
@@ -1300,19 +1312,21 @@ function polishTeacherFirst(students,pairs,k,traits,capRules,ordered,candidate,r
     }
     if(!improved)break;
   }
-  return changed?{...candidate,assign,score:calcScore(students,assign,k,traits,candidate.target)}:candidate;
+  return changed?{...candidate,assign,score:calcScore(students,assign,k,traits,candidate.target,weights)}:candidate;
 }
 /* BEST_EFFORT_START: fixed placements and explicit pairs stay hard; caps and basket edges are minimized. */
-function preferencePenalty(students,assign,k,capRules,softPairs=[]){
+function preferencePenalty(students,assign,k,capRules,softPairs=[],weights={}){
+ const basketWeight=normalizeAllocationWeights(weights).basket;
  const counts=Array.from({length:k},()=>({}));
  for(const s of students)if(assign[s.id])for(const tag of new Set(s.traits||[]))counts[assign[s.id]-1][tag]=(counts[assign[s.id]-1][tag]||0)+1;
  let total=0,square=0;
  for(const [tag,cap] of Object.entries(capRules))if(Number.isInteger(cap)&&cap>=0)for(const row of counts){const n=Math.max(0,(row[tag]||0)-cap);total+=n;square+=n*n}
- for(const p of softPairs)if(assign[p.a]&&assign[p.a]===assign[p.b]){total++;square++}
+ for(const p of softPairs)if(assign[p.a]&&assign[p.a]===assign[p.b]){total+=basketWeight;square+=basketWeight}
  return {total,square};
 }
 function preferenceLess(a,b){return a.total<b.total||(a.total===b.total&&a.square<b.square)}
-function preferenceLowerBound(students,k,capRules,softPairs){
+function preferenceLowerBound(students,k,capRules,softPairs,weights={}){
+ const basketWeight=normalizeAllocationWeights(weights).basket;
  let total=0,square=0;
  for(const [tag,cap] of Object.entries(capRules))if(Number.isInteger(cap)&&cap>=0){
   const people=students.filter(s=>(s.traits||[]).includes(tag)),over=Array(k).fill(0);
@@ -1330,21 +1344,22 @@ function preferenceLowerBound(students,k,capRules,softPairs){
   if(group.every(id=>graph[id].length===group.length-1)){
    const base=Math.floor(group.length/k),extra=group.length%k;
    const unavoidable=(k-extra)*base*(base-1)/2+extra*(base+1)*base/2;
-   total+=unavoidable;square+=unavoidable;
+   total+=unavoidable*basketWeight;square+=unavoidable*basketWeight;
   }
  }
  return {total,square};
 }
-function polishPreferences(students,hardPairs,k,traits,capRules,softPairs,candidate,random,budget=8000){
+function polishPreferences(students,hardPairs,k,traits,capRules,softPairs,candidate,random,budget=8000,weights={}){
+ const basketWeight=normalizeAllocationWeights(weights).basket;
  const assign={...candidate.assign},free=students.filter(s=>!s.fixed),hard=makeNeighborMap(students,hardPairs);
  const caps=Object.entries(capRules).filter(([,n])=>Number.isInteger(n)&&n>=0),tagIndex=new Map(caps.map(([t],i)=>[t,i]));
  const tags=new Map(students.map(s=>[s.id,[...new Set(s.traits||[])].filter(t=>tagIndex.has(t)).map(t=>tagIndex.get(t))]));
  const counts=Array.from({length:k},()=>Array(caps.length).fill(0)),edges=new Map(students.map(s=>[s.id,[]]));
  for(const s of students)for(const t of tags.get(s.id))counts[assign[s.id]-1][t]++;
  softPairs.forEach((p,i)=>{edges.get(p.a)?.push(i);edges.get(p.b)?.push(i)});
- let penalty=preferencePenalty(students,assign,k,capRules,softPairs),checks=0;
- const lower=preferenceLowerBound(students,k,capRules,softPairs);
- const capLower=caps.map(([tag,limit])=>preferenceLowerBound(students,k,{[tag]:limit},[]));
+ let penalty=preferencePenalty(students,assign,k,capRules,softPairs,weights),checks=0;
+ const lower=preferenceLowerBound(students,k,capRules,softPairs,weights);
+ const capLower=caps.map(([tag,limit])=>preferenceLowerBound(students,k,{[tag]:limit},[],weights));
  function attempt(pupils,destinations){
   if(++checks>budget)return false;
   const old=pupils.map(s=>assign[s.id]);
@@ -1358,7 +1373,7 @@ function polishPreferences(students,hardPairs,k,traits,capRules,softPairs,candid
   let total=penalty.total,square=penalty.square;
   for(const [key,delta] of changed){const c=Math.floor(key/caps.length),t=key%caps.length,cap=caps[t][1],before=Math.max(0,counts[c][t]-cap),after=Math.max(0,counts[c][t]+delta-cap);total+=after-before;square+=after*after-before*before}
   const previous=new Map(pupils.map((s,i)=>[s.id,old[i]]));
-  for(const index of affected){const p=softPairs[index],before=(previous.get(p.a)||assign[p.a])===(previous.get(p.b)||assign[p.b]),after=assign[p.a]===assign[p.b];const d=Number(after)-Number(before);total+=d;square+=d}
+  for(const index of affected){const p=softPairs[index],before=(previous.get(p.a)||assign[p.a])===(previous.get(p.b)||assign[p.b]),after=assign[p.a]===assign[p.b];const d=Number(after)-Number(before);total+=d*basketWeight;square+=d*basketWeight}
   const next={total,square};
   if(preferenceLess(next,penalty)){
    for(const [key,delta] of changed)counts[Math.floor(key/caps.length)][key%caps.length]+=delta;
@@ -1389,24 +1404,24 @@ function polishPreferences(students,hardPairs,k,traits,capRules,softPairs,candid
   }
   if(!changed)break;
  }
- return {...candidate,assign,preference:penalty,score:calcScore(students,assign,k,traits,candidate.target)};
+ return {...candidate,assign,preference:penalty,score:calcScore(students,assign,k,traits,candidate.target,weights)};
 }
 /* Small rosters get bounded branch-and-bound after local swaps, including alternate balanced room sizes. */
-function exactPreferenceRepair(students,hardPairs,k,traits,caps,softPairs,best){
+function exactPreferenceRepair(students,hardPairs,k,traits,caps,softPairs,best,weights={}){
  if(students.length>22)return best;
  const neighbors=makeNeighborMap(students,hardPairs),assign={},counts=Array(k).fill(0),base=Math.floor(students.length/k),ceiling=Math.ceil(students.length/k);
  for(const s of students)if(s.fixed){assign[s.id]=s.fixed;counts[s.fixed-1]++}
- const free=students.filter(s=>!s.fixed),taken=new Set(),soft=makeNeighborMap(students,softPairs),lower=preferenceLowerBound(students,k,caps,softPairs);
+ const free=students.filter(s=>!s.fixed),taken=new Set(),soft=makeNeighborMap(students,softPairs),lower=preferenceLowerBound(students,k,caps,softPairs,weights);
  let nodes=0;const deadline=Date.now()+350;
  const optimal=()=>best.preference.total===lower.total&&best.preference.square===lower.square;
  function visit(depth){
   if(++nodes>70000||Date.now()>deadline||optimal())return;
-  const partial=preferencePenalty(students,assign,k,caps,softPairs);
+  const partial=preferencePenalty(students,assign,k,caps,softPairs,weights);
   if(partial.total>best.preference.total||(partial.total===best.preference.total&&partial.square>=best.preference.square))return;
   if(counts.reduce((n,c)=>n+Math.max(0,base-c),0)>free.length-depth)return;
   if(depth===free.length){
    if(counts.some(c=>c<base))return;
-   best={assign:{...assign},target:[...counts],preference:partial,score:calcScore(students,assign,k,traits,counts)};return;
+   best={assign:{...assign},target:[...counts],preference:partial,score:calcScore(students,assign,k,traits,counts,weights)};return;
   }
   let chosen,choices,bestPriority=Infinity;
   for(const s of free){
@@ -1416,7 +1431,7 @@ function exactPreferenceRepair(students,hardPairs,k,traits,caps,softPairs,best){
    const priority=possible.length*1000-(neighbors[s.id].length+soft[s.id].length)*10-(s.traits||[]).filter(t=>Number.isInteger(caps[t])).length;
    if(priority<bestPriority){bestPriority=priority;chosen=s;choices=possible}
   }
-  const cost=c=>{assign[chosen.id]=c;const p=preferencePenalty(students,assign,k,caps,softPairs);delete assign[chosen.id];return p.total*1000+p.square+counts[c-1]*.01};
+  const cost=c=>{assign[chosen.id]=c;const p=preferencePenalty(students,assign,k,caps,softPairs,weights);delete assign[chosen.id];return p.total*1000+p.square+counts[c-1]*.01};
   choices=choices.map(c=>({c,cost:cost(c)})).sort((a,b)=>a.cost-b.cost||a.c-b.c);
   taken.add(chosen.id);
   for(const {c} of choices){assign[chosen.id]=c;counts[c-1]++;visit(depth+1);counts[c-1]--;delete assign[chosen.id];if(optimal()||nodes>70000||Date.now()>deadline)break}
@@ -1424,27 +1439,27 @@ function exactPreferenceRepair(students,hardPairs,k,traits,caps,softPairs,best){
  }
  visit(0);return best;
 }
-function bestEffortCandidates(students,hardPairs,k,traits,caps,softPairs,ordered,random){
- const solutions=[],seen=new Set(),lower=preferenceLowerBound(students,k,caps,softPairs);
+function bestEffortCandidates(students,hardPairs,k,traits,caps,softPairs,ordered,random,weights={}){
+ const solutions=[],seen=new Set(),lower=preferenceLowerBound(students,k,caps,softPairs,weights);
  const attempts=students.length>350?6:12,budget=students.length>350?24000:students.length>120?20000:12000;
  let best=null;
  for(let trial=0;trial<attempts;trial++){
   const order=trial?ordered.map(s=>({s,r:random()})).sort((a,b)=>a.r-b.r).map(x=>x.s):ordered;
-  const initial=greedySnake(students,hardPairs,k,traits,{},order,trial%3,trial,random)||(trial===0?searchFeasibleAssignment(students,hardPairs,k,traits,{},order,random):null);
+  const initial=greedySnake(students,hardPairs,k,traits,{},order,trial%3,trial,random,weights)||(trial===0?searchFeasibleAssignment(students,hardPairs,k,traits,{},order,random,weights):null);
   if(!initial)continue;
-  const result=polishPreferences(students,hardPairs,k,traits,caps,softPairs,initial,random,budget);
+  const result=polishPreferences(students,hardPairs,k,traits,caps,softPairs,initial,random,budget,weights);
   const signature=ordered.map(s=>result.assign[s.id]).join(',');if(!seen.has(signature)){seen.add(signature);solutions.push(result)}
   if(!best||preferenceLess(result.preference,best.preference)||(result.preference.total===best.preference.total&&result.preference.square===best.preference.square&&result.score<best.score))best=result;
   if(best.preference.total===lower.total&&best.preference.square===lower.square&&solutions.length>=3)break;
  }
  if(!best)return [];
- best=exactPreferenceRepair(students,hardPairs,k,traits,caps,softPairs,best);solutions.push(best);
+ best=exactPreferenceRepair(students,hardPairs,k,traits,caps,softPairs,best,weights);solutions.push(best);
  const ranked=solutions.filter(c=>c.preference.total===best.preference.total&&c.preference.square===best.preference.square).sort((a,b)=>a.score-b.score),unique=new Set();
  return ranked.filter(c=>{const sig=ordered.map(s=>c.assign[s.id]).join(',');if(unique.has(sig))return false;unique.add(sig);return true}).slice(0,3);
 }
 /* BEST_EFFORT_END */
 
-function generateCandidates(students,pairs,k,traits,random=Math.random,capRules={},softPairs=[]){
+function generateCandidates(students,pairs,k,traits,random=Math.random,capRules={},softPairs=[],weights={}){
   if(!students.length)return {error:'학생 명단을 먼저 입력해 주세요.'};
   if(students.some(s=>!s.name.trim()))return {error:'이름이 비어 있는 학생이 있습니다. 이름을 모두 입력해 주세요.'};
   const locked=new Map(students.filter(s=>s.fixed).map(s=>[s.id,s.fixed]));
@@ -1453,22 +1468,24 @@ function generateCandidates(students,pairs,k,traits,random=Math.random,capRules=
   const fixedRoom=Array(k).fill(0);for(const s of students)if(s.fixed)fixedRoom[s.fixed-1]++;
   if(fixedRoom.some(x=>x>Math.ceil(students.length/k)))
     return {error:'반별 적정 인원보다 고정 배정 학생이 많습니다. 새 반 고정을 수정해 주세요.'};
+  if(normalizeAllocationWeights(weights).basket===0)softPairs=[];
   const pairKeys=new Set(pairs.map(p=>[p.a,p.b].sort().join('\u001f'))),softSeen=new Set();
   softPairs=softPairs.filter(p=>{const key=[p.a,p.b].sort().join('\u001f');if(pairKeys.has(key)||softSeen.has(key))return false;softSeen.add(key);return students.some(s=>s.id===p.a)&&students.some(s=>s.id===p.b)&&p.a!==p.b});
-  const allPairs=[...pairs,...softPairs],lower=preferenceLowerBound(students,k,capRules,softPairs);
+  const allPairs=[...pairs,...softPairs],lower=preferenceLowerBound(students,k,capRules,softPairs,weights);
   const ordered=snakeOrder(students),solutions=[],seen=new Set();
   // Try diverse strict placements before relaxing any preference.
   if(lower.total===0){
     for(let trial=0;trial<9&&solutions.length<3;trial++){
-      const candidate=greedySnake(students,allPairs,k,traits,capRules,ordered,trial%3,trial,random);
+      const candidate=greedySnake(students,allPairs,k,traits,capRules,ordered,trial%3,trial,random,weights);
       if(!candidate)continue;
-      const tuned=polishTeacherFirst(students,allPairs,k,traits,capRules,ordered,candidate,random),sig=ordered.map(st=>tuned.assign[st.id]).join(',');
+      const tuned=polishTeacherFirst(students,allPairs,k,traits,capRules,ordered,candidate,random,weights),sig=ordered.map(st=>tuned.assign[st.id]).join(',');
       if(!seen.has(sig)){solutions.push(tuned);seen.add(sig)}
     }
-    if(!solutions.length){const candidate=searchFeasibleAssignment(students,allPairs,k,traits,capRules,ordered,random);if(candidate)solutions.push(polishTeacherFirst(students,allPairs,k,traits,capRules,ordered,candidate,random))}
+    if(!solutions.length){const candidate=searchFeasibleAssignment(students,allPairs,k,traits,capRules,ordered,random,weights);if(candidate)solutions.push(polishTeacherFirst(students,allPairs,k,traits,capRules,ordered,candidate,random,weights))}
   }
-  if(!solutions.length)solutions.push(...bestEffortCandidates(students,pairs,k,traits,capRules,softPairs,ordered,random));
+  if(!solutions.length)solutions.push(...bestEffortCandidates(students,pairs,k,traits,capRules,softPairs,ordered,random,weights));
   if(!solutions.length)return {error:'지정한 분리 관계·반 고정·유의 사항별 최대 인원을 모두 만족하는 편성안을 찾지 못했습니다. 조건을 확인해 주세요. 탐색 한도 때문에 실제로 가능한 편성안이 있을 수도 있습니다.'};
+  if(Object.values(normalizeAllocationWeights(weights)).some(n=>n!==1))solutions.sort((a,b)=>a.score-b.score);
   return {candidates:solutions,successes:solutions.length};
 }
 /* ENGINE_END */
@@ -1485,7 +1502,7 @@ function reviewClassStats(students,assign,k,traits){
  }
  return data;
 }
-function reviewStudentMove(students,pairs,assign,k,traits,capRules,id,to,teacherPriorityOn,softPairs=[],togetherPairs=[]){
+function reviewStudentMove(students,pairs,assign,k,traits,capRules,id,to,teacherPriorityOn,softPairs=[],togetherPairs=[],weights={}){
  const student=students.find(s=>s.id===id);
  if(!student)return {ok:false,error:'학생을 찾지 못했습니다.'};
  const from=Number(assign[id]);
@@ -1502,7 +1519,7 @@ function reviewStudentMove(students,pairs,assign,k,traits,capRules,id,to,teacher
  const proposed={...assign};for(const s of moving)proposed[s.id]=to;
  const active=teacherPriorityOn?students:students.map(s=>({...s,fixed:0}));
  const violations=validateAssignment(active,pairs,proposed,{});
- const priorPenalty=preferencePenalty(active,assign,k,capRules,softPairs),nextPenalty=preferencePenalty(active,proposed,k,capRules,softPairs);
+ const priorPenalty=preferencePenalty(active,assign,k,capRules,softPairs,weights),nextPenalty=preferencePenalty(active,proposed,k,capRules,softPairs,weights);
  if(preferenceLess(priorPenalty,nextPenalty))violations.push(...validateAssignment(active,[...pairs,...softPairs],proposed,capRules));
  if(violations.length)return {ok:false,error:violations[0],violations,from,to};
  const after=reviewClassStats(students,proposed,k,traits);
@@ -1573,7 +1590,7 @@ function renderResultOverview(){
 }
 function renderResults(){
   placeStageOverview();renderResultOverview();
-  const has=state.candidates.length>0;
+  const has=state.candidates.length>0;renderSourceColorLegend();
   $('exportCsv').disabled=!has;$('print').disabled=!has;$('copyResultExcel').disabled=!has;
   $('resultVertical').setAttribute('aria-pressed',String(state.resultLayout!=='compare'));
   $('resultCompare').setAttribute('aria-pressed',String(state.resultLayout==='compare'));
@@ -1765,9 +1782,8 @@ function normalizeRosterGender(raw){return /^(남|남자|남학생|m|male)$/i.te
 function rosterExcelPastePlan(text,startKey='name'){
  const rows=parseSheetText(text);
  if(!rows.length)return {rows:[],mapping:[],header:false};
- const columns={name:'name',gender:'gender',level:'level'};
- const startIndex=startKey==='name'?0:startKey==='gender'?1:startKey==='level'?2:3;
- const sequence=['name','gender','level','traits'];
+ const sequence=['oldClass','name','gender','level','traits'];
+ const startIndex=Math.max(0,sequence.indexOf(startKey));
  const recognized=rows[0].map(x=>['oldGrade','oldClass','number','name','gender','traits','level'][bulkHeaderColumn(x)]||null);
  const headers=recognized.filter(Boolean).length>=2||
   (rows[0].length===1&&recognized[0]&&rows.length>1);
@@ -2073,17 +2089,17 @@ function fillSampleNames(replaceAll=false){
  toast('가상 예시 이름 '+targets.length+'명을 입력했습니다. 학생별 성별·점수·유의 사항은 유지됩니다.');
 }
 function sampleData(){const surnames=['김','이','박','최','정','강','조','윤','장','임','한','오'];const names=['하늘','지우','도윤','민서','준우','서연','시우','하은','예준','다은','현우','윤서','지호','수아','건우','서준','나은','이안','채원','예은','유준','지안','서아','태윤','은우','시윤','다현','승우','윤호','서진','연우','수빈','민준','다온','현서','재윤'];return names.map((n,i)=>({id:makeId(),oldClass:(i%3+1)+'반',number:String(Math.floor(i/3)+1),name:surnames[i%12]+n,gender:i%2?'여':'남',level:Math.round((65+(i*13)%34+((i%4)*0.25))*100)/100,traits:[i%5===0?'사회성':null,i%7===0?'운동부':null].filter(Boolean),fixed:0,note:''}))}
-function isCompatibleMove(id,to,candidate){return reviewStudentMove(state.students,hardSeparationPairs(),candidate.assign,state.classCount,state.traits,state.capRules,id,to,state.teacherPriorityOn,buildBasketPairs([],state.baskets),twinRelations(state.twinGroups).together).ok}
+function isCompatibleMove(id,to,candidate){return reviewStudentMove(state.students,hardSeparationPairs(),candidate.assign,state.classCount,state.traits,state.capRules,id,to,state.teacherPriorityOn,buildBasketPairs([],state.baskets),twinRelations(state.twinGroups).together,state.allocationWeights).ok}
 function addStudent(){const room=state.sourceClassCount||1;const last=Math.max(0,...state.students.filter(st=>stageZeroRoom(st.oldClass)===room).map(st=>Number(st.number)||0));const s={id:makeId(),oldGrade:state.sourceGrade,oldClass:room+'반',number:String(last+1),name:'',gender:'',level:null,traits:[],fixed:0,note:''};state.students.push(s);syncSourceFromRoster();invalidate();changeState();toast('학생 자리 1개를 추가했습니다.');const field=document.querySelector(`[data-student="${s.id}"] [data-key="name"]`);field?.focus()}
 function addTrait(){const t=$('newTrait').value.trim();if(!t)return;if(state.traits.includes(t)){toast('이미 있는 특징입니다.');return}if(state.traits.length>=64){toast('유의 사항은 최대 64개까지 추가할 수 있습니다.');return}state.traits.push(t);$('newTrait').value='';invalidate();changeState()}
 function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)return;const fresh=tr.dataset.student==='roster-new-row';const s=fresh?newRosterStudent([],state.sourceGrade,makeId()):findStudent(tr.dataset.student);if(!s)return;
-  if(e.target.dataset.key){const key=e.target.dataset.key;let value=e.target.value;if(key==='gender'&&value.trim()){const sex=normalizeRosterGender(value);if(!sex){toast('성별은 남/여, 남자/여자 또는 M/F로 입력해 주세요.');renderRoster();return}value=sex}if(key==='fixed'){tryPreset(s.id,Number(value));return}if(key==='level'&&value!==''&&parseStudyScore(value)===null){toast('학습지표는 0.00 이상의 숫자로 입력해 주세요.');renderRoster();return}if(key==='gender'&&!['','남','여'].includes(value)){toast('성별은 남 또는 여로 선택해 주세요.');renderRoster();return}if(key==='traitsText'){const items=bulkAttention(value);const fresh=items.filter(x=>!state.traits.includes(x));if(state.traits.length+fresh.length>64){toast('유의 사항은 최대 64개까지 추가할 수 있습니다.');renderRoster();return}rosterSaveUndo();state.traits.push(...fresh);s.traits=items}else{rosterSaveUndo();if(key==='level')s.level=value===''?null:parseStudyScore(value);else s[key]=value.slice(0,key==='name'?80:50)}}
+  if(e.target.dataset.key){const key=e.target.dataset.key;let value=e.target.value;if(key==='oldClass'){const n=Number(value.trim().replace(/반$/,''));if(!Number.isInteger(n)||n<1||n>12){toast('기존 반은 1~12반으로 입력해 주세요.');renderRoster();return}value=n+'반'}if(key==='gender'&&value.trim()){const sex=normalizeRosterGender(value);if(!sex){toast('성별은 남/여, 남자/여자 또는 M/F로 입력해 주세요.');renderRoster();return}value=sex}if(key==='fixed'){tryPreset(s.id,Number(value));return}if(key==='level'&&value!==''&&parseStudyScore(value)===null){toast('학습지표는 0.00 이상의 숫자로 입력해 주세요.');renderRoster();return}if(key==='gender'&&!['','남','여'].includes(value)){toast('성별은 남 또는 여로 선택해 주세요.');renderRoster();return}if(key==='traitsText'){const items=bulkAttention(value);const fresh=items.filter(x=>!state.traits.includes(x));if(state.traits.length+fresh.length>64){toast('유의 사항은 최대 64개까지 추가할 수 있습니다.');renderRoster();return}rosterSaveUndo();state.traits.push(...fresh);s.traits=items}else{rosterSaveUndo();if(key==='level')s.level=value===''?null:parseStudyScore(value);else s[key]=value.slice(0,key==='name'?80:50)}}
   else return;
   if(fresh)state.students.push(s);
-  if(fresh||['name','gender'].includes(e.target.dataset.key))syncSourceFromRoster();
+  if(fresh||['oldClass','name','gender'].includes(e.target.dataset.key))syncSourceFromRoster();
   invalidate();saveState();
-  if(fresh){render();const nextKey={name:'gender',gender:'level',level:'traits'}[e.target.dataset.key];const row=$('rosterBody').querySelector('[data-student="'+CSS.escape(s.id)+'"]');(nextKey==='traits'?row?.querySelector('[data-roster-cell="traits"]'):row?.querySelector('[data-key="'+nextKey+'"]'))?.focus();return}
-  if(['name','gender','level'].includes(e.target.dataset.key)){
+  if(fresh){render();const nextKey={oldClass:'name',name:'gender',gender:'level',level:'traits'}[e.target.dataset.key];const row=$('rosterBody').querySelector('[data-student="'+CSS.escape(s.id)+'"]');(nextKey==='traits'?row?.querySelector('[data-roster-cell="traits"]'):row?.querySelector('[data-key="'+nextKey+'"]'))?.focus();return}
+  if(['oldClass','name','gender','level'].includes(e.target.dataset.key)){
     e.target.value=e.target.dataset.key==='level'?(hasStudyScore(s)?studyText(s.level):''):s[e.target.dataset.key];
     renderOverview();renderTraitRemote();$('rosterGenderSummary').innerHTML=rosterGenderCheck();$('statDuplicates').textContent=duplicateNames().length+'건';
   }else render();
@@ -2091,7 +2107,7 @@ function updateStudent(e){const tr=e.target.closest('[data-student]');if(!tr)ret
 }
 function previewResultMove(id,to){
  const candidate=state.candidates[state.activeCandidate];if(!candidate)return null;
- return reviewStudentMove(state.students,hardSeparationPairs(),candidate.assign,state.classCount,state.traits,state.capRules,id,to,state.teacherPriorityOn,buildBasketPairs([],state.baskets),twinRelations(state.twinGroups).together);
+ return reviewStudentMove(state.students,hardSeparationPairs(),candidate.assign,state.classCount,state.traits,state.capRules,id,to,state.teacherPriorityOn,buildBasketPairs([],state.baskets),twinRelations(state.twinGroups).together,state.allocationWeights);
 }
 function highlightMoveTarget(targetId,valid){
  document.querySelectorAll('#resultGrid .class-card').forEach(card=>{
@@ -2129,7 +2145,7 @@ function applyResultMove(id,to){
  moveUndoStack.push({candidate:state.activeCandidate,id,from:analysis.from,to:analysis.to});
  if(moveUndoStack.length>60)moveUndoStack.shift();
  candidate.assign=analysis.proposed;
- candidate.score=calcScore(state.students,candidate.assign,state.classCount,state.traits,candidate.target);
+ candidate.score=calcScore(state.students,candidate.assign,state.classCount,state.traits,candidate.target,state.allocationWeights);
  moveLastResult={candidate:state.activeCandidate,analysis,undone:false};
  moveSelectedId=null;moveDraggingId=null;
  saveState();renderResults();clearReviewPreview();
@@ -2147,7 +2163,7 @@ function undoResultMove(){
  if(!analysis||!analysis.ok){toast('현재 지정된 배정 조건 때문에 되돌릴 수 없습니다.');return false}
  moveUndoStack.splice(idx,1);
  candidate.assign=analysis.proposed;
- candidate.score=calcScore(state.students,candidate.assign,state.classCount,state.traits,candidate.target);
+ candidate.score=calcScore(state.students,candidate.assign,state.classCount,state.traits,candidate.target,state.allocationWeights);
  moveLastResult={candidate:candidateIndex,analysis,undone:true};
  moveSelectedId=null;moveDraggingId=null;saveState();renderResults();clearReviewPreview();
  toast('마지막 학생 이동을 되돌렸습니다.');
@@ -2198,7 +2214,7 @@ function showPlannerDialog(id){
 }
 function closePlannerDialog(id){const dialog=$(id);if(dialog?.open)dialog.close()}
 function installEvents(){
-  installTraitRemote();installTwinGroups();
+  installTraitRemote();installTwinGroups();installFeedbackSettings();
   $('openHelp').addEventListener('click',()=>showPlannerDialog('plannerHelpDialog'));
   $('closeNameColor').addEventListener('click',()=>$('nameColorDialog').close());
   $('nameColorDone').addEventListener('click',()=>$('nameColorDialog').close());
@@ -2331,7 +2347,7 @@ function installEvents(){
     if((e.ctrlKey||e.metaKey)&&['b','i','u'].includes(e.key.toLowerCase())){e.preventDefault();rosterApplyFormat({b:'bold',i:'italic',u:'underline'}[e.key.toLowerCase()]);return}
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'){e.preventDefault();rosterFillDown()}
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&rosterUndoStack.length){e.preventDefault();rosterUndo()}
-    if(e.key==='Enter'&&e.target.matches('[data-key="name"],[data-key="gender"],[data-key="level"],[data-key="traitsText"]')){
+    if(e.key==='Enter'&&e.target.matches('[data-key="oldClass"],[data-key="name"],[data-key="gender"],[data-key="level"],[data-key="traitsText"]')){
       const pos=rosterCellCoords(e.target),ids=rosterVisibleIds();
       if(!pos||pos.r+1>=ids.length)return;
       e.preventDefault();e.target.blur();
@@ -2339,7 +2355,7 @@ function installEvents(){
     }
   });
   $('rosterBody').addEventListener('paste',e=>{
-    const field=e.target.closest('[data-key="name"],[data-key="gender"],[data-key="level"],[data-key="traitsText"]')||e.target.closest('[data-roster-cell="traits"]')?.querySelector('[data-key="traitsText"]');
+    const field=e.target.closest('[data-key="oldClass"],[data-key="name"],[data-key="gender"],[data-key="level"],[data-key="traitsText"]')||e.target.closest('[data-roster-cell="traits"]')?.querySelector('[data-key="traitsText"]');
     if(!field)return;
     const text=e.clipboardData?.getData('text/plain')||'';
     if(!text)return;
@@ -2455,7 +2471,7 @@ function installEvents(){
     if(blank.length){showTab('roster');toast('이름을 입력하지 않은 학생 '+blank.length+'명의 이름을 먼저 입력해 주세요.');return}
     const problems=basketProblems();
     if(problems.length){invalidate();saveState();showTab('results');$('resultMessage').textContent=problems.join(' / ');toast(problems[0]);return}
-    const outcome=generateTwinCandidates(activeStudents(),state.pairs,state.classCount,state.traits,Math.random,state.capRules,buildBasketPairs([],state.baskets),state.twinGroups);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;moveUndoStack.length=0;moveSelectedId=null;moveDraggingId=null;moveLastResult=null;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
+    const outcome=generateTwinCandidates(activeStudents(),state.pairs,state.classCount,state.traits,Math.random,state.capRules,buildBasketPairs([],state.baskets),state.twinGroups,state.allocationWeights);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;moveUndoStack.length=0;moveSelectedId=null;moveDraggingId=null;moveLastResult=null;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
   $('generateQuick').addEventListener('click',()=>$('generate').click());
   $('alternatives').addEventListener('click',e=>{const b=e.target.closest('[data-candidate]');if(!b)return;state.activeCandidate=Number(b.dataset.candidate);moveSelectedId=null;moveDraggingId=null;saveState();renderResults();clearReviewPreview()});
   $('undoMove').addEventListener('click',undoResultMove);

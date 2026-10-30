@@ -9,9 +9,9 @@ function normalizeTwinGroups(value,validIds){
 }
 function twinRelations(groups){const together=[],apart=[];for(const group of groups||[])for(const r of group.rules||[])if(group.members.includes(r.a)&&group.members.includes(r.b)&&r.a!==r.b){if(r.mode==='together')together.push({a:r.a,b:r.b});if(r.mode==='apart')apart.push({a:r.a,b:r.b})}return {together,apart}}
 function twinAssignmentProblems(groups,assign){const problems=[];const r=twinRelations(groups);for(const p of r.together)if(assign[p.a]&&assign[p.b]&&assign[p.a]!==assign[p.b])problems.push('쌍생아 같은 반 조건 위반');for(const p of r.apart)if(assign[p.a]&&assign[p.a]===assign[p.b])problems.push('쌍생아 다른 반 조건 위반');return problems}
-function generateTwinCandidates(students,pairs,k,traits,random,caps,softPairs,groups){
+function generateTwinCandidates(students,pairs,k,traits,random,caps,softPairs,groups,weights={}){
  const relations=twinRelations(groups),hard=[...pairs,...relations.apart];
- if(!relations.together.length)return generateCandidates(students,hard,k,traits,random,caps,softPairs);
+ if(!relations.together.length)return generateCandidates(students,hard,k,traits,random,caps,softPairs,weights);
  const parent=new Map(students.map(s=>[s.id,s.id])),find=id=>{let p=id;while(parent.get(p)!==p)p=parent.get(p);while(parent.get(id)!==id){const next=parent.get(id);parent.set(id,p);id=next}return p};
  for(const p of relations.together)if(parent.has(p.a)&&parent.has(p.b))parent.set(find(p.a),find(p.b));
  for(const p of hard)if(parent.has(p.a)&&parent.has(p.b)&&find(p.a)===find(p.b))return {error:'같은 반으로 묶은 쌍생아 사이에 다른 반 조건이 있습니다. 3단계의 관계를 확인해 주세요.'};
@@ -25,12 +25,12 @@ function generateTwinCandidates(students,pairs,k,traits,random,caps,softPairs,gr
  const candidates=[],seen=new Set();let nodes=0,leaves=0;
  function search(index){
   if(++nodes>24000||leaves>=8)return;
-  if(index===blocks.length){leaves++;const pinned=students.map(s=>members.has(s.id)?{...s,fixed:assign[s.id]}:s),result=generateCandidates(pinned,hard,k,traits,random,caps,softPairs);for(const c of result.candidates||[]){const signature=students.map(s=>c.assign[s.id]).join(',');if(!seen.has(signature)){seen.add(signature);candidates.push(c)}}return}
+  if(index===blocks.length){leaves++;const pinned=students.map(s=>members.has(s.id)?{...s,fixed:assign[s.id]}:s),result=generateCandidates(pinned,hard,k,traits,random,caps,softPairs,weights);for(const c of result.candidates||[]){const signature=students.map(s=>c.assign[s.id]).join(',');if(!seen.has(signature)){seen.add(signature);candidates.push(c)}}return}
   const block=blocks[index],fixed=block.find(s=>s.fixed)?.fixed;
   const rooms=(fixed?[fixed]:Array.from({length:k},(_,i)=>i+1)).map(room=>{
    let cost=counts[room-1]*10+random()*8;const combined={...assign};for(const s of block)combined[s.id]=room;
    for(const [tag,cap] of Object.entries(caps||{})){const n=students.filter(s=>combined[s.id]===room&&s.traits.includes(tag)).length;cost+=Math.max(0,n-cap)*1000}
-   for(const p of softPairs||[])if(combined[p.a]===room&&combined[p.b]===room)cost+=1000;
+   for(const p of softPairs||[])if(combined[p.a]===room&&combined[p.b]===room)cost+=1000*normalizeAllocationWeights(weights).basket;
    return {room,cost};
   }).sort((a,b)=>a.cost-b.cost);
   for(const {room} of rooms){if(counts[room-1]+block.length>limit)continue;for(const s of block)assign[s.id]=room;
@@ -41,7 +41,7 @@ function generateTwinCandidates(students,pairs,k,traits,random,caps,softPairs,gr
  }
  search(0);
  if(!candidates.length)return {error:'쌍생아 관계·분리 조건·반 고정을 지키는 편성안을 찾지 못했습니다. 3단계의 관계를 확인해 주세요.'};
- candidates.sort((a,b)=>{const pa=preferencePenalty(students,a.assign,k,caps,softPairs),pb=preferencePenalty(students,b.assign,k,caps,softPairs);return pa.total-pb.total||pa.square-pb.square||a.score-b.score});
+ candidates.sort((a,b)=>{const pa=preferencePenalty(students,a.assign,k,caps,softPairs,weights),pb=preferencePenalty(students,b.assign,k,caps,softPairs,weights);return pa.total-pb.total||pa.square-pb.square||a.score-b.score});
  return {candidates:candidates.slice(0,3),successes:candidates.length};
 }
 const twinSearch=new Map();
