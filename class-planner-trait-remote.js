@@ -49,8 +49,10 @@ function positionTraitRemote(){
 }
 function renderTraitRemote(){
  const panel=$('traitRemote');if(!panel)return;
- panel.hidden=view!=='roster'||!traitRemoteUI.open;
- $('toggleTraitRemote').setAttribute('aria-expanded',String(!panel.hidden));
+ const results=view==='results';
+ panel.hidden=!['roster','results'].includes(view)||!traitRemoteUI.open;
+ for(const id of ['toggleTraitRemote','toggleResultRemote'])$(id).setAttribute('aria-expanded',String(!panel.hidden));
+ $('view-results').classList.toggle('results-remote-space',results&&!panel.hidden&&!traitRemoteUI.collapsed);
  $('view-roster').classList.toggle('trait-remote-space',!panel.hidden&&!traitRemoteUI.collapsed);
  panel.classList.toggle('is-collapsed',traitRemoteUI.collapsed);
  $('traitRemoteBody').hidden=traitRemoteUI.collapsed;
@@ -58,18 +60,26 @@ function renderTraitRemote(){
  $('collapseTraitRemote').textContent=traitRemoteUI.collapsed?'펼치기':'접기';
  if(panel.hidden)return;
  if(traitRemoteUI.tag&&!state.traits.includes(traitRemoteUI.tag))traitRemoteUI.tag=null;
- const student=traitRemoteUI.studentId&&findStudent(traitRemoteUI.studentId);
- const shown=student&&$('rosterBody').querySelector('[data-student="'+CSS.escape(student.id)+'"]');
- if(!shown)traitRemoteUI.studentId=null;
+ const selectedId=results?traitRemoteUI.resultStudentId:traitRemoteUI.studentId,student=selectedId&&findStudent(selectedId);
+ const shown=student&&(results?$('resultGrid').querySelector('[data-result-student="'+CSS.escape(student.id)+'"]'):$('rosterBody').querySelector('[data-student="'+CSS.escape(student.id)+'"]'));
+ if(!shown){if(results)traitRemoteUI.resultStudentId=null;else traitRemoteUI.studentId=null;}
+ $('remoteTraitsSection').hidden=results;$('traitRemoteNote').hidden=results;
+ $('remoteFormatTip').textContent=results?'학생 카드 선택 → 이름 색상·글씨 적용':'Ctrl·⌘로 여러 칸, Shift로 범위 선택';
+ $('resultRemoteMoveWrap').hidden=!results;$('resultRemoteUndo').hidden=!results;
+ $('resultRemoteUndo').disabled=!resultFormatUndo.length;
+ const locked=shown&&state.teacherPriorityOn&&student.fixed;
+ $('resultRemoteMove').disabled=!shown||!!locked;
+ $('resultRemoteMove').innerHTML=Array.from({length:state.classCount},(_,i)=>'<option value="'+(i+1)+'" '+(shown&&state.candidates[state.activeCandidate]?.assign[student.id]===i+1?'selected':'')+'>'+(i+1)+'반'+(locked?' · 고정':'으로 이동')+'</option>').join('');
  $('traitRemoteStudent').textContent=shown?studentTitle(student):'학생 행을 선택하세요';
  $('traitRemoteNote').disabled=!shown;
- $('traitRemoteFixedWrap').hidden=!state.teacherPriorityOn;
+ $('traitRemoteFixedWrap').hidden=results||!state.teacherPriorityOn;
  $('traitRemoteFixed').disabled=!shown;
  $('traitRemoteFixed').innerHTML='<option value="0">미고정</option>'+Array.from({length:state.classCount},(_,i)=>'<option value="'+(i+1)+'" '+(shown&&student.fixed===i+1?'selected':'')+'>'+(i+1)+'반 고정</option>').join('');
  const q=$('traitRemoteSearch').value.trim().toLowerCase();
  $('traitRemotePalette').innerHTML=state.traits.filter(t=>t.toLowerCase().includes(q)).map(tag=>'<button type="button" draggable="true" data-remote-trait="'+escapeHtml(tag)+'" aria-pressed="'+(traitRemoteUI.tag===tag)+'">'+escapeHtml(tag)+'</button>').join('')||'<span class="muted">검색 결과 없음</span>';
  $('traitRemoteStatus').textContent=traitRemoteUI.tag?'선택: '+traitRemoteUI.tag+' · 학생 행에 놓거나 유의 사항 칸을 누르세요.':'버튼을 학생 행에 끌어 놓으세요.';
  if(traitRemoteUI.studentId)$('rosterBody').querySelector('[data-student="'+CSS.escape(traitRemoteUI.studentId)+'"]')?.classList.add('trait-current-row');
+ if(results)rosterPaintFormatControls();
  positionTraitRemote();
 }
 function collapseMobileRemote(){
@@ -93,12 +103,14 @@ function markTraitDrop(tr){
 }
 function installTraitRemote(){
  try{const old=JSON.parse(localStorage.getItem('classplanner-trait-remote-ui-v1'));if(old){traitRemoteUI.open=old.open!==false;if(typeof old.collapsed==='boolean')traitRemoteUI.collapsed=old.collapsed;if(Number.isFinite(old.position?.x)&&Number.isFinite(old.position?.y))traitRemoteUI.position={x:old.position.x,y:old.position.y}}}catch{}
- $('toggleTraitRemote').addEventListener('click',()=>{traitRemoteUI.open=!traitRemoteUI.open;renderTraitRemote();saveTraitRemoteUI()});
- $('closeTraitRemote').addEventListener('click',()=>{traitRemoteUI.open=false;renderTraitRemote();saveTraitRemoteUI();$('toggleTraitRemote').focus()});
+ for(const id of ['toggleTraitRemote','toggleResultRemote'])$(id).addEventListener('click',()=>{traitRemoteUI.open=!traitRemoteUI.open;renderTraitRemote();saveTraitRemoteUI()});
+ $('closeTraitRemote').addEventListener('click',()=>{traitRemoteUI.open=false;renderTraitRemote();saveTraitRemoteUI();$(view==='results'?'toggleResultRemote':'toggleTraitRemote').focus()});
  $('collapseTraitRemote').addEventListener('click',()=>{traitRemoteUI.collapsed=!traitRemoteUI.collapsed;renderTraitRemote();saveTraitRemoteUI()});
  $('traitRemoteBody').addEventListener('click',e=>{const button=e.target.closest('[data-remote-color]');if(button){$('rosterFillColor').value=button.dataset.remoteColor;rosterApplyFormat('background',button.dataset.remoteColor);collapseMobileRemote();renderTraitRemote()}});
+ $('resultRemoteMove').addEventListener('change',e=>{const id=traitRemoteUI.resultStudentId;if(id){applyResultMove(id,Number(e.target.value));renderTraitRemote()}});
+ $('resultRemoteUndo').addEventListener('click',undoResultNameFormat);
  $('traitRemoteSearch').addEventListener('input',renderTraitRemote);
- $('traitRemote').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();traitRemoteUI.open=false;renderTraitRemote();saveTraitRemoteUI();$('toggleTraitRemote').focus()}});
+ $('traitRemote').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();traitRemoteUI.open=false;renderTraitRemote();saveTraitRemoteUI();$(view==='results'?'toggleResultRemote':'toggleTraitRemote').focus()}});
  $('traitRemoteNote').addEventListener('click',()=>{const s=findStudent(traitRemoteUI.studentId);if(!s)return;noteStudentId=s.id;$('noteTitle').textContent=(s.name||'학생')+' 메모';$('noteText').value=s.note;$('noteDialog').showModal()});
  $('traitRemoteFixed').addEventListener('change',e=>{if(traitRemoteUI.studentId)tryPreset(traitRemoteUI.studentId,Number(e.target.value));renderTraitRemote()});
  $('traitRemotePalette').addEventListener('click',e=>{

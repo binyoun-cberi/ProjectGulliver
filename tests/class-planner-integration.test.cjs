@@ -674,9 +674,9 @@ test('1단계 이름 배경색, 최종 가로·세로 편성표, 인쇄와 백�
  for(const id of ['nameColorDialog','nameColorPalette','customNameColor','clearNameColor','nameColorPreview'])assert.ok(html.includes('id="'+id+'"'),id);
  assert.match(html,/color:normalizeNameColor\(st\.color\)/,'저장 자료를 불러올 때 색을 검증');
  assert.ok(html.includes('id="rosterFormatTools"'),'1단계 셀 서식 도구');
- assert.match(html,/data-student-color="\$\{escapeHtml\(s\.id\)\}"/,'결과 단계 편집 버튼');
+ assert.ok(html.includes('id="toggleResultRemote"'),'결과 단계 리모컨');
  assert.match(html,/style="\$\{studentNameStyle\(st\.color\)\}"/,'이름 칸 배경');
- assert.match(html,/style="\$\{studentNameStyle\(s\.color\)\+cellFormatStyle/,'완성된 반 이름 배경');
+ assert.match(fs.readFileSync(path.join(__dirname,'..','class-planner-result-cards.js'),'utf8'),/style="\$\{studentNameStyle\(s\.color\)\+cellFormatStyle/,'완성된 반 이름 배경');
  assert.match(html,/studentNameStyle\(st\.color\)/,'인쇄 배경색');
  assert.match(html,/function changeStudentNameColor\(/);
 });
