@@ -153,6 +153,8 @@ const assert=require('node:assert/strict');
  const dimensions=await directPage.locator('.assigned').first().evaluate(el=>{const p=el.querySelector('.person').getBoundingClientRect(),n=el.querySelector('.student-name-highlight').getBoundingClientRect();return {pw:p.width,nw:n.width,nh:n.height,weight:getComputedStyle(el.querySelector('.student-name-highlight')).fontWeight,border:getComputedStyle(el).borderTopColor}});
  assert.ok(dimensions.pw>=210&&dimensions.nw>=dimensions.pw-72&&dimensions.nh>=44&&dimensions.weight==='700',JSON.stringify(dimensions));
  assert.equal(await directPage.locator('#resultGrid .move-controls,#resultGrid [data-student-color]').count(),0);
+ await directPage.evaluate(()=>{const grid=document.getElementById('resultGrid').getBoundingClientRect(),nav=document.querySelector('.tabs').getBoundingClientRect();window.scrollTo(0,scrollY+grid.top-nav.bottom-16)});
+ await directPage.screenshot({path:require('path').join(root,'test-artifacts/time-tools-planner-result-cards-desktop.png')});
  await directPage.locator('#resultVertical').click();assert.equal(await directPage.locator('.assigned').count(),120);
  // Final infographic always follows the active result rather than the original classes.
  assert.equal(await directPage.locator('#resultOverview').isVisible(),true);
@@ -182,6 +184,8 @@ const assert=require('node:assert/strict');
  await directPage.screenshot({path:require('path').join(root,'test-artifacts/time-tools-planner-result-infographic.png')});
  await directPage.setViewportSize({width:390,height:844});
  assert.equal(await directPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await directPage.locator('#resultGrid .assigned').first().scrollIntoViewIfNeeded();
+ await directPage.screenshot({path:require('path').join(root,'test-artifacts/time-tools-planner-result-cards-mobile.png')});
  await directPage.locator('[data-tab="roster"]').click();
  if(!await directPage.locator('#traitRemote').isVisible())await directPage.locator('#toggleTraitRemote').click();
  if(await directPage.locator('#collapseTraitRemote').getAttribute('aria-expanded')==='true')await directPage.locator('#collapseTraitRemote').click();
