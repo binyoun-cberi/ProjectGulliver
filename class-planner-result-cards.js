@@ -30,7 +30,12 @@ function applyResultNameFormat(property,value){
  saveState();renderResults();return true;
 }
 function undoResultNameFormat(){
- const previous=resultFormatUndo.pop(),student=previous&&findStudent(previous.id);if(!student)return;
+ const previous=resultFormatUndo.pop();
+ if(previous?.batch){
+  for(const item of previous.batch){const st=findStudent(item.id);if(!st)continue;st.color=item.color;const formats={...st.cellFormats};if(item.format)formats.name=item.format;else delete formats.name;st.cellFormats=formats;}
+  saveState();renderResults();return;
+ }
+ const student=previous&&findStudent(previous.id);if(!student)return;
  student.color=previous.color;student.cellFormats={...student.cellFormats,name:previous.format};
  traitRemoteUI.resultStudentId=student.id;saveState();renderResults();
 }
