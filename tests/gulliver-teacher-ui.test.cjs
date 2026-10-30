@@ -63,8 +63,10 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     // Real browser smoke: demo import -> generate -> result preview -> download.
     await page.goto(base + encodeURIComponent('반 편성 도우미.html'), {waitUntil: 'domcontentloaded'});
     // New stage zero sets current grade/class counts before any student names.
-    assert.equal(await page.locator('#view-setup').isVisible(),true);
-    assert.equal(await page.locator('[data-tab="setup"]').getAttribute('aria-selected'),'true');
+    assert.equal(await page.locator('#view-roster').isVisible(),true);
+    assert.equal(await page.locator('[data-tab="roster"]').getAttribute('aria-selected'),'true');
+    assert.equal(await page.locator('[data-tab="setup"]').count(),0);
+    await page.locator('#blankRosterSetup > summary').click();
     await page.locator('#sourceGrade').fill('5');
     await page.locator('#sourceGrade').press('Tab');
     await page.locator('#sourceClassCount').fill('4');
@@ -83,6 +85,8 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.match(await page.locator('#overviewDashboard').textContent(),/여 56명/);
     assert.equal(await page.locator('#overviewDashboard .compact-room-list span').count(),4);
     assert.match(await page.locator('#overviewDashboard').textContent(),/유의 사항별 현황/);
+    await page.locator('#rosterOverview > summary').click();
+    await page.locator('#rosterOverview').scrollIntoViewIfNeeded();
     await page.screenshot({path:'test-artifacts/time-tools-planner-overview-desktop.png',fullPage:false});
     await page.setViewportSize({width:390,height:844});
     assert.equal(await page.locator('#plannerHelpDialog').isVisible(),false);
@@ -212,12 +216,14 @@ test('6.0 standalone headers, student privacy, phone navigation and opt-in compo
     assert.equal(await nextFirst.locator('[data-remove-trait="돌봄 필요"]').count(),1);
     assert.equal(await nextFirst.locator('[data-key="level"]').inputValue(),'0.00');
     // Attention-category caps are configured in step zero, not the separation screen.
-    await page.locator('[data-tab="setup"]').click();
+    await page.locator('[data-tab="roster"]').click();
+    if(!await page.locator('#rosterAdvanced').evaluate(el=>el.open))await page.locator('#rosterAdvanced > summary').click();
     await page.locator('input[data-cap="운동부"]').fill('2');
     await page.locator('input[data-cap="운동부"]').press('Tab');
     assert.equal(await page.locator('input[data-cap="운동부"]').inputValue(),'2');
     await page.reload({waitUntil:'domcontentloaded'});
-    await page.locator('[data-tab="setup"]').click();
+    await page.locator('[data-tab="roster"]').click();
+    if(!await page.locator('#rosterAdvanced').evaluate(el=>el.open))await page.locator('#rosterAdvanced > summary').click();
     assert.equal(await page.locator('input[data-cap="운동부"]').inputValue(),'2','반당 인원 상한은 새로고침 후에도 보존해야 합니다.');
     await page.locator('[data-tab="rules"]').click();
 

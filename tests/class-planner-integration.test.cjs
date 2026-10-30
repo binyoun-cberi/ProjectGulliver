@@ -460,8 +460,8 @@ test('0단계 내년 학급 수 변경 시 남녀 평균과 반별 참고 목표
  assert.ok(dist.rows.every(row=>row.boys+row.girls>=18&&row.boys+row.girls<=20));
 });
 test('0단계 인터페이스와 1단계 학년·반·번호 읽기 전용 표시',()=>{
- for(const id of ['view-setup','sourceGrade','sourceClassCount','sourceClassRows','sourceClassTotals','futureClassSummary','applySetup','continueSetup','rosterGenderSummary'])assert.ok(html.includes('id="'+id+'"'),id);
- assert.match(html,/data-tab="setup"/);
+ for(const id of ['view-roster','blankRosterSetup','rosterAdvanced','sourceGrade','sourceClassCount','sourceClassRows','sourceClassTotals','futureClassSummary','applySetup','rosterGenderSummary'])assert.ok(html.includes('id="'+id+'"'),id);
+ assert.doesNotMatch(html,/data-tab="setup"/);
  assert.match(html,/function stageZeroReconcile\(/);
  assert.match(html,/roster-identity/);
  assert.match(html,/data-key="name"/);
@@ -546,7 +546,7 @@ test('예시 이름은 1000명까지 중복 없이 생성되며 기존 이름을
  assert.ok(names.every(x=>/^[가-힣]{3}$/.test(x)));
 });
 test('0단계에 인원 상한이 표시되고, 3단계 검색 목록에 드롭다운이 없으며 바구니는 버튼·드래그로 조작',()=>{
- assert.match(html,/id="view-setup"[\s\S]*?id="capRules"/);
+ assert.match(html,/id="view-roster"[\s\S]*?id="rosterAdvanced"[\s\S]*?id="capRules"/);
  assert.match(html,/data-basket-pick/);
  assert.match(html,/data-basket-add-selected/);
  assert.doesNotMatch(html,/data-basket-assign/);
