@@ -1213,7 +1213,10 @@ function prepareSnake(students,pairs,k,capRules,preferred){
 }
 /* The first plan follows the exact score-ordered snake unless a hard constraint requires another class. */
 function greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,random,weights={}){
-  const w=normalizeAllocationWeights(weights),custom=Object.values(w).some(n=>n!==1);
+  const w=normalizeAllocationWeights(weights),custom=Object.values(w).some(n=>n!==1)||(weights.traitGenderBalance||[]).some(tag=>traits.includes(tag));
+  const genderTags=new Set((weights.traitGenderBalance||[]).filter(tag=>traits.includes(tag))),tagSexTotals=new Map(),tagSexCounts=Array.from({length:k},()=>new Map());
+  const sexKeys=st=>['남','여'].includes(st.gender)?(st.traits||[]).filter(t=>genderTags.has(t)).map(t=>JSON.stringify([t,st.gender])):[];
+  for(const st of students)for(const key of sexKeys(st)){tagSexTotals.set(key,(tagSexTotals.get(key)||0)+1);if(st.fixed)tagSexCounts[st.fixed-1].set(key,(tagSexCounts[st.fixed-1].get(key)||0)+1);}
   const preferred=ordered.map((_,rank)=>snakeClass(rank,k,variant));
   const ctx=prepareSnake(students,pairs,k,capRules,preferred);
   if(!ctx)return null;
@@ -1252,13 +1255,15 @@ function greedySnake(students,pairs,k,traits,capRules,ordered,variant,trial,rand
           1.7*((boys[i]+(s.gender==='남'?1:0)-(genderCount[i]+1)*boyRatio)**2-(boys[i]-genderCount[i]*boyRatio)**2):0;
         const traitCost=(s.traits||[]).reduce((sum,tag)=>sum+(traitCounts[i][tag]||0)*1.2,0);
         const oldCost=s.oldClass?(oldCount[i][s.oldClass]||0)*0.6:0;
-        penalty=distance*7*w.learning+fill*3+academicCost*w.learning+genderCost*w.gender+traitCost+oldCost*w.oldClass+(trial?random()*3:0);
+        const traitGenderCost=sexKeys(s).reduce((sum,key)=>{const total=tagSexTotals.get(key),current=tagSexCounts[i].get(key)||0;return sum+60*(2*current+1-2*total*target[i]/students.length)/Math.max(1,total/k)},0);
+        penalty=traitGenderCost+distance*7*w.learning+fill*3+academicCost*w.learning+genderCost*w.gender+traitCost+oldCost*w.oldClass+(trial?random()*3:0);
       }
       options.push({c,penalty});
     }
     if(!options.length)return null;
     options.sort((a,b)=>a.penalty-b.penalty||a.c-b.c);
     const to=options[0].c;
+    for(const key of sexKeys(s))tagSexCounts[to-1].set(key,(tagSexCounts[to-1].get(key)||0)+1);
     assign[s.id]=to;counts[to-1]++;countTraits(traitCounts,s,to,1);
     if(hasStudyScore(s))academic[to-1]+=(s.level-avg)/sd;
     if(s.gender==='남')boys[to-1]++;
@@ -1491,8 +1496,9 @@ function polishTraitGenderBalance(students,pairs,k,traits,caps,softPairs,candida
  const budget=students.length<=120?5000:students.length<=350?1800:650;
  for(let pass=0;pass<4&&checks<budget;pass++){
   let improved=false;
-  for(const a of sources)for(let j=0;j<free.length&&checks<budget;j++){
-   const b=free[(j+pass*17)%free.length],ca=assign[a.id],cb=assign[b.id];if(a===b||ca===cb)continue;checks++;
+  for(let i=0;i<sources.length&&checks<budget;i++)for(let j=0;j<Math.min(free.length,students.length<=120?free.length:32)&&checks<budget;j++){
+   const a=sources[(i+pass*19)%sources.length];
+   const b=free[(students.length<=120?j:(j*37+i*13+pass*17))%free.length],ca=assign[a.id],cb=assign[b.id];if(a===b||ca===cb)continue;checks++;
    assign[a.id]=cb;assign[b.id]=ca;
    const nextPenalty=preferencePenalty(students,assign,k,caps,softPairs,weights);
    if(nextPenalty.total===penalty.total&&nextPenalty.square===penalty.square&&!validateAssignment(students,pairs,assign,{}).length){

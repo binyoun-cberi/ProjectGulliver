@@ -267,6 +267,7 @@ const assert=require('node:assert/strict');
  await twinPage.locator('[data-twin-rule][data-a="t1"][data-b="t2"]').selectOption('apart');
  assert.equal(await twinPage.locator('#view-rules > #overviewDashboard').count(),1);
  await twinPage.locator('.twin-section').scrollIntoViewIfNeeded();
+ assert.equal(await twinPage.evaluate(()=>document.querySelector('.basket-source-head').getBoundingClientRect().top>=document.querySelector('.tabs').getBoundingClientRect().bottom),true);
  await twinPage.screenshot({path:require('path').join(root,'test-artifacts/time-tools-planner-rules-remote.png')});
  await twinPage.screenshot({path:require('path').join(root,'test-artifacts/time-tools-planner-triplet-rules.png')});
  await twinPage.reload();

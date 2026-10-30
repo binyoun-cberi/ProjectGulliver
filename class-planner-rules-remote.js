@@ -49,6 +49,8 @@ function installRulesRemote(){
  $('basketSearch').setAttribute('aria-label','관계에 연결할 학생 검색');
  targets.append(basketHead,$('basketNotice'),$('basketGrid'),twin,pairHead,form,$('pairList'));
  workspace.append(source,targets);zone.replaceWith(workspace);
+ const position=()=>source.style.setProperty('--rules-remote-top',((document.querySelector('.gx-header')?.getBoundingClientRect().height||72)+(document.querySelector('.tabs')?.getBoundingClientRect().height||56)+12)+'px');
+ position();window.addEventListener('resize',position);window.addEventListener('load',position);
  for(const id of ['pairA','pairB']){
   const label=$(id).closest('label');label.classList.add('rule-pair-drop');
   const hint=document.createElement('span');hint.className='rule-pair-pad';hint.dataset.rulePairDrop=id;hint.textContent='학생을 여기에 놓으세요';label.prepend(hint);
