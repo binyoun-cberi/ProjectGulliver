@@ -56,3 +56,33 @@ test('social question bank quality: no answer leakage or meaningless related-to 
  for(const era of eras)for(const q of C.historyItems(era))check('history-'+q.id,q.prompt,q.answer);
  assert.deepEqual(failures,[],failures.join('\n'));
 });
+
+test('five-pass social audit: local reading answers, distractors, explanations and historical targets',()=>{
+ const root=path.resolve(__dirname,'..');
+ const loadCases=name=>{
+  const raw=fs.readFileSync(path.join(root,name),'utf8');
+  const match=raw.match(/const cases=(\[[^\n]*\]);/);
+  assert.ok(match,'case data missing: '+name);
+  return JSON.parse(match[1]);
+ };
+ let checked=0;
+ for(const name of ['worksheet-social-local-life-depth.js','worksheet-social-past-local-depth.js']){
+  for(const group of loadCases(name))for(const [index,row] of group.rows.entries()){
+   const [prompt,answer,wrong1,wrong2,explanation]=row;
+   assert.equal(new Set([answer,wrong1,wrong2]).size,3,name+':'+group.key+':'+index);
+   assert.ok(prompt&&answer&&explanation,name+':'+group.key+':'+index);
+   assert.ok(!String(prompt).includes(answer),name+' answer in prompt: '+prompt);
+   assert.doesNotMatch(explanation,/자료에서 .+와 관련된 내용을 확인할 수 있습니다/);
+   assert.doesNotMatch(wrong1+'|'+wrong2,/비행기 수리|전기 발전소|미래의 날씨|전자책으로만|현대 플라스틱/);
+   checked++;
+  }
+ }
+ assert.equal(checked,160);
+ const core=fs.readFileSync(path.join(root,'daily-worksheet-core.js'),'utf8');
+ assert.match(core,/645년 당나라의 공격에 맞서 안시성을 지켜 낸 나라는/);
+ assert.doesNotMatch(core,/고구려와 당의 전쟁에서 안시성 싸움과 관련된 나라는/);
+ const joseon=fs.readFileSync(path.join(root,'worksheet-joseon-volume.js'),'utf8');
+ assert.doesNotMatch(joseon,/경국대전으로 알아보기 알맞은 내용/);
+ const history=fs.readFileSync(path.join(root,'worksheet-history-volume.js'),'utf8');
+ assert.doesNotMatch(history,/돌을 다루는 솜씨와 탑의 구조를 통해 무엇을 살필 수 있나요/);
+});
