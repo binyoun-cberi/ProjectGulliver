@@ -44,8 +44,8 @@ test('actual legacy social page preserves initial URL and all row types, and cle
 });
 
 test('social question bank quality: no answer leakage or meaningless related-to prompts',()=>{
- const normalize=value=>String(value??'').replace(/[\\s‘’“”"'·.,!?()\\[\\]]/g,'');
- const vague=/(?:관련된\\s*(?:나라는|국가는|것은)|까닭과\\s*관련된|모습과\\s*관련된|무엇과\\s*관련되)/;
+ const normalize=value=>String(value??'').replace(/[\s‘’“”"'·.,!?()\[\]]/g,'');
+ const vague=/(?:관련된\s*(?:나라는|국가는|것은)|까닭과\s*관련된|모습과\s*관련된|무엇과\s*관련되)/;
  const failures=[];
  const check=(id,prompt,answer)=>{
   const p=normalize(prompt),a=normalize(answer);
@@ -54,5 +54,5 @@ test('social question bank quality: no answer leakage or meaningless related-to 
  };
  for(const bank of E.banks.filter(b=>b.subject==='social'))for(const q of bank.items)check(q.evidenceId,q.prompt,q.answer);
  for(const era of eras)for(const q of C.historyItems(era))check('history-'+q.id,q.prompt,q.answer);
- assert.deepEqual(failures,[],failures.join('\\n'));
+ assert.deepEqual(failures,[],failures.join('\n'));
 });
