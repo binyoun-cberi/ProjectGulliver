@@ -42,3 +42,17 @@ test('actual legacy social page preserves initial URL and all row types, and cle
  assert.equal(ad.querySelectorAll('#questions>li').length,25);assert.equal(ad.querySelectorAll('#questions .question-detail').length,25);assert.equal(ad.querySelector('#responseSetting').hidden,true);assert.equal(load(a.location.search).document.querySelector('#questions').innerHTML,ad.querySelector('#questions').innerHTML);
  a.console.warn=()=>{};const row=ad.querySelector('#unitMixRows input');row.value='100';row.dispatchEvent(new a.Event('input',{bubbles:true}));submit(a);assert.equal(ad.querySelectorAll('#questions>li').length,0);assert.equal(ad.querySelector('#printOnly').disabled,true);row.value='5';submit(a);assert.equal(ad.querySelectorAll('#questions>li').length,25);assert.equal(ad.querySelector('#printOnly').disabled,false);
 });
+
+test('social question bank quality: no answer leakage or meaningless related-to prompts',()=>{
+ const normalize=value=>String(value??'').replace(/[\\s‘’“”"'·.,!?()\\[\\]]/g,'');
+ const vague=/(?:관련된\\s*(?:나라는|국가는|것은)|까닭과\\s*관련된|모습과\\s*관련된|무엇과\\s*관련되)/;
+ const failures=[];
+ const check=(id,prompt,answer)=>{
+  const p=normalize(prompt),a=normalize(answer);
+  if(a.length>=2&&p.includes(a))failures.push(id+' 정답 노출: '+prompt+' → '+answer);
+  if(vague.test(prompt))failures.push(id+' 모호한 질문: '+prompt);
+ };
+ for(const bank of E.banks.filter(b=>b.subject==='social'))for(const q of bank.items)check(q.evidenceId,q.prompt,q.answer);
+ for(const era of eras)for(const q of C.historyItems(era))check('history-'+q.id,q.prompt,q.answer);
+ assert.deepEqual(failures,[],failures.join('\\n'));
+});
