@@ -8,6 +8,16 @@ const C=require('../daily-worksheet-core.js');
 const ERAS=['prehistoric','ancient','goryeo','joseon','modern'];
 const normalized=value=>String(value??'').normalize('NFKC').replace(/[\s.,!?'":;“”‘’(){}·—–\-]/g,'');
 const absolute=/(?:반드시|무조건|모두|전혀|절대로|항상|언제나|자동으로|영원히|한 번도)/;
+function similarity(left,right){
+ const grams=value=>{
+  const s=normalized(value),parts=new Set();
+  for(let i=0;i<s.length-1;i++)parts.add(s.slice(i,i+2));
+  return parts;
+ };
+ const A=grams(left),B=grams(right);
+ const same=[...A].filter(x=>B.has(x)).length;
+ return A.size+B.size>same?same/(A.size+B.size-same):0;
+}
 const vague=/(?:관련된\s*(?:나라는|국가는|것은)|까닭과\s*관련된|관련이\s*있나요|가까운\s*것은|무엇을\s*보여\s*주나요)/;
 const HISTORY_FACTS=[
  {match:/귀주 대첩에서 고려군을 지휘한 장수/,answer:'강감찬 — 거란군',
@@ -46,6 +56,8 @@ function examine(){
   if(vague.test(prompt))fail(id,'vague-question',prompt);
   const wrong=choices.filter(x=>x!==answer);
   if(wrong.length===2&&wrong.every(x=>absolute.test(x)))fail(id,'two-giveaway-options',wrong.join(' / '));
+  if(wrong.some(x=>similarity(answer,x)>=0.62))
+   warn(id,'similar-correct-and-wrong','Answer: '+answer+'; wrong: '+wrong.filter(x=>similarity(answer,x)>=0.62).join(' / '));
   if(wrong.some(x=>normalized(x).length>=4&&a.includes(normalized(x))))
    warn(id,'choice-overlap','Answer: '+answer+'; choices: '+wrong.join(' / '));
   if(prompt.length<10)warn(id,'short-question',prompt);
