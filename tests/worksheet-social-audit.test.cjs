@@ -140,3 +140,29 @@ test('entire 3081-item social pool passes deep uniqueness and grounded historica
  fs.writeFileSync(path.join(out,'social-deep-audit.md'),auditor.markdown(audit));
  assert.deepEqual(audit.fatal,[],JSON.stringify(audit.fatal.slice(0,25),null,2));
 });
+
+
+test('trade worksheets never present equivalent imports or exports as wrong choices',()=>{
+ const all=E.banks.filter(b=>b.subject==='social').flatMap(b=>b.items);
+ const find=(group,number)=>{
+  const id='social-world-economy-'+group+'-'+number;
+  const matches=all.filter(q=>q.evidenceId===id);
+  assert.equal(matches.length,1,id);
+  return matches[0];
+ };
+ const both=find('trade-definition',11);
+ assert.equal(both.answer,'수입과 수출이 하나의 생산 과정에서 이어진다');
+ assert.ok(both.choices.slice(1).every(w=>/수입 없이|수출하지 않고/.test(w)));
+ const books=find('trade-definition',16);
+ assert.match(books.answer,/수출/);
+ assert.ok(books.choices.slice(1).every(w=>!/국내 상품을 해외에 판매하는 수출/.test(w)));
+ const fruits=find('trade-definition',21);
+ assert.match(fruits.answer,/수입/);
+ assert.ok(fruits.choices.slice(1).every(w=>!/외국에서 생산한 상품을 들여오는 수입/.test(w)));
+ const condition=find('trade-definition',24);
+ assert.ok(!condition.choices.includes('과일의 품질이 운송 중 나빠질 수 있다'));
+ const global=find('world-population-pattern',23);
+ assert.ok(!global.choices.includes('지역별 인구 분포를 알아보려는 것이다'));
+ for(const n of [3,13]){const factory=find('enterprise-production',n);
+  assert.ok(!factory.choices.slice(1).some(w=>/많은 소비자에게 상품을 전달|소비자가 사용할 상품을 공급/.test(w)));}
+});
