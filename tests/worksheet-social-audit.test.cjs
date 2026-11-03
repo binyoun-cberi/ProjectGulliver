@@ -108,8 +108,20 @@ test('rewritten social prompts preserve their intended specific answers',()=>{
  const questions=E.banks.filter(b=>b.subject==='social').flatMap(b=>b.items);
  const cases=[
   [/귀주 대첩에서 고려군을 지휘한 장수/, '강감찬 — 거란군'],
-  [/흥남 철수 당시 피란민들이 배에 올라 떠나야 했던 상황/, '전쟁으로 살던 곳을 떠나 안전한 곳을 찾아야 했던 어려움'],
+  [/흥남 철수 당시 피란민들이 겪은 어려움/, '전쟁으로 살던 곳을 떠나 안전한 곳을 찾아야 했던 어려움'],
   [/냉대 지역 주민들이 집의 보온과 난방/, '길고 추운 겨울에 대비할 필요']
  ];
  for(const [pattern,answer] of cases){const matching=questions.filter(q=>pattern.test(q.prompt));assert.equal(matching.length,1,String(pattern));assert.equal(matching[0].answer,answer);}
+});
+
+
+test('social prompts do not pre-answer by defining the correct choice in the stem',()=>{
+ const core=fs.readFileSync(path.resolve(__dirname,'../daily-worksheet-core.js'),'utf8');
+ assert.match(core,/고려 시대에 《직지》를 제작할 때 사용한 인쇄 기술은 무엇인가요/);
+ assert.doesNotMatch(core,/직지를 만들 때 금속으로 만든 글자들을 조합해 찍어 낸/);
+ assert.match(core,/경제적·군사적 목적을 바르게 묶은 것은 무엇인가요/);
+ const gaya=E.banks.filter(b=>b.subject==='social').flatMap(b=>b.items).find(q=>q.prompt.includes('낙동강 유역에서 성장한 가야 여러 나라의 대표적인 경제활동'));
+ assert.ok(gaya,'a specific Gaya economy question is required');
+ assert.equal(gaya.answer,'철을 생산하고 다른 지역과 교류한 일');
+ assert.equal(new Set(gaya.choices).size,gaya.choices.length);
 });
