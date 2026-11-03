@@ -3,9 +3,9 @@ const DATA={"version":1,"groups":[["market-activities","시장경제에서 이�
 function activate({banks,bank}){
  const expanded=[];
  const oldBanks={ 'market-activities':'economic-work','growth-daily-change':'economic-growth-effects','trade-definition':'trade-reason','world-population-pattern':'social-fill-world-population-pattern','population-environment':'social-fill-population-environment','populous-countries':'social-fill-populous-countries','population-density':'social-fill-world-population-density','global-challenges':'global-problems'};
- const economyPrompts=['이 사례에 드러난 경제활동의 특징은 무엇인가요?','자료에 나타난 사람들이 실제로 한 일은 무엇인가요?','이런 활동이 이루어진 까닭은 무엇인가요?','자료에서 예상하거나 확인한 문제는 무엇인가요?','자료에 나타난 개선 방법이나 대응은 무엇인가요?'];
- const populationPrompts=['자료에서 알 수 있는 인구 분포나 구조의 특징은 무엇인가요?','학생들이 인구를 이해하려고 실제로 조사하거나 비교한 것은 무엇인가요?','그런 분포나 조사 방법이 나타난 까닭은 무엇인가요?','인구 자료를 해석할 때 주의할 점은 무엇인가요?','자료에서 제안한 추가 조사나 대응 방법은 무엇인가요?'];
- const globalPrompts=['사례에서 확인한 지구촌 문제나 협력의 특징은 무엇인가요?','지구촌 문제를 살펴보기 위해 한 활동은 무엇인가요?','해당 문제나 협력이 발생한 까닭은 무엇인가요?','해결 과정에서 예상되거나 확인된 어려움은 무엇인가요?','자료에 나타난 국제적 해결 노력은 무엇인가요?'];
+ const economyPrompts=['이 사례에 드러난 경제활동의 특징은 무엇인가요?','자료에 나타난 사람들이 실제로 한 일은 무엇인가요?','이런 활동이 이루어진 까닭은 무엇인가요?','자료에서 직접 언급한 문제는 무엇인가요?','자료에 나타난 개선 방법이나 대응은 무엇인가요?'];
+ const populationPrompts=['자료에서 알 수 있는 인구 분포나 구조의 특징은 무엇인가요?','학생들이 인구를 이해하려고 실제로 조사하거나 비교한 것은 무엇인가요?','그런 분포나 조사 방법이 나타난 까닭은 무엇인가요?','자료에 직접 제시된 인구 해석의 주의점은 무엇인가요?','자료에서 제안한 추가 조사나 대응 방법은 무엇인가요?'];
+ const globalPrompts=['사례에서 확인한 지구촌 문제나 협력의 특징은 무엇인가요?','지구촌 문제를 살펴보기 위해 한 활동은 무엇인가요?','해당 문제나 협력이 발생한 까닭은 무엇인가요?','자료에 직접 나타난 어려움은 무엇인가요?','자료에 나타난 국제적 해결 노력은 무엇인가요?'];
  for(const [id,lessonName,label,cases] of DATA.groups){
   if(cases.length!==5)throw Error('다섯 사례가 필요합니다: '+id);
   const prompts=id.startsWith('global-')?globalPrompts:['world-population-pattern','population-environment','populous-countries','population-density'].includes(id)?populationPrompts:economyPrompts;
@@ -26,7 +26,12 @@ function activate({banks,bank}){
      '4:2':['국내에서만 같은 과일을 생산하기 때문이다','수입한 과일을 외국 소비자에게 재판매하기 때문이다'],
      '4:3':['자동차 부품이 늦어 생산이 중단될 수 있다','해외 서점으로 보낸 책이 젖을 수 있다']
     };
-    const overridden=id==='trade-definition'&&tradeOverrides[i+':'+j];
+    const semanticOverrides={
+     'enterprise-production:0:2':['상품 판매 대신 생산 과정의 재료 사용만 확인하려고','연필을 소비자의 손에 전달하지 않고 보관만 하려고'],
+     'enterprise-production:2:2':['제과 기업이 빵 생산을 중단하려고','만든 제품을 판매하지 않고 포장재만 모으려고'],
+     'world-population-pattern:4:2':['한 도시의 인구만 조사하려는 것이다','대륙 이름을 기억하려고 인구 통계와 무관한 자료를 모은다']
+    };
+    const overridden=(id==='trade-definition'&&tradeOverrides[i+':'+j])||semanticOverrides[id+':'+i+':'+j];
     const distractors=overridden||[...new Set(cases.filter((_,k)=>k!==i).map(row=>row[j+2]).filter(v=>v&&v!==answer))].slice(0,2);
     if(distractors.length<2)throw Error('오답 후보 부족: '+id+' '+i+' '+j);
     rows.push(['「'+title+'」 '+prompts[j],answer,...distractors,passage,explanations[j]+'‘'+answer+'’입니다.']);
