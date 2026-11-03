@@ -26,7 +26,7 @@ const HISTORY_FACTS=[
   reference:'https://contents.history.go.kr/mobile/ta/view.do?levelId=ta_m71_0080_0030_0030_0010'},
  {match:/신민회가 활동하던 시기 민족 교육/,answer:'대성학교와 오산학교',
   reference:'https://contents.history.go.kr/front/ta/print.do?levelId=ta_m71_0090_0030_0010_0030'},
- {match:/1920년 봉오동 전투에서/,answer:'홍범도',
+ {match:/1920년 봉오동 전투에서 일본군에 승리한 독립군 부대를 이끈 대표적인 지도자/,answer:'홍범도',
   reference:'https://contents.history.go.kr/mobile/ta/view.do?levelId=ta_m71_0100_0030_0010_0020'},
  {match:/1920년 김좌진·홍범도 등이 이끈/,answer:'청산리 대첩',
   reference:'https://contents.history.go.kr/mobile/kc/view.do?levelId=kc_i403400'},
