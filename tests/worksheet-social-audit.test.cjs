@@ -29,7 +29,7 @@ test('all social evidence banks have complete unique options and rectangular tab
 test('every enabled social lesson and standard has valid answers, evidence, exact counts and reproducible selection',()=>{
  let lessons=0,sheets=0,standards=0;
  function check(o,b){const s=T.generate(o,C);sheets++;assert.equal(s.items.length,o.count);assert.deepEqual(T.generate(o,C),s);assert.equal(new Set(s.items.map(q=>q.evidenceId||JSON.stringify([q.prompt,q.detail,q.scienceMaterial]))).size,o.count);
- for(const q of s.items){assert.ok(q.prompt&&q.answer&&q.explanation);assert.doesNotMatch(q.prompt,/undefined|\[object Object\]/);if(o.responseFormat==='choice'){assert.ok(q.choices.includes(q.answer));assert.equal(new Set(q.choices).size,q.choices.length);}else assert.equal(q.choices.length,0);if(o.responseFormat==='initial')assert.ok(q.detail.endsWith('초성·빈칸 힌트: '+hint(q.answer)));if(q.scienceMaterial?.kind==='table')for(const row of q.scienceMaterial.rows)assert.equal(row.length,q.scienceMaterial.headers.length);}
+ for(const q of s.items){assert.ok(q.prompt&&q.answer&&q.explanation);assert.doesNotMatch(q.prompt,/undefined|\[object Object\]/);assert.doesNotMatch(q.prompt,/관련|가까운 것은|무엇을 보여 주나요/,q.evidenceId||q.prompt);if(o.responseFormat==='choice'){assert.ok(q.choices.includes(q.answer));assert.equal(new Set(q.choices).size,q.choices.length);}else assert.equal(q.choices.length,0);if(o.responseFormat==='initial')assert.ok(q.detail.endsWith('초성·빈칸 힌트: '+hint(q.answer)));if(q.scienceMaterial?.kind==='table')for(const row of q.scienceMaterial.rows)assert.equal(row.length,q.scienceMaterial.headers.length);}
  }
  for(const u of T.catalog.filter(u=>u.subject==='social'))for(const l of u.lessons){const b=T.binding(u,l);if(!b)continue;lessons++;for(const [responseFormat] of T.formats(b))for(const seed of [7,42]){const count=T.counts(b,responseFormat).at(-1);if(count)check({subject:'social',grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,responseFormat,count,seed},b);}}
  for(const grade of [3,4,5,6])for(const s of T.standards('social',grade)){standards++;for(const [responseFormat] of T.formats(s.binding)){const count=T.counts(s.binding,responseFormat).at(-1);if(count)check({subject:'social',grade,standardCode:s.code,responseFormat,count,seed:42},s.binding);}}
@@ -85,4 +85,21 @@ test('five-pass social audit: local reading answers, distractors, explanations a
  assert.doesNotMatch(joseon,/경국대전으로 알아보기 알맞은 내용/);
  const history=fs.readFileSync(path.join(root,'worksheet-history-volume.js'),'utf8');
  assert.doesNotMatch(history,/돌을 다루는 솜씨와 탑의 구조를 통해 무엇을 살필 수 있나요/);
+});
+
+
+test('social question stems specify a concrete historical, civic or geographic target',()=>{
+ const vague=/관련|가까운 것은|무엇을 보여 주나요/;
+ const matches=[];
+ for(const bank of E.banks.filter(bank=>bank.subject==='social'))for(const q of bank.items)if(vague.test(q.prompt))matches.push(bank.id+': '+q.prompt);
+ for(const era of eras)for(const q of C.historyItems(era))if(vague.test(q.prompt))matches.push(era+': '+q.prompt);
+ assert.deepEqual(matches,[],matches.join('\n'));
+ const root=path.resolve(__dirname,'..');
+ for(const name of ['worksheet-social-local-life-depth.js','worksheet-social-past-local-depth.js']){
+  const raw=fs.readFileSync(path.join(root,name),'utf8');
+  const match=raw.match(/const cases=(\[[^\n]*\]);/);
+  assert.ok(match,name);
+  const groups=JSON.parse(match[1]);
+  for(const group of groups)for(const row of group.rows)assert.doesNotMatch(row[0],vague,name+':'+group.key);
+ }
 });
