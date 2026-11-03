@@ -103,3 +103,13 @@ test('social question stems specify a concrete historical, civic or geographic t
   for(const group of groups)for(const row of group.rows)assert.doesNotMatch(row[0],vague,name+':'+group.key);
  }
 });
+
+test('rewritten social prompts preserve their intended specific answers',()=>{
+ const questions=E.banks.filter(b=>b.subject==='social').flatMap(b=>b.items);
+ const cases=[
+  [/귀주 대첩에서 고려군을 지휘한 장수/, '강감찬 — 거란군'],
+  [/흥남 철수 당시 피란민들이 배에 올라 떠나야 했던 상황/, '전쟁으로 살던 곳을 떠나 안전한 곳을 찾아야 했던 어려움'],
+  [/냉대 지역 주민들이 집의 보온과 난방/, '길고 추운 겨울에 대비할 필요']
+ ];
+ for(const [pattern,answer] of cases){const matching=questions.filter(q=>pattern.test(q.prompt));assert.equal(matching.length,1,String(pattern));assert.equal(matching[0].answer,answer);}
+});
