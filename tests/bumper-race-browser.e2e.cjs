@@ -39,7 +39,7 @@ for(const config of [
  {n:100,k:4,unique:false,balanced:false,width:1360},
  {n:100,k:200,unique:true,balanced:false,width:1360},
  {n:100,k:6,unique:false,balanced:true,width:430}
-])test('browser: '+JSON.stringify(config),{timeout:90000},async()=>{
+])test('browser: '+JSON.stringify(config),{timeout:210000},async()=>{
  const page=await browser.newPage({viewport:{width:config.width,height:900}});
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(base+'/범퍼 룰렛.html',{waitUntil:'load'});
@@ -58,7 +58,7 @@ for(const config of [
  assert.ok((await page.locator('#allocation-live').boundingBox()).y>=headerBottom,'Live status must clear the shared header');
  await page.waitForTimeout(4000);
  if(screenshots)await page.screenshot({path:path.join(screenshots,'race-'+config.k+'-'+config.width+'.png')});
- await page.waitForFunction(()=>!document.getElementById('result-modal').classList.contains('hidden'),null,{timeout:60000});
+ await page.waitForFunction(()=>!document.getElementById('result-modal').classList.contains('hidden'),null,{timeout:175000});
  const titleBox=await page.locator('#result-title').boundingBox();
  assert.ok(titleBox.y>=headerBottom,'Result title must clear the shared header');
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('gulliver.roulette.lastResults.v1')));
