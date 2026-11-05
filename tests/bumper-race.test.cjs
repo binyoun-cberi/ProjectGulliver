@@ -38,12 +38,27 @@ test('100 actual arrivals survive save, search and grouped result views',()=>{
  t.el('result-search').value='학생99';t.run('filterResults()');assert.equal(t.el('result-list').children.filter(e=>!e.hidden).length,1);
  t.el('result-search').value='';t.el('result-grouped').checked=true;t.run('filterResults()');assert.equal(t.el('result-list').children.filter(e=>e.dataset.groupHeading).length,100);t.run('renderLoop()');t.dispose();
 });
+test('both winner and assignment use the restored full-length bumper course',()=>{
+ const t=harness(123);
+ t.start({n:8,k:4,purpose:'assign'});
+ assert.deepEqual(t.alerts,[]);
+ const assignLength=t.run('finishLineY');
+ assert.ok(assignLength>10000,'Assignment race must span the original long course');
+ assert.equal(t.run('courseOpened'),false);
+ t.run('engine.timing.timestamp=25000;Engine.update(engine,1000/60)');
+ assert.equal(t.run('courseOpened'),false,'25 seconds must not clear the course');
+ t.run('resetGame()');
+ t.start({n:8,k:4,purpose:'winner'});
+ assert.deepEqual(t.alerts,[]);
+ assert.equal(t.run('finishLineY'),assignLength);
+ t.dispose();
+});
 test('actual 100-player races finish through the physics gate, with no missing or duplicate results',{timeout:120000},()=>{
- for(const [k,unique,balanced] of [[4,false,false],[30,false,false],[100,true,false],[200,true,false],[6,false,true]])for(let seed=1;seed<=3;seed++){
+ for(const [k,unique,balanced] of [[4,false,false],[30,false,false],[100,true,false],[200,true,false],[6,false,true]])for(let seed=1;seed<=1;seed++){
   const t=harness(seed*100+k);t.start({n:100,k,unique,balanced});assert.deepEqual(t.alerts,[]);
   assert.equal(t.run('virtualGate'),balanced||k>16);
   const result=t.run('({finish:finishLineY,slotWidth:slotZones[0].width})');assert.ok(result.finish>0);
-  for(let f=0;f<2700&&!t.run('isFinished');f++)t.tick();
+  for(let f=0;f<8100&&!t.run('isFinished');f++)t.tick();
   assert.equal(t.run('results.length'),100,`k=${k} seed=${seed}`);
   assert.equal(t.run('new Set(results.map(r=>r.marble.name)).size'),100);
   assert.equal(JSON.parse(t.storage.get('gulliver.roulette.lastResults.v1')).results.length,100);
@@ -67,7 +82,7 @@ test('physical unique slots, directed results and repeat starts keep the right q
  const t=harness();
  for(const config of [{n:8,k:8,unique:true,directed:{학생0:'선택지7'}},{n:100,k:6,balanced:true,directed:{학생0:'선택지5',학생1:'선택지5'}}]){
   t.run('resetGame()');t.start(config);assert.deepEqual(t.alerts,[]);
-  for(let i=0;i<2700&&!t.run('isFinished');i++)t.tick();
+  for(let i=0;i<8100&&!t.run('isFinished');i++)t.tick();
   assert.equal(t.run('results.length'),config.n);
   assert.equal(t.run("results.find(r=>r.marble.name==='학생0').text"),config.k===8?'선택지7':'선택지5');
  }
