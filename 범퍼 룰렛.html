@@ -1704,6 +1704,8 @@
         let startBoxBottom;
         let useBalanced=false,virtualGate=false,resultPool=null;
         let launchCeiling=-200,courseOpened=false,roundSerial=0;
+        // 이전 긴 레이스를 유지하고, 매우 오래 정체된 전체 배정만 구조합니다.
+        const ASSIGNMENT_STALL_RECOVERY_MS = 90000;
         const BC=window.ClasheetBumperCore;
 
 
@@ -2026,14 +2028,14 @@
                 if(gameState !== 'playing') return;
 
                 const time = engine.timing.timestamp;
-                if(gamePurpose==='assign'&&!courseOpened&&time>=25000){
+                if(gamePurpose==='assign'&&!courseOpened&&time>=ASSIGNMENT_STALL_RECOVERY_MS){
                     courseOpened=true;
                     const removable=mapElements.filter(b=>b.label!=='boundary'&&b.label!=='slotWall');
                     removable.forEach(b=>Composite.remove(engine.world,b));
                     mapElements=mapElements.filter(b=>!removable.includes(b));
                     motorizedWheels=[];dynamicSlopes=[];
                     const status=document.getElementById('allocation-live');
-                    status.style.display='block';status.textContent='우회 수로가 열렸어요 · 남은 구슬도 결승까지 달려요';
+                    status.style.display='block';status.textContent='긴 코스 완주 지원 · 남은 구슬을 결승까지 안내해요';
                 }
                 if(courseOpened){
                     for(const m of marbles)if(!m.finished){
@@ -2168,20 +2170,6 @@
             mapElements.push(Bodies.rectangle(600,y+1000,1200,60,opts));
             finishLineY=y+900;WORLD_HEIGHT=y+1200;
         }
-        function createAssignmentMap(labels){
-            const wall={isStatic:true,label:'boundary',friction:0,restitution:.2,render:{fillStyle:'#334155'}};
-            mapElements.push(Bodies.rectangle(600,launchCeiling-500,1200,1000,wall),Bodies.rectangle(-50,1800,100,5000,wall),Bodies.rectangle(1250,1800,100,5000,wall));
-            startBoxBottom=Bodies.rectangle(600,100,900,40,{...wall,label:'startBoxBottom',render:{fillStyle:'#f59e0b'}});
-            mapElements.push(startBoxBottom);
-            for(const [x,y] of [[240,450],[650,620],[950,900],[400,1150],[800,1450]])mapElements.push(Bodies.circle(x,y,55,{isStatic:true,label:'bumper',restitution:1.1,render:{fillStyle:'#f43f5e'}}));
-            for(const [x,y,speed] of [[450,780,.035],[650,1450,-.04]]){
-                const wheel=Bodies.rectangle(x,y,290,18,{isStatic:true,label:'dynamicSlope',render:{fillStyle:'#10b981'}});
-                wheel.baseAngle=0;wheel.swingSpeed=speed/100;wheel.timeOffset=Math.random()*6;wheel.swingAmplitude=1;
-                dynamicSlopes.push(wheel);mapElements.push(wheel);
-            }
-            addResultArea(labels,1800);Composite.add(engine.world,mapElements);
-        }
-
         function createMap(slotNames) {
             mapElements = [];
             slotZones = [];
@@ -2198,7 +2186,6 @@
 
             let currentY = 0;
 
-            if(gamePurpose==='assign'){createAssignmentMap(slotNames);return;}
             const boxWidth = 900; 
             
             mapElements.push(Bodies.rectangle(WORLD_WIDTH / 2 - boxWidth/2, -50, 40, 300, wallOpts)); 
@@ -2480,8 +2467,8 @@
 
 
             mapElements.push(Bodies.rectangle(WORLD_WIDTH / 2, launchCeiling-500, WORLD_WIDTH, 1000, {...wallOpts,label:'boundary'}));
-            mapElements.push(Bodies.rectangle(-250, WORLD_HEIGHT / 2, 500, WORLD_HEIGHT + 1000, wallOpts)); 
-            mapElements.push(Bodies.rectangle(WORLD_WIDTH + 250, WORLD_HEIGHT / 2, 500, WORLD_HEIGHT + 1000, wallOpts)); 
+            mapElements.push(Bodies.rectangle(-250, WORLD_HEIGHT / 2, 500, WORLD_HEIGHT + 1000, {...wallOpts,label:'boundary'})); 
+            mapElements.push(Bodies.rectangle(WORLD_WIDTH + 250, WORLD_HEIGHT / 2, 500, WORLD_HEIGHT + 1000, {...wallOpts,label:'boundary'})); 
 
             // 깔때기 구간에는 벽 이외의 기믹이 들어오지 않았는지 코드상으로 확인합니다.
             if (cleanFunnelZone) {
