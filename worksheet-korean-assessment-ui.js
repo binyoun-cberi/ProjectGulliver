@@ -96,7 +96,7 @@
  const examResult=student.querySelector('#koreanExamResult');
  let assessment=null;
  function resetStudent(sheet){
-   assessment=sheet?.subject==='korean'&&['reading-set','listening-set'].includes(sheet.topic)?sheet:null;
+   assessment=sheet?.subject==='korean'&&['reading-set','reading-assessment','listening-set'].includes(sheet.topic)?sheet:null;
    const supported=Boolean(assessment&&assessment.items.length&&assessment.items.every(q=>Array.isArray(q.choices)&&q.choices.length>=2));
    student.hidden=!assessment;student.classList.remove('in-progress');document.body.classList.remove('korean-assessment-in-progress');
    examQuestions.hidden=true;examQuestions.replaceChildren();examResult.hidden=true;examResult.replaceChildren();
@@ -115,7 +115,7 @@
        passageNumber++;
        const context=document.createElement('div');context.className='korean-exam-passage';
        const heading=document.createElement('h3');heading.textContent='[지문 '+passageNumber+'] '+item.readingTitle;context.append(heading);
-       if(assessment.topic==='reading-set'){
+       if(assessment.topic!=='listening-set'){
          const passage=document.createElement('p');passage.textContent=item.readingPassage;context.append(passage);
        }else{
          const guide=document.createElement('p');guide.textContent='음성으로 들은 내용을 떠올리며 아래 문제를 푸세요.';context.append(guide);
@@ -188,7 +188,7 @@
  // Direct shortcuts inside the existing Korean subject controls, not a separate app.
  const tabs=document.querySelector('.learning-tabs');
  if(tabs){
-   for(const [type,label] of [['reading-set','읽기 평가'],['listening-set','듣기 평가']]){
+   for(const [type,label] of [['reading-assessment','읽기 평가'],['listening-set','듣기 평가']]){
      const a=document.createElement('a');a.className='korean-eval-shortcut';a.dataset.assessmentTopic=type;a.textContent=label;
      tabs.append(a);
    }
