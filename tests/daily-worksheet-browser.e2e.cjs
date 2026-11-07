@@ -68,6 +68,8 @@ test('Korean reading and listening assessments render, answer and grade in real 
   const params=topic=>new URLSearchParams({subject:'korean',grade:'3',mode:'practice',unit:'k3-reading',topic,type:topic+'-five',count:'5',seed:'42'}).toString();
   await page.goto(base+'?'+params('reading-assessment'),{waitUntil:'load'});
   assert.equal(await page.locator('#koreanAssessmentStudent').isVisible(),true);
+  await page.locator('#koreanStudentCode').fill('A01');
+  await page.locator('#koreanSaveOptIn').check();
   await page.locator('#koreanExamStart').click();
   assert.equal(await page.locator('.korean-exam-question').count(),5);
   assert.equal(await page.locator('.korean-exam-passage p').count(),1);
@@ -76,11 +78,21 @@ test('Korean reading and listening assessments render, answer and grade in real 
   await page.locator('#koreanExamSubmit').click();
   assert.match(await page.locator('#koreanExamResult').innerText(),/평가 결과 · \d+점/);
   assert.equal(await page.locator('.korean-exam-feedback').count(),5);
+  const saved=await page.evaluate(()=>{try{return JSON.parse(localStorage.getItem('clasheet-korean-assessment-results.v1')||'[]')}catch{return null}});
+  if(saved){assert.equal(saved.length,1);assert.equal(saved[0].code,'A01');assert.equal(saved[0].mode,'읽기');assert.ok(saved[0].score>=0);}
+  else assert.match(await page.locator('#koreanSaveStatus').innerText(),/저장하지 못했습니다/);
   await page.locator('#koreanExamRetry').click();
   assert.equal(await page.locator('.korean-exam-feedback').count(),0);
 
   await page.goto(base+'?'+params('listening-set'),{waitUntil:'load'});
   assert.equal(await page.locator('#koreanListeningControls').isVisible(),true);
+  const voiceOptions=await page.evaluate(()=>{
+    if(!window.speechSynthesis)return [];
+    Object.defineProperty(window.speechSynthesis,'getVoices',{configurable:true,value:()=>[{lang:'ko-KR',name:'기본 한국어',voiceURI:'local'},{lang:'ko-KR',name:'Google 한국어',voiceURI:'google'}]});
+    window.speechSynthesis.dispatchEvent(new Event('voiceschanged'));
+    return [...document.querySelector('#koreanSpeechVoice').options].map(v=>v.textContent);
+  });
+  if(voiceOptions.length>1)assert.match(voiceOptions[1],/Google/);
   assert.equal(await page.locator('#koreanAssessmentStudent').isVisible(),true);
   const listeningPassage=await page.evaluate(()=>window.WorksheetEditor.getCurrent().items[0].readingPassage);
   assert.ok(listeningPassage.length>120);
