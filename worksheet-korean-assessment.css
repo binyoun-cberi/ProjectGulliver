@@ -1,0 +1,60 @@
+/* Korean reading/listening assessment additions in the existing worksheet view. */
+.korean-listening-controls{border:1px solid #c9d9d6;background:#f6fbf9;border-radius:16px;padding:18px 20px;margin:18px 0 22px;box-shadow:0 5px 18px #1b5a4210}
+.korean-listening-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.korean-listening-heading strong{font-size:16px;color:#175d51}
+.korean-listening-heading p{font-size:12px;color:#506b64;line-height:1.6;margin:6px 0 0}
+.korean-listening-settings{display:flex;gap:12px;flex-wrap:wrap}
+.korean-listening-settings label{font-size:12px;font-weight:700;display:grid;gap:5px;color:#405a55}
+.korean-listening-settings select{padding:8px 10px;border:1px solid #c9d9d6;border-radius:8px;background:#fff;color:#263c36}
+.korean-listening-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:16px}
+.korean-listening-card{border:1px solid #dae7e3;background:white;border-radius:12px;padding:13px;min-width:0}
+.korean-listening-card>strong{display:block;font-size:13px;margin-bottom:11px}
+.korean-listening-card.speaking{border-color:#378d79}
+.korean-listening-buttons{display:flex;gap:6px;flex-wrap:wrap}
+.korean-listening-buttons button{background:#e9f5f0;color:#185e51;border:1px solid #bfded3;border-radius:8px;font-size:12px;font-weight:750;padding:8px 10px}
+.korean-listening-buttons button:first-child{background:#176b5b;color:#fff;border-color:#176b5b}
+.korean-listening-buttons button:disabled{opacity:.48;cursor:not-allowed}
+.korean-listening-transcript{font-size:12px;color:#415954;margin-top:12px;border-top:1px solid #edf2ef;padding-top:9px}
+.korean-listening-transcript summary{cursor:pointer;font-weight:750}
+.korean-listening-transcript p{font-size:13px;white-space:pre-wrap;line-height:1.8;margin:9px 0 2px}
+.korean-listening-notice{font-size:11px;color:#607870;margin:12px 0 0}
+.listening-text{background:#fafdfc;border:1px dashed #b6cec7;border-radius:9px;padding:12px 15px;margin:0 0 15px -24px}
+.listening-text h3{font-size:15px;text-align:center;margin:0 0 4px}
+.listening-text p{font-size:12px;color:#55736a;margin:0;text-align:center}
+.korean-eval-shortcut{display:inline-flex;align-items:center;justify-content:center;padding:7px 10px;border:1px solid #b7d9cc;border-radius:8px;color:#11614f;background:#f0faf6;text-decoration:none;font-weight:800;font-size:12px}
+.korean-eval-shortcut:hover{background:#dff5eb}
+@media(max-width:650px){.korean-listening-controls{padding:14px}.korean-listening-list{grid-template-columns:1fr}.listening-text{margin-left:-18px}}
+
+.korean-assessment-student{background:#fff;border:1px solid #d3dfeb;border-radius:16px;padding:20px;margin:16px 0 22px}
+.korean-student-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.korean-student-heading strong{font-size:16px;color:#264c69}
+.korean-student-heading p{font-size:12px;color:#607287;line-height:1.6;margin:6px 0 0}
+.korean-student-actions{display:flex;gap:8px;flex-wrap:wrap}
+.korean-student-actions button{border:1px solid #b9d4e5;background:#edf6fc;color:#235a78;border-radius:9px;padding:9px 14px;font-size:12px;font-weight:800}
+#koreanExamStart,#koreanExamSubmit{background:#176b5b;color:white;border-color:#176b5b}
+.korean-student-actions button:disabled{opacity:.5;cursor:not-allowed}
+.korean-student-info{font-size:12px;color:#66798a;line-height:1.6;margin:10px 0 0}
+.korean-exam-questions{display:grid;gap:13px;margin-top:18px}
+.korean-exam-passage{border:1px solid #cddae3;background:#f9fbfe;border-radius:12px;padding:16px 20px;margin-top:12px}
+.korean-exam-passage h3{font-size:16px;margin:0 0 10px;text-align:center}
+.korean-exam-passage p{white-space:pre-wrap;line-height:2;margin:0;font-size:14px;color:#334258}
+.korean-exam-question{min-width:0;border:1px solid #e1e8ef;border-radius:12px;padding:15px 18px}
+.korean-exam-question legend{font-size:14px;font-weight:800;color:#243c52;padding:0 6px;line-height:1.7}
+.korean-exam-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.korean-exam-choice{display:flex;gap:9px;align-items:flex-start;border:1px solid #dae3ea;border-radius:8px;padding:10px 12px;font-size:13px;color:#31465c;cursor:pointer}
+.korean-exam-choice:has(input:checked){background:#e7f5ef;border-color:#71b5a0}
+.korean-exam-choice input{flex-shrink:0;margin-top:4px;accent-color:#176b5b}
+.korean-exam-feedback{font-size:12px;line-height:1.75;background:#f6faf9;border-top:1px solid #d9e5dd;margin:14px 0 0;padding:10px 0 0}
+.korean-exam-question.incorrect .korean-exam-feedback{color:#91503c}
+.korean-exam-question.correct .korean-exam-feedback{color:#176b5b}
+.korean-exam-result{border-top:1px solid #dce7ea;padding-top:15px;margin-top:18px}
+.korean-exam-result strong{font-size:22px;color:#16594c}
+.korean-exam-result p{font-size:13px;color:#58707d}
+.korean-assessment-in-progress .korean-listening-transcript{display:none}
+@media(max-width:650px){.korean-assessment-student{padding:14px}.korean-exam-choices{grid-template-columns:1fr}.korean-exam-question{padding:12px}.korean-exam-passage{padding:13px}.korean-exam-passage p{font-size:13px}}
+@media print{
+ .korean-listening-controls,.korean-eval-shortcut,.korean-assessment-student{display:none!important}
+ .listening-text{background:#fff;border:1px solid #bbb;margin:0 0 8px -10px;padding:8px 11px}
+ .listening-text h3{font-size:12px;margin:0 0 3px}
+ .listening-text p{font-size:10px}
+}

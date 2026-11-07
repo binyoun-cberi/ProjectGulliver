@@ -1,4 +1,4 @@
-(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./daily-worksheet-core.js'):root.DailyWorksheetCore,typeof module==='object'&&module.exports?require('./worksheet-korean-depth.js'):root.WorksheetKoreanDepth);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetKoreanReadings=api;})(globalThis,(core,depth)=>{
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./daily-worksheet-core.js'):root.DailyWorksheetCore,typeof module==='object'&&module.exports?require('./worksheet-korean-depth.js'):root.WorksheetKoreanDepth,typeof module==='object'&&module.exports?require('./data/korean-assessment-bank.js'):root.KoreanAssessmentBank);if(typeof module==='object'&&module.exports)module.exports=api;else root.WorksheetKoreanReadings=api;})(globalThis,(core,depth,assessment)=>{
 'use strict';
 const authored=[];
 function text(band,id,genre,title,passage,rows){
@@ -301,6 +301,8 @@ const reviewedRationales={
  '오래된 사진을 읽는 법':['옛 사진에는 가로수 뒤로 작은 상점이 보입니다.','상점이 왜 사라졌는지는 사진만으로 알 수 없다고 설명합니다.','사진을 찍은 위치가 다르면 같은 건물의 모습도 달라질 수 있다고 합니다.','촬영 연도와 위치를 확인하고 지도와 주민의 기억을 함께 살피라고 합니다.','사진의 단서와 한계를 설명하고 다른 자료를 함께 살피도록 권합니다.']
 };
 authored.push(...depth.readings());
+// Opt-in shared assessment collection; legacy curriculum lesson counts are unchanged.
+function assessmentInventory(grade){return assessment.asReadingSets(Number(grade),{mode:'read'});}
 const cache=new Map();
 function inventory(grade){
  if(cache.has(grade))return cache.get(grade);
@@ -315,7 +317,7 @@ function pool(grade,profile,genre){
   const skill=p.skills[i];if(spec.skills&&!spec.skills.includes(skill))return [];
   return [{evidenceId:'kr-'+p.band+'-'+p.id+'-'+i,passageId:'kr-'+p.band+'-'+p.id,passageTitle:p.title,detail:p.passage,
    prompt:'「'+p.title+'」에서 '+prompt,answer,choices:[answer,...wrong],explanation:p.rationales[i],readingGenre:p.genre,koreanSkill:skill,
-   ...(p.legacy?{legacyReadingTitle:p.title,legacyReadingQuestion:i,originalPrompt:prompt}:{koreanOriginal:true}),sourceLabel:'클라시트 창작 지문'}];
+   ...(p.legacy?{legacyReadingTitle:p.title,legacyReadingQuestion:i,originalPrompt:prompt}:{koreanOriginal:true}),sourceLabel:p.sourceLabel||'클라시트 창작 지문',...(p.sourceUrl?{source:p.sourceUrl}:{})}];
  }));
 }
 function find(unit,lesson){
@@ -327,5 +329,5 @@ function find(unit,lesson){
 }
 function standardPool(code,grade){return standards[code]?pool(grade,standards[code]):[];}
 function standardCoverage(code){return standards[code]?[labels[standards[code]]]:[];}
-return {find,standardPool,standardCoverage,authored:()=>JSON.parse(JSON.stringify(authored)),inventory:grade=>JSON.parse(JSON.stringify(inventory(Number(grade)))),rules};
+return {find,standardPool,standardCoverage,authored:()=>JSON.parse(JSON.stringify(authored)),inventory:grade=>JSON.parse(JSON.stringify(inventory(Number(grade)))),assessmentInventory:grade=>JSON.parse(JSON.stringify(assessmentInventory(grade))),rules};
 });

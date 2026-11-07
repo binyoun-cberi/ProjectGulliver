@@ -57,3 +57,41 @@ test('worksheet editor generates and prints student/teacher versions in real Chr
   }
 });
 
+
+
+test('Korean reading and listening assessments render, answer and grade in real Chromium', {skip: !chrome && 'Chromium or Google Chrome is required; set CHROME_BIN to run locally'}, async () => {
+ const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--allow-file-access-from-files']});
+ try {
+  const page=await browser.newPage({viewport:{width:1280,height:900}});
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  const base=pathToFileURL(path.resolve('문제지 만들기.html')).href;
+  const params=topic=>new URLSearchParams({subject:'korean',grade:'3',mode:'practice',unit:'k3-reading',topic,type:topic+'-five',count:'5',seed:'42'}).toString();
+  await page.goto(base+'?'+params('reading-assessment'),{waitUntil:'load'});
+  assert.equal(await page.locator('#koreanAssessmentStudent').isVisible(),true);
+  await page.locator('#koreanExamStart').click();
+  assert.equal(await page.locator('.korean-exam-question').count(),5);
+  assert.equal(await page.locator('.korean-exam-passage p').count(),1);
+  assert.ok((await page.locator('.korean-exam-passage p').first().innerText()).length>120);
+  for(let i=0;i<5;i++)await page.locator('.korean-exam-question').nth(i).locator('input[type="radio"]').first().check();
+  await page.locator('#koreanExamSubmit').click();
+  assert.match(await page.locator('#koreanExamResult').innerText(),/평가 결과 · \d+점/);
+  assert.equal(await page.locator('.korean-exam-feedback').count(),5);
+  await page.locator('#koreanExamRetry').click();
+  assert.equal(await page.locator('.korean-exam-feedback').count(),0);
+
+  await page.goto(base+'?'+params('listening-set'),{waitUntil:'load'});
+  assert.equal(await page.locator('#koreanListeningControls').isVisible(),true);
+  assert.equal(await page.locator('#koreanAssessmentStudent').isVisible(),true);
+  const listeningPassage=await page.evaluate(()=>window.WorksheetEditor.getCurrent().items[0].readingPassage);
+  assert.ok(listeningPassage.length>120);
+  assert.equal((await page.locator('#questions').innerText()).includes(listeningPassage),false);
+  await page.locator('#koreanExamStart').click();
+  assert.equal(await page.locator('.korean-exam-question').count(),5);
+  assert.equal((await page.locator('#koreanExamQuestions').innerText()).includes(listeningPassage),false);
+  assert.equal(await page.locator('.korean-listening-transcript').first().isVisible(),false);
+  await page.emulateMedia({media:'print'});
+  assert.equal(await page.locator('#koreanAssessmentStudent').isVisible(),false);
+  assert.equal(await page.locator('#koreanListeningControls').isVisible(),false);
+  assert.deepEqual(errors,[]);
+ } finally {await browser.close()}
+});
