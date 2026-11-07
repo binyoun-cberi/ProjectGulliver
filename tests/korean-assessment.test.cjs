@@ -42,7 +42,9 @@ test('기존 국어 단원에서 읽기와 듣기 평가를 고를 수 있다',(
    const u=units.find(v=>v.id==='k'+grade+'-reading');
    assert.ok(u);
    assert.ok(u.topics.includes('reading-set'));
+   assert.ok(u.topics.includes('reading-assessment'));
    assert.ok(u.topics.includes('listening-set'));
+   assert.ok(core.types('korean',grade,'reading-assessment',u.id).some(([id])=>id==='reading-assessment-five'));
    assert.ok(core.types('korean',grade,'listening-set',u.id).some(([id])=>id==='listening-set-five'));
  }
 });
@@ -74,10 +76,25 @@ test('단답형 듣기 평가와 읽기 평가 모두 생성되며 원본 지문
   const hearing=core.generate(options);
   assert.equal(hearing.items.length,5);
   assert.ok(hearing.items.every(item=>!item.choices.length&&item.answer));
-  const reading=core.generate({...options,topic:'reading-set',type:'reading-set-five'});
+  const reading=core.generate({...options,topic:'reading-assessment',type:'reading-assessment-five'});
   assert.equal(reading.items.length,5);
   assert.ok(reading.items[0].readingPassage);
   assert.equal(bank.passages(grade)[0].passage,source);
+ }
+});
+
+test('새 읽기·듣기 유형 모두 20문항과 자동 기본 유형을 지원한다',()=>{
+ for(let grade=1;grade<=6;grade++)for(const topic of ['reading-assessment','listening-set']){
+  const defaultSheet=core.generate({subject:'korean',grade,topic,count:5,seed:20});
+  assert.equal(defaultSheet.items.length,5);
+  for(const suffix of ['five','literary','nonfiction']){
+   const type=topic+'-'+suffix,options={subject:'korean',grade,topic,type,count:20,seed:66};
+   assert.ok(core.supportedCounts(options).includes(20),grade+'/'+type);
+   const sheet=core.generate(options);
+   assert.equal(sheet.items.length,20);
+   assert.equal(new Set(sheet.items.map(q=>q.readingGroup)).size,4);
+   assert.equal(sheet.items.filter(q=>q.readingPassage).length,4);
+  }
  }
 });
 
@@ -103,4 +120,9 @@ test('학생용 듣기 인쇄물에는 대본 본문을 출력하지 않고 교�
  assert.match(css,/@media print[\s\S]*\.korean-listening-controls[\s\S]*display:none!important/);
  assert.ok(html.indexOf('data/korean-assessment-bank.js')<html.indexOf('daily-worksheet-core.js'));
  assert.ok(html.includes('worksheet-korean-assessment-ui.js'));
+ const student=fs.readFileSync(path.join(__dirname,'..','worksheet-korean-assessment-ui.js'),'utf8');
+ assert.match(student,/function gradeExam\(\)/);
+ assert.match(student,/koreanExamStart/);
+ assert.match(student,/if\(assessment\.topic!=='listening-set'\)/);
+ assert.match(css,/@media print[\s\S]*\.korean-assessment-student\{display:none!important/);
 });
