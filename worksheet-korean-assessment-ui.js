@@ -80,7 +80,94 @@
    buttons.append(playButton,pauseButton,stopButton);card.append(title,buttons,details);
    return card;
  }
+ const student=document.createElement('section');
+ student.id='koreanAssessmentStudent';
+ student.className='korean-assessment-student';
+ student.hidden=true;
+ student.setAttribute('aria-label','국어 읽기·듣기 평가 학생 응시');
+ student.innerHTML='<div class="korean-student-heading"><div><strong id="koreanStudentTitle">국어 평가 · 학생 응시</strong><p>문제를 화면에서 풀고 채점 결과를 확인할 수 있습니다. 인쇄용 문제지는 아래에 그대로 제공됩니다.</p></div><div class="korean-student-actions"><button type="button" id="koreanExamStart">학생 평가 시작</button><button type="button" id="koreanExamSubmit" hidden>답안 제출 · 채점</button><button type="button" id="koreanExamRetry" hidden>다시 풀기</button></div></div><p class="korean-student-info" id="koreanStudentInfo" role="status" aria-live="polite"></p><div id="koreanExamQuestions" class="korean-exam-questions" hidden></div><div id="koreanExamResult" class="korean-exam-result" hidden role="status" aria-live="polite"></div>';
+ host.before(student);
+ const studentTitle=student.querySelector('#koreanStudentTitle');
+ const studentInfo=student.querySelector('#koreanStudentInfo');
+ const startButton=student.querySelector('#koreanExamStart');
+ const submitButton=student.querySelector('#koreanExamSubmit');
+ const retryButton=student.querySelector('#koreanExamRetry');
+ const examQuestions=student.querySelector('#koreanExamQuestions');
+ const examResult=student.querySelector('#koreanExamResult');
+ let assessment=null;
+ function resetStudent(sheet){
+   assessment=sheet?.subject==='korean'&&['reading-set','listening-set'].includes(sheet.topic)?sheet:null;
+   const supported=Boolean(assessment&&assessment.items.length&&assessment.items.every(q=>Array.isArray(q.choices)&&q.choices.length>=2));
+   student.hidden=!assessment;student.classList.remove('in-progress');document.body.classList.remove('korean-assessment-in-progress');
+   examQuestions.hidden=true;examQuestions.replaceChildren();examResult.hidden=true;examResult.replaceChildren();
+   startButton.hidden=false;submitButton.hidden=true;retryButton.hidden=true;startButton.disabled=!supported;
+   if(!assessment)return;
+   studentTitle.textContent=assessment.grade+'학년 국어 '+(assessment.topic==='listening-set'?'듣기':'읽기')+' 평가 · 학생 응시';
+   studentInfo.textContent=supported?'총 '+assessment.items.length+'문항 · 답을 모두 고른 뒤 제출하면 바로 채점합니다.':'화면 응시는 객관식 문제 유형에서 이용할 수 있습니다. 다른 유형은 기존 문제지로 인쇄하세요.';
+ }
+ function buildExam(){
+   if(!assessment)return;
+   examQuestions.replaceChildren();
+   let passageNumber=0;
+   for(const [i,item] of assessment.items.entries()){
+     const field=document.createElement('fieldset');field.className='korean-exam-question';field.dataset.questionIndex=String(i);
+     if(item.readingPassage){
+       passageNumber++;
+       const context=document.createElement('div');context.className='korean-exam-passage';
+       const heading=document.createElement('h3');heading.textContent='[지문 '+passageNumber+'] '+item.readingTitle;context.append(heading);
+       if(assessment.topic==='reading-set'){
+         const passage=document.createElement('p');passage.textContent=item.readingPassage;context.append(passage);
+       }else{
+         const guide=document.createElement('p');guide.textContent='음성으로 들은 내용을 떠올리며 아래 문제를 푸세요.';context.append(guide);
+       }
+       field.append(context);
+     }
+     const legend=document.createElement('legend');legend.textContent=(i+1)+'. '+item.prompt;field.append(legend);
+     const choices=document.createElement('div');choices.className='korean-exam-choices';
+     for(const [j,option] of item.choices.entries()){
+       const label=document.createElement('label');label.className='korean-exam-choice';
+       const input=document.createElement('input');input.type='radio';input.name='korean-answer-'+i;input.value=option;
+       const span=document.createElement('span');span.textContent=['①','②','③','④'][j]+' '+option;
+       label.append(input,span);choices.append(label);
+     }
+     field.append(choices);examQuestions.append(field);
+   }
+ }
+ function startExam(){
+   if(!assessment||startButton.disabled)return;
+   buildExam();student.classList.add('in-progress');document.body.classList.add('korean-assessment-in-progress');
+   startButton.hidden=true;retryButton.hidden=true;submitButton.hidden=false;examResult.hidden=true;examResult.replaceChildren();
+   examQuestions.hidden=false;studentInfo.textContent='답을 모두 고른 뒤 제출하세요. 채점 전에는 정답이 표시되지 않습니다.';
+   examQuestions.querySelector('input')?.focus();
+ }
+ function gradeExam(){
+   if(!assessment)return;
+   const fields=[...examQuestions.querySelectorAll('.korean-exam-question')];
+   const choices=fields.map(field=>field.querySelector('input:checked')?.value);
+   const missing=choices.filter(v=>v===undefined).length;
+   if(missing){studentInfo.textContent='답하지 않은 문제가 '+missing+'개 있습니다. 모두 답한 뒤 제출하세요.';return;}
+   let correct=0;
+   fields.forEach((field,i)=>{
+     const item=assessment.items[i],isCorrect=choices[i]===item.answer;
+     if(isCorrect)correct++;
+     field.classList.toggle('correct',isCorrect);field.classList.toggle('incorrect',!isCorrect);
+     for(const input of field.querySelectorAll('input'))input.disabled=true;
+     const feedback=document.createElement('p');feedback.className='korean-exam-feedback';
+     feedback.textContent=(isCorrect?'정답입니다. ':'다시 살펴보세요. ')+'정답: '+item.answer+(item.explanation?' · 해설: '+item.explanation:'');
+     field.append(feedback);
+   });
+   const percent=Math.round(100*correct/assessment.items.length);
+   const heading=document.createElement('strong');heading.textContent='평가 결과 · '+percent+'점';
+   const detail=document.createElement('p');detail.textContent='총 '+assessment.items.length+'문항 중 '+correct+'문항 정답 · '+(assessment.items.length-correct)+'문항 오답';
+   examResult.replaceChildren(heading,detail);examResult.hidden=false;
+   submitButton.hidden=true;retryButton.hidden=false;studentInfo.textContent='채점이 끝났습니다. 문항별 정답과 해설을 확인하거나 다시 풀 수 있습니다.';
+ }
+ startButton.addEventListener('click',startExam);
+ submitButton.addEventListener('click',gradeExam);
+ retryButton.addEventListener('click',startExam);
+
  function onRender(sheet){
+   resetStudent(sheet);
    stop();counts=new Map();items=[];
    const listening=sheet?.subject==='korean'&&sheet?.topic==='listening-set';
    panel.hidden=!listening;list.replaceChildren();
