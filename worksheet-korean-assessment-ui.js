@@ -106,7 +106,7 @@
  student.className='korean-assessment-student';
  student.hidden=true;
  student.setAttribute('aria-label','국어 읽기·듣기 평가 학생 응시');
- student.innerHTML='<div class="korean-student-heading"><div><strong id="koreanStudentTitle">국어 평가 · 학생 응시</strong><p>문제를 화면에서 풀고 채점 결과를 확인할 수 있습니다. 인쇄용 문제지는 아래에 그대로 제공됩니다.</p></div><div class="korean-student-actions"><button type="button" id="koreanExamStart">학생 평가 시작</button><button type="button" id="koreanExamSubmit" hidden>답안 제출 · 채점</button><button type="button" id="koreanExamRetry" hidden>다시 풀기</button></div></div><p class="korean-student-info" id="koreanStudentInfo" role="status" aria-live="polite"></p><div id="koreanExamQuestions" class="korean-exam-questions" hidden></div><div id="koreanExamResult" class="korean-exam-result" hidden role="status" aria-live="polite"></div>';
+ student.innerHTML='<div class="korean-student-heading"><div><strong id="koreanStudentTitle">국어 평가 · 학생 응시</strong><p>문제를 화면에서 풀고 채점 결과를 확인할 수 있습니다. 인쇄용 문제지는 아래에 그대로 제공됩니다.</p></div><div class="korean-student-actions"><button type="button" id="koreanExamStart">학생 평가 시작</button><button type="button" id="koreanExamSubmit" hidden>답안 제출 · 채점</button><button type="button" id="koreanExamRetry" hidden>다시 풀기</button></div></div><div class="korean-student-save"><label>학생 코드 <input id="koreanStudentCode" type="text" maxlength="20" autocomplete="off" placeholder="예: A01" aria-label="실명 대신 사용할 학생 코드"></label><label class="korean-student-optin"><input id="koreanSaveOptIn" type="checkbox"> 채점 결과를 이 기기에만 저장</label><small>실명 대신 학생 코드를 사용하세요. 결과는 이 브라우저에만 저장되며 다른 기기와 자동 동기화되지 않습니다.</small></div><p class="korean-student-info" id="koreanStudentInfo" role="status" aria-live="polite"></p><div id="koreanExamQuestions" class="korean-exam-questions" hidden></div><div id="koreanExamResult" class="korean-exam-result" hidden role="status" aria-live="polite"></div><p id="koreanSaveStatus" class="korean-save-status" role="status" aria-live="polite"></p><details class="korean-stored-results" id="koreanStoredResults"><summary>교사용 · 이 기기에 저장된 평가 결과</summary><p>학생 코드를 사용한 기록만 보여 줍니다. 이 기기를 사용하는 사람은 기록을 볼 수 있으므로 공용 기기에서는 저장하지 않는 것을 권장합니다.</p><div class="korean-stored-actions"><button type="button" id="koreanDownloadResults">CSV 내보내기</button><button type="button" id="koreanClearResults">저장 기록 모두 삭제</button></div><div id="koreanSavedRows" class="korean-saved-rows"></div></details>';
  host.before(student);
  const studentTitle=student.querySelector('#koreanStudentTitle');
  const studentInfo=student.querySelector('#koreanStudentInfo');
@@ -115,6 +115,12 @@
  const retryButton=student.querySelector('#koreanExamRetry');
  const examQuestions=student.querySelector('#koreanExamQuestions');
  const examResult=student.querySelector('#koreanExamResult');
+ const studentCode=student.querySelector('#koreanStudentCode');
+ const saveOptIn=student.querySelector('#koreanSaveOptIn');
+ const saveStatus=student.querySelector('#koreanSaveStatus');
+ const savedRows=student.querySelector('#koreanSavedRows');
+ const storedPanel=student.querySelector('#koreanStoredResults');
+ const results=window.KoreanAssessmentResults;
  let assessment=null;
  function resetStudent(sheet){
    assessment=sheet?.subject==='korean'&&['reading-set','reading-assessment','listening-set'].includes(sheet.topic)?sheet:null;
@@ -122,6 +128,7 @@
    student.hidden=!assessment;student.classList.remove('in-progress');document.body.classList.remove('korean-assessment-in-progress');
    examQuestions.hidden=true;examQuestions.replaceChildren();examResult.hidden=true;examResult.replaceChildren();
    startButton.hidden=false;submitButton.hidden=true;retryButton.hidden=true;startButton.disabled=!supported;
+   studentCode.value='';saveOptIn.checked=false;saveStatus.textContent='';refreshSavedResults();
    if(!assessment)return;
    studentTitle.textContent=assessment.grade+'학년 국어 '+(assessment.topic==='listening-set'?'듣기':'읽기')+' 평가 · 학생 응시';
    studentInfo.textContent=supported?'총 '+assessment.items.length+'문항 · 답을 모두 고른 뒤 제출하면 바로 채점합니다.':'화면 응시는 객관식 문제 유형에서 이용할 수 있습니다. 다른 유형은 기존 문제지로 인쇄하세요.';
@@ -167,6 +174,7 @@
    const choices=fields.map(field=>field.querySelector('input:checked')?.value);
    const missing=choices.filter(v=>v===undefined).length;
    if(missing){studentInfo.textContent='답하지 않은 문제가 '+missing+'개 있습니다. 모두 답한 뒤 제출하세요.';return;}
+   const summary=results?.summarize(assessment.items,choices);
    let correct=0;
    fields.forEach((field,i)=>{
      const item=assessment.items[i],isCorrect=choices[i]===item.answer;
@@ -181,9 +189,64 @@
    const heading=document.createElement('strong');heading.textContent='평가 결과 · '+percent+'점';
    const detail=document.createElement('p');detail.textContent='총 '+assessment.items.length+'문항 중 '+correct+'문항 정답 · '+(assessment.items.length-correct)+'문항 오답';
    examResult.replaceChildren(heading,detail);examResult.hidden=false;
+   if(summary){
+     const weak=results.weaknesses(summary.skills);
+     if(weak!=='없음'){
+       const hint=document.createElement('p');hint.className='korean-exam-skill-hint';
+       hint.textContent='참고할 평가 요소: '+weak+' (이번 평가의 오답을 바탕으로 한 참고 정보입니다.)';
+       examResult.append(hint);
+     }
+   }
+   if(saveOptIn.checked&&results){
+     try{
+       const record=results.makeRecord({code:studentCode.value.trim(),grade:assessment.grade,topic:assessment.topic,summary});
+       results.save(window.localStorage,record);
+       saveStatus.textContent='학생 코드 '+record.code+'의 결과를 이 기기에 저장했습니다.';
+       refreshSavedResults();
+     }catch(error){saveStatus.textContent='채점은 완료했지만 결과를 저장하지 못했습니다. '+error.message;}
+   }else{saveStatus.textContent='결과는 이 기기에 저장하지 않았습니다.';}
    submitButton.hidden=true;retryButton.hidden=false;studentInfo.textContent='채점이 끝났습니다. 문항별 정답과 해설을 확인하거나 다시 풀 수 있습니다.';
  }
- startButton.addEventListener('click',startExam);
+
+ function refreshSavedResults(){
+   savedRows.replaceChildren();
+   if(!results){savedRows.textContent='결과 저장 기능을 불러오지 못했습니다.';return}
+   let records=[];
+   try{records=results.read(window.localStorage)}catch{savedRows.textContent='기기 저장소를 읽을 수 없습니다.';return}
+   if(!records.length){savedRows.textContent='아직 저장된 결과가 없습니다.';return}
+   const table=document.createElement('table'),thead=document.createElement('thead'),tr=document.createElement('tr');
+   for(const title of ['평가 일시','학생 코드','학년','영역','점수','보완 요소']){
+     const th=document.createElement('th');th.scope='col';th.textContent=title;tr.append(th);
+   }
+   thead.append(tr);table.append(thead);
+   const tbody=document.createElement('tbody');
+   for(const item of records){
+     const row=document.createElement('tr');
+     for(const value of [new Date(item.at).toLocaleString('ko-KR'),item.code,item.grade+'학년',item.mode,item.score+'점 ('+item.correct+'/'+item.total+')',results.weaknesses(item.skills)]){
+       const td=document.createElement('td');td.textContent=String(value);row.append(td);
+     }
+     tbody.append(row);
+   }
+   table.append(tbody);savedRows.append(table);
+ }
+ student.querySelector('#koreanDownloadResults').addEventListener('click',()=>{
+   if(!results)return;
+   const records=results.read(window.localStorage);
+   if(!records.length){saveStatus.textContent='내보낼 기록이 없습니다.';return}
+   const csv=results.exportCSV(records);
+   const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+   const a=document.createElement('a');a.href=url;a.download='clasheet-korean-assessment-results.csv';document.body.append(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),1000);
+   saveStatus.textContent='학생 코드와 점수, 평가 요소가 담긴 CSV 파일을 내보냈습니다.';
+ });
+ student.querySelector('#koreanClearResults').addEventListener('click',()=>{
+   if(!results||!window.confirm('이 브라우저에 저장된 국어 평가 기록을 모두 삭제할까요? 삭제한 기록은 복구할 수 없습니다.'))return;
+   try{results.clear(window.localStorage);refreshSavedResults();saveStatus.textContent='이 브라우저의 저장 기록을 모두 삭제했습니다.'}
+   catch{saveStatus.textContent='저장 기록을 삭제하지 못했습니다. 브라우저 저장소 설정을 확인해 주세요.'}
+ });
+ storedPanel.addEventListener('toggle',()=>{if(storedPanel.open)refreshSavedResults()});
+
+  startButton.addEventListener('click',startExam);
  submitButton.addEventListener('click',gradeExam);
  retryButton.addEventListener('click',startExam);
 
