@@ -100,7 +100,7 @@ test('새 읽기·듣기 유형 모두 20문항과 자동 기본 유형을 지�
 
 test('교과 차시 문제은행에도 같은 원전 지문이 재사용된다',()=>{
  for(let grade=3;grade<=6;grade++){
-  const available=curriculum.inventory(grade);
+  const available=curriculum.assessmentInventory(grade);
   for(const p of bank.passages(grade)){
    const match=available.find(x=>x.id===p.id);
    assert.ok(match,'Missing shared passage '+p.id);
