@@ -302,7 +302,7 @@ const reviewedRationales={
 };
 authored.push(...depth.readings());
 // Opt-in shared assessment collection; legacy curriculum lesson counts are unchanged.
-function assessmentInventory(grade){const g=Number(grade),band=g<=2?'early':g<=4?'middle':'upper';return assessment.toAuthored().filter(p=>p.band===(band==='middle'?'lower':band==='upper'?'upper':'none')) .concat(band==='early'?assessment.asReadingSets(g,{mode:'read'}):[]);}
+function assessmentInventory(grade){return assessment.asReadingSets(Number(grade),{mode:'read'});}
 const cache=new Map();
 function inventory(grade){
  if(cache.has(grade))return cache.get(grade);
