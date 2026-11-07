@@ -1,0 +1,41 @@
+name: Korean reading and listening assessments
+on:
+  pull_request:
+    paths:
+      - 'data/korean-assessment-bank.js'
+      - 'daily-worksheet-core.js'
+      - 'daily-worksheet.js'
+      - 'worksheet-korean-readings.js'
+      - 'worksheet-korean-assessment-ui.js'
+      - 'worksheet-korean-assessment.css'
+      - '문제지 만들기.html'
+      - 'tests/korean-assessment.test.cjs'
+      - '.github/workflows/korean-assessment.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'data/korean-assessment-bank.js'
+      - 'daily-worksheet-core.js'
+      - 'daily-worksheet.js'
+      - 'worksheet-korean-readings.js'
+      - 'worksheet-korean-assessment-ui.js'
+      - 'tests/korean-assessment.test.cjs'
+jobs:
+  unit-tests:
+    name: Shared passage bank and worksheet generation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check data/korean-assessment-bank.js
+          node --check daily-worksheet-core.js
+          node --check daily-worksheet.js
+          node --check worksheet-korean-readings.js
+          node --check worksheet-korean-assessment-ui.js
+      - name: Test reading and listening assessments
+        run: node --test tests/korean-assessment.test.cjs
