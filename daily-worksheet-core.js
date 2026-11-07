@@ -691,6 +691,7 @@ function assessmentSet(size,grade,r,type,listening){
       ...(passage.sourceLabel?{sourceLabel:passage.sourceLabel,source:passage.sourceUrl}:{}),
       ...(listening?{listeningPassage:true}:{})}:{}),
    readingGroup:passage.id||passage.title,readingGenre:passage.genre||'brief',
+   koreanSkill:passage.skills?.[index]||'comprehension',
    explanation:passage.rationales?.[index]||'「'+passage.title+'」에서 정답의 근거를 찾아보세요.'});
  }
  if(items.length!==size)throw Error('선택한 평가 유형의 지문이 부족해요. 문항 수를 줄여 주세요.');
