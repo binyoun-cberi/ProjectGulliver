@@ -7,6 +7,10 @@ on:
       - 'daily-worksheet.js'
       - 'worksheet-korean-readings.js'
       - 'worksheet-korean-assessment-ui.js'
+      - 'worksheet-korean-assessment-results.js'
+      - 'worksheet-dictation-ui.js'
+      - 'tests/korean-assessment-results.test.cjs'
+      - '받아쓰기.html'
       - 'worksheet-korean-assessment.css'
       - '문제지 만들기.html'
       - 'tests/korean-assessment.test.cjs'
@@ -19,6 +23,10 @@ on:
       - 'daily-worksheet.js'
       - 'worksheet-korean-readings.js'
       - 'worksheet-korean-assessment-ui.js'
+      - 'worksheet-korean-assessment-results.js'
+      - 'worksheet-dictation-ui.js'
+      - 'tests/korean-assessment-results.test.cjs'
+      - '받아쓰기.html'
       - 'tests/korean-assessment.test.cjs'
 jobs:
   unit-tests:
@@ -37,5 +45,7 @@ jobs:
           node --check daily-worksheet.js
           node --check worksheet-korean-readings.js
           node --check worksheet-korean-assessment-ui.js
+          node --check worksheet-korean-assessment-results.js
+          node --check worksheet-dictation-ui.js
       - name: Test reading and listening assessments
-        run: node --test tests/korean-assessment.test.cjs
+        run: node --test tests/korean-assessment.test.cjs tests/korean-assessment-results.test.cjs
