@@ -25,7 +25,13 @@ test('공통 지문은행: 학년대별 4편, 모두 5문항, 유일한 정답�
         assert.ok(q.explanation.length>8);
       }
     }
-    assert.equal(bank.asReadingSets(grade).length,4);
+    const readingSets=bank.asReadingSets(grade,{mode:'read'}),listeningSets=bank.asReadingSets(grade,{mode:'listen'});
+    assert.equal(readingSets.length,4);
+    assert.equal(listeningSets.length,4);
+    for(let i=0;i<4;i++){
+      assert.equal(readingSets[i].passage,listeningSets[i].passage,'읽기/듣기는 지문 원문을 공유해야 합니다.');
+      assert.ok(readingSets[i].questions.filter((q,j)=>q[0]!==listeningSets[i].questions[j][0]).length>=2,'듣기 전용 문항이 2개 이상 필요합니다.');
+    }
   }
   assert.equal(unique.size,12);
 });
