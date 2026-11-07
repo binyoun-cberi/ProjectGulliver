@@ -193,7 +193,8 @@
    return passages(grade,{genre,mode}).map(p=>({id:p.id,title:p.title,genre:p.genre,passage:p.passage,sourceLabel:p.sourceTitle,
      sourceUrl:p.sourceUrl,sourceRelation:p.sourceRelation,
      questions:(mode==='listen'?p.listeningQuestions:p.questions).map(q=>[q.prompt,q.answer,...q.choices.slice(1)]),
-     rationales:(mode==='listen'?p.listeningQuestions:p.questions).map(q=>q.explanation)}));
+     rationales:(mode==='listen'?p.listeningQuestions:p.questions).map(q=>q.explanation),
+      skills:(mode==='listen'?p.listeningQuestions:p.questions).map(q=>q.skill)}));
  }
  function toAuthored(){
    return copy(entries.filter(p=>p.band!=='early').map(p=>({
