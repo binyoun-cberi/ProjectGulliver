@@ -52,6 +52,27 @@
 .korean-exam-result p{font-size:13px;color:#58707d}
 .korean-assessment-in-progress .korean-listening-transcript{display:none}
 @media(max-width:650px){.korean-assessment-student{padding:14px}.korean-exam-choices{grid-template-columns:1fr}.korean-exam-question{padding:12px}.korean-exam-passage{padding:13px}.korean-exam-passage p{font-size:13px}}
+
+.korean-listening-settings select#koreanSpeechVoice{max-width:240px;width:100%;min-width:155px}
+.korean-student-save{margin:14px 0 4px;padding:12px 14px;background:#f7fafc;border:1px solid #e0e9ef;border-radius:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.korean-student-save>label{font-size:12px;font-weight:750;color:#334e63}
+.korean-student-save input[type=text]{font:inherit;min-width:120px;max-width:165px;padding:7px 10px;margin-left:7px;border:1px solid #c7d7e2;border-radius:7px;background:white}
+.korean-student-save .korean-student-optin{display:flex;gap:6px;align-items:center}
+.korean-student-save small{flex-basis:100%;font-size:11px;line-height:1.5;color:#657787}
+.korean-exam-skill-hint{margin:8px 0 0;color:#506c82;font-size:12px}
+.korean-save-status{min-height:16px;font-size:12px;color:#315c69}
+.korean-stored-results{border-top:1px solid #dbe6ef;margin-top:14px;padding-top:13px}
+.korean-stored-results summary{font-weight:800;color:#244760;cursor:pointer}
+.korean-stored-results>p{font-size:12px;line-height:1.6;color:#617586}
+.korean-stored-actions{display:flex;gap:8px;flex-wrap:wrap;margin:9px 0}
+.korean-stored-actions button{font-size:12px;background:#edf6fc;color:#264d62;border:1px solid #cbdee9;border-radius:7px;padding:7px 10px}
+.korean-stored-actions button:last-child{background:#fff6f4;color:#954d41;border-color:#ebd2cc}
+.korean-saved-rows{max-width:100%;overflow-x:auto;line-height:1.5;font-size:12px}
+.korean-saved-rows table{border-collapse:collapse;min-width:550px;width:100%;text-align:left}
+.korean-saved-rows th,.korean-saved-rows td{padding:8px 7px;border-bottom:1px solid #e2e9ed}
+.korean-saved-rows th{background:#f0f6f8;white-space:nowrap}
+@media(max-width:650px){.korean-student-save{align-items:flex-start}.korean-student-save>label{width:100%}.korean-student-save input[type=text]{max-width:220px}}
+
 @media print{
  .korean-listening-controls,.korean-eval-shortcut,.korean-assessment-student{display:none!important}
  .listening-text{background:#fff;border:1px solid #bbb;margin:0 0 8px -10px;padding:8px 11px}
