@@ -121,6 +121,68 @@
  ['최종 기사가 바뀐 이유는 무엇인가요?','확인할 수 있는 사실만 쓰려고','사진을 지우기 위해서','축제가 열리지 않았기 때문에','축제 당일 사람이 많았다는 확인 가능한 사실로 고쳤습니다.','cause'],
  ['글의 중심 주장은 무엇인가요?','자료로 확인된 사실과 추측을 구분한다','사진 속 물건의 색만 기록한다','기사 제목은 항상 길게 쓴다','사진의 단서와 한계를 비교하며 사실과 주장을 나눕니다.','main']
  ]);
+ // Reading and listening share one text, but the listening version includes
+ // questions focused on remembered details, order and oral comprehension.
+ // Each passage has two independently authored listening-only questions.
+ const listenOverrides={
+  'kr-eval-sun-and-wind':[
+   [0,'들은 이야기에서 길을 걷던 사람은 무엇을 입고 있었나요?','두꺼운 외투','얇은 반팔옷','비옷','길을 걷던 사람은 두꺼운 외투를 입었습니다.','fact'],
+   [4,'해가 사람에게 한 일은 무엇인가요?','따뜻하게 비추었다','차가운 바람을 불었다','비를 내렸다','해는 따뜻하게 빛나 사람이 외투를 벗게 했습니다.','sequence']
+  ],
+  'kr-eval-lost-mitten':[
+   [0,'장갑의 주인이 찾아온 때는 언제였나요?','점심시간','아침 조회 시간','하교한 다음 날','점심시간에 하린이가 장갑을 찾으러 왔습니다.','fact'],
+   [4,'하린이가 보여 준 물건은 무엇이었나요?','같은 무늬의 다른 장갑 한 짝','새로 산 빨간 우산','잃어버린 모자','다른 한 짝의 무늬가 같아서 주인을 확인할 수 있었습니다.','evidence']
+  ],
+  'kr-eval-library-guide':[
+   [0,'도서관에서는 어떤 목소리로 말해야 하나요?','작은 목소리','아주 큰 목소리','노래하는 목소리','작은 목소리로 말하라는 안내가 있습니다.','action'],
+   [4,'책을 다 읽으면 어떻게 해야 하나요?','정해진 자리에 놓는다','책을 책상 아래 숨긴다','아무 곳에 두고 간다','책을 다 읽은 뒤 정해진 자리에 놓으라고 했습니다.','action']
+  ],
+  'kr-eval-seed-note':[
+   [0,'친구들은 식물의 모습을 무엇으로 남겼나요?','그림','노래','종이비행기','날짜마다 관찰한 모습을 그림으로 남겼습니다.','fact'],
+   [4,'강낭콩을 화분에 처음 심은 날은 언제였나요?','월요일','목요일','다음 주 금요일','첫 월요일에 강낭콩을 심었습니다.','sequence']
+  ],
+  'kr-eval-hillel':[
+   [0,'힐렐을 찾아온 사람은 무엇을 부탁했나요?','중요한 가르침을 짧게 알려 달라고','잃어버린 길을 알려 달라고','집을 지어 달라고','한 발로 서 있는 동안 중요한 가르침을 알려 달라고 했습니다.','fact'],
+   [4,'힐렐이 짧은 말을 들려준 뒤 권한 일은 무엇인가요?','더 배우기','말을 모두 잊어버리기','질문을 그만하기','핵심 말을 들려준 뒤 더 배우라고 권했습니다.','sequence']
+  ],
+  'kr-eval-samaritan':[
+   [0,'여행자는 다친 사람을 무엇에 태웠나요?','자신이 타던 짐승','큰 배','나무 수레','여행자는 자신이 타던 짐승에 다친 사람을 태웠습니다.','fact'],
+   [4,'여행자가 돌봄을 부탁한 사람은 누구인가요?','여관 주인','강도','마을 우체부','다음 날 여관 주인에게 돌봄을 부탁했습니다.','fact']
+  ],
+  'kr-eval-fisherman-jar':[
+   [0,'어부가 바다에서 하던 일은 무엇인가요?','그물 던지기','나무 심기','산에서 돌 캐기','어부는 정해진 횟수만 그물을 던졌습니다.','fact'],
+   [4,'마신은 어부의 말을 듣고 무엇을 보여 주었나요?','다시 항아리 안으로 들어가는 모습','새 그물을 만드는 모습','배를 타고 떠나는 모습','마신은 항아리에 다시 들어가 자신이 들어갈 수 있음을 보여 주었습니다.','sequence']
+  ],
+  'kr-eval-garden-pond':[
+   [0,'학생들이 살펴본 곳은 어디인가요?','학교의 작은 연못','학교 옥상','동네 운동장','학생들은 학교의 작은 연못을 조사했습니다.','fact'],
+   [4,'학생들이 한 번만 관찰하지 않고 한 일은 무엇인가요?','날짜를 바꾸어 여러 번 관찰했다','기록 없이 한 번만 보았다','처음의 관찰을 모두 지웠다','날짜를 바꾸어 여러 차례 관찰한 결과를 비교했습니다.','sequence']
+  ],
+  'kr-eval-analects-reciprocity':[
+   [0,'예시에서 친구가 좋아하는 시간은 무엇인가요?','혼자 공부하는 시간','큰 소리로 응원받는 시간','모두 함께 춤추는 시간','예시에 나온 친구는 혼자 공부하는 시간을 좋아합니다.','fact'],
+   [4,'글에서 상대를 이해하기 위해 먼저 해 볼 행동은 무엇인가요?','상대의 말을 듣고 상황 살피기','내가 좋아하는 것만 강요하기','친구의 마음을 묻지 않기','마지막에 상대의 말을 듣고 상황을 살피라고 설명합니다.','application']
+  ],
+  'kr-eval-quran-diversity':[
+   [0,'어떤 학생은 무엇이 다르면 이상하다고 말했나요?','식사 도구','교실 벽 색깔','날짜의 길이','어떤 학생은 식사 도구가 다르면 이상하다고 말했습니다.','fact'],
+   [4,'학생들은 서로 다른 문화를 알아보려고 무엇을 했나요?','질문하고 자료를 확인했다','조사를 멈추었다','서로의 말을 막았다','서로에게 질문하고 자료를 확인하며 차이를 이해하려 했습니다.','action']
+  ],
+  'kr-eval-dhammapada-peace':[
+   [0,'예시에 나온 두 학생은 무엇을 준비하고 있었나요?','모둠 발표','운동회 달리기','급식 시간','모둠 발표를 준비하다 심한 말을 주고받는 상황입니다.','fact'],
+   [4,'학생들이 다툼을 풀려고 먼저 한 행동은 무엇인가요?','언성을 낮추었다','더 심하게 되갚았다','서로 도망갔다','두 학생은 먼저 언성을 낮추고 차례로 이야기했습니다.','sequence']
+  ],
+  'kr-eval-news-photo':[
+   [0,'공원 사진은 언제 찍힌 것으로 밝혀졌나요?','축제 당일 오후','평일 이른 아침','겨울밤','사진은 축제 당일 오후에 찍힌 것으로 확인되었습니다.','fact'],
+   [4,'학생들은 평소에도 공원이 붐비는지 알아보려고 무엇을 하기로 했나요?','따로 관찰하기','한 장의 사진만으로 단정하기','조사를 모두 그만두기','평소에도 공원이 붐비는지 따로 관찰하기로 했습니다.','inference']
+  ]
+ };
+ for(const passage of entries){
+   const overrides=listenOverrides[passage.id];
+   if(!overrides||overrides.length!==2)throw Error('듣기 문항 미구성: '+passage.id);
+   passage.listeningQuestions=passage.questions.map(q=>({...q,choices:[...q.choices]}));
+   for(const [index,prompt,answer,w1,w2,explanation,skill] of overrides){
+     passage.listeningQuestions[index]={prompt,answer,choices:[answer,w1,w2],explanation,skill};
+   }
+ }
+
  function copy(value){return JSON.parse(JSON.stringify(value));}
  function passages(grade,{genre,mode}={}){
    const g=Number(grade),band=g<=2?'early':g<=4?'middle':'upper';
@@ -130,8 +192,8 @@
  function asReadingSets(grade,{genre,mode}={}){
    return passages(grade,{genre,mode}).map(p=>({id:p.id,title:p.title,genre:p.genre,passage:p.passage,sourceLabel:p.sourceTitle,
      sourceUrl:p.sourceUrl,sourceRelation:p.sourceRelation,
-     questions:p.questions.map(q=>[q.prompt,q.answer,...q.choices.slice(1)]),
-     rationales:p.questions.map(q=>q.explanation)}));
+     questions:(mode==='listen'?p.listeningQuestions:p.questions).map(q=>[q.prompt,q.answer,...q.choices.slice(1)]),
+     rationales:(mode==='listen'?p.listeningQuestions:p.questions).map(q=>q.explanation)}));
  }
  function toAuthored(){
    return copy(entries.filter(p=>p.band!=='early').map(p=>({
@@ -146,7 +208,8 @@
    for(const p of entries){
      if(ids.has(p.id)||!p.passage.trim()||p.questions.length!==5||!p.sourceTitle)throw Error('지문 검증 실패: '+p.id);
      ids.add(p.id);
-     for(const q of p.questions){
+     if(p.listeningQuestions.length!==5||p.listeningQuestions.filter((q,i)=>q.prompt!==p.questions[i].prompt).length<2)throw Error('듣기 문항의 독립성 부족: '+p.id);
+     for(const q of [...p.questions,...p.listeningQuestions]){
        if(!q.prompt||!q.explanation||!q.skill||q.choices.length!==3||new Set(q.choices).size!==3||
           q.choices[0]!==q.answer||!q.choices.every(Boolean))throw Error('문항 검증 실패: '+p.id);
      }
