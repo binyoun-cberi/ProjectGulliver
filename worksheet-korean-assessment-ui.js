@@ -120,7 +120,7 @@
        }else{
          const guide=document.createElement('p');guide.textContent='음성으로 들은 내용을 떠올리며 아래 문제를 푸세요.';context.append(guide);
        }
-       field.append(context);
+       examQuestions.append(context);
      }
      const legend=document.createElement('legend');legend.textContent=(i+1)+'. '+item.prompt;field.append(legend);
      const choices=document.createElement('div');choices.className='korean-exam-choices';
