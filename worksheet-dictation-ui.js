@@ -70,16 +70,19 @@ function refreshVoices(){
  const prefix=subject==='english'?/^en(?:[-_]|$)/i:/^ko(?:[-_]|$)/i;voices=all.filter(v=>prefix.test(v.lang));voiceMissing=all.length>0&&!voices.length;
  const selected=$('dictVoice').value;$('dictVoice').replaceChildren(new Option('기본 '+languages[subject].voice+' 음성',''));
  if(subject==='korean')voices.sort((a,b)=>Number(/Google/i.test(b.name))-Number(/Google/i.test(a.name)));
+ if(subject==='english')voices.sort((a,b)=>(Number(/Google/i.test(b.name)&&/^en[-_]US/i.test(b.lang))*2+Number(/Google/i.test(b.name)))-(Number(/Google/i.test(a.name)&&/^en[-_]US/i.test(a.lang))*2+Number(/Google/i.test(a.name))));
  for(const v of voices)$('dictVoice').append(new Option(v.name+' ('+v.lang+')',v.voiceURI));
  if(voices.some(v=>v.voiceURI===selected))$('dictVoice').value=selected;
- else if(subject==='korean'){
-   const google=voices.find(v=>/Google/i.test(v.name));
+ else if(subject==='korean'||subject==='english'){
+   const google=subject==='english'?(voices.find(v=>/Google/i.test(v.name)&&/^en[-_]US/i.test(v.lang))||voices.find(v=>/Google/i.test(v.name))):voices.find(v=>/Google/i.test(v.name));
    if(google)$('dictVoice').value=google.voiceURI;
  }
  const label=languages[subject].voice,selectedVoice=voices.find(v=>v.voiceURI===$('dictVoice').value);
  $('voiceNote').textContent=voiceMissing?`기기의 음성 설정에서 ${label} 음성을 추가한 뒤 다시 열어 주세요.`:subject==='korean'&&selectedVoice&&/Google/i.test(selectedVoice.name)?
    'Google 한국어 음성을 우선 선택했어요. 재생을 눌러 실제 목소리를 확인해 주세요.':
    subject==='korean'&&selectedVoice?'이 환경에서는 Google 한국어 음성을 제공하지 않아 '+selectedVoice.name+' 목소리를 사용합니다. 음성 메뉴에서 변경할 수 있어요.':
+   subject==='english'&&selectedVoice&&/Google/i.test(selectedVoice.name)?'Google 영어 음성을 우선 선택했어요. 재생하여 발음을 확인해 주세요.':
+   subject==='english'&&selectedVoice?'이 기기에는 Google 영어 음성이 없어 '+selectedVoice.name+' 목소리를 사용합니다.':
    voices.length?`선택한 ${label} 음성으로 읽어요. 시작 전 기기 소리를 확인해 주세요.`:`기본 ${label} 음성으로 시작합니다. Google 한국어 음성이 제공되는 브라우저에서는 자동으로 우선 선택합니다.`;
  if(sheet&&!['speaking','waiting','paused'].includes(player.snapshot().state))reloadPlayer();else stateChanged(player.snapshot());
 }
