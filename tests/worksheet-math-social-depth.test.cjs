@@ -53,13 +53,13 @@ test('all eight selected lessons can generate 20 nonduplicated questions in each
 
 test('historical micro-lessons retain old source questions and do not leak into unrelated lessons',()=>{
  const matches=matching('social',3,socialLessons);
- for(const {lesson:l,binding:b}of matches){const old=E.banks.find(row=>row.id===b.bankId).items.filter(q=>!q.socialSourceFocus);
-  assert.ok(b.items.some(q=>old.some(o=>o.evidenceId===q.evidenceId)),l.name);
+ for(const {unit:u,lesson:l,binding:b}of matches){const selected=E.find(u,l),old=E.banks.find(row=>row.id===b.bankId).items.filter(q=>!q.socialSourceFocus);
+  assert.ok(selected.items.some(q=>old.some(o=>o.evidenceId===q.evidenceId)),l.name);
   const expected=l.name.includes('시간을 표현하는')?'time':l.name.includes('오래된 물건')?'object':l.name.includes('일기와 편지')?'diary':'photo';
-  assert.ok(b.items.filter(q=>q.socialSourceFocus).every(q=>q.socialSourceFocus===expected),l.name);
+  assert.ok(selected.items.filter(q=>q.socialSourceFocus).every(q=>q.socialSourceFocus===expected),l.name);
  }
  const unrelated=allLessons.filter(x=>x.unit.subject==='social'&&x.unit.grade===3&&x.binding&&['timeline','past-sources'].includes(x.binding.bankId)&&!socialLessons.some(word=>x.lesson.name.includes(word)));
- assert.ok(unrelated.length>0);for(const {lesson:l,binding:b} of unrelated)assert.ok(!b.items.some(q=>q.socialSourceFocus),l.name);
+ assert.ok(unrelated.length>0);for(const {unit:u,lesson:l} of unrelated)assert.ok(!E.find(u,l).items.some(q=>q.socialSourceFocus),l.name);
 });
 
 test('browser loads new content before evidence registration',()=>{
