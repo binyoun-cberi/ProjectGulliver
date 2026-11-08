@@ -14,7 +14,7 @@
    for(let i=0;i<items.length;i++){
      const item=items[i];
      if(!item||!item.answer||selected[i]===undefined)throw Error('답안을 모두 확인해 주세요.');
-     const skill=SKILLS[item.koreanSkill]?item.koreanSkill:'comprehension';
+     const skill=SKILLS[item.englishSkill]?item.englishSkill:'comprehension';
      if(!skills[skill])skills[skill]={correct:0,total:0};
      skills[skill].total++;
      if(selected[i]===item.answer){skills[skill].correct++;correct++}
