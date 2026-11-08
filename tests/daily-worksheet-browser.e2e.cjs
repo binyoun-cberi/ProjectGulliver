@@ -134,6 +134,12 @@ test('English reading and listening assessments support Google voice, online gra
    await page.locator('#englishStoredResults summary').click();
    assert.match(await page.locator('#englishSavedRows').innerText(),/E301/);
   }else assert.match(await page.locator('#englishSaveStatus').innerText(),/저장하지 못했습니다/);
+  await page.goto(base+'?subject=english&grade=3&mode=practice',{waitUntil:'load'});
+  assert.equal(await page.locator('#unitSetting').isVisible(),false,'legacy English worksheet should hide unit selector');
+  assert.ok(await page.locator('#topic option[value="sentence"]').count());
+  await page.selectOption('#grade','5');
+  assert.ok(await page.locator('#topic option[value="message-reading"]').count(),'existing grade-5 English topics remain available');
+  assert.ok(await page.locator('#topic option[value="reading-assessment"]').count(),'new English assessments are also available');
   await page.goto(base+'?'+params(6,'listening-set'),{waitUntil:'load'});
   assert.equal(await page.locator('#englishListeningControls').isVisible(),true);
   assert.equal(await page.locator('#englishAssessmentStudent').isVisible(),true);
