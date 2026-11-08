@@ -9,7 +9,7 @@
  panel.className='english-listening-controls';
  panel.hidden=true;
  panel.setAttribute('aria-label','영어 듣기 평가 교사용 재생 도구');
- panel.innerHTML='<div class="english-listening-heading"><div><strong>영어 듣기 평가 · 교사용 재생</strong><p>학생용 문제지에는 지문이 표시되지 않습니다. 교사는 아래에서 음성·대본을 관리합니다.</p></div><div class="english-listening-settings"><label>재생 횟수 <select id="englishReplayLimit"><option value="1">1회</option><option value="2" selected>2회</option><option value="3">3회</option></select></label><label>읽기 속도 <select id="englishSpeechRate"><option value="0.85">천천히 · 0.85배</option><option value="1" selected>보통 · 1배</option><option value="1.15">빠르게 · 1.15배</option></select></label><label>한영어 음성 <select id="englishSpeechVoice" aria-label="한영어 음성 선택"><option value="auto">자동 · Google 우선</option></select></label></div></div><div id="englishListeningPassages" class="english-listening-list"></div><p id="englishListeningNotice" class="english-listening-notice" role="status" aria-live="polite">음성은 사용 중인 브라우저의 한영어 음성에 따라 조금 다르게 들릴 수 있습니다.</p>';
+ panel.innerHTML='<div class="english-listening-heading"><div><strong>영어 듣기 평가 · 교사용 재생</strong><p>학생용 문제지에는 지문이 표시되지 않습니다. 교사는 아래에서 음성·대본을 관리합니다.</p></div><div class="english-listening-settings"><label>재생 횟수 <select id="englishReplayLimit"><option value="1">1회</option><option value="2" selected>2회</option><option value="3">3회</option></select></label><label>읽기 속도 <select id="englishSpeechRate"><option value="0.85">천천히 · 0.85배</option><option value="1" selected>보통 · 1배</option><option value="1.15">빠르게 · 1.15배</option></select></label><label>영어 음성 <select id="englishSpeechVoice" aria-label="영어 음성 선택"><option value="auto">자동 · Google 우선</option></select></label></div></div><div id="englishListeningPassages" class="english-listening-list"></div><p id="englishListeningNotice" class="english-listening-notice" role="status" aria-live="polite">음성은 사용 중인 브라우저의 영어 음성에 따라 조금 다르게 들릴 수 있습니다.</p>';
  host.before(panel);
  const replay=panel.querySelector('#englishReplayLimit');
  const rate=panel.querySelector('#englishSpeechRate');
@@ -37,14 +37,14 @@
  function refreshVoices(){
    const previous=voiceSelect.value,voices=englishVoices();
    voices.sort((a,b)=>Number(isGoogleEnglish(b)&&/^en[-_]US/i.test(b.lang))*2+Number(isGoogleEnglish(b))-(Number(isGoogleEnglish(a)&&/^en[-_]US/i.test(a.lang))*2+Number(isGoogleEnglish(a))));
-   voiceSelect.replaceChildren(new Option('자동 · Google 한영어 우선','auto'));
+   voiceSelect.replaceChildren(new Option('자동 · Google 영어 우선','auto'));
    for(const v of voices)voiceSelect.add(new Option(v.name+' ('+v.lang+')',v.voiceURI));
    voiceSelect.value=voices.some(v=>v.voiceURI===previous)?previous:'auto';
    const chosen=bestVoice();
    if(!available)announce('이 브라우저에서 음성 재생을 사용할 수 없습니다. 교사용 대본을 이용해 주세요.');
-   else if(!chosen)announce('Google 한영어 음성이 아직 표시되지 않았어요. 음성 목록을 확인하는 중이며 기본 한영어 음성을 사용할 수 있습니다.');
-   else if(isGoogleEnglish(chosen))announce('Google 한영어 음성을 우선 선택했습니다. 듣기 재생에서 확인해 주세요.');
-   else announce('이 환경에서는 Google 한영어 음성을 제공하지 않아 '+chosen.name+' 음성을 사용합니다. 음성 목록에서 직접 바꿀 수도 있습니다.');
+   else if(!chosen)announce('Google 영어 음성이 아직 표시되지 않았어요. 음성 목록을 확인하는 중이며 기본 영어 음성을 사용할 수 있습니다.');
+   else if(isGoogleEnglish(chosen))announce('Google 영어 음성을 우선 선택했습니다. 듣기 재생에서 확인해 주세요.');
+   else announce('이 환경에서는 Google 영어 음성을 제공하지 않아 '+chosen.name+' 음성을 사용합니다. 음성 목록에서 직접 바꿀 수도 있습니다.');
  }
 
  function updateButtons(){
@@ -68,9 +68,9 @@
    utterance.lang='en-US';utterance.rate=Number(rate.value);utterance.pitch=1;utterance.volume=1;
    const voice=bestVoice();if(voice)utterance.voice=voice;
    active={id,utterance};
-   utterance.onstart=()=>{if(token===playToken){counts.set(id,n+1);announce('「'+p.title+'」을(를) '+(isGoogleEnglish(voice)?'Google 한영어':voice?.name||'기본 한영어')+' 음성으로 재생하고 있습니다.');updateButtons()}};
+   utterance.onstart=()=>{if(token===playToken){counts.set(id,n+1);announce('「'+p.title+'」을(를) '+(isGoogleEnglish(voice)?'Google 영어':voice?.name||'기본 영어')+' 음성으로 재생하고 있습니다.');updateButtons()}};
    utterance.onend=()=>{if(token===playToken){active=null;announce('「'+p.title+'」 재생이 끝났습니다.');updateButtons()}};
-   utterance.onerror=e=>{if(token===playToken){active=null;announce('음성을 재생하지 못했습니다. 브라우저의 한영어 음성과 소리 설정을 확인해 주세요.');updateButtons()}};
+   utterance.onerror=e=>{if(token===playToken){active=null;announce('음성을 재생하지 못했습니다. 브라우저의 영어 음성과 소리 설정을 확인해 주세요.');updateButtons()}};
    try{
      synth.speak(utterance);updateButtons();
      announce('「'+p.title+'」 음성 재생을 요청했습니다.');
@@ -123,7 +123,7 @@
  const results=window.EnglishAssessmentResults;
  let assessment=null;
  function resetStudent(sheet){
-   assessment=sheet?.subject==='english'&&['reading-set','reading-assessment','listening-set'].includes(sheet.topic)?sheet:null;
+   assessment=sheet?.subject==='english'&&['reading-assessment','listening-set'].includes(sheet.topic)?sheet:null;
    const supported=Boolean(assessment&&assessment.items.length&&assessment.items.every(q=>Array.isArray(q.choices)&&q.choices.length>=2));
    student.hidden=!assessment;student.classList.remove('in-progress');document.body.classList.remove('english-assessment-in-progress');
    examQuestions.hidden=true;examQuestions.replaceChildren();examResult.hidden=true;examResult.replaceChildren();
