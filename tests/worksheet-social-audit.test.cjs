@@ -24,7 +24,7 @@ test('five-era quotas preserve each selected answer format even under an opposit
 });
 test('all social evidence banks have complete unique options and rectangular tables',()=>{
  let questions=0;const banks=E.banks.filter(b=>b.subject==='social');for(const b of banks)for(const q of b.items){questions++;assert.ok(q.prompt&&q.answer&&q.explanation,q.evidenceId);assert.ok(q.choices.includes(q.answer),q.evidenceId);assert.equal(new Set(q.choices).size,q.choices.length,q.evidenceId);if(q.scienceMaterial?.headers)for(const row of q.scienceMaterial.rows)assert.equal(row.length,q.scienceMaterial.headers.length,q.evidenceId);}
- assert.equal(banks.length,143);assert.equal(questions,3081);
+ assert.equal(banks.length,143);assert.equal(questions,3161);
 });
 test('every enabled social lesson and standard has valid answers, evidence, exact counts and reproducible selection',()=>{
  let lessons=0,sheets=0,standards=0;
@@ -127,11 +127,11 @@ test('social prompts do not pre-answer by defining the correct choice in the ste
 });
 
 
-test('entire 3081-item social pool passes deep uniqueness and grounded historical anchors',()=>{
+test('entire 3161-item social pool passes deep uniqueness and grounded historical anchors',()=>{
  const auditor=require('../scripts/worksheet-social-deep-audit.cjs');
  const audit=auditor.examine();
  assert.equal(audit.summary.banks,143);
- assert.equal(audit.summary.questions,3081);
+ assert.equal(audit.summary.questions,3161);
  assert.equal(audit.summary.passedAnchors,auditor.HISTORY_FACTS.length,
   JSON.stringify(audit.historyChecks.filter(x=>!x.pass)));
  const out=path.resolve(__dirname,'../test-artifacts/worksheet-critique');

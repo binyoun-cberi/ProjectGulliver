@@ -1,0 +1,39 @@
+name: Worksheet mathematics and social quality
+on:
+  pull_request:
+    paths:
+      - 'worksheet-math-lesson-depth.js'
+      - 'worksheet-social-source-depth.js'
+      - 'worksheet-evidence-banks.js'
+      - '문제지 만들기.html'
+      - 'tests/worksheet-math-social-depth.test.cjs'
+      - 'tests/worksheet-evidence-banks.test.cjs'
+      - 'tests/worksheet-social-audit.test.cjs'
+      - 'docs/social-lesson-coverage.csv'
+  push:
+    branches:
+      - main
+    paths:
+      - 'worksheet-math-lesson-depth.js'
+      - 'worksheet-social-source-depth.js'
+      - 'worksheet-evidence-banks.js'
+      - 'tests/worksheet-math-social-depth.test.cjs'
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check syntax and focused regression tests
+        run: |
+          node --check worksheet-math-lesson-depth.js
+          node --check worksheet-social-source-depth.js
+          node --check worksheet-evidence-banks.js
+          node --test tests/worksheet-math-social-depth.test.cjs tests/worksheet-evidence-banks.test.cjs tests/worksheet-social-audit.test.cjs tests/worksheet-learning.test.cjs
+      - name: Check social lesson capacity CSV stays reproducible
+        run: |
+          node scripts/social-lesson-coverage.cjs
+          git diff --exit-code -- docs/social-lesson-coverage.csv
