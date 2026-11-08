@@ -5,13 +5,14 @@ const COLUMN=typeof module==='object'&&module.exports?require('./column-math.js'
 const SCIENCE=typeof module==='object'&&module.exports?require('./science-expansion.js'):globalThis.ScienceExpansion;
 const HANJA=typeof module==='object'&&module.exports?require('./worksheet-hanja.js'):globalThis.WorksheetHanja;
 const ASSESSMENTS=typeof module==='object'&&module.exports?require('./data/korean-assessment-bank.js'):globalThis.KoreanAssessmentBank;
+const ENGLISH_ASSESSMENTS=typeof module==='object'&&module.exports?require('./data/english-assessment-bank.js'):globalThis.EnglishAssessmentBank;
 const SUBJECTS={
  hanja:{name:'한자·사자성어',grades:[1,2,3,4,5,6],topics:[['hanja-trace','한자 따라쓰기',1],['idiom-trace','사자성어 따라쓰기',1]]},
  korean:{name:'국어',grades:[1,2,3,4,5,6],topics:[['opposite','반대말 찾기',1],['spacing','바른 띄어쓰기',2],['reading','글 읽고 답하기',1],['mainidea','짧은 글의 중심 내용',1,2],['vocabulary','문장 속 낱말의 뜻',3],['idiom','관용 표현과 속담',3],['hanja','한자어의 뜻',5],['reading-set','한 글을 읽고 여러 문제 풀기',1],['reading-assessment','국어 읽기 평가',1],['listening-set','국어 듣기 평가',1]]},
  math:{name:'수학',grades:[1,2,3,4,5,6],topics:[['column','세로셈 연습',2],['math-mix','유형 골라 섞기',1],['addition','덧셈과 뺄셈',1],['number','수의 자리와 크기',1,3],['time','시각과 시간',1,3],['shape','도형의 성질',1],['measurement','길이와 들이',2],['data-reading','표와 자료 읽기',3],['hundreds','세 자리 수 덧셈',3,3],['multiplication','곱셈',2],['division','나눗셈',3],['fraction','분수',3],['mixed','자연수의 혼합 계산',5,5],['decimal','소수의 계산',5,6]]},
  social:{name:'사회',grades:[3,4,5,6],topics:[['history-photo','사진으로 보는 역사',5],['direction','방향과 위치',3],['community','우리 사회의 일',3],['economy','생산과 소비',4],['past','생활 속 옛 모습',3,4],['local','지역의 변화',3,4],['map-symbol','지도와 공간',3,4],['natural','자연환경과 생활',3,4],['human','인문환경과 생활',3,4],['cultural','지역의 문화유산',3,4],['family','가족과 생활 변화',3,4],['community-rules','공동체와 규칙',3,4],['local-gov','지역의 공공 기관',3,4],['transport','교통과 지역 간 교류',3,4],['prehistoric','선사와 고조선',5],['ancient','삼국·가야의 유적',5],['goryeo','고려',5],['joseon','조선',5],['modern','일제 강점기·광복·전쟁',5],['history-mix','시대 골라 섞기',5],['history-review','한국사 종합',5],['korea-geography','우리 국토와 인구',5],['democracy','민주주의와 참여',5],['rights','인권과 헌법',5],['government','국가기관과 법',5],['market','경제생활과 시장',5],['world-geography','세계의 지리와 문화',5],['international','세계의 교류와 갈등',5],['environment','환경과 지속가능성',5],['contemporary','광복 이후의 대한민국',5]]},
  science:{name:'과학',grades:[3,4,5,6],topics:[['living','생물과 비생물',3],['matter','물질의 상태',3],['plant-observation','식물의 한살이 관찰',3,4],['weather','날씨 관찰 도구',5],['ecosystem','생태계 자료 읽기',5]]},
- english:{name:'영어',grades:[3,4,5,6],topics:[['words','기본 낱말',3],['sentence','문장 만들기',3],['conversation','상황에 맞는 대답',3],['short-reading','짧은 글 읽기',3,4],['message-reading','안내문·메시지 읽기',5]]}
+ english:{name:'영어',grades:[3,4,5,6],topics:[['words','기본 낱말',3],['sentence','문장 만들기',3],['conversation','상황에 맞는 대답',3],['short-reading','짧은 글 읽기',3,4],['message-reading','안내문·메시지 읽기',5],['reading-assessment','영어 읽기 평가',3],['listening-set','영어 듣기 평가',3]]}
 };
 SUBJECTS.science.topics.push(...SCIENCE.topics);
 // Semester labels are a browsing aid based on common unit names; textbook order varies.
@@ -69,8 +70,19 @@ for(const grade of [3,4,5,6])KOREAN_UNITS[grade]=[
  {id:`k${grade}-vocabulary`,label:grade<=4?'어휘 · 낱말의 의미 관계 [4국04-01]':'어휘 · 문맥에 맞는 낱말 쓰기',topics:['vocabulary','idiom',...(grade>=5?['hanja']:[])],types:[['vocabulary-context','문장 속 낱말의 뜻','vocabulary'],['idiom-context','관용 표현·속담의 뜻','idiom'],...(grade>=5?[['hanja-meaning','한자어의 뜻과 쓰임','hanja']]:[])]},
  {id:`k${grade}-reading`,label:grade<=4?'읽기 · 중심 생각과 이야기 흐름 [4국02-02·4국05-01]':'읽기 · 구조·추론과 작품 감상 [6국02-01·02·6국05-03]',topics:['reading-set','reading-assessment','listening-set'],types:[['reading-set-five','문학·비문학 함께 읽기','reading-set'],['reading-set-literary','문학 작품 읽기','reading-set'],['reading-set-nonfiction','비문학 글 읽기','reading-set'],['reading-set-brief','기초 짧은 글 읽기','reading-set'],['reading-assessment-five','고전·비문학 함께 읽기 평가','reading-assessment'],['reading-assessment-literary','문학 작품 읽기 평가','reading-assessment'],['reading-assessment-nonfiction','비문학 읽기 평가','reading-assessment'],['listening-set-five','문학·비문학 듣기 평가','listening-set'],['listening-set-literary','이야기 듣기 평가','listening-set'],['listening-set-nonfiction','설명문 듣기 평가','listening-set']]}
 ];
+ const ENGLISH_UNITS={};
+ for(const grade of [3,4,5,6])ENGLISH_UNITS[grade]=[
+  {id:'e'+grade+'-assessment',label:grade<=4?'읽기·듣기 · 익숙한 낱말과 짧은 글':'읽기·듣기 · 중심 내용과 간단한 추론',topics:['reading-assessment','listening-set'],types:[
+   ['en-reading-assessment-five','대화·이야기·설명문 읽기','reading-assessment'],
+   ['en-reading-assessment-literary','영어 이야기 읽기','reading-assessment'],
+   ['en-reading-assessment-nonfiction','영어 안내·설명문 읽기','reading-assessment'],
+   ['en-listening-set-five','다양한 영어 듣기 평가','listening-set'],
+   ['en-listening-set-literary','영어 이야기 듣기','listening-set'],
+   ['en-listening-set-nonfiction','영어 안내·설명 듣기','listening-set']
+  ]}
+ ];
 const COLUMN_TYPES=[['column-add2','두 자리 수 + 두 자리 수','column'],['column-sub2','두 자리 수 − 두 자리 수','column'],['column-mul2','두 자리 수 × 한 자리 수','column'],['column-mul3','세 자리 수 × 한 자리 수','column'],['column-div3','세 자리 수 ÷ 한 자리 수','column'],['column-add3','세 자리 수 + 세 자리 수','column'],['column-sub3','세 자리 수 − 세 자리 수','column']];
-function units(subject,grade){return subject==='hanja'?SUBJECTS.hanja.topics.map(([id,label])=>({id,label,topics:[id],types:[[id,label,id]]})):subject==='science'?SUBJECTS.science.topics.filter(t=>available(t,Number(grade))).map(([id,label])=>({id:'science-'+id,label,topics:[id],types:[[id+'-practice',label,id]]})):subject==='math'?[...(MATH_UNITS[grade]||[]),...(Number(grade)>=2?[{id:'column-practice',label:'세로셈 연습',topics:['column'],types:Number(grade)===2?COLUMN_TYPES.filter(t=>['column-add2','column-sub2'].includes(t[0])):COLUMN_TYPES}]:[])]:subject==='social'?(SOCIAL_UNITS[grade]||[]):subject==='korean'?(KOREAN_UNITS[grade]||[]):[]}
+function units(subject,grade){return subject==='hanja'?SUBJECTS.hanja.topics.map(([id,label])=>({id,label,topics:[id],types:[[id,label,id]]})):subject==='science'?SUBJECTS.science.topics.filter(t=>available(t,Number(grade))).map(([id,label])=>({id:'science-'+id,label,topics:[id],types:[[id+'-practice',label,id]]})):subject==='math'?[...(MATH_UNITS[grade]||[]),...(Number(grade)>=2?[{id:'column-practice',label:'세로셈 연습',topics:['column'],types:Number(grade)===2?COLUMN_TYPES.filter(t=>['column-add2','column-sub2'].includes(t[0])):COLUMN_TYPES}]:[])]:subject==='social'?(SOCIAL_UNITS[grade]||[]):subject==='korean'?(KOREAN_UNITS[grade]||[]):subject==='english'?(ENGLISH_UNITS[grade]||[]):[]}
 function types(subject,grade,topic,unitId){return units(subject,grade).filter(unit=>!unitId||unit.id===unitId).flatMap(unit=>unit.types.filter(entry=>entry[2]===topic).map(([id,label])=>[id,label]))}
 // Verified against the 2022 mathematics curriculum (MOE notice 2022-33, appendix 8).
 // These are practice links, not a claim that a sheet assesses the entire standard.
@@ -700,6 +712,24 @@ function assessmentSet(size,grade,r,type,listening){
 function readingAssessment(size,grade,r,type){return assessmentSet(size,grade,r,type,false)}
 function listeningSet(size,grade,r,type){return assessmentSet(size,grade,r,type,true)}
 
+
+ function englishAssessmentSet(size,grade,r,type,listening){
+  const genre=type.endsWith('-literary')?'literary':type.endsWith('-nonfiction')?'nonfiction':null;
+  const candidates=ENGLISH_ASSESSMENTS.asReadingSets(grade,{genre,mode:listening?'listen':'read'});
+  const selected=shuffle(candidates,r).slice(0,size/5),items=[];
+  for(const passage of selected)for(const [index,row] of passage.questions.entries()){
+   const [prompt,answer,...wrong]=row;
+   items.push({...choice(prompt,answer,[answer,...wrong],r),
+    ...(index===0?{readingTitle:passage.title,readingPassage:passage.passage,
+     sourceLabel:passage.sourceLabel,
+     ...(listening?{listeningPassage:true}:{})}:{}),
+    readingGroup:passage.id,readingGenre:passage.genre,
+    englishSkill:passage.skills[index]||'comprehension',
+    explanation:passage.rationales[index]});
+  }
+  if(items.length!==size)throw Error('선택한 영어 평가 지문이 부족해요. 문항 수를 줄이거나 글 종류를 변경해 주세요.');
+  return items;
+ }
 function socialTheme(topic,r){const [prompt,answer,...wrong]=pick(SOCIAL_THEME_QUESTIONS[topic],r);return choice(prompt,answer,[answer,...wrong],r)}
 // Original, short classroom evidence prompts. Historical facts are cross-checkable in the
 // National Institute of Korean History elementary history collection; local cases are fictional.
@@ -1317,8 +1347,8 @@ function generate(options){
  return {subject,grade:Number(grade),topic:'unit-mix',type:'',count:total,seed:Number(seed)>>>0,difficulty:options.difficulty||'basic',variant:'tens',responseFormat:options.responseFormat||'',columnPlaces:Boolean(options.columnPlaces),unitMix:plan,title:grade+'학년 '+SUBJECTS[subject].name+' · 여러 단원 모아 풀기',alignment:null,items};
 }
 function generateSingle({subject,topic,grade,count=10,seed=Date.now(),difficulty='basic',variant='tens',type='',eras=[],mathTypes=[],responseFormat='',columnMode='any',columnPlaces=false,hanjaLevel='8',idiomLevel='all'}){
- if(topic==='listening-set'&&!type)type='listening-set-five';
- if(topic==='reading-assessment'&&!type)type='reading-assessment-five';
+ if(topic==='listening-set'&&!type)type=subject==='english'?'en-listening-set-five':'listening-set-five';
+ if(topic==='reading-assessment'&&!type)type=subject==='english'?'en-reading-assessment-five':'reading-assessment-five';
  if(subject==='hanja')return HANJA.generate({subject,topic,grade,count,seed,responseFormat,hanjaLevel,idiomLevel});
  if(subject==='math'&&topic==='column'){
   if(!SUBJECTS.math.grades.includes(Number(grade))||!types(subject,Number(grade),topic).some(([id])=>id===type))throw Error('학년과 세로셈 유형을 확인해 주세요.');
@@ -1331,7 +1361,7 @@ function generateSingle({subject,topic,grade,count=10,seed=Date.now(),difficulty
  if(responseFormat&&(!answerFormats(subject,topic).some(([id])=>id===responseFormat)||subject==='math'))throw Error('이 학습 내용에서는 선택한 문제 유형을 사용할 수 없어요.');
  if(!info||!info.grades.includes(year)||!info.topics.some(t=>t[0]===topic&&available(t,year))||![5,10,15,20].includes(size)||!['basic','challenge'].includes(difficulty)||!['tens','ones'].includes(variant)||type&&!selected||['mixed','decimal','history-review','history-mix','math-mix','reading-set','reading-assessment','listening-set'].includes(topic)&&!selected||mixed&&(!Array.isArray(chosen)||!chosen.length||new Set(chosen).size!==chosen.length||chosen.some(era=>!HISTORY_ERAS.includes(era)))||mathMixed&&(!Array.isArray(selectedMath)||!selectedMath.length||new Set(selectedMath).size!==selectedMath.length||selectedMath.some(id=>!allowedMath.has(id))))throw Error(mixed?'역사 시대를 하나 이상 선택해 주세요.':mathMixed?'수학 유형을 하나 이상 선택해 주세요.':'학년·교과·유형을 다시 선택해 주세요.');
  const historyContentType=responseFormat&&responseFormat!=='initial'&&subject==='social'&&(mixed||Boolean(HISTORY_QUIZ[topic]))?type.replace(/-(quiz|ox|short|initial)$/,'-quiz'):responseFormat==='initial'?type.replace(/-(quiz|ox|short|initial)$/,'-initial'):type;
-  const random=rng(seed),eraOrder=mixed?shuffle(chosen,random):[],mathOrder=mathMixed?shuffle(selectedMath,random):[],items=subject==='science'?scienceQuestions(topic,size,random):topic==='history-review'?historyReview(type,size,random):topic==='reading-set'?readingSet(size,year,random,type):topic==='reading-assessment'?readingAssessment(size,year,random,type):topic==='listening-set'?listeningSet(size,year,random,type):[],seen=new Set(),seenAnswers=new Set(),seenPassages=new Set(),uniqueHistoryAnswers=subject==='social'&&(mixed||Boolean(HISTORY_QUIZ[topic]))&&!historyContentType.endsWith('-ox');let attempts=0;
+  const random=rng(seed),eraOrder=mixed?shuffle(chosen,random):[],mathOrder=mathMixed?shuffle(selectedMath,random):[],items=subject==='science'?scienceQuestions(topic,size,random):topic==='history-review'?historyReview(type,size,random):topic==='reading-set'?readingSet(size,year,random,type):topic==='reading-assessment'?(subject==='english'?englishAssessmentSet(size,year,random,type,false):readingAssessment(size,year,random,type)):topic==='listening-set'?(subject==='english'?englishAssessmentSet(size,year,random,type,true):listeningSet(size,year,random,type)):[],seen=new Set(),seenAnswers=new Set(),seenPassages=new Set(),uniqueHistoryAnswers=subject==='social'&&(mixed||Boolean(HISTORY_QUIZ[topic]))&&!historyContentType.endsWith('-ox');let attempts=0;
  while(items.length<size&&attempts++<3000){const skill=mathMixed?mathOrder[items.length%mathOrder.length]:null,candidate=mathMixed?{...typedMath(skill,random),skill}:mixed?historyQuiz(eraOrder[items.length%eraOrder.length],historyContentType,random):subject==='social'&&HISTORY_QUIZ[topic]?historyQuiz(topic,historyContentType,random):subject==='social'&&SOCIAL_THEME_QUESTIONS[topic]?socialTheme(topic,random):subject==='social'&&SOCIAL_EVIDENCE[topic]?socialEvidence(topic,random):subject==='korean'&&['vocabulary','idiom','hanja'].includes(topic)?koreanPractice(topic,year,random):selected&&subject==='math'?typedMath(type,random):item(subject,topic,year,random,difficulty,variant),key=candidate.prompt+'|'+candidate.answer+'|'+(candidate.detail||'');if(seen.has(key)||uniqueHistoryAnswers&&seenAnswers.has(candidate.answer)||subject==='social'&&!HISTORY_QUIZ[topic]&&SOCIAL_EVIDENCE[topic]&&seenPassages.has(candidate.detail)||topic==='reading'&&seenPassages.has(candidate.detail))continue;seen.add(key);seenAnswers.add(candidate.answer);if(subject==='social'&&!HISTORY_QUIZ[topic]&&SOCIAL_EVIDENCE[topic]||topic==='reading')seenPassages.add(candidate.detail);items.push(candidate)}
  if(items.length<size)throw Error('이 유형에서는 서로 다른 문제를 충분히 만들지 못했어요. 문항 수를 줄여 주세요.');
 

@@ -1,0 +1,46 @@
+name: English reading and listening assessments
+on:
+  pull_request:
+    paths:
+      - 'data/english-assessment-bank.js'
+      - 'daily-worksheet-core.js'
+      - 'daily-worksheet.js'
+      - 'worksheet-english-assessment-ui.js'
+      - 'worksheet-english-assessment-results.js'
+      - 'worksheet-english-assessment.css'
+      - 'worksheet-dictation-ui.js'
+      - '받아쓰기.html'
+      - '문제지 만들기.html'
+      - 'tests/english-assessment.test.cjs'
+      - 'tests/daily-worksheet-browser.e2e.cjs'
+      - '.github/workflows/english-assessment.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'data/english-assessment-bank.js'
+      - 'daily-worksheet-core.js'
+      - 'worksheet-english-assessment-ui.js'
+      - 'worksheet-english-assessment-results.js'
+      - 'tests/english-assessment.test.cjs'
+      - '.github/workflows/english-assessment.yml'
+jobs:
+  unit-tests:
+    name: English bank, worksheet generation and local result verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check data/english-assessment-bank.js
+          node --check daily-worksheet-core.js
+          node --check daily-worksheet.js
+          node --check worksheet-english-assessment-ui.js
+          node --check worksheet-english-assessment-results.js
+          node --check worksheet-dictation-ui.js
+          node --check tests/daily-worksheet-browser.e2e.cjs
+      - name: English and Korean regression suite
+        run: node --test tests/english-assessment.test.cjs tests/korean-assessment.test.cjs tests/korean-assessment-results.test.cjs

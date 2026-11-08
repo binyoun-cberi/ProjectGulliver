@@ -107,3 +107,61 @@ test('Korean reading and listening assessments render, answer and grade in real 
   assert.deepEqual(errors,[]);
  } finally {await browser.close()}
 });
+
+
+test('English reading and listening assessments support Google voice, online grading and private local results', {skip: !chrome && 'Chromium or Google Chrome is required; set CHROME_BIN to run locally'}, async () => {
+ const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--allow-file-access-from-files']});
+ try{
+  const page=await browser.newPage({viewport:{width:1200,height:850}});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const base=pathToFileURL(path.resolve('문제지 만들기.html')).href;
+  const params=(grade,topic)=>new URLSearchParams({subject:'english',grade:String(grade),mode:'practice',
+   unit:'e'+grade+'-assessment',topic,type:'en-'+topic+'-five',count:'5',seed:'42',format:'choice'}).toString();
+  await page.goto(base+'?'+params(3,'reading-assessment'),{waitUntil:'load'});
+  assert.equal(await page.locator('#englishAssessmentStudent').isVisible(),true);
+  assert.equal(await page.locator('#englishListeningControls').isVisible(),false);
+  await page.locator('#englishStudentCode').fill('E301');
+  await page.locator('#englishSaveOptIn').check();
+  await page.locator('#englishExamStart').click();
+  assert.equal(await page.locator('.english-exam-question').count(),5);
+  assert.equal(await page.locator('.english-exam-passage p').count(),1);
+  for(let i=0;i<5;i++)await page.locator('.english-exam-question').nth(i).locator('input[type="radio"]').first().check();
+  await page.locator('#englishExamSubmit').click();
+  assert.match(await page.locator('#englishExamResult').innerText(),/평가 결과 · \d+점/);
+  const records=await page.evaluate(()=>{try{return window.EnglishAssessmentResults.read(localStorage)}catch{return null}});
+  if(records){
+   assert.equal(records.length,1);assert.equal(records[0].code,'E301');assert.equal(records[0].grade,3);
+   await page.locator('#englishStoredResults summary').click();
+   assert.match(await page.locator('#englishSavedRows').innerText(),/E301/);
+  }else assert.match(await page.locator('#englishSaveStatus').innerText(),/저장하지 못했습니다/);
+  await page.goto(base+'?subject=english&grade=3&mode=practice',{waitUntil:'load'});
+  assert.equal(await page.locator('#unitSetting').isVisible(),false,'legacy English worksheet should hide unit selector');
+  assert.ok(await page.locator('#topic option[value="sentence"]').count());
+  await page.selectOption('#grade','5');
+  assert.ok(await page.locator('#topic option[value="message-reading"]').count(),'existing grade-5 English topics remain available');
+  assert.ok(await page.locator('#topic option[value="reading-assessment"]').count(),'new English assessments are also available');
+  await page.goto(base+'?'+params(6,'listening-set'),{waitUntil:'load'});
+  assert.equal(await page.locator('#englishListeningControls').isVisible(),true);
+  assert.equal(await page.locator('#englishAssessmentStudent').isVisible(),true);
+  const passage=await page.evaluate(()=>window.WorksheetEditor.getCurrent().items[0].readingPassage);
+  assert.ok(passage.length>150);
+  assert.equal((await page.locator('#questions').innerText()).includes(passage),false);
+  const voices=await page.evaluate(()=>{
+   if(!window.speechSynthesis)return [];
+   Object.defineProperty(window.speechSynthesis,'getVoices',{configurable:true,value:()=>[
+    {name:'System English',voiceURI:'system',lang:'en-US'},
+    {name:'Google UK English',voiceURI:'google-uk',lang:'en-GB'},
+    {name:'Google US English',voiceURI:'google-us',lang:'en-US'}]});
+   window.speechSynthesis.dispatchEvent(new Event('voiceschanged'));
+   return [...document.querySelector('#englishSpeechVoice').options].map(x=>x.textContent);
+  });
+  assert.equal(voices[1]?.includes('Google US English'),true);
+  await page.locator('#englishExamStart').click();
+  assert.equal((await page.locator('#englishExamQuestions').innerText()).includes(passage),false);
+  assert.equal(await page.locator('.english-listening-transcript').first().isVisible(),false);
+  await page.emulateMedia({media:'print'});
+  assert.equal(await page.locator('#englishAssessmentStudent').isVisible(),false);
+  assert.equal(await page.locator('#englishListeningControls').isVisible(),false);
+  assert.deepEqual(errors,[]);
+ }finally{await browser.close()}
+});
