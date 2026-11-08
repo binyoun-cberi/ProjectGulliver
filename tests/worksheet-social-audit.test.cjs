@@ -127,11 +127,11 @@ test('social prompts do not pre-answer by defining the correct choice in the ste
 });
 
 
-test('entire 3081-item social pool passes deep uniqueness and grounded historical anchors',()=>{
+test('entire 3161-item social pool passes deep uniqueness and grounded historical anchors',()=>{
  const auditor=require('../scripts/worksheet-social-deep-audit.cjs');
  const audit=auditor.examine();
  assert.equal(audit.summary.banks,143);
- assert.equal(audit.summary.questions,3081);
+ assert.equal(audit.summary.questions,3161);
  assert.equal(audit.summary.passedAnchors,auditor.HISTORY_FACTS.length,
   JSON.stringify(audit.historyChecks.filter(x=>!x.pass)));
  const out=path.resolve(__dirname,'../test-artifacts/worksheet-critique');
