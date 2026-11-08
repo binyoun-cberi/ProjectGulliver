@@ -183,6 +183,26 @@
    }
  }
 
+ // Expanded passages use the same IDs, difficulty, questions and print/listen schema.
+ // Load after legacy overrides so their independently authored oral questions are not replaced.
+ const expansions=typeof module==='object'&&module.exports
+   ?[require('./korean-assessment-extra-early.js'),require('./korean-assessment-extra-middle.js'),require('./korean-assessment-extra-upper.js')]
+   :[globalThis.KoreanAssessmentExtraEarly,globalThis.KoreanAssessmentExtraMiddle,globalThis.KoreanAssessmentExtraUpper];
+ const existingIds=new Set(entries.map(p=>p.id));
+ for(const bandEntries of expansions){
+   if(!Array.isArray(bandEntries))throw Error('국어 확장 지문 파일을 불러오지 못했습니다.');
+   for(const p of bandEntries){
+     if(existingIds.has(p.id))throw Error('중복된 국어 지문 ID: '+p.id);
+     existingIds.add(p.id);
+     entries.push(p);
+   }
+ }
+ function inventory(){
+   const bands={early:{literary:0,nonfiction:0},middle:{literary:0,nonfiction:0},upper:{literary:0,nonfiction:0}};
+   for(const p of entries){if(!bands[p.band]||!['literary','nonfiction'].includes(p.genre))throw Error('국어 지문 학년군 또는 장르 오류: '+p.id);bands[p.band][p.genre]++}
+   return JSON.parse(JSON.stringify({passages:entries.length,readingQuestions:entries.length*5,listeningAlternatives:entries.length*2,bands}));
+ }
+
  function copy(value){return JSON.parse(JSON.stringify(value));}
  function passages(grade,{genre,mode}={}){
    const g=Number(grade),band=g<=2?'early':g<=4?'middle':'upper';
@@ -207,7 +227,7 @@
  function audit(){
    const ids=new Set();
    for(const p of entries){
-     if(ids.has(p.id)||!p.passage.trim()||p.questions.length!==5||!p.sourceTitle)throw Error('지문 검증 실패: '+p.id);
+     if(ids.has(p.id)||!p.passage.trim()||p.questions.length!==5||!p.sourceTitle||!p.sourceRelation||p.reviewStatus!=='수업 전 교사 검수 필요')throw Error('지문 검증 실패: '+p.id);
      ids.add(p.id);
      if(p.listeningQuestions.length!==5||p.listeningQuestions.filter((q,i)=>q.prompt!==p.questions[i].prompt).length<2)throw Error('듣기 문항의 독립성 부족: '+p.id);
      for(const q of [...p.questions,...p.listeningQuestions]){
@@ -218,5 +238,5 @@
    return {passages:entries.length,questions:entries.reduce((n,p)=>n+p.questions.length,0),grades:[1,2,3,4,5,6]};
  }
  audit();
- return {passages,asReadingSets,toAuthored,audit};
+ return {passages,asReadingSets,toAuthored,audit,inventory};
 });
