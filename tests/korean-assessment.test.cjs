@@ -8,11 +8,11 @@ const core=require('../daily-worksheet-core.js');
 const curriculum=require('../worksheet-korean-readings.js');
 
 test('공통 지문은행: 학년대별 4편, 모두 5문항, 유일한 정답과 출처',()=>{
-  assert.deepEqual(bank.audit(),{passages:12,questions:60,grades:[1,2,3,4,5,6]});
+  assert.deepEqual(bank.audit(),{passages:48,questions:240,grades:[1,2,3,4,5,6]});
   const unique=new Set();
   for(let grade=1;grade<=6;grade++){
     const passages=bank.passages(grade);
-    assert.equal(passages.length,4);
+    assert.equal(passages.length,16);
     for(const p of passages){
       assert.ok(p.read&&p.listen);
       assert.ok(p.reviewStatus.includes('검수 필요'));
@@ -26,14 +26,14 @@ test('공통 지문은행: 학년대별 4편, 모두 5문항, 유일한 정답�
       }
     }
     const readingSets=bank.asReadingSets(grade,{mode:'read'}),listeningSets=bank.asReadingSets(grade,{mode:'listen'});
-    assert.equal(readingSets.length,4);
-    assert.equal(listeningSets.length,4);
-    for(let i=0;i<4;i++){
+    assert.equal(readingSets.length,16);
+    assert.equal(listeningSets.length,16);
+    for(let i=0;i<16;i++){
       assert.equal(readingSets[i].passage,listeningSets[i].passage,'읽기/듣기는 지문 원문을 공유해야 합니다.');
       assert.ok(readingSets[i].questions.filter((q,j)=>q[0]!==listeningSets[i].questions[j][0]).length>=2,'듣기 전용 문항이 2개 이상 필요합니다.');
     }
   }
-  assert.equal(unique.size,12);
+  assert.equal(unique.size,48);
 });
 
 test('기존 국어 단원에서 읽기와 듣기 평가를 고를 수 있다',()=>{
