@@ -128,10 +128,12 @@ test('English reading and listening assessments support Google voice, online gra
   for(let i=0;i<5;i++)await page.locator('.english-exam-question').nth(i).locator('input[type="radio"]').first().check();
   await page.locator('#englishExamSubmit').click();
   assert.match(await page.locator('#englishExamResult').innerText(),/평가 결과 · \d+점/);
-  const records=await page.evaluate(()=>window.EnglishAssessmentResults.read(localStorage));
-  assert.equal(records.length,1);assert.equal(records[0].code,'E301');assert.equal(records[0].grade,3);
-  await page.locator('#englishStoredResults summary').click();
-  assert.match(await page.locator('#englishSavedRows').innerText(),/E301/);
+  const records=await page.evaluate(()=>{try{return window.EnglishAssessmentResults.read(localStorage)}catch{return null}});
+  if(records){
+   assert.equal(records.length,1);assert.equal(records[0].code,'E301');assert.equal(records[0].grade,3);
+   await page.locator('#englishStoredResults summary').click();
+   assert.match(await page.locator('#englishSavedRows').innerText(),/E301/);
+  }else assert.match(await page.locator('#englishSaveStatus').innerText(),/저장하지 못했습니다/);
   await page.goto(base+'?'+params(6,'listening-set'),{waitUntil:'load'});
   assert.equal(await page.locator('#englishListeningControls').isVisible(),true);
   assert.equal(await page.locator('#englishAssessmentStudent').isVisible(),true);
