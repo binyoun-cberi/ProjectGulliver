@@ -51,8 +51,8 @@ test('CSV 내보내기는 엑셀 수식 주입 방지와 UTF-8 BOM을 적용한�
 test('공통 지문은 읽기·듣기 공통이며 듣기에는 별도 문항과 평가 요소 태그가 있다',()=>{
  for(let g=1;g<=6;g++){
   const a=Bank.asReadingSets(g,{mode:'read'}),b=Bank.asReadingSets(g,{mode:'listen'});
-  assert.equal(a.length,4);assert.equal(b.length,4);
-  for(let i=0;i<4;i++){
+  assert.equal(a.length,16);assert.equal(b.length,16);
+  for(let i=0;i<16;i++){
    assert.equal(a[i].passage,b[i].passage);
    assert.equal(a[i].skills.length,5);assert.equal(b[i].skills.length,5);
    assert.ok(a[i].skills.every(Boolean)&&b[i].skills.every(Boolean));
