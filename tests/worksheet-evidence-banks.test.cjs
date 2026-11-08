@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../worksheet-evidence-banks.js'),T=require('../worksheet-learning.js'),C=require('../daily-worksheet-core.js');
 test('original banks contain complete, independent evidence questions',()=>{
- assert.equal(E.banks.length,342);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),8063);
+ assert.equal(E.banks.length,346);assert.equal(E.banks.reduce((n,b)=>n+b.items.filter(q=>!q.legacyHistoryId&&!q.legacyPhotoName&&!q.legacyMaterialId).length,0),8243);
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(b.id+q.evidenceId));ids.add(b.id+q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
@@ -15,11 +15,12 @@ test('all authored banks are reachable from an actual lesson; specific past sour
  for(const u of T.catalog)for(const l of u.lessons){const b=E.find(u,l);if(!b||T.binding(u,l)?.kind!=='evidence')continue;reached.add(b.id);if(/일기와 편지|사진과 그림|오래된 물건|노래 가사와 신문/.test(l.name))cases.push([u,l,b]);}
  assert.deepEqual([...reached].sort(),E.banks.map(b=>b.id).sort());assert.ok(cases.length>=4);
  for(const [u,l,b] of cases){
-  const s=T.generate({subject:u.subject,grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:b.items.length,responseFormat:'choice',seed:7},C);
-  if(/일기와 편지/.test(l.name))assert.deepEqual(s.items.map(q=>q.evidenceId),['past-sources-1']);
-  if(/오래된 물건/.test(l.name))assert.deepEqual(s.items.map(q=>q.evidenceId),['past-sources-3']);
-  if(/사진과 그림/.test(l.name))assert.deepEqual(s.items.map(q=>q.evidenceId).sort(),['past-sources-2','past-sources-4']);
-  if(/노래 가사와 신문/.test(l.name))assert.deepEqual(s.items.map(q=>q.evidenceId),['past-sources-5']);
+  const size=Math.min(20,b.items.length),s=T.generate({subject:u.subject,grade:u.grade,semester:u.semester,unitId:u.id,lessonId:l.id,count:size,responseFormat:'choice',seed:7},C);
+  assert.equal(s.items.length,size);
+  const expected=/일기와 편지/.test(l.name)?['past-sources-1']:/오래된 물건/.test(l.name)?['past-sources-3']:/사진과 그림/.test(l.name)?['past-sources-2','past-sources-4']:['past-sources-5'];
+  for(const id of expected)assert.ok(b.items.some(q=>q.evidenceId===id),l.name+' '+id);
+  const focus=/일기와 편지/.test(l.name)?'diary':/오래된 물건/.test(l.name)?'object':/사진과 그림/.test(l.name)?'photo':null;
+  assert.ok(b.items.every(q=>!q.socialSourceFocus||q.socialSourceFocus===focus),l.name);
  }
 });
 test('numeric answers and the limits of inference have evidence in the displayed records',()=>{
@@ -151,7 +152,7 @@ test('Silla unification and Goryeo lessons keep periods, activities and event or
  const culture=E.banks.find(b=>b.id==='goryeo-culture').items;assert.match(culture[0].answer,/다른 색 흙/);assert.match(culture[2].answer,/낱글자 활자를 조합/);
 });
 test('legacy history is reused without changing its bank, with photo rights and separate essay capacity',()=>{
- assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),8231);
+ assert.equal(E.banks.reduce((n,b)=>n+b.items.length,0),8411);
  const original=C.historyItems('goryeo');const copy=C.historyItems('goryeo');copy[0].answer='changed';copy[0].choices[0]='changed';assert.deepEqual(C.historyItems('goryeo'),original);
  const used=E.banks.flatMap(b=>b.items.filter(q=>q.legacyHistoryId));assert.equal(used.length,139);assert.equal(new Set(used.map(q=>q.legacyHistoryId)).size,139);
  for(const b of E.banks){const known=b.items.filter(q=>q.legacyHistoryId);assert.equal(new Set(known.map(q=>q.answer.replace(/\s/g,''))).size,known.length);

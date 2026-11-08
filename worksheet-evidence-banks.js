@@ -566,13 +566,19 @@ for(const q of modernDepth.items()){const b=banks.find(b=>b.id===q.bankId);if(!b
 (typeof module==='object'&&module.exports?require('./worksheet-korean-depth.js'):globalThis.WorksheetKoreanDepth).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-social-local-life-depth.js'):globalThis.WorksheetSocialLocalLifeDepth).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-social-past-local-depth.js'):globalThis.WorksheetSocialPastLocalDepth).register(banks);
+(typeof module==='object'&&module.exports?require('./worksheet-social-source-depth.js'):globalThis.WorksheetSocialSourceDepth).register(banks);
+(typeof module==='object'&&module.exports?require('./worksheet-math-lesson-depth.js'):globalThis.WorksheetMathLessonDepth).register(banks);
 function find(unit,lesson){
  const exactLessonName=lesson.name.replace(/^(?:[①-⑳]|\d+\.)\s*/, '').trim();
  const exact=banks.find(b=>b.exactLessonName===exactLessonName&&b.subject===unit.subject&&b.grades.includes(unit.grade)&&(!b.exactUnitName||b.exactUnitName===unit.name)&&(!b.exactSemester||b.exactSemester===unit.semester));
  const b=exact||banks.find(b=>b.subject===unit.subject&&b.grades.includes(unit.grade)&&b.pattern.test(lesson.name)&&!(b.id==='local-problem'&&/지역문제란/.test(lesson.name)));if(!b)return null;
  let indexes=null;const n=lesson.name;
  if(b.id==='korean-war'){const focus=/피해와 영향/.test(n)?'war-impact':'war-life';return {...b,items:b.items.filter(q=>q.lessonFocus===focus)};}
- if(b.id==='past-sources')indexes=/오래된 물건/.test(n)?[2]:/일기와 편지/.test(n)?[0]:/사진과 그림/.test(n)?[1,3]:/노래 가사와 신문/.test(n)?[4]:null;
+ if(b.id==='past-sources'){
+  const focus=/오래된 물건/.test(n)?'object':/일기와 편지/.test(n)?'diary':/사진과 그림/.test(n)?'photo':null;
+  const base=/오래된 물건/.test(n)?[2]:/일기와 편지/.test(n)?[0]:/사진과 그림/.test(n)?[1,3]:/노래 가사와 신문/.test(n)?[4]:b.items.map((q,i)=>q.socialSourceFocus?-1:i).filter(i=>i>=0);
+  indexes=[...base,...b.items.map((q,i)=>q.socialSourceFocus===focus&&focus?i:-1).filter(i=>i>=0)];
+ }
  if(b.id==='transport-types')indexes=/옛날/.test(n)?[0,1]:[2,3,4];
  if(b.id==='transport-change')indexes=/불편/.test(n)?[3,4]:[0,1,2];
  if(b.id==='communication-types')indexes=/옛날/.test(n)?[1,2]:/오늘날/.test(n)?[3,4]:[0];
@@ -598,7 +604,7 @@ function find(unit,lesson){
  if(b.id==='rights-cases')indexes=/보장/.test(n)?[0,1]:[2,3,4];
  if(b.id==='rights-support')indexes=/법을 지키고/.test(n)?[0]:/우리 사회/.test(n)?[1,2]:[3,4];
  if(b.id==='election-principles')indexes=/의미/.test(n)?[0]:/중요성/.test(n)?[1]:/공정한/.test(n)?[2,3]:[4];
- if(b.id==='timeline'&&/표현하는 말/.test(n))indexes=[3];
+ if(b.id==='timeline')indexes=/표현하는 말/.test(n)?[3,...b.items.map((q,i)=>q.socialSourceFocus==='time'?i:-1).filter(i=>i>=0)]:b.items.map((q,i)=>q.socialSourceFocus?-1:i).filter(i=>i>=0);
  if(b.id==='local-problem'){
   if(/지역문제란/.test(n))return null;
   indexes=/원인/.test(n)?[0,1]:/실천/.test(n)?[2,4]:null;
