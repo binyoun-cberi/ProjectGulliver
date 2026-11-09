@@ -81,7 +81,8 @@ test('이솝 원전 각색 표기를 포함하고 창작 자료는 실제 안내
  }
  for(const id of ['town-festival-notice','one-week-temperature','star-club-notice']){
   const e=Object.values(extra).flat().find(x=>x.id==='kr-eval-'+id);
-  assert.ok(e&&/가상|가정한/.test(e.passage),id+' 자료의 가상성');
+  assert.ok(e&&e.sourceRelation==='창작'&&e.sourceTitle==='클라시트 창작 지문',id+' 자료의 창작성');
+  assert.ok(!/^(다음은 가상|가상의 학교)/.test(e.passage),id+' 학생용 문장에 제작 메타정보가 없어야 합니다.');
  }
 });
 test('모든 학년·장르의 읽기·듣기 평가에서 5~20문항을 안정적으로 생성한다',()=>{
@@ -112,4 +113,23 @@ test('기존 인쇄·듣기 화면은 확장 데이터 파일을 공유하고 �
  assert.match(ui,/if\(assessment\.topic!=='listening-set'\)/);
  const c=fs.readFileSync(path.join(__dirname,'..','daily-worksheet.js'),'utf8');
  assert.match(c,/if\(sheet\.topic==='listening-set'\)\{const note=/);
+});
+
+test('편집 검수: 부정확한 수식과 어색한 학년 관계·가상 문구가 재발하지 않는다',()=>{
+ const texts=[1,3,5].flatMap(grade=>bank.passages(grade));
+ const byId=id=>texts.find(p=>p.id==='kr-eval-'+id);
+ assert.ok(byId('old-shoes').passage.includes('한 학년 아래인 학생'));
+ assert.equal(byId('old-shoes').passage.includes('같은 학년의 동생'),false);
+ assert.equal(byId('dog-water-reflection').passage.includes('비친 그림자'),false);
+ assert.ok(byId('dog-water-reflection').passage.includes('물에 비친 자신의 모습'));
+ assert.equal(byId('garden-pond').passage.includes('쓰레기가 많던 날'),false);
+ assert.ok(byId('garden-pond').passage.includes('바람이 강하게 불던 날'));
+ assert.ok(byId('one-week-temperature').passage.includes('오전 10시'));
+ assert.equal(byId('one-week-temperature').passage.includes('측정했다고 가정한'),false);
+ assert.ok(byId('one-week-temperature').questions.some(q=>q.skill==='comparison'));
+ for(const p of texts){
+   assert.equal(p.reviewStatus,'수업 전 교사 검수 필요');
+   assert.equal(p.questions.length,5);
+   assert.equal(p.listeningQuestions.length,5);
+ }
 });
