@@ -65,7 +65,7 @@ const HISTORY_ERAS=['prehistoric','ancient','goryeo','joseon','modern'];
 for(const grade of [5,6])SOCIAL_UNITS[grade].push({id:`s${grade}-history-mix`,label:'역사 · 시대 골라 섞기',topics:['history-mix'],types:[['history-mix-quiz','선택한 시대 객관식','history-mix'],['history-mix-short','선택한 시대 답 쓰기','history-mix'],['history-mix-ox','선택한 시대 OX','history-mix'],['history-mix-initial','선택한 시대 초성 힌트','history-mix']]});
 for(const grade of [3,4,5,6])for(const id of grade<=4?['map-symbol','natural','human','cultural','family','community-rules','local-gov','transport']:['korea-geography','democracy','rights','government','market','world-geography','international','environment','contemporary'])SOCIAL_UNITS[grade].push({id:`s${grade}-${id}`,label:SOCIAL_THEME_LABELS[id],topics:[id],types:[[`${id}-quiz`,'개념과 사례 고르기',id]]});
 const KOREAN_UNITS={};
-for(const grade of [1,2])KOREAN_UNITS[grade]=[{id:`k${grade}-reading`,label:'읽기 · 중심 내용과 인물 마음 [2국02-03·04]',topics:['reading-set','reading-assessment','listening-set'],types:[['reading-set-five','이야기·설명문 함께 읽기','reading-set'],['reading-set-literary','인물과 마음 살펴 읽기','reading-set'],['reading-set-nonfiction','설명문의 중심 내용 읽기','reading-set'],['reading-assessment-five','새 지문과 기존 지문 함께 읽기','reading-assessment'],['reading-assessment-literary','문학 작품 읽기 평가','reading-assessment'],['reading-assessment-nonfiction','설명문 읽기 평가','reading-assessment'],['listening-set-five','다양한 이야기를 듣고 이해하기','listening-set'],['listening-set-literary','문학 이야기 듣기','listening-set'],['listening-set-nonfiction','설명문·안내문 듣기','listening-set']]}];
+for(const grade of [1,2])KOREAN_UNITS[grade]=[{id:`k${grade}-reading`,label:'읽기 · 중심 내용과 인물 마음 [2국02-03·04]',topics:['reading-set','reading-assessment','listening-set'],types:[['reading-set-five','이야기·설명문 함께 읽기','reading-set'],['reading-set-literary','인물과 마음 살펴 읽기','reading-set'],['reading-set-nonfiction','설명문의 중심 내용 읽기','reading-set'],['reading-assessment-five','문학·비문학 지문 고르게 평가','reading-assessment'],['reading-assessment-literary','문학 작품 읽기 평가','reading-assessment'],['reading-assessment-nonfiction','설명문 읽기 평가','reading-assessment'],['listening-set-five','다양한 이야기를 듣고 이해하기','listening-set'],['listening-set-literary','문학 이야기 듣기','listening-set'],['listening-set-nonfiction','설명문·안내문 듣기','listening-set']]}];
 for(const grade of [3,4,5,6])KOREAN_UNITS[grade]=[
  {id:`k${grade}-vocabulary`,label:grade<=4?'어휘 · 낱말의 의미 관계 [4국04-01]':'어휘 · 문맥에 맞는 낱말 쓰기',topics:['vocabulary','idiom',...(grade>=5?['hanja']:[])],types:[['vocabulary-context','문장 속 낱말의 뜻','vocabulary'],['idiom-context','관용 표현·속담의 뜻','idiom'],...(grade>=5?[['hanja-meaning','한자어의 뜻과 쓰임','hanja']]:[])]},
  {id:`k${grade}-reading`,label:grade<=4?'읽기 · 중심 생각과 이야기 흐름 [4국02-02·4국05-01]':'읽기 · 구조·추론과 작품 감상 [6국02-01·02·6국05-03]',topics:['reading-set','reading-assessment','listening-set'],types:[['reading-set-five','문학·비문학 함께 읽기','reading-set'],['reading-set-literary','문학 작품 읽기','reading-set'],['reading-set-nonfiction','비문학 글 읽기','reading-set'],['reading-set-brief','기초 짧은 글 읽기','reading-set'],['reading-assessment-five','고전·비문학 함께 읽기 평가','reading-assessment'],['reading-assessment-literary','문학 작품 읽기 평가','reading-assessment'],['reading-assessment-nonfiction','비문학 읽기 평가','reading-assessment'],['listening-set-five','문학·비문학 듣기 평가','listening-set'],['listening-set-literary','이야기 듣기 평가','listening-set'],['listening-set-nonfiction','설명문 듣기 평가','listening-set']]}
@@ -686,14 +686,23 @@ function readingSet(size,grade,r,type){
 }
 function assessmentSet(size,grade,r,type,listening){
  const genre=type.endsWith('-literary')?'literary':type.endsWith('-nonfiction')?'nonfiction':null;
- const original=READING_SETS[grade<=2?'early':grade<=4?'lower':'upper'];
- const shared=ASSESSMENTS.asReadingSets(grade,{mode:listening?'listen':'read'});
- // Shared original reading texts are usable in both assessments. For listening,
- // oral framing is adapted while the authored bank adds separate listening questions.
- const legacy=listening?original.map(p=>({...p,questions:p.questions.map((row,i)=>i===0||i===4?['들은 내용을 떠올리며 답하세요. '+row[0],...row.slice(1)]:row)})):original;
- const bank=[...legacy,...shared];
- const candidates=bank.filter(p=>(!p.minGrade||grade>=p.minGrade)&&(genre?(p.genre||'brief')===genre:Boolean(p.genre)));
- const chosen=shuffle(candidates,r).slice(0,size/5),items=[];
+ // Only the shared assessment bank has fully authored explanations and
+ // cognitive-skill labels. Older practice texts remain available through reading-set.
+ const bank=ASSESSMENTS.asReadingSets(grade,{mode:listening?'listen':'read'});
+ const candidates=bank.filter(p=>!genre||p.genre===genre),groups=size/5;
+ let chosen=shuffle(candidates,r).slice(0,groups);
+ if(!genre&&groups>=2){
+   // A general 10–20 item evaluation should not accidentally contain only stories
+   // or only informational texts. Odd-sized sets alternate the extra genre by seed.
+   const lit=shuffle(candidates.filter(p=>p.genre==='literary'),r);
+   const info=shuffle(candidates.filter(p=>p.genre==='nonfiction'),r);
+   const moreLit=groups%2===1&&r()<0.5;
+   const litCount=Math.floor(groups/2)+(moreLit?1:0);
+   const infoCount=groups-litCount;
+   if(lit.length>=litCount&&info.length>=infoCount)
+     chosen=shuffle([...lit.slice(0,litCount),...info.slice(0,infoCount)],r);
+ }
+ const items=[];
  const standards=grade<=2?{literary:'[2국02-04]',nonfiction:'[2국02-03]'}:grade<=4?{literary:'[4국05-01]',nonfiction:'[4국02-02]'}:{literary:'[6국05-03]',nonfiction:'[6국02-01]'};
  for(const passage of chosen)for(const [index,row] of passage.questions.entries()){
   const [prompt,answer,...wrong]=row;
