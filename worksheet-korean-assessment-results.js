@@ -5,7 +5,7 @@
 })(typeof globalThis!=='undefined'?globalThis:this,()=>{
  'use strict';
  const KEY='clasheet-korean-assessment-results.v1',MAX_RECORDS=100;
- const SKILLS={fact:'정보 파악',cause:'원인과 결과',sequence:'순서 파악',evidence:'근거 찾기',main:'중심 내용',inference:'추론',application:'상황 적용',action:'행동 이해',intent:'글쓴이 의도',structure:'글의 구조',comparison:'비교·대조',solution:'문제 해결',safety:'안전 판단',location:'장소 파악',time:'시간 정보 파악',rule:'규칙 이해',condition:'조건 판단',comprehension:'내용 이해'};
+ const SKILLS={fact:'정보 파악',cause:'원인과 결과',sequence:'순서 파악',evidence:'근거 찾기',main:'중심 내용',inference:'추론',application:'상황 적용',action:'행동 이해',intent:'글쓴이 의도',structure:'글의 구조',comparison:'비교·대조',emotion:'인물 마음 이해',solution:'문제 해결',safety:'안전 판단',location:'장소 파악',time:'시간 정보 파악',rule:'규칙 이해',condition:'조건 판단',comprehension:'내용 이해'};
  function validCode(value){return typeof value==='string'&&/^[A-Za-z0-9_-]{1,20}$/.test(value)}
  function skillName(key){return SKILLS[key]||SKILLS.comprehension}
  function summarize(items,selected){
