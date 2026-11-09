@@ -6,7 +6,7 @@ const Bank=require('../data/korean-assessment-bank.js');
 const Results=require('../worksheet-korean-assessment-results.js');
 
 const tagged=['fact','cause','sequence','evidence','main','inference','application',
- 'action','intent','structure','comparison','solution','safety','location','time','rule','condition'];
+ 'action','intent','structure','comparison','emotion','solution','safety','location','time','rule','condition'];
 const get=id=>[1,3,5].flatMap(grade=>Bank.passages(grade)).find(p=>p.id==='kr-eval-'+id);
 
 test('평가 요소 태그와 근거 해설이 모든 국어 평가 문항에 있다',()=>{
@@ -82,23 +82,23 @@ test('고학년은 자료 해석 한계, 비교, 민주적 의사결정과 상�
   assert.equal(p.reviewStatus,'수업 전 교사 검수 필요');
  }
 });
-test('국어 평가 결과에서 누락된 7개 요소는 내용 이해에 합쳐지지 않는다',()=>{
+test('국어 평가 결과에서 누락된 8개 요소는 내용 이해에 합쳐지지 않는다',()=>{
  const specs=[
-   ['comparison','비교·대조'],['solution','문제 해결'],['safety','안전 판단'],
+   ['comparison','비교·대조'],['emotion','인물 마음 이해'],['solution','문제 해결'],['safety','안전 판단'],
    ['location','장소 파악'],['time','시간 정보 파악'],['rule','규칙 이해'],['condition','조건 판단']
  ];
  const questions=specs.map(([skill],i)=>({answer:'정답'+i,koreanSkill:skill}));
  const answers=questions.map((q,i)=>i%2===0?q.answer:'오답');
  const result=Results.summarize(questions,answers);
  assert.equal(result.correct,4);
- assert.equal(result.total,7);
- assert.equal(Object.keys(result.skills).length,7);
+ assert.equal(result.total,8);
+ assert.equal(Object.keys(result.skills).length,8);
  for(const [skill,label] of specs){
    assert.ok(result.skills[skill]);
    assert.equal(result.skills[skill].total,1);
    assert.equal(Results.skillName(skill),label);
  }
  const saved=Results.makeRecord({code:'A06',grade:6,topic:'reading-assessment',summary:result,when:'2026-11-10T00:00:00Z'});
- assert.equal(Object.keys(saved.skills).length,7);
+ assert.equal(Object.keys(saved.skills).length,8);
  assert.ok(!saved.skills.comprehension);
 });
