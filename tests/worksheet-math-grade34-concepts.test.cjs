@@ -38,7 +38,7 @@ test('each bank is reached by its exact 2022 textbook lesson and supports reprod
   const grade=b.grades[0],semester=b.exactSemester;
   const unit=T.units('math',grade,semester).find(u=>u.name===b.exactUnitName);
   assert.ok(unit,'unit missing: '+b.exactUnitName);
-  const lesson=unit.lessons.find(l=>l.name.replace(/^\\d+\\.\\s*/,'').trim()===b.exactLessonName);
+  const lesson=unit.lessons.find(l=>l.name.replace(/^\d+\.\s*/,'').trim()===b.exactLessonName);
   assert.ok(lesson,'lesson missing: '+b.exactLessonName);
   const e=E.find(unit,lesson);
   assert.equal(e?.id,b.id,'wrong exact bank for '+b.exactLessonName);
@@ -78,13 +78,13 @@ test('distractors for seconds, metric units, weight and capacity are not equival
 test('grade 4 geometry examples satisfy angle sums and shape classification',()=>{
  const byKind=kind=>banks.find(b=>b.id.includes('math-g4-shapes-')&&b.id.includes('-'+kind+'-'));
  for(const row of byKind('triangle-acute-obtuse').items){
-  const angles=[...row.prompt.matchAll(/(\\d+)°/g)].map(x=>Number(x[1]));
+  const angles=[...row.prompt.matchAll(/(\d+)°/g)].map(x=>Number(x[1]));
   assert.equal(angles.reduce((s,v)=>s+v,0),180);
   const t=angles.includes(90)?'직각삼각형':angles.some(x=>x>90)?'둔각삼각형':'예각삼각형';
   assert.equal(row.answer,t);
  }
  for(const row of byKind('angle-estimate').items){
-  const h=Number(row.prompt.match(/정각 (\\d+)시/)[1]);
+  const h=Number(row.prompt.match(/정각 (\d+)시/)[1]);
   assert.equal(row.answer,Math.min(h,12-h)*30+'°');
  }
 });
