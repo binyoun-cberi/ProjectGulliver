@@ -578,6 +578,8 @@ for(const q of modernDepth.items()){const b=banks.find(b=>b.id===q.bankId);if(!b
 (typeof module==='object'&&module.exports?require('./worksheet-korean-grade3-language.js'):globalThis.WorksheetKoreanGradeThreeLanguage).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-korean-grade4-language.js'):globalThis.WorksheetKoreanGradeFourLanguage).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-korean-upper-language.js'):globalThis.WorksheetKoreanUpperGradeLanguage).register(banks);
+(typeof module==='object'&&module.exports?require('./worksheet-korean-literacy-grade5.js'):globalThis.WorksheetKoreanLiteracyFive).register(banks);
+(typeof module==='object'&&module.exports?require('./worksheet-korean-literacy-grade6.js'):globalThis.WorksheetKoreanLiteracySix).register(banks);
 function find(unit,lesson){
  const exactLessonName=lesson.name.trim().replace(/^(?:[①-⑳]|\d+\.)\s*/, '').trim();
  const exact=banks.find(b=>b.exactLessonName===exactLessonName&&b.subject===unit.subject&&b.grades.includes(unit.grade)&&(!b.exactUnitName||b.exactUnitName===unit.name)&&(!b.exactSemester||b.exactSemester===unit.semester));
