@@ -72,7 +72,7 @@ function make(kind,i){
   return q('표에 나온 조사에 참여한 학생 수를 모두 더하면?',
    sum+'명',(sum+1)+'명',(sum+2)+'명',
    '세 항목의 학생 수를 더하면 '+values.join('+')+'='+sum+'명입니다.',
-   '자료의 전체 수는 각 분류에 속한 수를 합해서 알아봅니다.',chart(i,v));
+   undefined,chart(i,v));
  }
  case 'make-table':{
   const raw=names.flatMap((x,k)=>Array(values[k]).fill(x));
@@ -93,18 +93,18 @@ function make(kind,i){
   return q('● 하나가 1명을 나타냅니다. ‘'+names[selected]+'’를 고른 학생 수는?',
    cur+'명',(cur+1)+'명',(cur+2)+'명',
    '‘'+names[selected]+'’ 행에 있는 ●의 개수는 '+cur+'개이므로 '+cur+'명입니다.',
-   '그림그래프의 ●를 한 개씩 세어 보세요.',chart(i,values,'symbol'));
+   undefined,chart(i,values,'symbol'));
  }
  case 'read-graph':{
   const j=(selected+1)%3,diff=Math.abs(values[selected]-values[j]);
   // Use the comparison between two plotted bars; actual quantities are always explicit.
   if(values[selected]===values[j])return q('그림그래프에서 ‘'+names[selected]+'’와 ‘'+names[j]+'’의 학생 수를 비교하면?',
     '같다','첫 번째가 1명 더 많다','두 번째가 1명 더 많다',
-    '두 항목 모두 '+values[selected]+'명이므로 학생 수가 같습니다.','● 하나는 1명입니다.',chart(i,values,'symbol'));
+    '두 항목 모두 '+values[selected]+'명이므로 학생 수가 같습니다.',undefined,chart(i,values,'symbol'));
   return q('그림그래프에서 ‘'+names[selected]+'’와 ‘'+names[j]+'’의 학생 수 차이는?',
    diff+'명',(diff+1)+'명',(diff+2)+'명',
    values[selected]+'명과 '+values[j]+'명을 비교하면 '+diff+'명 차이입니다.',
-   '● 하나는 1명입니다.',chart(i,values,'symbol'));
+   undefined,chart(i,values,'symbol'));
  }
  case 'table-and-graph':{
   const s=values[0],b=values[1],c=values[2];
@@ -113,7 +113,7 @@ function make(kind,i){
    names[0]+' '+(s+1)+'명, '+names[1]+' '+b+'명',
    names[0]+' '+s+'명, '+names[1]+' '+(b+1)+'명',
    '● 하나가 1명이므로 그래프의 첫째 항목은 '+s+'명, 둘째 항목은 '+b+'명입니다.',
-   '분류한 자료를 표와 그림그래프에 같은 수로 나타냅니다.',chart(i,values,'symbol'));
+   undefined,chart(i,values,'symbol'));
  }
  case 'tile-pattern1':{
   const abc=[['빨강','파랑'],['동그라미','세모'],['해','별'],['삼각형','사각형'],['하양','검정'],['나비','꽃'],
