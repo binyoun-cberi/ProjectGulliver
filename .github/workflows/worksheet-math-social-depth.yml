@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'worksheet-math-lesson-depth.js'
+      - 'worksheet-math-coverage.js'
+      - 'tests/worksheet-math-coverage.test.cjs'
       - 'worksheet-social-source-depth.js'
       - 'worksheet-evidence-banks.js'
       - '문제지 만들기.html'
@@ -30,9 +32,10 @@ jobs:
       - name: Check syntax and focused regression tests
         run: |
           node --check worksheet-math-lesson-depth.js
+          node --check worksheet-math-coverage.js
           node --check worksheet-social-source-depth.js
           node --check worksheet-evidence-banks.js
-          node --test tests/worksheet-math-social-depth.test.cjs tests/worksheet-evidence-banks.test.cjs tests/worksheet-social-audit.test.cjs tests/worksheet-learning.test.cjs
+          node --test tests/worksheet-math-coverage.test.cjs tests/worksheet-math-social-depth.test.cjs tests/worksheet-evidence-banks.test.cjs tests/worksheet-social-audit.test.cjs tests/worksheet-learning.test.cjs
       - name: Check social lesson capacity CSV stays reproducible
         run: |
           node scripts/social-lesson-coverage.cjs
