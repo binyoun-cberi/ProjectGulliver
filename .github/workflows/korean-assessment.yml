@@ -8,6 +8,7 @@ on:
       - 'data/korean-assessment-extra-upper.js'
       - 'tests/korean-assessment-expansion.test.cjs'
       - 'tests/korean-assessment-kice-quality.test.cjs'
+      - 'tests/korean-assessment-naturalness.test.cjs'
       - 'daily-worksheet-core.js'
       - 'daily-worksheet.js'
       - 'worksheet-korean-readings.js'
@@ -29,6 +30,7 @@ on:
       - 'data/korean-assessment-extra-upper.js'
       - 'tests/korean-assessment-expansion.test.cjs'
       - 'tests/korean-assessment-kice-quality.test.cjs'
+      - 'tests/korean-assessment-naturalness.test.cjs'
       - 'daily-worksheet-core.js'
       - 'daily-worksheet.js'
       - 'worksheet-korean-readings.js'
@@ -61,4 +63,4 @@ jobs:
           node --check worksheet-korean-assessment-results.js
           node --check worksheet-dictation-ui.js
       - name: Test reading and listening assessments
-        run: node --test tests/korean-assessment.test.cjs tests/korean-assessment-results.test.cjs tests/korean-assessment-expansion.test.cjs tests/korean-assessment-kice-quality.test.cjs
+        run: node --test tests/korean-assessment.test.cjs tests/korean-assessment-results.test.cjs tests/korean-assessment-expansion.test.cjs tests/korean-assessment-kice-quality.test.cjs tests/korean-assessment-naturalness.test.cjs
