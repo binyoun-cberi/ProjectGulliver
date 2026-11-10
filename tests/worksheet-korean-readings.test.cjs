@@ -23,7 +23,7 @@ test('all 32 explicit lesson rules are reachable without enabling unrelated acti
  assert.equal(targets.length,32);assert.equal(K.rules.length,32);
  for(const [grade,name] of K.rules)assert.ok(targets.some(t=>t.unit.grade===grade&&t.lesson.name.trim()===name),name);
  const all=T.catalog.filter(u=>u.subject==='korean');
- assert.equal(all.flatMap(u=>u.lessons.filter(l=>T.binding(u,l))).length,47);
+ assert.equal(all.filter(u=>u.grade>=3).flatMap(u=>u.lessons.filter(l=>T.binding(u,l))).length,47);assert.equal(all.flatMap(u=>u.lessons.filter(l=>T.binding(u,l))).length,72);
  assert.equal(K.find({subject:'korean',grade:5},{name:'뉴스나 면담 영상 보기'}),null);
  assert.equal(K.find({subject:'social',grade:5},{name:K.rules[0][1]}),null);
  for(const t of targets)for(const [format] of T.formats(t.binding)){
