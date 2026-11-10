@@ -7,6 +7,9 @@ on:
       - 'worksheet-math-grade3-concepts.js'
       - 'worksheet-math-grade4-geometry.js'
       - 'worksheet-math-grade2-numbers-time.js'
+      - 'worksheet-math-grade2-data-patterns.js'
+      - 'worksheet-math-grade2-length.js'
+      - 'tests/worksheet-math-grade2-data-length.test.cjs'
       - 'tests/worksheet-math-grade2-numbers-time.test.cjs'
       - 'tests/worksheet-math-grade34-concepts.test.cjs'
       - 'tests/worksheet-math-coverage.test.cjs'
@@ -41,9 +44,11 @@ jobs:
           node --check worksheet-math-grade3-concepts.js
           node --check worksheet-math-grade4-geometry.js
           node --check worksheet-math-grade2-numbers-time.js
+          node --check worksheet-math-grade2-data-patterns.js
+          node --check worksheet-math-grade2-length.js
           node --check worksheet-social-source-depth.js
           node --check worksheet-evidence-banks.js
-          node --test tests/worksheet-math-grade2-numbers-time.test.cjs tests/worksheet-math-grade34-concepts.test.cjs tests/worksheet-math-coverage.test.cjs tests/worksheet-math-social-depth.test.cjs tests/worksheet-evidence-banks.test.cjs tests/worksheet-social-audit.test.cjs tests/worksheet-learning.test.cjs
+          node --test tests/worksheet-math-grade2-data-length.test.cjs tests/worksheet-math-grade2-numbers-time.test.cjs tests/worksheet-math-grade34-concepts.test.cjs tests/worksheet-math-coverage.test.cjs tests/worksheet-math-social-depth.test.cjs tests/worksheet-evidence-banks.test.cjs tests/worksheet-social-audit.test.cjs tests/worksheet-learning.test.cjs
       - name: Check social lesson capacity CSV stays reproducible
         run: |
           node scripts/social-lesson-coverage.cjs
