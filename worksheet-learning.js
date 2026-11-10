@@ -68,15 +68,11 @@ function binding(unit,lesson){
    [1,1,'덧셈과 뺄셈',/^뺄셈(?:을 알아볼까요|을 해 볼까요)$/,'addition','small-sub-10','10 이하의 뺄셈'],
    [1,2,'덧셈과 뺄셈(2)',/^덧셈(?:을 알아볼까요|을 해 볼까요|을 여러 가지 방법으로 해 볼까요|을 해 볼까요.*)$/,'addition','small-add-20-no','20 이하 · 받아올림 없는 덧셈'],
    [1,2,'덧셈과 뺄셈(2)',/^뺄셈(?:을 알아볼까요|을 해 볼까요|을 여러 가지 방법으로 해 볼까요)$/,'addition','small-sub-20-no','20 이하 · 받아내림 없는 뺄셈'],
-   [1,2,'덧셈과 뺄셈(3)',/^덧셈을 알아볼까요$/,'addition','small-add-20-carry','20 이하 · 받아올림 있는 덧셈'],
-   [1,2,'덧셈과 뺄셈(3)',/^뺄셈을 알아볼까요$/,'addition','small-sub-20-borrow','20 이하 · 받아내림 있는 뺄셈'],
-   [2,1,'덧셈과 뺄셈',/^덧셈을 해 볼까요$/,'addition','two-add-carry','두 자리 수 · 받아올림 있는 덧셈'],
-   [2,1,'덧셈과 뺄셈',/^뺄셈을 해 볼까요$/,'addition','two-sub-borrow','두 자리 수 · 받아내림 있는 뺄셈'],
+   [2,1,'덧셈과 뺄셈',/^덧셈을 해 볼까요$/,'addition','two-add-none','두 자리 수 · 받아올림 없는 계산 연습'],
+   [2,1,'덧셈과 뺄셈',/^뺄셈을 해 볼까요$/,'addition','two-sub-none','두 자리 수 · 받아내림 없는 계산 연습'],
    [3,2,'곱셈',/\(세 자리 수\)×\(한 자리 수\).*계산해요/,'multiplication','times-three-one','세 자리 수 × 한 자리 수'],
-   [3,2,'곱셈',/\(두 자리 수\)×\(두 자리 수\).*계산해요/,'multiplication','times-two-one','두 자리 수 × 한 자리 수의 선행 연습'],
-   [3,2,'곱셈',/\(한 자리 수\)×\(두 자리 수\).*계산해요/,'multiplication','times-two-one','두 자리 수 × 한 자리 수의 선행 연습'],
+   [3,2,'곱셈',/\(한 자리 수\)×\(두 자리 수\).*계산해요/,'multiplication','times-two-one','한 자리 수와 두 자리 수의 곱셈 연습'],
    [3,2,'나눗셈',/\(두 자리 수\)÷\(한 자리 수\).*계산해요/,'division','divide-two-one','두 자리 수 ÷ 한 자리 수 · 나머지 없는 계산'],
-   [3,2,'나눗셈',/\(세 자리 수\)÷\(한 자리 수\).*계산해요/,'division','divide-two-one','두 자리 수 ÷ 한 자리 수의 선행 연습'],
    [4,1,'곱셈과 나눗셈',/^몇십몇을 곱해요$/,'multiplication','times-two-two','두 자리 수 × 두 자리 수'],
    [4,1,'곱셈과 나눗셈',/^몇십몇으로 나누어요/,'division','divide-three-two','세 자리 수 ÷ 두 자리 수'],
    [5,2,'소수의 곱셈',/\(소수\)×\(자연수\).*계산해요/,'decimal','decimal-mul-int','소수 × 자연수'],
@@ -222,7 +218,7 @@ function generate(options,C){
   }
   if(b.kind==='decimal'){const scale=10**b.places;let a=int(1,90*scale),z=int(1,90*scale);if(b.op==='−'&&a<z)[a,z]=[z,a];const value=b.op==='+'?a+z:a-z;q={prompt:`${a/scale} ${b.op} ${z/scale} =`,answer:String(value/scale),choices:[],explanation:'소수점의 자리를 맞추어 같은 자리끼리 계산합니다.'}}
   if(b.kind==='division'){const a=int(2,9),z=int(2,9);q={prompt:`${a*z} ÷ ${a} =`,answer:String(z),choices:[],explanation:`${a} × ${z} = ${a*z}이므로 몫은 ${z}입니다.`}}
-  if(b.kind==='table'){const match=lesson.name.match(/([2-9])단/),a=match?Number(match[1]):int(2,9),z=int(1,9);q={prompt:`${a} × ${z} =`,answer:String(a*z),choices:[],explanation:`${a}씩 ${z}묶음은 ${a*z}입니다.`}}
+  if(b.kind==='table'){const match=lesson.name.match(/([2-9])단/),a=/1단 곱셈구구와 0의 곱/.test(lesson.name)?(int(0,1)===0?1:0):match?Number(match[1]):int(2,9),z=int(1,9);q={prompt:`${a} × ${z} =`,answer:String(a*z),choices:[],explanation:`${a}씩 ${z}묶음은 ${a*z}입니다.`}}
   if(b.kind==='numbers'){const a=int(1,b.max-1),z=int(a+1,b.max);q={prompt:`${a}와 ${z} 중 더 큰 수를 쓰세요.`,answer:String(z),choices:[],explanation:`수를 차례대로 셀 때 ${z}가 ${a}보다 뒤에 나옵니다.`}}
   if(b.kind==='direction'){const place=shuffled(['도서관','소방서','공원','박물관','우체국','병원'],r)[0],dirs=['북쪽','동쪽','남쪽','서쪽'],d=int(0,3),map=['·','·','·','·','학교','·','·','·','·'];map[[1,5,7,3][d]]=place;q={prompt:`학교에서 ${place}은 어느 방향에 있나요?`,detail:'북 ↑\n'+[0,3,6].map(i=>map.slice(i,i+3).join('  |  ')).join('\n'),answer:dirs[d],choices:shuffled(dirs,r),explanation:`방위표의 북쪽을 위로 두면 ${place}은 학교의 ${dirs[d]}에 있습니다.`}}
   if(b.kind==='economy'){const goods=shuffled(['빵','가방','의자','옷','공책','도자기'],r)[0],object=goods+((goods.charCodeAt(goods.length-1)-0xAC00)%28?'을':'를'),prod=r()<.5;q={prompt:'다음 사례는 생산과 소비 중 무엇에 해당하나요?',detail:prod?`가게에 팔 ${object} 만들었습니다.`:`필요한 ${object} 사서 사용했습니다.`,answer:prod?'생산':'소비',choices:shuffled(['생산','소비'],r),explanation:prod?'판매할 물건을 만드는 것은 생산 활동입니다.':'필요한 물건을 사서 사용하는 것은 소비 활동입니다.'}}
