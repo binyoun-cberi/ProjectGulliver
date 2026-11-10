@@ -73,7 +73,7 @@ function make(kind,i){
  case 'flat-find':{
   const [object,answer]=shapes2[i],other=['□ 모양','△ 모양','○ 모양'].filter(x=>x!==answer);
   return q('다음 물건에서 볼 수 있는 평면 모양은?',answer,other[0],other[1],
-   object+'의 윤곽은 '+answer+'과(와) 같습니다.','물건: '+object+' / '+who+'의 관찰');
+   '물건의 윤곽을 살피면 '+answer+'에 해당합니다.','물건: '+object+' / '+who+'의 관찰');
  }
  case 'flat-properties':{
   const style=i%3,answers=['□ 모양','△ 모양','○ 모양'],answer=answers[style],other=answers.filter(x=>x!==answer);
@@ -88,7 +88,7 @@ function make(kind,i){
  }
  case 'clock-hour':{
   const h=i+1,wrong1=h===12?1:h+1,wrong2=h>=11?h-2:h+2;
-  return q('분침이 숫자 12를 가리키고 시침이 숫자 '+h+'을/를 가리킵니다. 몇 시인가요?',
+  return q('분침이 숫자 12를 가리키고 시침이 숫자 '+h+'을 가리킵니다. 몇 시인가요?',
    h+'시',wrong1+'시',wrong2+'시',
    '분침이 12이고 시침이 '+h+'에 있으므로 '+h+'시입니다.','정각의 시계 모습을 글로 설명한 문제입니다.');
  }
