@@ -156,15 +156,15 @@ function make(kind,i){
    dan+'×'+k+'='+(dan*k)+', '+dan+'×'+(k+1)+'='+(dan*(k+1))+', '+dan+'×'+(k+2)+'=? (기록 '+(i+1)+')');
  }
  case 'life-pattern':{
-  const cycles=[['월','화','수'],['딸기','바나나','포도'],['빨강','파랑'],['독서','산책','운동'],
-   ['봄','여름','가을','겨울'],['장미','국화'],['해','달','별'],['청소','급식','도서관'],
-   ['기차','버스'],['아침','점심','저녁'],['○','□','△'],['빨강','노랑','파랑'],
-   ['모래','흙'],['손뼉','무릎','손뼉','책상'],['공부','휴식'],['가','나','다','라']][i];
+  const cycles=[['월','화','수'],['딸기','바나나','포도'],['빨강','파랑','노랑'],['독서','산책','운동'],
+   ['봄','여름','가을','겨울'],['장미','국화','튤립'],['해','달','별'],['청소','급식','도서관'],
+   ['기차','버스','자전거'],['아침','점심','저녁'],['○','□','△'],['빨강','노랑','파랑'],
+   ['모래','흙','자갈'],['손뼉','무릎','책상'],['공부','휴식','정리'],['가','나','다','라']][i];
   const first=Array.from({length:cycles.length*2+1},(_,j)=>cycles[j%cycles.length]);
   const answer=cycles[1];
-  const distractors=[cycles[0],cycles[cycles.length-1]].filter(x=>x!==answer);
+  const distractors=[cycles[0],cycles[cycles.length-1]];
   return q('생활에서 반복되는 규칙을 살펴보세요. 다음 차례는 무엇인가요?',answer,...distractors,
-   '‘'+cycles.join(' → ')+'’ 순서가 되풀이되므로 ‘'+cycles[0]+'’ 다음에는 ‘'+answer+'’가 옵니다.',
+   '‘'+cycles.join(' → ')+'’ 순서가 되풀이되므로 ‘'+cycles[0]+'’ 다음에는 ‘'+answer+'’이(가) 옵니다.',
    '반복 기록: '+first.join(' → ')+' → ?');
  }
  default:throw Error('Unknown grade-two data or pattern skill '+kind);
