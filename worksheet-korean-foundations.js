@@ -159,7 +159,7 @@ function make(kind){
 }
 function add(grade,semester,unit,lessons,kind,label){
  for(const [index,name] of lessons.entries()){
-  const id='korean-foundation-'+grade+'-'+semester+'-'+kind+'-'+index;
+  const id='korean-foundation-'+grade+'-'+semester+'-'+kind+'-'+banks.length;
   const rows=make(kind);const items=rows.map((q,i)=>({
    ...q,evidenceId:id+'-'+(i+1),knowledgeOnly:true,
    sourceLabel:'클라시트 창작 국어 기본 연습 · 교과서 문제 복제 없음'
