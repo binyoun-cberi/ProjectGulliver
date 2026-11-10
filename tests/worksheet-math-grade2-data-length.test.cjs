@@ -23,7 +23,7 @@ test('27 exact grade-two lesson banks contain 432 separately sourced and uniquel
   const prompts=new Set();
   for(const q of b.items){
    assert.ok(!ids.has(q.evidenceId),q.evidenceId);ids.add(q.evidenceId);
-   const key=JSON.stringify([q.prompt,q.detail,q.scienceMaterial]);
+   const key=JSON.stringify([q.prompt,q.detail||q.scienceMaterial]);
    assert.ok(!prompts.has(key),'repeated problem '+b.id);prompts.add(key);
    assert.equal(q.choices.length,3);
    assert.equal(new Set(q.choices).size,3);
