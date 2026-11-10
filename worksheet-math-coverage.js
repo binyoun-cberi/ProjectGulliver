@@ -28,16 +28,16 @@ function make(kind,i){
    const d=a+2,k=t;return choose(a+'/'+d+'와 크기가 같은 분수는 어느 것인가요?',a*k+'/'+(d*k),(a*k+1)+'/'+(d*k),(a*k)+'/'+(d*k+1),'분자와 분모에 똑같이 '+k+'를 곱해도 분수의 크기는 같습니다.');
   }
   case 'reduce':{
-   const p=a*6,q=(a+2)*6,ans=frac(p,q);return choose(p+'/'+q+'를 기약분수로 나타내면 무엇인가요?',ans,(frac(p,q).split('/').map((v,j)=>j===0?String(Number(v)+1):v).join('/')),(frac(p,q).split('/').map((v,j)=>j===1?String(Number(v)+1):v).join('/')),'분자와 분모를 최대공약수로 나누면 '+ans+'입니다.');
+   const p=(n+2)*6,q=(n+4)*6,ans=frac(p,q);return choose(p+'/'+q+'를 기약분수로 나타내면 무엇인가요?',ans,(frac(p,q).split('/').map((v,j)=>j===0?String(Number(v)+1):v).join('/')),(frac(p,q).split('/').map((v,j)=>j===1?String(Number(v)+1):v).join('/')),'분자와 분모를 최대공약수로 나누면 '+ans+'입니다.');
   }
   case 'common-denominator':{
-   const x=2*a,y=3*a,k=lcm(x,y);return number('1/'+x+'과 1/'+y+'를 통분할 때 사용할 수 있는 가장 작은 공통 분모는 얼마인가요?',k,'두 분모 '+x+', '+y+'의 최소공배수는 '+k+'입니다.','',a);
+   const x=2*(n+2),y=3*(n+2),k=lcm(x,y);return number('1/'+x+'과 1/'+y+'를 통분할 때 사용할 수 있는 가장 작은 공통 분모는 얼마인가요?',k,'두 분모 '+x+', '+y+'의 최소공배수는 '+k+'입니다.','',a);
   }
-  case 'compare-frac':return choose('1/'+(a+1)+'과 1/'+(a+2)+' 중 더 큰 분수는 무엇인가요?','1/'+(a+1),'1/'+(a+2),'크기가 같다','분자가 1로 같으면 분모가 작은 쪽이 더 큽니다.');
+  case 'compare-frac':return choose('1/'+(n+1)+'과 1/'+(n+2)+' 중 더 큰 분수는 무엇인가요?','1/'+(n+1),'1/'+(n+2),'크기가 같다','분자가 1로 같으면 분모가 작은 쪽이 더 큽니다.');
   case 'compare-decimal':{
-   const p=a/10,q=(a+1)/10,left=i%2===0?'분수':'소수',right=left==='분수'?'소수':'분수';
-   const lhs=left==='분수'?a+'/10':nice(q),rhs=right==='분수'?a+'/10':nice(q);
-   return choose(lhs+'와 '+rhs+'의 크기를 비교한 결과로 알맞은 것은?',right==='소수'?'소수가 더 크다':'소수가 더 크다','분수가 더 크다','크기가 같다',a+'/10은 '+nice(p)+'이고 소수는 '+nice(q)+'이므로 소수가 더 큽니다.');
+   const p=(n+2)/10,q=(n+3)/10,left=i%2===0?'분수':'소수',right=left==='분수'?'소수':'분수';
+   const lhs=left==='분수'?(n+2)+'/10':nice(q),rhs=right==='분수'?(n+2)+'/10':nice(q);
+   return choose(lhs+'와 '+rhs+'의 크기를 비교한 결과로 알맞은 것은?',right==='소수'?'소수가 더 크다':'소수가 더 크다','분수가 더 크다','크기가 같다',(n+2)+'/10은 '+nice(p)+'이고 소수는 '+nice(q)+'이므로 소수가 더 큽니다.');
   }
   case 'perimeter-rectangle':{
    const x=n+3,y=b+2;return number('가로 '+x+' cm, 세로 '+y+' cm인 직사각형의 둘레는 몇 cm인가요?',2*(x+y),'가로와 세로를 각각 두 번 더하면 '+(2*(x+y))+' cm입니다.',' cm',2);
@@ -95,7 +95,7 @@ function make(kind,i){
    return number('네 학생의 '+context+'가 '+values.join(', ')+'입니다. 각 기록에 2를 더하면 평균은 얼마인가요?',mean+2,'모든 자료에 2를 더하면 평균도 2만큼 커집니다.');
   }
   case 'chance-judgment':{
-   const red=(i%5)+2,blue=(i%5)+2+(i%3===0?0:i%3===1?2:-1),detail='크기가 같은 빨강 카드 '+red+'장, 파랑 카드 '+blue+'장을 섞어 한 장을 뽑습니다.';
+   const red=n+2,blue=red+(i%3===0?0:i%3===1?2:-1),detail='크기가 같은 빨강 카드 '+red+'장, 파랑 카드 '+blue+'장을 섞어 한 장을 뽑습니다.';
    const outcomes=['빨강이 나올 가능성이 더 크다','파랑이 나올 가능성이 더 크다','두 색의 가능성이 같다'];
    const answer=red>blue?outcomes[0]:blue>red?outcomes[1]:outcomes[2];
    return choose(detail+' 알맞은 판단은 무엇인가요?',answer,...outcomes.filter(x=>x!==answer),red+'장과 '+blue+'장을 비교하면 '+answer+'.');
@@ -110,7 +110,7 @@ function make(kind,i){
    const total=(n+4)*10,yes=(n+4)*2;return choose('학생 '+total+'명 중 '+yes+'명이 도보로 등교합니다. 전체 학생에 대한 도보 등교 학생의 비율은?', '0.2','0.5','2',yes+'÷'+total+'=0.2입니다.');
   }
   case 'percent':{
-   const p=(i%8+1)*10;return choose('비율 '+nice(p/100)+'를 백분율로 나타내면?',p+'%',(p+10)+'%',nice(p/100)+'%',nice(p/100)+'×100='+p+'%입니다.');
+   const p=2*(n+1);return choose('비율 '+nice(p/100)+'를 백분율로 나타내면?',p+'%',(p+10)+'%',nice(p/100)+'%',nice(p/100)+'×100='+p+'%입니다.');
   }
   case 'percent-context':{
    const total=(n+5)*10,yes=(n+5)*3;return choose('전체 '+total+'명 중 '+yes+'명이 참여했습니다. 참여한 사람의 비율을 백분율로 나타내면?','30%','3%','70%',yes+'÷'+total+'×100=30%입니다.');
