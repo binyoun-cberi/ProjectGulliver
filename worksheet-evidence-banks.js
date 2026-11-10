@@ -568,8 +568,9 @@ for(const q of modernDepth.items()){const b=banks.find(b=>b.id===q.bankId);if(!b
 (typeof module==='object'&&module.exports?require('./worksheet-social-past-local-depth.js'):globalThis.WorksheetSocialPastLocalDepth).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-social-source-depth.js'):globalThis.WorksheetSocialSourceDepth).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-math-lesson-depth.js'):globalThis.WorksheetMathLessonDepth).register(banks);
+(typeof module==='object'&&module.exports?require('./worksheet-math-coverage.js'):globalThis.WorksheetMathCoverage).register(banks);
 function find(unit,lesson){
- const exactLessonName=lesson.name.replace(/^(?:[①-⑳]|\d+\.)\s*/, '').trim();
+ const exactLessonName=lesson.name.trim().replace(/^(?:[①-⑳]|\d+\.)\s*/, '').trim();
  const exact=banks.find(b=>b.exactLessonName===exactLessonName&&b.subject===unit.subject&&b.grades.includes(unit.grade)&&(!b.exactUnitName||b.exactUnitName===unit.name)&&(!b.exactSemester||b.exactSemester===unit.semester));
  const b=exact||banks.find(b=>b.subject===unit.subject&&b.grades.includes(unit.grade)&&b.pattern.test(lesson.name)&&!(b.id==='local-problem'&&/지역문제란/.test(lesson.name)));if(!b)return null;
  let indexes=null;const n=lesson.name;
