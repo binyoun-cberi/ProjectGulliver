@@ -174,8 +174,8 @@ function make(kind){
    '온라인에서도 상대를 배려하고 정확한 내용을 전달해야 합니다. 알맞은 행동은 ‘'+answer+'’입니다.',detail));
  case 'copyright':return copyright.map(([detail,answer,w1,w2])=>q('다른 사람의 저작물과 권리를 존중하는 방법은?',answer,w1,w2,
    '자료를 만든 사람의 권리와 이용 조건을 확인하고 필요한 허락·출처를 지켜야 합니다.',detail));
- case 'fact':return facts.map(([fact,op1,op2])=>q('다음 중 자료나 기록으로 확인할 수 있는 사실은?',fact,op1,op2,
-   '‘'+fact+'’는 수량이나 발생한 일을 확인할 수 있는 문장이고, 다른 보기는 개인적인 평가입니다.'));
+ case 'fact':return facts.map(([fact,op1,op2])=>q('다음 세 문장 중 자료나 기록으로 확인할 수 있는 사실은?',fact,op1,op2,
+   '‘'+fact+'’는 수량이나 발생한 일을 확인할 수 있는 문장이고, 다른 보기는 개인적인 평가입니다.','세 문장: '+fact+' / '+op1+' / '+op2));
  case 'fact-in-text':return facts.map(([fact,op1,op2])=>q('글에 나타난 의견에 해당하는 문장은 무엇인가요?',op1,fact,op2,
    '‘'+op1+'’는 좋고 나쁨에 대한 글쓴이의 평가입니다.','친구가 쓴 글: '+fact+' '+op1));
  case 'source':return sources.map(([detail,answer,w1,w2])=>q('이 자료를 활용한 글에 출처를 적을 때 중요한 정보는?',answer,w1,w2,
