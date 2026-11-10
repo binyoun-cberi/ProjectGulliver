@@ -13,17 +13,18 @@ const q=(prompt,answer,w1,w2,explanation,detail)=>{
  return {prompt,answer:String(answer),choices,explanation,...(detail?{detail}:{})};
 };
 const n=(prompt,answer,w1,w2,explanation,detail)=>q(prompt,String(answer),String(w1),String(w2),explanation,detail);
+function withParticle(word,batchim,noBatchim){const c=word.charCodeAt(word.length-1);return word+(c>=0xac00&&c<=0xd7a3&&(c-0xac00)%28?batchim:noBatchim);}
 function make(kind,i){
  const name=people[i],o=objects[i];
  switch(kind){
  case 'one-five':{
   const count=i%5+1,wrong1=count%5+1,wrong2=(count+1)%5+1;
-  return n(name+'가 '+o+'을/를 하나씩 세었습니다. 몇 개일까요?',count,wrong1,wrong2,
+  return n(name+'가 '+withParticle(o,'을','를')+' 하나씩 세었습니다. 몇 개일까요?',count,wrong1,wrong2,
    '하나부터 '+count+'까지 차례로 세면 모두 '+count+'개입니다.','세어 볼 '+o+': '+'● '.repeat(count).trim());
  }
  case 'six-nine':{
   const count=6+i%4,wrong1=6+(i+1)%4,wrong2=6+(i+2)%4;
-  return n(name+'가 '+o+'을/를 세었습니다. 모두 몇 개일까요?',count,wrong1,wrong2,
+  return n(name+'가 '+withParticle(o,'을','를')+' 세었습니다. 모두 몇 개일까요?',count,wrong1,wrong2,
    '여섯부터 아홉까지의 수를 세면 '+count+'개입니다.','한 개씩 세어 보세요: '+'● '.repeat(count).trim());
  }
  case 'ordinal':{
@@ -45,15 +46,15 @@ function make(kind,i){
  }
  case 'zero':{
   const count=i%5+1;
-  if(i%2===0)return n(name+'가 상자를 열었는데 '+o+'이/가 하나도 없었습니다. 이때 물건 수는?',0,1,2,
-    '아무것도 없는 것은 수 0으로 나타냅니다.','빈 상자에는 '+o+'이/가 없습니다. 기록 '+(i+1));
+  if(i%2===0)return n(name+'가 상자를 열었는데 '+withParticle(o,'이','가')+' 하나도 없었습니다. 이때 물건 수는?',0,1,2,
+    '아무것도 없는 것은 수 0으로 나타냅니다.','빈 상자에는 '+withParticle(o,'이','가')+' 없습니다. 기록 '+(i+1));
   return n('빈 상자(0개)에 '+o+' '+count+'개를 넣었습니다. 이제 모두 몇 개인가요?',count,count+1,count+2,
     '0개에 '+count+'개를 더하면 '+count+'개입니다.','0+'+count+'='+count+'이므로 수가 늘어난 만큼만 셉니다.');
  }
  case 'after-nine':{
-  if(i%2===0)return n(name+'가 '+o+'을/를 9개 세고 한 개를 더 찾았습니다. 모두 몇 개인가요?',10,9,8,
+  if(i%2===0)return n(name+'가 '+withParticle(o,'을','를')+' 9개 세고 한 개를 더 찾았습니다. 모두 몇 개인가요?',10,9,8,
    '9개보다 하나 많으면 10개입니다.','9개와 1개를 합쳐 10개를 만듭니다. 기록 '+(i+1));
-  return n(name+'가 '+o+'을/를 10개 모았는데 하나를 나누어 주었습니다. 남은 것은?',9,10,8,
+  return n(name+'가 '+withParticle(o,'을','를')+' 10개 모았는데 하나를 나누어 주었습니다. 남은 것은?',9,10,8,
    '10개에서 하나를 빼면 9개입니다.','10개는 9개보다 하나 많습니다. 기록 '+(i+1));
  }
  case 'teens':{
@@ -84,7 +85,7 @@ function make(kind,i){
  }
  case 'tens-sixty-ninety':{
   const groups=6+i%4,ans=groups*10,other1=(6+(i+1)%4)*10,other2=(6+(i+2)%4)*10;
-  return n('10개씩 묶은 '+o+'이/가 '+groups+'묶음 있습니다. 모두 몇 개인가요?',ans,other1,other2,
+  return n('10개씩 묶은 '+withParticle(o,'이','가')+' '+groups+'묶음 있습니다. 모두 몇 개인가요?',ans,other1,other2,
    '10개 묶음이 '+groups+'개이므로 '+ans+'개입니다.','십 단위로 세기: '+name+'의 기록');
  }
  case 'upto-ninety-nine':{
