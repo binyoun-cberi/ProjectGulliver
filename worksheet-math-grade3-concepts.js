@@ -114,7 +114,7 @@ function make(kind,i){
    whole+'에 0.'+tenth+'을 더하면 '+whole+'.'+tenth+'입니다.');
  }
  case 'decimal-compare':{
-  const whole=i%3,small=i%5+1,big=small+3;
+  const whole=Math.floor(i/5),small=i%5+1,big=small+3;
   return q(whole+'.'+small+'과 '+whole+'.'+big+' 중 큰 수는?',whole+'.'+big,whole+'.'+small,'크기가 같다',
    '소수 첫째 자리에서 '+big+'가 '+small+'보다 크므로 '+whole+'.'+big+'가 더 큽니다.');
  }
