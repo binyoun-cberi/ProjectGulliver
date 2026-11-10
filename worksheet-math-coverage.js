@@ -11,7 +11,7 @@ const money=n=>n.toLocaleString('ko-KR');
 const nice=n=>Number(n.toFixed(2)).toString();
 function number(prompt,answer,why,unit='',step=1){
  const a=Number(answer),alt=a-step>=0?a-step:a+2*step;
- return [prompt,String(a)+unit,String(a+step)+unit,String(alt)+unit,why];
+ return [prompt,nice(a)+unit,nice(a+step)+unit,nice(alt)+unit,why];
 }
 function choose(prompt,answer,wrong1,wrong2,why){return [prompt,String(answer),String(wrong1),String(wrong2),why];}
 function make(kind,i){
@@ -28,7 +28,7 @@ function make(kind,i){
    const d=a+2,k=t;return choose(a+'/'+d+'와 크기가 같은 분수는 어느 것인가요?',a*k+'/'+(d*k),(a*k+1)+'/'+(d*k),(a*k)+'/'+(d*k+1),'분자와 분모에 똑같이 '+k+'를 곱해도 분수의 크기는 같습니다.');
   }
   case 'reduce':{
-   const p=a*6,q=(a+2)*6,ans=frac(p,q);return choose(p+'/'+q+'를 기약분수로 나타내면 무엇인가요?',ans,(p/2)+'/'+(q/2),(p/3)+'/'+(q/3),'분자와 분모를 최대공약수로 나누면 '+ans+'입니다.');
+   const p=a*6,q=(a+2)*6,ans=frac(p,q);return choose(p+'/'+q+'를 기약분수로 나타내면 무엇인가요?',ans,(frac(p,q).split('/').map((v,j)=>j===0?String(Number(v)+1):v).join('/')),(frac(p,q).split('/').map((v,j)=>j===1?String(Number(v)+1):v).join('/')),'분자와 분모를 최대공약수로 나누면 '+ans+'입니다.');
   }
   case 'common-denominator':{
    const x=2*a,y=3*a,k=lcm(x,y);return number('1/'+x+'과 1/'+y+'를 통분할 때 사용할 수 있는 가장 작은 공통 분모는 얼마인가요?',k,'두 분모 '+x+', '+y+'의 최소공배수는 '+k+'입니다.','',a);
