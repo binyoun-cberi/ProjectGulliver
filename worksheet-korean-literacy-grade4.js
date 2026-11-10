@@ -80,7 +80,7 @@ const meanings=[
  ['선생님은 아이들의 말을 귀 기울여 들으셨다.','귀','소리를 듣는 신체 부위','보석의 반짝이는 부분','길의 네모난 모퉁이']
 ];
 const references=[
- ['민호는 아버지에게서 낡은 시계를 받았다. 그는 조심스럽게 시곗바늘을 돌려 보았다.','그는','민호','아버지','시계','‘그는’은 시계를 받은 뒤 바늘을 돌려 본 민호를 가리킵니다.'],
+ ['민호는 낡은 시계를 선물로 받았다. 그는 조심스럽게 시곗바늘을 돌려 보았다.','그는','민호','아버지','시계','‘그는’은 시계를 받은 뒤 바늘을 돌려 본 민호를 가리킵니다.'],
  ['지수는 집 앞에 작은 화분을 놓았다. 그것에는 분홍색 꽃이 피었다.','그것','화분','집','지수','‘그것’에 꽃이 피었으므로 화분을 가리킵니다.'],
  ['서아는 동네 도서관에 갔다. 그곳에는 새 책이 많이 들어와 있었다.','그곳','도서관','동네','새 책','‘그곳’은 서아가 간 도서관을 가리킵니다.'],
  ['우진이는 고양이에게 물을 주었다. 녀석은 물그릇에 다가와 물을 마셨다.','녀석','고양이','우진이','물그릇','‘녀석’은 물을 마시는 고양이를 가리킵니다.'],
@@ -189,7 +189,7 @@ function make(kind){
    '‘'+answer+'’는 관찰하거나 측정한 내용을 구체적으로 나타낸 기록입니다.',detail));
  case 'polysemy':return meanings.map(([detail,word,answer,w1,w2])=>q('이 글에서 ‘'+word+'’는 어떤 뜻으로 쓰였나요?',answer,w1,w2,
    '문장의 앞뒤 내용을 살피면 ‘'+word+'’는 ‘'+answer+'’를 뜻합니다.',detail));
- case 'reference':return references.map(([detail,ref,answer,w1,w2,why])=>q('글에서 ‘'+ref+'’이/가 가리키는 대상은 무엇인가요?',answer,w1,w2,why,detail));
+ case 'reference':return references.map(([detail,ref,answer,w1,w2,why])=>q('글에서 ‘'+ref+'’라는 표현이 가리키는 대상은 무엇인가요?',answer,w1,w2,why,detail));
  case 'cause':return causality.map(([detail,question,answer,w1,w2])=>q(question,answer,w1,w2,
    '이 글에서 원인은 ‘'+answer+'’라는 점이며, 그로 인해 뒤의 일이 일어났습니다.',detail));
  case 'hangul':return hangul.map(([prompt,answer,w1,w2])=>q(prompt,answer,w1,w2,
