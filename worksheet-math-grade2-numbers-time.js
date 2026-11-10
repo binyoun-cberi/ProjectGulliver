@@ -77,7 +77,7 @@ function make(kind,i){
   const thousands=i%6+2,hundreds=i%5+3,tens=i%4+2,ones=i%7+1,val=thousands*1000+hundreds*100+tens*10+ones;
   const mode=i%4,digits=[thousands,hundreds,tens,ones],place=[1000,100,10,1][mode],answer=digits[mode]*place;
   return item(number(val)+'에서 '+['천','백','십','일'][mode]+'의 자리 숫자 '+digits[mode]+'은 얼마를 나타내나요?',
-   number(answer),number(digits[mode]),number(answer+place),
+   number(answer),number(digits[mode]*(mode===3?10:1)),number(answer+place),
    ['천','백','십','일'][mode]+'의 자리는 '+number(place)+'의 개수를 나타내므로 '+number(answer)+'입니다.');
  }
  case 'skip-four':{
