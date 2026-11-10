@@ -63,11 +63,11 @@ function make(kind,i){
    '같은 크기의 단위 '+count+'개를 이어 놓았으므로 '+count+'개 길이입니다.','단위: '+piece+'. 사이에 틈이 없습니다.');
  }
  case 'one-centimeter':{
-  const n=i+2,mode=i%2;return mode===0?
+  const n=i+2,mode=i%2,span=2+i%5;return mode===0?
    number('자에서 0 cm부터 '+n+' cm까지의 간격은 몇 cm인가요?',n,1,' cm',
     '0 cm에서 '+n+' cm까지는 '+n+' cm 길이입니다.'):
-   number('자에서 '+(n+1)+' cm부터 '+(n+5)+' cm까지의 간격은 몇 cm인가요?',4,1,' cm',
-    '끝 눈금 '+(n+5)+'에서 시작 눈금 '+(n+1)+'을 빼면 4 cm입니다.','자로 잴 때 시작 눈금이 0이 아닐 수도 있습니다.');
+   number('자에서 '+(n+1)+' cm부터 '+(n+1+span)+' cm까지의 간격은 몇 cm인가요?',span,1,' cm',
+    '끝 눈금 '+(n+1+span)+'에서 시작 눈금 '+(n+1)+'을 빼면 '+span+' cm입니다.','자로 잴 때 시작 눈금이 0이 아닐 수도 있습니다.');
  }
  case 'ruler-method':{
   const [s,a,b,c]=howRuler[i];return item('자를 이용해 길이를 재는 방법으로 알맞은 것은?',a,b,c,
