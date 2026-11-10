@@ -8,9 +8,9 @@ const G4=require('../worksheet-korean-grade4-language');
 const G56=require('../worksheet-korean-upper-language');
 const fs=require('node:fs'),path=require('node:path');
 const banks=[...G3.banks(),...G4.banks(),...G56.banks()];
-test('21 textbook-specific Korean language banks offer 252 independently keyed and explained examples',()=>{
- assert.equal(G3.banks().length,5);assert.equal(G4.banks().length,5);assert.equal(G56.banks().length,11);
- assert.equal(banks.length,21);
+test('18 textbook-specific Korean language banks offer 216 independently keyed and explained examples',()=>{
+ assert.equal(G3.banks().length,3);assert.equal(G4.banks().length,5);assert.equal(G56.banks().length,10);
+ assert.equal(banks.length,18);
  const ids=new Set(),targets=new Set();let count=0;
  for(const b of banks){
   assert.equal(b.subject,'korean');
@@ -30,11 +30,11 @@ test('21 textbook-specific Korean language banks offer 252 independently keyed a
    assert.ok(!/undefined|NaN/.test(JSON.stringify(q)));
   }
  }
- assert.equal(count,252);assert.equal(ids.size,252);
+ assert.equal(count,216);assert.equal(ids.size,216);
  const clone=G3.banks();clone[0].items[0].choices[0]='잘못된 선택지';
  assert.notEqual(G3.banks()[0].items[0].choices[0],'잘못된 선택지');
 });
-test('all 21 target lessons match source curriculum and print 10 stable, strictly local items in two formats',()=>{
+test('all 18 target lessons match source curriculum and print 10 stable, strictly local items in two formats',()=>{
  for(const bank of banks){
   const grade=bank.grades[0],semester=bank.exactSemester;
   const unit=T.units('korean',grade,semester).find(u=>u.name===bank.exactUnitName);
