@@ -575,6 +575,8 @@ for(const q of modernDepth.items()){const b=banks.find(b=>b.id===q.bankId);if(!b
 (typeof module==='object'&&module.exports?require('./worksheet-math-grade2-numbers-time.js'):globalThis.WorksheetMathGradeTwoNumbersTime).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-math-grade2-data-patterns.js'):globalThis.WorksheetMathGradeTwoDataPatterns).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-math-grade2-length.js'):globalThis.WorksheetMathGradeTwoLength).register(banks);
+(typeof module==='object'&&module.exports?require('./worksheet-math-grade1-number-sense.js'):globalThis.WorksheetMathGradeOneNumberSense).register(banks);
+(typeof module==='object'&&module.exports?require('./worksheet-math-grade1-shapes-patterns.js'):globalThis.WorksheetMathGradeOneShapesPatterns).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-korean-literacy-grade3.js'):globalThis.WorksheetKoreanLiteracyThree).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-korean-literacy-grade4.js'):globalThis.WorksheetKoreanLiteracyFour).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-korean-grade3-language.js'):globalThis.WorksheetKoreanGradeThreeLanguage).register(banks);
