@@ -155,7 +155,7 @@ function make(kind,i){
  case 'capacity-operate':{
   const litre=i%4+2,ml=250+i*10;
   if(i%2===0){const plus=800+i*5,total=ml+plus,ans=(litre+Math.floor(total/1000))+' L '+(total%1000)+' mL';
-   return q(litre+' L '+ml+' mL에 '+plus+' mL를 더하면?',ans,litre+' L '+total+' mL',(litre+2)+' L '+total%1000+' mL',
+   return q(litre+' L '+ml+' mL에 '+plus+' mL를 더하면?',ans,litre+' L '+total+' mL',(litre+2)+' L '+(total%1000)+' mL',
     '1,000 mL를 1 L로 바꾸어 나타내면 '+ans+'입니다.');}
   const take=150+i*5,answer=ml-take;
   return q(litre+' L '+ml+' mL에서 '+take+' mL를 빼면?',litre+' L '+answer+' mL',litre+' L '+(ml+take)+' mL',(litre+1)+' L '+answer+' mL',
