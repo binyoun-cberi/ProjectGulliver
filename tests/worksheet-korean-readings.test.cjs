@@ -23,7 +23,7 @@ test('all 32 explicit lesson rules are reachable without enabling unrelated acti
  assert.equal(targets.length,32);assert.equal(K.rules.length,32);
  for(const [grade,name] of K.rules)assert.ok(targets.some(t=>t.unit.grade===grade&&t.lesson.name.trim()===name),name);
  const all=T.catalog.filter(u=>u.subject==='korean');
- const enabled=all.flatMap(u=>u.lessons.map(l=>T.binding(u,l)).filter(Boolean));assert.equal(enabled.filter(b=>!b.bankId?.startsWith('korean-foundation-')).length,47);assert.equal(enabled.filter(b=>b.bankId?.startsWith('korean-foundation-')).length,25);
+ const enabled=all.flatMap(u=>u.lessons.map(l=>T.binding(u,l)).filter(Boolean));const isAdded=b=>/^korean-g[3456]-language-/.test(b.bankId||'');assert.ok(enabled.length>=72,'new Korean questions should not decrease available lesson coverage');assert.equal(enabled.filter(b=>b.bankId?.startsWith('korean-foundation-')).length,25);assert.equal(enabled.filter(isAdded).length,33);assert.ok(enabled.filter(b=>!b.bankId?.startsWith('korean-foundation-')&&!isAdded(b)).length>=25);
  assert.equal(K.find({subject:'korean',grade:5},{name:'뉴스나 면담 영상 보기'}),null);
  assert.equal(K.find({subject:'social',grade:5},{name:K.rules[0][1]}),null);
  for(const t of targets)for(const [format] of T.formats(t.binding)){
