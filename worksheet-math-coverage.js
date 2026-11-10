@@ -25,7 +25,7 @@ function make(kind,i){
   case 'gcd':return number(2*n+'과 '+3*n+'의 최대공약수는 얼마인가요?',n,'두 수는 각각 2×'+n+', 3×'+n+'이므로 최대공약수는 '+n+'입니다.');
   case 'lcm':return number(2*n+'과 '+3*n+'의 최소공배수는 얼마인가요?',6*n,'2와 3의 최소공배수 6에 '+n+'을 곱하면 '+6*n+'입니다.','',n);
   case 'equivalent':{
-   const d=a+2,k=t;return choose(a+'/'+d+'와 크기가 같은 분수는 어느 것인가요?',a*k+'/'+(d*k),(a*k+1)+'/'+(d*k),(a*k)+'/'+(d*k+1),'분자와 분모에 똑같이 '+k+'를 곱해도 분수의 크기는 같습니다.');
+   const v=n+3,d=v+2,k=t;return choose(v+'/'+d+'와 크기가 같은 분수는 어느 것인가요?',v*k+'/'+(d*k),(v*k+1)+'/'+(d*k),(v*k)+'/'+(d*k+1),'분자와 분모에 똑같이 '+k+'를 곱해도 분수의 크기는 같습니다.');
   }
   case 'reduce':{
    const p=(n+2)*6,q=(n+4)*6,ans=frac(p,q);return choose(p+'/'+q+'를 기약분수로 나타내면 무엇인가요?',ans,(frac(p,q).split('/').map((v,j)=>j===0?String(Number(v)+1):v).join('/')),(frac(p,q).split('/').map((v,j)=>j===1?String(Number(v)+1):v).join('/')),'분자와 분모를 최대공약수로 나누면 '+ans+'입니다.');
