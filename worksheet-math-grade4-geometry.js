@@ -76,7 +76,7 @@ function make(kind,i){
   const b=mode===0?60:mode===1?30:35+i%4*5,c=180-a-b;
   const ans=mode===0?'예각삼각형':mode===1?'둔각삼각형':'직각삼각형';
   const others=['예각삼각형','둔각삼각형','직각삼각형'].filter(x=>x!==ans);
-  return q('세 각이 '+a+'°, '+b+'°, '+c+'°인 삼각형의 종류는?',ans,others[0],others[1],
+  return q('삼각형 '+label+'의 세 각이 '+a+'°, '+b+'°, '+c+'°일 때 종류는?',ans,others[0],others[1],
    mode===0?'세 각 모두 90°보다 작으므로 예각삼각형입니다.':mode===1?'90°보다 큰 각이 있으므로 둔각삼각형입니다.':'90°인 각이 하나 있으므로 직각삼각형입니다.');
  }
  case 'perpendicular':{
