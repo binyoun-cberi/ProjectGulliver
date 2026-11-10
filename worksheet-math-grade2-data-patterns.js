@@ -32,7 +32,6 @@ function make(kind,i){
  const at=(j)=>names[(selected+j)%3];
  switch(kind){
  case 'why-classify':{
-  const correct=['물건의 색깔','물건의 모양','물건의 쓰임','물건의 크기'][i%4];
   const cases=[
    ['빨간 블록과 파란 블록을 서로 다른 상자에 넣었습니다.','물건의 색깔','물건의 모양','물건의 개수'],
    ['동그란 단추와 네모난 단추를 나누었습니다.','물건의 모양','물건의 무게','물건의 색깔'],
@@ -68,8 +67,7 @@ function make(kind,i){
    '같은 항목끼리 모은 '+topic+' 조사 자료입니다.',data);
  }
  case 'class-infer':{
-  const v=[...values],largest=names[v.indexOf(Math.max(...v))];
-  const small=names[v.indexOf(Math.min(...v))];
+  const v=[...values];
   // The construction can produce ties; ask about total instead to keep a unique answer.
   return q('표에 나온 조사에 참여한 학생 수를 모두 더하면?',
    sum+'명',(sum+1)+'명',(sum+2)+'명',
@@ -135,7 +133,7 @@ function make(kind,i){
    '무늬 배열: '+[...abc,...abc,abc[0]].join(' → ')+' → ?');
  }
  case 'stack-pattern':{
-  const first=i%3+1,step=i%3+1,a=first+3*step;
+  const first=i%4+1,step=Math.floor(i/4)+1,a=first+3*step;
   return q('블록을 쌓을 때 각 단계에 쓴 블록 수가 규칙적으로 변합니다. 4단계의 블록 수는?',
    a+'개',(a+step)+'개',(a+2*step)+'개',
    '처음 '+first+'개에서 단계마다 '+step+'개씩 늘어나므로 '+a+'개입니다.',
@@ -164,7 +162,7 @@ function make(kind,i){
   const answer=cycles[1];
   const distractors=[cycles[0],cycles[cycles.length-1]];
   return q('생활에서 반복되는 규칙을 살펴보세요. 다음 차례는 무엇인가요?',answer,...distractors,
-   '‘'+cycles.join(' → ')+'’ 순서가 되풀이되므로 ‘'+cycles[0]+'’ 다음에는 ‘'+answer+'’이(가) 옵니다.',
+   '‘'+cycles.join(' → ')+'’ 순서가 되풀이되므로 ‘'+cycles[0]+'’ 다음 차례는 ‘'+answer+'’입니다.',
    '반복 기록: '+first.join(' → ')+' → ?');
  }
  default:throw Error('Unknown grade-two data or pattern skill '+kind);
