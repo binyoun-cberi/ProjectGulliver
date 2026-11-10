@@ -175,7 +175,6 @@ function make(kind){
  throw Error('Unknown upper grade Korean kind '+kind);
 }
 const specs=[
- [5,1,'대상을 설명해요','설명하는 글의 구조 알기','explain-structure'],
  [5,2,'올바른 문장으로 글을 써요','문장 성분 이해하기','grammar-roles'],
  [5,2,'올바른 문장으로 글을 써요','문장 성분의 호응 관계 이해하기','grammar-agreement'],
  [6,1,'상황에 맞게 표현해요','관용어 이해하기','idioms'],
