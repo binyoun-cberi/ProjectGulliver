@@ -67,7 +67,7 @@ function make(kind,i){
  case 'seconds':return i%2===0?num(n+'분은 몇 초인가요?',n*60,60,'초','1분은 60초이므로 '+n*60+'초입니다.'):num(n*60+'초는 몇 분인가요?',n,1,'분','60초가 1분이므로 '+n+'분입니다.');
  case 'time-add':{
   const m=2+i%4,s=37+i%17,t=30+i%11,total=s+t,ans=(m+Math.floor(total/60))+'분 '+total%60+'초';
-  return q(m+'분 '+s+'초에 '+t+'초를 더하면 얼마인가요?',ans,m+'분 '+total+'초',(m+Math.floor(total/60)+1)+'분 '+total%60+'초',
+  return q(m+'분 '+s+'초에 '+t+'초를 더하면 얼마인가요?',ans,m+'분 '+total%60+'초',(m+Math.floor(total/60)+1)+'분 '+total%60+'초',
     s+'+'+t+'='+(s+t)+'초입니다. 60초를 1분으로 바꾸면 '+ans+'입니다.');
  }
  case 'time-sub':{
@@ -138,7 +138,7 @@ function make(kind,i){
  case 'weight-operate':{
   const kg=i%3+2,gram=200+i*10;
   if(i%2===0){const more=850+i*10,total=gram+more;
-   return q(kg+' kg '+gram+' g에 '+more+' g을 더하면?',(kg+1)+' kg '+(total-1000)+' g',kg+' kg '+total+' g',(kg+2)+' kg '+(total-1000)+' g',
+   return q(kg+' kg '+gram+' g에 '+more+' g을 더하면?',(kg+1)+' kg '+(total-1000)+' g',kg+' kg '+(total-1000)+' g',(kg+2)+' kg '+(total-1000)+' g',
     '1,000 g을 1 kg으로 바꾸어 더하면 '+(kg+1)+' kg '+(total-1000)+' g입니다.');}
   return q(kg+' kg '+gram+' g에서 '+(gram-100)+' g을 빼면?',kg+' kg 100 g',kg+' kg '+(gram+(gram-100))+' g',(kg+1)+' kg 100 g',
    gram+'-'+(gram-100)+'=100 g이므로 '+kg+' kg 100 g이 남습니다.');
@@ -155,7 +155,7 @@ function make(kind,i){
  case 'capacity-operate':{
   const litre=i%4+2,ml=250+i*10;
   if(i%2===0){const plus=800+i*5,total=ml+plus,ans=(litre+Math.floor(total/1000))+' L '+(total%1000)+' mL';
-   return q(litre+' L '+ml+' mL에 '+plus+' mL를 더하면?',ans,litre+' L '+total+' mL',(litre+2)+' L '+(total%1000)+' mL',
+   return q(litre+' L '+ml+' mL에 '+plus+' mL를 더하면?',ans,litre+' L '+(total%1000)+' mL',(litre+2)+' L '+(total%1000)+' mL',
     '1,000 mL를 1 L로 바꾸어 나타내면 '+ans+'입니다.');}
   const take=150+i*5,answer=ml-take;
   return q(litre+' L '+ml+' mL에서 '+take+' mL를 빼면?',litre+' L '+answer+' mL',litre+' L '+(ml+take)+' mL',(litre+1)+' L '+answer+' mL',
