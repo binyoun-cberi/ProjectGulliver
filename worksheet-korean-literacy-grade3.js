@@ -159,9 +159,9 @@ const wordtypes=[
 function make(kind){
  switch(kind){
  case 'tone':return tones.map(([detail,answer,w1,w2,why])=>q('이 상황에 알맞은 말투나 행동은 무엇인가요?',answer,w1,w2,why,detail));
- case 'syntax':return syntax.map(([detail,answer,w1,w2,why])=>q('다음 문장에서 행동하거나 움직이는 대상을 나타내는 말은 무엇인가요?',answer,w1,w2,why,detail));
+ case 'syntax':return syntax.map(([detail,answer,w1,w2,why])=>q('다음 문장에서 행동하거나 움직이는 대상을 나타내는 말은 무엇인가요?',answer,w1,w2,'문장 속에서 ‘'+answer+'’가 움직이거나 행동하는 대상을 나타냅니다.',detail));
  case 'compose':return syntax.map(([detail,answer,w1,w2,why,sub,predicate])=>{
-  const full=sub+' '+predicate,fragment=sub+' '+predicate.split(' ')[0],bad=sub.replace(/(가|이|께서)$/,'을')+' '+predicate;
+  const full=sub+' '+predicate,fragment=sub,bad=sub.replace(/(가|이|께서)$/,'을')+' '+predicate;
   return q('주어와 서술어가 알맞게 이어진 문장은 무엇인가요?',full,fragment,bad,
    '‘'+sub+'’ 뒤에 ‘'+predicate+'’가 이어져 누가 무엇을 하는지 나타낸 완전한 문장입니다.',
    '주어와 서술어를 갖춘 문장을 고릅니다. 내용: '+detail);
@@ -188,7 +188,7 @@ function make(kind){
   const sorted=[a,b,c].sort((x,y)=>x.localeCompare(y,'ko'));return q('국어사전에서 다음 세 낱말을 찾을 때 가장 먼저 나오는 낱말은?',sorted[0],sorted[1],sorted[2],
    '국어사전은 자음자와 모음자의 순서대로 찾으므로 ‘'+sorted[0]+'’를 가장 먼저 찾습니다.','낱말: '+a+', '+b+', '+c);
  });
- case 'wordtypes':return wordtypes.map(([detail,answer,w1,w2,why])=>q('글에 쓰인 낱말 가운데 알맞은 종류의 낱말을 고르세요.',answer,w1,w2,why,detail));
+ case 'wordtypes':return wordtypes.map(([detail,answer,w1,w2,why],i)=>q('다음 문장에서 '+['동작','상태','동작','이름','상태','동작','상태','이름','동작','상태','이름','동작'][i]+'을 나타내는 낱말은 무엇인가요?',answer,w1,w2,why,detail));
  default:throw Error('No grade-three literacy skill '+kind);
  }
 }
