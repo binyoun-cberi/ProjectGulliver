@@ -34,7 +34,7 @@ function make(kind,i){
  }
  case 'angle-estimate':{
   const clocks=[1,2,3,4,5,6,7,8,9,10,11,12],h=clocks[i%12],smaller=Math.min(h,12-h),ans=smaller*30;
-  const first=ans===180?150:ans+30,second=ans===0?60:ans-30;
+  const first=ans===180?90:ans+30,second=ans===0?60:ans-30;
   return q('정각 '+h+'시의 시계에서 시침과 분침이 이루는 작은 쪽 각은 몇 도인가요?',ans+'°',first+'°',second+'°',
    '시계에서 이웃한 숫자 사이의 각은 30°이며 작은 쪽으로 '+smaller+'칸이므로 '+ans+'°입니다.');
  }
@@ -109,7 +109,7 @@ function make(kind,i){
     '마름모','정사각형','직사각형','네 변이 모두 같으면서 직각이 없는 사각형이므로 정사각형이 아닌 마름모입니다.');
  }
  case 'poly':{
-  const sides=i%6+3;return q('곧은 선분 '+sides+'개로 둘러싸인 닫힌 도형이 있습니다. 이 도형을 무엇이라 하나요?','다각형','원','곡선',
+  const sides=i%6+3;return q('도형 '+label+'는 곧은 선분 '+sides+'개로 둘러싸인 닫힌 도형입니다. 이 도형을 무엇이라 하나요?','다각형','원','곡선',
    '곧은 선분으로만 둘러싸인 닫힌 평면도형은 다각형입니다.');
  }
  case 'regular-poly':{
@@ -134,9 +134,10 @@ const curriculum=[
 ];
 for(const [semester,unit,lessons] of curriculum)for(const [name,kind]of lessons){
  const id='math-g4-shapes-'+semester+'-'+kind+'-'+banks.length;
- const items=Array.from({length:16},(_,i)=>({...make(kind,i),evidenceId:id+'-'+(i+1),knowledgeOnly:true,
+ const amount=kind==='angle-estimate'?12:16;
+ const items=Array.from({length:amount},(_,i)=>({...make(kind,i),evidenceId:id+'-'+(i+1),knowledgeOnly:true,
    sourceLabel:'클라시트 창작 수학 기본 개념 · 도형의 작도와 실제 측정은 평가하지 않음'}));
- if(new Set(items.map(q=>JSON.stringify([q.prompt,q.detail]))).size!==16)throw Error('Duplicate maths prompts '+id);
+ if(new Set(items.map(q=>JSON.stringify([q.prompt,q.detail]))).size!==amount)throw Error('Duplicate maths prompts '+id);
  banks.push({id,subject:'math',grades:[4],exactSemester:semester,exactUnitName:unit,exactLessonName:name,
    label:name+' · 기본 개념·수치 자료',pattern:/^$/,items});
 }
