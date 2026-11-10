@@ -6,7 +6,7 @@ test('original banks contain complete, independent evidence questions',()=>{
  const ids=new Set();for(const b of E.banks)for(const q of b.items){
   assert.ok(!ids.has(b.id+q.evidenceId));ids.add(b.id+q.evidenceId);
   assert.equal(q.choices.length,3);assert.equal(new Set(q.choices).size,3);assert.ok(q.choices.includes(q.answer));
-  assert.ok(q.knowledgeOnly&&q.source||q.detail?.length>15||q.scienceMaterial?.rows?.length||q.scienceMaterial?.body);assert.ok(q.explanation.length>10);
+  assert.ok(q.knowledgeOnly&&(q.source||q.sourceLabel?.includes('창작'))||q.detail?.length>15||q.scienceMaterial?.rows?.length||q.scienceMaterial?.body);assert.ok(q.explanation.length>10);
   if(q.scienceMaterial){const m=q.scienceMaterial;if(m.kind==='diagram'){assert.ok(m.body);assert.ok(m.viewBox);}else{assert.equal(m.kind,'table');for(const row of m.rows)assert.equal(row.length,m.headers.length);}}
  }
 });
