@@ -134,8 +134,6 @@ function make(kind){
  throw Error('Unknown kind '+kind);
 }
 const targets=[
- [1,'자신 있게 읽고 써요','사실과 의견에 대해 알기','fact-type'],
- [1,'자신 있게 읽고 써요','사실과 의견을 구분하며 글 읽기','fact-in-text'],
  [2,'정확하게 글을  써요 ','출처를 확인하며 읽으면 좋은 점 알기','source-why'],
  [2,'정확하게 글을  써요 ','자료의 출처를 확인하며 글 읽기','source-read'],
  [2,'서로 존중하며 대화해요','높임 표현을 사용하는 상황 알기','honorific-context'],
