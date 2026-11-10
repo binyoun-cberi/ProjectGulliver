@@ -62,6 +62,13 @@ function make(kind,i){
   return q('세 변의 길이가 각각 '+lengths.join(' cm, ')+' cm인 삼각형을 가장 구체적으로 설명한 것은?',ans,wrong[0],wrong[1],
    mode===0?'세 변의 길이가 모두 같으므로 정삼각형입니다.':mode===1?'두 변만 길이가 같으므로 이등변삼각형의 특징을 가집니다.':'세 변의 길이가 모두 다르므로 해당 설명에 맞습니다.');
  }
+ case 'triangle-names':{
+  const side=n+2,mode=i%2;
+  const lengths=mode===0?[side,side,side]:[side,side,side+2];
+  const correct=mode===0?'정삼각형':'이등변삼각형',other=mode===0?'직각삼각형':'정삼각형';
+  return q('세 변의 길이가 '+lengths.join(' cm, ')+' cm인 삼각형 '+label+'의 가장 구체적인 이름은?',correct,other,'직사각형',
+   mode===0?'세 변이 모두 같으므로 정삼각형입니다.':'길이가 같은 변이 두 개 있고 세 변이 모두 같지는 않으므로 이등변삼각형입니다.');
+ }
  case 'triangle-iso':{
   const a=30+i*2;return num('이등변삼각형의 한 밑각이 '+a+'°입니다. 다른 밑각의 크기는?',a,5,'°',
    '이등변삼각형의 두 밑각의 크기는 서로 같으므로 '+a+'°입니다.');
@@ -128,7 +135,7 @@ function make(kind,i){
 }
 const curriculum=[
  [1,'각도',[['각의 크기를 비교해요','angle-compare'],['각의 크기를 재어요','angle-read'],['예각과 둔각을 알아봐요','acute-obtuse'],['각도를 어림해요','angle-estimate'],['각도의 합과 차를 구해요','angle-add'],['삼각형의 세 각의 크기의 합을 알아봐요','triangle-angle-sum'],['사각형의 네 각의 크기의 합을 알아봐요','quad-angle-sum']]],
- [2,'삼각형',[['삼각형을 분류해 봐요','triangle-classify'],['이등변삼각형, 정삼각형을 알아봐요','triangle-classify'],['이등변삼각형의 성질을 알아봐요','triangle-iso'],['정삼각형의 성질을 알아봐요','triangle-equilateral'],['예각삼각형, 둔각삼각형을 알아봐요','triangle-acute-obtuse']]],
+ [2,'삼각형',[['삼각형을 분류해 봐요','triangle-classify'],['이등변삼각형, 정삼각형을 알아봐요','triangle-names'],['이등변삼각형의 성질을 알아봐요','triangle-iso'],['정삼각형의 성질을 알아봐요','triangle-equilateral'],['예각삼각형, 둔각삼각형을 알아봐요','triangle-acute-obtuse']]],
  [2,'사각형',[['수직과 수선을 알아봐요','perpendicular'],['평행과 평행선을 알아봐요','parallel'],['평행선 사이의 거리를 알아봐요','parallel-distance'],['사다리꼴을 알아봐요','trapezoid'],['평행사변형을 알아봐요','parallelogram'],['마름모를 알아봐요','rhombus']]],
  [2,'다각형',[['다각형을 알아봐요','poly'],['정다각형을 알아봐요','regular-poly'],['대각선을 알아봐요','diagonal']]]
 ];
