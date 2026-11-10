@@ -7,10 +7,10 @@ const T=require('../worksheet-learning.js');
 const C=require('../daily-worksheet-core.js');
 const fs=require('node:fs'),path=require('node:path');
 const banks=[...Three.banks(),...Four.banks()];
-test('26 grade-three and grade-four Korean lesson banks contain 312 original items and unique answers',()=>{
- assert.equal(Three.banks().length,14);assert.equal(Four.banks().length,12);
- assert.equal(banks.length,26);
- assert.equal(banks.reduce((sum,b)=>sum+b.items.length,0),312);
+test('23 grade-three and grade-four Korean lesson banks contain 276 original items and unique answers',()=>{
+ assert.equal(Three.banks().length,11);assert.equal(Four.banks().length,12);
+ assert.equal(banks.length,23);
+ assert.equal(banks.reduce((sum,b)=>sum+b.items.length,0),276);
  const ids=new Set(),targets=new Set();
  for(const b of banks){
   assert.equal(b.subject,'korean');assert.ok([3,4].includes(b.grades[0]));
@@ -30,10 +30,10 @@ test('26 grade-three and grade-four Korean lesson banks contain 312 original ite
    assert.ok(!item.prompt.includes('소리를 듣고')&&!item.prompt.includes('그림을 보고'));
   }
  }
- assert.equal(ids.size,312);
+ assert.equal(ids.size,276);
  const clone=Four.banks();clone[0].items[0].answer='changed';assert.notEqual(Four.banks()[0].items[0].answer,'changed');
 });
-test('26 exact Korean 2022 textbook lessons can generate reproducible 10-question choice and short worksheets',()=>{
+test('23 exact Korean 2022 textbook lessons can generate reproducible 10-question choice and short worksheets',()=>{
  for(const bank of banks){
   const grade=bank.grades[0],semester=bank.exactSemester;
   const unit=T.units('korean',grade,semester).find(u=>u.name===bank.exactUnitName);
@@ -67,9 +67,9 @@ test('language assessment items have a concrete basis and avoid confusion betwee
  const a=get('wordtypes').items;
  assert.match(a[7].prompt,/물건의 이름/);
  assert.match(a[10].prompt,/장소의 이름/);
- const fact=get('fact-in-text').items;
- assert.ok(fact.every(q=>q.detail.includes(q.answer)));
- assert.ok(fact.every(q=>q.detail.includes('친구가 쓴 글')));
+ const support=get('support').items;
+ assert.ok(support.every(q=>q.detail.startsWith('중심 문장:')));
+ assert.ok(support.every(q=>!q.choices.slice(1).includes(q.answer)));
  const b=get('source').items;
  assert.ok(b.every(q=>q.detail.length>=18));
  const c=get('reference').items;
