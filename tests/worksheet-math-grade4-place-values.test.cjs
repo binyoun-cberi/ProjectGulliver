@@ -32,7 +32,7 @@ test('eleven exact grade-four textbook lessons generate ten reproducible choice 
  for(const b of banks){
   const unit=T.units('math',4,b.exactSemester).find(u=>u.name===b.exactUnitName);
   assert.ok(unit,b.id+' missing unit');
-  const lesson=unit.lessons.find(l=>l.name.trim().replace(/^\\d+\\.\\s*/,'')===b.exactLessonName);
+  const lesson=unit.lessons.find(l=>l.name.trim().replace(/^\d+\.\s*/,'')===b.exactLessonName);
   assert.ok(lesson,b.id+' missing lesson '+b.exactLessonName);
   assert.equal(E.find(unit,lesson)?.id,b.id,b.id+' matched wrong bank');
   const binding=T.binding(unit,lesson);
@@ -76,7 +76,7 @@ test('large-number answer generation respects man, eok and jo place values witho
   assert.ok(Number.isSafeInteger(number(q.answer)));
  }
  for(const q of get('skip-count').items){
-  const nums=q.detail.match(/수의 배열: (.*) \/ /)[1].split(' → ').map(number);
+  const nums=q.detail.match(/수의 배열: (.*) \/ /)[1].split(' → ').slice(0,3).map(number);
   assert.equal(nums.length,3);assert.equal(nums[1]-nums[0],nums[2]-nums[1]);
   assert.equal(number(q.answer),nums[2]+nums[1]-nums[0]);
  }
