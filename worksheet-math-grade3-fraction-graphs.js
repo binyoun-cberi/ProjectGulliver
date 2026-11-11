@@ -16,6 +16,7 @@ function q(prompt,answer,w1,w2,explanation,detail,scienceMaterial){
 }
 const GCD=(a,b)=>b?GCD(b,a%b):a;
 const fract=(a,d)=>a+'/'+d;
+const mixed=(w,n,d)=>w+([1,3,6,7,8].includes(w)?'과 ':'와 ')+n+'/'+d;
 const detailShapes=(a,d)=>'같은 크기로 나눈 '+d+'칸: '+'■'.repeat(a)+'□'.repeat(d-a)+' (■는 색칠한 칸입니다.)';
 function make(kind,i){
  const thing=things[i],n=i+2,den=4+i%6,top=1+i%(den-1);
@@ -25,14 +26,14 @@ function make(kind,i){
    return q('전체를 같은 크기로 나누었을 때 색칠한 부분을 나타낸 분수는?',
     fract(part,total),fract(total,part),fract(part+1,total),
     '전체 '+total+'칸 중 색칠한 '+part+'칸은 '+part+'/'+total+'입니다.',
-    thing+' 모양 종이를 사용했습니다. '+detailShapes(part,total));
+    thing+' 그림이 있는 종이: '+detailShapes(part,total));
  }
  case 'fraction-of-set':{
    const d=2+i%6,k=2+i%4,p=1+i%(d-1),total=d*k,answer=p*k;
    return q('전체 '+total+'개 중 '+p+'/'+d+'만큼에 해당하는 '+thing+'의 수는?',
      answer+'개',(answer+k)+'개',(answer-k)+'개',
      '전체 '+total+'개를 '+d+'개의 같은 묶음으로 나누면 한 묶음에 '+k+'개입니다. '+p+'묶음이므로 '+answer+'개입니다.',
-     thing+'을/를 '+d+'묶음으로 똑같이 나누었습니다.');
+     thing+' '+total+'개를 '+d+'묶음으로 똑같이 나누었습니다.');
  }
  case 'part-of-whole':{
    const total=5+i%7,part=1+i%(total-1);
@@ -57,9 +58,9 @@ function make(kind,i){
  case 'convert-mixed':{
    const d=3+i%6,whole=1+i%5,t=1+i%(d-1),num=d*whole+t;
    return q('가분수 '+num+'/'+d+'를 대분수로 바르게 나타낸 것은?',
-     whole+'와 '+t+'/'+d,(whole+1)+'와 '+t+'/'+d,whole+'와 '+(t+1)+'/'+d,
-     num+'을 '+d+'로 나누면 몫 '+whole+', 나머지 '+t+'이므로 '+whole+'와 '+t+'/'+d+'입니다.',
-     '전체 '+thing+'을/를 같은 크기의 '+d+'조각씩 한 묶음으로 생각하세요.');
+     mixed(whole,t,d),mixed(whole+1,t,d),mixed(whole,t+1,d),
+     num+'을 '+d+'로 나누면 몫 '+whole+', 나머지 '+t+'이므로 '+mixed(whole,t,d)+'입니다.',
+     '전체 '+thing+'을 같은 크기의 '+d+'조각씩 한 묶음으로 생각하세요.');
  }
  case 'fraction-compare':{
    const d=3+i%5,a=1+i%d,b=d+1+i%d,answer=b+'/'+d;
