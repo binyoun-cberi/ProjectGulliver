@@ -13,6 +13,8 @@ on:
       - 'worksheet-math-grade1-shapes-patterns.js'
       - 'worksheet-math-grade3-fraction-graphs.js'
       - 'worksheet-math-grade4-place-values.js'
+      - 'worksheet-math-grade4-patterns.js'
+      - 'tests/worksheet-math-grade4-patterns.test.cjs'
       - 'tests/worksheet-math-grade4-place-values.test.cjs'
       - 'tests/worksheet-math-grade3-fraction-graphs.test.cjs'
       - 'tests/worksheet-math-grade1-concepts.test.cjs'
@@ -57,9 +59,10 @@ jobs:
           node --check worksheet-math-grade1-shapes-patterns.js
           node --check worksheet-math-grade3-fraction-graphs.js
           node --check worksheet-math-grade4-place-values.js
+          node --check worksheet-math-grade4-patterns.js
           node --check worksheet-social-source-depth.js
           node --check worksheet-evidence-banks.js
-          node --test tests/worksheet-math-grade4-place-values.test.cjs tests/worksheet-math-grade3-fraction-graphs.test.cjs tests/worksheet-math-grade1-concepts.test.cjs tests/worksheet-math-grade2-data-length.test.cjs tests/worksheet-math-grade2-numbers-time.test.cjs tests/worksheet-math-grade34-concepts.test.cjs tests/worksheet-math-coverage.test.cjs tests/worksheet-math-social-depth.test.cjs tests/worksheet-evidence-banks.test.cjs tests/worksheet-social-audit.test.cjs tests/worksheet-learning.test.cjs
+          node --test tests/worksheet-math-grade4-patterns.test.cjs tests/worksheet-math-grade4-place-values.test.cjs tests/worksheet-math-grade3-fraction-graphs.test.cjs tests/worksheet-math-grade1-concepts.test.cjs tests/worksheet-math-grade2-data-length.test.cjs tests/worksheet-math-grade2-numbers-time.test.cjs tests/worksheet-math-grade34-concepts.test.cjs tests/worksheet-math-coverage.test.cjs tests/worksheet-math-social-depth.test.cjs tests/worksheet-evidence-banks.test.cjs tests/worksheet-social-audit.test.cjs tests/worksheet-learning.test.cjs
       - name: Check social lesson capacity CSV stays reproducible
         run: |
           node scripts/social-lesson-coverage.cjs
