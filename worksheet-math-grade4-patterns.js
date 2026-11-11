@@ -67,7 +67,7 @@ function make(kind,i){
    groups+' + '+each+' + '+single+' = '+total,
    groups+' × ('+each+' + '+single+') = '+total,
    '상자 '+groups+'개의 물건 수는 '+groups+' × '+each+'개이고 낱개 '+single+'개를 더해야 합니다. 따라서 '+total+'개입니다.',
-   who+'의 활동 기록: '+object+' '+each+'개씩 '+groups+'상자에 담고 낱개 '+single+'개를 따로 두었습니다.');
+   who+'의 활동 기록: 물건은 '+object+'입니다. 한 상자에 '+each+'개씩 '+groups+'상자에 담고 낱개 '+single+'개를 따로 두었습니다.');
  }
  default:throw Error('Unknown grade four patterns '+kind);
  }
