@@ -59,8 +59,8 @@ function make(kind,i){
    const d=3+i%6,whole=1+i%5,t=1+i%(d-1),num=d*whole+t;
    return q('가분수 '+num+'/'+d+'를 대분수로 바르게 나타낸 것은?',
      mixed(whole,t,d),mixed(whole+1,t,d),mixed(whole,t+1,d),
-     num+'을 '+d+'로 나누면 몫 '+whole+', 나머지 '+t+'이므로 '+mixed(whole,t,d)+'입니다.',
-     '전체 '+thing+'을 같은 크기의 '+d+'조각씩 한 묶음으로 생각하세요.');
+     num+' ÷ '+d+'의 몫은 '+whole+'이고 나머지는 '+t+'이므로 '+mixed(whole,t,d)+'입니다.',
+     '같은 크기의 '+d+'조각씩 한 묶음으로 생각하세요. 자료: '+thing);
  }
  case 'fraction-compare':{
    const d=3+i%5,a=1+i%d,b=d+1+i%d,answer=b+'/'+d;
