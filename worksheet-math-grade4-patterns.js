@@ -36,7 +36,7 @@ function make(kind,i){
   return q('같은 규칙으로 도형을 늘립니다. 어느 단계에서나 필요한 작은 정사각형 수를 나타낸 식은?',
     formula(step,offset),formula(step+1,offset),formula(step,offset+1),
     '단계 수를 한 단계 늘릴 때 '+step+'개씩 많아지므로 식은 ‘'+formula(step,offset)+'’입니다.',
-    who+'가 만든 정사각형 배열: '+picture);
+    who+'의 정사각형 배열: '+picture);
  }
  case 'calculation-add':{
   const a=2+i,b=3+i%6,step=1+i%4,s=(a+3*step)+(b+3*step);
@@ -58,7 +58,7 @@ function make(kind,i){
   return q('같은 양을 나타내는 식으로 알맞은 것은?',
    each+' × '+groups,each+' + '+groups,each+' × '+(groups+1),
    '한 모둠에 '+each+'개씩 '+groups+'모둠이므로 '+each+' × '+groups+' = '+total+'개입니다.',
-   who+'가 '+object+'을 한 모둠에 '+each+'개씩 놓아 '+groups+'모둠을 만들었습니다. 모두 '+total+'개입니다.');
+   who+'의 활동 기록: 물건은 '+object+'입니다. 한 모둠에 '+each+'개씩 '+groups+'모둠을 만들었습니다. 모두 '+total+'개입니다.');
  }
  case 'equation-check':{
   const groups=3+i%5,each=3+Math.floor(i/5),single=1+i%4,total=groups*each+single;
@@ -67,7 +67,7 @@ function make(kind,i){
    groups+' + '+each+' + '+single+' = '+total,
    groups+' × ('+each+' + '+single+') = '+total,
    '상자 '+groups+'개의 물건 수는 '+groups+' × '+each+'개이고 낱개 '+single+'개를 더해야 합니다. 따라서 '+total+'개입니다.',
-   who+'가 '+object+'을 한 상자에 '+each+'개씩 '+groups+'상자에 담고 낱개 '+single+'개를 따로 두었습니다.');
+   who+'의 활동 기록: '+object+' '+each+'개씩 '+groups+'상자에 담고 낱개 '+single+'개를 따로 두었습니다.');
  }
  default:throw Error('Unknown grade four patterns '+kind);
  }
