@@ -25,7 +25,7 @@ function make(kind,i){
    return q('전체를 같은 크기로 나누었을 때 색칠한 부분을 나타낸 분수는?',
     fract(part,total),fract(total,part),fract(part+1,total),
     '전체 '+total+'칸 중 색칠한 '+part+'칸은 '+part+'/'+total+'입니다.',
-    detailShapes(part,total));
+    thing+' 모양 종이를 사용했습니다. '+detailShapes(part,total));
  }
  case 'fraction-of-set':{
    const d=2+i%6,k=2+i%4,p=1+i%(d-1),total=d*k,answer=p*k;
