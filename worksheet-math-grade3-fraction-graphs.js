@@ -110,7 +110,7 @@ for(const [semester,unit,lessons]of curriculum)for(const [lesson,kind]of lessons
  const items=Array.from({length:16},(_,i)=>({...make(kind,i),evidenceId:id+'-'+(i+1),
    knowledgeOnly:true,sourceLabel:'클라시트 창작 3학년 분수·그림그래프 자료 · 실제 그리기 수행을 대체하지 않음'}));
  if(new Set(items.map(q=>JSON.stringify([q.prompt,q.detail||q.scienceMaterial]))).size!==16)throw Error('Repeated question '+id);
- banks.push({id,subject:'math',grades:[3],exactSemester:semester,exactUnitName:unit,exactLessonName:lesson,
+ banks.push({id,subject:'math',grades:[3],exactSemester:semester,exactUnitName:unit,exactLessonName:lesson.replace(/^\d+\.\s*/, ''),
   label:lesson.replace(/^\d+\.\s*/, '')+' · 분수·그림그래프 개념',pattern:/^$/,items});
 }
 function register(target){for(const b of banks){if(target.some(x=>x.id===b.id))throw Error('Duplicate grade3 bank '+b.id);target.push(b);}}
