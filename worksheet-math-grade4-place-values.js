@@ -20,8 +20,8 @@ function make(kind,i){
  switch(kind){
  case 'ten-thousand':{
   const blocks=i%9+1,additional=(i*137)%10000,val=blocks*10000+additional;
-  return numeric('1만이 '+blocks+'개 있고, 낱수 '+additional+'이(가) 더 있습니다. 이 수는?',val,val+10000,val+1000,
-   '1만은 10,000이므로 '+comma(blocks*10000)+'과 '+comma(additional)+'을 합해 '+comma(val)+'입니다.',
+  return numeric('1만짜리 묶음 '+blocks+'개와 낱수 '+additional+'의 합은 얼마인가요?',val,val+10000,val+1000,
+   '1만은 10,000입니다. '+comma(blocks*10000)+' + '+comma(additional)+' = '+comma(val)+'입니다.',
    kid+'가 만 단위와 낱수를 합쳐 수를 만들었습니다.');
  }
  case 'five-digit':{
@@ -59,7 +59,7 @@ function make(kind,i){
   const scale=[10000,100000,100000000,1000000000000][i%4],a=(i+13)*scale+(i*13+91),b=a+(i%5+2)*scale;
   const left=i%2===0?a:b,right=i%2===0?b:a,answer=left>right?'가':'나';
   return q('가와 나 중 더 큰 수는 무엇인가요?',answer,answer==='가'?'나':'가','두 수가 같다',
-   '가 '+comma(left)+'와 나 '+comma(right)+'에서 높은 자리부터 비교하면 '+answer+'가 더 큽니다.',
+   '가: '+comma(left)+', 나: '+comma(right)+'입니다. 높은 자리부터 비교하면 더 큰 수는 '+answer+'입니다.',
    kid+'의 기록: 가 = '+comma(left)+' / 나 = '+comma(right));
  }
  case 'hundredths':{
@@ -78,9 +78,9 @@ function make(kind,i){
   const mode=i%4,units=2+Math.floor(i/4),ratio=mode<2?10:100;
   const den=[100,1000,1000,100][mode],large=units*ratio/den,small=units/den;
   const label=mode===0?'소수 첫째 자리와 둘째 자리':mode===1?'소수 둘째 자리와 셋째 자리':mode===2?'소수 첫째 자리와 셋째 자리':'자릿값이 100배 차이인 두 소수';
-  return q(dec(large,1)+'은 '+dec(small,1)+'의 몇 배인가요?',
+  return q(large.toFixed(3)+'은 '+small.toFixed(3)+'의 몇 배인가요?',
    ratio+'배',(ratio===10?100:10)+'배','1배',
-   dec(small,1)+'을 '+ratio+'배 하면 '+dec(large,1)+'입니다. 높은 자리로 갈수록 자릿값이 커집니다.',
+   small.toFixed(3)+' × '+ratio+' = '+large.toFixed(3)+'입니다. 높은 자리로 갈수록 자릿값이 커집니다.',
    kid+'의 기록: '+label+'를 비교합니다.');
  }
  case 'decimal-compare':{
@@ -95,7 +95,7 @@ function make(kind,i){
   const answer=Number(left)>Number(right)?'가':Number(left)<Number(right)?'나':'두 수는 같다';
   const wrong=['가','나','두 수는 같다'].filter(c=>c!==answer);
   return q('소수 가와 나의 크기를 비교하면?',answer,wrong[0],wrong[1],
-   '가 '+left+'와 나 '+right+'를 자릿값별로 비교하면 '+(answer==='두 수는 같다'?'같은 크기':'더 큰 수는 '+answer)+'입니다.',
+   '가: '+left+', 나: '+right+'입니다. 자릿값별로 비교하면 '+(answer==='두 수는 같다'?'두 수의 크기가 같습니다.':'더 큰 수는 '+answer+'입니다.'),
    kid+'의 기록: 가 = '+left+' / 나 = '+right);
  }
  default:throw Error('Unknown grade-four place-value topic '+kind);
