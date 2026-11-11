@@ -29,7 +29,7 @@ test('ten grade-three second-semester fraction and picture-graph banks contain 1
 test('ten 2022 textbook lessons match exactly and support real seeded choice/short generation',()=>{
  for(const bank of banks){
   const u=T.units('math',3,2).find(x=>x.name===bank.exactUnitName);assert.ok(u,bank.id);
-  const l=u.lessons.find(x=>x.name.trim()===bank.exactLessonName);assert.ok(l,bank.id+' '+bank.exactLessonName);
+  const l=u.lessons.find(x=>x.name.trim().replace(/^\d+\.\s*/, '')===bank.exactLessonName);assert.ok(l,bank.id+' '+bank.exactLessonName);
   assert.equal(E.find(u,l)?.id,bank.id,bank.id+' clobbered');
   const b=T.binding(u,l);assert.equal(b?.kind,'evidence');assert.equal(b.bankId,bank.id);
   assert.equal(T.capacity(b,'choice'),16);
@@ -50,7 +50,7 @@ test('ten 2022 textbook lessons match exactly and support real seeded choice/sho
 });
 test('equal partitions, fractional sets, improper/mixed conversion and fraction ordering are mathematically sound',()=>{
  for(const q of byKind('equal-part').items){
-  const d=q.detail;
+  const d=q.detail.split(' (■는')[0];
   const black=[...d].filter(x=>x==='■').length,white=[...d].filter(x=>x==='□').length;
   assert.equal(q.answer,black+'/'+(black+white));assert.ok(black>=1&&white>=1);
  }
