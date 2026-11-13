@@ -98,7 +98,7 @@ test('rotating a figure 90/180/270 degrees produces the sole mathematically corr
   const initial=q.scienceMaterial.body.match(/font-size="73"[^>]*>([^<]+)<\/text>/);
   assert.ok(initial,q.evidenceId);
   const i=dirs.indexOf(initial[1]);assert.ok(i>=0);
-  const step=q.prompt.includes('시계 방향 90°')?1:q.prompt.includes('180°')?2:3;
+  const step=q.prompt.includes('반시계 방향 90°')?3:q.prompt.includes('180°')?2:1;
   assert.equal(q.answer,dirs[(i+step)%4],q.evidenceId);
   assert.ok(q.choices.every(x=>dirs.includes(x)));
  }
