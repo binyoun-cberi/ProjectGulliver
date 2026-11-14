@@ -71,10 +71,10 @@ function syncCount(preferred){
 function syncScienceOption(){
  const field=$('scienceInteractiveSetting'),input=$('scienceInteractive');field.hidden=subject!=='science';
  if(field.hidden)return;
- const grade=Number($('grade').value),topics=new Set(['matter','heat','light-sound']);
+ const grade=Number($('grade').value);
  const selected=$('unitMixEnabled').checked?mixPlan().map(row=>C.mixOptions('science',grade).find(entry=>entry.id===row.id)?.topic).filter(Boolean):[$('topic').value];
- const supported=grade>=5&&selected.some(topic=>topics.has(topic));input.disabled=!supported;
- $('scienceInteractiveNote').textContent=supported?'선택한 내용에서 조건에 맞는 실험 1문항씩을 기존 문제와 교체합니다. QR 없이 인쇄할 수도 있어요.':'시범 실험은 5~6학년의 물질의 상태·온도와 열·빛과 소리에서 제공됩니다.';
+ const supported=selected.some(topic=>topic==='matter'&&grade>=4||['heat','light-sound'].includes(topic)&&grade>=5);input.disabled=!supported;
+ $('scienceInteractiveNote').textContent=supported?'선택한 내용에서 조건에 맞는 실험 1문항씩을 기존 문제와 교체합니다. QR 없이 인쇄할 수도 있어요.':'시범 실험은 4~6학년의 기체와 5~6학년의 온도·빛에서 제공됩니다.';
 }
 function syncDifficulty(){
  $('grade').closest('label').hidden=subject==='hanja';$('hanjaLevelSetting').hidden=subject!=='hanja'||$('topic').value!=='hanja-trace';$('idiomLevelSetting').hidden=subject!=='hanja'||$('topic').value!=='idiom-trace';const typed=!$('typeSetting').hidden,hundreds=subject==='math'&&$('topic').value==='hundreds'&&!typed,math=subject==='math'&&!hundreds&&!typed;$('difficultySetting').hidden=!math;$('difficulty').disabled=!math;$('variantSetting').hidden=!hundreds;$('variant').disabled=!hundreds;if(!math)$('difficulty').value='basic';
