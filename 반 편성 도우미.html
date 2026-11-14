@@ -336,7 +336,7 @@
 @media(min-width:851px){.planner-overview{align-items:start}.compact-overview .overview-mini{margin:8px 0;gap:6px}.compact-overview .overview-mini>div{padding:6px 9px}.compact-overview .compact-overview-total{margin:7px 0}}
 @media(max-width:480px){.trait-donut-card{flex-basis:244px}.trait-chart-controls>span{display:none}.trait-overview{padding:12px 10px}.trait-chart-navigation{gap:3px}.trait-chart-navigation>button{width:21px;min-width:21px}}
 </style>
-<link rel="stylesheet" href="class-planner-trait-remote.css"><link rel="stylesheet" href="class-planner-results.css"><link rel="stylesheet" href="class-planner-candidate-compare.css">
+<link rel="stylesheet" href="class-planner-trait-remote.css"><link rel="stylesheet" href="class-planner-results.css"><link rel="stylesheet" href="class-planner-candidate-compare.css"><link rel="stylesheet" href="class-planner-diagnostics.css">
 </head>
 <body>
 <main class="shell">
@@ -381,12 +381,12 @@
  <div class="basket-zone"><div class="basket-source"><div class="basket-source-head"><strong>학생 찾기</strong><span>선택 또는 드래그</span></div><label class="field"><input id="basketSearch" type="search" placeholder="이름 · 기존 반 · 번호" aria-label="분리 학생 검색"></label><div id="basketSelected" class="basket-selected-label" aria-live="polite">학생을 선택해 바구니에 담으세요.</div><div id="basketPool" class="basket-pool"></div></div><div id="basketGrid" class="basket-grid"></div></div>
  <section class="twin-section" aria-label="쌍생아 배정 관계"><div class="section-head"><div><h2>쌍생아 관계 <span id="twinCount" class="count-pill">0묶음</span></h2><p>함께 태어난 학생을 연결하세요. 세쌍둥이는 세 쌍의 관계를 각각 정할 수 있습니다.</p></div><button id="addTwinGroup" class="btn soft" type="button">+ 쌍생아 묶음</button></div><div id="twinGroups" class="twin-grid"></div></section>
  <div class="section-head"><div><h2>개별 분리 관계 <span id="pairCount" class="count-pill">0쌍</span></h2><p>서로 다른 반에 배정할 두 학생을 선택하세요.</p></div></div><div class="constraint-form"><label class="field">학생 A <select id="pairA" class="wide"></select></label><label class="field">학생 B <select id="pairB" class="wide"></select></label><button id="addPair" class="btn primary">분리 관계 추가</button></div><div id="pairList"></div></section>
- <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>완성된 반 편성표</h2><p>편성 결과를 확인하고 필요한 학생을 옮겨 보세요.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="copyResultExcel" class="btn" disabled>엑셀에 복사</button><button id="exportCsv" class="btn" disabled>엑셀용 파일 저장</button><button id="print" class="btn" disabled>인쇄 · PDF 저장</button></div></div>
+ <section id="view-results" class="card hidden" aria-label="반 편성 결과"><div class="section-head"><div><h2>완성된 반 편성표</h2><p>편성 결과를 확인하고 필요한 학생을 옮겨 보세요.</p></div><div class="result-toolbar"><button id="generate" class="btn primary">자동 편성하기</button><button id="checkConditions" type="button" class="btn soft">조건 미리 점검</button><button id="copyResultExcel" class="btn" disabled>엑셀에 복사</button><button id="exportCsv" class="btn" disabled>엑셀용 파일 저장</button><button id="print" class="btn" disabled>인쇄 · PDF 저장</button></div></div>
  <div id="resultOverview" class="result-overview no-print" aria-label="편성 결과 인포그래픽" hidden></div>
  <div class="result-layout-bar no-print"><div class="result-layout-picker" role="group" aria-label="반 편성표 배치 방식"><span>반 배치</span><button id="resultVertical" type="button" data-result-layout="vertical" aria-pressed="true">세로형</button><button id="resultCompare" type="button" data-result-layout="compare" aria-pressed="false">가로 비교형</button></div><label class="source-color-toggle"><input id="showSourceColors" type="checkbox" checked>기존 반 색상 표시</label><button id="toggleResultRemote" class="btn small" type="button" aria-controls="traitRemote" aria-expanded="true">색상 · 편집 리모컨</button><span id="resultLayoutHint" class="result-layout-hint">반을 세로로 펼쳐 봅니다.</span></div>
  <div id="sourceColorLegend" class="source-color-legend no-print" aria-label="기존 반별 색상 범례" hidden></div>
  <div class="move-guide no-print"><span>번호·손잡이를 잡아 다른 반으로 옮기세요. 번호를 누른 뒤 대상 반의 「여기로 이동」이나 리모컨으로도 이동할 수 있습니다.</span><button id="undoMove" class="btn small" disabled>마지막 이동 되돌리기</button></div><div id="moveSelection" class="move-selection no-print" aria-live="polite"></div><div id="movePreview" class="move-preview no-print" aria-live="polite"></div><div id="moveHistoryResult" class="move-history" aria-live="polite"></div>
- <div id="resultMessage" class="helper result-help">먼저 학생 명단을 작성한 다음 자동 편성하기를 눌러 주세요. 결과에서 학생의 반을 직접 바꾸거나 다른 편성안을 선택할 수도 있습니다.</div><div id="alternatives" class="alternatives"></div><div id="validation"></div><div id="report"></div><div id="resultGrid" class="result-grid" data-layout="vertical" aria-label="반별 편성 학생 목록"></div><section id="resultPrintSheet" aria-label="인쇄용 반 편성표"></section><div class="helper result-help">최종 확정 전에 반별 구성을 확인하세요.</div></section>
+ <section id="plannerDiagnosticReport" class="planner-diagnostics no-print" aria-label="반 편성 조건 충돌 점검" aria-live="polite" hidden></section><div id="resultMessage" class="helper result-help">먼저 학생 명단을 작성한 다음 자동 편성하기를 눌러 주세요. 결과에서 학생의 반을 직접 바꾸거나 다른 편성안을 선택할 수도 있습니다.</div><div id="alternatives" class="alternatives"></div><div id="validation"></div><div id="report"></div><div id="resultGrid" class="result-grid" data-layout="vertical" aria-label="반별 편성 학생 목록"></div><section id="resultPrintSheet" aria-label="인쇄용 반 편성표"></section><div class="helper result-help">최종 확정 전에 반별 구성을 확인하세요.</div></section>
  
  <div class="foot">학생 정보는 이 기기에 저장됩니다. 공동 PC에서는 사용 후 자료를 정리해 주세요. 자세한 내용은 상단 도움말에서 확인할 수 있습니다.</div>
 </main>
@@ -445,7 +445,7 @@
  <button data-roster-format="bold" class="btn small" type="button" aria-label="굵게" aria-pressed="false"><b>B</b></button><button data-roster-format="italic" class="btn small" type="button" aria-label="기울임" aria-pressed="false"><i>I</i></button><button data-roster-format="underline" class="btn small" type="button" aria-label="밑줄" aria-pressed="false"><u>U</u></button><button data-roster-format="strike" class="btn small" type="button" aria-label="취소선" aria-pressed="false"><s>S</s></button>
  </div><details id="traitColorTools" class="trait-color-tools"><summary>유의사항별 이름 색상</summary><label>대상 항목<select id="traitColorTag" aria-label="색칠할 유의 사항"><option value="">유의 사항 선택</option></select></label><small id="traitColorCount" aria-live="polite"></small><label>이름 배경색<input id="traitBatchColor" type="color" value="#fff0b9" aria-label="유의 사항별 이름 배경색"></label><div class="actions"><button id="applyTraitColor" class="btn small" type="button" disabled>항목 학생에 적용</button><button id="clearTraitColor" class="btn small" type="button" disabled>해제</button></div></details><p id="remoteFormatTip" class="remote-tip">Ctrl·⌘로 여러 칸, Shift로 범위 선택</p></section><section id="remoteTraitsSection" class="remote-section"><div class="remote-section-head"><h3>유의 사항</h3><span>행에 끌어 놓기</span></div><input id="traitRemoteSearch" type="search" placeholder="유의 사항 검색" aria-label="리모컨 유의 사항 검색"><div id="traitRemotePalette" class="trait-remote-palette" role="group" aria-label="끌어 놓을 유의 사항"></div><p id="traitRemoteStatus" class="trait-remote-status" role="status"></p></section><div class="trait-remote-context"><strong id="traitRemoteStudent">학생 행을 선택하세요</strong><label id="resultRemoteMoveWrap" hidden>선택 학생 이동<select id="resultRemoteMove" disabled aria-label="선택 학생을 다른 반으로 이동"></select></label><button id="resultRemoteUndo" class="btn small" type="button" hidden disabled>색상·서식 되돌리기</button><button id="traitRemoteNote" class="btn small" type="button" disabled>참고 메모</button><label id="remoteTransferWrap" hidden>전학 시기<select id="remoteTransferTiming" aria-label="전학 시기"><option value="before">편성 전 · 배정 제외</option><option value="after">편성 후 · 배정 포함</option></select></label><label id="traitRemoteFixedWrap" hidden>교사 우선 배치<select id="traitRemoteFixed" disabled></select></label></div></div>
 </aside>
-<link rel="stylesheet" href="class-planner-unified-roster.css"><script src="class-planner-unified-roster.js"></script><script src="class-planner-xlsx.min.js"></script><script src="class-planner-excel.js"></script><script src="class-planner-transfers.js"></script><link rel="stylesheet" href="class-planner-rules-remote.css"><script src="class-planner-rules-remote.js"></script><link rel="stylesheet" href="class-planner-feedback.css"><script src="class-planner-feedback.js"></script><link rel="stylesheet" href="class-planner-twins.css"><script src="class-planner-twins.js"></script><script src="class-planner-result-cards.js"></script><script src="class-planner-candidate-compare.js"></script><script src="class-planner-trait-colors.js"></script><script src="class-planner-direct-input.js"></script><script src="class-planner-trait-remote.js"></script>
+<link rel="stylesheet" href="class-planner-unified-roster.css"><script src="class-planner-unified-roster.js"></script><script src="class-planner-xlsx.min.js"></script><script src="class-planner-excel.js"></script><script src="class-planner-transfers.js"></script><link rel="stylesheet" href="class-planner-rules-remote.css"><script src="class-planner-rules-remote.js"></script><link rel="stylesheet" href="class-planner-feedback.css"><script src="class-planner-feedback.js"></script><link rel="stylesheet" href="class-planner-twins.css"><script src="class-planner-twins.js"></script><script src="class-planner-result-cards.js"></script><script src="class-planner-candidate-compare.js"></script><script src="class-planner-diagnostics.js"></script><script src="class-planner-trait-colors.js"></script><script src="class-planner-direct-input.js"></script><script src="class-planner-trait-remote.js"></script>
 <script>
 'use strict';
 const STORAGE_KEY = 'classplanner-v1-local';
@@ -647,7 +647,7 @@ function normalize(raw){
 }
 function loadState(){try{return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY)))}catch(e){return defaultState()}}
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
-function invalidate(){state.candidates=[];state.activeCandidate=0;moveSelectedId=null;moveDraggingId=null;moveLastResult=null;moveUndoStack.length=0;movePreviewClass=0}
+function invalidate(){clearPlannerDiagnostics();state.candidates=[];state.activeCandidate=0;moveSelectedId=null;moveDraggingId=null;moveLastResult=null;moveUndoStack.length=0;movePreviewClass=0}
 function changeState(){saveState();render()}
 function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),3700)}
 function uniquePairs(arr){const seen=new Set();return arr.filter(p=>{const key=[p.a,p.b].sort().join('|');if(seen.has(key))return false;seen.add(key);return true})}
@@ -1704,7 +1704,7 @@ function renderResultOverview(){
  }).join('')+'</div>';
 }
 function renderResults(){
-  placeStageOverview();renderResultOverview();
+  renderPlannerDiagnostics();placeStageOverview();renderResultOverview();
   const has=state.candidates.length>0;renderSourceColorLegend();
   $('exportCsv').disabled=!has;$('print').disabled=!has;$('copyResultExcel').disabled=!has;
   $('resultVertical').setAttribute('aria-pressed',String(state.resultLayout!=='compare'));
@@ -2594,8 +2594,8 @@ function installEvents(){
     const blank=state.students.filter(st=>studentTransferTiming(st)!=='before'&&!st.name.trim());
     if(blank.length){showTab('roster');toast('이름을 입력하지 않은 학생 '+blank.length+'명의 이름을 먼저 입력해 주세요.');return}
     const problems=basketProblems();
-    if(problems.length){invalidate();saveState();showTab('results');$('resultMessage').textContent=problems.join(' / ');toast(problems[0]);return}
-    const outcome=generateTransferCandidates(state.students,state.pairs,state.classCount,state.traits,Math.random,state.capRules,buildBasketPairs([],state.baskets),state.twinGroups,allocationOptions(),state.teacherPriorityOn);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;moveUndoStack.length=0;moveSelectedId=null;moveDraggingId=null;moveLastResult=null;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
+    if(problems.length){invalidate();showPlannerDiagnostics(problems.join(' / '));saveState();showTab('results');$('resultMessage').textContent=problems.join(' / ');toast(problems[0]);return}
+    const outcome=generateTransferCandidates(state.students,state.pairs,state.classCount,state.traits,Math.random,state.capRules,buildBasketPairs([],state.baskets),state.twinGroups,allocationOptions(),state.teacherPriorityOn);if(outcome.error){invalidate();showPlannerDiagnostics(outcome.error);saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}clearPlannerDiagnostics();state.candidates=outcome.candidates;state.activeCandidate=0;moveUndoStack.length=0;moveSelectedId=null;moveDraggingId=null;moveLastResult=null;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
   $('generateQuick').addEventListener('click',()=>$('generate').click());
   $('alternatives').addEventListener('click',e=>{const b=e.target.closest('[data-candidate], [data-candidate-compare]');if(!b)return;state.activeCandidate=Number(b.dataset.candidate??b.dataset.candidateCompare);moveSelectedId=null;moveDraggingId=null;saveState();renderResults();clearReviewPreview()});
   $('undoMove').addEventListener('click',undoResultMove);
@@ -2655,7 +2655,7 @@ function installEvents(){
   $('copyResultExcel').addEventListener('click',copyResultExcel);
   $('exportCsv').addEventListener('click',exportCSV);$('print').addEventListener('click',()=>{if(state.candidates.length)window.print()});
 }
-installEvents();showTab(view);
+installEvents();installPlannerDiagnostics();showTab(view);
 </script>
 </body>
 </html>
