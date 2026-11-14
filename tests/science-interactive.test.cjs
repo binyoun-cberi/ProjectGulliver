@@ -42,9 +42,15 @@ test('opt-in enrich replaces only eligible science units, preserving sheet and i
 test('not-science, younger grades, and ineligible topics are not changed',()=>{
  for(const sheet of [
   {subject:'math',grade:6,topic:'matter',items:[{prompt:'a'}]},
-  {subject:'science',grade:4,topic:'matter',items:[{prompt:'a'}]},
+  {subject:'science',grade:3,topic:'matter',items:[{prompt:'a'}]},
   {subject:'science',grade:6,topic:'animals',items:[{prompt:'a'}]}
  ])assert.equal(B.enrich(sheet),sheet);
+});
+test('grade-four gas activity uses observation-focused wording',()=>{
+ const sheet=B.enrich({subject:'science',grade:4,topic:'matter',seed:42,items:[{prompt:'a'}]});
+ assert.equal(sheet.items[0].interactiveExperiment.id,'gas');
+ assert.match(sheet.items[0].modelExplanation,/실제 측정값이 아닌 모형/);
+ assert.doesNotMatch(sheet.items[0].prompt,/반비례/);
 });
 test('lab link is same-origin, stable, and has no student or teacher identity query',()=>{
  const link=B.linkFor('https://example.org/class/문제지 만들기.html?subject=science&student=abc','reflection',4294967298);
