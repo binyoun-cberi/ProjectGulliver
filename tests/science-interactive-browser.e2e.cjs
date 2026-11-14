@@ -56,6 +56,11 @@ test('mobile QR labs and existing science worksheet A4 QR flow', {skip:!chromium
   const printed=await page.evaluate(()=>{const result=window.DailyWorksheetA4?.compose();return {result,qrCount:document.querySelectorAll('.print-paper .science-experiment-link svg').length}});
   assert.equal(printed.result?.ok,true,JSON.stringify(printed.result));
   assert.ok(printed.qrCount>=1);
+  await page.goto(base+'/문제지%20만들기.html?subject=science&grade=4&unit=science-matter&topic=matter&type=matter-practice&count=5&lab=1&seed=34',{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>window.WorksheetEditor?.getCurrent()?.items?.length===5,{timeout:25000});
+  assert.equal(await page.locator('#scienceInteractive').isEnabled(),true);
+  assert.equal(await page.locator('#questions .science-experiment-qr').count(),1);
+  assert.match(await page.locator('#questions .science-experiment-link').getAttribute('href'),/lab=gas/);
   assert.deepEqual(errors,[],'Browser runtime errors: '+errors.join('; '));
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve))}
 });
