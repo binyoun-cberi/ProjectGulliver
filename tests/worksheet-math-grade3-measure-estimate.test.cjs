@@ -69,7 +69,7 @@ test('six previously connected grade-three length/time lessons remain bound to t
   '시간의 덧셈과 뺄셈을 해요 (2)':'math-g3-basics-time-sub'
  };
  for(const [label,id]of Object.entries(preserved)){
-  const l=unit.lessons.find(x=>x.name.trim().replace(/^\\d+\\.\\s*/,'')===label);
+  const l=unit.lessons.find(x=>x.name.trim().replace(/^\d+\.\s*/,'')===label);
   assert.ok(l,'missing existing length/time target '+label);
   assert.equal(E.find(unit,l)?.id,id,label);
   assert.equal(T.binding(unit,l)?.bankId,id,label+' must not be overridden');
