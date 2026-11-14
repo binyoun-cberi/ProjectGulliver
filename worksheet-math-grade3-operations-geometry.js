@@ -59,7 +59,7 @@ function make(kind,i){
  if(kind==='multiplication3'){
   const a=58+i*2,b=34+(i%7)*5,product=a*b,tens=Math.floor(b/10)*10,ones=b%10;
   const p1=a*tens,p2=a*ones,wrongWithoutPlace=a*Math.floor(b/10)+p2;
-  return answers('두 자리 수의 곱셈 '+a+' × '+b+'을 계산한 값은?',
+  return answers('두 자리 수의 곱셈 '+a+' × '+b+'의 계산 결과는?',
    String(product),String(wrongWithoutPlace),String(product+10),
    b+'는 '+tens+' + '+ones+'입니다. '+a+' × '+tens+' = '+p1+', '+a+' × '+ones+' = '+p2+'이므로 '+p1+' + '+p2+' = '+product+'입니다.',
    people[i]+'의 계산: 십의 자리에 대한 곱을 구할 때 자릿값을 잊지 마세요.');
