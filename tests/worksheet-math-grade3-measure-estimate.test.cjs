@@ -109,7 +109,7 @@ test('second-hand readings, minute conversions, carrying and borrowing honor bas
   assert.equal(ans.value,calc==='time-add'?a.value+b.value:a.value-b.value,q.evidenceId);
   assert.ok(ans.value>=0);assert.ok(!/시간 6\d+분|분 6\d+초/.test(q.answer));
   for(const w of q.choices.slice(1))assert.notEqual(duration(w).value,ans.value);
-  assert.match(q.explanation,calc==='time-add'?/60(분|초)를 1(시간|분)/:/60(분|초)로 바꿔 계산/);
+  assert.match(q.explanation,calc==='time-add'?/60(분|초)을 1(시간|분)/:/60(분|초)로 바꿔 계산/);
  }
 });
 test('estimate tasks state concrete objects and do not imply that actual measurement was observed',()=>{
