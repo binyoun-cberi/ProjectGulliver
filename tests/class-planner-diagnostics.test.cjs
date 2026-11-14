@@ -20,7 +20,7 @@ test('묶음이 반별 목표 상한 초과',()=>{
  assert.ok(has(check({students:[p('a'),p('b'),p('c'),p('d')],together:[{a:'a',b:'b'},{a:'b',b:'c'}],classCount:2}),'twin-capacity'));
 });
 test('고정 배정 합계가 목표 상한 초과',()=>{
- assert.ok(has(check({students:[p('a',1),p('b',1),p('c',1),p('d'),p('e')],classCount:2}),'room-over'));
+ assert.ok(has(check({students:[p('a',1),p('b',1),p('c',1),p('d')],classCount:2}),'room-over'));
 });
 test('모든 반을 분리 대상 고정 학생이 차지하는 경우',()=>{
  assert.ok(has(check({students:[p('a',1),p('b',2),p('c'),p('d')],separations:[{a:'a',b:'c'},{a:'b',b:'c'}],classCount:2}),'no-room'));
