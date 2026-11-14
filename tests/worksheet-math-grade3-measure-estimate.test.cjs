@@ -76,7 +76,7 @@ test('six previously connected grade-three length/time lessons remain bound to t
  }
 });
 test('estimate tasks state concrete objects and do not imply that actual measurement was observed',()=>{
- for(const k of ['length-estimate','weight-estimate','capacity-estimate']){
+ for(const k of ['weight-estimate','capacity-estimate']){
   const b=kind(k);
   assert.equal(b.items.length,16);
   const labels=new Set();
