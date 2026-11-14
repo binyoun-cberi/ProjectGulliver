@@ -2597,7 +2597,7 @@ function installEvents(){
     if(problems.length){invalidate();saveState();showTab('results');$('resultMessage').textContent=problems.join(' / ');toast(problems[0]);return}
     const outcome=generateTransferCandidates(state.students,state.pairs,state.classCount,state.traits,Math.random,state.capRules,buildBasketPairs([],state.baskets),state.twinGroups,allocationOptions(),state.teacherPriorityOn);if(outcome.error){invalidate();saveState();showTab('results');toast(outcome.error);$('resultMessage').textContent=outcome.error;$('resultMessage').classList.remove('hidden');return}state.candidates=outcome.candidates;state.activeCandidate=0;moveUndoStack.length=0;moveSelectedId=null;moveDraggingId=null;moveLastResult=null;saveState();showTab('results');toast(`${outcome.candidates.length}개의 편성안을 만들었습니다. 분리 조건을 검증했습니다.`)});
   $('generateQuick').addEventListener('click',()=>$('generate').click());
-  $('alternatives').addEventListener('click',e=>{const b=e.target.closest('[data-candidate]');if(!b)return;state.activeCandidate=Number(b.dataset.candidate);moveSelectedId=null;moveDraggingId=null;saveState();renderResults();clearReviewPreview()});
+  $('alternatives').addEventListener('click',e=>{const b=e.target.closest('[data-candidate], [data-candidate-compare]');if(!b)return;state.activeCandidate=Number(b.dataset.candidate??b.dataset.candidateCompare);moveSelectedId=null;moveDraggingId=null;saveState();renderResults();clearReviewPreview()});
   $('undoMove').addEventListener('click',undoResultMove);
   $('resultGrid').addEventListener('click',e=>{
     const move=e.target.closest('[data-drop-button]');
