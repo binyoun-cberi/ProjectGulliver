@@ -56,7 +56,7 @@ test('worksheet and page integrate lab bank, qrcode, print styling, and no remot
  const worksheet=read('문제지 만들기.html'),ui=read('daily-worksheet.js'),page=read('과학 탐구 실험.html'),css=read('science-interactive-worksheet.css');
  assert.match(worksheet,/id="scienceInteractive"/);
  assert.ok(worksheet.indexOf('science-interactive-bank.js')<worksheet.indexOf('daily-worksheet.js'));
- assert.match(ui,/ScienceInteractiveBank\.enrich/);
+ assert.match(ui,/ScienceInteractiveBank\?\.enrich/);
  assert.match(ui,/generator\.createSvgTag/);
  assert.match(ui,/url\.searchParams\.set\('lab','1'\)/);
  assert.match(ui,/interactiveExperiment/);
