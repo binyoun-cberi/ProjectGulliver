@@ -1,0 +1,43 @@
+name: Science QR Inquiry Checks
+on:
+  push:
+    branches:
+      - feat/science-qr-inquiry-20261114
+    paths:
+      - 'science-interactive-*'
+      - '과학 탐구 실험.html'
+      - '문제지 만들기.html'
+      - 'daily-worksheet.js'
+      - 'tests/science-interactive.test.cjs'
+      - 'tests/science-interactive-browser.e2e.cjs'
+      - '.github/workflows/science-qr-inquiry.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'science-interactive-*'
+      - '과학 탐구 실험.html'
+      - '문제지 만들기.html'
+      - 'daily-worksheet.js'
+      - 'tests/science-interactive.test.cjs'
+      - 'tests/science-interactive-browser.e2e.cjs'
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check science-interactive-bank.js
+          node --check daily-worksheet.js
+          node --check tests/science-interactive.test.cjs
+      - name: Science inquiry and worksheet regression
+        run: node --test tests/science-interactive.test.cjs tests/daily-worksheet-core.test.cjs
+      - name: Install headless browser driver
+        run: npm install --no-save --ignore-scripts playwright-core@1.56.1
+      - name: Mobile lab and A4 QR browser checks
+        run: |
+          test -x /usr/bin/google-chrome || test -x /usr/bin/chromium
+          node --test tests/science-interactive-browser.e2e.cjs

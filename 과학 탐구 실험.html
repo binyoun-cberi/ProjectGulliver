@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>QR 과학 탐구 · 클라시트</title>
+<link rel="icon" href="clasheet-mark.svg" type="image/svg+xml">
+<style>
+:root{font-family:system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#21334a;background:#f3f7fc}*{box-sizing:border-box}body{margin:0}button,input,textarea{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid #368ac8;outline-offset:3px}
+[hidden]{display:none!important}header{background:#fff;border-bottom:1px solid #dbe5f0;padding:14px max(18px,calc((100vw - 770px)/2));display:flex;align-items:center;justify-content:space-between;gap:14px;font-size:14px}header strong{color:#246d9c}header a{color:#385b7d;text-decoration:none;font-size:12px}
+main{width:min(100%,800px);margin:0 auto;padding:22px 16px 56px}.lead{margin-bottom:16px}.lead span{font-size:12px;font-weight:800;color:#277eb2;letter-spacing:.05em}.lead h1{font-size:clamp(23px,5vw,32px);line-height:1.3;margin:6px 0}.lead p{margin:7px 0 0;line-height:1.65;color:#536b80;font-size:14px}.panel{background:white;border:1px solid #dfe7f0;border-radius:18px;padding:20px;margin-top:14px;box-shadow:0 8px 28px #19344c0b}.panel h2{font-size:17px;margin:0 0 11px}.badge{display:inline-block;background:#e6f1fc;border-radius:99px;color:#245e87;padding:5px 11px;font-size:12px;font-weight:800}.model{background:#101f35;border-radius:16px;overflow:hidden;margin:15px 0;color:white;position:relative}.model svg{display:block;width:100%;max-height:300px;aspect-ratio:16/9}.model-note{padding:0 14px 13px;color:#c6d5e7;font-size:11px;line-height:1.5}.model svg text{font-size:12px;font-family:inherit;fill:#dcecff}.model svg .glow{filter:drop-shadow(0 0 5px #58b9ff)}.control-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:750}.control-head output{font-variant-numeric:tabular-nums;color:#146f9d;font-weight:900;font-size:20px}input[type=range]{width:100%;accent-color:#177cbb;margin:15px 0;height:26px;cursor:pointer}.ticks{display:flex;justify-content:space-between;font-size:11px;color:#748296}.result{border-radius:12px;background:#f0f8ff;border:1px solid #c7e5f5;padding:12px 14px;font-weight:750;margin:13px 0;line-height:1.55}.actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center}.primary{border:0;background:#137ab5;color:white;border-radius:11px;padding:12px 18px;font-weight:850;min-height:45px}.primary:disabled{background:#bbcbd7;cursor:not-allowed}.secondary{border:1px solid #bdcfdf;background:#fff;color:#32566d;border-radius:11px;padding:10px 14px;min-height:45px;font-weight:750}.status{min-height:22px;color:#315e79;font-size:13px;margin:11px 0 0}.count{margin-left:auto;color:#5d7282;font-size:13px;font-weight:750}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:10px 8px;text-align:left;border-bottom:1px solid #e1e8ed;font-variant-numeric:tabular-nums}th{background:#f1f5fa;font-weight:800}label.text-label{display:block;font-size:13px;font-weight:800;margin:13px 0 6px}textarea{width:100%;border-radius:9px;border:1px solid #bccbda;padding:11px;min-height:70px;resize:vertical;font-size:14px;line-height:1.5}.muted{color:#607388;font-size:12px;line-height:1.65}.answer{background:#f4f8ee;border-left:4px solid #62964a;padding:12px;border-radius:6px;line-height:1.7;margin-top:10px}.back{display:inline-block;margin-top:22px;color:#2879aa}.molecule{fill:#78cbff;stroke:#d4f4ff;stroke-width:1.5}.particle{transform-box:fill-box;transform-origin:center;animation:drift var(--speed,1.8s) ease-in-out infinite alternate}@keyframes drift{0%{transform:translate(-5px,-4px)}100%{transform:translate(6px,6px)}}@media(prefers-reduced-motion:reduce){.particle{animation:none}}@media(max-width:520px){.panel{padding:15px}.model svg{aspect-ratio:4/3}.count{width:100%;margin:0}}
+@media print{body{background:#fff}header,.actions,input[type=range],.ticks{display:none}.panel{box-shadow:none;break-inside:avoid}}
+</style></head>
+<body><header><strong>클라시트 · QR 과학 탐구</strong><a href="문제지 만들기.html?subject=science">과학 문제지 만들기</a></header>
+<main><section class="lead"><span>관찰 · 기록 · 설명</span><h1 id="title">과학 탐구 실험</h1><p id="description">문제지의 QR코드로 접속한 탐구 활동입니다.</p></section>
+<div id="unavailable" class="panel" hidden>해당 실험을 찾지 못했습니다. 문제지에서 QR코드를 다시 확인해 주세요.</div>
+<div id="activity" hidden>
+ <section class="panel"><span class="badge">1 · 예상하기</span><label class="text-label" for="prediction">조건을 바꾸면 어떤 일이 일어날까요?</label><textarea id="prediction" placeholder="먼저 나의 예상과 까닭을 적어 보세요."></textarea></section>
+ <section class="panel"><span class="badge">2 · 조건 바꾸고 관찰하기</span><div class="model"><svg id="diagram" role="img" aria-label="조건을 바꿀 때 변화하는 과학 모형" viewBox="0 0 440 250"></svg><div id="modelNote" class="model-note"></div></div>
+  <div class="control-head"><label id="sliderLabel" for="slider">실험 조건</label><output id="selected" for="slider"></output></div>
+  <input id="slider" type="range" min="0" max="3" step="1" value="0" aria-describedby="result">
+  <div class="ticks" id="ticks"></div><p class="result" id="result" role="status"></p>
+  <div class="actions"><button id="save" class="primary" type="button">이 조건 기록하기</button><button id="reset" class="secondary" type="button">기록 초기화</button><span id="count" class="count">0 / 3개 기록</span></div>
+  <p class="status" id="feedback" role="status" aria-live="polite">서로 다른 조건 3개를 기록하세요.</p>
+ </section>
+ <section class="panel"><span class="badge">3 · 결과 비교하고 설명하기</span><h2 style="margin-top:12px">실험 기록</h2><table><thead><tr><th>조건</th><th id="resultHeader">관찰 결과</th></tr></thead><tbody id="rows"><tr><td colspan="2">아직 기록하지 않았습니다.</td></tr></tbody></table>
+  <label class="text-label" for="conclusion">세 조건을 비교해 알아낸 사실을 적어 보세요.</label><textarea id="conclusion" placeholder="자료에서 확인한 수치와 그 까닭을 함께 적어 보세요."></textarea>
+  <div class="actions" style="margin-top:12px"><button id="reveal" class="secondary" type="button" disabled>세 번 기록한 뒤 해설 보기</button><button id="copy" class="secondary" type="button">내 기록 복사하기</button></div>
+  <p class="answer" id="answer" hidden></p><p class="muted">기록과 답변은 이 화면에서만 관리하며 서버에 자동 제출되지 않습니다. 다른 기기로 이동하거나 새로고침하면 지워집니다. 문제지에 결과를 옮겨 적으세요.</p>
+ </section>
+</div></main><script src="science-interactive-bank.js?v=20261114-1"></script>
+<script>
+(()=>{'use strict';
+const B=window.ScienceInteractiveBank,p=new URLSearchParams(location.search),id=p.get('lab'),lab=B?.LABS[id],$=id=>document.getElementById(id);
+if(!lab){$('unavailable').hidden=false;return}
+$('activity').hidden=false;$('title').textContent=lab.title;
+$('description').textContent=lab.detail+' 실험 결과는 교사가 실제 측정한 자료가 아니라 개념 학습용 모형입니다.';
+const slider=$('slider'),values=lab.values;slider.max=String(values.length-1);slider.value='0';
+$('sliderLabel').textContent=id==='gas'?'기체의 부피':id==='temperature'?'물의 온도':'입사각';
+$('resultHeader').textContent=id==='gas'?'압력(기압)':id==='temperature'?'입자의 상대 평균 속력':'반사각';
+$('ticks').replaceChildren(...values.map(value=>{const t=document.createElement('span');t.textContent=value+lab.unit;return t}));
+let records=[];const number=()=>values[Number(slider.value)],round=x=>(Math.round(x*100)/100).toFixed(2);
+function outcome(value){const n=B.valueFor(id,value);return id==='gas'?n.toFixed(2)+'기압':id==='temperature'?round(n)+'배 (20°C 기준)':'반사각 '+n+'°';}
+function svgGas(v){const width=260*v/24,x=70,balls=Array.from({length:18},(_,i)=>{const bx=x+17+((i*41+9)%211)/211*(width-34),by=57+((i*37+21)%117);return '<circle class="molecule" cx="'+bx.toFixed(1)+'" cy="'+by+'" r="5"/>'}).join('');
+return '<rect x="70" y="40" width="260" height="150" rx="12" fill="#263d58" stroke="#8297ab" stroke-width="3"/><rect x="'+(x+width)+'" y="40" width="13" height="150" rx="3" fill="#becbdb"/><rect x="'+(x+width+13)+'" y="103" width="60" height="12" rx="5" fill="#becbdb"/><rect x="70" y="40" width="'+width+'" height="150" rx="9" fill="#174e70" opacity=".28"/>'+balls+'<text x="70" y="218">온도와 입자 수 일정 · 단순화된 기체 모형</text>';}
+function svgTemp(v){const speed=B.particleSpeed(v),circles=Array.from({length:22},(_,i)=>{const bx=92+(i*37%248),by=70+(i*43%108);return '<circle class="molecule particle" style="--speed:'+(1.7/speed).toFixed(2)+'s;animation-delay:-'+(i%8*.17).toFixed(2)+'s" cx="'+bx+'" cy="'+by+'" r="5"/>'}).join('');
+return '<path d="M75 40V190Q75 205 92 205H350Q365 205 365 190V40" fill="#123e5f" stroke="#8eacc7" stroke-width="5"/><path d="M84 80H356V190Q356 196 346 196H95Q84 196 84 190Z" fill="#2675a0" opacity=".35"/>'+circles+'<text x="95" y="231">같은 양의 물 · 움직임을 단순화한 모형</text>';}
+function svgReflection(deg){const rad=deg*Math.PI/180,dx=145*Math.sin(rad),dy=145*Math.cos(rad),x1=220-dx,x2=220+dx,y=184-dy;
+return '<path d="M45 184H395" stroke="#d4dce5" stroke-width="6"/><path d="M55 188l-8 10m32-10l-8 10m32-10l-8 10m32-10l-8 10m32-10l-8 10m32-10l-8 10m32-10l-8 10m32-10l-8 10m32-10l-8 10m32-10l-8 10" stroke="#8395aa" stroke-width="2"/><path d="M220 24V184" stroke="#94adc5" stroke-width="2" stroke-dasharray="5 7"/><path d="M'+x1.toFixed(1)+' '+y.toFixed(1)+' L220 184" stroke="#ffcb70" stroke-width="4" stroke-linecap="round"/><path d="M220 184 L'+x2.toFixed(1)+' '+y.toFixed(1)+'" stroke="#79edc9" stroke-width="4" stroke-linecap="round"/><circle cx="220" cy="184" r="5" fill="#fff"/><text x="145" y="33">입사각 '+deg+'°</text><text x="272" y="33">반사각 '+deg+'°</text><text x="174" y="224">점선: 법선</text>';}
+function draw(){const value=number();$('selected').textContent=value+lab.unit;$('result').textContent=id==='gas'?'기체 압력: '+outcome(value):id==='temperature'?'평균 운동 속력 모형: '+outcome(value):'법선에서 잰 '+outcome(value);
+ $('diagram').innerHTML=id==='gas'?svgGas(value):id==='temperature'?svgTemp(value):svgReflection(value);
+ $('diagram').setAttribute('aria-label',lab.title+', '+value+lab.unit+', '+outcome(value));
+ $('modelNote').textContent=id==='gas'?'압력 = 24 ÷ 부피 (24 mL에서 1.00기압). 입자 그림은 비율을 설명하는 모형입니다.':id==='temperature'?'절대온도에 따른 평균 속력 변화의 방향만 나타낸 모형입니다. 실제 물 분자 궤적이 아닙니다.':'입사각과 반사각은 모두 점선 법선으로부터 잽니다.';
+}
+function refresh(){const body=$('rows');body.replaceChildren();if(!records.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=2;td.textContent='아직 기록하지 않았습니다.';tr.append(td);body.append(tr)}
+ for(const v of records){const tr=document.createElement('tr');for(const text of [v+lab.unit,outcome(v)]){const td=document.createElement('td');td.textContent=text;tr.append(td)}body.append(tr)}
+ $('count').textContent=records.length+' / 3개 기록';$('save').disabled=records.length>=3;$('reveal').disabled=records.length<3;$('reveal').textContent=records.length<3?'세 번 기록한 뒤 해설 보기':'해설 보기';}
+slider.addEventListener('input',draw);
+$('save').addEventListener('click',()=>{if(records.length>=3)return;const before=records.length;records=B.record(records,id,number());$('feedback').textContent=records.length===before?'이미 기록한 조건입니다. 다른 조건으로 바꾸세요.':records.length===3?'세 조건을 기록했습니다. 결과를 비교하고 설명해 보세요.':'기록했습니다. 다른 조건도 관찰하세요.';refresh()});
+$('reset').addEventListener('click',()=>{records=[];$('answer').hidden=true;$('feedback').textContent='기록을 초기화했습니다. 서로 다른 조건을 3번 기록하세요.';refresh()});
+$('reveal').addEventListener('click',()=>{if(records.length<3)return;$('answer').textContent=lab.modelExplanation;$('answer').hidden=!$('answer').hidden;$('reveal').textContent=$('answer').hidden?'해설 보기':'해설 닫기'});
+$('copy').addEventListener('click',async()=>{const txt=[lab.title,'예상: '+$('prediction').value,...records.map(v=>v+lab.unit+' → '+outcome(v)),'설명: '+$('conclusion').value].join('\n');try{await navigator.clipboard.writeText(txt);$('feedback').textContent='내 기록을 복사했습니다.'}catch{$('feedback').textContent='복사할 수 없습니다. 표를 직접 옮겨 적으세요.'}});
+draw();refresh();
+})();
+</script></body></html>
