@@ -583,6 +583,7 @@ for(const q of modernDepth.items()){const b=banks.find(b=>b.id===q.bankId);if(!b
 (typeof module==='object'&&module.exports?require('./worksheet-math-grade4-bar-line-graphs.js'):globalThis.WorksheetMathGradeFourGraphs).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-math-grade4-transforms-quads.js'):globalThis.WorksheetMathGradeFourTransformations).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-math-grade3-measure-estimate.js'):globalThis.WorksheetMathGradeThreeMeasures).register(banks);
+(typeof module==='object'&&module.exports?require('./worksheet-math-grade3-operations-geometry.js'):globalThis.WorksheetMathGradeThreeOperations).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-korean-literacy-grade3.js'):globalThis.WorksheetKoreanLiteracyThree).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-korean-literacy-grade4.js'):globalThis.WorksheetKoreanLiteracyFour).register(banks);
 (typeof module==='object'&&module.exports?require('./worksheet-korean-grade3-language.js'):globalThis.WorksheetKoreanGradeThreeLanguage).register(banks);
