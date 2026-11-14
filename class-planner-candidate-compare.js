@@ -53,7 +53,7 @@ function candidateComparisonTable(students,candidates,classCount,activeIndex,exp
  const tableRows=scores.map(({stats:s,changed},i)=>{
   const current=i===activeIndex;
   return '<tr'+(current?' class="candidate-comparison-current"':'')+'>'+
-   '<th scope="row"><button type="button" data-candidate="'+i+'" aria-pressed="'+current+'">편성안 '+String.fromCharCode(65+i)+(current?' · 선택 중':'')+'</button></th>'+
+   '<th scope="row"><button type="button" data-candidate-compare="'+i+'" aria-pressed="'+current+'">편성안 '+String.fromCharCode(65+i)+(current?' · 선택 중':'')+'</button></th>'+
    '<td>'+numeric(s.countGap,'명')+'</td>'+
    '<td>'+numeric(s.genderGap,'명')+'</td>'+
    '<td>'+(s.averageGap===null?'—':s.averageGap.toFixed(2))+'</td>'+
