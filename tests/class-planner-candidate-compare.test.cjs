@@ -48,7 +48,7 @@ test('전학 후 중립 정보는 원 반·성별·유의사항·학습 편차�
 test('A/B/C 비교는 실제 변경 학생 수와 선택을 표시하고 접기 유지',()=>{
  const list=[{assign:A},{assign:B},{assign:A}];
  const output=api().candidateComparisonTable(people,list,2,1,false);
- assert.match(output,/data-candidate="1" aria-pressed="true"/);
+ assert.match(output,/data-candidate-compare="1" aria-pressed="true"/);
  assert.match(output,/A안과 다른 학생/);
  assert.match(output,/2명/);
  assert.doesNotMatch(output,/<details class="candidate-compare" open>/);
