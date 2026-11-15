@@ -499,6 +499,47 @@ const assert=require('node:assert/strict');
  await diagnosticPage.setViewportSize({width:390,height:844});
  assert.equal(await diagnosticPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  await diagnosticPage.close();
+ // Named checkpoints: save -> move -> compare -> restore -> refresh -> changed-rule protection.
+ const savePage=await browser.newPage({viewport:{width:1200,height:950}});savePage.on('pageerror',e=>errors.push(e.message));
+ await savePage.goto('http://localhost:8765/'+encodeURIComponent('반 편성 도우미.html'));
+ await savePage.evaluate(()=>{
+  state=defaultState();state.setupCompleted=true;state.grade='6';state.classCount=2;
+  state.students=Array.from({length:4},(_,i)=>({
+   id:'saved'+i,name:'보관학생'+i,oldGrade:'5',oldClass:(Math.floor(i/2)+1)+'반',
+   number:String(i+1),gender:i%2?'여':'남',level:80+i*2,traits:[],fixed:0,note:''
+  }));
+  state.candidates=[{assign:{saved0:1,saved1:1,saved2:2,saved3:2},target:[2,2],score:0}];
+  saveState();showTab('results');
+ });
+ await savePage.locator('#savedPlanPanel > summary').click();
+ await savePage.locator('#savedPlanName').fill('1차 협의안');
+ await savePage.locator('#saveCurrentPlan').click();
+ assert.equal(await savePage.evaluate(()=>state.savedPlans.length),1);
+ assert.equal(await savePage.locator('.saved-plan-row').count(),1);
+ const savedId=await savePage.evaluate(()=>state.savedPlans[0].id);
+ assert.equal(await savePage.evaluate(()=>applyResultMove('saved0',2)),true);
+ await savePage.locator('[data-saved-compare="'+savedId+'"]').click();
+ assert.match(await savePage.locator('#savedPlanComparison').textContent(),/1명이 다른 반/);
+ assert.match(await savePage.locator('#savedPlanComparison').textContent(),/보관학생0/);
+ await savePage.locator('[data-saved-restore="'+savedId+'"]').click();
+ assert.equal(await savePage.evaluate(()=>state.candidates[0].assign.saved0),1);
+ assert.equal(await savePage.evaluate(()=>state.savedPlans.length),2);
+ assert.ok(await savePage.evaluate(()=>state.savedPlans.some(p=>p.name.startsWith('복원 전'))));
+ const keptState=await savePage.evaluate(()=>({...JSON.parse(localStorage.getItem('classplanner-v1-local')),candidates:[]}));
+ assert.equal(keptState.savedPlans.length,2); // JSON backup retains checkpoints even when candidates are omitted
+ await savePage.reload();await savePage.locator('[data-tab="results"]').click();
+ await savePage.locator('#savedPlanPanel > summary').click();
+ assert.equal(await savePage.locator('.saved-plan-row').count(),2);
+ assert.equal(await savePage.evaluate(()=>state.candidates[0].assign.saved0),1);
+ // A new hard rule invalidates the old checkpoint but does not delete it.
+ await savePage.evaluate(()=>{
+  state.pairs=[{a:'saved0',b:'saved1'}];invalidate();changeState();
+ });
+ assert.equal(await savePage.locator('[data-saved-restore="'+savedId+'"]').isDisabled(),true);
+ assert.match(await savePage.locator('#savedPlansList').textContent(),/분리 조건/);
+ await savePage.setViewportSize({width:390,height:844});
+ assert.equal(await savePage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await savePage.close();
  assert.deepEqual(errors,[]);console.log('PASS: spreadsheet editing, charts, five-person basket, sixth-person guard, best-effort generation and saved results');
  await browser.close();server.close();
 })().catch(e=>{console.error(e);process.exit(1)});
