@@ -103,7 +103,7 @@ const problems={
   {type:'product',a:[3,4],b:[2,3],n:1,d:2,text:'3/4의 2/3에 해당하는 부분을 만들어 보세요.'}]
 };
 problems.master=[problems.explore[1],problems.puzzle[2],problems.calc[1],problems.multiply[0],problems.calc[3],problems.puzzle[3]];
-const state={mode:'free',topic:'shade',shape:'rect',den:4,mask:[true,false,false,false],history:[],level:0,success:false,message:'조각을 눌러 색칠하거나 해제해 보세요.',tone:'',
+const state={mode:'free',topic:'shade',operation:'add',shape:'rect',den:4,mask:[true,false,false,false],history:[],level:0,success:false,message:'조각을 눌러 색칠하거나 해제해 보세요.',tone:'',
  a:{n:1,d:4},b:{n:2,d:4},pa:{n:1,d:2},pb:{n:2,d:3},mixedD:4,mixedN:5};
 function f(n,d){return n+'/'+d}
 function snapshot(){state.history.push({den:state.den,mask:state.mask.slice(),shape:state.shape,mixedN:state.mixedN,mixedD:state.mixedD});if(state.history.length>40)state.history.shift()}
@@ -139,8 +139,9 @@ function renderControls(){
   if(state.mode!=='free') h+='<div class="buttons">'+button('check','정답 확인','primary wide')+(state.success?button('next','다음 문제 →','gold wide'): '')+'</div>';
   h+='<p class="info">분할하기는 기존 색칠을 유지하면서 조각만 두 배로 나눕니다. 분모를 직접 바꿀 때에도 색칠이 정확히 유지되는 경우에만 변경됩니다.</p>';
  }else if(state.topic==='add'){
-  h+='<div class="field"><label>더할 분수</label><div class="operand-grid">'+fractionOptions('a',state.a,'첫 번째 분수')+fractionOptions('b',state.b,'두 번째 분수')+'</div></div>'+
-    '<p class="info">분모가 다르면 같은 크기의 전체를 공통 분모로 나눈 다음 색칠을 합쳐 보세요.</p>';
+  h+='<div class="field"><label>연산 고르기</label><div class="segmented">'+choice('operation','add','덧셈 +',state.operation==='add')+choice('operation','subtract','뺄셈 −',state.operation==='subtract')+'</div></div>'+
+    '<div class="field"><label>분수 조작</label><div class="operand-grid">'+fractionOptions('a',state.a,'첫 번째 분수')+fractionOptions('b',state.b,'두 번째 분수')+'</div></div>'+
+    '<p class="info">분모가 다른 경우에도 같은 크기의 전체를 공통 분모로 나누어 비교합니다.</p>';
  }else if(state.topic==='product'){
   h+='<div class="field"><label>겹칠 분수</label><div class="operand-grid">'+fractionOptions('pa',state.pa,'가로 방향')+fractionOptions('pb',state.pb,'세로 방향')+'</div></div>'+
     '<p class="info">파란 세로 구역과 노란 가로 구역이 겹치는 초록색 부분이 곱셈의 결과입니다.</p>';
@@ -197,14 +198,27 @@ function renderShading(){
  return h;
 }
 function renderAdd(){
- const a=state.a,b=state.b,common=M.strip(a,b),whole=common.first+common.second,res=M.add(a,b);
- return '<div class="stage-head"><h2>덧셈 연구</h2><span class="chip">공통 분모 '+common.denominator+'</span></div>'+
-  '<p class="note">두 분수는 같은 크기의 전체를 기준으로 표시됩니다.</p><div class="math-board">'+
+ const a=state.a,b=state.b,common=M.strip(a,b),isMinus=state.operation==='subtract';
+ let h='<div class="stage-head"><h2>'+(isMinus?'뺄셈 연구':'덧셈 연구')+'</h2><span class="chip">공통 분모 '+common.denominator+'</span></div>'+
+  '<p class="note">두 분수를 같은 크기의 전체로 나타내고, 그 조각 개수를 '+(isMinus?'빼':'합쳐')+' 보세요.</p><div class="math-board">'+
   '<div class="fraction-row"><span class="math-label">'+f(a.n,a.d)+'</span>'+strip(common.first,common.denominator,'blue')+'</div>'+
-  '<div class="fraction-row"><span class="math-label">＋ '+f(b.n,b.d)+'</span>'+strip(common.second,common.denominator,'yellow')+'</div>'+
-  '<p class="equal-text">같은 크기의 '+common.denominator+'조각을 기준으로 합쳐요.</p>'+stacked(whole,common.denominator,common.first)+
-  '<p class="equal-text">'+common.first+'/'+common.denominator+' + '+common.second+'/'+common.denominator+' = '+whole+'/'+common.denominator+' = '+f(res.n,res.d)+'</p>'+
-  '<p class="subtext">분모끼리 더하지 않습니다. 같은 크기의 조각 개수를 합합니다.</p></div>';
+  '<div class="fraction-row"><span class="math-label">'+(isMinus?'− ':'＋ ')+f(b.n,b.d)+'</span>'+strip(common.second,common.denominator,'yellow')+'</div>';
+ if(isMinus){
+  if(common.second>common.first){
+   return h+'<div class="feedback warn" role="status">두 번째 분수가 더 큽니다. 지금은 0보다 작아지는 뺄셈 대신 첫 번째 분수를 더 크게 해 보세요.</div></div>';
+  }
+  const remain=common.first-common.second,res=M.subtract(a,b);
+  h+='<p class="equal-text">첫 번째 분수에서 '+common.second+'조각을 덜어 내요.</p>'+
+   '<div class="fraction-row"><span class="math-label">남은 양</span>'+strip(remain,common.denominator,'green')+'</div>'+
+   '<p class="equal-text">'+common.first+'/'+common.denominator+' − '+common.second+'/'+common.denominator+' = '+remain+'/'+common.denominator+' = '+f(res.n,res.d)+'</p>'+
+   '<p class="subtext">같은 크기의 조각을 기준으로 빼야 합니다.</p></div>';
+ }else{
+  const total=common.first+common.second,res=M.add(a,b);
+  h+='<p class="equal-text">같은 크기의 '+common.denominator+'조각을 기준으로 합쳐요.</p>'+stacked(total,common.denominator,common.first)+
+   '<p class="equal-text">'+common.first+'/'+common.denominator+' + '+common.second+'/'+common.denominator+' = '+total+'/'+common.denominator+' = '+f(res.n,res.d)+'</p>'+
+   '<p class="subtext">분모끼리 더하지 않습니다. 같은 크기의 조각 개수를 합합니다.</p></div>';
+ }
+ return h;
 }
 function areaModel(a,b){
  let cells='';
@@ -226,9 +240,10 @@ function renderMixed(){
  const n=state.mixedN,d=state.mixedD,parts=M.mixed(n,d);
  let strips='';
  for(let i=0;i<Math.max(1,Math.ceil(n/d));i++)strips+='<div class="whole"><small>'+ (i+1)+'번 전체</small>'+strip(Math.max(0,Math.min(d,n-i*d)),d,'green')+'</div>';
+ const displayed=parts.whole===0?f(n,d):parts.remainder===0?String(parts.whole):parts.whole+'과 '+f(parts.remainder,d);
  return '<div class="stage-head"><h2>가분수와 대분수</h2><span class="chip">전체 묶기</span></div>'+
   '<p class="note">조각 '+d+'개를 모으면 전체 1개가 됩니다. +, − 버튼을 눌러 조각 수를 조절해 보세요.</p>'+
-  '<div class="group-stack">'+strips+'</div><p class="equal-text">'+f(n,d)+' = '+parts.whole+'와 '+f(parts.remainder,d)+'</p>'+
+  '<div class="group-stack">'+strips+'</div><p class="equal-text">'+f(n,d)+' = '+displayed+'</p>'+
   '<p class="subtext">완성한 전체 '+parts.whole+'개, 남은 조각 '+parts.remainder+'개입니다.</p>';
 }
 function render(){
@@ -286,6 +301,7 @@ document.addEventListener('click',event=>{
   if(state.mode!=='free')return;
   state.topic=value;state.history=[];notify('직접 조작해 보며 분수의 크기를 비교하세요.','');render();return;
  }
+ if(action==='operation'){if(state.mode==='free'&&['add','subtract'].includes(value)){state.operation=value;render()}return}
  if(action==='shape'){snapshot();state.shape=value;render();return}
  if(action==='piece'){
   const i=Number(el.dataset.index);
