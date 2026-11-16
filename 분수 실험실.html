@@ -1,7 +1,345 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>분수 실험실 · 클라시트</title><style>
-:root{font-family:system-ui,"Apple SD Gothic Neo",sans-serif;color:#23344c;background:#f3f7fc}*{box-sizing:border-box}body{margin:0;padding:20px}main{max-width:980px;margin:auto}h1{margin:8px 0}p{line-height:1.6}.panel{background:white;border:1px solid #dce5ef;border-radius:20px;padding:20px;margin:14px 0;box-shadow:0 4px 18px #152c4910}.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}button,select{font:inherit;min-height:48px;padding:9px 15px;border-radius:12px;border:1px solid #b8c9d9;background:white;color:#23344c;cursor:pointer}button.primary,.active{background:#177c72;color:white;border-color:#177c72}button:focus-visible,select:focus-visible{outline:3px solid #f2b84b}svg{width:100%;max-width:470px;display:block;margin:12px auto;touch-action:manipulation}svg [role=button]{cursor:pointer}#fraction{font-size:clamp(28px,5vw,44px);font-weight:800;color:#087b70}#message{min-height:48px;font-weight:700}#shape{min-height:240px}.muted{color:#66768b}.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}.fraction-row{font-size:23px;font-weight:750}a{color:#116c7d}@media(max-width:600px){body{padding:10px}.panel{padding:14px}button{flex:1}}
-</style></head><body><main><a href="index.html">← 교사 도구로 돌아가기</a><h1>분수 실험실</h1><p>도형을 직접 눌러 색칠하고, 같은 넓이를 여러 분수로 나타내 보세요.</p><section class="panel"><div class="controls"><button id="free" class="primary">자유 실험실</button><button id="challenge">도전 모드</button><label>도형 <select id="kind"><option value="rect">사각형</option><option value="circle">원</option></select></label><label>분할 <select id="denom"></select></label></div><div id="shape" aria-label="색칠할 분수 모형"></div><div class="controls"><button id="clear">색칠 지우기</button><button id="all">전체 색칠</button><button id="undo">한 단계 되돌리기</button><button id="refine">조각을 두 배로 나누기</button></div><p>현재 색칠한 분수 <span id="fraction">1/4</span> <span id="percent" class="muted">25%</span></p><p id="message" role="status" aria-live="polite"></p></section><div class="split"><section class="panel"><h2>분수 덧셈 실험</h2><p class="muted">같은 크기의 전체를 기준으로 계산해요.</p><div class="controls"><label>첫째 분수 <select id="a"></select></label><label>둘째 분수 <select id="b"></select></label></div><p id="addition" class="fraction-row"></p><div id="additionShape"></div></section><section class="panel"><h2>분수 도전</h2><p id="goal">도전 모드를 선택해 보세요.</p><div class="controls"><button id="check" class="primary">정답 확인</button><button id="next">다음 문제</button></div><p id="score" aria-live="polite">성공 0문제</p></section></div><div class="split"><section class="panel"><h2>분수 곱셈 연구소</h2><p>가로와 세로를 나누어 겹친 넓이를 관찰해요.</p><div class="controls"><label>가로 <select id="mulA"></select></label><label>세로 <select id="mulB"></select></label></div><p id="mulResult" class="fraction-row"></p><div id="mulShape"></div></section><section class="panel"><h2>가분수와 대분수</h2><p>하나의 전체보다 큰 분수를 여러 도형으로 나타내요.</p><div class="controls"><label>분자 <select id="imN"></select></label><label>분모 <select id="imD"></select></label></div><p id="imResult" class="fraction-row"></p><div id="imShape"></div></section></div><section class="panel" id="freeOperations"><h2>자유 연산 놀이터</h2><p>두 분수를 직접 만들고 조각을 눌러 색칠해 보세요. 두 모형의 전체 크기는 같습니다.</p><div class="controls"><button id="opAdd" class="primary" type="button">덧셈</button><button id="opMul" type="button">곱셈</button><button id="opUndo" type="button">되돌리기</button><button id="opReset" type="button">처음으로</button></div><div class="split"><div><h3>첫 번째 분수 <span id="opFractionA"></span></h3><div class="controls"><label>분모 <select id="opDenA"></select></label><button id="opMinusA" type="button">분자 −</button><button id="opPlusA" type="button">분자 +</button></div><div id="opShapeA"></div></div><div><h3>두 번째 분수 <span id="opFractionB"></span></h3><div class="controls"><label>분모 <select id="opDenB"></select></label><button id="opMinusB" type="button">분자 −</button><button id="opPlusB" type="button">분자 +</button></div><div id="opShapeB"></div></div></div><div class="controls"><button id="opSplit" type="button">같은 크기로 다시 나누기</button><button id="opPredict" type="button">정답 숨기기</button></div><p id="opSteps" class="fraction-row"></p><div id="opVisual"></div><p id="opMessage" role="status" aria-live="polite"></p></section></main><script>
-(()=>{'use strict';const $=id=>document.getElementById(id);const gcd=(a,b)=>b?gcd(b,a%b):a;const reduce=(n,d)=>{const g=gcd(n,d);return [n/g,d/g]};const fraction=(n,d)=>{const [a,b]=reduce(n,d);return a+'/'+b};const state={d:4,selected:new Set([0]),kind:'rect',mode:'free',history:[],goal:[1,2],score:0,step:0};const goals=[[1,2],[2,3],[3,4],[1,4],[3,6],[5,8],[2,4],[4,6]];function save(){state.history.push({d:state.d,selected:[...state.selected],kind:state.kind});if(state.history.length>40)state.history.shift()}function msg(s){$('message').textContent=s}function sync(){ $('denom').value=state.d;$('kind').value=state.kind;$('fraction').textContent=fraction(state.selected.size,state.d);$('percent').textContent=Math.round(100*state.selected.size/state.d)+'%';draw();}function draw(){const d=state.d,selected=state.selected;let paths='';for(let i=0;i<d;i++){let path;if(state.kind==='rect'){const x=10+i*440/d;path='<rect x="'+x+'" y="20" width="'+(440/d)+'" height="220" />'}else{const a=-Math.PI/2+i*2*Math.PI/d,b=a+2*Math.PI/d;const x=t=>230+105*Math.cos(t),y=t=>130+105*Math.sin(t);path=d===1?'<circle cx="230" cy="130" r="105" />':'<path d="M230 130 L'+x(a)+' '+y(a)+' A105 105 0 '+(b-a>Math.PI?1:0)+' 1 '+x(b)+' '+y(b)+' Z" />'}paths+='<g role="button" tabindex="0" aria-label="'+(i+1)+'번 조각 '+(selected.has(i)?'색칠됨':'색칠 안 됨')+'" data-i="'+i+'" fill="'+(selected.has(i)?'#35b7a5':'#eef4fa')+'" stroke="#2c5366" stroke-width="1.8">'+path+'</g>'} $('shape').innerHTML='<svg viewBox="0 0 460 260" role="group" aria-label="'+d+'개 중 '+selected.size+'개 색칠">'+paths+'</svg>';for(const el of $('shape').querySelectorAll('[data-i]')){const toggle=()=>{save();const i=Number(el.dataset.i);state.selected.has(i)?state.selected.delete(i):state.selected.add(i);sync();msg('색칠한 넓이를 확인해 보세요.')};el.addEventListener('click',toggle);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}})}}function changeDenom(next){if(next===state.d)return;const old=state.d,sel=state.selected;const newSel=new Set();for(let j=0;j<next;j++){const left=j/next,right=(j+1)/next;let covered=0;for(const i of sel){covered+=Math.max(0,Math.min(right,(i+1)/old)-Math.max(left,i/old))}if(covered>1e-9&&Math.abs(covered-(right-left))>1e-9){msg('색칠한 영역을 정확히 유지할 수 없는 분할이에요. '+old+'조각 상태를 유지합니다.');return}if(covered>1e-9)newSel.add(j)}save();state.d=next;state.selected=newSel;sync();msg('전체 넓이와 색칠한 영역은 그대로예요.')}for(let i=1;i<=24;i++)$('denom').add(new Option(i+'조각',i));for(const id of ['a','b']){for(let d=2;d<=8;d++)for(let n=1;n<d;n++)$(id).add(new Option(n+'/'+d,n+'/'+d));$(id).value=id==='a'?'1/4':'2/4'}function add(){const [a,b]=$('a').value.split('/').map(Number),[c,d]=$('b').value.split('/').map(Number);const common=b*d/gcd(b,d),n=a*(common/b)+c*(common/d);$('addition').textContent=a+'/'+b+' + '+c+'/'+d+' = '+n+'/'+common+' = '+fraction(n,common);let blocks='';for(let i=0;i<common;i++)blocks+='<span style="display:inline-block;width:'+Math.max(10,100/common)+'%;height:42px;border:1px solid #426777;background:'+(i<n?'#35b7a5':'#eef4fa')+'"></span>';$('additionShape').innerHTML='<div aria-label="합 '+n+'/'+common+'" style="display:flex;flex-wrap:wrap">'+blocks+'</div><p class="muted">공통 분모 '+common+'으로 나누어 합친 결과입니다.</p>'}function extra(){const [a,b]=$('mulA').value.split('/').map(Number),[c,d]=$('mulB').value.split('/').map(Number);$('mulResult').textContent=a+'/'+b+' × '+c+'/'+d+' = '+(a*c)+'/'+(b*d)+' = '+fraction(a*c,b*d);let cells='';for(let y=0;y<d;y++)for(let x=0;x<b;x++){const horiz=x<a,vert=y<c;cells+='<rect x="'+(x*320/b)+'" y="'+(y*180/d)+'" width="'+(320/b)+'" height="'+(180/d)+'" fill="'+(horiz&&vert?'#149b8c':horiz?'#bce8df':vert?'#c8d7fa':'#f0f4f8')+'" stroke="#53738b" />'}$('mulShape').innerHTML='<svg viewBox="0 0 320 180" role="img" aria-label="가로 '+a+'/'+b+'와 세로 '+c+'/'+d+'의 겹친 부분 '+a*c+'/'+b*d+'">'+cells+'</svg><p class="muted">진한 색이 겹친 부분입니다.</p>'}function improper(){const n=Number($('imN').value),d=Number($('imD').value),whole=Math.floor(n/d),rem=n%d;$('imResult').textContent=n+'/'+d+' = '+whole+(rem?'과 '+rem+'/'+d:'');let out='';for(let k=0;k<Math.ceil(n/d);k++){out+='<div style="display:flex;width:100%;max-width:350px;margin:8px 0">';for(let j=0;j<d;j++)out+='<span style="flex:1;height:48px;border:1px solid #4e7087;background:'+(k*d+j<n?'#35b7a5':'#eef4fa')+'"></span>';out+='</div>'}$('imShape').innerHTML=out}function next(){state.step=(state.step+1)%goals.length;state.goal=goals[state.step];$('goal').textContent='목표: '+state.goal.join('/')+'만큼 색칠해 보세요.';msg('목표 분수를 만들어 보세요.')}function mode(m){state.mode=m;$('free').classList.toggle('primary',m==='free');$('challenge').classList.toggle('primary',m==='challenge');$('goal').textContent=m==='free'?'자유 실험에는 정답과 오답이 없어요.':'목표: '+state.goal.join('/')+'만큼 색칠해 보세요.';msg(m==='free'?'마음껏 실험해 보세요.':'도형을 색칠한 뒤 정답 확인을 누르세요.')} $('denom').onchange=e=>changeDenom(Number(e.target.value));$('kind').onchange=e=>{save();state.kind=e.target.value;sync()};$('clear').onclick=()=>{save();state.selected.clear();sync()};$('all').onclick=()=>{save();state.selected=new Set(Array.from({length:state.d},(_,i)=>i));sync()};$('undo').onclick=()=>{const h=state.history.pop();if(!h){msg('되돌릴 단계가 없어요.');return}state.d=h.d;state.selected=new Set(h.selected);state.kind=h.kind;sync();msg('이전 단계로 돌아왔어요.')};$('refine').onclick=()=>{if(state.d*2>24){msg('최대 24조각까지 나눌 수 있어요.');return}changeDenom(state.d*2)};$('free').onclick=()=>mode('free');$('challenge').onclick=()=>mode('challenge');$('next').onclick=next;$('check').onclick=()=>{if(state.mode!=='challenge'){msg('도전 모드에서 정답을 확인할 수 있어요.');return}if(state.selected.size*state.goal[1]===state.goal[0]*state.d){state.score++;$('score').textContent='성공 '+state.score+'문제';msg('정답이에요! 같은 크기의 분수를 만들었어요.');next()}else msg('조각의 수가 아니라 전체에서 색칠한 넓이를 비교해 보세요.')};$('a').onchange=add;$('b').onchange=add;for(const id of ['mulA','mulB']){for(let d=2;d<=6;d++)for(let n=1;n<d;n++)$(id).add(new Option(n+'/'+d,n+'/'+d));$(id).value=id==='mulA'?'1/2':'2/3';$(id).onchange=extra}for(let i=1;i<=16;i++)$('imN').add(new Option(i,i));for(let i=2;i<=8;i++)$('imD').add(new Option(i,i));$('imN').value='5';$('imD').value='4';$('imN').onchange=improper;$('imD').onchange=improper;sync();add();extra();improper();mode('free')})();
-</script><script>
-(()=>{'use strict';const $=id=>document.getElementById(id),gcd=(a,b)=>b?gcd(b,a%b):a,lcm=(a,b)=>a*b/gcd(a,b),reduce=(n,d)=>{const g=gcd(n,d);return n/g+'/'+d/g};const state={mode:'add',a:{d:2,parts:[true,false]},b:{d:3,parts:[true,false,false]},history:[],revealed:true,split:false};const count=o=>o.parts.filter(Boolean).length;function snapshot(){state.history.push(JSON.stringify({mode:state.mode,a:state.a,b:state.b,revealed:state.revealed,split:state.split}));if(state.history.length>60)state.history.shift()}function announce(t){$('opMessage').textContent=t}function fraction(o){return count(o)+'/'+o.d}function setDen(which,d){const o=state[which];snapshot();o.d=d;o.parts=Array.from({length:d},(_,i)=>i<countBefore);state.split=false;render()}let countBefore=0;function resize(which,d){const o=state[which];countBefore=Math.min(count(o),d);setDen(which,d);announce('전체 크기는 같지만 조각 크기가 바뀌었습니다. 색칠한 조각 수를 확인해 보세요.')}function change(which,delta){const o=state[which],n=count(o)+delta;if(n<0||n>o.d)return;snapshot();o.parts=Array.from({length:o.d},(_,i)=>i<n);state.split=false;render()}function strips(which){const o=state[which],root=$('opShape'+which.toUpperCase());root.innerHTML='';const strip=document.createElement('div');strip.style.cssText='display:flex;min-height:76px;max-width:450px;border:2px solid #426777;border-radius:9px;overflow:hidden';o.parts.forEach((selected,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(selected));b.setAttribute('aria-label',(i+1)+'번째 조각');b.style.cssText='flex:1;min-width:0;min-height:76px;padding:0;border:1px solid #426777;border-radius:0;background:'+(selected?'#35b7a5':'#eef4fa');b.onclick=()=>{snapshot();o.parts[i]=!o.parts[i];state.split=false;render()};strip.appendChild(b)});root.appendChild(strip)}function render(){for(const w of ['a','b']){$('opDen'+w.toUpperCase()).value=state[w].d;$('opFraction'+w.toUpperCase()).textContent=fraction(state[w]);strips(w)}$('opAdd').classList.toggle('primary',state.mode==='add');$('opMul').classList.toggle('primary',state.mode==='mul');$('opPredict').textContent=state.revealed?'정답 숨기기':'정답 보기';const a=count(state.a),b=count(state.b),da=state.a.d,db=state.b.d,common=lcm(da,db);if(state.mode==='add'){const n=a*(common/da)+b*(common/db);$('opSteps').textContent=state.revealed?fraction(state.a)+' + '+fraction(state.b)+' = '+n+'/'+common+' = '+reduce(n,common):fraction(state.a)+' + '+fraction(state.b)+' = ?';const pieces=state.split?common:Math.max(da,db);let html='<p class="muted">'+(state.split?'같은 크기 '+common+'조각으로 나누었습니다.':'통분 버튼을 누르면 두 분수를 같은 크기의 조각으로 나눕니다.')+'</p>';if(state.split){for(const [label,k] of [['첫째',a*common/da],['둘째',b*common/db]]){html+='<p>'+label+' 분수</p><div style="display:flex;max-width:450px">';for(let i=0;i<common;i++)html+='<span style="flex:1;height:34px;border:1px solid #53738b;background:'+(i<k?'#35b7a5':'#eef4fa')+'"></span>';html+='</div>'}}$('opVisual').innerHTML=html}else{const n=a*b,d=da*db;$('opSteps').textContent=state.revealed?fraction(state.a)+' × '+fraction(state.b)+' = '+n+'/'+d+' = '+reduce(n,d):fraction(state.a)+' × '+fraction(state.b)+' = ?';let svg='<svg viewBox="0 0 320 200" role="img" aria-label="가로와 세로 색칠이 겹치는 넓이 모형">';for(let y=0;y<db;y++)for(let x=0;x<da;x++){const h=state.a.parts[x],v=state.b.parts[y];svg+='<rect x="'+(x*320/da)+'" y="'+(y*200/db)+'" width="'+320/da+'" height="'+200/db+'" fill="'+(h&&v?'#087c70':h?'#bce8df':v?'#a6bffa':'#eef4fa')+'" stroke="#476478" />'}$('opVisual').innerHTML=svg+'</svg><p class="muted">가로와 세로가 겹치는 진한 색 영역이 곱셈 결과입니다.</p>'}}for(const w of ['A','B']){const lower=w.toLowerCase();for(let d=2;d<=12;d++)$('opDen'+w).add(new Option(d+'조각',d));$('opDen'+w).onchange=e=>resize(lower,Number(e.target.value));$('opMinus'+w).onclick=()=>change(lower,-1);$('opPlus'+w).onclick=()=>change(lower,1)}$('opAdd').onclick=()=>{snapshot();state.mode='add';render()};$('opMul').onclick=()=>{snapshot();state.mode='mul';render()};$('opUndo').onclick=()=>{const old=state.history.pop();if(!old){announce('되돌릴 단계가 없습니다.');return}Object.assign(state,JSON.parse(old));render()};$('opReset').onclick=()=>{snapshot();state.a={d:2,parts:[true,false]};state.b={d:3,parts:[true,false,false]};state.split=false;state.revealed=true;render()};$('opSplit').onclick=()=>{if(state.mode!=='add'){announce('같은 크기로 나누기는 덧셈 모드에서 사용합니다.');return}snapshot();state.split=true;render();announce('공통 분모로 나누었습니다. 색칠한 전체 넓이는 바뀌지 않습니다.')};$('opPredict').onclick=()=>{snapshot();state.revealed=!state.revealed;render()};render()})();
-</script></body></html>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#eff8f5">
+<title>분수 실험실 | 클라시트 교사도구</title>
+<link rel="icon" type="image/svg+xml" href="clasheet-mark.svg">
+<style>
+:root{--ink:#253449;--muted:#67798a;--green:#16846f;--light:#e9f8f1;--line:#dce9e6;--sky:#2e80c7;--gold:#efaa35;--bg:#f3f8f6}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;background:radial-gradient(circle at 92% 0,#d8f1e7 0,transparent 30%),var(--bg)}
+button,select{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible,select:focus-visible,[role=button]:focus-visible{outline:3px solid #f6b63f;outline-offset:3px}
+a{color:var(--green);text-decoration:none}.app{max-width:1330px;margin:0 auto;padding:22px 18px 44px}
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
+.back{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 14px;font-weight:800;font-size:13px}
+.brand{display:inline-flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);font-weight:800}.brand-mark{width:34px;height:34px;border-radius:10px;background:var(--green);color:white;display:grid;place-items:center;font-weight:1000}
+.hero{padding:22px 26px;border:1px solid #e3efea;background:#fff;border-radius:24px;margin-bottom:14px}
+.kicker{font-size:12px;font-weight:900;color:var(--green);letter-spacing:.08em}.hero h1{font-size:clamp(27px,4vw,42px);letter-spacing:-.055em;margin:4px 0 6px}.hero p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+.modes{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 14px;scrollbar-width:thin}.mode{min-height:48px;padding:12px 16px;white-space:nowrap;border:1px solid var(--line);background:#fff;color:#657484;font-size:13px;font-weight:850;border-radius:14px}.mode[aria-selected=true]{background:var(--green);color:#fff;border-color:var(--green);box-shadow:0 5px 13px #14856b25}
+.layout{display:grid;grid-template-columns:minmax(272px,340px) minmax(0,1fr);gap:14px;align-items:start}
+.card{background:#fff;border:1px solid #e4ebe8;border-radius:23px;box-shadow:0 5px 19px #153d3208}
+.controls{padding:21px}.controls h2,.stage h2{margin:0 0 10px;font-size:18px;letter-spacing:-.035em}.controls p,.note{font-size:13px;color:var(--muted);line-height:1.65;margin:0 0 14px}
+.field{margin-top:18px}.field>label{display:block;font-size:12px;font-weight:900;color:#5d6d7d;margin-bottom:8px}
+.segmented{display:flex;gap:7px;flex-wrap:wrap}.choice{min-height:45px;border:1px solid #dbe9e4;border-radius:12px;background:#fff;padding:9px 14px;font-size:13px;font-weight:850;color:#516375}
+.choice.active{background:var(--light);border-color:#9acdbf;color:#096d57}.choice:disabled,.btn:disabled{opacity:.4;cursor:not-allowed}
+.select{width:100%;min-height:48px;padding:0 12px;border:1px solid #dbe9e4;border-radius:12px;background:#fff;color:var(--ink);font-weight:800}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}.btn{min-height:48px;border:1px solid #d4e7dd;border-radius:12px;background:#fff;color:#285b51;font-size:13px;font-weight:850;padding:10px}
+.btn.primary{color:#fff;background:var(--green);border-color:var(--green)}.btn.wide{grid-column:1/-1}.btn.gold{color:#7a5015;background:#fff3d8;border-color:#f4d892}
+.stage{padding:22px;min-height:580px}.stage-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.stage-head h2{margin:0}.chip{font-size:12px;font-weight:850;color:#167260;background:#e6f6ed;padding:7px 11px;border-radius:999px}
+.task{border-radius:16px;background:#eff8f5;border:1px solid #dceee5;padding:15px 17px;margin:16px 0;font-weight:850;line-height:1.6}
+.task small{display:block;font-size:12px;font-weight:700;color:#618375;margin-bottom:3px}
+.art{margin:16px auto 10px;max-width:620px;overflow-x:auto;text-align:center}.art svg{display:block;width:100%;min-width:355px;max-height:420px;margin:0 auto;touch-action:manipulation;user-select:none}
+.piece{cursor:pointer;transition:fill .18s ease,opacity .18s ease}.piece:hover{opacity:.85}
+.piece.on{fill:#28b49a}.piece.off{fill:#ecf3f0}
+.outline{fill:none;stroke:#2e6760;stroke-width:3;pointer-events:none}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.metric{padding:15px;border-radius:14px;background:#f6faf8;text-align:center}
+.metric small{display:block;font-size:12px;color:#627d76;font-weight:800;margin-bottom:5px}.metric strong{font-size:clamp(22px,3vw,31px);color:#176d61}
+.feedback{margin-top:17px;padding:15px;border-radius:14px;background:#f3f7fb;color:#435b70;font-weight:750;font-size:13px;line-height:1.65;min-height:53px}
+.feedback.success{background:#e9f9ef;color:#126c43;animation:pop .35s ease}.feedback.warn{background:#fff6e6;color:#8e5a16}
+@keyframes pop{from{transform:scale(.96)}to{transform:scale(1)}}
+.info{font-size:12px;color:#71817e;margin-top:14px;line-height:1.6}
+.math-board{margin:22px 0 8px}.fraction-row{display:flex;align-items:center;gap:12px;justify-content:center;margin:13px 0;flex-wrap:wrap}
+.math-label{font-size:18px;font-weight:950;min-width:60px}.strip{height:58px;display:flex;min-width:0;width:min(550px,100%);border:2px solid #568379;border-radius:9px;overflow:hidden;background:#fff}
+.strip span{flex:1;min-width:0;border-right:2px solid #fff;background:#e5efed}.strip span:last-child{border-right:0}
+.strip span.blue{background:#61afe4}.strip span.yellow{background:#ffd478}.strip span.green{background:#28b49a}
+.equal-text{text-align:center;margin:16px 0 4px;font-size:23px;font-weight:950;color:#126b5c}.subtext{text-align:center;color:#687d82;font-size:13px;line-height:1.6}
+.operand-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.operand{background:#f7faf9;border:1px solid var(--line);border-radius:15px;padding:12px}
+.operand strong{display:block;margin-bottom:10px;font-size:13px}.operand select{width:100%;min-height:43px;margin-top:6px;border-radius:10px;border:1px solid #d8e6e1;background:#fff;padding:0 10px}
+.operand label{display:block;font-size:11px;color:#6f807f;font-weight:800}
+.area-grid{display:grid;width:min(440px,100%);aspect-ratio:1.5;margin:22px auto 12px;border:3px solid #326e69;border-radius:9px;overflow:hidden;box-shadow:0 12px 25px #246f5720}
+.area-cell{border:1px solid #fff;background:#e6efec;position:relative}
+.area-cell.horizontal{background:#c4e6fb}.area-cell.vertical{background:#ffe6af}
+.area-cell.overlap{background:#25877a}
+.area-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;color:#677b7c;font-size:12px;font-weight:750}
+.dot{display:inline-block;width:12px;height:12px;vertical-align:middle;margin-right:4px;border-radius:3px}.dot.blue{background:#c4e6fb}.dot.gold{background:#ffe6af}.dot.green{background:#25877a}
+.plus-control{display:flex;align-items:center;gap:12px;justify-content:center;margin:18px 0}
+.plus-control strong{font-size:32px;min-width:100px;text-align:center}.round{border:1px solid #cde4d8;background:#f3fcf8;color:#137d69;border-radius:14px;font-size:26px;font-weight:950;min-width:57px;min-height:55px}
+.group-stack{max-width:570px;margin:20px auto}.whole{margin:10px 0}.whole small{display:block;text-align:left;color:#738783;margin-bottom:5px;font-size:12px;font-weight:800}
+.small-print{margin:20px 2px;color:#71847d;font-size:12px;line-height:1.6}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.controls{padding:17px}.stage{padding:17px;min-height:460px}.hero{padding:18px}.art svg{min-width:340px}}
+@media(max-width:420px){.app{padding:12px 10px 30px}.brand{display:none}.mode{padding:11px 13px}.stage{padding:13px}.art svg{min-width:315px}.metrics{gap:7px}.metric{padding:12px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style>
+<script src="fraction-lab-math.js"></script>
+</head>
+<body>
+<div class="app">
+<header><a class="back" href="index.html?view=tools" aria-label="교사 도구 목록으로 돌아가기">← 교사 도구</a><span class="brand"><span class="brand-mark">½</span>클라시트 수학 교구</span></header>
+<div class="hero"><span class="kicker">직접 만지고 발견하는 수학</span><h1>분수 실험실</h1><p>쪼개고, 색칠하고, 합치면서 분수의 크기를 눈으로 확인해 보세요.</p></div>
+<nav class="modes" id="modes" aria-label="분수 실험실 모드"></nav>
+<div class="layout"><aside id="controls" class="card controls"></aside><section id="stage" class="card stage" aria-label="분수 실험 화면"></section></div>
+<p class="small-print">교사 안내: 자유 실험에는 정답과 오답이 없습니다. 도전 모드에서만 확인 버튼으로 결과를 판정합니다. 갤럭시탭에서는 조각을 직접 눌러 색칠할 수 있습니다.</p>
+</div>
+<script>
+(function(){
+'use strict';
+const M=window.FractionLabMath;
+const $=id=>document.getElementById(id);
+const DENOMS=[2,3,4,6,8,12,16];
+const modes=[['free','자유 실험실'],['explore','분수 탐험'],['puzzle','분수 퍼즐'],['calc','분수 계산왕'],['multiply','곱셈 연구소'],['master','분수 마스터']];
+const problems={
+ explore:[
+  {type:'shade',n:1,d:2,text:'전체의 1/2을 색칠해 보세요.'},
+  {type:'shade',n:3,d:4,text:'전체의 3/4을 만들어 보세요.'},
+  {type:'shade',n:2,d:3,text:'전체의 2/3를 색칠해 보세요.'},
+  {type:'shade',n:5,d:6,text:'전체의 5/6를 만들어 보세요.'}],
+ puzzle:[
+  {type:'equiv',n:1,d:2,required:4,text:'1/2과 같은 크기를 네 조각으로 나타내 보세요.'},
+  {type:'equiv',n:1,d:2,required:8,text:'1/2과 같은 크기를 여덟 조각으로 나타내 보세요.'},
+  {type:'equiv',n:2,d:3,required:6,text:'2/3와 같은 크기를 여섯 조각으로 나타내 보세요.'},
+  {type:'equiv',n:3,d:4,required:12,text:'3/4과 같은 크기를 열두 조각으로 나타내 보세요.'}],
+ calc:[
+  {type:'add',a:[1,4],b:[2,4],n:3,d:4,text:'1/4과 2/4을 합한 만큼 색칠해 보세요.'},
+  {type:'add',a:[1,2],b:[1,4],n:3,d:4,text:'1/2과 1/4을 더하면 얼마일까요?'},
+  {type:'add',a:[1,3],b:[1,6],n:1,d:2,text:'1/3과 1/6을 합한 만큼 나타내 보세요.'},
+  {type:'subtract',a:[3,4],b:[1,2],n:1,d:4,text:'3/4에서 1/2을 빼고 남은 만큼 색칠해 보세요.'}],
+ multiply:[
+  {type:'product',a:[1,2],b:[2,3],n:1,d:3,text:'1/2의 2/3만큼은 전체의 얼마일까요?'},
+  {type:'product',a:[2,3],b:[1,2],n:1,d:3,text:'2/3의 1/2만큼을 색칠해 보세요.'},
+  {type:'product',a:[3,4],b:[2,3],n:1,d:2,text:'3/4의 2/3에 해당하는 부분을 만들어 보세요.'}]
+};
+problems.master=[problems.explore[1],problems.puzzle[2],problems.calc[1],problems.multiply[0],problems.calc[3],problems.puzzle[3]];
+const state={mode:'free',topic:'shade',operation:'add',shape:'rect',den:4,mask:[true,false,false,false],history:[],level:0,success:false,score:0,message:'조각을 눌러 색칠하거나 해제해 보세요.',tone:'',
+ a:{n:1,d:4},b:{n:2,d:4},pa:{n:1,d:2},pb:{n:2,d:3},mixedD:4,mixedN:5};
+function f(n,d){return n+'/'+d}
+function snapshot(){state.history.push({den:state.den,mask:state.mask.slice(),shape:state.shape,mixedN:state.mixedN,mixedD:state.mixedD});if(state.history.length>40)state.history.shift()}
+function notify(message,tone){state.message=message;state.tone=tone||''}
+function problem(){const all=problems[state.mode]||[];return all[state.level%all.length]||null}
+function problemAnswer(p){return {n:p.n,d:p.d}}
+function selectOptions(values,current){return values.map(v=>'<option value="'+v+'"'+(v===current?' selected':'')+'>'+v+'조각</option>').join('')}
+function numOptions(d,n){return Array.from({length:d+1},(_,i)=>'<option value="'+i+'"'+(i===n?' selected':'')+'>'+i+'</option>').join('')}
+function button(action,label,cls,disabled){return '<button type="button" class="btn '+(cls||'')+'" data-action="'+action+'"'+(disabled?' disabled':'')+'>'+label+'</button>'}
+function choice(action,value,title,active){return '<button type="button" class="choice'+(active?' active':'')+'" data-action="'+action+'" data-value="'+value+'" aria-pressed="'+(active?'true':'false')+'">'+title+'</button>'}
+function fractionOptions(prefix,obj,name){
+ return '<div class="operand"><strong>'+name+'</strong><label>분모<select data-field="'+prefix+'D" aria-label="'+name+' 분모">'+selectOptions([2,3,4,6,8,12],obj.d)+'</select></label><label>분자<select data-field="'+prefix+'N" aria-label="'+name+' 분자">'+numOptions(obj.d,obj.n)+'</select></label></div>';
+}
+function renderNav(){
+ $('modes').innerHTML=modes.map(v=>'<button class="mode" role="tab" data-action="mode" data-value="'+v[0]+'" aria-selected="'+(state.mode===v[0])+'">'+v[1]+'</button>').join('');
+}
+function renderControls(){
+ let h='';
+ if(state.mode==='free'){
+  h='<h2>자유 실험실</h2><p>여기에는 틀린 답이 없어요. 원하는 방법으로 분수 모형을 바꿔 보세요.</p>'+
+   '<div class="field"><label>무엇을 실험할까요?</label><div class="segmented">'+[
+    ['shade','분할·색칠'],['add','덧셈·뺄셈'],['product','곱셈'],['mixed','가분수·대분수']
+   ].map(v=>choice('topic',v[0],v[1],state.topic===v[0])).join('')+'</div></div>';
+ }else{
+  const p=problem();h='<h2>'+modes.find(x=>x[0]===state.mode)[1]+'</h2><p>문제를 보고 조각을 조작해 보세요. 틀려도 다시 시도할 수 있습니다.</p>'+
+   '<div class="task"><small>도전 '+(state.level+1)+' / '+problems[state.mode].length+' · 성공 '+state.score+'문제</small>'+p.text+'</div>';
+ }
+ const shading=state.mode!=='free'||state.topic==='shade';
+ if(shading){
+  h+='<div class="field"><label>모형 고르기</label><div class="segmented">'+choice('shape','rect','사각형',state.shape==='rect')+choice('shape','circle','원',state.shape==='circle')+'</div></div>'+
+   '<div class="field"><label for="denominator">전체를 몇 조각으로 나눌까요?</label><select id="denominator" class="select" data-field="den">'+selectOptions(DENOMS,state.den)+'</select></div>'+
+   '<div class="buttons">'+button('split','분할하기 ×2','primary',state.den*2>16)+button('undo','한 단계 되돌리기','',!state.history.length)+button('clear','색칠 지우기')+button('all','전체 색칠')+'</div>';
+  if(state.mode!=='free') h+='<div class="buttons">'+button('check','정답 확인','primary wide')+(state.success?button('next','다음 문제 →','gold wide'): '')+'</div>';
+  h+='<p class="info">분할하기는 기존 색칠을 유지하면서 조각만 두 배로 나눕니다. 분모를 직접 바꿀 때에도 색칠이 정확히 유지되는 경우에만 변경됩니다.</p>';
+ }else if(state.topic==='add'){
+  h+='<div class="field"><label>연산 고르기</label><div class="segmented">'+choice('operation','add','덧셈 +',state.operation==='add')+choice('operation','subtract','뺄셈 −',state.operation==='subtract')+'</div></div>'+
+    '<div class="field"><label>분수 조작</label><div class="operand-grid">'+fractionOptions('a',state.a,'첫 번째 분수')+fractionOptions('b',state.b,'두 번째 분수')+'</div></div>'+
+    '<p class="info">분모가 다른 경우에도 같은 크기의 전체를 공통 분모로 나누어 비교합니다.</p>';
+ }else if(state.topic==='product'){
+  h+='<div class="field"><label>겹칠 분수</label><div class="operand-grid">'+fractionOptions('pa',state.pa,'가로 방향')+fractionOptions('pb',state.pb,'세로 방향')+'</div></div>'+
+    '<p class="info">파란 세로 구역과 노란 가로 구역이 겹치는 초록색 부분이 곱셈의 결과입니다.</p>';
+ }else if(state.topic==='mixed'){
+  h+='<div class="field"><label for="mixedD">전체 하나를 몇 조각으로 나눌까요?</label><select class="select" id="mixedD" data-field="mixedD">'+selectOptions([2,3,4,6,8],state.mixedD)+'</select></div>'+
+    '<div class="plus-control"><button type="button" class="round" data-action="decMixed" aria-label="한 조각 빼기">−</button><strong>'+state.mixedN+'/'+state.mixedD+'</strong><button type="button" class="round" data-action="incMixed" aria-label="한 조각 더하기">+</button></div>'+
+    '<p class="info">조각을 더하거나 빼면서 전체가 몇 개 완성되는지 살펴보세요.</p>';
+ }
+ $('controls').innerHTML=h;
+}
+function rectangularPieces(mask){
+ const n=mask.length,w=432,h=226,x=24,y=48;
+ return '<svg viewBox="0 0 480 330" role="group" aria-label="'+n+'등분한 사각형. 조각을 눌러 색칠하세요">'+
+  mask.map((on,i)=>'<rect class="piece '+(on?'on':'off')+'" x="'+(x+i*w/n)+'" y="'+y+'" width="'+w/n+'" height="'+h+'" fill="'+(on?'#28b49a':'#ecf3f0')+'" stroke="white" stroke-width="3" data-action="piece" data-index="'+i+'" role="button" tabindex="0" aria-pressed="'+on+'" aria-label="'+(i+1)+'번째 조각 '+(on?'색칠됨':'색칠 안 됨')+'"></rect>').join('')+
+  '<rect class="outline" x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'"></rect></svg>';
+}
+function circularPieces(mask){
+ const n=mask.length,cx=240,cy=165,r=142;
+ function point(a){const rad=(a-90)*Math.PI/180;return [cx+r*Math.cos(rad),cy+r*Math.sin(rad)]}
+ return '<svg viewBox="0 0 480 330" role="group" aria-label="'+n+'등분한 원. 조각을 눌러 색칠하세요">'+mask.map((on,i)=>{
+  const a=point(i*360/n),b=point((i+1)*360/n);
+  const d='M '+cx+' '+cy+' L '+a[0]+' '+a[1]+' A '+r+' '+r+' 0 '+(360/n>180?1:0)+' 1 '+b[0]+' '+b[1]+' Z';
+  return '<path class="piece '+(on?'on':'off')+'" d="'+d+'" fill="'+(on?'#28b49a':'#ecf3f0')+'" stroke="white" stroke-width="3" stroke-linejoin="round" data-action="piece" data-index="'+i+'" role="button" tabindex="0" aria-pressed="'+on+'" aria-label="'+(i+1)+'번째 조각 '+(on?'색칠됨':'색칠 안 됨')+'"></path>';
+ }).join('')+'<circle class="outline" cx="'+cx+'" cy="'+cy+'" r="'+r+'"></circle></svg>';
+}
+function strip(n,d,cl){
+ return '<div class="strip" aria-label="'+f(n,d)+' 분수 막대">'+Array.from({length:d},(_,i)=>'<span class="'+(i<n?cl:'')+'"></span>').join('')+'</div>';
+}
+function stacked(total,d,first){
+ const count=Math.max(1,Math.ceil(total/d));let h='';
+ for(let whole=0;whole<count;whole++){
+   h+='<div class="fraction-row"><span class="math-label">'+(whole+1)+'번 전체</span><div class="strip">'+Array.from({length:d},(_,j)=>{
+    const position=whole*d+j;return '<span class="'+(position<first?'blue':position<total?'yellow':'')+'"></span>';
+   }).join('')+'</div></div>';
+ }
+ return h;
+}
+function renderShading(){
+ const count=M.colored(state.mask),n=state.den,red=M.reduce(count,n);
+ const percent=(count/n*100).toFixed(1).replace(/\.0$/,'');
+ let h='<div class="stage-head"><h2>'+(state.mode==='free'?'색칠로 분수 만들기':'문제를 풀어 보세요')+'</h2><span class="chip">조각 '+count+' / '+n+'</span></div>';
+ if(state.mode!=='free'){
+  const p=problem();
+  if(p.type==='add'||p.type==='subtract'){
+   const a={n:p.a[0],d:p.a[1]},b={n:p.b[0],d:p.b[1]},common=M.strip(a,b);
+   h+='<div class="task"><small>같은 크기의 전체로 비교하기</small>'+f(a.n,a.d)+(p.type==='add'?' + ':' − ')+f(b.n,b.d)+' · 공통 분모 '+common.denominator+'</div>';
+  }else if(p.type==='product')h+='<div class="task"><small>넓이 모형으로 생각하기</small>'+f(p.a[0],p.a[1])+' × '+f(p.b[0],p.b[1])+'</div>';
+  else if(p.type==='equiv')h+='<div class="task"><small>기억하기</small>분모는 '+p.required+'로, 색칠된 양은 '+f(p.n,p.d)+'과 같게 만드세요.</div>';
+ }
+ h+='<div class="art">'+(state.shape==='rect'?rectangularPieces(state.mask):circularPieces(state.mask))+'</div>'+
+  '<div class="metrics"><div class="metric"><small>현재 색칠한 분수</small><strong>'+count+'/'+n+'</strong></div><div class="metric"><small>전체에서 차지하는 비율</small><strong>'+percent+'%</strong></div></div>';
+ if(count>0&&red.d!==n)h+='<p class="equal-text">'+f(count,n)+' = '+f(red.n,red.d)+'</p><p class="subtext">조각 수는 다르지만 색칠한 크기는 같습니다.</p>';
+ h+='<div class="feedback '+state.tone+'" role="status" aria-live="polite">'+state.message+'</div>';
+ return h;
+}
+function renderAdd(){
+ const a=state.a,b=state.b,common=M.strip(a,b),isMinus=state.operation==='subtract';
+ let h='<div class="stage-head"><h2>'+(isMinus?'뺄셈 연구':'덧셈 연구')+'</h2><span class="chip">공통 분모 '+common.denominator+'</span></div>'+
+  '<p class="note">두 분수를 같은 크기의 전체로 나타내고, 그 조각 개수를 '+(isMinus?'빼':'합쳐')+' 보세요.</p><div class="math-board">'+
+  '<div class="fraction-row"><span class="math-label">'+f(a.n,a.d)+'</span>'+strip(common.first,common.denominator,'blue')+'</div>'+
+  '<div class="fraction-row"><span class="math-label">'+(isMinus?'− ':'＋ ')+f(b.n,b.d)+'</span>'+strip(common.second,common.denominator,'yellow')+'</div>';
+ if(isMinus){
+  if(common.second>common.first){
+   return h+'<div class="feedback warn" role="status">두 번째 분수가 더 큽니다. 지금은 0보다 작아지는 뺄셈 대신 첫 번째 분수를 더 크게 해 보세요.</div></div>';
+  }
+  const remain=common.first-common.second,res=M.subtract(a,b);
+  h+='<p class="equal-text">첫 번째 분수에서 '+common.second+'조각을 덜어 내요.</p>'+
+   '<div class="fraction-row"><span class="math-label">남은 양</span>'+strip(remain,common.denominator,'green')+'</div>'+
+   '<p class="equal-text">'+common.first+'/'+common.denominator+' − '+common.second+'/'+common.denominator+' = '+remain+'/'+common.denominator+' = '+f(res.n,res.d)+'</p>'+
+   '<p class="subtext">같은 크기의 조각을 기준으로 빼야 합니다.</p></div>';
+ }else{
+  const total=common.first+common.second,res=M.add(a,b);
+  h+='<p class="equal-text">같은 크기의 '+common.denominator+'조각을 기준으로 합쳐요.</p>'+stacked(total,common.denominator,common.first)+
+   '<p class="equal-text">'+common.first+'/'+common.denominator+' + '+common.second+'/'+common.denominator+' = '+total+'/'+common.denominator+' = '+f(res.n,res.d)+'</p>'+
+   '<p class="subtext">분모끼리 더하지 않습니다. 같은 크기의 조각 개수를 합합니다.</p></div>';
+ }
+ return h;
+}
+function areaModel(a,b){
+ let cells='';
+ for(let row=0;row<b.d;row++)for(let col=0;col<a.d;col++){
+  const horizontal=col<a.n,vertical=row<b.n;
+  cells+='<div class="area-cell '+(horizontal&&vertical?'overlap':horizontal?'horizontal':vertical?'vertical':'')+'"></div>';
+ }
+ return '<div class="area-grid" aria-label="가로 '+f(a.n,a.d)+'와 세로 '+f(b.n,b.d)+'의 겹치는 넓이" style="grid-template-columns:repeat('+a.d+',1fr);grid-template-rows:repeat('+b.d+',1fr)">'+cells+'</div>';
+}
+function renderProduct(){
+ const a=state.pa,b=state.pb,r=M.multiply(a,b);
+ return '<div class="stage-head"><h2>곱셈 연구</h2><span class="chip">넓이 모형</span></div>'+
+  '<p class="note">가로의 '+f(a.n,a.d)+'과 세로의 '+f(b.n,b.d)+'를 겹쳐 보세요. 두 방향이 겹친 칸이 곱셈 결과입니다.</p>'+
+  areaModel(a,b)+'<div class="area-legend"><span><i class="dot blue"></i>가로</span><span><i class="dot gold"></i>세로</span><span><i class="dot green"></i>겹친 부분</span></div>'+
+  '<p class="equal-text">'+f(a.n,a.d)+' × '+f(b.n,b.d)+' = '+a.n*b.n+'/'+a.d*b.d+' = '+f(r.n,r.d)+'</p>'+
+  '<p class="subtext">전체 '+a.d*b.d+'칸 중 겹친 '+a.n*b.n+'칸을 찾았습니다.</p>';
+}
+function renderMixed(){
+ const n=state.mixedN,d=state.mixedD,parts=M.mixed(n,d);
+ let strips='';
+ for(let i=0;i<Math.max(1,Math.ceil(n/d));i++)strips+='<div class="whole"><small>'+ (i+1)+'번 전체</small>'+strip(Math.max(0,Math.min(d,n-i*d)),d,'green')+'</div>';
+ const displayed=parts.whole===0?f(n,d):parts.remainder===0?String(parts.whole):parts.whole+'과 '+f(parts.remainder,d);
+ return '<div class="stage-head"><h2>가분수와 대분수</h2><span class="chip">전체 묶기</span></div>'+
+  '<p class="note">조각 '+d+'개를 모으면 전체 1개가 됩니다. +, − 버튼을 눌러 조각 수를 조절해 보세요.</p>'+
+  '<div class="group-stack">'+strips+'</div><p class="equal-text">'+f(n,d)+' = '+displayed+'</p>'+
+  '<p class="subtext">완성한 전체 '+parts.whole+'개, 남은 조각 '+parts.remainder+'개입니다.</p>';
+}
+function render(){
+ renderNav();renderControls();
+ $('stage').innerHTML=(state.mode!=='free'||state.topic==='shade')?renderShading():
+  state.topic==='add'?renderAdd():state.topic==='product'?renderProduct():renderMixed();
+}
+function startChallenge(){
+ const p=problem();state.history=[];state.success=false;
+ state.den=p.required||p.d;state.mask=Array(state.den).fill(false);
+ if(p.type==='product')state.shape='rect';
+ notify('조각을 직접 눌러 색칠한 뒤 정답을 확인하세요.','');
+}
+function setMode(mode){
+ if(!modes.some(x=>x[0]===mode))return;
+ state.mode=mode;state.level=0;state.history=[];
+ if(mode==='free')notify('자유롭게 탐구해 보세요. 여기에는 정답과 오답이 없습니다.','');
+ else startChallenge();
+ render();
+}
+function changeDen(next){
+ if(!DENOMS.includes(next))return;
+ if(next===state.den)return;
+ const moved=M.resample(state.mask,next);
+ if(!moved){notify('현재 색칠을 그 조각 수로는 정확히 옮길 수 없어요. 다른 조각 수를 고르거나 색칠을 지워 주세요.','warn');render();return}
+ snapshot();state.den=next;state.mask=moved;state.success=false;
+ notify('색칠한 영역의 크기는 그대로입니다. 조각만 '+next+'개로 바뀌었어요.','');
+ render();
+}
+function check(){
+ if(state.mode==='free')return;
+ const p=problem(),mine={n:M.colored(state.mask),d:state.den},target=problemAnswer(p);
+ if(M.equal(mine,target)&&(!p.required||state.den===p.required)){
+  if(!state.success)state.score++;
+  state.success=true;notify('정답입니다! 같은 크기의 분수를 정확히 만들었어요. 다음 문제로 가 볼까요?','success');
+ }else{
+  state.success=false;notify(p.required&&state.den!==p.required?'이번 도전에서는 분모를 '+p.required+'로 만들어야 해요.':'아직 목표한 크기와 달라요. 전체 크기와 색칠한 조각 수를 다시 살펴보세요.','warn');
+ }
+ render();
+}
+function setOperand(field,value){
+ const names={aD:['a','d'],aN:['a','n'],bD:['b','d'],bN:['b','n'],paD:['pa','d'],paN:['pa','n'],pbD:['pb','d'],pbN:['pb','n']};
+ const target=names[field];if(!target)return;
+ const obj=state[target[0]];if(!Number.isInteger(value))return;
+ if(target[1]==='d'){
+  if(![2,3,4,6,8,12].includes(value))return;
+  obj.d=value;obj.n=Math.min(obj.n,value);
+ }else if(value>=0&&value<=obj.d)obj.n=value;
+ render();
+}
+document.addEventListener('click',event=>{
+ const el=event.target.closest('[data-action]');if(!el)return;
+ const action=el.dataset.action,value=el.dataset.value;
+ if(action==='mode'){setMode(value);return}
+ if(action==='topic'){
+  if(state.mode!=='free')return;
+  state.topic=value;state.history=[];notify('직접 조작해 보며 분수의 크기를 비교하세요.','');render();return;
+ }
+ if(action==='operation'){if(state.mode==='free'&&['add','subtract'].includes(value)){state.operation=value;render()}return}
+ if(action==='shape'){snapshot();state.shape=value;render();return}
+ if(action==='piece'){
+  const i=Number(el.dataset.index);
+  if(!Number.isInteger(i)||i<0||i>=state.den)return;
+  snapshot();state.mask[i]=!state.mask[i];state.success=false;
+  notify('색칠한 조각의 수와 전체에서 차지하는 비율을 확인해 보세요.','');render();return;
+ }
+ if(action==='split'){if(state.den*2<=16)changeDen(state.den*2);return}
+ if(action==='undo'){
+  const previous=state.history.pop();if(!previous)return;
+  Object.assign(state,{den:previous.den,mask:previous.mask,shape:previous.shape,mixedN:previous.mixedN,mixedD:previous.mixedD,success:false});
+  notify('한 단계 전으로 돌아왔습니다.','');render();return;
+ }
+ if(action==='clear'||action==='all'){snapshot();state.mask=Array(state.den).fill(action==='all');state.success=false;notify(action==='all'?'전체 한 개를 모두 색칠했어요.':'색칠을 지웠어요.','');render();return}
+ if(action==='check'){check();return}
+ if(action==='next'){if(!state.success)return;state.level++;startChallenge();render();return}
+ if(action==='incMixed'||action==='decMixed'){
+  snapshot();state.mixedN=Math.max(0,Math.min(24,state.mixedN+(action==='incMixed'?1:-1)));render();return;
+ }
+});
+document.addEventListener('keydown',event=>{
+ if((event.key==='Enter'||event.key===' ')&&event.target.matches('.piece[role=button]')){
+  event.preventDefault();event.target.dispatchEvent(new MouseEvent('click',{bubbles:true}));return;
+ }
+ if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='z'&&!event.target.matches('input,select,textarea')){
+  event.preventDefault();document.querySelector('[data-action=undo]')?.click();
+ }
+});
+document.addEventListener('change',event=>{
+ const field=event.target.dataset.field;if(!field)return;
+ const value=Number(event.target.value);
+ if(field==='den')changeDen(value);
+ else if(field==='mixedD'&&[2,3,4,6,8].includes(value)){snapshot();state.mixedD=value;render()}
+ else setOperand(field,value);
+});
+render();
+})();
+</script>
+</body>
+</html>
