@@ -59,7 +59,7 @@ test('교사도구에 등록되고 자유 실험·도전 화면 요소가 존재
 
 test('화면 조작과 도전 성공 흐름을 가상 DOM에서 회귀 검증한다',()=>{
   const html=fs.readFileSync(path.resolve(__dirname,'../분수 실험실.html'),'utf8');
-  const script=html.match(/<script>\\s*([\\s\\S]*?)<\\/script>\\s*<\\/body>/)?.[1];
+  const script=html.match(/<script>\s*([\s\S]*?)<\/script>\s*<\/body>/)?.[1];
   assert.ok(script,'인라인 화면 코드가 있어야 합니다.');
   const handlers={},elements={};
   const document={
@@ -73,13 +73,13 @@ test('화면 조작과 도전 성공 흐름을 가상 DOM에서 회귀 검증한
     handlers.click({target});
   };
   const change=(field,value)=>handlers.change({target:{dataset:{field},value}});
-  assert.match(elements.stage.innerHTML,/1\\/4/);
+  assert.match(elements.stage.innerHTML,/1\/4/);
   click('split');
-  assert.match(elements.stage.innerHTML,/2\\/8/);
+  assert.match(elements.stage.innerHTML,/2\/8/);
   change('den',3);
   assert.match(elements.stage.innerHTML,/정확히 옮길 수 없어요/);
   click('undo');
-  assert.match(elements.stage.innerHTML,/1\\/4/);
+  assert.match(elements.stage.innerHTML,/1\/4/);
   click('topic','add');
   assert.match(elements.stage.innerHTML,/덧셈 연구/);
   click('operation','subtract');
@@ -87,11 +87,11 @@ test('화면 조작과 도전 성공 흐름을 가상 DOM에서 회귀 검증한
   click('topic','product');
   assert.match(elements.stage.innerHTML,/area-grid/);
   click('topic','mixed');
-  assert.match(elements.stage.innerHTML,/1과 1\\/4/);
+  assert.match(elements.stage.innerHTML,/1과 1\/4/);
   click('mode','explore');
   click('piece',undefined,0);
   click('check');
   assert.match(elements.stage.innerHTML,/정답입니다!/);
   click('next');
-  assert.match(elements.controls.innerHTML,/도전 2 \\/ 4/);
+  assert.match(elements.controls.innerHTML,/도전 2 \/ 4/);
 });
