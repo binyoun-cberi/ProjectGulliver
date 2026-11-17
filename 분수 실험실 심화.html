@@ -530,6 +530,27 @@ document.addEventListener('click',event=>{
  const el=event.target.closest('[data-action]');if(!el)return;
  const action=el.dataset.action,value=el.dataset.value;
  if(action==='mode'){setMode(value);return}
+ if(action==='saveTeacher'){saveTeacher();return}
+ if(action==='resetTeacher'){resetTeacher();return}
+ if(action==='playTeacher'){playTeacher(el.dataset.id);return}
+ if(action==='editTeacher'){editTeacher(el.dataset.id);return}
+ if(action==='deleteTeacher'||action==='confirmDeleteTeacher'){deleteTeacher(el.dataset.id);return}
+ if(action==='teacherBack'){setMode('teacher');return}
+ if(action==='transferPiece'){moveTransfer(el.dataset.source,Number(el.dataset.index));return}
+ if(action==='convertTransfer'){
+  if(!currentIsTransfer()||state.transfer.converted)return;
+  rememberTransfer();state.transfer.converted=true;
+  notify('분모를 같게 나누었습니다! 색칠된 조각을 눌러 아래로 옮겨 보세요.','');render();return;
+ }
+ if(action==='undoTransfer'){
+  const prior=state.transferHistory.pop();if(!prior)return;
+  state.transfer=prior;state.success=false;notify('조각 이동을 한 단계 되돌렸습니다.','');render();return;
+ }
+ if(action==='resetTransfer'){
+  if(!currentIsTransfer())return;
+  rememberTransfer();state.transfer=C.freshTransfer(problem());state.success=false;
+  notify('조각을 처음 상태로 돌렸습니다.','');render();return;
+ }
  if(action==='topic'){
   if(state.mode!=='free')return;
   state.topic=value;state.history=[];notify('직접 조작해 보며 분수의 크기를 비교하세요.','');render();return;
@@ -550,7 +571,10 @@ document.addEventListener('click',event=>{
  }
  if(action==='clear'||action==='all'){snapshot();state.mask=Array(state.den).fill(action==='all');state.success=false;notify(action==='all'?'전체 한 개를 모두 색칠했어요.':'색칠을 지웠어요.','');render();return}
  if(action==='check'){check();return}
- if(action==='next'){if(!state.success)return;state.level++;startChallenge();render();return}
+ if(action==='next'){
+  if(!state.success)return;
+  state.level++;startChallenge();render();return;
+ }
  if(action==='incMixed'||action==='decMixed'){
   snapshot();state.mixedN=Math.max(0,Math.min(24,state.mixedN+(action==='incMixed'?1:-1)));render();return;
  }
@@ -564,12 +588,51 @@ document.addEventListener('keydown',event=>{
  }
 });
 document.addEventListener('change',event=>{
+ const teacherField=event.target.dataset.teacher;
+ if(teacherField){
+  changeTeacher(teacherField,event.target.value);
+  if(teacherField!=='text')render();
+  return;
+ }
  const field=event.target.dataset.field;if(!field)return;
  const value=Number(event.target.value);
  if(field==='den')changeDen(value);
  else if(field==='mixedD'&&[2,3,4,6,8].includes(value)){snapshot();state.mixedD=value;render()}
  else setOperand(field,value);
 });
+// 데스크톱 드래그·갤럭시탭 터치 모두 지원하며, 정밀 드래그 없이 조각 탭으로도 이동 가능
+document.addEventListener('dragstart',event=>{
+ const piece=event.target.closest('[data-action="transferPiece"]');
+ if(!piece||!currentIsTransfer())return;
+ event.dataTransfer?.setData('text/plain',piece.dataset.source+':'+piece.dataset.index);
+ if(event.dataTransfer)event.dataTransfer.effectAllowed='move';
+});
+document.addEventListener('dragover',event=>{
+ if(!currentIsTransfer()||!event.target.closest('#transferTray'))return;
+ event.preventDefault();
+ if(event.dataTransfer)event.dataTransfer.dropEffect='move';
+});
+document.addEventListener('drop',event=>{
+ if(!currentIsTransfer()||!event.target.closest('#transferTray'))return;
+ event.preventDefault();
+ const raw=event.dataTransfer?.getData('text/plain')||'';
+ const match=/^([ab]):(\\d+)$/.exec(raw);
+ if(match)moveTransfer(match[1],Number(match[2]));
+});
+let pointerSource=null;
+document.addEventListener('pointerdown',event=>{
+ const piece=event.target.closest('[data-action="transferPiece"]');
+ pointerSource=piece&&currentIsTransfer()?
+  {source:piece.dataset.source,index:Number(piece.dataset.index),x:event.clientX,y:event.clientY}:null;
+});
+document.addEventListener('pointerup',event=>{
+ const drag=pointerSource;pointerSource=null;
+ if(!drag||!currentIsTransfer()||!document.elementFromPoint)return;
+ const distance=Math.hypot(event.clientX-drag.x,event.clientY-drag.y);
+ const hit=document.elementFromPoint(event.clientX,event.clientY);
+ if(distance>22&&hit?.closest('#transferTray'))moveTransfer(drag.source,drag.index);
+});
+
 render();
 })();
 </script>
