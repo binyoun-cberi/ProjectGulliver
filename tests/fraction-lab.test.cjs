@@ -121,6 +121,25 @@ test('교사 출제: 정확한 덧셈·뺄셈 정답, 교육과정 분모 제한
  assert.deepEqual(C.readQuestions({getItem(){return '{not-json';}}),[]);
  assert.ok(C.readQuestions(store).every(x=>x.text.length<=120));
 });
+test('교사 문제 공유 링크는 문제·정답을 정확히 복원하고 위조값을 거절한다',()=>{
+ const cases=[
+  {type:'add',a:[1,2],b:[1,4],grade:4,text:'분모가 다른 덧셈'},
+  {type:'subtract',a:[3,4],b:[1,2],grade:5,text:'색칠된 조각을 빼 보세요'},
+  {type:'add',a:[4,4],b:[3,3],grade:6,text:'전체를 두 개 만드는 문제'}
+ ];
+ for(const input of cases){
+  const q=C.composeQuestion(input);
+  const shared=C.decodeQuestion(C.encodeQuestion(q));
+  assert.ok(shared);
+  assert.deepEqual({type:shared.type,a:shared.a,b:shared.b,n:shared.n,d:shared.d,text:shared.text},
+    {type:q.type,a:q.a,b:q.b,n:q.n,d:q.d,text:q.text});
+ }
+ assert.equal(C.decodeQuestion('s.1.4.1.2.4.broken'),null);
+ assert.equal(C.decodeQuestion('a.1.5.1.2.4.broken'),null);
+ assert.equal(C.decodeQuestion('a.1.2.1.4.4.%E0%A4%A'),null);
+ assert.equal(C.decodeQuestion('a.'.repeat(500)),null);
+});
+
 test('조각 이동: 순서와 중복을 검증하고 공통 분모를 유지한다',()=>{
  const add=C.composeQuestion({type:'add',a:[1,2],b:[1,4]});
  const totals=C.commonParts(add);
