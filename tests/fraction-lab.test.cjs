@@ -138,6 +138,10 @@ test('교사 문제 공유 링크는 문제·정답을 정확히 복원하고 �
  assert.equal(C.decodeQuestion('a.1.5.1.2.4.broken'),null);
  assert.equal(C.decodeQuestion('a.1.2.1.4.4.%E0%A4%A'),null);
  assert.equal(C.decodeQuestion('a.'.repeat(500)),null);
+ const longQuestion=C.composeQuestion({type:'add',a:[1,2],b:[1,4],text:'가'.repeat(120)});
+ assert.equal(C.decodeQuestion(C.encodeQuestion(longQuestion)).text,'가'.repeat(120));
+ const emojiQuestion=C.composeQuestion({type:'add',a:[1,2],b:[1,4],text:'😀'.repeat(60)});
+ assert.equal(C.decodeQuestion(C.encodeQuestion(emojiQuestion)).text,'😀'.repeat(60));
 });
 
 test('조각 이동: 순서와 중복을 검증하고 공통 분모를 유지한다',()=>{
