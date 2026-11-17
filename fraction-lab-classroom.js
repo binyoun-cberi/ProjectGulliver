@@ -1,7 +1,9 @@
 (function(root,factory){
  'use strict';
- const api=factory(root.FractionLabMath);
- if(typeof module==='object'&&module.exports)module.exports=api;
+ const node=typeof module==='object'&&module.exports;
+ const math=node?require('./fraction-lab-math.js'):root.FractionLabMath;
+ const api=factory(math);
+ if(node)module.exports=api;
  else root.FractionLabClassroom=api;
 })(typeof globalThis!=='undefined'?globalThis:this,function(M){
  'use strict';
