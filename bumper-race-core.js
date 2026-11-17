@@ -48,5 +48,5 @@
   }
   return {assign,assigned,virtual:balanced||labels.length>PHYSICAL_OPTIONS};
  }
- return {MAX_PEOPLE,MAX_OPTIONS,PHYSICAL_OPTIONS,launchLayout,createPool};
+ return {MAX_PEOPLE,MAX_OPTIONS,PHYSICAL_OPTIONS,launchLayout,createPool,shuffleSlots:shuffle};
 });
