@@ -3,6 +3,62 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const C=require('../bumper-race-core.js'),harness=require('./bumper-race-harness.cjs');
 const names=n=>Array.from({length:n},(_,i)=>'학생'+i),labels=k=>Array.from({length:k},(_,i)=>'선택지'+i);
 function seeded(seed){let s=seed;return()=>((s=(1664525*s+1013904223)>>>0)/4294967296)}
+test('physical slot permutation preserves weighted duplicate labels and does not favor one fixed position',()=>{
+ const weighted=['발표','통과','통과','질문','통과','발표'];
+ const random=seeded(307);
+ const counts=Array.from({length:weighted.length},()=>({발표:0,통과:0,질문:0}));
+ for(let i=0;i<12000;i++){
+  const shuffled=C.shuffleSlots(weighted,random);
+  assert.equal(shuffled.length,weighted.length);
+  shuffled.forEach((label,position)=>counts[position][label]++);
+ }
+ assert.deepEqual(weighted,['발표','통과','통과','질문','통과','발표'],'Original teacher input must not be changed');
+ for(const row of counts){
+  for(const [label,weight] of [['발표',2],['통과',3],['질문',1]]){
+   const expected=12000*weight/weighted.length;
+   assert.ok(Math.abs(row[label]-expected)<expected*.11,label+' position bias: '+row[label]+' vs '+expected);
+  }
+ }
+});
+test('physical result slots change location each round and preserve all duplicates',()=>{
+ const options=['발표','통과','통과','질문','통과','기타'];
+ const observed=new Set();
+ for(let seed=1;seed<=9;seed++){
+  const t=harness(seed*491);t.start({n:8,labels:options});
+  assert.deepEqual(t.alerts,[]);
+  assert.equal(t.run('virtualGate'),false);
+  const arranged=Array.from(t.run('slotZones.map(s=>s.text)'));
+  assert.deepEqual(arranged.slice().sort(),options.slice().sort());
+  observed.add(arranged.join('|'));
+  t.dispose();
+ }
+ assert.ok(observed.size>=5,'Physical label layout should vary across races');
+});
+test('out-of-bounds finish positions resolve to the actual edge slot, never an arbitrary first-slot fallback',()=>{
+ const t=harness(54);t.start({n:4,k:4});
+ assert.equal(t.run('getSlotByX(-100).id'),0);
+ assert.equal(t.run('getSlotByX(1200).id'),3);
+ assert.equal(t.run('getSlotByX(1400).id'),3);
+ assert.equal(t.run('getSlotByX(NaN)'),null);
+ t.run('Body.setPosition(marbles[0].body,{x:1300,y:finishLineY+10});checkWinCondition(marbles[0]);');
+ assert.equal(t.run('results[0].text === slotZones[slotZones.length-1].text'),true);
+ t.dispose();
+});
+test('final approach spreads ordinary marbles but respects teacher-directed and unique-slot modes',()=>{
+ for(const config of [
+  {n:4,k:4},
+  {n:4,k:4,directed:{학생0:'선택지2'}},
+  {n:4,k:4,unique:true}
+ ]){
+  const t=harness(818);t.start(config);
+  assert.deepEqual(t.alerts,[]);
+  t.run('Body.setPosition(marbles[0].body,{x:600,y:slotZones[0].y-LAST_STAGE_SCATTER_HEIGHT+20}); Engine.update(engine,1000/60)');
+  assert.equal(t.run('Boolean(marbles[0].finalScatterUsed)'),!config.unique&&!config.directed);
+  assert.equal(t.run('resultPool.assigned.size'),0,'Physical finishing outcomes are not preselected');
+  t.dispose();
+ }
+});
+
 test('100 marbles spawn clear of ceiling, floor, walls and each other',()=>{
  for(const n of [1,2,22,23,44,45,80,100]){
  const t=harness(n);t.start({n,k:4});assert.deepEqual(t.alerts,[]);
