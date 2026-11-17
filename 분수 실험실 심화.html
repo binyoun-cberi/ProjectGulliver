@@ -63,8 +63,40 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;ma
 @media(max-width:780px){.layout{grid-template-columns:1fr}.controls{padding:17px}.stage{padding:17px;min-height:460px}.hero{padding:18px}.art svg{min-width:340px}}
 @media(max-width:420px){.app{padding:12px 10px 30px}.brand{display:none}.mode{padding:11px 13px}.stage{padding:13px}.art svg{min-width:315px}.metrics{gap:7px}.metric{padding:12px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* 교사 출제 및 조각 이동: 작은 드래그 대신 48px 이상 터치 버튼을 우선 사용 */
+.transfer-panel{margin:14px 0;padding:15px;border:1px solid var(--line);border-radius:16px;background:#f8fcfa}
+.transfer-title{font-weight:950;font-size:15px;margin:0 0 8px}
+.transfer-scroll{overflow-x:auto;overscroll-behavior-x:contain;padding:5px 0 9px}
+.transfer-row{display:flex;gap:4px;width:max-content;min-width:100%;justify-content:flex-start}
+.transfer-unit{min-width:48px;min-height:62px;border:2px solid #dce8e6;border-radius:10px;background:#e8efed;font-size:12px;font-weight:850;color:#62766c;display:grid;place-items:center}
+button.transfer-unit{touch-action:manipulation}
+.transfer-unit.blue{background:#75b8ec;color:#073453;border-color:#559cd0}
+.transfer-unit.yellow{background:#ffd981;color:#65400b;border-color:#edbd58}
+.transfer-unit.green{background:#54c9a3;color:#063f31;border-color:#279975}
+.transfer-unit.taken{opacity:.27;background:#e4e9e8;border-style:dashed;color:#68766f}
+.transfer-unit.empty{opacity:.5;border-style:dashed}
+.transfer-unit[disabled]{cursor:default}
+.transfer-tray{min-height:125px;border:3px dashed #61ad95;border-radius:14px;background:#eefbf5;padding:14px;margin-top:10px}
+.transfer-tray.drag-over{border-color:#0c8067;background:#dff7ea}
+.transfer-tray .transfer-row{min-width:0}
+.transfer-graphic{width:100%;overflow-x:auto}
+.transfer-sentence{font-size:clamp(18px,2.8vw,25px);font-weight:950;margin:12px 0;color:#137563}
+.transfer-instruction{font-size:13px;font-weight:750;color:#607769;line-height:1.7}
+.teacher-form .field{margin-top:12px}
+.teacher-form textarea{width:100%;min-height:85px;resize:vertical;border:1px solid #d5e4df;border-radius:12px;padding:10px;font:inherit;font-size:13px}
+.teacher-form .select{font-size:13px}
+.teacher-list{display:grid;gap:8px;margin-top:15px}
+.teacher-item{padding:12px;border:1px solid var(--line);border-radius:13px;background:#fff}
+.teacher-item strong{font-size:14px;display:block}
+.teacher-item small{display:block;color:#677d74;margin:5px 0 8px}
+.teacher-actions{display:flex;gap:7px;flex-wrap:wrap}
+.teacher-actions .btn{min-height:44px;padding:7px 10px;flex:1}
+.teacher-pill{display:inline-block;background:#eaf7ed;border-radius:9px;font-size:12px;font-weight:900;color:#16674e;padding:7px 10px}
+.queued-score{font-size:12px;color:#416d60;font-weight:850;margin-top:10px}
 </style>
 <script src="fraction-lab-math.js"></script>
+<script src="fraction-lab-classroom.js"></script>
 </head>
 <body>
 <div class="app">
@@ -78,9 +110,10 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;ma
 (function(){
 'use strict';
 const M=window.FractionLabMath;
+const C=window.FractionLabClassroom;
 const $=id=>document.getElementById(id);
 const DENOMS=[2,3,4,6,8,12,16];
-const modes=[['free','자유 실험실'],['explore','분수 탐험'],['puzzle','분수 퍼즐'],['calc','분수 계산왕'],['multiply','곱셈 연구소'],['master','분수 마스터']];
+const modes=[['free','자유 실험실'],['explore','분수 탐험'],['puzzle','분수 퍼즐'],['calc','분수 계산왕'],['multiply','곱셈 연구소'],['master','분수 마스터'],['teacher','교사 출제']];
 const problems={
  explore:[
   {type:'shade',n:1,d:2,text:'전체의 1/2을 색칠해 보세요.'},
@@ -104,11 +137,18 @@ const problems={
 };
 problems.master=[problems.explore[1],problems.puzzle[2],problems.calc[1],problems.multiply[0],problems.calc[3],problems.puzzle[3]];
 const state={mode:'free',topic:'shade',operation:'add',shape:'rect',den:4,mask:[true,false,false,false],history:[],level:0,success:false,score:0,message:'조각을 눌러 색칠하거나 해제해 보세요.',tone:'',
- a:{n:1,d:4},b:{n:2,d:4},pa:{n:1,d:2},pb:{n:2,d:3},mixedD:4,mixedN:5};
+ a:{n:1,d:4},b:{n:2,d:4},pa:{n:1,d:2},pb:{n:2,d:3},mixedD:4,mixedN:5,
+ teacher:{type:'add',a:{n:1,d:2},b:{n:1,d:4},grade:4,text:''},
+ teacherQuestions:[],editingId:null,teacherNotice:'',shareUrl:'',sharedProblem:null,pendingDeleteId:null,transfer:null,transferHistory:[],dragging:null};
 function f(n,d){return n+'/'+d}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+try{state.teacherQuestions=C.readQuestions(localStorage)}catch{state.teacherQuestions=[]}
+function challengeMode(){return state.mode!=='free'&&state.mode!=='teacher'}
+function challengeCount(){return state.mode==='shared-play'?1:state.mode==='teacher-play'?state.teacherQuestions.length:(problems[state.mode]||[]).length}
+function currentIsTransfer(){const p=challengeMode()?problem():null;return Boolean(p&&(p.type==='add'||p.type==='subtract'))}
 function snapshot(){state.history.push({den:state.den,mask:state.mask.slice(),shape:state.shape,mixedN:state.mixedN,mixedD:state.mixedD});if(state.history.length>40)state.history.shift()}
 function notify(message,tone){state.message=message;state.tone=tone||''}
-function problem(){const all=problems[state.mode]||[];return all[state.level%all.length]||null}
+function problem(){if(state.mode==='shared-play')return state.sharedProblem;const all=state.mode==='teacher-play'?state.teacherQuestions:(problems[state.mode]||[]);return all.length?all[state.level%all.length]:null}
 function problemAnswer(p){return {n:p.n,d:p.d}}
 function selectOptions(values,current){return values.map(v=>'<option value="'+v+'"'+(v===current?' selected':'')+'>'+v+'조각</option>').join('')}
 function numOptions(d,n){return Array.from({length:d+1},(_,i)=>'<option value="'+i+'"'+(i===n?' selected':'')+'>'+i+'</option>').join('')}
@@ -118,26 +158,74 @@ function fractionOptions(prefix,obj,name){
  return '<div class="operand"><strong>'+name+'</strong><label>분모<select data-field="'+prefix+'D" aria-label="'+name+' 분모">'+selectOptions([2,3,4,6,8,12],obj.d)+'</select></label><label>분자<select data-field="'+prefix+'N" aria-label="'+name+' 분자">'+numOptions(obj.d,obj.n)+'</select></label></div>';
 }
 function renderNav(){
- $('modes').innerHTML=modes.map(v=>'<button class="mode" role="tab" data-action="mode" data-value="'+v[0]+'" aria-selected="'+(state.mode===v[0])+'">'+v[1]+'</button>').join('');
+ $('modes').innerHTML=modes.map(v=>'<button class="mode" role="tab" data-action="mode" data-value="'+v[0]+'" aria-selected="'+(state.mode===v[0]||(v[0]==='teacher'&&(state.mode==='teacher-play'||state.mode==='shared-play')))+'">'+v[1]+'</button>').join('');
+}
+function teacherFrac(which,title){
+ const obj=state.teacher[which];
+ const ns=Array.from({length:obj.d},(_,i)=>'<option value="'+(i+1)+'"'+(obj.n===i+1?' selected':'')+'>'+(i+1)+'</option>').join('');
+ return '<div class="operand"><strong>'+title+'</strong><label>분모<select data-teacher="'+which+'D" aria-label="'+title+' 분모">'+C.DENOMINATORS.map(d=>'<option value="'+d+'"'+(obj.d===d?' selected':'')+'>'+d+'</option>').join('')+'</select></label>'+
+  '<label>분자<select data-teacher="'+which+'N" aria-label="'+title+' 분자">'+ns+'</select></label></div>';
+}
+function renderTeacherControls(){
+ const t=state.teacher;
+ return '<h2>교사용 문제 만들기</h2><p>분수를 고르고 문제를 저장하세요. 학생은 정답을 보지 않고 조각을 옮겨 답을 완성합니다.</p>'+
+  '<div class="teacher-form"><div class="field"><label for="teacherOperation">연산 종류</label><select id="teacherOperation" class="select" data-teacher="operation">'+
+  '<option value="add"'+(t.type==='add'?' selected':'')+'>덧셈 (+)</option><option value="subtract"'+(t.type==='subtract'?' selected':'')+'>뺄셈 (−)</option></select></div>'+
+  '<div class="field"><label>분수 선택</label><div class="operand-grid">'+teacherFrac('a','첫 번째 분수')+teacherFrac('b','두 번째 분수')+'</div></div>'+
+  '<div class="field"><label for="teacherGrade">권장 학년</label><select id="teacherGrade" class="select" data-teacher="grade">'+
+  [3,4,5,6].map(g=>'<option value="'+g+'"'+(t.grade===g?' selected':'')+'>'+g+'학년</option>').join('')+'</select></div>'+
+  '<div class="field"><label for="teacherText">문제 안내 (선택, 120자 이내)</label><textarea id="teacherText" data-teacher="text" maxlength="120" placeholder="예: 두 분수를 합쳐 결과를 만들어 보세요.">'+esc(t.text)+'</textarea></div>'+
+  '<div class="buttons">'+button('saveTeacher',state.editingId?'수정 완료':'문제 저장','primary wide')+
+  (state.editingId?button('resetTeacher','새 문제 작성','wide'): '')+'</div>'+
+  '<p class="info">최대 40문제까지 이 브라우저에 저장됩니다. 다른 기기에는 자동 동기화되지 않으니 기기를 바꿀 때 주의하세요.</p>'+
+  (state.shareUrl?'<div class="field"><label for="teacherShareUrl">학생에게 나눠줄 주소</label><input id="teacherShareUrl" class="select" readonly value="'+esc(state.shareUrl)+'" aria-label="학생 공유 링크">'+button('copyShareUrl','링크 복사','wide')+'<p class="info">주소를 QR 코드 도구에 붙여 넣으면 학생 태블릿에서도 이 문제를 열 수 있습니다.</p></div>':'')+
+  '<div class="feedback '+(state.teacherNotice&&state.teacherNotice.includes('저장할 수')?'warn':'')+'" role="status" aria-live="polite">'+esc(state.teacherNotice||'분수를 선택하고 문제 저장을 눌러 보세요.')+'</div></div>';
+}
+function renderTeacherStage(){
+ const list=state.teacherQuestions,operator=t=>t.type==='add'?' + ':' − ';
+ let h='<div class="stage-head"><h2>내가 만든 문제</h2><span class="chip">'+list.length+' / 40문제</span></div>'+
+ '<p class="note">문제를 누르면 학생용 조각 이동 도전이 시작됩니다. 정답은 문제를 푼 뒤 확인합니다.</p>';
+ if(!list.length)h+='<div class="task">저장된 문제가 없습니다. 왼쪽에서 분수를 선택해 첫 문제를 만들어 보세요.</div>';
+ else h+='<div class="teacher-list">'+list.map(q=>{
+  const pending=state.pendingDeleteId===q.id;
+  return '<article class="teacher-item"><strong>'+esc(f(q.a[0],q.a[1])+operator(q)+f(q.b[0],q.b[1]))+' <span class="teacher-pill">'+q.grade+'학년</span></strong>'+
+   '<small>'+esc(q.text)+'</small><div class="teacher-actions">'+
+   '<button class="btn primary" data-action="playTeacher" data-id="'+q.id+'">학생 문제 시작</button>'+
+   '<button class="btn" data-action="shareTeacher" data-id="'+q.id+'">공유</button>'+ 
+   '<button class="btn" data-action="editTeacher" data-id="'+q.id+'">수정</button>'+
+   '<button class="btn" data-action="'+(pending?'confirmDeleteTeacher':'deleteTeacher')+'" data-id="'+q.id+'">'+(pending?'삭제 확인':'삭제')+'</button></div></article>';
+ }).join('')+'</div>';
+ return h;
 }
 function renderControls(){
  let h='';
+ if(state.mode==='teacher'){$('controls').innerHTML=renderTeacherControls();return;}
  if(state.mode==='free'){
   h='<h2>자유 실험실</h2><p>여기에는 틀린 답이 없어요. 원하는 방법으로 분수 모형을 바꿔 보세요.</p>'+
    '<div class="field"><label>무엇을 실험할까요?</label><div class="segmented">'+[
     ['shade','분할·색칠'],['add','덧셈·뺄셈'],['product','곱셈'],['mixed','가분수·대분수']
    ].map(v=>choice('topic',v[0],v[1],state.topic===v[0])).join('')+'</div></div>';
  }else{
-  const p=problem();h='<h2>'+modes.find(x=>x[0]===state.mode)[1]+'</h2><p>문제를 보고 조각을 조작해 보세요. 틀려도 다시 시도할 수 있습니다.</p>'+
-   '<div class="task"><small>도전 '+(state.level+1)+' / '+problems[state.mode].length+' · 성공 '+state.score+'문제</small>'+p.text+'</div>';
+  const p=problem();
+  const name=state.mode==='teacher-play'?'교사가 만든 문제':state.mode==='shared-play'?'공유 받은 문제':modes.find(x=>x[0]===state.mode)[1];
+  h='<h2>'+name+'</h2><p>문제를 보고 직접 조각을 옮겨 보세요. 틀려도 다시 시도할 수 있습니다.</p>'+
+   '<div class="task"><small>도전 '+(state.level+1)+' / '+challengeCount()+' · 성공 '+state.score+'문제</small>'+esc(p.text)+'</div>';
+  if(state.mode==='teacher-play'||state.mode==='shared-play')h+='<div class="buttons">'+button('teacherBack','교사 문제 목록으로','wide')+'</div>';
  }
- const shading=state.mode!=='free'||state.topic==='shade';
- if(shading){
+ if(currentIsTransfer()){
+  const p=problem(),trans=state.transfer||C.freshTransfer(p),status=C.transferStatus(p,trans);
+  h+='<div class="field"><label>조각 이동</label><p class="info">먼저 분모가 같도록 나누고, 색칠된 조각을 눌러 결과 칸으로 옮겨 보세요.</p></div>'+
+   '<div class="buttons">'+button('convertTransfer','같은 크기로 나누기','primary wide',trans.converted)+
+   button('undoTransfer','조각 이동 되돌리기','',!state.transferHistory.length)+
+   button('resetTransfer','조각 다시 놓기')+'</div>'+
+   '<div class="buttons">'+button('check','정답 확인','primary wide')+(state.success?button('next',state.mode==='shared-play'?'다시 풀기 ↻':'다음 문제 →','gold wide'): '')+'</div>'+
+   '<p class="info">이동 완료: '+(p.type==='add'?status.movedA+status.movedB:status.movedB)+' / '+status.required+'조각. 조각은 클릭하거나 결과 칸으로 드래그할 수 있습니다.</p>';
+ }else if(state.mode!=='free'||state.topic==='shade'){
   h+='<div class="field"><label>모형 고르기</label><div class="segmented">'+choice('shape','rect','사각형',state.shape==='rect')+choice('shape','circle','원',state.shape==='circle')+'</div></div>'+
    '<div class="field"><label for="denominator">전체를 몇 조각으로 나눌까요?</label><select id="denominator" class="select" data-field="den">'+selectOptions(DENOMS,state.den)+'</select></div>'+
    '<div class="buttons">'+button('split','분할하기 ×2','primary',state.den*2>16)+button('undo','한 단계 되돌리기','',!state.history.length)+button('clear','색칠 지우기')+button('all','전체 색칠')+'</div>';
-  if(state.mode!=='free') h+='<div class="buttons">'+button('check','정답 확인','primary wide')+(state.success?button('next','다음 문제 →','gold wide'): '')+'</div>';
-  h+='<p class="info">분할하기는 기존 색칠을 유지하면서 조각만 두 배로 나눕니다. 분모를 직접 바꿀 때에도 색칠이 정확히 유지되는 경우에만 변경됩니다.</p>';
+  if(state.mode!=='free')h+='<div class="buttons">'+button('check','정답 확인','primary wide')+(state.success?button('next','다음 문제 →','gold wide'): '')+'</div>';
+  h+='<p class="info">분할하기는 기존 색칠을 유지하면서 조각만 두 배로 나눕니다.</p>';
  }else if(state.topic==='add'){
   h+='<div class="field"><label>연산 고르기</label><div class="segmented">'+choice('operation','add','덧셈 +',state.operation==='add')+choice('operation','subtract','뺄셈 −',state.operation==='subtract')+'</div></div>'+
     '<div class="field"><label>분수 조작</label><div class="operand-grid">'+fractionOptions('a',state.a,'첫 번째 분수')+fractionOptions('b',state.b,'두 번째 분수')+'</div></div>'+
@@ -246,23 +334,184 @@ function renderMixed(){
   '<div class="group-stack">'+strips+'</div><p class="equal-text">'+f(n,d)+' = '+displayed+'</p>'+
   '<p class="subtext">완성한 전체 '+parts.whole+'개, 남은 조각 '+parts.remainder+'개입니다.</p>';
 }
+function sourceTransferRow(q,source,status,converted){
+ const trans=state.transfer,minus=q.type==='subtract',isA=source==='a',den=converted?status.denominator:q[source][1];
+ const total=converted?(isA?status.first:status.second):q[source][0];
+ const moved=isA?trans.movedA:trans.movedB;
+ const interactive=converted&&!(minus&&isA);
+ let units='';
+ for(let i=0;i<den;i++){
+  const filled=i<total,already=moved.includes(i);
+  const cls=filled?(already?'taken':isA?'blue':'yellow'):'empty';
+  const word=already?'옮김':filled?'이동':'빈 칸';
+  if(filled&&interactive){
+   units+='<button type="button" class="transfer-unit '+cls+'" data-action="transferPiece" data-source="'+source+'" data-index="'+i+'"'+(already?' disabled':' draggable="true"')+
+    ' aria-label="'+(isA?'첫 번째':'두 번째')+' 분수 '+(i+1)+'번째 조각 '+word+'">'+(already?'✓':'1/'+den)+'</button>';
+  }else{
+   units+='<span class="transfer-unit '+cls+'" aria-label="'+(i+1)+'번째 조각 '+word+'">'+(filled?'1/'+den:'')+'</span>';
+  }
+ }
+ return '<div class="transfer-panel"><h3 class="transfer-title">'+(isA?'첫 번째':'두 번째')+' 분수 '+f(q[source][0],q[source][1])+
+  (minus?(isA?' · 남길 원래 양':' · 빼낼 조각'):' · 더할 조각')+'</h3>'+
+  '<div class="transfer-scroll"><div class="transfer-row">'+units+'</div></div>'+
+  (converted&&interactive?'<p class="transfer-instruction">색칠된 조각을 누르면 아래 칸으로 옮겨집니다.</p>':'')+'</div>';
+}
+function resultUnitRows(den,colors){
+ const count=Math.max(den,colors.length),groups=Math.ceil(count/den);
+ return Array.from({length:groups},(_,g)=>{
+  let h='<div class="transfer-scroll"><div class="transfer-row" aria-label="'+(g+1)+'번째 전체">';
+  for(let i=0;i<den;i++){
+   const at=g*den+i,v=colors[at]||'empty';
+   h+='<span class="transfer-unit '+v+'" aria-label="'+(at+1)+'번째 칸 '+(v==='empty'?'비어 있음':'채워짐')+'">'+(v==='empty'?'':'1/'+den)+'</span>';
+  }
+  return h+'</div></div>';
+ }).join('');
+}
+function renderTransferChallenge(){
+ const p=problem(),trans=state.transfer||C.freshTransfer(p),status=C.transferStatus(p,trans);
+ const minus=p.type==='subtract',den=status.denominator;
+ let h='<div class="stage-head"><h2>'+(minus?'뺄셈 조각 빼기':'덧셈 조각 합치기')+'</h2><span class="chip">'+(trans.converted?'공통 분모 '+den:'분모 비교하기')+'</span></div>'+
+  '<p class="note">'+(minus?'첫 번째 분수에서 두 번째 분수만큼 직접 조각을 빼 보세요.':'두 분수의 조각을 결과 칸으로 옮겨 합쳐 보세요.')+'</p>'+
+  sourceTransferRow(p,'a',status,trans.converted)+
+  '<p class="equal-text" aria-hidden="true">'+(minus?'−':'＋')+'</p>'+
+  sourceTransferRow(p,'b',status,trans.converted);
+ if(!trans.converted){
+  h+='<div class="task"><small>통분이 필요한 이유</small>한 조각의 크기가 달라요. 전체 크기는 그대로 두고 같은 분모로 나눠 보세요. '+f(p.a[0],p.a[1])+
+   '와 '+f(p.b[0],p.b[1])+'을 각각 '+den+'등분하면 어떤 조각이 될까요?</div>';
+ }else{
+  const colors=minus?Array.from({length:status.filled},()=> 'green'):
+   Array.from({length:status.movedA},()=> 'blue').concat(Array.from({length:status.movedB},()=> 'yellow'));
+  h+='<div id="transferTray" class="transfer-tray" role="region" aria-label="조각을 옮길 결과 칸">'+
+   '<h3 class="transfer-title">'+(minus?'남은 조각':'조각을 합칠 칸')+'</h3>'+
+   resultUnitRows(den,colors)+
+   '<div class="transfer-sentence" aria-live="polite">'+status.filled+'/'+den+'</div>'+
+   '<p class="transfer-instruction">위의 색칠된 조각을 터치하거나 이 칸으로 끌어오세요. '+(minus?'빼낸 조각은 오른쪽에서부터 사라집니다.':'빈 조각은 자동으로 정렬됩니다.')+'</p></div>';
+  if(minus&&status.movedB)h+='<div class="transfer-panel"><h3 class="transfer-title">빼낸 조각 '+status.movedB+'/'+den+'</h3>'+resultUnitRows(den,Array(status.movedB).fill('yellow'))+'</div>';
+  if(status.finished&&state.success){
+   const red=M.reduce(status.filled,den);
+   const mixed=M.mixed(status.filled,den);
+   const mixedLabel=mixed.whole>0&&(mixed.remainder>0?mixed.whole+'과 '+mixed.remainder+'/'+mixed.denominator:String(mixed.whole));
+   h+='<p class="equal-text">'+status.filled+'/'+den+' = '+f(red.n,red.d)+(mixedLabel?' = '+mixedLabel:'')+'</p>'+
+   '<p class="subtext">분모끼리 계산한 것이 아니라 같은 크기로 나눈 조각을 '+(minus?'뺐습니다.':'합쳤습니다.')+'</p>';
+  }
+ }
+ return h+'<div class="feedback '+state.tone+'" role="status" aria-live="polite">'+esc(state.message)+'</div>';
+}
 function render(){
  renderNav();renderControls();
- $('stage').innerHTML=(state.mode!=='free'||state.topic==='shade')?renderShading():
+ if(state.mode==='teacher')$('stage').innerHTML=renderTeacherStage();
+ else if(currentIsTransfer())$('stage').innerHTML=renderTransferChallenge();
+ else $('stage').innerHTML=(state.mode!=='free'||state.topic==='shade')?renderShading():
   state.topic==='add'?renderAdd():state.topic==='product'?renderProduct():renderMixed();
 }
 function startChallenge(){
- const p=problem();state.history=[];state.success=false;
+ const p=problem();if(!p)return;
+ state.history=[];state.success=false;state.awarded=false;state.transferHistory=[];
+ state.transfer=(p.type==='add'||p.type==='subtract')?C.freshTransfer(p):null;
  state.den=p.required||p.d;state.mask=Array(state.den).fill(false);
  if(p.type==='product')state.shape='rect';
- notify('조각을 직접 눌러 색칠한 뒤 정답을 확인하세요.','');
+ notify(state.transfer?'조각을 눌러 결과 칸으로 옮겨 보세요.':'조각을 직접 눌러 색칠한 뒤 정답을 확인하세요.','');
 }
 function setMode(mode){
  if(!modes.some(x=>x[0]===mode))return;
- state.mode=mode;state.level=0;state.history=[];
+ state.mode=mode;state.level=0;state.history=[];state.transferHistory=[];
  if(mode==='free')notify('자유롭게 탐구해 보세요. 여기에는 정답과 오답이 없습니다.','');
+ else if(mode==='teacher')state.teacherNotice=state.teacherNotice||'교사가 만든 문제를 저장하고 직접 풀어 볼 수 있어요.';
  else startChallenge();
  render();
+}
+function rememberTransfer(){
+ if(!state.transfer)return;
+ state.transferHistory.push({converted:state.transfer.converted,movedA:state.transfer.movedA.slice(),movedB:state.transfer.movedB.slice()});
+ if(state.transferHistory.length>60)state.transferHistory.shift();
+}
+function moveTransfer(source,index){
+ if(!currentIsTransfer())return false;
+ const next=C.movePiece(problem(),state.transfer,source,index);
+ if(!next)return false;
+ rememberTransfer();state.transfer=next;state.success=false;
+ const status=C.transferStatus(problem(),next);
+ notify(status.finished?'조각을 모두 옮겼어요. 정답 확인을 눌러 보세요.':'좋아요! 한 조각이 이동했습니다.','');
+ render();return true;
+}
+function saveTeacher(){
+ const textArea=$('teacherText');
+ if(textArea)state.teacher.text=textArea.value.slice(0,120);
+ const t=state.teacher;
+ const raw={id:state.editingId||undefined,type:t.type,a:[t.a.n,t.a.d],b:[t.b.n,t.b.d],text:t.text,grade:t.grade};
+ const q=C.composeQuestion(raw);
+ if(q.error){state.teacherNotice=q.error;render();return;}
+ const index=state.teacherQuestions.findIndex(p=>p.id===q.id);
+ if(index===-1&&state.teacherQuestions.length>=40){state.teacherNotice='저장할 수 있는 문제는 최대 40개입니다.';render();return;}
+ const next=state.teacherQuestions.slice();
+ if(index!==-1)next[index]=q;else next.push(q);
+ try{C.writeQuestions(localStorage,next);}
+ catch{state.teacherNotice='저장할 수 없습니다. 브라우저의 저장 공간이나 사용 권한을 확인해 주세요.';render();return;}
+ state.teacherQuestions=next;state.editingId=null;state.pendingDeleteId=null;state.shareUrl='';
+ state.teacherNotice='문제를 저장했습니다. 오른쪽에서 학생 문제 시작을 눌러 보세요.';render();
+}
+function resetTeacher(){
+ state.editingId=null;state.pendingDeleteId=null;state.shareUrl='';
+ state.teacher={type:'add',a:{n:1,d:2},b:{n:1,d:4},grade:4,text:''};
+ state.teacherNotice='새 문제를 설정해 보세요.';render();
+}
+function playTeacher(id){
+ const idx=state.teacherQuestions.findIndex(q=>q.id===id);
+ if(idx<0)return;
+ state.mode='teacher-play';state.level=idx;startChallenge();render();
+}
+function shareTeacher(id){
+ const q=state.teacherQuestions.find(item=>item.id===id);
+ if(!q||typeof location==='undefined')return;
+ try{
+  const target=new URL(location.href);
+  target.search='';target.hash='';
+  target.searchParams.set('task',C.encodeQuestion(q));
+  state.shareUrl=target.toString();
+  state.teacherNotice='공유 주소를 만들었습니다. 링크 복사를 누르거나 주소를 직접 복사해 주세요.';
+ }catch{state.teacherNotice='공유 주소를 만들 수 없습니다. 다시 시도해 주세요.';}
+ render();
+}
+function copyShareUrl(){
+ if(!state.shareUrl)return;
+ const target=$('teacherShareUrl');if(target&&typeof target.select==='function')target.select();
+ if(typeof navigator!=='undefined'&&navigator.clipboard?.writeText){
+  navigator.clipboard.writeText(state.shareUrl).then(()=>{
+   state.teacherNotice='학생 공유 링크를 복사했습니다.';render();
+  }).catch(()=>{state.teacherNotice='자동 복사에 실패했습니다. 표시된 주소를 길게 눌러 복사해 주세요.';render();});
+ }else{
+  let success=false;
+  try{success=Boolean(document.execCommand?.('copy'))}catch{}
+  state.teacherNotice=success?'학생 공유 링크를 복사했습니다.':'표시된 주소를 길게 눌러 복사해 주세요.';
+  render();
+ }
+}
+function editTeacher(id){
+ const q=state.teacherQuestions.find(p=>p.id===id);if(!q)return;
+ state.editingId=q.id;state.teacher={type:q.type,a:{n:q.a[0],d:q.a[1]},b:{n:q.b[0],d:q.b[1]},text:q.text,grade:q.grade};
+ state.pendingDeleteId=null;state.shareUrl='';state.teacherNotice='문제를 수정한 뒤 수정 완료를 눌러 주세요.';render();
+}
+function deleteTeacher(id){
+ if(state.pendingDeleteId!==id){state.pendingDeleteId=id;state.teacherNotice='삭제 확인을 다시 눌러야 문제가 삭제됩니다.';render();return;}
+ const next=state.teacherQuestions.filter(q=>q.id!==id);
+ try{C.writeQuestions(localStorage,next)}
+ catch{state.teacherNotice='저장할 수 없어 삭제가 취소되었습니다.';render();return}
+ state.teacherQuestions=next;state.pendingDeleteId=null;state.shareUrl='';
+ if(state.editingId===id)resetTeacher();
+ else{state.teacherNotice='문제가 삭제되었습니다.';render();}
+}
+function changeTeacher(field,value){
+ const t=state.teacher;
+ if(field==='text'){t.text=String(value||'').slice(0,120);return}
+ if(field==='operation'){if(['add','subtract'].includes(value))t.type=value;return}
+ if(field==='grade'){if([3,4,5,6].includes(Number(value)))t.grade=Number(value);return}
+ const names={aD:['a','d'],aN:['a','n'],bD:['b','d'],bN:['b','n']};
+ const match=names[field];if(!match)return;
+ const obj=t[match[0]],number=Number(value);
+ if(match[1]==='d'){
+  if(!C.DENOMINATORS.includes(number))return;
+  obj.d=number;obj.n=Math.min(obj.n,number);
+ }else if(Number.isInteger(number)&&number>=1&&number<=obj.d)obj.n=number;
 }
 function changeDen(next){
  if(!DENOMS.includes(next))return;
@@ -274,10 +523,21 @@ function changeDen(next){
  render();
 }
 function check(){
- if(state.mode==='free')return;
+ if(!challengeMode())return;
+ if(currentIsTransfer()){
+  const status=C.transferStatus(problem(),state.transfer);
+  if(!status.finished){
+   state.success=false;
+   notify(!state.transfer.converted?'먼저 같은 크기로 나누기를 눌러 주세요.':'아직 조각을 모두 옮기지 않았습니다. 조각을 더 움직여 보세요.','warn');
+  }else{
+   if(!state.awarded){state.score++;state.awarded=true;}
+   state.success=true;notify('정답입니다! 같은 크기의 조각을 이용해 정확하게 계산했어요.','success');
+  }
+  render();return;
+ }
  const p=problem(),mine={n:M.colored(state.mask),d:state.den},target=problemAnswer(p);
  if(M.equal(mine,target)&&(!p.required||state.den===p.required)){
-  if(!state.success)state.score++;
+  if(!state.awarded){state.score++;state.awarded=true;}
   state.success=true;notify('정답입니다! 같은 크기의 분수를 정확히 만들었어요. 다음 문제로 가 볼까요?','success');
  }else{
   state.success=false;notify(p.required&&state.den!==p.required?'이번 도전에서는 분모를 '+p.required+'로 만들어야 해요.':'아직 목표한 크기와 달라요. 전체 크기와 색칠한 조각 수를 다시 살펴보세요.','warn');
@@ -298,6 +558,29 @@ document.addEventListener('click',event=>{
  const el=event.target.closest('[data-action]');if(!el)return;
  const action=el.dataset.action,value=el.dataset.value;
  if(action==='mode'){setMode(value);return}
+ if(action==='saveTeacher'){saveTeacher();return}
+ if(action==='resetTeacher'){resetTeacher();return}
+ if(action==='shareTeacher'){shareTeacher(el.dataset.id);return}
+ if(action==='copyShareUrl'){copyShareUrl();return}
+ if(action==='playTeacher'){playTeacher(el.dataset.id);return}
+ if(action==='editTeacher'){editTeacher(el.dataset.id);return}
+ if(action==='deleteTeacher'||action==='confirmDeleteTeacher'){deleteTeacher(el.dataset.id);return}
+ if(action==='teacherBack'){setMode('teacher');return}
+ if(action==='transferPiece'){moveTransfer(el.dataset.source,Number(el.dataset.index));return}
+ if(action==='convertTransfer'){
+  if(!currentIsTransfer()||state.transfer.converted)return;
+  rememberTransfer();state.transfer.converted=true;
+  notify('분모를 같게 나누었습니다! 색칠된 조각을 눌러 아래로 옮겨 보세요.','');render();return;
+ }
+ if(action==='undoTransfer'){
+  const prior=state.transferHistory.pop();if(!prior)return;
+  state.transfer=prior;state.success=false;notify('조각 이동을 한 단계 되돌렸습니다.','');render();return;
+ }
+ if(action==='resetTransfer'){
+  if(!currentIsTransfer())return;
+  rememberTransfer();state.transfer=C.freshTransfer(problem());state.success=false;
+  notify('조각을 처음 상태로 돌렸습니다.','');render();return;
+ }
  if(action==='topic'){
   if(state.mode!=='free')return;
   state.topic=value;state.history=[];notify('직접 조작해 보며 분수의 크기를 비교하세요.','');render();return;
@@ -318,7 +601,11 @@ document.addEventListener('click',event=>{
  }
  if(action==='clear'||action==='all'){snapshot();state.mask=Array(state.den).fill(action==='all');state.success=false;notify(action==='all'?'전체 한 개를 모두 색칠했어요.':'색칠을 지웠어요.','');render();return}
  if(action==='check'){check();return}
- if(action==='next'){if(!state.success)return;state.level++;startChallenge();render();return}
+ if(action==='next'){
+  if(!state.success)return;
+  if(state.mode!=='shared-play')state.level++;
+  startChallenge();render();return;
+ }
  if(action==='incMixed'||action==='decMixed'){
   snapshot();state.mixedN=Math.max(0,Math.min(24,state.mixedN+(action==='incMixed'?1:-1)));render();return;
  }
@@ -332,12 +619,56 @@ document.addEventListener('keydown',event=>{
  }
 });
 document.addEventListener('change',event=>{
+ const teacherField=event.target.dataset.teacher;
+ if(teacherField){
+  changeTeacher(teacherField,event.target.value);
+  if(teacherField!=='text')render();
+  return;
+ }
  const field=event.target.dataset.field;if(!field)return;
  const value=Number(event.target.value);
  if(field==='den')changeDen(value);
  else if(field==='mixedD'&&[2,3,4,6,8].includes(value)){snapshot();state.mixedD=value;render()}
  else setOperand(field,value);
 });
+// 데스크톱 드래그·갤럭시탭 터치 모두 지원하며, 정밀 드래그 없이 조각 탭으로도 이동 가능
+document.addEventListener('dragstart',event=>{
+ const piece=event.target.closest('[data-action="transferPiece"]');
+ if(!piece||!currentIsTransfer())return;
+ event.dataTransfer?.setData('text/plain',piece.dataset.source+':'+piece.dataset.index);
+ if(event.dataTransfer)event.dataTransfer.effectAllowed='move';
+});
+document.addEventListener('dragover',event=>{
+ if(!currentIsTransfer()||!event.target.closest('#transferTray'))return;
+ event.preventDefault();
+ if(event.dataTransfer)event.dataTransfer.dropEffect='move';
+});
+document.addEventListener('drop',event=>{
+ if(!currentIsTransfer()||!event.target.closest('#transferTray'))return;
+ event.preventDefault();
+ const raw=event.dataTransfer?.getData('text/plain')||'';
+ const match=/^([ab]):(\\d+)$/.exec(raw);
+ if(match)moveTransfer(match[1],Number(match[2]));
+});
+let pointerSource=null;
+document.addEventListener('pointerdown',event=>{
+ const piece=event.target.closest('[data-action="transferPiece"]');
+ pointerSource=piece&&currentIsTransfer()?
+  {source:piece.dataset.source,index:Number(piece.dataset.index),x:event.clientX,y:event.clientY}:null;
+});
+document.addEventListener('pointerup',event=>{
+ const drag=pointerSource;pointerSource=null;
+ if(!drag||!currentIsTransfer()||!document.elementFromPoint)return;
+ const distance=Math.hypot(event.clientX-drag.x,event.clientY-drag.y);
+ const hit=document.elementFromPoint(event.clientX,event.clientY);
+ if(distance>22&&hit?.closest('#transferTray'))moveTransfer(drag.source,drag.index);
+});
+
+try{
+ const token=typeof location!=='undefined'?new URLSearchParams(location.search).get('task'):null;
+ const shared=C.decodeQuestion(token);
+ if(shared){state.sharedProblem=shared;state.mode='shared-play';startChallenge();}
+}catch{}
 render();
 })();
 </script>
