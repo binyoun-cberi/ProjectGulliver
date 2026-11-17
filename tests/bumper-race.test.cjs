@@ -87,6 +87,16 @@ test('balanced groups preserve quotas including fixed students for 1..100 people
 test('more teacher-directed students than capacity is rejected',()=>{
  assert.throws(()=>C.createPool(names(100),labels(6),{balanced:true,directed:Object.fromEntries(names(18).map(n=>[n,'선택지0']))}));
 });
+test('marble stranded on the lip of a physical slot divider is nudged free without assigning a result',()=>{
+ const t=harness(224);t.start({n:3,k:4,purpose:'assign'});
+ assert.deepEqual(t.alerts,[]);
+ t.run('Body.setPosition(marbles[0].body,{x:slotZones[0].width-7,y:slotZones[0].y-14});Body.setVelocity(marbles[0].body,{x:0,y:0});');
+ for(let i=0;i<35;i++)t.run('Engine.update(engine,1000/60)');
+ assert.ok(t.run('(marbles[0].slotLipRescues||0)>=1'),'The stranded marble should be freed from the divider lip');
+ assert.equal(t.run('resultPool.assigned.size'),0,'Physical marble result remains determined by its final landing');
+ t.dispose();
+});
+
 test('actual seeded physics races report physical-lane distribution without forced quotas',{timeout:240000},()=>{
  for(const k of [4,8]){
   const totals=Array(k).fill(0);
@@ -96,8 +106,6 @@ test('actual seeded physics races report physical-lane distribution without forc
    for(let frame=0;frame<8100&&!t.run('isFinished');frame++)t.tick();
    if(t.run('results.length')!==45){
     console.log('Unfinished after 135s: '+JSON.stringify(Array.from(t.run('marbles.filter(m=>!m.finished).map(m=>({name:m.name,x:m.body.position.x,y:m.body.position.y,vx:m.body.velocity.x,vy:m.body.velocity.y,finished:finishLineY,zoneY:slotZones[0].y,slot:getSlotByX(m.body.position.x)?.id}))'))));
-    t.tick(1800);
-    console.log('Unfinished after 165s: '+JSON.stringify(Array.from(t.run('marbles.filter(m=>!m.finished).map(m=>({name:m.name,x:m.body.position.x,y:m.body.position.y,vx:m.body.velocity.x,vy:m.body.velocity.y,finished:finishLineY,zoneY:slotZones[0].y,slot:getSlotByX(m.body.position.x)?.id}))'))));
    }
    assert.equal(t.run('results.length'),45);
    const indices=Array.from(t.run("results.map(r=>Number(r.text.replace('선택지','')))"));
