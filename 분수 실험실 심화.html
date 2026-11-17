@@ -139,16 +139,16 @@ problems.master=[problems.explore[1],problems.puzzle[2],problems.calc[1],problem
 const state={mode:'free',topic:'shade',operation:'add',shape:'rect',den:4,mask:[true,false,false,false],history:[],level:0,success:false,score:0,message:'조각을 눌러 색칠하거나 해제해 보세요.',tone:'',
  a:{n:1,d:4},b:{n:2,d:4},pa:{n:1,d:2},pb:{n:2,d:3},mixedD:4,mixedN:5,
  teacher:{type:'add',a:{n:1,d:2},b:{n:1,d:4},grade:4,text:''},
- teacherQuestions:[],editingId:null,teacherNotice:'',transfer:null,transferHistory:[],dragging:null};
+ teacherQuestions:[],editingId:null,teacherNotice:'',shareUrl:'',sharedProblem:null,pendingDeleteId:null,transfer:null,transferHistory:[],dragging:null};
 function f(n,d){return n+'/'+d}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 try{state.teacherQuestions=C.readQuestions(localStorage)}catch{state.teacherQuestions=[]}
 function challengeMode(){return state.mode!=='free'&&state.mode!=='teacher'}
-function challengeCount(){return state.mode==='teacher-play'?state.teacherQuestions.length:(problems[state.mode]||[]).length}
+function challengeCount(){return state.mode==='shared-play'?1:state.mode==='teacher-play'?state.teacherQuestions.length:(problems[state.mode]||[]).length}
 function currentIsTransfer(){const p=challengeMode()?problem():null;return Boolean(p&&(p.type==='add'||p.type==='subtract'))}
 function snapshot(){state.history.push({den:state.den,mask:state.mask.slice(),shape:state.shape,mixedN:state.mixedN,mixedD:state.mixedD});if(state.history.length>40)state.history.shift()}
 function notify(message,tone){state.message=message;state.tone=tone||''}
-function problem(){const all=state.mode==='teacher-play'?state.teacherQuestions:(problems[state.mode]||[]);return all.length?all[state.level%all.length]:null}
+function problem(){if(state.mode==='shared-play')return state.sharedProblem;const all=state.mode==='teacher-play'?state.teacherQuestions:(problems[state.mode]||[]);return all.length?all[state.level%all.length]:null}
 function problemAnswer(p){return {n:p.n,d:p.d}}
 function selectOptions(values,current){return values.map(v=>'<option value="'+v+'"'+(v===current?' selected':'')+'>'+v+'조각</option>').join('')}
 function numOptions(d,n){return Array.from({length:d+1},(_,i)=>'<option value="'+i+'"'+(i===n?' selected':'')+'>'+i+'</option>').join('')}
@@ -158,7 +158,7 @@ function fractionOptions(prefix,obj,name){
  return '<div class="operand"><strong>'+name+'</strong><label>분모<select data-field="'+prefix+'D" aria-label="'+name+' 분모">'+selectOptions([2,3,4,6,8,12],obj.d)+'</select></label><label>분자<select data-field="'+prefix+'N" aria-label="'+name+' 분자">'+numOptions(obj.d,obj.n)+'</select></label></div>';
 }
 function renderNav(){
- $('modes').innerHTML=modes.map(v=>'<button class="mode" role="tab" data-action="mode" data-value="'+v[0]+'" aria-selected="'+(state.mode===v[0]||(v[0]==='teacher'&&state.mode==='teacher-play'))+'">'+v[1]+'</button>').join('');
+ $('modes').innerHTML=modes.map(v=>'<button class="mode" role="tab" data-action="mode" data-value="'+v[0]+'" aria-selected="'+(state.mode===v[0]||(v[0]==='teacher'&&(state.mode==='teacher-play'||state.mode==='shared-play')))+'">'+v[1]+'</button>').join('');
 }
 function teacherFrac(which,title){
  const obj=state.teacher[which];
@@ -178,6 +178,7 @@ function renderTeacherControls(){
   '<div class="buttons">'+button('saveTeacher',state.editingId?'수정 완료':'문제 저장','primary wide')+
   (state.editingId?button('resetTeacher','새 문제 작성','wide'): '')+'</div>'+
   '<p class="info">최대 40문제까지 이 브라우저에 저장됩니다. 다른 기기에는 자동 동기화되지 않으니 기기를 바꿀 때 주의하세요.</p>'+
+  (state.shareUrl?'<div class="field"><label for="teacherShareUrl">학생에게 나눠줄 주소</label><input id="teacherShareUrl" class="select" readonly value="'+esc(state.shareUrl)+'" aria-label="학생 공유 링크">'+button('copyShareUrl','링크 복사','wide')+'<p class="info">주소를 QR 코드 도구에 붙여 넣으면 학생 태블릿에서도 이 문제를 열 수 있습니다.</p></div>':'')+
   '<div class="feedback '+(state.teacherNotice&&state.teacherNotice.includes('저장할 수')?'warn':'')+'" role="status" aria-live="polite">'+esc(state.teacherNotice||'분수를 선택하고 문제 저장을 눌러 보세요.')+'</div></div>';
 }
 function renderTeacherStage(){
@@ -190,6 +191,7 @@ function renderTeacherStage(){
   return '<article class="teacher-item"><strong>'+esc(f(q.a[0],q.a[1])+operator(q)+f(q.b[0],q.b[1]))+' <span class="teacher-pill">'+q.grade+'학년</span></strong>'+
    '<small>'+esc(q.text)+'</small><div class="teacher-actions">'+
    '<button class="btn primary" data-action="playTeacher" data-id="'+q.id+'">학생 문제 시작</button>'+
+   '<button class="btn" data-action="shareTeacher" data-id="'+q.id+'">공유</button>'+ 
    '<button class="btn" data-action="editTeacher" data-id="'+q.id+'">수정</button>'+
    '<button class="btn" data-action="'+(pending?'confirmDeleteTeacher':'deleteTeacher')+'" data-id="'+q.id+'">'+(pending?'삭제 확인':'삭제')+'</button></div></article>';
  }).join('')+'</div>';
@@ -205,10 +207,10 @@ function renderControls(){
    ].map(v=>choice('topic',v[0],v[1],state.topic===v[0])).join('')+'</div></div>';
  }else{
   const p=problem();
-  const name=state.mode==='teacher-play'?'교사가 만든 문제':modes.find(x=>x[0]===state.mode)[1];
+  const name=state.mode==='teacher-play'?'교사가 만든 문제':state.mode==='shared-play'?'공유 받은 문제':modes.find(x=>x[0]===state.mode)[1];
   h='<h2>'+name+'</h2><p>문제를 보고 직접 조각을 옮겨 보세요. 틀려도 다시 시도할 수 있습니다.</p>'+
    '<div class="task"><small>도전 '+(state.level+1)+' / '+challengeCount()+' · 성공 '+state.score+'문제</small>'+esc(p.text)+'</div>';
-  if(state.mode==='teacher-play')h+='<div class="buttons">'+button('teacherBack','교사 문제 목록으로','wide')+'</div>';
+  if(state.mode==='teacher-play'||state.mode==='shared-play')h+='<div class="buttons">'+button('teacherBack','교사 문제 목록으로','wide')+'</div>';
  }
  if(currentIsTransfer()){
   const p=problem(),trans=state.transfer||C.freshTransfer(p),status=C.transferStatus(p,trans);
@@ -216,7 +218,7 @@ function renderControls(){
    '<div class="buttons">'+button('convertTransfer','같은 크기로 나누기','primary wide',trans.converted)+
    button('undoTransfer','조각 이동 되돌리기','',!state.transferHistory.length)+
    button('resetTransfer','조각 다시 놓기')+'</div>'+
-   '<div class="buttons">'+button('check','정답 확인','primary wide')+(state.success?button('next','다음 문제 →','gold wide'): '')+'</div>'+
+   '<div class="buttons">'+button('check','정답 확인','primary wide')+(state.success?button('next',state.mode==='shared-play'?'다시 풀기 ↻':'다음 문제 →','gold wide'): '')+'</div>'+
    '<p class="info">이동 완료: '+(p.type==='add'?status.movedA+status.movedB:status.movedB)+' / '+status.required+'조각. 조각은 클릭하거나 결과 칸으로 드래그할 수 있습니다.</p>';
  }else if(state.mode!=='free'||state.topic==='shade'){
   h+='<div class="field"><label>모형 고르기</label><div class="segmented">'+choice('shape','rect','사각형',state.shape==='rect')+choice('shape','circle','원',state.shape==='circle')+'</div></div>'+
@@ -458,6 +460,32 @@ function playTeacher(id){
  if(idx<0)return;
  state.mode='teacher-play';state.level=idx;startChallenge();render();
 }
+function shareTeacher(id){
+ const q=state.teacherQuestions.find(item=>item.id===id);
+ if(!q||typeof location==='undefined')return;
+ try{
+  const target=new URL(location.href);
+  target.search='';target.hash='';
+  target.searchParams.set('task',C.encodeQuestion(q));
+  state.shareUrl=target.toString();
+  state.teacherNotice='공유 주소를 만들었습니다. 링크 복사를 누르거나 주소를 직접 복사해 주세요.';
+ }catch{state.teacherNotice='공유 주소를 만들 수 없습니다. 다시 시도해 주세요.';}
+ render();
+}
+function copyShareUrl(){
+ if(!state.shareUrl)return;
+ const target=$('teacherShareUrl');if(target&&typeof target.select==='function')target.select();
+ if(typeof navigator!=='undefined'&&navigator.clipboard?.writeText){
+  navigator.clipboard.writeText(state.shareUrl).then(()=>{
+   state.teacherNotice='학생 공유 링크를 복사했습니다.';render();
+  }).catch(()=>{state.teacherNotice='자동 복사에 실패했습니다. 표시된 주소를 길게 눌러 복사해 주세요.';render();});
+ }else{
+  let success=false;
+  try{success=Boolean(document.execCommand?.('copy'))}catch{}
+  state.teacherNotice=success?'학생 공유 링크를 복사했습니다.':'표시된 주소를 길게 눌러 복사해 주세요.';
+  render();
+ }
+}
 function editTeacher(id){
  const q=state.teacherQuestions.find(p=>p.id===id);if(!q)return;
  state.editingId=q.id;state.teacher={type:q.type,a:{n:q.a[0],d:q.a[1]},b:{n:q.b[0],d:q.b[1]},text:q.text,grade:q.grade};
@@ -532,6 +560,8 @@ document.addEventListener('click',event=>{
  if(action==='mode'){setMode(value);return}
  if(action==='saveTeacher'){saveTeacher();return}
  if(action==='resetTeacher'){resetTeacher();return}
+ if(action==='shareTeacher'){shareTeacher(el.dataset.id);return}
+ if(action==='copyShareUrl'){copyShareUrl();return}
  if(action==='playTeacher'){playTeacher(el.dataset.id);return}
  if(action==='editTeacher'){editTeacher(el.dataset.id);return}
  if(action==='deleteTeacher'||action==='confirmDeleteTeacher'){deleteTeacher(el.dataset.id);return}
@@ -573,7 +603,8 @@ document.addEventListener('click',event=>{
  if(action==='check'){check();return}
  if(action==='next'){
   if(!state.success)return;
-  state.level++;startChallenge();render();return;
+  if(state.mode!=='shared-play')state.level++;
+  startChallenge();render();return;
  }
  if(action==='incMixed'||action==='decMixed'){
   snapshot();state.mixedN=Math.max(0,Math.min(24,state.mixedN+(action==='incMixed'?1:-1)));render();return;
@@ -633,6 +664,11 @@ document.addEventListener('pointerup',event=>{
  if(distance>22&&hit?.closest('#transferTray'))moveTransfer(drag.source,drag.index);
 });
 
+try{
+ const token=typeof location!=='undefined'?new URLSearchParams(location.search).get('task'):null;
+ const shared=C.decodeQuestion(token);
+ if(shared){state.sharedProblem=shared;state.mode='shared-play';startChallenge();}
+}catch{}
 render();
 })();
 </script>
