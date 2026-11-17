@@ -90,8 +90,8 @@ test('more teacher-directed students than capacity is rejected',()=>{
 test('marble stranded on the lip of a physical slot divider is nudged free without assigning a result',()=>{
  const t=harness(224);t.start({n:3,k:4,purpose:'assign'});
  assert.deepEqual(t.alerts,[]);
- t.run('Body.setPosition(marbles[0].body,{x:slotZones[0].width-7,y:slotZones[0].y-14});Body.setVelocity(marbles[0].body,{x:0,y:0});');
- for(let i=0;i<35;i++)t.run('Engine.update(engine,1000/60)');
+ // Hold the ball at the divider lip to reproduce a persistent contact (not a normal crossing).
+ for(let i=0;i<20;i++)t.run('Body.setPosition(marbles[0].body,{x:slotZones[0].width-7,y:slotZones[0].y-14});Body.setVelocity(marbles[0].body,{x:0,y:0});Engine.update(engine,1000/60)');
  assert.ok(t.run('(marbles[0].slotLipRescues||0)>=1'),'The stranded marble should be freed from the divider lip');
  assert.equal(t.run('resultPool.assigned.size'),0,'Physical marble result remains determined by its final landing');
  t.dispose();
@@ -117,6 +117,10 @@ test('actual seeded physics races report physical-lane distribution without forc
   }
   console.log('Aggregated physical distribution: '+k+' slots, 180 results: '+JSON.stringify(totals));
   assert.equal(totals.reduce((a,b)=>a+b,0),180);
+  // Detect substantial systematic concentration while allowing ordinary random fluctuation.
+  const expected=180/k;
+  const chiSquared=totals.reduce((sum,count)=>sum+(count-expected)**2/expected,0);
+  assert.ok(chiSquared<(k===4?25:30),'Physical distribution is excessively concentrated: chi-square '+chiSquared);
  }
 });
 
