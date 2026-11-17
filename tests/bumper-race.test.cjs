@@ -87,6 +87,26 @@ test('balanced groups preserve quotas including fixed students for 1..100 people
 test('more teacher-directed students than capacity is rejected',()=>{
  assert.throws(()=>C.createPool(names(100),labels(6),{balanced:true,directed:Object.fromEntries(names(18).map(n=>[n,'선택지0']))}));
 });
+test('actual seeded physics races report physical-lane distribution without forced quotas',{timeout:240000},()=>{
+ for(const k of [4,8]){
+  const totals=Array(k).fill(0);
+  for(const seed of [7,11,23,47]){
+   const t=harness(seed*811+k);t.start({n:45,k,purpose:'assign'});
+   assert.deepEqual(t.alerts,[]);
+   for(let frame=0;frame<8100&&!t.run('isFinished');frame++)t.tick();
+   assert.equal(t.run('results.length'),45);
+   const indices=Array.from(t.run("results.map(r=>Number(r.text.replace('선택지','')))"));
+   const counts=Array(k).fill(0);
+   indices.forEach(i=>{assert.ok(i>=0&&i<k);counts[i]++;totals[i]++});
+   console.log('Physical distribution: '+k+' slots, seed '+seed+': '+JSON.stringify(counts));
+   assert.equal(counts.reduce((a,b)=>a+b,0),45);
+   t.dispose();
+  }
+  console.log('Aggregated physical distribution: '+k+' slots, 180 results: '+JSON.stringify(totals));
+  assert.equal(totals.reduce((a,b)=>a+b,0),180);
+ }
+});
+
 test('100 actual arrivals survive save, search and grouped result views',()=>{
  const t=harness();t.start({n:100,k:200,unique:true,directed:{학생0:'선택지199'}});
  t.run('for(const m of marbles)checkWinCondition(m)');
