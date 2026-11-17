@@ -79,6 +79,23 @@
   if(!key||!transfer[key].includes(index))return null;
   return {...transfer,[key]:transfer[key].filter(v=>v!==index)};
  }
+ function encodeQuestion(input){
+  const q=composeQuestion(input);
+  if(q.error)throw new TypeError(q.error);
+  return [q.type==='add'?'a':'s',q.a[0],q.a[1],q.b[0],q.b[1],q.grade,encodeURIComponent(q.text)].join('.');
+ }
+ function decodeQuestion(token){
+  if(typeof token!=='string'||token.length>650)return null;
+  const match=/^([as])\.(\d{1,2})\.(\d{1,2})\.(\d{1,2})\.(\d{1,2})\.([3-6])\.(.{0,500})$/.exec(token);
+  if(!match)return null;
+  let text='';
+  try{text=decodeURIComponent(match[7]);}catch{return null;}
+  if(text.length>120)return null;
+  const q=composeQuestion({id:'qshared',type:match[1]==='a'?'add':'subtract',
+   a:[Number(match[2]),Number(match[3])],b:[Number(match[4]),Number(match[5])],
+   grade:Number(match[6]),text});
+  return q.error?null:q;
+ }
  return Object.freeze({DENOMINATORS,STORAGE_KEY,composeQuestion,readQuestions,writeQuestions,
-  commonParts,freshTransfer,transferStatus,movePiece,undoMove});
+  commonParts,freshTransfer,transferStatus,movePiece,undoMove,encodeQuestion,decodeQuestion});
 });
