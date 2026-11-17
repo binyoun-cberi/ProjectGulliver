@@ -63,8 +63,40 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;ma
 @media(max-width:780px){.layout{grid-template-columns:1fr}.controls{padding:17px}.stage{padding:17px;min-height:460px}.hero{padding:18px}.art svg{min-width:340px}}
 @media(max-width:420px){.app{padding:12px 10px 30px}.brand{display:none}.mode{padding:11px 13px}.stage{padding:13px}.art svg{min-width:315px}.metrics{gap:7px}.metric{padding:12px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* 교사 출제 및 조각 이동: 작은 드래그 대신 48px 이상 터치 버튼을 우선 사용 */
+.transfer-panel{margin:14px 0;padding:15px;border:1px solid var(--line);border-radius:16px;background:#f8fcfa}
+.transfer-title{font-weight:950;font-size:15px;margin:0 0 8px}
+.transfer-scroll{overflow-x:auto;overscroll-behavior-x:contain;padding:5px 0 9px}
+.transfer-row{display:flex;gap:4px;width:max-content;min-width:100%;justify-content:flex-start}
+.transfer-unit{min-width:48px;min-height:62px;border:2px solid #dce8e6;border-radius:10px;background:#e8efed;font-size:12px;font-weight:850;color:#62766c;display:grid;place-items:center}
+button.transfer-unit{touch-action:manipulation}
+.transfer-unit.blue{background:#75b8ec;color:#073453;border-color:#559cd0}
+.transfer-unit.yellow{background:#ffd981;color:#65400b;border-color:#edbd58}
+.transfer-unit.green{background:#54c9a3;color:#063f31;border-color:#279975}
+.transfer-unit.taken{opacity:.27;background:#e4e9e8;border-style:dashed;color:#68766f}
+.transfer-unit.empty{opacity:.5;border-style:dashed}
+.transfer-unit[disabled]{cursor:default}
+.transfer-tray{min-height:125px;border:3px dashed #61ad95;border-radius:14px;background:#eefbf5;padding:14px;margin-top:10px}
+.transfer-tray.drag-over{border-color:#0c8067;background:#dff7ea}
+.transfer-tray .transfer-row{min-width:0}
+.transfer-graphic{width:100%;overflow-x:auto}
+.transfer-sentence{font-size:clamp(18px,2.8vw,25px);font-weight:950;margin:12px 0;color:#137563}
+.transfer-instruction{font-size:13px;font-weight:750;color:#607769;line-height:1.7}
+.teacher-form .field{margin-top:12px}
+.teacher-form textarea{width:100%;min-height:85px;resize:vertical;border:1px solid #d5e4df;border-radius:12px;padding:10px;font:inherit;font-size:13px}
+.teacher-form .select{font-size:13px}
+.teacher-list{display:grid;gap:8px;margin-top:15px}
+.teacher-item{padding:12px;border:1px solid var(--line);border-radius:13px;background:#fff}
+.teacher-item strong{font-size:14px;display:block}
+.teacher-item small{display:block;color:#677d74;margin:5px 0 8px}
+.teacher-actions{display:flex;gap:7px;flex-wrap:wrap}
+.teacher-actions .btn{min-height:44px;padding:7px 10px;flex:1}
+.teacher-pill{display:inline-block;background:#eaf7ed;border-radius:9px;font-size:12px;font-weight:900;color:#16674e;padding:7px 10px}
+.queued-score{font-size:12px;color:#416d60;font-weight:850;margin-top:10px}
 </style>
 <script src="fraction-lab-math.js"></script>
+<script src="fraction-lab-classroom.js"></script>
 </head>
 <body>
 <div class="app">
@@ -78,9 +110,10 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;ma
 (function(){
 'use strict';
 const M=window.FractionLabMath;
+const C=window.FractionLabClassroom;
 const $=id=>document.getElementById(id);
 const DENOMS=[2,3,4,6,8,12,16];
-const modes=[['free','자유 실험실'],['explore','분수 탐험'],['puzzle','분수 퍼즐'],['calc','분수 계산왕'],['multiply','곱셈 연구소'],['master','분수 마스터']];
+const modes=[['free','자유 실험실'],['explore','분수 탐험'],['puzzle','분수 퍼즐'],['calc','분수 계산왕'],['multiply','곱셈 연구소'],['master','분수 마스터'],['teacher','교사 출제']];
 const problems={
  explore:[
   {type:'shade',n:1,d:2,text:'전체의 1/2을 색칠해 보세요.'},
@@ -104,11 +137,18 @@ const problems={
 };
 problems.master=[problems.explore[1],problems.puzzle[2],problems.calc[1],problems.multiply[0],problems.calc[3],problems.puzzle[3]];
 const state={mode:'free',topic:'shade',operation:'add',shape:'rect',den:4,mask:[true,false,false,false],history:[],level:0,success:false,score:0,message:'조각을 눌러 색칠하거나 해제해 보세요.',tone:'',
- a:{n:1,d:4},b:{n:2,d:4},pa:{n:1,d:2},pb:{n:2,d:3},mixedD:4,mixedN:5};
+ a:{n:1,d:4},b:{n:2,d:4},pa:{n:1,d:2},pb:{n:2,d:3},mixedD:4,mixedN:5,
+ teacher:{type:'add',a:{n:1,d:2},b:{n:1,d:4},grade:4,text:''},
+ teacherQuestions:[],editingId:null,teacherNotice:'',transfer:null,transferHistory:[],dragging:null};
 function f(n,d){return n+'/'+d}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+try{state.teacherQuestions=C.readQuestions(localStorage)}catch{state.teacherQuestions=[]}
+function challengeMode(){return state.mode!=='free'&&state.mode!=='teacher'}
+function challengeCount(){return state.mode==='teacher-play'?state.teacherQuestions.length:(problems[state.mode]||[]).length}
+function currentIsTransfer(){const p=challengeMode()?problem():null;return Boolean(p&&(p.type==='add'||p.type==='subtract'))}
 function snapshot(){state.history.push({den:state.den,mask:state.mask.slice(),shape:state.shape,mixedN:state.mixedN,mixedD:state.mixedD});if(state.history.length>40)state.history.shift()}
 function notify(message,tone){state.message=message;state.tone=tone||''}
-function problem(){const all=problems[state.mode]||[];return all[state.level%all.length]||null}
+function problem(){const all=state.mode==='teacher-play'?state.teacherQuestions:(problems[state.mode]||[]);return all.length?all[state.level%all.length]:null}
 function problemAnswer(p){return {n:p.n,d:p.d}}
 function selectOptions(values,current){return values.map(v=>'<option value="'+v+'"'+(v===current?' selected':'')+'>'+v+'조각</option>').join('')}
 function numOptions(d,n){return Array.from({length:d+1},(_,i)=>'<option value="'+i+'"'+(i===n?' selected':'')+'>'+i+'</option>').join('')}
@@ -118,7 +158,7 @@ function fractionOptions(prefix,obj,name){
  return '<div class="operand"><strong>'+name+'</strong><label>분모<select data-field="'+prefix+'D" aria-label="'+name+' 분모">'+selectOptions([2,3,4,6,8,12],obj.d)+'</select></label><label>분자<select data-field="'+prefix+'N" aria-label="'+name+' 분자">'+numOptions(obj.d,obj.n)+'</select></label></div>';
 }
 function renderNav(){
- $('modes').innerHTML=modes.map(v=>'<button class="mode" role="tab" data-action="mode" data-value="'+v[0]+'" aria-selected="'+(state.mode===v[0])+'">'+v[1]+'</button>').join('');
+ $('modes').innerHTML=modes.map(v=>'<button class="mode" role="tab" data-action="mode" data-value="'+v[0]+'" aria-selected="'+(state.mode===v[0]||(v[0]==='teacher'&&state.mode==='teacher-play'))+'">'+v[1]+'</button>').join('');
 }
 function renderControls(){
  let h='';
