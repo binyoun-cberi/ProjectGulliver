@@ -1386,7 +1386,7 @@
 통과
 질문하기
 통과</textarea>
-                    <p class="probability-hint">같은 결과를 여러 줄 넣으면 그 결과의 비중이 커집니다. 17개 이상은 결승 통과 후 무작위로 배정합니다.</p>
+                    <p class="probability-hint">같은 결과를 여러 줄 넣으면 그 결과의 비중이 커집니다. 16개 이하는 결과함 위치를 매 경기 섞고, 17개 이상은 결승 통과 후 무작위로 배정합니다.</p>
                 </div>
             </div>
 
@@ -1707,6 +1707,9 @@
         // 이전 긴 레이스를 유지하고, 매우 오래 정체된 전체 배정만 구조합니다.
         const ASSIGNMENT_STALL_RECOVERY_MS = 90000;
         const BC=window.ClasheetBumperCore;
+        // 마지막 구간에서 좌우 방향을 무작위로 확산합니다. 결과 개수는 보정하지 않습니다.
+        const LAST_STAGE_SCATTER_HEIGHT=860;
+        const LAST_STAGE_SCATTER_SPEED=22;
 
 
         let countdownTimer = null;
@@ -1847,7 +1850,9 @@
         }
 
         function getSlotByX(x) {
-            return slotZones.find(zone => x >= zone.x && x < zone.x + zone.width) || null;
+            if (!slotZones.length || !Number.isFinite(x)) return null;
+            const safeX = Math.max(0, Math.min(WORLD_WIDTH - Number.EPSILON * WORLD_WIDTH, x));
+            return slotZones[Math.min(slotZones.length - 1, Math.floor(safeX / (WORLD_WIDTH / slotZones.length)))];
         }
 
         function getFreeSlotZones() {
@@ -2062,6 +2067,42 @@
 
                 marbles.forEach(m => {
                     if (m.finished) return;
+
+                    // 구슬이 결과함 칸막이 윗면에 오래 머무르면 그 칸막이의 가까운 쪽으로
+                    // 작은 횡방향 속도를 줍니다. 선택지별 배정 수를 조정하지는 않습니다.
+                    if (!virtualGate && !useOneMarblePerSlot && !cheatData[m.name] && slotZones.length > 1 &&
+                        m.body.position.y > slotZones[0].y - MARBLE_RADIUS * 3 &&
+                        m.body.position.y < slotZones[0].y + MARBLE_RADIUS) {
+                        const slotWidth = slotZones[0].width;
+                        const dividerX = Math.round(m.body.position.x / slotWidth) * slotWidth;
+                        if (dividerX > 0 && dividerX < WORLD_WIDTH &&
+                            Math.abs(m.body.position.x - dividerX) < MARBLE_RADIUS + 17) {
+                            m.slotLipTicks = (m.slotLipTicks || 0) + 1;
+                            if (m.slotLipTicks > 12) {
+                                const direction = m.body.position.x < dividerX ? -1 : 1;
+                                Body.setVelocity(m.body, {
+                                    x: direction * 11,
+                                    y: Math.max(7, m.body.velocity.y)
+                                });
+                                m.slotLipTicks = 0;
+                                m.slotLipRescues = (m.slotLipRescues || 0) + 1;
+                            }
+                        } else m.slotLipTicks = 0;
+                    } else m.slotLipTicks = 0;
+
+                    // 결승 직전 열린 공간에서는 중립적인 좌우 난류로 물리적 중앙 쏠림을 완화합니다.
+                    // 특정 결과함으로 유도하지 않으며, 실제 도착 위치로 최종 결과를 정합니다.
+                    // 중복 금지·교사 지정은 기존의 개별 슬롯 유도 방식을 유지합니다.
+                    if (!virtualGate && !useOneMarblePerSlot && !cheatData[m.name] &&
+                        slotZones.length > 1 && !m.finalScatterUsed &&
+                        m.body.position.y >= slotZones[0].y - LAST_STAGE_SCATTER_HEIGHT) {
+                        m.finalScatterUsed = true;
+                        const lateral = (Math.random() * 2 - 1) * LAST_STAGE_SCATTER_SPEED;
+                        Body.setVelocity(m.body, {
+                            x: Math.max(-LAST_STAGE_SCATTER_SPEED, Math.min(LAST_STAGE_SCATTER_SPEED, m.body.velocity.x * 0.2 + lateral)),
+                            y: Math.max(10, Math.min(18, m.body.velocity.y))
+                        });
+                    }
 
                     // --- 교사 지정 결과 또는 결과 중복 금지에서만 보조 유도 ---
                     const needsSlotGuide = !virtualGate && (Boolean(cheatData[m.name]) || useOneMarblePerSlot);
@@ -2461,7 +2502,9 @@
                     mapElements.push(Bodies.rectangle(WORLD_WIDTH, currentY + row * 80, 150, 20, { ...wallOpts, angle: -Math.PI / 4 }));
                 }
             }
-            currentY += pachinkoHeight + 300; 
+            currentY += pachinkoHeight + 300;
+            // 파친코 핀과 결과함 사이에 좌우 확산을 위한 열린 주행 공간을 확보합니다.
+            currentY += LAST_STAGE_SCATTER_HEIGHT + 180;
 
             addResultArea(slotNames,currentY);
 
@@ -2610,11 +2653,13 @@
                 setHudVisible(true);
             }, 300);
 
-            createMap(slotsInput);
+            // 실제 함은 매번 섞어 고정된 물리 경로가 특정 결과를 계속 유리하게 만들지 않도록 합니다.
+            // 무작위 배정 게이트에서는 원래 결과 순서를 유지해야 티켓 인덱스가 일치합니다.
+            createMap(virtualGate ? slotsInput : BC.shuffleSlots(slotsInput));
             engine.timing.timestamp=0;
             const status=document.getElementById('allocation-live');
             status.style.display='block';
-            status.textContent=virtualGate?(useBalanced?'결승 통과 후 남은 모둠 자리에 균등 배정해요':'결승 통과 후 '+slotsInput.length+'개 선택지에서 '+(useOneMarblePerSlot?'중복 없이 ':'')+'무작위 배정해요'):'도착한 결과함에 배정해요';
+            status.textContent=virtualGate?(useBalanced?'결승 통과 후 남은 모둠 자리에 균등 배정해요':'결승 통과 후 '+slotsInput.length+'개 선택지에서 '+(useOneMarblePerSlot?'중복 없이 ':'')+'무작위 배정해요'):'결과함 위치는 무작위 · 실제 도착한 결과함에 배정해요';
             if (!reserveTeacherSlots()) {
                 alert('교사 지정 결과용 슬롯을 예약하지 못했습니다. 결과 슬롯 설정을 확인해 주세요.');
                 resetGame();
@@ -2909,10 +2954,10 @@
             if (isFinished || marble.finished) return;
 
             const x = marble.body.position.x;
-            const selectedSlot = (virtualGate?slotZones[resultPool.assign(marble.name)]:getPreferredSlotForMarble(marble, x))
-                || getNearestFreeSlot(x)
-                || getSlotByX(Math.max(0, Math.min(WORLD_WIDTH - 0.001, x)))
-                || slotZones[0];
+            const safeX = Number.isFinite(x) ? Math.max(0, Math.min(WORLD_WIDTH - 0.001, x)) : WORLD_WIDTH / 2;
+            const selectedSlot = (virtualGate ? slotZones[resultPool.assign(marble.name)] : getPreferredSlotForMarble(marble, safeX))
+                || getNearestFreeSlot(safeX)
+                || getSlotByX(safeX);
 
             if (!selectedSlot) {
                 console.error('도착 결과 함을 찾지 못했습니다.');
@@ -3063,7 +3108,7 @@
         function updateAllocationRule(){
             const labels=document.getElementById('slots-input').value.split('\n').map(x=>x.trim()).filter(Boolean);
             const balance=document.getElementById('balanced-teams').checked;
-            document.getElementById('allocation-rule').textContent=balance?'모둠별 인원을 최대 1명 차이로 배정합니다.':labels.length>16?'선택지가 많아 넓은 결승 게이트에서 무작위로 배정합니다.':'실제 구슬이 도착한 결과함으로 배정합니다.';
+            document.getElementById('allocation-rule').textContent=balance?'모둠별 인원을 최대 1명 차이로 배정합니다.':labels.length>16?'선택지가 많아 넓은 결승 게이트에서 무작위로 배정합니다.':'결과함 위치를 매 경기 섞고, 실제 구슬이 도착한 함으로 배정합니다.';
         }
         document.getElementById('balanced-teams').addEventListener('change',()=>{
             if(document.getElementById('balanced-teams').checked){
