@@ -160,24 +160,70 @@ function fractionOptions(prefix,obj,name){
 function renderNav(){
  $('modes').innerHTML=modes.map(v=>'<button class="mode" role="tab" data-action="mode" data-value="'+v[0]+'" aria-selected="'+(state.mode===v[0]||(v[0]==='teacher'&&state.mode==='teacher-play'))+'">'+v[1]+'</button>').join('');
 }
+function teacherFrac(which,title){
+ const obj=state.teacher[which];
+ const ns=Array.from({length:obj.d},(_,i)=>'<option value="'+(i+1)+'"'+(obj.n===i+1?' selected':'')+'>'+(i+1)+'</option>').join('');
+ return '<div class="operand"><strong>'+title+'</strong><label>분모<select data-teacher="'+which+'D" aria-label="'+title+' 분모">'+C.DENOMINATORS.map(d=>'<option value="'+d+'"'+(obj.d===d?' selected':'')+'>'+d+'</option>').join('')+'</select></label>'+
+  '<label>분자<select data-teacher="'+which+'N" aria-label="'+title+' 분자">'+ns+'</select></label></div>';
+}
+function renderTeacherControls(){
+ const t=state.teacher;
+ return '<h2>교사용 문제 만들기</h2><p>분수를 고르고 문제를 저장하세요. 학생은 정답을 보지 않고 조각을 옮겨 답을 완성합니다.</p>'+
+  '<div class="teacher-form"><div class="field"><label for="teacherOperation">연산 종류</label><select id="teacherOperation" class="select" data-teacher="operation">'+
+  '<option value="add"'+(t.type==='add'?' selected':'')+'>덧셈 (+)</option><option value="subtract"'+(t.type==='subtract'?' selected':'')+'>뺄셈 (−)</option></select></div>'+
+  '<div class="field"><label>분수 선택</label><div class="operand-grid">'+teacherFrac('a','첫 번째 분수')+teacherFrac('b','두 번째 분수')+'</div></div>'+
+  '<div class="field"><label for="teacherGrade">권장 학년</label><select id="teacherGrade" class="select" data-teacher="grade">'+
+  [3,4,5,6].map(g=>'<option value="'+g+'"'+(t.grade===g?' selected':'')+'>'+g+'학년</option>').join('')+'</select></div>'+
+  '<div class="field"><label for="teacherText">문제 안내 (선택, 120자 이내)</label><textarea id="teacherText" data-teacher="text" maxlength="120" placeholder="예: 두 분수를 합쳐 결과를 만들어 보세요.">'+esc(t.text)+'</textarea></div>'+
+  '<div class="buttons">'+button('saveTeacher',state.editingId?'수정 완료':'문제 저장','primary wide')+
+  (state.editingId?button('resetTeacher','새 문제 작성','wide'): '')+'</div>'+
+  '<p class="info">최대 40문제까지 이 브라우저에 저장됩니다. 다른 기기에는 자동 동기화되지 않으니 기기를 바꿀 때 주의하세요.</p>'+
+  '<div class="feedback '+(state.teacherNotice&&state.teacherNotice.includes('저장할 수')?'warn':'')+'" role="status" aria-live="polite">'+esc(state.teacherNotice||'분수를 선택하고 문제 저장을 눌러 보세요.')+'</div></div>';
+}
+function renderTeacherStage(){
+ const list=state.teacherQuestions,operator=t=>t.type==='add'?' + ':' − ';
+ let h='<div class="stage-head"><h2>내가 만든 문제</h2><span class="chip">'+list.length+' / 40문제</span></div>'+
+ '<p class="note">문제를 누르면 학생용 조각 이동 도전이 시작됩니다. 정답은 문제를 푼 뒤 확인합니다.</p>';
+ if(!list.length)h+='<div class="task">저장된 문제가 없습니다. 왼쪽에서 분수를 선택해 첫 문제를 만들어 보세요.</div>';
+ else h+='<div class="teacher-list">'+list.map(q=>{
+  const pending=state.pendingDeleteId===q.id;
+  return '<article class="teacher-item"><strong>'+esc(f(q.a[0],q.a[1])+operator(q)+f(q.b[0],q.b[1]))+' <span class="teacher-pill">'+q.grade+'학년</span></strong>'+
+   '<small>'+esc(q.text)+'</small><div class="teacher-actions">'+
+   '<button class="btn primary" data-action="playTeacher" data-id="'+q.id+'">학생 문제 시작</button>'+
+   '<button class="btn" data-action="editTeacher" data-id="'+q.id+'">수정</button>'+
+   '<button class="btn" data-action="'+(pending?'confirmDeleteTeacher':'deleteTeacher')+'" data-id="'+q.id+'">'+(pending?'삭제 확인':'삭제')+'</button></div></article>';
+ }).join('')+'</div>';
+ return h;
+}
 function renderControls(){
  let h='';
+ if(state.mode==='teacher'){$('controls').innerHTML=renderTeacherControls();return;}
  if(state.mode==='free'){
   h='<h2>자유 실험실</h2><p>여기에는 틀린 답이 없어요. 원하는 방법으로 분수 모형을 바꿔 보세요.</p>'+
    '<div class="field"><label>무엇을 실험할까요?</label><div class="segmented">'+[
     ['shade','분할·색칠'],['add','덧셈·뺄셈'],['product','곱셈'],['mixed','가분수·대분수']
    ].map(v=>choice('topic',v[0],v[1],state.topic===v[0])).join('')+'</div></div>';
  }else{
-  const p=problem();h='<h2>'+modes.find(x=>x[0]===state.mode)[1]+'</h2><p>문제를 보고 조각을 조작해 보세요. 틀려도 다시 시도할 수 있습니다.</p>'+
-   '<div class="task"><small>도전 '+(state.level+1)+' / '+problems[state.mode].length+' · 성공 '+state.score+'문제</small>'+p.text+'</div>';
+  const p=problem();
+  const name=state.mode==='teacher-play'?'교사가 만든 문제':modes.find(x=>x[0]===state.mode)[1];
+  h='<h2>'+name+'</h2><p>문제를 보고 직접 조각을 옮겨 보세요. 틀려도 다시 시도할 수 있습니다.</p>'+
+   '<div class="task"><small>도전 '+(state.level+1)+' / '+challengeCount()+' · 성공 '+state.score+'문제</small>'+esc(p.text)+'</div>';
+  if(state.mode==='teacher-play')h+='<div class="buttons">'+button('teacherBack','교사 문제 목록으로','wide')+'</div>';
  }
- const shading=state.mode!=='free'||state.topic==='shade';
- if(shading){
+ if(currentIsTransfer()){
+  const p=problem(),trans=state.transfer||C.freshTransfer(p),status=C.transferStatus(p,trans);
+  h+='<div class="field"><label>조각 이동</label><p class="info">먼저 분모가 같도록 나누고, 색칠된 조각을 눌러 결과 칸으로 옮겨 보세요.</p></div>'+
+   '<div class="buttons">'+button('convertTransfer','같은 크기로 나누기','primary wide',trans.converted)+
+   button('undoTransfer','조각 이동 되돌리기','',!state.transferHistory.length)+
+   button('resetTransfer','조각 다시 놓기')+'</div>'+
+   '<div class="buttons">'+button('check','정답 확인','primary wide')+(state.success?button('next','다음 문제 →','gold wide'): '')+'</div>'+
+   '<p class="info">이동 완료: '+(p.type==='add'?status.movedA+status.movedB:status.movedB)+' / '+status.required+'조각. 조각은 클릭하거나 결과 칸으로 드래그할 수 있습니다.</p>';
+ }else if(state.mode!=='free'||state.topic==='shade'){
   h+='<div class="field"><label>모형 고르기</label><div class="segmented">'+choice('shape','rect','사각형',state.shape==='rect')+choice('shape','circle','원',state.shape==='circle')+'</div></div>'+
    '<div class="field"><label for="denominator">전체를 몇 조각으로 나눌까요?</label><select id="denominator" class="select" data-field="den">'+selectOptions(DENOMS,state.den)+'</select></div>'+
    '<div class="buttons">'+button('split','분할하기 ×2','primary',state.den*2>16)+button('undo','한 단계 되돌리기','',!state.history.length)+button('clear','색칠 지우기')+button('all','전체 색칠')+'</div>';
-  if(state.mode!=='free') h+='<div class="buttons">'+button('check','정답 확인','primary wide')+(state.success?button('next','다음 문제 →','gold wide'): '')+'</div>';
-  h+='<p class="info">분할하기는 기존 색칠을 유지하면서 조각만 두 배로 나눕니다. 분모를 직접 바꿀 때에도 색칠이 정확히 유지되는 경우에만 변경됩니다.</p>';
+  if(state.mode!=='free')h+='<div class="buttons">'+button('check','정답 확인','primary wide')+(state.success?button('next','다음 문제 →','gold wide'): '')+'</div>';
+  h+='<p class="info">분할하기는 기존 색칠을 유지하면서 조각만 두 배로 나눕니다.</p>';
  }else if(state.topic==='add'){
   h+='<div class="field"><label>연산 고르기</label><div class="segmented">'+choice('operation','add','덧셈 +',state.operation==='add')+choice('operation','subtract','뺄셈 −',state.operation==='subtract')+'</div></div>'+
     '<div class="field"><label>분수 조작</label><div class="operand-grid">'+fractionOptions('a',state.a,'첫 번째 분수')+fractionOptions('b',state.b,'두 번째 분수')+'</div></div>'+
