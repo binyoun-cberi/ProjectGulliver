@@ -85,8 +85,8 @@
   return [q.type==='add'?'a':'s',q.a[0],q.a[1],q.b[0],q.b[1],q.grade,encodeURIComponent(q.text)].join('.');
  }
  function decodeQuestion(token){
-  if(typeof token!=='string'||token.length>650)return null;
-  const match=/^([as])\.(\d{1,2})\.(\d{1,2})\.(\d{1,2})\.(\d{1,2})\.([3-6])\.(.{0,500})$/.exec(token);
+  if(typeof token!=='string'||token.length>2000)return null;
+  const match=/^([as])\.(\d{1,2})\.(\d{1,2})\.(\d{1,2})\.(\d{1,2})\.([3-6])\.(.{0,1800})$/.exec(token);
   if(!match)return null;
   let text='';
   try{text=decodeURIComponent(match[7]);}catch{return null;}
