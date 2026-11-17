@@ -332,6 +332,69 @@ function renderMixed(){
   '<div class="group-stack">'+strips+'</div><p class="equal-text">'+f(n,d)+' = '+displayed+'</p>'+
   '<p class="subtext">완성한 전체 '+parts.whole+'개, 남은 조각 '+parts.remainder+'개입니다.</p>';
 }
+function sourceTransferRow(q,source,status,converted){
+ const trans=state.transfer,minus=q.type==='subtract',isA=source==='a',den=converted?status.denominator:q[source][1];
+ const total=converted?(isA?status.first:status.second):q[source][0];
+ const moved=isA?trans.movedA:trans.movedB;
+ const interactive=converted&&!(minus&&isA);
+ let units='';
+ for(let i=0;i<den;i++){
+  const filled=i<total,already=moved.includes(i);
+  const cls=filled?(already?'taken':isA?'blue':'yellow'):'empty';
+  const word=already?'옮김':filled?'이동':'빈 칸';
+  if(filled&&interactive){
+   units+='<button type="button" class="transfer-unit '+cls+'" data-action="transferPiece" data-source="'+source+'" data-index="'+i+'"'+(already?' disabled':' draggable="true"')+
+    ' aria-label="'+(isA?'첫 번째':'두 번째')+' 분수 '+(i+1)+'번째 조각 '+word+'">'+(already?'✓':'1/'+den)+'</button>';
+  }else{
+   units+='<span class="transfer-unit '+cls+'" aria-label="'+(i+1)+'번째 조각 '+word+'">'+(filled?'1/'+den:'')+'</span>';
+  }
+ }
+ return '<div class="transfer-panel"><h3 class="transfer-title">'+(isA?'첫 번째':'두 번째')+' 분수 '+f(q[source][0],q[source][1])+
+  (minus?(isA?' · 남길 원래 양':' · 빼낼 조각'):' · 더할 조각')+'</h3>'+
+  '<div class="transfer-scroll"><div class="transfer-row">'+units+'</div></div>'+
+  (converted&&interactive?'<p class="transfer-instruction">색칠된 조각을 누르면 아래 칸으로 옮겨집니다.</p>':'')+'</div>';
+}
+function resultUnitRows(den,colors){
+ const count=Math.max(den,colors.length),groups=Math.ceil(count/den);
+ return Array.from({length:groups},(_,g)=>{
+  let h='<div class="transfer-scroll"><div class="transfer-row" aria-label="'+(g+1)+'번째 전체">';
+  for(let i=0;i<den;i++){
+   const at=g*den+i,v=colors[at]||'empty';
+   h+='<span class="transfer-unit '+v+'" aria-label="'+(at+1)+'번째 칸 '+(v==='empty'?'비어 있음':'채워짐')+'">'+(v==='empty'?'':'1/'+den)+'</span>';
+  }
+  return h+'</div></div>';
+ }).join('');
+}
+function renderTransferChallenge(){
+ const p=problem(),trans=state.transfer||C.freshTransfer(p),status=C.transferStatus(p,trans);
+ const minus=p.type==='subtract',den=status.denominator;
+ let h='<div class="stage-head"><h2>'+(minus?'뺄셈 조각 빼기':'덧셈 조각 합치기')+'</h2><span class="chip">'+(trans.converted?'공통 분모 '+den:'분모 비교하기')+'</span></div>'+
+  '<p class="note">'+(minus?'첫 번째 분수에서 두 번째 분수만큼 직접 조각을 빼 보세요.':'두 분수의 조각을 결과 칸으로 옮겨 합쳐 보세요.')+'</p>'+
+  sourceTransferRow(p,'a',status,trans.converted)+
+  '<p class="equal-text" aria-hidden="true">'+(minus?'−':'＋')+'</p>'+
+  sourceTransferRow(p,'b',status,trans.converted);
+ if(!trans.converted){
+  h+='<div class="task"><small>통분이 필요한 이유</small>한 조각의 크기가 달라요. 전체 크기는 그대로 두고 같은 분모로 나눠 보세요. '+f(p.a[0],p.a[1])+
+   '와 '+f(p.b[0],p.b[1])+'을 각각 '+den+'등분하면 어떤 조각이 될까요?</div>';
+ }else{
+  const colors=minus?Array.from({length:status.filled},()=> 'green'):
+   Array.from({length:status.movedA},()=> 'blue').concat(Array.from({length:status.movedB},()=> 'yellow'));
+  h+='<div id="transferTray" class="transfer-tray" role="region" aria-label="조각을 옮길 결과 칸">'+
+   '<h3 class="transfer-title">'+(minus?'남은 조각':'조각을 합칠 칸')+'</h3>'+
+   resultUnitRows(den,colors)+
+   '<div class="transfer-sentence" aria-live="polite">'+status.filled+'/'+den+'</div>'+
+   '<p class="transfer-instruction">위의 색칠된 조각을 터치하거나 이 칸으로 끌어오세요. '+(minus?'빼낸 조각은 오른쪽에서부터 사라집니다.':'빈 조각은 자동으로 정렬됩니다.')+'</p></div>';
+  if(minus&&status.movedB)h+='<div class="transfer-panel"><h3 class="transfer-title">빼낸 조각 '+status.movedB+'/'+den+'</h3>'+resultUnitRows(den,Array(status.movedB).fill('yellow'))+'</div>';
+  if(status.finished&&state.success){
+   const red=M.reduce(status.filled,den);
+   const mixed=M.mixed(status.filled,den);
+   const mixedLabel=mixed.whole>0&&(mixed.remainder>0?mixed.whole+'과 '+mixed.remainder+'/'+mixed.denominator:String(mixed.whole));
+   h+='<p class="equal-text">'+status.filled+'/'+den+' = '+f(red.n,red.d)+(mixedLabel?' = '+mixedLabel:'')+'</p>'+
+   '<p class="subtext">분모끼리 계산한 것이 아니라 같은 크기로 나눈 조각을 '+(minus?'뺐습니다.':'합쳤습니다.')+'</p>';
+  }
+ }
+ return h+'<div class="feedback '+state.tone+'" role="status" aria-live="polite">'+esc(state.message)+'</div>';
+}
 function render(){
  renderNav();renderControls();
  $('stage').innerHTML=(state.mode!=='free'||state.topic==='shade')?renderShading():
