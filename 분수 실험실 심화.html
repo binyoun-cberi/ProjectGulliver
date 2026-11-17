@@ -397,21 +397,93 @@ function renderTransferChallenge(){
 }
 function render(){
  renderNav();renderControls();
- $('stage').innerHTML=(state.mode!=='free'||state.topic==='shade')?renderShading():
+ if(state.mode==='teacher')$('stage').innerHTML=renderTeacherStage();
+ else if(currentIsTransfer())$('stage').innerHTML=renderTransferChallenge();
+ else $('stage').innerHTML=(state.mode!=='free'||state.topic==='shade')?renderShading():
   state.topic==='add'?renderAdd():state.topic==='product'?renderProduct():renderMixed();
 }
 function startChallenge(){
- const p=problem();state.history=[];state.success=false;
+ const p=problem();if(!p)return;
+ state.history=[];state.success=false;state.transferHistory=[];
+ state.transfer=(p.type==='add'||p.type==='subtract')?C.freshTransfer(p):null;
  state.den=p.required||p.d;state.mask=Array(state.den).fill(false);
  if(p.type==='product')state.shape='rect';
- notify('조각을 직접 눌러 색칠한 뒤 정답을 확인하세요.','');
+ notify(state.transfer?'조각을 눌러 결과 칸으로 옮겨 보세요.':'조각을 직접 눌러 색칠한 뒤 정답을 확인하세요.','');
 }
 function setMode(mode){
  if(!modes.some(x=>x[0]===mode))return;
- state.mode=mode;state.level=0;state.history=[];
+ state.mode=mode;state.level=0;state.history=[];state.transferHistory=[];
  if(mode==='free')notify('자유롭게 탐구해 보세요. 여기에는 정답과 오답이 없습니다.','');
+ else if(mode==='teacher')state.teacherNotice=state.teacherNotice||'교사가 만든 문제를 저장하고 직접 풀어 볼 수 있어요.';
  else startChallenge();
  render();
+}
+function rememberTransfer(){
+ if(!state.transfer)return;
+ state.transferHistory.push({converted:state.transfer.converted,movedA:state.transfer.movedA.slice(),movedB:state.transfer.movedB.slice()});
+ if(state.transferHistory.length>60)state.transferHistory.shift();
+}
+function moveTransfer(source,index){
+ if(!currentIsTransfer())return false;
+ const next=C.movePiece(problem(),state.transfer,source,index);
+ if(!next)return false;
+ rememberTransfer();state.transfer=next;state.success=false;
+ const status=C.transferStatus(problem(),next);
+ notify(status.finished?'조각을 모두 옮겼어요. 정답 확인을 눌러 보세요.':'좋아요! 한 조각이 이동했습니다.','');
+ render();return true;
+}
+function saveTeacher(){
+ const textArea=$('teacherText');
+ if(textArea)state.teacher.text=textArea.value.slice(0,120);
+ const t=state.teacher;
+ const raw={id:state.editingId||undefined,type:t.type,a:[t.a.n,t.a.d],b:[t.b.n,t.b.d],text:t.text,grade:t.grade};
+ const q=C.composeQuestion(raw);
+ if(q.error){state.teacherNotice=q.error;render();return;}
+ const index=state.teacherQuestions.findIndex(p=>p.id===q.id);
+ if(index===-1&&state.teacherQuestions.length>=40){state.teacherNotice='저장할 수 있는 문제는 최대 40개입니다.';render();return;}
+ const next=state.teacherQuestions.slice();
+ if(index!==-1)next[index]=q;else next.push(q);
+ try{C.writeQuestions(localStorage,next);}
+ catch{state.teacherNotice='저장할 수 없습니다. 브라우저의 저장 공간이나 사용 권한을 확인해 주세요.';render();return;}
+ state.teacherQuestions=next;state.editingId=null;state.pendingDeleteId=null;
+ state.teacherNotice='문제를 저장했습니다. 오른쪽에서 학생 문제 시작을 눌러 보세요.';render();
+}
+function resetTeacher(){
+ state.editingId=null;state.pendingDeleteId=null;
+ state.teacher={type:'add',a:{n:1,d:2},b:{n:1,d:4},grade:4,text:''};
+ state.teacherNotice='새 문제를 설정해 보세요.';render();
+}
+function playTeacher(id){
+ const idx=state.teacherQuestions.findIndex(q=>q.id===id);
+ if(idx<0)return;
+ state.mode='teacher-play';state.level=idx;startChallenge();render();
+}
+function editTeacher(id){
+ const q=state.teacherQuestions.find(p=>p.id===id);if(!q)return;
+ state.editingId=q.id;state.teacher={type:q.type,a:{n:q.a[0],d:q.a[1]},b:{n:q.b[0],d:q.b[1]},text:q.text,grade:q.grade};
+ state.pendingDeleteId=null;state.teacherNotice='문제를 수정한 뒤 수정 완료를 눌러 주세요.';render();
+}
+function deleteTeacher(id){
+ if(state.pendingDeleteId!==id){state.pendingDeleteId=id;state.teacherNotice='삭제 확인을 다시 눌러야 문제가 삭제됩니다.';render();return;}
+ const next=state.teacherQuestions.filter(q=>q.id!==id);
+ try{C.writeQuestions(localStorage,next)}
+ catch{state.teacherNotice='저장할 수 없어 삭제가 취소되었습니다.';render();return}
+ state.teacherQuestions=next;state.pendingDeleteId=null;
+ if(state.editingId===id)resetTeacher();
+ else{state.teacherNotice='문제가 삭제되었습니다.';render();}
+}
+function changeTeacher(field,value){
+ const t=state.teacher;
+ if(field==='text'){t.text=String(value||'').slice(0,120);return}
+ if(field==='operation'){if(['add','subtract'].includes(value))t.type=value;return}
+ if(field==='grade'){if([3,4,5,6].includes(Number(value)))t.grade=Number(value);return}
+ const names={aD:['a','d'],aN:['a','n'],bD:['b','d'],bN:['b','n']};
+ const match=names[field];if(!match)return;
+ const obj=t[match[0]],number=Number(value);
+ if(match[1]==='d'){
+  if(!C.DENOMINATORS.includes(number))return;
+  obj.d=number;obj.n=Math.min(obj.n,number);
+ }else if(Number.isInteger(number)&&number>=1&&number<=obj.d)obj.n=number;
 }
 function changeDen(next){
  if(!DENOMS.includes(next))return;
@@ -423,7 +495,18 @@ function changeDen(next){
  render();
 }
 function check(){
- if(state.mode==='free')return;
+ if(!challengeMode())return;
+ if(currentIsTransfer()){
+  const status=C.transferStatus(problem(),state.transfer);
+  if(!status.finished){
+   state.success=false;
+   notify(!state.transfer.converted?'먼저 같은 크기로 나누기를 눌러 주세요.':'아직 조각을 모두 옮기지 않았습니다. 조각을 더 움직여 보세요.','warn');
+  }else{
+   if(!state.success)state.score++;
+   state.success=true;notify('정답입니다! 같은 크기의 조각을 이용해 정확하게 계산했어요.','success');
+  }
+  render();return;
+ }
  const p=problem(),mine={n:M.colored(state.mask),d:state.den},target=problemAnswer(p);
  if(M.equal(mine,target)&&(!p.required||state.den===p.required)){
   if(!state.success)state.score++;
