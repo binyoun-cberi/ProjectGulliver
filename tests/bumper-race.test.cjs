@@ -94,6 +94,11 @@ test('actual seeded physics races report physical-lane distribution without forc
    const t=harness(seed*811+k);t.start({n:45,k,purpose:'assign'});
    assert.deepEqual(t.alerts,[]);
    for(let frame=0;frame<8100&&!t.run('isFinished');frame++)t.tick();
+   if(t.run('results.length')!==45){
+    console.log('Unfinished after 135s: '+JSON.stringify(Array.from(t.run('marbles.filter(m=>!m.finished).map(m=>({name:m.name,x:m.body.position.x,y:m.body.position.y,vx:m.body.velocity.x,vy:m.body.velocity.y,finished:finishLineY,zoneY:slotZones[0].y,slot:getSlotByX(m.body.position.x)?.id}))'))));
+    t.tick(1800);
+    console.log('Unfinished after 165s: '+JSON.stringify(Array.from(t.run('marbles.filter(m=>!m.finished).map(m=>({name:m.name,x:m.body.position.x,y:m.body.position.y,vx:m.body.velocity.x,vy:m.body.velocity.y,finished:finishLineY,zoneY:slotZones[0].y,slot:getSlotByX(m.body.position.x)?.id}))'))));
+   }
    assert.equal(t.run('results.length'),45);
    const indices=Array.from(t.run("results.map(r=>Number(r.text.replace('선택지','')))"));
    const counts=Array(k).fill(0);
