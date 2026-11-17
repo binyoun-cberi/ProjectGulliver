@@ -2068,6 +2068,28 @@
                 marbles.forEach(m => {
                     if (m.finished) return;
 
+                    // 구슬이 결과함 칸막이 윗면에 오래 머무르면 그 칸막이의 가까운 쪽으로
+                    // 작은 횡방향 속도를 줍니다. 선택지별 배정 수를 조정하지는 않습니다.
+                    if (!virtualGate && !useOneMarblePerSlot && !cheatData[m.name] && slotZones.length > 1 &&
+                        m.body.position.y > slotZones[0].y - MARBLE_RADIUS * 3 &&
+                        m.body.position.y < slotZones[0].y + MARBLE_RADIUS) {
+                        const slotWidth = slotZones[0].width;
+                        const dividerX = Math.round(m.body.position.x / slotWidth) * slotWidth;
+                        if (dividerX > 0 && dividerX < WORLD_WIDTH &&
+                            Math.abs(m.body.position.x - dividerX) < MARBLE_RADIUS + 17) {
+                            m.slotLipTicks = (m.slotLipTicks || 0) + 1;
+                            if (m.slotLipTicks > 12) {
+                                const direction = m.body.position.x < dividerX ? -1 : 1;
+                                Body.setVelocity(m.body, {
+                                    x: direction * 11,
+                                    y: Math.max(7, m.body.velocity.y)
+                                });
+                                m.slotLipTicks = 0;
+                                m.slotLipRescues = (m.slotLipRescues || 0) + 1;
+                            }
+                        } else m.slotLipTicks = 0;
+                    } else m.slotLipTicks = 0;
+
                     // 결승 직전 열린 공간에서는 중립적인 좌우 난류로 물리적 중앙 쏠림을 완화합니다.
                     // 특정 결과함으로 유도하지 않으며, 실제 도착 위치로 최종 결과를 정합니다.
                     // 중복 금지·교사 지정은 기존의 개별 슬롯 유도 방식을 유지합니다.
