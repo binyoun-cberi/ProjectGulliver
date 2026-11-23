@@ -48,16 +48,23 @@
       fixedSeats:{0:'seat-0'},genderSeats:{0:'M'},frontIds:[],rules:[]}));
    });
    await page.reload();
+   assert.equal(await page.locator('.optional-settings').evaluate(el=>el.open),false);
    await page.locator('#generateBtn').click();
    await page.locator('#notice').getByText(/배치 완료/).waitFor();
    assert.equal(await page.evaluate(()=>{
     const ids=window.GulliverTeacherLiveSnapshot().assignment.filter(Boolean);
     return ids.length===8&&new Set(ids).size===8;
    }),true);
+   await page.locator('.optional-settings summary').click();
+   await page.locator('#seatEditBtn').click();
+   assert.equal(await page.locator('#boardEditor').isVisible(),true);
+   await page.locator('#finishEditingBtn').click();
+   assert.equal(await page.locator('#boardEditor').isVisible(),false);
    await page.locator('#seatGrid .seat').first().click();
-   await page.locator('#seatGrid .seat').nth(1).click();
-   assert.match(await page.locator('#notice').textContent(),/지정 자리|움직일 수 없|고정/);
+   assert.match(await page.locator('#notice').textContent(),/고정된 자리/);
    assert.equal(await page.evaluate(()=>window.GulliverTeacherLiveSnapshot().assignment[0]),'seat-0');
+   await page.locator('#seatGrid .seat').nth(1).click();
+   assert.match(await page.locator('#notice').textContent(),/선택됨/);
 
    // Group setup: a transitive "together" chain contradicts separation.
    await page.goto(origin+encodeURIComponent('행운의 모둠 메이커.html'));
