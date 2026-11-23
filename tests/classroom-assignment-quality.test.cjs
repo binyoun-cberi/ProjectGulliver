@@ -48,22 +48,49 @@
       fixedSeats:{0:'seat-0'},genderSeats:{0:'M'},frontIds:[],rules:[]}));
    });
    await page.reload();
+   assert.equal(await page.locator('[data-step="1"]').getAttribute('aria-current'),'step');
+   await page.getByRole('button',{name:'학생1 교사용 설정',exact:true}).click();
+   await page.locator('#optionPosition').selectOption('front');
+   await page.locator('#optionNote').fill('비공개 교사용 메모');
+   await page.getByRole('button',{name:'적용',exact:true}).click();
+   assert.match(await page.locator('[data-student-card="seat-0"]').innerText(),/조건 2개/);
+   assert.doesNotMatch(await page.locator('[data-student-card="seat-0"]').innerText(),/비공개/);
+   await page.locator('#nextSetup').click();
    assert.equal(await page.locator('.optional-settings').evaluate(el=>el.open),false);
+   await page.locator('.seat-cell').nth(1).click({button:'right'});
+   await page.locator('#optionSeatStudent').selectOption('seat-1');
+   await page.locator('#optionSeatFixed').check();
+   await page.getByRole('button',{name:'적용',exact:true}).click();
+   assert.match(await page.locator('.seat-cell').nth(1).innerText(),/학생2/);
    await page.locator('#generateBtn').click();
+   assert.equal(await page.locator('[data-step="3"]').getAttribute('aria-current'),'step');
+   const publicSnapshot=await page.evaluate(()=>window.GulliverTeacherLiveSnapshot());
+   assert.equal(publicSnapshot.assignment[1],'seat-1');
+   assert.doesNotMatch(JSON.stringify(publicSnapshot),/비공개 교사용 메모|fixedSeats|frontIds/);
+   const popupEvent=page.waitForEvent('popup');
+   await page.locator('.gt-open-display').click();
+   const projection=await popupEvent;
+   await projection.getByRole('heading',{name:'우리 반 자리표'}).waitFor();
+   assert.equal(await projection.locator('.seating-seat').nth(1).innerText(),'학생2');
+   assert.doesNotMatch(await projection.locator('body').innerText(),/비공개 교사용 메모|학생1 · 교사용 설정|📌/);
+   await projection.close();
+
    await page.locator('#notice').getByText(/배치 완료/).waitFor();
    assert.equal(await page.evaluate(()=>{
     const ids=window.GulliverTeacherLiveSnapshot().assignment.filter(Boolean);
     return ids.length===8&&new Set(ids).size===8;
    }),true);
+   await page.locator('[data-step="2"]').click();
    await page.locator('.optional-settings summary').click();
    await page.locator('#seatEditBtn').click();
    assert.equal(await page.locator('#boardEditor').isVisible(),true);
    await page.locator('#finishEditingBtn').click();
    assert.equal(await page.locator('#boardEditor').isVisible(),false);
+   await page.locator('[data-step="3"]').click();
    await page.locator('#seatGrid .seat').first().click();
    assert.match(await page.locator('#notice').textContent(),/고정된 자리/);
    assert.equal(await page.evaluate(()=>window.GulliverTeacherLiveSnapshot().assignment[0]),'seat-0');
-   await page.locator('#seatGrid .seat').nth(1).click();
+   await page.locator('#seatGrid .seat').nth(2).click();
    assert.match(await page.locator('#notice').textContent(),/선택됨/);
 
    // Group setup: a transitive "together" chain contradicts separation.
