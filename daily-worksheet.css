@@ -428,3 +428,60 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
  .horizontal-worksheet .compact-learning .filter-submit{grid-column:6/span 7}
  .horizontal-worksheet .output-actions{align-items:start;flex-direction:column}
 }
+
+/* Social studies assessment paper */
+.social-paper-heading[hidden]{display:none}
+.social-paper .social-paper-heading{
+ display:grid;grid-template-columns:minmax(55px,1fr) minmax(0,3fr) minmax(100px,1.5fr);
+ align-items:center;gap:12px;border:4px double #444;padding:10px 12px;color:#222
+}
+.social-paper .social-paper-heading h2{margin:0;text-align:center;font-size:clamp(17px,2.5vw,23px);line-height:1.3}
+.social-paper-grade{font-size:14px;font-weight:800}
+.social-paper-student{display:grid;gap:3px;font-size:11px}
+.social-paper-student span{display:flex;align-items:baseline;gap:4px;white-space:nowrap}
+.social-paper-student i{flex:1;min-width:12px;border-bottom:1px solid #555}
+.social-paper>.paper-topline,.social-paper>.student-line,.social-paper .answer-heading h2{display:none}
+.social-paper .paper-instruction{margin:8px 0 0;color:#444}
+.social-paper .history-question{border-bottom-color:#bbb}
+@media screen and (min-width:601px){
+ body:not(.large-print) #questions.social-exam-columns{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(var(--social-rows),auto);
+  grid-auto-flow:column;gap:0 28px;list-style:decimal outside
+ }
+}
+body:not(.print-answers):not(.large-print) .print-paper .social-exam-columns{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(var(--social-rows,1),auto);
+ grid-auto-flow:column;gap:0 28px
+}
+body:not(.print-answers):not(.large-print) .print-paper .social-exam-columns>li{padding-bottom:12px!important}
+body:is(.print-answers,.large-print) .print-paper .social-exam-columns{display:block}
+.social-paper .social-exam-columns{
+ position:relative;
+}
+.social-paper .social-exam-columns::after{
+ content:"";position:absolute;inset:0 auto 0 50%;border-left:1px dotted #888;pointer-events:none
+}
+.social-paper .social-exam-columns>li{border-bottom:0;color:#222}
+.social-paper .social-exam-columns>li::marker{color:#222}
+.social-paper .social-exam-columns .choice-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media screen and (max-width:600px){
+ .social-paper .social-paper-heading{grid-template-columns:1fr minmax(100px,1fr);gap:8px}
+ .social-paper .social-paper-heading h2{grid-column:1/-1;grid-row:1;text-align:left}
+ .social-paper #questions.social-exam-columns{display:block}
+ .social-paper #questions.social-exam-columns::after{display:none}
+}
+body:is(.print-answers,.large-print) .social-paper .social-exam-columns::after{display:none}
+body:not(.print-answers) .social-paper .social-exam-columns .choice-list::before{
+ content:"( _____ )";grid-column:1/-1;text-align:right;padding-right:8px;color:#444;font-size:11px
+}
+body.print-answers .social-paper .social-paper-grade::after{
+ content:"교사용 정답·풀이";display:block;margin-top:3px;font-size:10px;color:#27618f
+}
+
+.history-level-mode .count-control,.history-level-counts[hidden]{display:none!important}
+.history-level-counts{grid-column:1/-1;min-width:0;border:1px solid var(--daily-line);border-radius:10px;padding:12px 14px}
+.history-level-counts legend{padding:0 5px;font-weight:750}
+.history-level-inputs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:600px}
+.history-level-inputs input{width:100%;min-width:0}
+.history-level-counts p,.history-level-counts output{display:block;margin:8px 0 0;font-size:13px}
+@media(max-width:500px){.history-level-inputs{grid-template-columns:repeat(2,minmax(0,1fr))}}

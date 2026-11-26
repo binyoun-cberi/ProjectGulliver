@@ -8,6 +8,8 @@ function makePage(index,original){
  const article=document.createElement('article');
  article.className='paper print-paper';
  article.dataset.page=String(index+1);
+ const socialHeading=original.querySelector('.social-paper-heading:not([hidden])');
+ if(socialHeading){article.classList.add('social-paper');article.append(socialHeading.cloneNode(true));}
  const topline=original.querySelector('.paper-topline')?.cloneNode(true);
  if(topline){
   if(index>0){const tag=topline.querySelector('span');if(tag)tag.textContent='문제지 이어서 · '+(index+1)+'쪽';}
@@ -18,7 +20,7 @@ function makePage(index,original){
    const node=original.querySelector(selector);
    if(node&&!node.hidden)article.append(node.cloneNode(true));
   }
- }else{
+ }else if(!socialHeading){
   const title=document.createElement('h2');title.className='print-continuation-title';
   title.textContent=($('paperTitle')?.textContent||'문제지')+' · 계속';article.append(title);
  }
@@ -35,10 +37,17 @@ function canFit(page){
  // Reserve the footer and printer tolerance, including fractional CSS pixel rounding.
  const footerTop=r.bottom-11*MM_PX;
  const last=page.list.lastElementChild;
+ const bottom=page.list.classList.contains('social-exam-columns')
+  ? Math.max(...Array.from(page.list.children,item=>item.getBoundingClientRect().bottom))
+  : last?.getBoundingClientRect().bottom??-Infinity;
  return page.article.scrollHeight<=page.article.clientHeight+1 &&
-   (!last||last.getBoundingClientRect().bottom<=footerTop+0.5);
+   bottom<=footerTop+0.5;
 }
 function put(page,items){
+ const socialColumns=page.list.classList.contains('social-exam-columns')&&!document.body.matches('.print-answers,.large-print');
+ const count=page.count+items.length;
+ if(socialColumns&&count>10)return false;
+ if(socialColumns)page.list.style.setProperty('--social-rows',Math.ceil(count/2));
  const clones=items.map(({node,index})=>{
   const clone=node.cloneNode(true);clone.value=index+1;clone.dataset.question=String(index+1);
   clone.classList.remove('reading-next-page');
@@ -49,6 +58,7 @@ function put(page,items){
  page.list.append(...clones);
  if(canFit(page)){page.count+=clones.length;return true}
  clones.forEach(n=>n.remove());
+ if(socialColumns)page.list.style.setProperty('--social-rows',Math.ceil(page.count/2));
  return false;
 }
 function widenLegacyShortSheet(page){
@@ -61,6 +71,7 @@ function widenLegacyShortSheet(page){
    item.classList.contains('reading-question')||item.classList.contains('history-question')
  ))return;
  const list=page.list;
+ if(list.classList.contains('social-exam-columns'))return;
  const calculation=list.classList.contains('calculation-grid');
  const grid=calculation||list.classList.contains('compact-questions');
  const linear=!calculation&&grid&&total<=5&&items.every(item=>!item.querySelector('.choice-list,.question-detail')&&/\d\s*[+×−÷]/.test(item.dataset.prompt||''));
@@ -154,7 +165,7 @@ function refreshPreview(){
  source.classList.remove('roomy-preview');
  for(const name of ['--preview-row-height','--preview-rows','--preview-columns'])source.style.removeProperty(name);
  const items=[...questions.children];
- if(!lastResult.ok||lastResult.pages!==1||source.getBoundingClientRect().width<550||!items.length||items.length>10||
+ if(source.classList.contains('social-paper')||!lastResult.ok||lastResult.pages!==1||source.getBoundingClientRect().width<550||!items.length||items.length>10||
    items.some(q=>q.matches('.reading-question,.essay-question')||q.querySelector('.science-material,.history-photo,svg,.history-match,.order-choices')))return;
  const style=getComputedStyle(questions),grid=style.display==='grid',rows=[];
  for(const item of items){const y=item.getBoundingClientRect().top;let row=rows.find(r=>Math.abs(r.y-y)<2);if(!row){row={y,items:[]};rows.push(row)}row.items.push(item);}

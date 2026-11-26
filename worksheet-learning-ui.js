@@ -1,8 +1,9 @@
 (()=>{'use strict';
 const T=window.WorksheetLearning,C=window.DailyWorksheetCore,E=window.WorksheetEditor,$=id=>document.getElementById(id),form=$('sheetForm');
+const H=window.WorksheetHistoryLevels;
 const query=new URLSearchParams(E.initialSearch),legacy=(!!query.get('topic')||query.has('unitMix'))&&!query.has('lesson')&&!query.has('standard')&&!query.has('lessonMix');
 const box=document.createElement('section');box.className='textbook-flow';box.setAttribute('aria-label','문제지 학습 범위');
-box.innerHTML=`<div class="learning-mode-bar"><div class="learning-tabs" role="group" aria-label="만들기 기준"><button type="button" data-mode="textbook">차시별</button><button type="button" data-mode="standard">성취기준별</button><button type="button" data-mode="practice">종합 연습</button></div><select id="learningMode" aria-label="학습 범위" hidden><option value="textbook">차시별</option><option value="standard">성취기준별</option><option value="practice">기존 연습</option></select><span id="textPractice" aria-live="polite"></span></div><div id="textbookControls"><label class="semester-control">학기<select id="textSemester"><option value="1">1학기</option><option value="2">2학기</option></select></label><label class="unit-control">단원<select id="textUnit"></select></label><label class="lesson-control">차시<select id="textLesson"></select></label><label class="standard-control" hidden>성취기준<select id="textStandard"></select><span id="selectedStandard"></span></label><label class="format-control">유형<select id="textFormat"></select></label><details class="learning-source"><summary>출처·연결 범위</summary><p id="textCoverage"></p><a id="textSource" target="_blank" rel="noopener noreferrer">원문 보기</a><p>연결된 문제만 제공합니다. 도입·마무리, 제작·발표·검색 활동은 차시 목록에서 제외했습니다.</p></details></div>`;
+box.innerHTML=`<div class="learning-mode-bar"><div class="learning-tabs" role="group" aria-label="만들기 기준"><button type="button" data-mode="textbook">차시별</button><button type="button" data-mode="standard">성취기준별</button><button type="button" data-mode="practice">종합 연습</button><button type="button" data-mode="history-levels" hidden>한국사 난이도별</button></div><select id="learningMode" aria-label="학습 범위" hidden><option value="textbook">차시별</option><option value="standard">성취기준별</option><option value="practice">기존 연습</option><option value="history-levels">한국사 난이도별</option></select><span id="textPractice" aria-live="polite"></span></div><div id="textbookControls"><label class="semester-control">학기<select id="textSemester"><option value="1">1학기</option><option value="2">2학기</option></select></label><label class="unit-control">단원<select id="textUnit"></select></label><label class="lesson-control">차시<select id="textLesson"></select></label><label class="standard-control" hidden>성취기준<select id="textStandard"></select><span id="selectedStandard"></span></label><label class="format-control">유형<select id="textFormat"></select></label><details class="learning-source"><summary>출처·연결 범위</summary><p id="textCoverage"></p><a id="textSource" target="_blank" rel="noopener noreferrer">원문 보기</a><p>연결된 문제만 제공합니다. 도입·마무리, 제작·발표·검색 활동은 차시 목록에서 제외했습니다.</p></details></div>`;
 $('grade').closest('label').after(box);$('grade').closest('label').classList.add('grade-control');$('count').closest('label').classList.add('count-control');
 const dictationLink=document.createElement('a');dictationLink.className='dictation-link';dictationLink.textContent='받아쓰기 · 음성 읽기';box.querySelector('.learning-tabs').append(dictationLink);
 const englishDictationLink=document.createElement('a');englishDictationLink.className='english-dictation-link';englishDictationLink.textContent='영어 받아쓰기 · 듣고 쓰기';englishDictationLink.hidden=true;$('grade').closest('label').after(englishDictationLink);
@@ -11,6 +12,46 @@ let active=false,subject='',chosen=null,displayedSeed=null,lastIds=[],lastKey=''
 const mixBox=document.createElement('details');mixBox.className='unit-mix-settings';mixBox.id='learningMixSettings';
 mixBox.innerHTML=`<summary>학습 범위 선택 · 여러 단원·차시 섞기</summary><div class="unit-mix-body"><label class="print-option"><input type="checkbox" id="learningMixEnabled"> 여러 차시에서 문제 뽑기</label><p>차시 목록에서 원하는 범위를 체크하고, 담은 차시별 문항 수를 정하세요. 총 40문항까지 만들 수 있어요.</p><label class="print-option"><input type="checkbox" id="learningMixAcross"> 1·2학기 함께 보기</label><div class="learning-range-layout"><section class="range-selection" aria-label="담은 차시"><h3>담은 차시</h3><div id="learningMixRows"></div><div class="range-selection-actions"><button type="button" id="addLearningMix">차시 추가</button><button type="button" id="addCurrentLearningMix">현재 차시 담기</button><button type="button" id="clearLearningMix">선택 비우기</button></div><output id="learningMixTotal" aria-live="polite"></output></section><section id="learningRangeTree" class="range-tree" aria-label="차시 목록"></section></div></div>`;
 box.after(mixBox);
+const historyBox=document.createElement('fieldset');
+historyBox.className='history-level-counts';historyBox.hidden=true;
+const historyLimits=H.limits(C);
+historyBox.innerHTML=`<legend>한국사 문항 수</legend>
+ <div class="history-level-inputs">
+ <label>전체 <input type="number" min="1" max="${H.MAX_TOTAL}" value="20" data-history-count="total"></label>
+ ${H.levels.map(level=>`<label>${H.labels[level]} <input type="number" min="0" max="${historyLimits[level]}" value="${level==='low'?10:5}" data-history-count="${level}"></label>`).join('')}
+ </div>
+ <p>하 · 기본 개념 확인 / 중 · 짧은 자료 해석 / 상 · 자료 비교와 사건의 관계 판단</p>
+ <output aria-live="polite"></output>`;
+mixBox.after(historyBox);
+const isHistoryMode=()=>$('learningMode').value==='history-levels';
+const historyAvailable=()=>subject==='social'&&Number($('grade').value)===5;
+const historyInput=key=>historyBox.querySelector(`[data-history-count="${key}"]`);
+function historyOptions(){
+ return {count:historyInput('total').valueAsNumber,
+  counts:Object.fromEntries(H.levels.map(level=>[level,historyInput(level).valueAsNumber]))};
+}
+function updateHistoryCounts(){
+ const {count,counts}=historyOptions(),sum=H.levels.reduce((n,level)=>n+counts[level],0);
+ const valid=[...historyBox.querySelectorAll('input')].every(input=>Number.isInteger(input.valueAsNumber)&&input.validity.valid)&&sum===count;
+ historyBox.querySelector('output').textContent=valid?`합계 ${sum}문항 · 하 ${counts.low} / 중 ${counts.middle} / 상 ${counts.high}`:
+  `전체 1~${H.MAX_TOTAL}문항, 하 0~${historyLimits.low}, 중 0~${historyLimits.middle}, 상 0~${historyLimits.high} 범위에서 전체와 합계를 맞춰 주세요. 현재 합계 ${Number.isFinite(sum)?sum:'—'}문항`;
+ form.querySelector('button[type="submit"]').disabled=!valid;
+ return valid;
+}
+historyBox.addEventListener('input',e=>{
+ if(e.target===historyInput('total')){
+  const {count,counts}=historyOptions(),remaining=count-counts.middle-counts.high;
+  if(Number.isInteger(remaining)&&remaining>=0&&remaining<=historyLimits.low)historyInput('low').value=remaining;
+ }
+ clear('문항 수를 바꿨어요. 문제지 만들기를 눌러 주세요.');
+ updateHistoryCounts();
+});
+if(query.get('mode')==='history-levels'){
+ for(const key of ['total',...H.levels]){
+  const value=query.get(key==='total'?'count':key);
+  if(value!==null)historyInput(key).value=value;
+ }
+}
 const mixing=()=>active&&['math','korean','social','science'].includes(subject)&&!standardMode()&&$('learningMixEnabled').checked;
 const mixPlan=()=>[...$('learningMixRows').children].map(row=>({id:row.querySelector('select').value,count:Number(row.querySelector('input').value)}));
 function mixEntries(){return ($('learningMixAcross').checked?[1,2]:[Number($('textSemester').value)]).flatMap(term=>T.mixOptions(subject,$('grade').value,term))}
@@ -74,6 +115,12 @@ function units(preferred,lesson){const select=$('textUnit');select.replaceChildr
 function standards(preferred){const select=$('textStandard');select.replaceChildren();for(const s of T.standards(subject,$('grade').value))option(select,s.code,`[${s.code}] ${s.statement}`);select.disabled=!select.options.length;if(!select.options.length)option(select,'','연결된 성취기준 준비 중');if([...select.options].some(o=>o.value===preferred))select.value=preferred;formats(query.get('format'));}
 function make(seed,{replay=false,preserve=false}={}){
  if(!active)return;try{
+  if(isHistoryMode()){
+   if(!updateHistoryCounts())return;
+   const sheet=H.generate({...historyOptions(),seed},C);
+   E.render(sheet);displayedSeed=sheet.seed;
+   return;
+  }
   const k=key(),params={subject,grade:Number($('grade').value),semester:Number($('textSemester').value),unitId:$('textUnit').value,lessonId:$('textLesson').value,count:Number($('count').value),seed,responseFormat:$('textFormat').value,...(standardMode()?{standardCode:$('textStandard').value}:{})};
   if(!mixing()&&replay&&query.has('pick'))params.itemIndexes=query.get('pick').split(',').map(Number);
   else if(!mixing()&&preserve&&lastKey===k)params.itemIndexes=lastIndexes;
@@ -87,14 +134,28 @@ function make(seed,{replay=false,preserve=false}={}){
 }
 let lastIndexes,lastMixIndexes;
 function sync(initial=false){
- subject=form.querySelector('input[name="subject"]:checked').value;active=!['english','hanja'].includes(subject)&&$('learningMode').value!=='practice';
+ subject=form.querySelector('input[name="subject"]:checked').value;
+ const available=historyAvailable();
+ box.querySelector('[data-mode="history-levels"]').hidden=!available;
+ if(isHistoryMode()&&!available)$('learningMode').value='textbook';
+ const historyMode=isHistoryMode();
+ historyBox.hidden=!historyMode;
+ form.classList.toggle('history-level-mode',historyMode);
+ active=!['english','hanja'].includes(subject)&&$('learningMode').value!=='practice';
  dictationLink.hidden=subject!=='korean';dictationLink.href='받아쓰기.html?subject=korean&grade='+$('grade').value;
  englishDictationLink.hidden=subject!=='english';englishDictationLink.href='받아쓰기.html?subject=english&grade='+$('grade').value;
  if(active){$('unitMixEnabled').checked=false;form.classList.remove('unit-mix-active');}
- form.classList.toggle('compact-learning',active);box.hidden=['english','hanja'].includes(subject);$('textbookControls').hidden=!active;mixBox.hidden=!active||standardMode()||!['math','korean','social','science'].includes(subject);$('unitMixSettings').hidden=active||subject==='hanja';
+ form.classList.toggle('compact-learning',active);box.hidden=['english','hanja'].includes(subject);$('textbookControls').hidden=!active||historyMode;mixBox.hidden=historyMode||!active||standardMode()||!['math','korean','social','science'].includes(subject);$('unitMixSettings').hidden=active||subject==='hanja';
  for(const button of box.querySelectorAll('[data-mode]'))button.setAttribute('aria-pressed',String(button.dataset.mode===$('learningMode').value));
  for(const cls of ['semester-control','unit-control','lesson-control'])box.querySelector('.'+cls).hidden=standardMode();box.querySelector('.standard-control').hidden=!standardMode();
  for(const id of hiddenIds)if(active)$(id).hidden=true;
+ if(historyMode){
+  const {count}=historyOptions();
+  $('filterSelectionSummary').textContent='5학년 사회 · 한국사 난이도별';
+  clear(Number.isInteger(count)?'문항 수를 정하고 문제지 만들기를 눌러 주세요.':'전체 문항 수를 입력해 주세요.');
+  updateHistoryCounts();
+  return;
+ }
  if(!active){$('unitMixSettings').hidden=subject==='hanja';$('curriculumNote').hidden=false;form.querySelector('button[type="submit"]').disabled=false;for(const id of ['regenerate','toggleAnswers','printOnly','printWithAnswers'])$(id).disabled=false;return;}
  if(initial||rangeSubject!==subject){$('learningMixAcross').checked=subject==='math'||initial&&query.get('mixTerms')==='all';rangeSubject=subject;}
  resetLearningMix();if(initial&&query.has('lessonMix')){try{const rows=JSON.parse(query.get('lessonMix'));if(!Array.isArray(rows)||!rows.length||rows.length>40||rows.some(row=>!mixEntries().some(e=>e.id===row.id)))throw Error();$('learningMixRows').replaceChildren();rows.forEach(addMixRow);$('learningMixEnabled').checked=true;mixBox.open=true;}catch{$('learningMixEnabled').checked=false;initialMixInvalid=true;}}
@@ -103,7 +164,7 @@ function sync(initial=false){
  clear(chosen?.binding?'범위를 골랐어요. 문제지 만들기를 눌러 주세요.':'이 범위의 문제는 준비 중이에요.');
 }
 for(const button of box.querySelectorAll('[data-mode]'))button.onclick=()=>{$('learningMode').value=button.dataset.mode;$('learningMode').dispatchEvent(new Event('change',{bubbles:true}));};
-$('learningMode').value=legacy?'practice':query.get('mode')==='standard'?'standard':'textbook';$('textSemester').value=query.get('semester')==='2'?'2':'1';
+$('learningMode').value=query.get('mode')==='history-levels'?'history-levels':legacy?'practice':query.get('mode')==='standard'?'standard':'textbook';$('textSemester').value=query.get('semester')==='2'?'2':'1';
 form.addEventListener('change',e=>{if(e.target.id==='learningMode'&&e.target.value==='practice'||e.target.name==='subject'&&['english','hanja'].includes(e.target.value)){$('count').replaceChildren();for(const n of [6,8,12,5,10,15,20])option($('count'),String(n),n+'문항');$('count').value=e.target.value==='hanja'?'5':'10';$('count').disabled=false;}},true);
 const newSeed=()=>window.crypto?.getRandomValues?crypto.getRandomValues(new Uint32Array(1))[0]:Date.now();
 form.addEventListener('submit',e=>{if(!active)return;e.preventDefault();e.stopImmediatePropagation();make(newSeed())},true);
@@ -112,9 +173,10 @@ form.addEventListener('change',e=>{
  if(e.target.id==='learningMode'){if(e.target.value==='practice')$('grade').dispatchEvent(new Event('change',{bubbles:true}));else sync();return;}
  if(['subject','grade'].includes(e.target.name)){sync();return;}if(!active)return;
  if(e.target.id==='largePrint'){if(displayedSeed!==null)make(displayedSeed,{preserve:true});return;}
+ if(isHistoryMode())return;
  if(e.target.id==='textSemester'){if(mixing()&&$('learningMixAcross').checked){units();mixFormats();}else{units();resetLearningMix();}}else if(e.target.id==='textUnit')lessons();else if(['textLesson','textStandard'].includes(e.target.id))formats();else if(e.target.id==='textFormat')counts();
  if(['textSemester','textUnit','textLesson','textStandard','textFormat'].includes(e.target.id))clear(chosen?.binding?'범위를 바꿨어요. 문제지 만들기를 눌러 주세요.':'이 범위의 문제는 준비 중이에요.');
  counts(priorCounts.get(e));$('unitMixSettings').hidden=true;summary();
 });
-sync(true);if(active){if(!mixing()&&T.counts(chosen?.binding,$('textFormat').value).includes(Number(query.get('count'))))$('count').value=query.get('count');if(initialMixInvalid)clear('저장된 여러 차시 설정을 찾지 못했어요. 다시 골라 주세요.');else if(query.has('lesson')&&query.get('lesson')!==selected()?.lesson.id)clear('저장된 단원과 차시를 찾지 못했어요. 다시 골라 주세요.');else if(query.has('standard')&&query.get('standard')!==selected()?.standard?.code)clear('저장된 성취기준을 찾지 못했어요. 다시 골라 주세요.');else if(chosen?.binding||mixing())make(query.has('seed')?Number(query.get('seed')):Date.now(),{replay:true});}
+sync(true);if(isHistoryMode()){if(query.has('seed'))make(Number(query.get('seed')));}else if(active){if(!mixing()&&T.counts(chosen?.binding,$('textFormat').value).includes(Number(query.get('count'))))$('count').value=query.get('count');if(initialMixInvalid)clear('저장된 여러 차시 설정을 찾지 못했어요. 다시 골라 주세요.');else if(query.has('lesson')&&query.get('lesson')!==selected()?.lesson.id)clear('저장된 단원과 차시를 찾지 못했어요. 다시 골라 주세요.');else if(query.has('standard')&&query.get('standard')!==selected()?.standard?.code)clear('저장된 성취기준을 찾지 못했어요. 다시 골라 주세요.');else if(chosen?.binding||mixing())make(query.has('seed')?Number(query.get('seed')):Date.now(),{replay:true});}
 })();
