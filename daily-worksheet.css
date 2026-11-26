@@ -403,3 +403,28 @@ body.print-answers .print-paper .print-question-list.photo-small{grid-template-c
 @media(max-width:800px){.learning-range-layout{grid-template-columns:minmax(0,1fr)}.range-tree{grid-row:1}.range-tree-list{max-height:420px}.range-selection .learning-mix-row{grid-template-columns:minmax(0,1fr) 76px auto}.range-lesson{margin-left:0}.range-lesson small{white-space:normal;max-width:70px}}
 
 .practice-range-mode .learning-mode-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.practice-range-mode #textPractice{font-size:12px;color:#607166}.practice-range-mode .learning-tabs{display:flex;flex-wrap:wrap}
+
+@media screen {
+ .daily-intro-links{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px}
+ .worksheet-preview-link{display:inline-flex;align-items:center;min-height:44px;padding:6px 12px;border:1px solid #247b6b;border-radius:9px;color:#176956;font-size:13px;font-weight:750}
+ .worksheet-preview-link:hover{background:#e7f2ed}
+ .daily-intro-links .quiet-link{margin-top:0}
+ #worksheetPreview{scroll-margin-top:120px}
+ .output-buttons #printOnly:not(:disabled){background:#247b6b;border-color:#247b6b;color:#fff}
+ .output-buttons #printOnly:not(:disabled):hover{background:#185e4d;border-color:#185e4d}
+ .worksheet-preview-link:focus-visible,.output-buttons button:focus-visible{outline:2px solid #247b6b;outline-offset:2px}
+}
+@media screen and (min-width:1200px) {
+ .horizontal-worksheet .daily-workspace{display:grid;grid-template-columns:minmax(420px,1fr) minmax(0,1.65fr);align-items:start}
+ .horizontal-worksheet .daily-workspace>#sheetForm:not(.compact-learning){grid-template-columns:repeat(2,minmax(0,1fr))}
+ .horizontal-worksheet #mathTypeOptions{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .horizontal-worksheet :is(.practice-range-layout,.learning-range-layout){grid-template-columns:minmax(0,1fr)}
+ .horizontal-worksheet .filter-submit{flex-wrap:wrap}
+ .horizontal-worksheet .filter-submit .daily-primary{min-width:0}
+ .compact-learning .grade-control,.compact-learning .format-control{grid-column:1/span 6}
+ .compact-learning .semester-control,.compact-learning .count-control{grid-column:7/span 6}
+ .compact-learning .unit-control,.compact-learning .lesson-control,.compact-learning .standard-control{grid-column:1/-1}
+ .horizontal-worksheet .compact-learning>label.print-option{grid-column:1/span 5}
+ .horizontal-worksheet .compact-learning .filter-submit{grid-column:6/span 7}
+ .horizontal-worksheet .output-actions{align-items:start;flex-direction:column}
+}
