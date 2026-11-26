@@ -56,7 +56,6 @@ function writingCells(text){
  for(const {segment} of graphemeSegmenter.segment(text)){
   const cell=document.createElement('span');
   cell.className='dictation-cell';
-  if(/^[\t ]+$/.test(segment))cell.classList.add('dictation-space');
   const model=document.createElement('span');
   model.className='dictation-model';
   model.textContent=segment;
@@ -87,6 +86,8 @@ function updateWritingMode(){
  $('dictPrintStudent').textContent='학생용 '+(copying?'따라쓰기':'받아쓰기')+' 인쇄';
 }
 $('dictFollowCopy').addEventListener('change',updateWritingMode);
+$('dictCellSize').addEventListener('change',e=>{$('dictPaper').dataset.cellSize=e.target.value;});
+
 function render(){
  const size=sheet.custom?sheet.items.length:D.bank(sheet.grade,sheet.topic).length;
  $('gradeFocus').textContent=sheet.focus+(subject==='korean'&&/^level-/.test(sheet.topic)?' · 클라시트 연습 급수입니다. 학교 급수표와는 다를 수 있어요.':'');$('poolInfo').textContent=sheet.custom?`${sheet.grade}학년 · 직접 입력 · ${size}문장`:`${sheet.grade}학년 · ${sheet.topicLabel} · ${size===10?'10문장 한 묶음':size+'개 중 10문장'}`;

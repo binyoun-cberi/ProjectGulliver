@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>학년별 받아쓰기 | 클라시트</title><link rel="icon" type="image/svg+xml" href="clasheet-mark.svg">
-<link rel="stylesheet" href="gulliver-design.css?v=1.2.0"><link rel="stylesheet" href="worksheet-dictation.css?v=20261126-copy">
+<link rel="stylesheet" href="gulliver-design.css?v=1.2.0"><link rel="stylesheet" href="worksheet-dictation.css?v=20261126-grid">
 <script src="gulliver-app-shell.js?v=20261026-english1" defer></script>
 <script src="worksheet-dictation-topics.js?v=20261118-topics2" defer></script><script src="worksheet-dictation-levels.js?v=20261027-batchim1" defer></script><script src="worksheet-dictation-expansion.js?v=20261118-600" defer></script>
-<script src="worksheet-dictation-data.js?v=20261118-600" defer></script><script src="worksheet-english-dictation.js?v=20261026-english1" defer></script><script src="worksheet-dictation-player.js?v=20261027-five" defer></script><script src="worksheet-dictation-custom.js?v=20261026-custom1" defer></script><script src="worksheet-dictation-ui.js?v=20261126-copy" defer></script>
+<script src="worksheet-dictation-data.js?v=20261118-600" defer></script><script src="worksheet-english-dictation.js?v=20261026-english1" defer></script><script src="worksheet-dictation-player.js?v=20261027-five" defer></script><script src="worksheet-dictation-custom.js?v=20261026-custom1" defer></script><script src="worksheet-dictation-ui.js?v=20261126-grid" defer></script>
 <script src="worksheet-dictation-settings.js?v=1" defer></script>
 </head><body><main id="gulliverWork" class="dictation-layout">
  <header class="dictation-intro"><div><p class="eyebrow">클라시트 · 국어</p><h1>열 문장, 차근차근 받아쓰기</h1><p>한 문장을 듣고 쓸 시간을 가진 뒤, 다음 문장으로 넘어가요.</p></div><a id="backToKorean" href="문제지 만들기.html?subject=korean">국어 문제지로 돌아가기 →</a></header>
@@ -38,7 +38,7 @@
     <div class="dictation-controls"><button id="dictStart" type="button" class="dictation-primary">시작</button><button id="dictPause" type="button" disabled>일시정지</button><button id="dictStop" type="button">처음으로</button></div>
     <div class="dictation-controls secondary"><button id="dictPrevious" type="button">이전 문장</button><button id="dictReplay" type="button">이 문장 처음부터 읽기</button><button id="dictNext" type="button">다음 문장</button></div>
    </section>
-   <div class="dictation-print-actions"><label class="dictation-copy-toggle"><input id="dictFollowCopy" type="checkbox"> 따라쓰기</label><button id="dictPrintStudent" type="button">학생용 10문장 쓰기 인쇄</button><button id="dictPrintTeacher" type="button">교사용 정답 인쇄</button></div>
+   <div class="dictation-print-actions"><label class="dictation-copy-toggle"><input id="dictFollowCopy" type="checkbox"> 따라쓰기</label><label class="dictation-cell-size">쓰기 칸 <select id="dictCellSize"><option value="12">기본 (12mm)</option><option value="15">큰 칸 (15mm)</option></select></label><button id="dictPrintStudent" type="button">학생용 10문장 쓰기 인쇄</button><button id="dictPrintTeacher" type="button">교사용 정답 인쇄</button></div>
    <details id="dictTeacher" class="dictation-teacher"><summary>교사용 문장 확인 · 정답이 보입니다</summary><p id="dictTeacherNote">수업 전에 문장과 띄어쓰기를 확인해 주세요. 마침표와 쉼표는 문장에 맞게 쓰되 음성으로 따로 읽지 않습니다.</p><ol id="dictAnswerList"></ol></details>
    <article id="dictPaper" class="dictation-paper"><header class="dictation-sheet-heading"><span id="dictCopyLabel">듣고 바르게 써 보세요</span><h2 id="dictPaperTitle">1학년 받아쓰기</h2><div class="dictation-student"><span><i></i> 초등학교</span><span><i></i> 반 <i></i> 번</span><span>이름 <i></i></span></div></header><p class="dictation-instruction" id="dictPaperInstruction">문장을 듣고 띄어쓰기에 유의해 바르게 써 보세요.</p><ol id="dictWritingList"></ol><footer id="dictSheetNumber"></footer></article>
   </section>
