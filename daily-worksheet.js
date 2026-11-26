@@ -139,25 +139,24 @@ const compact=!tracing&&!column&&!dense&&sheet.responseFormat!=='essay'&&sheet.i
   (!item.choices||item.choices.length<=4&&item.choices.every(choice=>String(choice).length<=62))
 );$('sheetStatus').textContent='문제지가 준비됐어요';$('sheetMeta').textContent=C.SUBJECTS[sheet.subject].name+' · '+(tracing?sheet.scope:sheet.grade+'학년')+' · '+sheet.items.length+'문제'+(sheet.difficulty==='challenge'?' · 도전 문제':'');$('paperTitle').textContent=sheet.title;$('sheetNumber').textContent='문제지 번호 '+sheet.seed.toString(36).toUpperCase();
  const paper=$('questionSheet'),social=sheet.subject==='social';
- const socialHeading=paper.querySelector('.social-paper-heading');
- paper.classList.toggle('social-paper',social);
- if(socialHeading){
-  socialHeading.hidden=!social;
-  if(social){
-   socialHeading.querySelector('.social-paper-grade').textContent='사회 '+sheet.grade+'학년';
-   socialHeading.querySelector('h2').textContent=sheet.title.replace(new RegExp('^'+sheet.grade+'학년 사회 · '),'');
-  }
- }
+ const paperHeading=paper.querySelector('.worksheet-paper-heading');
+ paper.classList.add('worksheet-paper');
+ paperHeading.hidden=false;
+ const subjectName=C.SUBJECTS[sheet.subject].name;
+ paperHeading.querySelector('.worksheet-paper-grade').textContent=tracing?subjectName:subjectName+' '+sheet.grade+'학년';
+ const titlePrefix=sheet.grade+'학년 '+subjectName+' · ';
+ const paperTitle=$('paperTitle');
+ if(sheet.topic==='hundreds'&&!sheet.type)paperTitle.textContent+=' · '+(sheet.variant==='ones'?'B · 일의 자리까지':'A · 일의 자리가 0');
+ paperHeading.querySelector('h2').textContent=paperTitle.textContent.startsWith(titlePrefix)?paperTitle.textContent.slice(titlePrefix.length):paperTitle.textContent;
  const questions=$('questions');questions.replaceChildren();
- questions.classList.toggle('social-exam-columns',social&&compact);
- questions.style.setProperty('--social-rows',Math.ceil(sheet.items.length/2));questions.classList.toggle('tracing-questions',tracing);questions.classList.toggle('idiom-tracing',tracing&&sheet.topic==='idiom-trace');questions.classList.toggle('science-evidence',sheet.items.some(item=>item.scienceMaterial));
+ questions.classList.toggle('worksheet-exam-columns',compact&&!mathVertical);
+ questions.style.setProperty('--exam-rows',Math.ceil(sheet.items.length/2));questions.classList.toggle('tracing-questions',tracing);questions.classList.toggle('idiom-tracing',tracing&&sheet.topic==='idiom-trace');questions.classList.toggle('science-evidence',sheet.items.some(item=>item.scienceMaterial));
  questions.classList.toggle('photo-small',sheet.items.length<=6&&sheet.items.every(item=>item.photo));questions.classList.toggle('photo-questions',sheet.items.length>0&&sheet.items.every(item=>item.photo));questions.classList.toggle('column-questions',column);questions.classList.toggle('column-few',column&&sheet.count<=8);questions.classList.toggle('calculation-grid',dense);questions.classList.toggle('compact-questions',compact);$('questionSheet').classList.toggle('dense-paper',dense);
  $('paperInstruction').hidden=!(tracing||dense||column||sheet.subject==='science'||sheet.topic==='listening-set'||sheet.topic==='reading-set'||sheet.topic==='reading-assessment');if(sheet.topic==='listening-set')$('paperInstruction').textContent='안내된 음성을 듣고 문제를 풀어 보세요. 듣기 지문은 학생용 문제지에 표시되지 않습니다.';if(['reading-set','reading-assessment'].includes(sheet.topic))$('paperInstruction').textContent='글을 읽고, 글의 내용에 근거하여 답하세요.';if(tracing)$('paperInstruction').textContent=sheet.responseFormat==='blank'?'뜻과 음을 읽고 본보기를 보며 빈칸에 써 보세요.':'뜻과 음을 읽고 흐린 글씨를 따라 쓴 뒤 빈칸에 혼자 써 보세요.';if(sheet.subject==='science')$('paperInstruction').textContent='표와 그림은 학습용 예시 자료입니다. 자료를 살펴보고 답하세요.';if(column)$('paperInstruction').textContent='칸에 계산 과정을 쓰고 답을 구해 보세요.';if(dense)$('paperInstruction').textContent=sheet.type?'계산해 보세요.':sheet.topic==='hundreds'?'받아올림 없이 덧셈을 하세요.':'계산해 보세요.';
  if(social){
   $('paperInstruction').hidden=false;
   $('paperInstruction').textContent='문제를 읽고 알맞은 답을 고르거나 써 보세요.';
  }
- if(sheet.topic==='hundreds'&&!sheet.type)$('paperTitle').textContent+=' · '+(sheet.variant==='ones'?'B · 일의 자리까지':'A · 일의 자리가 0');
  $('paperStandard').hidden=!sheet.alignment;if(sheet.alignment)$('paperStandard').textContent=`교사용 수업 참고 · ${sheet.alignment.code} · ${sheet.alignment.scope}`;
  sheet.items.forEach((item,index)=>{
   const li=document.createElement('li');if(item.format==='essay')li.classList.add('essay-question');if(item.format==='ox')li.classList.add('ox-question');li.dataset.prompt=`${index+1}번. ${item.prompt}`;li.dataset.answer=item.answer;
@@ -264,7 +263,7 @@ $('printOnly').onclick=()=>print(false);$('printWithAnswers').onclick=()=>print(
 document.addEventListener('DOMContentLoaded',updateFilterSummary,{once:true});
 window.addEventListener('beforeprint',()=>{if(current)window.DailyWorksheetA4?.compose()});
 window.addEventListener('afterprint',()=>{document.body.classList.remove('print-answers');window.DailyWorksheetA4?.refreshPreview()});
-window.WorksheetEditor={render,initialSearch:params.toString(),getCurrent:()=>current,clear(){current=null;$('questionSheet').classList.remove('social-paper');const heading=$('questionSheet').querySelector('.social-paper-heading');if(heading)heading.hidden=true;window.dispatchEvent(new CustomEvent('gulliver:korean-assessment-render',{detail:{sheet:null}}));$('questions').replaceChildren();$('paperTitle').textContent='단원과 학습 내용을 골라 주세요.';$('sheetNumber').textContent='';$('answerQr').hidden=true;$('paperStandard').hidden=true;$('paperInstruction').hidden=true;window.DailyWorksheetA4?.refreshPreview();}};
+window.WorksheetEditor={render,initialSearch:params.toString(),getCurrent:()=>current,clear(){current=null;$('questionSheet').classList.remove('worksheet-paper');const heading=$('questionSheet').querySelector('.worksheet-paper-heading');if(heading)heading.hidden=true;window.dispatchEvent(new CustomEvent('gulliver:korean-assessment-render',{detail:{sheet:null}}));$('questions').replaceChildren();$('paperTitle').textContent='단원과 학습 내용을 골라 주세요.';$('sheetNumber').textContent='';$('answerQr').hidden=true;$('paperStandard').hidden=true;$('paperInstruction').hidden=true;window.DailyWorksheetA4?.refreshPreview();}};
 updateFilterSummary();
 make(Number.isFinite(Number(params.get('seed')))&&params.has('seed')?Number(params.get('seed')):seed());
 })();

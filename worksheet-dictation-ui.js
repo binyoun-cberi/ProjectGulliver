@@ -48,21 +48,65 @@ function stateChanged(s){
 }
 const player=window.WorksheetDictationPlayer.create({synth,Utterance:window.SpeechSynthesisUtterance,onChange:stateChanged});
 function reloadPlayer(){if(!sheet)return;const voice=voices.find(v=>v.voiceURI===$('dictVoice').value)||null;player.load(sheet.items,{...settings(),voice,language:voice?.lang||languages[subject].lang});}
+const graphemeSegmenter=new Intl.Segmenter(undefined,{granularity:'grapheme'});
+function writingCells(text){
+ const cells=document.createElement('div');
+ cells.className='dictation-cells';
+ cells.setAttribute('aria-hidden','true');
+ for(const {segment} of graphemeSegmenter.segment(text)){
+  const cell=document.createElement('span');
+  cell.className='dictation-cell';
+  if(/^[\t ]+$/.test(segment))cell.classList.add('dictation-space');
+  const model=document.createElement('span');
+  model.className='dictation-model';
+  model.textContent=segment;
+  cell.append(model);
+  cells.append(cell);
+ }
+ return cells;
+}
+function updateWritingMode(){
+ const copying=$('dictFollowCopy').checked;
+ $('dictPaper').classList.toggle('dictation-copy',copying);
+ for(const cells of $('dictWritingList').querySelectorAll('.dictation-cells')){
+  if(copying){
+   cells.removeAttribute('aria-hidden');
+   cells.setAttribute('role','img');
+   cells.setAttribute('aria-label',cells.nextElementSibling.textContent);
+  }else{
+   cells.setAttribute('aria-hidden','true');
+   cells.removeAttribute('role');
+   cells.removeAttribute('aria-label');
+  }
+ }
+ $('dictCopyLabel').textContent=copying?'보고 바르게 써 보세요':'듣고 바르게 써 보세요';
+ $('dictPaperInstruction').textContent=copying?'윗줄의 글자를 보고 바로 아래 칸에 한 글자씩 써 보세요.':'문장을 듣고 한 칸에 한 글자씩 써 보세요. 띄어쓰기는 한 칸을 비워 두세요.';
+ if(!sheet)return;
+ const language=subject==='english'?'영어 ':'';
+ $('dictPaperTitle').textContent=`${sheet.grade}학년 ${language}${copying?'따라쓰기':'받아쓰기'} · ${sheet.items.length}문장`;
+ $('dictPrintStudent').textContent='학생용 '+(copying?'따라쓰기':'받아쓰기')+' 인쇄';
+}
+$('dictFollowCopy').addEventListener('change',updateWritingMode);
 function render(){
  const size=sheet.custom?sheet.items.length:D.bank(sheet.grade,sheet.topic).length;
  $('gradeFocus').textContent=sheet.focus+(subject==='korean'&&/^level-/.test(sheet.topic)?' · 클라시트 연습 급수입니다. 학교 급수표와는 다를 수 있어요.':'');$('poolInfo').textContent=sheet.custom?`${sheet.grade}학년 · 직접 입력 · ${size}문장`:`${sheet.grade}학년 · ${sheet.topicLabel} · ${size===10?'10문장 한 묶음':size+'개 중 10문장'}`;
  $('newDictation').textContent=size===10?'↻ 이 주제의 10문장 순서 바꾸기':'↻ 다른 10문장 뽑기';
  $('backToKorean').href=`문제지 만들기.html?subject=${subject}&grade=${sheet.grade}`;$('backToKorean').textContent=languages[subject].name+' 문제지로 돌아가기 →';
- $('dictPaperTitle').textContent=`${sheet.grade}학년 ${subject==='english'?'영어 ':''}받아쓰기 · ${sheet.items.length}문장`;$('dictSheetNumber').textContent=`${sheet.topicLabel} · 문제지 번호 ${sheet.seed.toString(36).toUpperCase()}`;
+ $('dictSheetNumber').textContent=`${sheet.topicLabel} · 문제지 번호 ${sheet.seed.toString(36).toUpperCase()}`;
  $('dictWritingList').replaceChildren();$('dictAnswerList').replaceChildren();$('dictTeacher').open=false;
  const topicNames=sheet.custom?new Map([['custom','직접 입력']]):new Map(D.topics(sheet.grade).map(t=>[t.id,t.label]));
  for(const q of sheet.items){
-  const li=document.createElement('li'),lines=document.createElement('div'),answer=document.createElement('p');lines.className='dictation-lines';lines.setAttribute('aria-hidden','true');answer.className='dictation-answer';answer.lang=subject==='english'?'en':'ko';answer.textContent=q.text;li.append(lines,answer);$('dictWritingList').append(li);
+  const li=document.createElement('li'),answer=document.createElement('p');
+  answer.className='dictation-answer';
+  answer.lang=subject==='english'?'en':'ko';
+  answer.textContent=q.text;
+  li.append(writingCells(q.text),answer);
+  $('dictWritingList').append(li);
   const check=document.createElement('li'),sentence=document.createElement('span'),note=document.createElement('small');sentence.textContent=q.text;sentence.lang=answer.lang;note.className='dictation-word-focus';note.textContent=topicNames.get(q.topic)+' · '+q.focus;check.append(sentence);
   if(q.translation){const meaning=document.createElement('small');meaning.className='dictation-meaning';meaning.textContent=q.translation;check.append(meaning);}
   check.append(note);$('dictAnswerList').append(check);
  }
- $('dictPrintStudent').textContent='학생용 '+sheet.items.length+'문장 쓰기 인쇄';reloadPlayer();save();
+ updateWritingMode();reloadPlayer();save();
 }
 function draw(){if(customMode()){applyCustom();return;}$('dictNotice').hidden=true;const seed=window.crypto?.getRandomValues?crypto.getRandomValues(new Uint32Array(1))[0]:Date.now();sheet=D.generate({grade:Number($('dictGrade').value),topic:$('dictTopic').value,seed,excludeIds:sheet?.grade===Number($('dictGrade').value)?sheet.items.map(q=>q.id):[]});render();}
 function refreshVoices(){

@@ -32,7 +32,7 @@ test('dictation audio controls, grade selection, hidden answers, six A4 student/
    for(const teacher of [false,true]){
     await page.evaluate(t=>document.body.classList.toggle('dictation-print-teacher',t),teacher);
     const visible=await page.locator('#dictWritingList .dictation-answer:visible').count();assert.equal(visible,teacher?10:0);
-    assert.equal(await page.locator('#dictPaper').evaluate(p=>p.querySelector('footer').getBoundingClientRect().bottom<=p.getBoundingClientRect().bottom-12*96/25.4),true);
+    assert.equal(await page.locator('#dictPaper').evaluate(p=>p.getBoundingClientRect().height<=(297-28)*96/25.4),true);
     const pdf=await page.pdf({format:'A4',preferCSSPageSize:true,printBackground:true});assert.equal([...pdf.toString('latin1').matchAll(/\/Type\s*\/Page\b/g)].length,1,`${grade} teacher=${teacher}: one A4 page`);
     if(process.env.WORKSHEET_QA_DIR)fs.writeFileSync(path.join(process.env.WORKSHEET_QA_DIR,`dictation-${grade}-${teacher?'teacher':'student'}.pdf`),pdf);
    }
@@ -41,7 +41,7 @@ test('dictation audio controls, grade selection, hidden answers, six A4 student/
    await page.setViewportSize({width:1440,height:1100});
   }
   await page.goto(pathToFileURL(path.resolve('문제지 만들기.html')).href+'?subject=korean&grade=3');const entry=page.locator('.dictation-link');assert.equal(await entry.isVisible(),true);assert.match(await entry.getAttribute('href'),/grade=3/);
-  await page.setViewportSize({width:390,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);await entry.click();assert.match(page.url(),/grade=3/);assert.equal(await page.locator('#dictGrade').inputValue(),'3');assert.deepEqual(errors,[]);
+  await page.setViewportSize({width:390,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);await entry.click();assert.match(page.url(),/grade=3/);await page.waitForFunction(()=>document.querySelector('#dictGrade')?.value==='3');assert.equal(await page.locator('#dictGrade').inputValue(),'3');assert.deepEqual(errors,[]);
  }finally{await browser.close();}
 });
 test('English dictation offers grades 3-6, English-only speech, translations and A4 student/teacher output',{timeout:120000,skip:!chromium||!chrome},async()=>{
@@ -57,7 +57,7 @@ test('English dictation offers grades 3-6, English-only speech, translations and
    await page.emulateMedia({media:'print'});
    for(const teacher of [false,true]){
     await page.evaluate(t=>document.body.classList.toggle('dictation-print-teacher',t),teacher);assert.equal(await page.locator('#dictWritingList .dictation-answer:visible').count(),teacher?10:0);
-    assert.equal(await page.locator('#dictPaper').evaluate(p=>p.querySelector('footer').getBoundingClientRect().bottom<=p.getBoundingClientRect().bottom-12*96/25.4),true);
+    assert.equal(await page.locator('#dictPaper').evaluate(p=>p.getBoundingClientRect().height<=(297-28)*96/25.4),true);
     const pdf=await page.pdf({format:'A4',preferCSSPageSize:true,printBackground:true});assert.equal([...pdf.toString('latin1').matchAll(/\/Type\s*\/Page\b/g)].length,1);
     if(process.env.WORKSHEET_QA_DIR)fs.writeFileSync(path.join(process.env.WORKSHEET_QA_DIR,`english-${grade}-${teacher?'teacher':'student'}.pdf`),pdf);
    }
