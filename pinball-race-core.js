@@ -5,7 +5,8 @@
   if (root) root.ClasheetPinballCore = api;
 })(typeof window !== 'undefined' ? window : null, function () {
   'use strict';
-  const W = 900, H = 1390, FINISH_Y = 1274, RADIUS = 11;
+  const W = 900, H = 2350, FINISH_Y = 2200, RADIUS = 11;
+  const P=typeof module==='object'&&module.exports?require('./pinball-race-progress.js'):window.ClasheetPinballView;
   const BRIDGE_KEY = 'clasheet.race-roster.v1';
   const OWN_KEY = 'clasheet.pinballRace.v1';
   const BUMPER_KEY = 'gulliver.bumperRoulette.v2';
@@ -73,7 +74,7 @@
     const roster = normalizeNames(names);
     const { Engine, Bodies, Body, Composite, Events } = Matter;
     const engine = Engine.create({enableSleeping:false});
-    engine.gravity.y = 0.065;
+    engine.gravity.y = 0.09;
     const staticBodies=[], animated=[], impacts=[];
     const wall = {isStatic:true, friction:0.02, restitution:0.66,label:'rail',
       render:{fillStyle:'#43516e'}};
@@ -81,42 +82,29 @@
     function rail(x,y,w,h,angle=0) {
       return add(Bodies.rectangle(x,y,w,h,{...wall,angle}));
     }
-    // Open-top funnel and safety side rails. No participant-specific geometry.
-    rail(67,H/2,30,H); rail(833,H/2,30,H);
-    rail(168,151,215,18,0.42); rail(732,151,215,18,-0.42);
-    // Short central route meets a rotating gate; side routes remain open.
-
-    const pegOpts={isStatic:true,restitution:1.2,friction:0,label:'peg',render:{fillStyle:'#8ea3c5'}};
-    const bumperOpts={isStatic:true,restitution:1.44,friction:0,label:'bumper',render:{fillStyle:'#fda846'}};
-    const pegs = [[180,230],[330,208],[480,227],[630,208],[755,245],
-      [138,332],[265,345],[420,338],[573,345],[730,337],
-      [210,460],[350,446],[545,451],[705,470]];
-    for (const [x,y] of pegs) add(Bodies.circle(x,y,10,pegOpts));
-    [[265,280,30],[645,288,30],[185,405,24],[715,405,24]].forEach(([x,y,r]) => add(Bodies.circle(x,y,r,bumperOpts)));
-    // Short alternative routes: risky spinning middle versus slower side rails.
-    // Lower section remains open: narrow V-shaped ramps can trap slow-moving balls.
-    const spindle=add(Bodies.rectangle(450,305,150,19,{isStatic:true,restitution:1.15,
-      label:'spinner',render:{fillStyle:'#78e0d3'}}));
-    animated.push({body:spindle,angle:0,speed:0.047 + random()*0.018});
-    const gates=add(Bodies.rectangle(450,1190,190,15,{isStatic:true,restitution:1.35,
-      label:'spinner',render:{fillStyle:'#b4a1ff'}}));
-    animated.push({body:gates,angle:random()*Math.PI,speed:-(0.035+random()*0.015)});
-    rail(350,660,600,18,.32).friction=0; rail(550,990,600,18,-.32).friction=0;
-    // Extended middle: staggered rotating paddles leave broad side routes open.
-    for(const [x,y,direction] of [[450,520,1],[450,840,-1]]){
-      const paddle=add(Bodies.rectangle(x,y,180,17,{isStatic:true,restitution:1.12,
-        label:'spinner',render:{fillStyle:'#78e0d3'}}));
-      animated.push({body:paddle,angle:random()*Math.PI,speed:direction*(.025+random()*.015)});
+    // A connected channel: gather, split around an island, merge, then race the final gate.
+    // Every wall is rendered from the same body used by the physics engine.
+    const left=[[65,-120],[65,380],[240,650],[90,880],[90,1150],[235,1370],[125,1580],[125,1880],[225,2050],[65,2190],[65,2350]];
+    const right=[[835,-120],[835,440],[700,660],[810,880],[810,1150],[670,1370],[775,1580],[775,1880],[675,2050],[835,2190],[835,2350]];
+    function channel(points){
+      for(let i=1;i<points.length;i++){
+        const [ax,ay]=points[i-1],[bx,by]=points[i];
+        rail((ax+bx)/2,(ay+by)/2,Math.hypot(bx-ax,by-ay)+10,16,Math.atan2(by-ay,bx-ax)).friction=0;
+      }
     }
-    [[680,525,27],[200,690,27],[670,865,28],[200,1180,25],[650,1075,25]]
-      .forEach(([x,y,r])=>add(Bodies.circle(x,y,r,bumperOpts)));
-    for(const [x,y] of [[450,580],[450,770],[180,940],[440,970],[730,950],[360,1135],[540,1145]]){
-      add(Bodies.circle(x,y,10,pegOpts));
+    channel(left);channel(right);rail(450,-135,900,20);
+    rail(300,450,520,18,.28).friction=0;
+    rail(580,1530,420,18,-.3).friction=0;
+    add(Bodies.fromVertices(450,970,[{x:450,y:780},{x:560,y:910},{x:560,y:1040},{x:450,y:1160},{x:340,y:1040},{x:340,y:910}],{...wall,label:'island',render:{fillStyle:'#172d43'}}));
+    const pegOpts={isStatic:true,restitution:.8,friction:0,label:'peg',render:{fillStyle:'#829bb5'}};
+    const bumperOpts={isStatic:true,restitution:1.2,friction:0,label:'bumper',render:{fillStyle:'#ffad66'}};
+    for(const [x,y] of [[640,580],[290,720],[610,720],[200,980],[650,960],[665,1090],[360,1260],[580,1290],[260,1650],[620,1740]]){
+      add(Bodies.circle(x,y,y<1200?25:21,bumperOpts));
     }
-    // Moving bumper lanes create visible, shared opportunities to overtake.
-    for(const body of staticBodies.filter(b=>b.label==='bumper'&&b.position.y>500&&b.position.y<1000)){
-      body.render.fillStyle='#ff845f';
-      animated.push({body,x:body.position.x,y:body.position.y,sway:55,speed:.018,phase:body.position.y*.01});
+    for(const [x,y] of [[340,280],[470,300],[600,285],[380,615],[500,680],[180,1120],[700,1190],[400,1430],[300,1770],[440,1830],[600,1810],[390,2050],[510,2070]])add(Bodies.circle(x,y,10,pegOpts));
+    for(const [x,y,width,speed] of [[460,330,180,.035],[235,1000,150,-.032],[450,1340,250,.025],[430,1720,190,-.032],[450,1850,450,.018],[450,1990,205,.028]]){
+      const paddle=add(Bodies.rectangle(x,y,width,17,{isStatic:true,label:'spinner',render:{fillStyle:y>1900?'#baa4ff':'#67d9c6'}}));
+      paddle.friction=0;animated.push({body:paddle,angle:random()*Math.PI,speed});
     }
     // A single finish sensor line, followed by UI capacity gates for team mode.
     const order=shuffled(roster,random);
@@ -133,6 +121,7 @@
       return {name,index,body,color:colors[index],finished:false,team:null,finishFx:null,stallFrames:0};
     });
     Composite.add(engine.world,[...staticBodies,...balls.map(b=>b.body)]);
+    const progress=P.makeProgressMap(staticBodies,{width:W,height:FINISH_Y,radius:RADIUS});
     // Bumpers deliver the SAME physical kick to everyone. Rank and participant names are never consulted.
     Events.on(engine,'collisionStart',event=>{
       for (const pair of event.pairs) {
@@ -144,7 +133,7 @@
         const sign=Math.abs(dx)<3?(random()<.5?-1:1):Math.sign(dx);
         if(obstacle.label==='bumper'){
           const vel=ballBody.velocity;
-          const kick=obstacle.position.y>1050?.85:2.4;
+          const kick=obstacle.position.y>1800?.7:3.2;
           Body.setVelocity(ballBody,{x:Math.max(-3.8,Math.min(3.8,vel.x+sign*(kick===.85?1.65:2.4))),y:Math.max(-4.2,vel.y-kick)});
         }
         if(impacts.length<160)impacts.push({x:ballBody.position.x,y:ballBody.position.y,
@@ -156,13 +145,14 @@
       frame++;
       for (const ball of balls) ball.previousY=ball.body.position.y;
       for (const part of animated) {
-        if(part.sway)Body.setPosition(part.body,{x:part.x+Math.sin(part.phase+part.speed*frame)*part.sway,y:part.y});
-        else Body.setAngle(part.body,part.angle+part.speed*frame);
+        Body.setAngle(part.body,part.angle+part.speed*frame);
       }
       Engine.update(engine,1000/60);
       // Universal stuck-ball recovery, independent of identity or rank.
       for (const ball of balls) {
         if (ball.finished) continue;
+        const raw=progress.distanceAt(ball.body.position.x,ball.body.position.y);
+        ball.routeDistance=Number.isFinite(ball.routeDistance)?ball.routeDistance+(raw-ball.routeDistance)*.18:raw;
         const speed=ball.body.speed;
         ball.stallFrames=speed<.45?ball.stallFrames+1:0;
         if (ball.stallFrames>150) {
@@ -170,7 +160,7 @@
         }
       }
     }
-    return {engine,balls,staticBodies,animated,impacts,step,frame:()=>frame,finishY:FINISH_Y,W,H};
+    return {engine,balls,staticBodies,animated,impacts,progress,ranked:()=>P.rankBalls(balls,progress),step,frame:()=>frame,finishY:FINISH_Y,W,H};
   }
   return {W,H,RADIUS,FINISH_Y,BRIDGE_KEY,OWN_KEY,BUMPER_KEY,normalizeNames,shuffled,
     makeCapacities,createAllocator,parseBridge,rosterPayload,crossingOrder,createWorld};

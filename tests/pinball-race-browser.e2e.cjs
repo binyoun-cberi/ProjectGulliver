@@ -151,7 +151,7 @@ test('real Chrome: thirty players are evenly divided among four teams', {timeout
 });
 
 for(const viewport of [{width:1450,height:930},{width:768,height:1024},{width:430,height:920}]){
- test('single pinball cabinet setup and stop: '+viewport.width,async()=>{
+ test('immersive marble-race setup and stop: '+viewport.width,async()=>{
   const page=await browser.newPage({viewport});const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/핀볼 레이스.html',{waitUntil:'load'});
   assert.ok(await page.locator('.arena-surface #pre-start').isVisible());
@@ -166,6 +166,11 @@ for(const viewport of [{width:1450,height:930},{width:768,height:1024},{width:43
   await page.locator('#start-btn').click();
   assert.equal(await page.locator('#pre-start').isVisible(),false);
   assert.ok(await page.locator('#pinball-canvas').isVisible());
+  const boardBox=await page.locator('#pinball-canvas').boundingBox();
+  assert.ok(boardBox.width>=viewport.width*.95,'Race uses the screen width');
+  assert.ok(boardBox.height>=viewport.height*.75,'Race uses the screen height');
+  assert.equal(await page.locator('.arena-surface #live-rankings').count(),1);
+
   assert.ok(await page.locator('#stop-btn').isVisible());
   assert.equal(await page.locator('#marble-legend').getAttribute('open'),null);
   await page.waitForTimeout(3000);

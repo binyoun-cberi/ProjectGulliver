@@ -141,7 +141,7 @@ test('30-player races have sustained leadership changes before the first finish'
   for(let f=0;f<4200&&!finished;f++){
    w.step();
    if(f>210){
-    const next=w.balls.slice().sort((a,b)=>b.body.position.y-a.body.position.y)[0].index;
+    const next=w.ranked()[0].index;
     if(candidate===next)held++;else{candidate=next;held=1;}
     if(held===30&&leader!==candidate){if(leader!==null)swaps++;leader=candidate;}
    }
@@ -149,5 +149,6 @@ test('30-player races have sustained leadership changes before the first finish'
   }
   assert.equal(finished,true);M.Engine.clear(w.engine);
  }
- assert.ok(swaps>=90,'At least three sustained lead changes per race on average');
+ // Route-distance ranking removes false changes caused by simply moving downward on a detour.
+ assert.ok(swaps>=60,'The course must permit sustained lead changes with route-distance ranking');
 });
